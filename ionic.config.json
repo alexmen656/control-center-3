@@ -1,0 +1,7 @@
+{
+  "name": "Control Center",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue"
+}

@@ -1,0 +1,2 @@
+"use strict";(self["webpackChunkcontrol_center"]=self["webpackChunkcontrol_center"]||[]).push([[76],{3076:(e,n,t)=>{function r(e,n,t,r,c,o){return" Something geilo "}t.r(n),t.d(n,{default:()=>u});const c={name:"ProjectView"};var o=t(3744);const s=(0,o.Z)(c,[["render",r]]),u=s}}]);
+//# sourceMappingURL=76-legacy.68eff268.js.map
