@@ -97,6 +97,7 @@ export default {
   async mounted() {
     const chatId = this.$route.params.id;
     const data = await getUserData();
+    console.log(data.email);
     this.userID = data.userID;
     await this.fetchChat(chatId);
     await this.fetchMessages(chatId);

@@ -1,0 +1,37 @@
+[
+    {
+        "url": "home",
+        "showTitle": true,
+        "title": "Home"
+    },
+    {
+        "url": "dashboard",
+        "showTitle": true,
+        "title": "Dashboad"
+    },
+    {
+        "url": "my-account",
+        "showTitle": false,
+        "title": "Dashboad"
+    },
+    {
+        "url": "messages",
+        "showTitle": false,
+        "title": "Dashboad"
+    },
+    {
+        "url": "filesystem",
+        "showTitle": true,
+        "title": "Dashboad"
+    },
+    {
+        "url": "databases",
+        "showTitle": true,
+        "title": "Dashboad"
+    },
+    {
+        "url": "messages/123456",
+        "showTitle": false,
+        "title": "d"
+    }
+]

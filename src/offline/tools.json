@@ -1,0 +1,8 @@
+{
+    "tools": [
+        { "icon": "home-outline", "name": "Home" },
+        { "icon": "chat", "name": "Messages" },
+        { "icon": "home", "name": "Filesystem" },
+        { "icon": "home", "name": "Databases" }
+    ]
+}

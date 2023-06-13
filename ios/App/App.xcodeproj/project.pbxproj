@@ -52,14 +52,14 @@
 /* Begin PBXCopyFilesBuildPhase section */
 		D9BD676E299D177D00759076 /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 8;
 			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
 			dstSubfolderSpec = 16;
 			files = (
 				D9BD676D299D177D00759076 /* Control Center.app in Embed Watch Content */,
 			);
 			name = "Embed Watch Content";
-			runOnlyForDeploymentPostprocessing = 0;
+			runOnlyForDeploymentPostprocessing = 1;
 		};
 		D9BD678A299D17B600759076 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -684,7 +684,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"watchkitapp Watch App/Preview Content\"";
-				DEVELOPMENT_TEAM = R6934YW2PH;
+				DEVELOPMENT_TEAM = H27JBQK8B5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
@@ -720,7 +720,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"watchkitapp Watch App/Preview Content\"";
-				DEVELOPMENT_TEAM = R6934YW2PH;
+				DEVELOPMENT_TEAM = H27JBQK8B5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
@@ -753,7 +753,7 @@
 				CODE_SIGN_ENTITLEMENTS = watchkitextensionExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = R6934YW2PH;
+				DEVELOPMENT_TEAM = H27JBQK8B5;
 				GCC_OPTIMIZATION_LEVEL = "-Oneone";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = watchkitextension/Info.plist;
@@ -788,7 +788,7 @@
 				CODE_SIGN_ENTITLEMENTS = watchkitextensionExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = R6934YW2PH;
+				DEVELOPMENT_TEAM = H27JBQK8B5;
 				GCC_OPTIMIZATION_LEVEL = "-Oneone";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = watchkitextension/Info.plist;

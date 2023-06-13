@@ -1,82 +1,116 @@
 <template>
   <ion-app>
-    <SiteHeader v-if="token"></SiteHeader><!--@click="subscribe"-->
+    <SiteHeader v-if="token"></SiteHeader
+    ><!--@click="subscribe"-->
     <ion-split-pane content-id="main-content">
-       <SideBar :projects="projects" :tools="tools" :bookmarks="bookmarks" v-if="token && !$route.params.project"></SideBar>
-       <ProjectSideBar v-if="token && $route.params.project"></ProjectSideBar>
-       <div id="main-content">
-        <SiteTitle v-if="token && page.title && page.showTitle == 'true'" :icon="page.icon" :title="page.title" @updateSidebar="updateSidebar()"/>
-         <ion-router-outlet v-if="page.title" @updateSidebar="updateSidebar()" :class="{ showTitle: page.showTitle == 'true' }"></ion-router-outlet> 
-         <div v-else class="error404">
-           <h1>Error 404, Site not found.</h1> 
-         </div>
-           
-       </div>       
-      
-    </ion-split-pane> 
+      <SideBar
+        :projects="projects"
+        :tools="tools"
+        :bookmarks="bookmarks"
+        v-if="token && !$route.params.project"
+      ></SideBar>
+      <ProjectSideBar v-if="token && $route.params.project"></ProjectSideBar>
+      <div id="main-content">
+        <SiteTitle
+          v-if="token && page.title && page.showTitle == true"
+          :icon="page.icon"
+          :title="page.title"
+          @updateSidebar="updateSidebar()"
+        />
+        <ion-router-outlet
+          v-if="page.title"
+          @updateSidebar="updateSidebar()"
+          :class="{ showTitle: page.showTitle == 'true' }"
+        ></ion-router-outlet>
+        <div v-else class="error404">
+          <h1>Error 404, Site not found.</h1>
+        </div>
+      </div>
+    </ion-split-pane>
+    <div class="offline" v-if="!isOnline"><h6>You are offline!</h6></div>
   </ion-app>
 </template>
 
 <script>
-import { IonApp, IonRouterOutlet, IonSplitPane, useIonRouter } from '@ionic/vue';
-import { defineComponent, ref } from 'vue';
-import SiteHeader from '@/components/Header.vue';
-import SideBar from '@/components/SideBar.vue';
-import SiteTitle from '@/components/SiteTitle.vue';
-import ProjectSideBar from '@/components/ProjectSideBar.vue';
-import axios from 'axios';
-import { initializeApp} from "firebase/app";
+import { IonApp, IonRouterOutlet, IonSplitPane, useIonRouter } from "@ionic/vue";
+import { defineComponent, ref } from "vue";
+import SiteHeader from "@/components/Header.vue";
+import SideBar from "@/components/SideBar.vue";
+import SiteTitle from "@/components/SiteTitle.vue";
+import ProjectSideBar from "@/components/ProjectSideBar.vue";
+import axios from "axios";
+import { initializeApp } from "firebase/app";
 import { useRoute } from "vue-router";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
-import qs from 'qs';
+import qs from "qs";
+import offlineTools from "@/offline/tools.json";
+import offlinePages from "@/offline/pages.json";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAF53AYFblvyoeCHvXqUT--C5lnYf095VY",
-    authDomain: "alexs-blog-371818.firebaseapp.com",
-    projectId: "alexs-blog-371818",
-    storageBucket: "alexs-blog-371818.appspot.com",
-    messagingSenderId: "993142363546",
-    appId: "1:993142363546:web:af5db6e6c5ff5c57105623",
-    measurementId: "G-Y452FKG122"
-  };
-  
+  apiKey: "AIzaSyAF53AYFblvyoeCHvXqUT--C5lnYf095VY",
+  authDomain: "alexs-blog-371818.firebaseapp.com",
+  projectId: "alexs-blog-371818",
+  storageBucket: "alexs-blog-371818.appspot.com",
+  messagingSenderId: "993142363546",
+  appId: "1:993142363546:web:af5db6e6c5ff5c57105623",
+  measurementId: "G-Y452FKG122",
+};
+
 const app = initializeApp(firebaseConfig);
-const messaging = getMessaging();
-
-onMessage(messaging, (payload) => {
-  console.log('Message received. ', payload);
+let messaging;
+try {
+    messaging = getMessaging();
+    onMessage(messaging, (payload) => {
+  console.log("Message received. ", payload);
 });
+} catch (err) {
+    console.error('Failed to initialize Firebase Messaging', err);
+}
 
-getToken(messaging, { vapidKey: 'BLHOWBaM9Ej23udRuBcV5-hUMw-jVCA6czu7wCOtqtyv54u-0NyeughCPUomwSVdhJGUsC54VGdjb2czi2HeTr4' }).then((currentToken) => {
-  if (currentToken) {
-    //alert(currentToken);
-    //console.log(currentToken);
-    axios.post("https://alex.polan.sk/control-center/push_notifications_token.php", qs.stringify({newToken: 'newToken', token: currentToken, platform: window.navigator.userAgent, userID: '79'}));
-  } else {
-    console.log('No registration token available. Request permission to generate one.');
-  }
-}).catch((err) => {
-  console.log('An error occurred while retrieving token. ', err);
-});
+
+
+getToken(messaging, {
+  vapidKey:
+    "BLHOWBaM9Ej23udRuBcV5-hUMw-jVCA6czu7wCOtqtyv54u-0NyeughCPUomwSVdhJGUsC54VGdjb2czi2HeTr4",
+})
+  .then((currentToken) => {
+    if (currentToken) {
+      axios.post(
+        "https://alex.polan.sk/control-center/push_notifications_token.php",
+        qs.stringify({
+          newToken: "newToken",
+          token: currentToken,
+          platform: window.navigator.userAgent,
+          userID: "79",
+        })
+      );
+    } else {
+      console.log(
+        "No registration token available. Request permission to generate one."
+      );
+    }
+  })
+  .catch((err) => {
+    console.log("An error occurred while retrieving token. ", err);
+  });
 
 export default defineComponent({
-  name: 'App',
+  name: "App",
   components: {
-    IonApp, 
-    IonRouterOutlet, 
+    IonApp,
+    IonRouterOutlet,
     IonSplitPane,
     SiteHeader,
     SideBar,
     ProjectSideBar,
-    SiteTitle
+    SiteTitle,
   },
-  data(){
+  data() {
     return {
       token: localStorage.getItem("token"),
-    }
+    };
   },
   mounted() {
-   
     this.$watch(
       () => this.$route.params,
       () => {
@@ -107,60 +141,93 @@ export default defineComponent({
     const ionRouter = useIonRouter();
     let paramUrl = "";
 
+    const isOnline = ref(navigator.onLine);
+
     const loadPageData = () => {
-
-
-      if (!localStorage.getItem('token') && location.pathname != "/login" && location.pathname != "/login/verification/" && location.pathname != "/login/" && location.pathname != "/login/verification") {
-        //console.log(location.pathname);
-        ionRouter.push('/login');
+      if (
+        !localStorage.getItem("token") &&
+        location.pathname != "/login" &&
+        location.pathname != "/login/verification/" &&
+        location.pathname != "/login/" &&
+        location.pathname != "/login/verification"
+      ) {
+        ionRouter.push("/login");
       }
 
       if (!route.params || !route.params.url) {
-        console.error('Route params or URL not defined.');
+        console.error("Route params or URL not defined.");
         paramUrl = window.location.pathname.replace("/", "");
-        if(paramUrl.charAt(paramUrl.length - 1) == "/"){
+        if (paramUrl.charAt(paramUrl.length - 1) == "/") {
           paramUrl = paramUrl.slice(0, -1);
         }
-       // console.log(paramUrl);
-        //return;
-      }else{
+      } else {
         paramUrl = route.params.url;
       }
 
-      axios
-        .post('https://alex.polan.sk/control-center/pages.php')
-        .then((response) => {
-          pages.value = response.data;
-          //console.log(route.params.url);
-          //console.log(paramUrl);
-          //console.log(pages.value.find((p) => p['url'] === paramUrl) ?? "-");
-          const foundPage = pages.value.find((p) => p['url'] === paramUrl);
-        
+      if (isOnline.value) {
+        axios
+          .post("https://alex.polan.sk/control-center/pages.php")
+          .then((response) => {
+            pages.value = response.data;
+            const foundPage = pages.value.find((p) => p["url"] === paramUrl);
 
-          if (!foundPage) {
-           // console.error('Page not found.');
-            return;
-          }
+            if (!foundPage) {
+              return;
+            }
 
+            page.value = foundPage;
+            document.title = page.value.title;
+          });
+
+        axios
+          .get("https://alex.polan.sk/control-center/sidebar.php")
+          .then((response) => {
+            tools.value = response.data.tools;
+            projects.value = response.data.projects;
+            localStorage.setItem("tools", tools.value);
+            localStorage.setItem("projects", projects.value);
+
+          });
+
+        axios
+          .get(
+            "https://alex.polan.sk/control-center/bookmarks.php?getBookmarks=getBookmarks"
+          )
+          .then((response) => {
+            bookmarks.value = response.data;
+            localStorage.setItem("bookmarks", bookmarks.value);
+          });
+      } else {
+        // Load data from local JSON files
+
+        pages.value = offlinePages;
+        const foundPage = pages.value.find((p) => p["url"] === paramUrl);
+
+        if (!foundPage) {
+          return;
+        } else {
           page.value = foundPage;
-          //console.log(foundPage);
           document.title = page.value.title;
-          //console.log(page.value);
-        });
+        }
 
-      axios.get('https://alex.polan.sk/control-center/sidebar.php').then((response) => {
-        tools.value = response.data.tools;
-        projects.value = response.data.projects;
-      });
+        tools.value = offlineTools.tools;
 
-      axios
-        .get('https://alex.polan.sk/control-center/bookmarks.php?getBookmarks=getBookmarks')
-        .then((response) => {
+        axios.get("path/to/local/bookmarks.json").then((response) => {
           bookmarks.value = response.data;
         });
-
-      //console.log(tools);
+      }
     };
+
+    // Listen for online/offline events to update the isOnline value
+    window.addEventListener("online", () => {
+      isOnline.value = true;
+      loadPageData();
+    });
+
+    window.addEventListener("offline", () => {
+      isOnline.value = false;
+      loadPageData();
+    });
 
     return {
       page: page,
@@ -168,34 +235,46 @@ export default defineComponent({
       projects: projects,
       bookmarks: bookmarks,
       loadPageData: loadPageData,
+      isOnline: isOnline,
     };
   },
+
   methods: {
-    
-updateSidebar(){
-        const bookmarks = ref([]);
-        axios.get('https://alex.polan.sk/control-center/bookmarks.php?getBookmarks=getBookmarks').then(response => {
+    updateSidebar() {
+      const bookmarks = ref([]);
+      axios
+        .get(
+          "https://alex.polan.sk/control-center/bookmarks.php?getBookmarks=getBookmarks"
+        )
+        .then((response) => {
           this.bookmarks = response.data;
+          localStorage.setItem("bookmarks", this.bookmarks);
         });
     },
-    subscribe(){
-      getToken(messaging, { vapidKey: 'BLHOWBaM9Ej23udRuBcV5-hUMw-jVCA6czu7wCOtqtyv54u-0NyeughCPUomwSVdhJGUsC54VGdjb2czi2HeTr4' }).then((currentToken) => {
-  if (currentToken) {
-    alert(currentToken);
-    console.log(currentToken);
-  } else {
-    console.log('No registration token available. Request permission to generate one.');
-  }
-}).catch((err) => {
-  console.log('An error occurred while retrieving token. ', err);
-});
-    }
-  }
+    subscribe() {
+      getToken(messaging, {
+        vapidKey:
+          "BLHOWBaM9Ej23udRuBcV5-hUMw-jVCA6czu7wCOtqtyv54u-0NyeughCPUomwSVdhJGUsC54VGdjb2czi2HeTr4",
+      })
+        .then((currentToken) => {
+          if (currentToken) {
+            alert(currentToken);
+            console.log(currentToken);
+          } else {
+            console.log(
+              "No registration token available. Request permission to generate one."
+            );
+          }
+        })
+        .catch((err) => {
+          console.log("An error occurred while retrieving token. ", err);
+        });
+    },
+  },
 });
 </script>
 
 <style>
-
 .error404 {
   width: 100%;
   height: 100%;
@@ -337,22 +416,24 @@ ion-item.selected {
   --color: var(--ion-color-primary);
 }
 
-a{
+a {
   text-decoration: none;
   color: red;
 }
 
-ion-header, ion-toolbar, .header{
+ion-header,
+ion-toolbar,
+.header {
   --background: #000;
 }
 
 .mobile-only {
-    display: none;
-  }
+  display: none;
+}
 
-  .desktop-only {
-    display: block;
-  }
+.desktop-only {
+  display: block;
+}
 
 @media only screen and (max-width: 600px) {
   .only-web {
@@ -368,7 +449,8 @@ ion-header, ion-toolbar, .header{
   }
 }
 
-router-link,a {
+router-link,
+a {
   color: red;
 }
 
@@ -381,22 +463,22 @@ a {
 }
 
 .link-container {
-    display: flex;
-    justify-content: center;
-  }
-  ion-footer ion-toolbar {
-    color: #000;
-  }
+  display: flex;
+  justify-content: center;
+}
+ion-footer ion-toolbar {
+  color: #000;
+}
 
-  ion-title {
-    color: white;
-  }
-  .link {
-    text-decoration: none;
-  }
+ion-title {
+  color: white;
+}
+.link {
+  text-decoration: none;
+}
 
-  ion-menu.md ion-item.selected {
-  --background: rgba(255,0,0, 0.14) !important;
+ion-menu.md ion-item.selected {
+  --background: rgba(255, 0, 0, 0.14) !important;
 }
 
 ion-item.selected {
@@ -415,13 +497,12 @@ ion-menu ion-item.selected ion-icon {
   /*padding-top: 100px !important;*/
   margin-top: 56px !important;
   width: 100%;
-
 }
 h1 {
   z-index: 6666;
 }
 
-ion-router-outlet.showTitle{ 
+ion-router-outlet.showTitle {
   margin-top: 55px;
 }
 
@@ -430,7 +511,7 @@ ion-router-outlet {
 }
 
 ion-card {
- /* background: #000000;*/
+  /* background: #000000;*/
 }
 
 @media (prefers-color-scheme: dark) {
@@ -440,10 +521,21 @@ ion-card {
 }
 
 @media only screen and (min-width: 600px) {
- ion-card {
-  padding: 1rem;
-  border-radius: 20px;
+  ion-card {
+    padding: 1rem;
+    border-radius: 20px;
   }
 }
-</style>
 
+.offline {
+  background-color: #212121;
+  z-index: 100000;
+}
+
+.offline > h6 {
+  text-align: center !important;
+  width: 100%;
+  color: #fff;
+  margin: 0.25rem;
+}
+</style>
