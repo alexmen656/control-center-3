@@ -1,7 +1,9 @@
 <template>
   <ion-app>
-    <SiteHeader v-if="token"></SiteHeader
-    ><!--@click="subscribe"-->
+
+  <ion-content>
+    <SiteHeader v-if="token"></SiteHeader>
+    <!--@click="subscribe"-->
     <ion-split-pane content-id="main-content">
       <SideBar
         :projects="projects"
@@ -11,8 +13,9 @@
       ></SideBar>
       <ProjectSideBar v-if="token && $route.params.project"></ProjectSideBar>
       <div id="main-content">
-        <SiteTitle
-          v-if="token && page.title && page.showTitle == true"
+      
+      <SiteTitle
+          v-if="token && page.title && (page.showTitle == true || page.showTitle == 'true')"
           :icon="page.icon"
           :title="page.title"
           @updateSidebar="updateSidebar()"
@@ -20,19 +23,26 @@
         <ion-router-outlet
           v-if="page.title"
           @updateSidebar="updateSidebar()"
-          :class="{ showTitle: page.showTitle == 'true' }"
+          :class="{ showTitle: (page.showTitle == true || page.showTitle == 'true') }"
         ></ion-router-outlet>
         <div v-else class="error404">
           <h1>Error 404, Site not found.</h1>
         </div>
       </div>
     </ion-split-pane>
-    <div class="offline" v-if="!isOnline"><h6>You are offline!</h6></div>
+  </ion-content>
+  <!--<div class="offline" v-if="!isOnline"><h6>You are offline!</h6></div>-->
+  <ion-footer v-if="!isOnline" class="offline" collapse="fade">
+    <ion-toolbar>
+      <ion-title><h6 class="offline-h6">You are offline!</h6></ion-title>
+    </ion-toolbar>
+  </ion-footer>
+
   </ion-app>
 </template>
 
 <script>
-import { IonApp, IonRouterOutlet, IonSplitPane, useIonRouter } from "@ionic/vue";
+import { IonApp, IonRouterOutlet, IonSplitPane, useIonRouter, IonTitle, IonHeader, IonToolbar, IonContent } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import SiteHeader from "@/components/Header.vue";
 import SideBar from "@/components/SideBar.vue";
@@ -103,7 +113,9 @@ export default defineComponent({
     SiteHeader,
     SideBar,
     ProjectSideBar,
-    SiteTitle,
+   SiteTitle,
+    //IonTitle, IonHeader, IonToolbar, 
+    IonContent
   },
   data() {
     return {
@@ -144,6 +156,8 @@ export default defineComponent({
     const isOnline = ref(navigator.onLine);
 
     const loadPageData = () => {
+      //alert("changed");
+
       if (
         !localStorage.getItem("token") &&
         location.pathname != "/login" &&
@@ -164,7 +178,8 @@ export default defineComponent({
         paramUrl = route.params.url;
       }
 
-      if (isOnline.value) {
+      if (isOnline.value) {   //   alert("changed2");
+
         axios
           .post("https://alex.polan.sk/control-center/pages.php")
           .then((response) => {
@@ -184,8 +199,8 @@ export default defineComponent({
           .then((response) => {
             tools.value = response.data.tools;
             projects.value = response.data.projects;
-            localStorage.setItem("tools", tools.value);
-            localStorage.setItem("projects", projects.value);
+            localStorage.setItem("tools", JSON.stringify(tools.value));
+            localStorage.setItem("projects", JSON.stringify(projects.value));
 
           });
 
@@ -195,9 +210,11 @@ export default defineComponent({
           )
           .then((response) => {
             bookmarks.value = response.data;
-            localStorage.setItem("bookmarks", bookmarks.value);
+            localStorage.setItem("bookmarks", JSON.stringify(bookmarks.value));
           });
       } else {
+        //alert("changed3");
+
         // Load data from local JSON files
 
         pages.value = offlinePages;
@@ -210,22 +227,37 @@ export default defineComponent({
           document.title = page.value.title;
         }
 
-        tools.value = offlineTools.tools;
+        if(localStorage.getItem("tools")){
+          tools.value = JSON.parse(localStorage.getItem("tools"));
+        }else{
+          tools.value = offlineTools.tools;
+        }
 
-        axios.get("path/to/local/bookmarks.json").then((response) => {
-          bookmarks.value = response.data;
-        });
+        if(localStorage.getItem("projects")){
+          projects.value = JSON.parse(localStorage.getItem("projects"));
+        }else{
+          projects.value = offlineTools.tools;
+        }
+
+        if(localStorage.getItem("bookmarks")){
+          bookmarks.value = JSON.parse(localStorage.getItem("bookmarks"));
+        }else{
+          bookmarks.value = offlineTools.tools;
+        }
       }
     };
 
     // Listen for online/offline events to update the isOnline value
     window.addEventListener("online", () => {
       isOnline.value = true;
+     // alert("changed");
       loadPageData();
     });
 
     window.addEventListener("offline", () => {
       isOnline.value = false;
+//      alert("changed");
+
       loadPageData();
     });
 
@@ -421,12 +453,6 @@ a {
   color: red;
 }
 
-ion-header,
-ion-toolbar,
-.header {
-  --background: #000;
-}
-
 .mobile-only {
   display: none;
 }
@@ -466,13 +492,7 @@ a {
   display: flex;
   justify-content: center;
 }
-ion-footer ion-toolbar {
-  color: #000;
-}
 
-ion-title {
-  color: white;
-}
 .link {
   text-decoration: none;
 }
@@ -528,11 +548,11 @@ ion-card {
 }
 
 .offline {
-  background-color: #212121;
+  background-color: #212121 !important;
   z-index: 100000;
 }
 
-.offline > h6 {
+.offline-h6 {
   text-align: center !important;
   width: 100%;
   color: #fff;

@@ -68,4 +68,19 @@ export default defineComponent({
       text-align: center;
     }
   }
+
+  ion-footer ion-toolbar {
+  color: #000;
+}
+
+ion-title {
+  color: red;
+}
+
+ion-header,
+ion-toolbar,
+.header {
+  --background: #000;
+}
+
 </style>

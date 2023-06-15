@@ -1,4 +1,5 @@
 <template>
+   <ion-header>
   <ion-toolbar>
     <ion-title size="large">
       <ion-icon :name="icon"></ion-icon>
@@ -18,6 +19,7 @@
       ></ion-icon>
     </span>
   </ion-toolbar>
+  </ion-header>
 </template>
 
 <script>

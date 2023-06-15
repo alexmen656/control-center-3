@@ -24,6 +24,7 @@
 <script>
 import ChatsMenu from "@/components/ChatsMenu.vue";
 import ChatView from "@/views/ChatView.vue";
+import { defineComponent, ref } from "vue";
 import {
   IonPage,
  // IonHeader,
@@ -36,7 +37,7 @@ import {
   //IonLabel,
 } from "@ionic/vue";
 
-export default {
+export default defineComponent({
   data() {
     return {
       chats: [],
@@ -61,15 +62,24 @@ export default {
   methods: {
     fetchChats() {
       const userId = 79; // Beispielwert, entsprechend anpassen
-
+      const isOnline = ref(navigator.onLine);
+//alert(isOnline.value);
+      if (isOnline.value) {
       fetch(`https://alex.polan.sk/control-center/chats.php?userId=${userId}`)
         .then((response) => response.json())
         .then((data) => {
           this.chats = data;
+          localStorage.setItem("chats", JSON.stringify(this.chats));
         })
         .catch((error) => {
           console.error("Fehler beim Abrufen der Chats:", error);
         });
+      }else{
+       // alert("1" + JSON.parse(localStorage.getItem("chats")));
+       // alert("2" + localStorage.getItem("chats"));
+
+        this.chats = localStorage.getItem("chats");
+      }
     },
     goToChat(chatId) {
       // Hier kannst du die Navigation zur Chatseite implementieren
@@ -78,7 +88,7 @@ export default {
       this.$router.push({ path: "/chat/" + chatId });
     },
   },
-};
+});
 </script>
 <style scoped>
 ion-grid,

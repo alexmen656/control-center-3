@@ -33,6 +33,7 @@
 
 <script>
 import Avatar from "@/components/AvatarComponent.vue";
+import { defineComponent, ref } from "vue";
 import {
   //IonPage,
   //IonHeader,
@@ -46,7 +47,7 @@ import {
   IonAvatar,
 } from "@ionic/vue";
 
-export default {
+export default defineComponent({
   components: {
     Avatar,
     //IonPage,
@@ -70,27 +71,30 @@ export default {
   },
   methods: {
     async fetchChats() {
+      const isOnline = ref(navigator.onLine);
       const userId = 79; // Beispielwert, entsprechend anpassen
-
-      await fetch(
-        `https://alex.polan.sk/control-center/chats.php?userId=${userId}`
-      )
-        .then((response) => response.json())
-        .then((data) => {
-          this.chats = data;
-        })
-        .catch((error) => {
-          console.error("Fehler beim Abrufen der Chats:", error);
-        });
+      if (isOnline.value) {
+        await fetch(
+          `https://alex.polan.sk/control-center/chats.php?userId=${userId}`
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            this.chats = data;
+          })
+          .catch((error) => {
+            console.error("Fehler beim Abrufen der Chats:", error);
+          });
+      } else {
+        alert(1);
+        this.chats = JSON.parse(localStorage.getItem("chats"));
+      }
     },
     goToChat(chatId) {
-      // Hier kannst du die Navigation zur Chatseite implementieren
-      // Verwende Vue Router oder Ionic Navigation nach Bedarf
       console.log("Navigating to chat:", chatId);
       this.$router.push("/messages/" + chatId);
     },
   },
-};
+});
 </script>
 
 <style scoped>
