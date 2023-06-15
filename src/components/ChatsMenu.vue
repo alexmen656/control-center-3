@@ -85,7 +85,6 @@ export default defineComponent({
             console.error("Fehler beim Abrufen der Chats:", error);
           });
       } else {
-        alert(1);
         this.chats = JSON.parse(localStorage.getItem("chats"));
       }
     },
