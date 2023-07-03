@@ -111,6 +111,7 @@ import axios from 'axios';
 import qs from 'qs';
 import { IonButton, IonLabel, IonItem, IonRow, IonCol, IonText, IonContent, IonList, IonInput } from '@ionic/vue';
 import { defineComponent } from 'vue';
+import { NativeStorage } from '@awesome-cordova-plugins/native-storage';
 
 if(localStorage.getItem("token")){ 
    //  location.href = '/home'; 
@@ -129,6 +130,8 @@ export default defineComponent({
       continueWithGoogleScreen: false,
       hasError: false,
       errorMessage: ""
+      localToken: Storage.get({ key: 'prova' });
+
     }
   },
   components: {

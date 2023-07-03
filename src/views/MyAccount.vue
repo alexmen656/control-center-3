@@ -29,7 +29,16 @@
         <ion-text>{{ user.birthday }}</ion-text>
       </ion-item>
     </ion-list>-->
-      <ion-grid>
+
+
+    <ion-grid>
+        <ion-row>
+<ion-col size="1"></ion-col>
+<ion-col size="10">
+
+
+
+  <ion-grid>
         <ion-row>
           <ion-col
             v-for="card in cards"
@@ -37,7 +46,7 @@
             size="12"
             size-md="6"
             size-lg="6"
-            size-xl="3"
+            size-xl="4"
           >
             <ion-card class="tall-card">
               <ion-card-header>
@@ -53,10 +62,25 @@
               </ion-card-header>
             </ion-card>
           </ion-col>
-          <ion-button>Edit Profile</ion-button
-          ><!-- @click="goToEditPage"-->
+          <a href="">Log Out</a>
+         <!--  <ion-button>Edit Profile</ion-button
+          >@click="goToEditPage"-->
         </ion-row>
       </ion-grid>
+
+
+
+
+
+</ion-col>
+<ion-col size="1"></ion-col>
+
+
+     
+
+</ion-row>
+</ion-grid>
+
     </ion-content>
   </ion-page>
 </template>
@@ -88,15 +112,15 @@ export default defineComponent({
       selectedTheme: "light",
       userData: {},
       cards: [
-        "Logout",
+      //  "Logout",
         "Personal Information",
         "Settings",
         "Preferences",
         "Account Security",
-        "App Theme",
+        //"App Theme",
         "My Team",
         "My Projects",
-        "photo",
+       // "photo",
       ],
     };
   },
@@ -110,7 +134,7 @@ export default defineComponent({
     IonCard,
     IonCardHeader,
     IonCardTitle,
-    IonButton,
+    //IonButton,
     IonAvatar,
   },
   async mounted() {
