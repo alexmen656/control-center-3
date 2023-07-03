@@ -13,8 +13,8 @@
   </ion-page>
 </template>
 <script>
-import axios from 'axios';
-import qs from 'qs';
+import axios from "axios";
+import qs from "qs";
 
 export default {
   mounted() {
@@ -50,35 +50,55 @@ export default {
         return;
       }
     }
-    function onKeyUp($event){
-        const input = $event.target;
-        const value = input.value;
-        const fieldIndex = +input.dataset.index;
 
-        if($event.key == 'Backspace' && fieldIndex > 0){
-            input.previousElementSibling.focus();
+    function onKeyUp($event) {
+      const input = $event.target;
+      const value = input.value;
+      const fieldIndex = +input.dataset.index;
+
+      if ($event.key == "Backspace" && fieldIndex > 0) {
+        input.previousElementSibling.focus();
+      }
+
+      if (checkNumber(value)) {
+        if (value.length > 0 && fieldIndex < inputs.length - 1) {
+          input.nextElementSibling.focus();
         }
 
-        if(checkNumber(value)){
-            if(value.length > 0 && fieldIndex < inputs.length - 1){
-                input.nextElementSibling.focus();
-            }
-
-            if(input.value != '' && fieldIndex === inputs.length -1){
-                submit();
-            }
-        }else{
-            clear($event);
+        if (input.value != "" && fieldIndex === inputs.length - 1) {
+          submit();
         }
+      } else {
+        clear($event);
+      }
     }
 
-    function submit(){
-        let otp = '';
-        inputs.forEach((input) => {
-            otp += input.value;
-            input.disabled = true;
-        })
-        axios.post("https://alex.polan.sk/control-center/verification.php", qs.stringify({otp: otp}));
+    function submit() {
+      let otp = "";
+      inputs.forEach((input) => {
+        otp += input.value;
+        input.disabled = true;
+      });
+
+      const verification_token = localStorage.getItem("verification_token");
+      axios
+        .post(
+          "https://alex.polan.sk/control-center/verification.php",
+          qs.stringify({
+            verificationToken: verification_token,
+            verificationCode: otp,
+          })
+        )
+        .then((res) => {
+          if (res.data.token) {
+            localStorage.setItem("token", res.data.token);
+            location.href = "/home";
+          }else{
+           if(confirm("False verifiction code")){
+            location.href = "/login";
+           }
+          }
+        });
     }
   },
 };
@@ -116,6 +136,6 @@ export default {
 }
 
 .otp-input-fields > input:disabled {
-  opacity: .3;
+  opacity: 0.3;
 }
 </style>
