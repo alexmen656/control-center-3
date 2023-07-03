@@ -68,4 +68,7 @@ tr:nth-child(even) {
   }
 }
 
+ion-card {
+  margin-top: 20px;
+}
 </style>

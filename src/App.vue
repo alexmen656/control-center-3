@@ -523,7 +523,7 @@ h1 {
 }
 
 ion-router-outlet.showTitle {
-  margin-top: 55px;
+  margin-top: 45px;
 }
 
 ion-router-outlet {
