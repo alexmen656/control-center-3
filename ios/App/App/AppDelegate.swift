@@ -1,14 +1,76 @@
 import UIKit
 import Capacitor
+import SwiftUI
+
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
-
+ 
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        //SettingsBundleHelper.setTest()
+        SettingsBundleHelper.setTest()
+        print("lsod")
+        Alert(
+            title: Text("Important message"),
+            message: Text("Wear sunscreen"),
+            dismissButton: .default(Text("Got it!"))
+        )
+
+    
+           // Auslesen des Werts für die Einstellung "email"
+        let defaults = UserDefaults.standard
+        defaults.setValue("fgfhf", forKey: "token")
+        if let email = defaults.string(forKey: "email") {
+            // Wert der Einstellung "email" ist verfügbar
+            // Sende den Wert an das Widget
+            let widgetUserDefaults = UserDefaults(suiteName: "group.settings-settings") // Ersetze "com.example.widget" durch die tatsächliche Gruppenkennung deines Widgets
+            widgetUserDefaults?.set(email, forKey: "email")
+            widgetUserDefaults?.synchronize()
+        } else {
+            // Kein Wert für die Einstellung "email" gefunden
+        }
+
+        
+        
+        func test(){
+            
+            // Die URL der API
+            let apiUrl = URL(string: "https://api.example.com/data")!
+
+            // URLSession erstellen
+            let session = URLSession.shared
+
+            // URLRequest erstellen
+            var request = URLRequest(url: apiUrl)
+            request.httpMethod = "GET"
+
+            // URLSessionDataTask erstellen
+            let task = session.dataTask(with: request) { (data, response, error) in
+                if let error = error {
+                    // Fehlerbehandlung
+                    print("Fehler: \(error)")
+                    return
+                }
+                
+                // Erfolgreiche Antwort erhalten
+                if let data = data {
+                    // API-Antwort verarbeiten
+                    let responseString = String(data: data, encoding: .utf8)
+                    print("API-Antwort: \(responseString ?? "")")
+                    
+                    // Hier kannst du die erhaltenen Daten weiterverarbeiten
+                }
+            }
+
+            // Aufruf starten
+            task.resume()
+        }
+        test()
         return true
+
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
@@ -23,6 +85,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
+        Alert(
+            title: Text("Important message"),
+            message: Text("Wear sunscreen"),
+            dismissButton: .default(Text("Got it!"))
+        )
+        SettingsBundleHelper.setTest()
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
