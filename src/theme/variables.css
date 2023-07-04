@@ -4,7 +4,7 @@ http://ionicframework.com/docs/theming/ */
 /** Ionic CSS Variables **/
 :root {
   /** primary **/
-  --ion-color-primary: #db0a0a;
+  --ion-color-primary: #ea0e2b;
   --ion-color-primary-rgb: 235, 68, 90;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
@@ -83,9 +83,9 @@ http://ionicframework.com/docs/theming/ */
    */
 
   body {
-    --ion-color-primary: #ff4961;
+    --ion-color-primary: #ea0e2b;
     --ion-color-primary-rgb: 255, 73, 97;
-    --ion-color-primary-contrast: #000000;
+    --ion-color-primary-contrast: #fff;
     --ion-color-primary-contrast-rgb: 0, 0, 0;
     --ion-color-primary-shade: #e04055;
     --ion-color-primary-tint: #ff5b71;
