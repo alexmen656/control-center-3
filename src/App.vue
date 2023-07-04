@@ -163,7 +163,9 @@ export default defineComponent({
         location.pathname != "/login" &&
         location.pathname != "/login/verification/" &&
         location.pathname != "/login/" &&
-        location.pathname != "/login/verification"
+        location.pathname != "/login/verification" &&
+        location.pathname != "/signup" &&
+        location.pathname != "/signup/"
       ) {
         ionRouter.push("/login");
       }

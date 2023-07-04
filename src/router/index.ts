@@ -167,6 +167,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/DropZone.vue'),
   },
   {
+    path: '/signup',
+    component: () => import('../views/SignUp.vue'),
+  },
+  {
     path: '/:url(.*)',
     component: () => import('../views/PageViev.vue'),
   }

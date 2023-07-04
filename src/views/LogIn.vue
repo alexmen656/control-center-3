@@ -47,7 +47,8 @@
                     <p v-show="showPasswordError" padding-left>{{passwordError}}</p>
                   </ion-text>
                 </ion-list>
-                <ion-button @click="onLogin()" type="submit" expand="block">Login</ion-button>
+                <ion-button @click="onLogin()" type="submit" expand="block">Log In</ion-button>
+                <router-link to="/signup"><ion-button @click="onLogin()" type="button" expand="block">Sign Up</ion-button></router-link>
               </form>
             </ion-col>
             <ion-col size="4"></ion-col>
@@ -103,6 +104,16 @@ ion-item {
 
 ion-list {
   border: none !important;
+}
+
+
+:root {
+  --ion-color-secondary: #006600;
+  --ion-color-secondary-rgb: 0, 102, 0;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #005a00;
+  --ion-color-secondary-tint: #1a751a;
 }
 </style>
 
