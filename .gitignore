@@ -31,3 +31,5 @@ npm-debug.log*
 /platforms
 /plugins
 /www
+/backend/images/groups/*
+/backend/images/profileImages/*
