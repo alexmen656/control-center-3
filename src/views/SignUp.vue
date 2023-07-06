@@ -153,7 +153,8 @@ import {
   IonButton,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-
+import axios from 'axios';
+import qs from 'qs';
 
 export default defineComponent({
   components: {
@@ -178,7 +179,7 @@ export default defineComponent({
     };
   },
   methods: {
-    validateAndSignUp() {
+    async validateAndSignUp() {
       if (
         this.firstName.trim() === "" ||
         this.email.trim() === "" ||
@@ -193,21 +194,37 @@ export default defineComponent({
         return;
       }
 
-      if (this.emailAlreadyExists()) {
+      const emailExists = await this.emailAlreadyExists();
+   
+      if (emailExists == true) {
         alert("This email has already been used.");
         return;
       }
 
       this.signUp();
     },
-    emailAlreadyExists() {
-      return false;
+    async emailAlreadyExists() {
+      try {
+        const response = await axios.post("https://alex.polan.sk/control-center/user.php", qs.stringify({ checkEmailExists: "checkEmailExists", email: this.email }));
+        return response.data.value;
+      } catch (error) {
+        console.error(error);
+        return "";
+      }
     },
     signUp() {
-      alert("Sign up successful!");
+      axios.post("https://alex.polan.sk/control-center/sign_up.php", qs.stringify({first_name: this.firstName, last_name: this.lastName, email_adress: this.email, password: this.password})).then(res => {
+        if(res.data.token){
+          localStorage.setItem("token", res.data.token);
+          location.href = "/home";
+        } else {
+          alert("Sorry, an error occurred. Please try again later.");
+        }
+      })
     },
   },
 });
+
 </script>
 <style scoped>
 ion-content {
