@@ -64,7 +64,7 @@
               </ion-card-header>
             </ion-card>
           </ion-col>
-          <a href="">Log Out</a>
+          <router-link to="/my-account/logout">Log Out</router-link>
          <!--  <ion-button>Edit Profile</ion-button
           >@click="goToEditPage"-->
         </ion-row>
@@ -210,6 +210,10 @@ ion-row {
 }
 
 ion-button {
+  margin-top: 1rem;
+}
+
+a {
   margin-top: 1rem;
 }
 </style>
