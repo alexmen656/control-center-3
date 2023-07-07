@@ -1,96 +1,126 @@
 <template>
-    <div class="ion-padding">
-      <ion-input placeholder="Bot Token" v-model="token" :value="token" @ionInput="token = $event.target.value;"></ion-input>
-      <ion-input placeholder="Chat ID" v-model="chat" :value="chat" @ionInput="chat = $event.target.value;"></ion-input>
-      <ion-button v-if="originalToken || originalChat" @click="change(token, chat)">Change</ion-button>
-      <ion-button v-else @click="submit(token, chat)">Submit</ion-button>
-      <!--<HtmlInput></HtmlInput> <== Das Richtige-->
-      <!--<vue-editor v-model="content" />-->
-      <CodeEditor></CodeEditor>
+  <div class="ion-padding">
+    <ion-input
+      placeholder="Bot Token"
+      v-model="token"
+      :value="token"
+      @ionInput="token = $event.target.value"
+    />
+    <ion-input
+      placeholder="Chat ID"
+      v-model="chat"
+      :value="chat"
+      @ionInput="chat = $event.target.value"
+    />
+    <ion-button
+      v-if="originalToken || originalChat"
+      @click="change(token, chat)"
+      >Change</ion-button
+    >
+    <ion-button v-else @click="submit(token, chat)">Submit</ion-button>
+  </div>
+</template>
 
-    </div>
+<script>
+import { IonButton, IonInput } from "@ionic/vue";
+import axios from "axios";
+import qs from "qs";
+import { useRoute } from "vue-router";
 
-  
-  </template>
-  
-  <script>
-  import { IonButton, IonInput } from '@ionic/vue';
-  import axios from 'axios';
-  import qs from 'qs';
-  import { useRoute } from "vue-router";
-  import HtmlInput from '@/components/HtmlInput.vue';
-  import CodeEditor from 'simple-code-editor';
-
-  //import { VueEditor } from "vue2-editor";
-
-
-
-  export default {
-    components: {
-      IonButton,
-      IonInput,
-     // HtmlInput,
-      CodeEditor
-     // VueEditor,
-    },
-    data() {
-      return {
-        token: '',
-        chat: '',
-        content: "<h1>Some initial content</h1>"
-      }
-   },
-   setup(){
+export default {
+  components: {
+    IonButton,
+    IonInput,
+  },
+  data() {
+    return {
+      token: "",
+      chat: "",
+      content: "<h1>Some initial content</h1>",
+    };
+  },
+  setup() {
     const route = useRoute();
-    function submit(token, chat){
-        if(token && chat){
-            console.log(chat);
-                axios.post('https://alex.polan.sk/control-center/telegram_bot.php', qs.stringify({newConfig: "newConfig", token: token, chatID: chat, project: route.params.project})).then(res => {
-                    alert("Data successful submitted!!!");
-                    //reload();
-                });
-}else{
-    alert("Bot Token or ChatID empty!")
-}
-            
-        }
+    function submit(token, chat) {
+      if (token && chat) {
+        console.log(chat);
+        axios
+          .post(
+            "https://alex.polan.sk/control-center/telegram_bot.php",
+            qs.stringify({
+              newConfig: "newConfig",
+              token: token,
+              chatID: chat,
+              project: route.params.project,
+            })
+          )
+          .then((res) => {
+            alert("Data successful submitted!!!");
+            //reload();
+          });
+      } else {
+        alert("Bot Token or ChatID empty!");
+      }
+    }
 
-        function change(token, chat){
-            if(token && chat){
-                axios.post('https://alex.polan.sk/control-center/telegram_bot.php', qs.stringify({changeConfig: "changeConfig", token: token, chatID: chat, project: route.params.project})).then(res => {
-                    alert("Data successful changed!!!");
-                    //reload();
-                });
-            }else{
-                alert("Bot Token or ChatID empty!")
-            }
-        }
+    function change(token, chat) {
+      if (token && chat) {
+        axios
+          .post(
+            "https://alex.polan.sk/control-center/telegram_bot.php",
+            qs.stringify({
+              changeConfig: "changeConfig",
+              token: token,
+              chatID: chat,
+              project: route.params.project,
+            })
+          )
+          .then((res) => {
+            alert("Data successful changed!!!");
+            //reload();
+          });
+      } else {
+        alert("Bot Token or ChatID empty!");
+      }
+    }
 
-        return {
-         submit,
-         change
-        }
-   },
-    async mounted(){
-        const route = useRoute();
-        await axios.post('https://alex.polan.sk/control-center/telegram_bot.php', qs.stringify({getConfig: 'getConfig', project: route.params.project})).then(res=>{
-            this.token = res.data.token;
-            this.chat = res.data.chatID;
-            this.originalToken = res.data.token;
-            this.originalChat = res.data.chatID;
+    return {
+      submit,
+      change,
+    };
+  },
+  async mounted() {
+    const route = useRoute();
+    await axios
+      .post(
+        "https://alex.polan.sk/control-center/telegram_bot.php",
+        qs.stringify({ getConfig: "getConfig", project: route.params.project })
+      )
+      .then((res) => {
+        this.token = res.data.token;
+        this.chat = res.data.chatID;
+        this.originalToken = res.data.token;
+        this.originalChat = res.data.chatID;
+      });
+  },
+  methods: {
+    async reload() {
+      const route = useRoute();
+      await axios
+        .post(
+          "https://alex.polan.sk/control-center/telegram_bot.php",
+          qs.stringify({
+            getConfig: "getConfig",
+            project: route.params.project,
+          })
+        )
+        .then((res) => {
+          this.token = res.data.token;
+          this.chat = res.data.chatID;
+          this.originalToken = res.data.token;
+          this.originalChat = res.data.chatID;
         });
     },
-    methods: {
-        async reload(){
-            const route = useRoute();
-             await axios.post('https://alex.polan.sk/control-center/telegram_bot.php', qs.stringify({getConfig: 'getConfig', project: route.params.project})).then(res=>{
-            this.token = res.data.token;
-            this.chat = res.data.chatID;
-            this.originalToken = res.data.token;
-            this.originalChat = res.data.chatID;
-        });
-        }
-    }
-  };
-  </script>
-  
+  },
+};
+</script>
