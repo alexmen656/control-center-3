@@ -8,7 +8,12 @@
 </template>
 
 <script>
-import { IonCard, IonCardHeader, IonCardTitle, IonCardContent } from '@ionic/vue';
+import {
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+} from "@ionic/vue";
 
 export default {
   name: "AlertMessage",

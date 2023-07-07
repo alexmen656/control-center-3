@@ -1,48 +1,60 @@
 <template>
   <ion-app>
-
-  <ion-content>
-    <SiteHeader v-if="token"></SiteHeader>
-    <!--@click="subscribe"-->
-    <ion-split-pane content-id="main-content">
-      <SideBar
-        :projects="projects"
-        :tools="tools"
-        :bookmarks="bookmarks"
-        v-if="token && !$route.params.project"
-      ></SideBar>
-      <ProjectSideBar v-if="token && $route.params.project"></ProjectSideBar>
-      <div id="main-content">
-      
-      <SiteTitle
-          v-if="token && page.title && (page.showTitle == true || page.showTitle == 'true')"
-          :icon="page.icon"
-          :title="page.title"
-          @updateSidebar="updateSidebar()"
-        />
-        <ion-router-outlet
-          v-if="page.title"
-          @updateSidebar="updateSidebar()"
-          :class="{ showTitle: (page.showTitle == true || page.showTitle == 'true') }"
-        ></ion-router-outlet>
-        <div v-else class="error404">
-          <h1>Error 404, Site not found.</h1>
+    <ion-content>
+      <SiteHeader v-if="token"></SiteHeader>
+      <!--@click="subscribe"-->
+      <ion-split-pane content-id="main-content">
+        <SideBar
+          :projects="projects"
+          :tools="tools"
+          :bookmarks="bookmarks"
+          v-if="token && !$route.params.project"
+        ></SideBar>
+        <ProjectSideBar v-if="token && $route.params.project"></ProjectSideBar>
+        <div id="main-content">
+          <SiteTitle
+            v-if="
+              token &&
+              page.title &&
+              (page.showTitle == true || page.showTitle == 'true')
+            "
+            :icon="page.icon"
+            :title="page.title"
+            @updateSidebar="updateSidebar()"
+          />
+          <ion-router-outlet
+            v-if="page.title"
+            @updateSidebar="updateSidebar()"
+            :class="{
+              showTitle: page.showTitle == true || page.showTitle == 'true',
+            }"
+          ></ion-router-outlet>
+          <div v-else class="error404">
+            <h1>Error 404, Site not found.</h1>
+          </div>
         </div>
-      </div>
-    </ion-split-pane>
-  </ion-content>
-  <!--<div class="offline" v-if="!isOnline"><h6>You are offline!</h6></div>-->
-  <ion-footer v-if="!isOnline" class="offline" collapse="fade">
-    <ion-toolbar>
-      <ion-title><h6 class="offline-h6">You are offline!</h6></ion-title>
-    </ion-toolbar>
-  </ion-footer>
-
+      </ion-split-pane>
+    </ion-content>
+    <!--<div class="offline" v-if="!isOnline"><h6>You are offline!</h6></div>-->
+    <ion-footer v-if="!isOnline" class="offline" collapse="fade">
+      <ion-toolbar>
+        <ion-title><h6 class="offline-h6">You are offline!</h6></ion-title>
+      </ion-toolbar>
+    </ion-footer>
   </ion-app>
 </template>
 
 <script>
-import { IonApp, IonRouterOutlet, IonSplitPane, useIonRouter, IonTitle, IonHeader, IonToolbar, IonContent } from "@ionic/vue";
+import {
+  IonApp,
+  IonRouterOutlet,
+  IonSplitPane,
+  useIonRouter,
+  IonTitle,
+  IonFooter,
+  IonToolbar,
+  IonContent,
+} from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import SiteHeader from "@/components/Header.vue";
 import SideBar from "@/components/SideBar.vue";
@@ -69,15 +81,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 let messaging;
 try {
-    messaging = getMessaging();
-    onMessage(messaging, (payload) => {
-  console.log("Message received. ", payload);
-});
+  messaging = getMessaging();
+  onMessage(messaging, (payload) => {
+    console.log("Message received. ", payload);
+  });
 } catch (err) {
-    console.error('Failed to initialize Firebase Messaging', err);
+  console.error("Failed to initialize Firebase Messaging", err);
 }
-
-
 
 getToken(messaging, {
   vapidKey:
@@ -113,9 +123,12 @@ export default defineComponent({
     SiteHeader,
     SideBar,
     ProjectSideBar,
-   SiteTitle,
-    //IonTitle, IonHeader, IonToolbar, 
-    IonContent
+    SiteTitle,
+    IonTitle,
+    IonContent,
+    IonFooter,
+    IonToolbar,
+    //IonHeader
   },
   data() {
     return {
@@ -180,7 +193,8 @@ export default defineComponent({
         paramUrl = route.params.url;
       }
 
-      if (isOnline.value) {   //   alert("changed2");
+      if (isOnline.value) {
+        //   alert("changed2");
 
         axios
           .post("https://alex.polan.sk/control-center/pages.php")
@@ -203,7 +217,6 @@ export default defineComponent({
             projects.value = response.data.projects;
             localStorage.setItem("tools", JSON.stringify(tools.value));
             localStorage.setItem("projects", JSON.stringify(projects.value));
-
           });
 
         axios
@@ -229,21 +242,21 @@ export default defineComponent({
           document.title = page.value.title;
         }
 
-        if(localStorage.getItem("tools")){
+        if (localStorage.getItem("tools")) {
           tools.value = JSON.parse(localStorage.getItem("tools"));
-        }else{
+        } else {
           tools.value = offlineTools.tools;
         }
 
-        if(localStorage.getItem("projects")){
+        if (localStorage.getItem("projects")) {
           projects.value = JSON.parse(localStorage.getItem("projects"));
-        }else{
+        } else {
           projects.value = offlineTools.tools;
         }
 
-        if(localStorage.getItem("bookmarks")){
+        if (localStorage.getItem("bookmarks")) {
           bookmarks.value = JSON.parse(localStorage.getItem("bookmarks"));
-        }else{
+        } else {
           bookmarks.value = offlineTools.tools;
         }
       }
@@ -252,13 +265,13 @@ export default defineComponent({
     // Listen for online/offline events to update the isOnline value
     window.addEventListener("online", () => {
       isOnline.value = true;
-     // alert("changed");
+      // alert("changed");
       loadPageData();
     });
 
     window.addEventListener("offline", () => {
       isOnline.value = false;
-//      alert("changed");
+      //      alert("changed");
 
       loadPageData();
     });

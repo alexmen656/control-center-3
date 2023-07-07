@@ -5,9 +5,9 @@
         <ion-row class="md">
           <ion-col size="1"></ion-col>
           <ion-col size="10">
-            <ion-button @click="select()">Select More Tools</ion-button>
+            <ion-button @click="select()">Select More Components</ion-button>
             <ion-button v-if="selectt" @click="multi_delete(selectedComponents)"
-              >Delete selected tools</ion-button
+              >Delete selected components</ion-button
             >
             <ion-list>
               <ion-item-sliding v-for="tool in tools" :key="tool.id">
@@ -48,9 +48,39 @@ import { defineComponent, ref } from "vue";
 import axios from "axios";
 import qs from "qs";
 import { useRoute } from "vue-router";
+import {
+  IonPage,
+  IonButton,
+  IonContent,
+  IonItem,
+  IonLabel,
+  IonGrid,
+  IonRow,
+  IonCol,
+  IonIcon,
+  IonItemOptions,
+  IonItemOption,
+  IonItemSliding,
+  IonList,
+} from "@ionic/vue";
 
 export default defineComponent({
   name: "ProjectsPage",
+  components: {
+    IonPage,
+    IonButton,
+    IonContent,
+    IonItem,
+    IonLabel,
+    IonGrid,
+    IonRow,
+    IonCol,
+    IonIcon,
+    IonItemOptions,
+    IonItemOption,
+    IonItemSliding,
+    IonList,
+  },
   data() {
     return {
       name: "",

@@ -153,8 +153,8 @@ import {
   IonButton,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import axios from 'axios';
-import qs from 'qs';
+import axios from "axios";
+import qs from "qs";
 
 export default defineComponent({
   components: {
@@ -195,7 +195,7 @@ export default defineComponent({
       }
 
       const emailExists = await this.emailAlreadyExists();
-   
+
       if (emailExists == true) {
         alert("This email has already been used.");
         return;
@@ -205,7 +205,13 @@ export default defineComponent({
     },
     async emailAlreadyExists() {
       try {
-        const response = await axios.post("https://alex.polan.sk/control-center/user.php", qs.stringify({ checkEmailExists: "checkEmailExists", email: this.email }));
+        const response = await axios.post(
+          "https://alex.polan.sk/control-center/user.php",
+          qs.stringify({
+            checkEmailExists: "checkEmailExists",
+            email: this.email,
+          })
+        );
         return response.data.value;
       } catch (error) {
         console.error(error);
@@ -213,18 +219,27 @@ export default defineComponent({
       }
     },
     signUp() {
-      axios.post("https://alex.polan.sk/control-center/sign_up.php", qs.stringify({first_name: this.firstName, last_name: this.lastName, email_adress: this.email, password: this.password})).then(res => {
-        if(res.data.token){
-          localStorage.setItem("token", res.data.token);
-          location.href = "/home";
-        } else {
-          alert("Sorry, an error occurred. Please try again later.");
-        }
-      })
+      axios
+        .post(
+          "https://alex.polan.sk/control-center/sign_up.php",
+          qs.stringify({
+            first_name: this.firstName,
+            last_name: this.lastName,
+            email_adress: this.email,
+            password: this.password,
+          })
+        )
+        .then((res) => {
+          if (res.data.token) {
+            localStorage.setItem("token", res.data.token);
+            location.href = "/home";
+          } else {
+            alert("Sorry, an error occurred. Please try again later.");
+          }
+        });
     },
   },
 });
-
 </script>
 <style scoped>
 ion-content {
@@ -270,6 +285,6 @@ hr {
   justify-content: center;
   align-items: center;
   text-align: center;
-  margin: .5rem 0;
+  margin: 0.5rem 0;
 }
 </style>

@@ -1,56 +1,56 @@
 <style>
-  form{
-    display: block;
-    height: 400px;
-    width: 400px;
-    background: #ccc;
-    margin: auto;
-    margin-top: 40px;
-    text-align: center;
-    line-height: 400px;
-    border-radius: 4px;
-  }
+form {
+  display: block;
+  height: 400px;
+  width: 400px;
+  background: #ccc;
+  margin: auto;
+  margin-top: 40px;
+  text-align: center;
+  line-height: 400px;
+  border-radius: 4px;
+}
 
-  div.file-listing{
-    width: 400px;
-    margin: auto;
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-  }
+div.file-listing {
+  width: 400px;
+  margin: auto;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
 
-  div.file-listing img{
-    height: 100px;
-  }
+div.file-listing img {
+  height: 100px;
+}
 
-  div.remove-container{
-    text-align: center;
-  }
+div.remove-container {
+  text-align: center;
+}
 
-  div.remove-container a{
-    color: red;
-    cursor: pointer;
-  }
+div.remove-container a {
+  color: red;
+  cursor: pointer;
+}
 
-  a.submit-button{
-    display: block;
-    margin: auto;
-    text-align: center;
-    width: 200px;
-    padding: 10px;
-    text-transform: uppercase;
-    background-color: #CCC;
-    color: white;
-    font-weight: bold;
-    margin-top: 20px;
-  }
+a.submit-button {
+  display: block;
+  margin: auto;
+  text-align: center;
+  width: 200px;
+  padding: 10px;
+  text-transform: uppercase;
+  background-color: #ccc;
+  color: white;
+  font-weight: bold;
+  margin-top: 20px;
+}
 
-  progress{
-    width: 400px;
-    margin: auto;
-    display: block;
-    margin-top: 20px;
-    margin-bottom: 20px;
-  }
+progress {
+  width: 400px;
+  margin: auto;
+  display: block;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
 </style>
 
 <template>

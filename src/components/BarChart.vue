@@ -1,30 +1,48 @@
 <template>
-  <Bar
-    id="my-chart-id"
-    :options="chartOptions"
-    :data="chartData"
-  />
+  <Bar id="my-chart-id" :options="chartOptions" :data="chartData" />
 </template>
 
 <script>
-import { Bar } from 'vue-chartjs'
-import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js'
+import { Bar } from "vue-chartjs";
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+} from "chart.js";
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale
+);
 
 export default {
-  name: 'BarChart',
+  name: "BarChart",
   components: { Bar },
   data() {
     return {
       chartData: {
-        labels: [ 'January', 'February', 'March', "April", "May" ],
-        datasets: [ {label: 'Verkäufe', data: [40, 20, 12, 300, 123],  backgroundColor: '#f87979', title: "cvf"} ]
+        labels: ["January", "February", "March", "April", "May"],
+        datasets: [
+          {
+            label: "Verkäufe",
+            data: [40, 20, 12, 300, 123],
+            backgroundColor: "#f87979",
+            title: "cvf",
+          },
+        ],
       },
       chartOptions: {
-        responsive: true
-      }
-    }
-  }
-}
+        responsive: true,
+      },
+    };
+  },
+};
 </script>

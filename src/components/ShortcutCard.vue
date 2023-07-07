@@ -8,16 +8,16 @@
 </template>
 
 <script>
-import { IonCard, IonCardHeader, IonCardTitle, IonIcon } from '@ionic/vue';
-import { defineComponent } from 'vue';
+import { IonCard, IonCardHeader, IonCardTitle, IonIcon } from "@ionic/vue";
+import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: 'ShortcutCard',
+  name: "ShortcutCard",
   components: {
     IonCard,
     IonCardHeader,
     IonCardTitle,
-    IonIcon
+    IonIcon,
   },
   props: {
     link: {
@@ -68,10 +68,10 @@ ion-card:hover > ion-card-header > ion-card-title {
 }
 
 .shortcut-card:hover {
-  box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);/*rgba(255, 255, 255, 0)*/
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.5); /*rgba(255, 255, 255, 0)*/
 }
 
 .shortcut-card:hover ion-card-title {
-  color: #FFF;
+  color: #fff;
 }
 </style>

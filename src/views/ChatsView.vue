@@ -27,7 +27,7 @@ import ChatView from "@/views/ChatView.vue";
 import { defineComponent, ref } from "vue";
 import {
   IonPage,
- // IonHeader,
+  // IonHeader,
   IonContent,
   //IonList,
   //IonItem,
@@ -63,20 +63,20 @@ export default defineComponent({
     fetchChats() {
       const userId = 79; // Beispielwert, entsprechend anpassen
       const isOnline = ref(navigator.onLine);
-//alert(isOnline.value);
+      //alert(isOnline.value);
       if (isOnline.value) {
-      fetch(`https://alex.polan.sk/control-center/chats.php?userId=${userId}`)
-        .then((response) => response.json())
-        .then((data) => {
-          this.chats = data;
-          localStorage.setItem("chats", JSON.stringify(this.chats));
-        })
-        .catch((error) => {
-          console.error("Fehler beim Abrufen der Chats:", error);
-        });
-      }else{
-       // alert("1" + JSON.parse(localStorage.getItem("chats")));
-       // alert("2" + localStorage.getItem("chats"));
+        fetch(`https://alex.polan.sk/control-center/chats.php?userId=${userId}`)
+          .then((response) => response.json())
+          .then((data) => {
+            this.chats = data;
+            localStorage.setItem("chats", JSON.stringify(this.chats));
+          })
+          .catch((error) => {
+            console.error("Fehler beim Abrufen der Chats:", error);
+          });
+      } else {
+        // alert("1" + JSON.parse(localStorage.getItem("chats")));
+        // alert("2" + localStorage.getItem("chats"));
 
         this.chats = localStorage.getItem("chats");
       }

@@ -20,12 +20,11 @@
           {{ chat.name }}
         </h2>
         <!-- <h2 v-if="chat.type == 2">Group</h2>-->
-
         <!--   <p>{{ lastMessage(chat.id) }}</p>-->
       </ion-label>
     </ion-item>
     <ion-item router-link="/messages/new/group">
-      <ion-icon name="add-outline"></ion-icon>
+      <ion-icon name="add-outline" />
       <h2>New Group</h2>
     </ion-item>
   </ion-list>
@@ -45,6 +44,7 @@ import {
   //IonGrid,
   IonLabel,
   IonAvatar,
+  IonIcon,
 } from "@ionic/vue";
 
 export default defineComponent({
@@ -60,6 +60,7 @@ export default defineComponent({
     //IonGrid,
     IonLabel,
     IonAvatar,
+    IonIcon,
   },
   data() {
     return {

@@ -267,13 +267,13 @@ export default defineComponent({
       .then((response) => {
         tools.value = response.data.tools;
         components.value = response.data.components;
-        console.log(components);
+        //console.log(components);
         tools.value.forEach((element) => {
           // console.log(element.id);
 
           list[element.id] = element.order;
         });
-        console.log(list);
+        //console.log(list);
       });
     // console.log(tools);
 

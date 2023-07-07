@@ -1,8 +1,7 @@
 <template>
- 
   <ion-toolbar>
     <ion-title size="large">
-      <ion-icon :name="icon"></ion-icon>
+      <ion-icon :name="icon" />
       {{ title }}
     </ion-title>
     <span class="actions" slot="end">
@@ -10,22 +9,21 @@
         slot="end"
         @click="toggleBookmark()"
         :name="isBookmark ? 'star' : 'star-outline'"
-      ></ion-icon>
+      />
       <ion-icon
         @click="share()"
         slot="end"
         name="share-social-outline"
         class="copy-effect"
-      ></ion-icon>
+      />
     </span>
   </ion-toolbar>
-
 </template>
 
 <script>
 import axios from "axios";
 import qs from "qs";
-import { IonTitle, IonIcon } from "@ionic/vue";
+import { IonTitle, IonIcon, IonToolbar } from "@ionic/vue";
 
 export default {
   name: "SiteTitle",
@@ -40,6 +38,7 @@ export default {
   components: {
     IonTitle,
     IonIcon,
+    IonToolbar,
   },
   data() {
     return {
@@ -87,19 +86,19 @@ export default {
   },
   methods: {
     share() {
-  if (navigator.share) {
-    navigator.share({ text: "", url: "", title: "gh" });
-  } else {
-    navigator.clipboard.writeText(window.location.href);
-    this.$nextTick(() => {
-      const shareButton = document.querySelector(".copy-effect");
-      shareButton.classList.add("copied");
-      setTimeout(() => {
-        shareButton.classList.remove("copied");
-      }, 2000);
-    });
-  }
-},
+      if (navigator.share) {
+        navigator.share({ text: "", url: "", title: "gh" });
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        this.$nextTick(() => {
+          const shareButton = document.querySelector(".copy-effect");
+          shareButton.classList.add("copied");
+          setTimeout(() => {
+            shareButton.classList.remove("copied");
+          }, 2000);
+        });
+      }
+    },
 
     toggleBookmark() {
       if (this.isBookmark) {
@@ -145,8 +144,6 @@ ion-title {
   display: flex;
   align-items: center;
   color: black;
-
-
 }
 
 @media (prefers-color-scheme: dark) {
@@ -157,8 +154,8 @@ ion-title {
 
 ion-toolbar {
   --background: transparent !important;
-  padding-top: .5rem;
-  padding-bottom: .5rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
 }
 
 .actions {

@@ -5,9 +5,9 @@
         v-if="successMessage"
         :message="{ title: 'Success!', content: 'User created successful' }"
       />
-      <TableCard :labels="labels" :data="data"></TableCard>
+      <TableCard :labels="labels" :data="data" />
       <ion-button id="open-modal">
-        <ion-icon name="add-outline"/>
+        <ion-icon name="add-outline" />
         New User
       </ion-button>
       <ion-modal ref="modal" trigger="open-modal">
@@ -39,7 +39,7 @@
                     v-model="first_name"
                     :value="first_name"
                     @ionInput="first_name = $event.target.value"
-                  ></ion-input>
+                  />
                 </ion-item>
               </ion-col>
               <ion-col>
@@ -52,7 +52,7 @@
                     v-model="last_name"
                     :value="last_name"
                     @ionInput="last_name = $event.target.value"
-                  ></ion-input>
+                  />
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -66,7 +66,7 @@
               v-model="email_adress"
               :value="email_adress"
               @ionInput="email_adress = $event.target.value"
-            ></ion-input>
+            />
           </ion-item>
           <ion-item>
             <ion-label position="stacked">Password</ion-label>
@@ -77,7 +77,7 @@
               v-model="password"
               :value="password"
               @ionInput="password = $event.target.value"
-            ></ion-input>
+            />
           </ion-item>
         </ion-content>
       </ion-modal>
@@ -85,11 +85,27 @@
   </ion-page>
 </template>
 
-<script lang="js">
+<script>
 import TableCard from "@/components/TableCard.vue";
-import AlertMessage from '@/components/AlertMessage.vue';
+import AlertMessage from "@/components/AlertMessage.vue";
 import { defineComponent, ref } from "vue";
-import { IonPage, IonButton, IonContent, IonModal } from "@ionic/vue";
+import {
+  IonPage,
+  IonButton,
+  IonContent,
+  IonModal,
+  IonItem,
+  IonInput,
+  IonLabel,
+  IonGrid,
+  IonRow,
+  IonCol,
+  IonHeader,
+  IonToolbar,
+  IonButtons,
+  IonIcon,
+  IonTitle,
+} from "@ionic/vue";
 import { OverlayEventDetail } from "@ionic/core/components";
 import axios from "axios";
 import qs from "qs";
@@ -101,7 +117,18 @@ export default defineComponent({
     IonButton,
     IonContent,
     IonModal,
-    AlertMessage
+    AlertMessage,
+    IonItem,
+    IonInput,
+    IonLabel,
+    IonGrid,
+    IonRow,
+    IonCol,
+    IonHeader,
+    IonToolbar,
+    IonButtons,
+    IonIcon,
+    IonTitle,
   },
   setup() {
     const labels = ref([]);
@@ -124,21 +151,21 @@ export default defineComponent({
   },
   data() {
     return {
-        password: "",
-        email_adress: "",
-        first_name: "",
-        last_name: "",
-        message: "",
-        successMessage: ""
+      password: "",
+      email_adress: "",
+      first_name: "",
+      last_name: "",
+      message: "",
+      successMessage: "",
     };
   },
   methods: {
-      cancel() {
-        this.$refs.modal.$el.dismiss(null, 'cancel');
-      },
-      confirm() {
-      if(this.password && this.email_adress && this.first_name){
-         axios
+    cancel() {
+      this.$refs.modal.$el.dismiss(null, "cancel");
+    },
+    confirm() {
+      if (this.password && this.email_adress && this.first_name) {
+        axios
           .post(
             "https://alex.polan.sk/control-center/users.php",
             qs.stringify({
@@ -146,32 +173,33 @@ export default defineComponent({
               first_name: this.first_name,
               last_name: this.last_name,
               email_adress: this.email_adress,
-              password: this.password
+              password: this.password,
             })
-            ).then(res => {
-          console.log(res);
-          this.successMessage = res.data;
+          )
+          .then((res) => {
+            console.log(res);
+            this.successMessage = res.data;
 
-          axios
-            .post(
-              "https://alex.polan.sk/control-center/mysql.php",
-              qs.stringify({ getTableByName: "control_center_users" })
-            )
-            .then((res) => {
-              this.labels = res.data.labels;
-              this.data = res.data.data;
-            });
+            axios
+              .post(
+                "https://alex.polan.sk/control-center/mysql.php",
+                qs.stringify({ getTableByName: "control_center_users" })
+              )
+              .then((res) => {
+                this.labels = res.data.labels;
+                this.data = res.data.data;
+              });
 
-          setTimeout(() => {
-            this.successMessage = "";
-            console.log(this.successMessage);
-          }, 3000);
-         });
-         this.$refs.modal.$el.dismiss(null, 'confirm');
-      }else{
-        console.log("empty")
+            setTimeout(() => {
+              this.successMessage = "";
+              console.log(this.successMessage);
+            }, 3000);
+          });
+        this.$refs.modal.$el.dismiss(null, "confirm");
+      } else {
+        console.log("empty");
       }
-      },
     },
+  },
 });
 </script>
