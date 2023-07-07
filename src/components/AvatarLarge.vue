@@ -11,7 +11,7 @@
 
 
 export default {
-  name: "AvatarComponent",
+  name: "AvatarLarge",
   props: {
     profileImg: String,
     firstName: {
@@ -38,19 +38,19 @@ export default {
 
   <style scoped>
   .avatar {
-      width: 36px;
-      height: 36px;
-      font-size: 1.125rem;
+      width: 164px;
+      height: 164px;
+      font-size: 5.2rem;
       font-weight: bold;
       text-align: center;
-      line-height: 36px;
+      line-height: 164px;
       border-radius: 50%;
       color: #fff;
   }
 
   img {
-    width: 36px;
-      height: 36px;
+    width: 164px;
+      height: 164px;
     border-radius: 50%;
     object-fit: cover;
   }

@@ -3,9 +3,11 @@
     <ion-content class="profile-container" v-if="token"
       ><!--ion-padding-->
       <ion-avatar>
-        <img
-          v-if="userData.profileImg != 'avater'"
-          :src="userData.profileImg"
+        <AvatarLarge
+          :profileImg="userData.profileImg"
+          :firstName="userData.firstName"
+          :lastName="userData.lastName"
+          avatarColor="green"
         />
       </ion-avatar>
       <div class="user-info">
@@ -101,7 +103,7 @@ import {
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import { getUserData } from "@/userData";
-
+import AvatarLarge from "@/components/AvatarLarge.vue";
 
 export default defineComponent({
   name: "MyAccount",
@@ -136,6 +138,7 @@ export default defineComponent({
     IonCardTitle,
     //IonButton,
     IonAvatar,
+    AvatarLarge
   },
   async mounted() {
     this.userData = await getUserData();
