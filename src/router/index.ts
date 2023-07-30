@@ -102,7 +102,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/info/:function/',
     component: () => import('../views/InfoView.vue'),
   },
-  {
+  /*{
     path: '/project/:project/',
     component: () => import('../views/ProjectView.vue'),
   },
@@ -117,15 +117,17 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/project/:project/databases',
     component: () => import('../views/ProjectView.vue'),
-  },
+  },*/
   {
     path: '/project/:project/manage/tools',
     component: () => import('../views/ManageTools.vue'),
   },
+  /*
   {
     path: '/project/:project/whatsapp-bot',
     component: () => import('../views/ProjectView.vue'),
   },
+  */
   {
     path: '/project/:project/telegram-bot',
     component: () => import('../views/TelegramBot.vue'),
@@ -142,10 +144,11 @@ const routes: Array<RouteRecordRaw> = [
     path: '/project/:project/newsletter',
     component: () => import('../views/NewsletterView.vue'),
   },
+  /*
   {
     path: '/project/:project/:url(.*)',
     component: () => import('../views/ProjectView.vue'),
-  },
+  },*/
   {
     path: '/project/:project/components',
     component: () => import('../views/ComponentsView.vue'),

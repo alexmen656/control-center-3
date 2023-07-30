@@ -45,7 +45,7 @@ export default {
   data() {
     return {
       name: "",
-      description: "",ß
+      description: "",
       examples: "",
     };
   },
