@@ -18,6 +18,8 @@ export async function getUserData() {
         firstName: localStorage.getItem("firstName"),
         lastName: localStorage.getItem("lastName"),
         email: localStorage.getItem("email"),
+        accountStatus: localStorage.getItem("email"),
+
       };
       data.value = daten;
     }

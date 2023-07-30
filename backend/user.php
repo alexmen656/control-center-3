@@ -36,6 +36,7 @@ if ($headers['Authorization']) {
             $json['lastName'] = $data['lastname'];
             $json['email'] = $data['email'];
             $json['userID'] = $data['userID'];
+            $json['accountStatus'] = $data['account_status'];
             echo preg_replace('/^\h*\v+/m', '', echoJson($json));
         }
 

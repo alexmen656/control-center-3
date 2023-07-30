@@ -1,20 +1,22 @@
 <template>
   <ion-app>
     <ion-content>
-      <SiteHeader v-if="token"></SiteHeader>
-      <!--@click="subscribe"-->
+      <SiteHeader v-if="account_active && token"></SiteHeader>
       <ion-split-pane content-id="main-content">
         <SideBar
           :projects="projects"
           :tools="tools"
           :bookmarks="bookmarks"
-          v-if="token && !$route.params.project"
+          v-if="token && account_active && !$route.params.project"
         ></SideBar>
-        <ProjectSideBar v-if="token && $route.params.project"></ProjectSideBar>
+        <ProjectSideBar
+          v-if="token && account_active && $route.params.project"
+        ></ProjectSideBar>
         <div id="main-content">
           <SiteTitle
             v-if="
               token &&
+              account_active &&
               page.title &&
               (page.showTitle == true || page.showTitle == 'true')
             "
@@ -65,6 +67,7 @@ import { initializeApp } from "firebase/app";
 import { useRoute } from "vue-router";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import qs from "qs";
+import { getUserData } from "@/userData";
 import offlineTools from "@/offline/tools.json";
 import offlinePages from "@/offline/pages.json";
 
@@ -133,6 +136,7 @@ export default defineComponent({
   data() {
     return {
       token: localStorage.getItem("token"),
+      // account_active: false
     };
   },
   mounted() {
@@ -162,13 +166,14 @@ export default defineComponent({
     const tools = ref([]);
     const projects = ref([]);
     const bookmarks = ref([]);
+    const account_active = ref({});
     const route = useRoute();
     const ionRouter = useIonRouter();
     let paramUrl = "";
 
     const isOnline = ref(navigator.onLine);
 
-    const loadPageData = () => {
+    const loadPageData = async () => {
       //alert("changed");
 
       if (
@@ -181,6 +186,28 @@ export default defineComponent({
         location.pathname != "/signup/"
       ) {
         ionRouter.push("/login");
+      }
+
+      const userData = await getUserData();
+
+      if (
+        userData.accountStatus == "pending_verification" &&
+        location.pathname != "/pending_verification" &&
+        location.pathname != "/pending_verification/"
+      ) {
+        location.href = "/pending_verification";
+      } else if (
+        userData.accountStatus != "pending_verification" &&
+        (location.pathname == "/pending_verification" ||
+          location.pathname == "/pending_verification/")
+      ) {
+        location.href = "/home";
+      }
+
+      if (userData.accountStatus == "pending_verification") {
+        account_active.value = false;
+      } else {
+        account_active.value = true;
       }
 
       if (!route.params || !route.params.url) {
@@ -228,10 +255,6 @@ export default defineComponent({
             localStorage.setItem("bookmarks", JSON.stringify(bookmarks.value));
           });
       } else {
-        //alert("changed3");
-
-        // Load data from local JSON files
-
         pages.value = offlinePages;
         const foundPage = pages.value.find((p) => p["url"] === paramUrl);
 
@@ -262,17 +285,13 @@ export default defineComponent({
       }
     };
 
-    // Listen for online/offline events to update the isOnline value
     window.addEventListener("online", () => {
       isOnline.value = true;
-      // alert("changed");
       loadPageData();
     });
 
     window.addEventListener("offline", () => {
       isOnline.value = false;
-      //      alert("changed");
-
       loadPageData();
     });
 
@@ -283,6 +302,7 @@ export default defineComponent({
       bookmarks: bookmarks,
       loadPageData: loadPageData,
       isOnline: isOnline,
+      account_active: account_active,
     };
   },
 

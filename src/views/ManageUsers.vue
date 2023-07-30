@@ -6,6 +6,40 @@
         :message="{ title: 'Success!', content: 'User created successful' }"
       />
       <TableCard :labels="labels" :data="data" />
+
+      <h2 v-if="pendingVerificationEntries.length > 0">
+        Waiting for verification
+      </h2>
+
+      <ion-card v-if="pendingVerificationEntries.length > 0">
+        <table>
+          <tr>
+            <th>User ID</th>
+            <th>Profile Image</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>E-Mail</th>
+            <th>Password</th>
+            <th>Account Status</th>
+            <th>Approve</th>
+          </tr>
+          <tr v-for="tr in pendingVerificationEntries" :key="tr">
+            <td>{{ tr[0] }}</td>
+            <td>{{ tr[1] }}</td>
+            <td>{{ tr[2] }}</td>
+            <td>{{ tr[3] }}</td>
+            <td>{{ tr[4] }}</td>
+            <td>{{ tr[5] }}</td>
+            <td>{{ tr[7] }}</td>
+            <td>
+              <ion-button color="success" size="small" @click="approve(tr[0])"
+                >Approve</ion-button
+              >
+            </td>
+          </tr>
+        </table>
+      </ion-card>
+
       <ion-button id="open-modal">
         <ion-icon name="add-outline" />
         New User
@@ -133,6 +167,8 @@ export default defineComponent({
   setup() {
     const labels = ref([]);
     const data = ref([]);
+    const data2 = ref({});
+    const pendingVerificationEntries = ref([]);
 
     axios
       .post(
@@ -142,11 +178,19 @@ export default defineComponent({
       .then((res) => {
         labels.value = res.data.labels;
         data.value = res.data.data;
+
+        data2.value = res.data;
+
+        const accountStatusIndex = data2.value.labels.indexOf("account_status");
+        pendingVerificationEntries.value = data2.value.data.filter(
+          (entry) => entry[accountStatusIndex] === "pending_verification"
+        );
       });
 
     return {
       labels,
       data,
+      pendingVerificationEntries,
     };
   },
   data() {
@@ -200,6 +244,59 @@ export default defineComponent({
         console.log("empty");
       }
     },
+    approve(userID) {
+      axios
+        .post(
+          "https://alex.polan.sk/control-center/users.php",
+          qs.stringify({
+            updateAccountStatus: "updateAccountStatus",
+            userID: userID,
+            newStatus: "active",
+          })
+        )
+        .then(() => {
+          axios
+            .post(
+              "https://alex.polan.sk/control-center/mysql.php",
+              qs.stringify({ getTableByName: "control_center_users" })
+            )
+            .then((res) => {
+              this.labels = res.data.labels;
+              this.data = res.data.data;
+              this.data2 = res.data;
+              const accountStatusIndex =
+                this.data2.labels.indexOf("account_status");
+              this.pendingVerificationEntries = this.data2.data.filter(
+                (entry) => entry[accountStatusIndex] === "pending_verification"
+              );
+            });
+          alert(userID + " approved");
+        });
+    },
   },
 });
 </script>
+<style scoped>
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td,
+th {
+  border: none;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #e9e9e9;
+}
+
+@media (prefers-color-scheme: dark) {
+  tr:nth-child(even) {
+    background-color: #121212;
+  }
+}
+</style>

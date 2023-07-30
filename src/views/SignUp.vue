@@ -232,7 +232,7 @@ export default defineComponent({
         .then((res) => {
           if (res.data.token) {
             localStorage.setItem("token", res.data.token);
-            location.href = "/home";
+            location.href = "/pending-verification";
           } else {
             alert("Sorry, an error occurred. Please try again later.");
           }

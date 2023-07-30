@@ -10,6 +10,14 @@ if(isset($_POST['new_user']) && isset($_POST['first_name']) && isset($_POST['ema
     if(query("INSERT INTO control_center_users VALUES(0, '', '$first_name', '$last_name', '$email_adress', '$password', '$token', 'active')")){
         echo "User created successful";
     }
+} elseif (isset($_REQUEST['updateAccountStatus']) && isset($_REQUEST['userID']) && isset($_REQUEST['newStatus'])) {
+    $userID = escape_string($_REQUEST['userID']);
+    $new_status = escape_string($_REQUEST['newStatus']);
+
+    if(query("UPDATE control_center_users SET account_status='$new_status' WHERE userID='$userID'")){
+        echo "Account status updated";
+    }
+    
 }
 
 ?>

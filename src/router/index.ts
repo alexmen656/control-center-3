@@ -171,6 +171,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/SignUp.vue'),
   },
   {
+    path: '/pending_verification',
+    component: () => import('../views/PendingVerification.vue'),
+  },
+  {
     path: '/:url(.*)',
     component: () => import('../views/PageViev.vue'),
   }
