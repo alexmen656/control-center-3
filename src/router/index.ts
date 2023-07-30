@@ -129,6 +129,10 @@ const routes: Array<RouteRecordRaw> = [
   },
   */
   {
+    path: '/project/:project/info',
+    component: () => import('../views/ProjectInfo.vue'),
+  },
+  {
     path: '/project/:project/telegram-bot',
     component: () => import('../views/TelegramBot.vue'),
   },

@@ -1,43 +1,65 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Projekt-Info</ion-title>
-      </ion-toolbar>
-    </ion-header>
     <ion-content>
-      <ion-list>
-        <ion-item>
-          <ion-label position="floating">Projektname</ion-label>
-          <ion-input v-model="projectName"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="floating">Erstelldatum</ion-label>
-          <ion-datetime v-model="creationDate"></ion-datetime>
-        </ion-item>
-        <ion-item>
+      <ion-grid>
+        <ion-row>
+          <ion-col></ion-col>
+          <ion-col size="11">
+            <ion-list>
+              <ion-item>
+                <ion-label position="floating">Project Name</ion-label>
+                <ion-input disabled :value="projectName"></ion-input>
+              </ion-item>
+              <ion-item>
+                <ion-label position="floating">Created On</ion-label>
+                <ion-input disabled :value="creationDate"></ion-input>
+              </ion-item>
+              <!--  <ion-item>
           <ion-label>Internes Projekt?</ion-label>
           <ion-checkbox v-model="isInternal"></ion-checkbox>
         </ion-item>
         <ion-item>
           <ion-label>Öffentliche Website?</ion-label>
           <ion-checkbox v-model="hasWebsite"></ion-checkbox>
-        </ion-item>
-      </ion-list>
+        </ion-item>-->
+            </ion-list>
+          </ion-col>
+          <ion-col></ion-col>
+        </ion-row>
+      </ion-grid>
     </ion-content>
   </ion-page>
 </template>
 
 <script>
+import axios from "axios";
+import qs from "qs";
+
 export default {
   name: "ProjectInfo",
   data() {
     return {
       projectName: "",
       creationDate: "",
-      isInternal: false,
-      hasWebsite: false,
+      //isInternal: false,
+      //hasWebsite: false,
     };
+  },
+  created() {
+    axios
+      .post(
+        "/control-center/projects.php",
+        qs.stringify({
+          getProjectInfo: "getProjectInfo",
+          project: this.$route.params.project,
+        })
+      )
+      .then((res) => {
+        this.projectName = res.data.name;
+        this.creationDate = new Date(res.data.createdOn)
+          .toLocaleDateString("en-GB")
+          .replaceAll("/", ".");
+      });
   },
 };
 </script>

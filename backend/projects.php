@@ -43,6 +43,18 @@ if(isset($_POST['createProject']) && isset($_POST['projectName'])){
          echo alert('succes', 'The project was created successfully. <a href="/paxar/projects/'.$href.'/">Go to the project</a>');
      }
     
+ }elseif(isset($_POST['getProjectInfo']) && isset($_POST['project'])){
+    $link = escape_string($_POST['project']);
+    $query = query("SELECT * FROM projects WHERE link='$link'");
+    if(mysqli_num_rows($query) == 1){
+        $project = fetch_assoc($query);
+        $json['icon'] = $project['icon'];
+        $json['name'] = $project['name'];
+        $json['createdOn'] = $project['createdOn'];
+        echo echoJSON($json);
+    }else{
+        echo "No project found";
+    }
  }else{
     $projects = query("SELECT * FROM projects"); 
     $i=0;
