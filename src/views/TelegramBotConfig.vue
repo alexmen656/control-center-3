@@ -46,7 +46,7 @@ export default {
         console.log(chat);
         axios
           .post(
-            "https://alex.polan.sk/control-center/telegram_bot.php",
+            "/control-center/telegram_bot.php",
             qs.stringify({
               newConfig: "newConfig",
               token: token,
@@ -67,7 +67,7 @@ export default {
       if (token && chat) {
         axios
           .post(
-            "https://alex.polan.sk/control-center/telegram_bot.php",
+            "/control-center/telegram_bot.php",
             qs.stringify({
               changeConfig: "changeConfig",
               token: token,
@@ -93,7 +93,7 @@ export default {
     const route = useRoute();
     await axios
       .post(
-        "https://alex.polan.sk/control-center/telegram_bot.php",
+        "/control-center/telegram_bot.php",
         qs.stringify({ getConfig: "getConfig", project: route.params.project })
       )
       .then((res) => {
@@ -108,7 +108,7 @@ export default {
       const route = useRoute();
       await axios
         .post(
-          "https://alex.polan.sk/control-center/telegram_bot.php",
+          "/control-center/telegram_bot.php",
           qs.stringify({
             getConfig: "getConfig",
             project: route.params.project,

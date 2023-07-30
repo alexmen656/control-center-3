@@ -94,7 +94,7 @@ export default defineComponent({
 
     axios
       .get(
-        "https://alex.polan.sk/control-center/sidebar.php?getSideBarByProjectName=" +
+        "/control-center/sidebar.php?getSideBarByProjectName=" +
           route.params.project
       )
       .then((response) => {
@@ -105,14 +105,14 @@ export default defineComponent({
       if (confirm("Do you really want to delete the tool")) {
         axios
           .post(
-            "https://alex.polan.sk/control-center/tools.php",
+            "/control-center/tools.php",
             qs.stringify({ deleteTool: "deleteTool", toolID: tool.id })
           )
           .then((res) => {
             alert("Tool deleted successfull");
             axios
               .get(
-                "https://alex.polan.sk/control-center/sidebar.php?getSideBarByProjectName=" +
+                "/control-center/sidebar.php?getSideBarByProjectName=" +
                   route.params.project
               )
               .then((response) => {
@@ -129,7 +129,7 @@ export default defineComponent({
       if (confirm("Do you really want to delete the tool")) {
         toolss.forEach((tool) => {
           axios.post(
-            "https://alex.polan.sk/control-center/tools.php",
+            "/control-center/tools.php",
             qs.stringify({ deleteTool: "deleteTool", toolID: tool })
           );
         });
@@ -139,7 +139,7 @@ export default defineComponent({
 
         axios
           .get(
-            "https://alex.polan.sk/control-center/sidebar.php?getSideBarByProjectName=" +
+            "/control-center/sidebar.php?getSideBarByProjectName=" +
               route.params.project
           )
           .then((response) => {

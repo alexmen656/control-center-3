@@ -83,7 +83,7 @@ export default {
       const verification_token = localStorage.getItem("verification_token");
       axios
         .post(
-          "https://alex.polan.sk/control-center/verification.php",
+          "/control-center/verification.php",
           qs.stringify({
             verificationToken: verification_token,
             verificationCode: otp,

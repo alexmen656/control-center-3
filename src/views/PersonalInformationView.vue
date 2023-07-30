@@ -1,10 +1,5 @@
 <template>
   <ion-page>
-    <!--  <ion-header>
-        <ion-toolbar>
-          <ion-title>Persönliche Informationen</ion-title>
-        </ion-toolbar>
-      </ion-header>-->
     <ion-content>
       <ion-grid>
         <ion-row>
@@ -138,9 +133,6 @@ export default defineComponent({
   name: "PersonalInformation",
   components: {
     IonPage,
-    //IonHeader,
-    //IonToolbar,
-    //IonTitle,
     IonContent,
     IonList,
     IonItem,
@@ -167,9 +159,6 @@ export default defineComponent({
       this.user[field].editable = true;
     },
     save() {
-      //console.log('User: ', this.user);
-
-      // Filtern der Felder, die gespeichert werden sollen
       const filteredUser = {};
       for (const field in this.user) {
         if (Object.prototype.propertyIsEnumerable.call(this.user, field)) {
@@ -179,17 +168,12 @@ export default defineComponent({
         }
       }
       filteredUser["editData"] = "editData";
-      // Senden der Benutzerdaten an die API
       axios
-        .post(
-          "https://alex.polan.sk/control-center/user.php?" +
-            qs.stringify(filteredUser),
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        )
+        .post("/control-center/user.php?" + qs.stringify(filteredUser), {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
         .then((response) => {
           console.log(response);
           console.log("API response:", response.data);
@@ -198,7 +182,6 @@ export default defineComponent({
           console.error("API error:", error);
         });
 
-      // Zurücksetzen der editierbaren Felder
       for (const field in this.user) {
         if (Object.prototype.propertyIsEnumerable.call(this.user, field)) {
           this.user[field].editable = false;

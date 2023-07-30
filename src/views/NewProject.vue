@@ -75,7 +75,7 @@ export default {
       if (this.name != "") {
         axios
           .post(
-            "https://alex.polan.sk/control-center/projects.php",
+            "/control-center/projects.php",
             qs.stringify({
               createProject: "createProject",
               projectName: this.name,

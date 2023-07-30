@@ -60,7 +60,7 @@ export default {
       formData.append("image", this.groupImage);
 
       axios
-        .post("https://alex.polan.sk/control-center/groups.php", formData)
+        .post("/control-center/groups.php", formData)
         .then((response) => {
           if (response.data.success) {
             const imagePath = response.data.path;
@@ -73,10 +73,7 @@ export default {
 
             // Send the group data to your backend or perform any required actions
             axios
-              .post(
-                "https://alex.polan.sk/control-center/groups.php",
-                groupData
-              )
+              .post("/control-center/groups.php", groupData)
               .then((response) => {
                 // Handle the response from the server
                 console.log(response.data);

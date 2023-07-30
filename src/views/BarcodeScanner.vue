@@ -34,14 +34,14 @@ export default {
   methods: {
     onDecode(text) {
       const audio = new Audio(
-        "https://alex.polan.sk/control-center/scanner.mp3"
+        "/control-center/scanner.mp3"
       );
 
       console.log(`Decode text from QR code is ${text}`);
       //alert(text);
       axios
         .post(
-          "https://alex.polan.sk/control-center/products.php",
+          "/control-center/products.php",
           qs.stringify({ getProductByCode: "getProductByCode", code: text })
         )
         .then((res) => {

@@ -50,7 +50,7 @@ export default {
   methods: {
     send() {
       axios.post(
-        "https://alex.polan.sk/control-center/newsletter.php",
+        "/control-center/newsletter.php",
         qs.stringify({ subject: this.subject, email: this.email })
       );
     },

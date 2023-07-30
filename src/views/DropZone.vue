@@ -185,7 +185,7 @@ import axios from 'axios';
           formData.append('newComponent', 'newComponent');
         }
 
-        axios.post( 'https://alex.polan.sk/control-center/components.php',
+        axios.post( '/control-center/components.php',
           formData,
           {
             headers: {

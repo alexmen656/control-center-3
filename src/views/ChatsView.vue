@@ -65,7 +65,7 @@ export default defineComponent({
       const isOnline = ref(navigator.onLine);
       //alert(isOnline.value);
       if (isOnline.value) {
-        fetch(`https://alex.polan.sk/control-center/chats.php?userId=${userId}`)
+        fetch(`/control-center/chats.php?userId=${userId}`)
           .then((response) => response.json())
           .then((data) => {
             this.chats = data;

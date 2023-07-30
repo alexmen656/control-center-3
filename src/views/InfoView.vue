@@ -49,7 +49,7 @@ export default {
     async fetchFunctionData() {
       try {
         const response = await axios.get(
-          `https://alex.polan.sk/control-center/info.php?function=${this.functionName}`
+          `/control-center/info.php?function=${this.functionName}`
         );
         this.functionData = response.data;
       } catch (error) {

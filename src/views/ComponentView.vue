@@ -23,11 +23,7 @@
         <ion-button v-if="type == 'script'" @click="saveHTML()" color="danger"
           >Save Component</ion-button
         >
-        <img
-          v-if="type == 'image'"
-          :src="'https://alex.polan.sk/' + newHTML"
-          alt=""
-        />
+        <img v-if="type == 'image'" :src="'/' + newHTML" alt="" />
       </ion-col>
       <ion-col size="1" />
     </ion-row>
@@ -62,7 +58,7 @@ export default {
 
     await axios
       .post(
-        "https://alex.polan.sk/control-center/components.php",
+        "/control-center/components.php",
         qs.stringify({
           getCoponent: "getCoponent",
           project: route.params.project,
@@ -88,7 +84,7 @@ export default {
       console.log(this.newHTML);
       axios
         .post(
-          "https://alex.polan.sk/control-center/components.php",
+          "/control-center/components.php",
           qs.stringify({
             updateHTML: "updateHTML",
             project: this.$route.params.project,

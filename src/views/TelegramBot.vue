@@ -31,7 +31,7 @@ export default {
     const route = useRoute();
     axios
       .post(
-        "https://alex.polan.sk/control-center/telegram_bot.php",
+        "/control-center/telegram_bot.php",
         qs.stringify({ getConfig: "getConfig", project: route.params.project })
       )
       .then((res) => {

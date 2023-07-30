@@ -206,7 +206,7 @@ export default defineComponent({
     async emailAlreadyExists() {
       try {
         const response = await axios.post(
-          "https://alex.polan.sk/control-center/user.php",
+          "/control-center/user.php",
           qs.stringify({
             checkEmailExists: "checkEmailExists",
             email: this.email,
@@ -221,7 +221,7 @@ export default defineComponent({
     signUp() {
       axios
         .post(
-          "https://alex.polan.sk/control-center/sign_up.php",
+          "/control-center/sign_up.php",
           qs.stringify({
             first_name: this.firstName,
             last_name: this.lastName,

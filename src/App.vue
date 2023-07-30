@@ -99,7 +99,7 @@ getToken(messaging, {
   .then((currentToken) => {
     if (currentToken) {
       axios.post(
-        "https://alex.polan.sk/control-center/push_notifications_token.php",
+        "/control-center/push_notifications_token.php",
         qs.stringify({
           newToken: "newToken",
           token: currentToken,
@@ -224,7 +224,7 @@ export default defineComponent({
         //   alert("changed2");
 
         axios
-          .post("https://alex.polan.sk/control-center/pages.php")
+          .post("/control-center/pages.php")
           .then((response) => {
             pages.value = response.data;
             const foundPage = pages.value.find((p) => p["url"] === paramUrl);
@@ -238,7 +238,7 @@ export default defineComponent({
           });
 
         axios
-          .get("https://alex.polan.sk/control-center/sidebar.php")
+          .get("/control-center/sidebar.php")
           .then((response) => {
             tools.value = response.data.tools;
             projects.value = response.data.projects;
@@ -248,7 +248,7 @@ export default defineComponent({
 
         axios
           .get(
-            "https://alex.polan.sk/control-center/bookmarks.php?getBookmarks=getBookmarks"
+            "/control-center/bookmarks.php?getBookmarks=getBookmarks"
           )
           .then((response) => {
             bookmarks.value = response.data;
@@ -311,7 +311,7 @@ export default defineComponent({
       const bookmarks = ref([]);
       axios
         .get(
-          "https://alex.polan.sk/control-center/bookmarks.php?getBookmarks=getBookmarks"
+          "/control-center/bookmarks.php?getBookmarks=getBookmarks"
         )
         .then((response) => {
           this.bookmarks = response.data;

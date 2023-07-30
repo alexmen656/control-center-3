@@ -172,7 +172,7 @@ export default defineComponent({
 
     axios
       .post(
-        "https://alex.polan.sk/control-center/mysql.php",
+        "/control-center/mysql.php",
         qs.stringify({ getTableByName: "control_center_users" })
       )
       .then((res) => {
@@ -211,7 +211,7 @@ export default defineComponent({
       if (this.password && this.email_adress && this.first_name) {
         axios
           .post(
-            "https://alex.polan.sk/control-center/users.php",
+            "/control-center/users.php",
             qs.stringify({
               new_user: "new_user",
               first_name: this.first_name,
@@ -226,7 +226,7 @@ export default defineComponent({
 
             axios
               .post(
-                "https://alex.polan.sk/control-center/mysql.php",
+                "/control-center/mysql.php",
                 qs.stringify({ getTableByName: "control_center_users" })
               )
               .then((res) => {
@@ -247,7 +247,7 @@ export default defineComponent({
     approve(userID) {
       axios
         .post(
-          "https://alex.polan.sk/control-center/users.php",
+          "/control-center/users.php",
           qs.stringify({
             updateAccountStatus: "updateAccountStatus",
             userID: userID,
@@ -257,7 +257,7 @@ export default defineComponent({
         .then(() => {
           axios
             .post(
-              "https://alex.polan.sk/control-center/mysql.php",
+              "/control-center/mysql.php",
               qs.stringify({ getTableByName: "control_center_users" })
             )
             .then((res) => {

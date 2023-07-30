@@ -32,57 +32,47 @@
       </ion-item>
     </ion-list>-->
 
-
-    <ion-grid>
+      <ion-grid>
         <ion-row>
-<ion-col size="1"></ion-col>
-<ion-col size="10">
-
-
-
-  <ion-grid>
-        <ion-row>
-          <ion-col
-            v-for="card in cards"
-            :key="card"
-            size="12"
-            size-md="6"
-            size-lg="6"
-            size-xl="4"
-          >
-            <ion-card class="tall-card">
-              <ion-card-header>
-                <ion-card-title>
-                  <ion-icon name="log-out-outline" slot="start"></ion-icon>
-                  <router-link
-                    :to="
-                      '/my-account/' + card.replaceAll(` `, `-`).toLowerCase()
-                    "
-                    >{{ card }}</router-link
-                  >
-                </ion-card-title>
-              </ion-card-header>
-            </ion-card>
-          </ion-col>
-          <router-link to="/my-account/logout">Log Out</router-link>
-         <!--  <ion-button>Edit Profile</ion-button
+          <ion-col size="1"></ion-col>
+          <ion-col size="10">
+            <ion-grid>
+              <ion-row>
+                <ion-col
+                  v-for="card in cards"
+                  :key="card"
+                  size="12"
+                  size-md="6"
+                  size-lg="6"
+                  size-xl="4"
+                >
+                  <ion-card class="tall-card">
+                    <ion-card-header>
+                      <ion-card-title>
+                        <ion-icon
+                          name="log-out-outline"
+                          slot="start"
+                        ></ion-icon>
+                        <router-link
+                          :to="
+                            '/my-account/' +
+                            card.replaceAll(` `, `-`).toLowerCase()
+                          "
+                          >{{ card }}</router-link
+                        >
+                      </ion-card-title>
+                    </ion-card-header>
+                  </ion-card>
+                </ion-col>
+                <router-link to="/my-account/logout">Log Out</router-link>
+                <!--  <ion-button>Edit Profile</ion-button
           >@click="goToEditPage"-->
+              </ion-row>
+            </ion-grid>
+          </ion-col>
+          <ion-col size="1"></ion-col>
         </ion-row>
       </ion-grid>
-
-
-
-
-
-</ion-col>
-<ion-col size="1"></ion-col>
-
-
-     
-
-</ion-row>
-</ion-grid>
-
     </ion-content>
   </ion-page>
 </template>
@@ -114,7 +104,7 @@ export default defineComponent({
       selectedTheme: "light",
       userData: {},
       cards: [
-      //  "Logout",
+        //  "Logout",
         "Personal Information",
         "Settings",
         "Preferences",
@@ -122,7 +112,7 @@ export default defineComponent({
         //"App Theme",
         "My Team",
         "My Projects",
-       // "photo",
+        // "photo",
       ],
     };
   },
@@ -138,7 +128,7 @@ export default defineComponent({
     IonCardTitle,
     //IonButton,
     IonAvatar,
-    AvatarLarge
+    AvatarLarge,
   },
   async mounted() {
     this.userData = await getUserData();

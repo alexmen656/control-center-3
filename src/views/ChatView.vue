@@ -106,7 +106,7 @@ export default {
     async fetchChat(chatId) {
       try {
         const response = await axios.post(
-          "https://alex.polan.sk/control-center/chats.php",
+          "/control-center/chats.php",
           qs.stringify({
             getChatByChatID: "getChatByChatID",
             chatID: chatId,
@@ -122,7 +122,7 @@ export default {
     async fetchMessages(chatId) {
       try {
         const response = await axios.post(
-          "https://alex.polan.sk/control-center/messages.php",
+          "/control-center/messages.php",
           qs.stringify({
             getMessagesByChatID: "getMessagesByChatID",
             chatID: chatId,
