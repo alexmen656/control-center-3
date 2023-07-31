@@ -62,6 +62,7 @@ if(isset($_POST['createProject']) && isset($_POST['projectName'])){
         $json[$i]["id"] = $p['id'];
         $json[$i]["icon"] = $p['icon'];
         $json[$i]["name"] = $p['name'];
+        $json[$i]["link"] = $p['link'];
         $i++;
     }
     
