@@ -23,7 +23,7 @@
         <ion-button v-if="type == 'script'" @click="saveHTML()" color="danger"
           >Save Component</ion-button
         >
-        <img v-if="type == 'image'" :src="'/' + newHTML" alt="" />
+        <img v-if="type == 'image'" :src="'https://alex.polan.sk/' + newHTML" alt="" />
       </ion-col>
       <ion-col size="1" />
     </ion-row>
@@ -109,5 +109,9 @@ export default {
 <style>
 textarea {
   overflow-y: scroll !important;
+}
+
+img {
+  height: 100%;
 }
 </style>
