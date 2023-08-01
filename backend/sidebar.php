@@ -57,6 +57,7 @@ if($_REQUEST['getSideBarByProjectName']){
         $json['components'][$z]["id"] = $c['id'];
        // $json['tools'][$z]["icon"] = $c['icon'];
         $json['components'][$z]["name"] = $c['name'];
+        $json['components'][$z]["type"] = $c['type'];
         $z++;
     }
 
