@@ -96,7 +96,8 @@
                   this.selectedIndex === Number(i) + Number(tools.length),
               }"
             >
-              <ion-icon slot="start" :name="p.icon"></ion-icon>
+              <ion-icon v-if="p.type == 'script'" slot="start" name="code-slash-outline"></ion-icon>
+              <ion-icon v-if="p.type == 'image'" slot="start" name="image-outline"></ion-icon>
               <ion-label
                 >{{ p.name[0].toUpperCase()
                 }}{{ p.name.substring(1) }}</ion-label

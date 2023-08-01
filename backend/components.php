@@ -94,9 +94,11 @@ if (isset($_POST['getComponentsByProject']) && isset($_POST['project'])) {
   $name = escape_string($_POST['name']);
   $code = escape_string($_POST['code']);
   $type = "script";
+  $icon = "code-slash-outline";
 
   if (isset($_FILES["files"])) {
     $type = "image";
+    $icon = "image-outline";
     foreach ($_FILES['files']['tmp_name'] as $key => $tmp_name) {
       $name2 = $_FILES['files']['name'][$key];
       $file_info = pathinfo($name2, PATHINFO_EXTENSION);
@@ -118,7 +120,7 @@ if (isset($_POST['getComponentsByProject']) && isset($_POST['project'])) {
   $projectID = fetch_assoc(query("SELECT * FROM projects WHERE link='$projectName'"))['projectID'];
   $insert = query("INSERT INTO project_components VALUES(0, '$fileName', '$type', '$name', '$code', '1234567890', '$projectID')");
   $url = "project/" . $projectName . "/components/" . $code;
-  query("INSERT INTO control_center_pages VALUES (0, '$url', 'true', '', '$name', '', 0)");
+  query("INSERT INTO control_center_pages VALUES (0, '$url', 'true', '$icon', '$name', '', 0)");
   if ($insert) {
     $location = "/www/" . $projectName . "/" . $fileName;
     file_put_contents($location, "", 0777);
