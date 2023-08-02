@@ -4,10 +4,10 @@
       <ion-col size="1" />
       <ion-col
         size="10"
-        style="display: flex; content-align: center; flex-direction: column"
+        style="display: flex; align-items: center; flex-direction: column"
       >
         <code-editor
-          v-if="type == 'script'"
+          v-if="type === 'script'"
           :wrap_code="false"
           style="overflow-y: scroll !important"
           v-model="newHTML"
@@ -20,15 +20,24 @@
             ['html', 'HTML'],
           ]"
         />
-        <ion-button v-if="type == 'script'" @click="saveHTML()" color="danger"
+        <ion-button v-if="type === 'script'" @click="saveHTML()" color="primary"
           >Save Component</ion-button
         >
-        <img v-if="type == 'image'" :src="'https://alex.polan.sk/' + newHTML" alt="" />
+        <img
+          v-if="type === 'image'"
+          :src="'https://alex.polan.sk/' + newHTML"
+          alt="Image"
+        />
+        <span v-if="dateTimeString && component.last_change_by"
+          >Last Change: {{ dateTimeString }} by
+          {{ component.last_change_by }}</span
+        ><span v-if="createdOn">Created: {{ createdOn }}</span>
       </ion-col>
       <ion-col size="1" />
     </ion-row>
   </ion-grid>
 </template>
+
 <script>
 import axios from "axios";
 import qs from "qs";
@@ -50,38 +59,36 @@ export default {
       component: {},
       newHTML: "",
       type: "",
+      dateTimeString: "",
+      createdOn: "",
     };
   },
   async mounted() {
-    const route = useRoute();
-    const component = {};
-
-    await axios
-      .post(
-        "/control-center/components.php",
-        qs.stringify({
-          getCoponent: "getCoponent",
-          project: route.params.project,
-          name: route.params.component,
-        })
-      )
-      .then((res) => {
-        component.content = res.data.content;
-        component.type = res.data.type;
-        //console.log(component.content);
-      });
-
-    this.component = component;
-    this.newHTML = component.content.replaceAll("\n", "\n");
-    this.type = component.type;
-    //this.newHTML = "hello\n\nhello\n\n"
-    //console.log(this.type);
+    await this.getComponentData();
   },
   methods: {
-    saveHTML() {
-      const route = useRoute();
+    async getComponentData() {
+      try {
+        const response = await axios.post(
+          "/control-center/components.php",
+          qs.stringify({
+            getCoponent: "getCoponent",
+            project: this.$route.params.project,
+            name: this.$route.params.component,
+          })
+        );
 
-      console.log(this.newHTML);
+        this.component = response.data;
+        this.newHTML = this.component.content.trim();
+        this.type = this.component.type;
+
+        this.updateDateTimeString();
+      } catch (error) {
+        console.error("Error fetching component data:", error);
+      }
+    },
+    saveHTML() {
+      const html = this.newHTML.trim();
       axios
         .post(
           "/control-center/components.php",
@@ -89,7 +96,7 @@ export default {
             updateHTML: "updateHTML",
             project: this.$route.params.project,
             name: this.$route.params.component,
-            html: this.newHTML.replaceAll("\n", "\n").trim(),
+            html: html,
           }),
           {
             headers: {
@@ -97,15 +104,40 @@ export default {
             },
           }
         )
-        .then((res) => {
-          //replaceAll("\n", "\r\n")
-          //component.content = res.data.content;
-          //console.log(component.content);
+        .then(() => {
+          this.getComponentData();
+        })
+        .catch((error) => {
+          console.error("Error saving component HTML:", error);
         });
+    },
+    updateDateTimeString() {
+      if (new Date(this.component.last_change) != "Invalid Date") {
+        const lastChangeDate = new Date(this.component.last_change);
+        const formattedDate = lastChangeDate
+          .toLocaleDateString("en-GB")
+          .split("/")
+          .join(".");
+        const formattedTime = lastChangeDate.toLocaleTimeString("en-GB");
+        this.dateTimeString = formattedDate + " at " + formattedTime;
+      }
+      if (new Date(this.component.createdOn) != "Invalid Date") {
+        const createdOn = new Date(this.component.createdOn);
+        const formattedCreatedOnDate = createdOn
+          .toLocaleDateString("en-GB")
+          .split("/")
+          .join(".");
+        const formattedCreatedOnTime = createdOn.toLocaleTimeString("en-GB");
+        this.createdOn =
+          formattedCreatedOnDate + " at " + formattedCreatedOnTime;
+      } else {
+        this.createdOn = "Not Avaible";
+      }
     },
   },
 };
 </script>
+
 <style>
 textarea {
   overflow-y: scroll !important;
