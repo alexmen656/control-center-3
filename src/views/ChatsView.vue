@@ -11,7 +11,6 @@
               <ChatView />
             </div>
             <div v-else class="select-chat-screen">
-              <!--v-else-->
               <h2>Select a chat to show messages.</h2>
             </div>
           </ion-col>
@@ -61,7 +60,7 @@ export default defineComponent({
   },
   methods: {
     fetchChats() {
-      const userId = 79; // Beispielwert, entsprechend anpassen
+      const userId = 79;
       const isOnline = ref(navigator.onLine);
       //alert(isOnline.value);
       if (isOnline.value) {

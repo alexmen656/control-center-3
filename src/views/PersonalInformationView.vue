@@ -207,9 +207,6 @@ export default defineComponent({
 });
 </script>
 <style scoped>
-ion-list {
-  background: var(--ion-background-color);
-}
 ion-avatar {
   display: flex;
   justify-content: center;

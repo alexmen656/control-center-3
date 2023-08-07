@@ -121,10 +121,6 @@ ion-icon {
   margin-right: 0.75rem;
 }
 
-ion-list {
-  border: none;
-}
-
 ion-card:first-of-type {
   margin-bottom: 2rem;
 }

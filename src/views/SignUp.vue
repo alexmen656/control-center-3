@@ -427,18 +427,4 @@ ion-content {
     height: 60%;
   }
 }
-
-hr {
-  background-color: #fff;
-  color: #fff;
-  width: 30%;
-}
-
-.line-between {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  margin: 0.5rem 0;
-}
 </style>

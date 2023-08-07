@@ -73,7 +73,7 @@ export default defineComponent({
   methods: {
     async fetchChats() {
       const isOnline = ref(navigator.onLine);
-      const userId = 79; // Beispielwert, entsprechend anpassen
+      const userId = 79;
       if (isOnline.value) {
         await fetch(
           `https://alex.polan.sk/control-center/chats.php?userId=${userId}`

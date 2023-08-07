@@ -162,7 +162,7 @@ export default defineComponent({
 
     this.loadPageData();
   },
-  async created(){
+  async created() {
     await loadUserData();
   },
   setup() {
@@ -561,10 +561,6 @@ ion-router-outlet {
   width: 100%;
 }
 
-ion-card {
-  /* background: #000000;*/
-}
-
 @media (prefers-color-scheme: dark) {
   ion-card {
     --background: black;
@@ -588,5 +584,13 @@ ion-card {
   width: 100%;
   color: #fff;
   margin: 0.25rem;
+}
+
+ion-list {
+  background-color: var(--ion-background-color);
+}
+
+ion-list {
+  border: none !important;
 }
 </style>

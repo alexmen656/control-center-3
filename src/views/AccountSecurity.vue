@@ -61,11 +61,10 @@ import {
   IonCol,
   IonList,
   IonItem,
-  IonLabel,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import axios from 'axios';
-import qs from 'qs';
+import axios from "axios";
+import qs from "qs";
 import { getUserData } from "@/userData";
 
 export default defineComponent({
@@ -76,7 +75,6 @@ export default defineComponent({
     IonCol,
     IonList,
     IonItem,
-   // IonLabel,
   },
   data() {
     return {
@@ -90,7 +88,13 @@ export default defineComponent({
   },
   methods: {
     update(event) {
-      axios.post("/control-center/user.php", qs.stringify({updateLoginWithGoogle: "updateLoginWithGoogle", newValue: event.detail.checked}));
+      axios.post(
+        "/control-center/user.php",
+        qs.stringify({
+          updateLoginWithGoogle: "updateLoginWithGoogle",
+          newValue: event.detail.checked,
+        })
+      );
     },
   },
 });

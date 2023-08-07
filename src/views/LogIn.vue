@@ -366,16 +366,6 @@ ion-item {
   margin-bottom: 0.5rem; /* 1rem */
 }
 
-@media (prefers-color-scheme: dark) {
-  ion-list {
-    background-color: var(--ion-background-color);
-  }
-}
-
-ion-list {
-  border: none !important;
-}
-
 .logo {
   margin-bottom: 2rem;
 }

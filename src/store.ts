@@ -1,4 +1,4 @@
-import { createStore } from 'vuex';
+import { createStore } from "vuex";
 
 interface UserData {
   profileImg: string;
@@ -6,12 +6,12 @@ interface UserData {
   lastName: string;
   email: string;
   accountStatus: string;
-  [key: string]: string; // Add this index signature
+  login_with_google: string;
+  [key: string]: string;
 }
 
 interface State {
   user: UserData;
-  // ... other properties
 }
 
 const state: State = {
@@ -21,15 +21,14 @@ const state: State = {
     lastName: "",
     email: "",
     accountStatus: "",
+    login_with_google: "false",
   },
-  // ... other properties
 };
 
 const mutations = {
   updateUser(state: State, payload: { valueName: string; newValue: string }) {
     state.user[payload.valueName] = payload.newValue;
   },
-  // ... other mutations
 };
 
 const store = createStore({

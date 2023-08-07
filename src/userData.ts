@@ -8,6 +8,7 @@ interface UserData {
   lastName: string;
   email: string;
   accountStatus: string;
+  login_with_google: string;
 }
 
 const data = ref<UserData>({
@@ -16,6 +17,7 @@ const data = ref<UserData>({
   lastName: "",
   email: "",
   accountStatus: "",
+  login_with_google: "false",
 });
 
 export async function loadUserData() {
@@ -45,6 +47,10 @@ export async function loadUserData() {
         valueName: "profileImg",
         newValue: data.value.profileImg,
       });
+      store.commit("updateUser", {
+        valueName: "login_with_google",
+        newValue: data.value.login_with_google,
+      });
     } catch (error) {
       console.error(error);
     }
@@ -59,6 +65,7 @@ export function getUserData(): UserData | null {
       lastName: store.state.user.lastName,
       email: store.state.user.email,
       accountStatus: store.state.user.accountStatus,
+      login_with_google: store.state.user.login_with_google,
     };
   } catch (error) {
     console.error(error);
