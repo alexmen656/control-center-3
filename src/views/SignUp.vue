@@ -21,7 +21,50 @@
       <ion-grid>
         <ion-row>
           <ion-col size-md="2" size="0"></ion-col>
-          <ion-col size-md="8" size="12">
+          <ion-col size-md="8" size="12" v-if="createPasswordView">
+            <alert-message
+              v-if="errorMessage"
+              color="danger"
+              :message="{ title: 'Error!', content: errorMessage }"
+            ></alert-message>
+            <ion-item>
+              <ion-label position="floating">
+                Password<span style="color: red">*</span>
+              </ion-label>
+              <ion-input
+                type="password"
+                v-model="g_password"
+                :value="g_password"
+                @ionInput="g_password = $event.target.value"
+                placeholder="Enter your password"
+                fill="outline"
+              ></ion-input>
+            </ion-item>
+
+            <ion-item>
+              <ion-label position="floating"
+                >Confirm Password<span style="color: red">*</span></ion-label
+              >
+              <ion-input
+                type="password"
+                v-model="g_confirmPassword"
+                :value="g_confirmPassword"
+                @ionInput="g_confirmPassword = $event.target.value"
+                placeholder="Confirm your password"
+                fill="outline"
+              ></ion-input>
+            </ion-item>
+            <ion-button @click="onSignUpp()" type="submit" expand="block">
+              Continue</ion-button
+            >
+          </ion-col>
+
+          <ion-col size-md="8" size="12" v-else>
+            <alert-message
+              v-if="errorMessage"
+              color="danger"
+              :message="{ title: 'Error!', content: errorMessage }"
+            ></alert-message>
             <ion-grid>
               <ion-row>
                 <ion-col size-md="6" size="12">
@@ -100,37 +143,37 @@
                     ></ion-input>
                   </ion-item>
                 </ion-col>
+                <ion-col size-md="3" size="0"></ion-col>
+                <ion-col size-md="6" size="12">
+                  <ion-button
+                    size="medium"
+                    expand="full"
+                    color="primary"
+                    type="submit"
+                    @click="validateAndSignUp"
+                    >Sign Up</ion-button
+                  >
+
+                  <router-link to="/login"
+                    ><ion-button expand="full">Log In</ion-button></router-link
+                  >
+                  <ion-button
+                    color="light"
+                    type="button"
+                    expand="block"
+                    @click="continueWithGoogle()"
+                    ><img
+                      height="24"
+                      src="/assets/g-logo3.png"
+                      alt=""
+                    />Continue with Google</ion-button
+                  >
+                </ion-col>
+                <ion-col size-md="3" size="0"></ion-col>
               </ion-row>
             </ion-grid>
           </ion-col>
           <ion-col size-md="2" size="0"></ion-col>
-
-          <ion-col size=""></ion-col>
-
-          <ion-col size-md="5" size="12">
-            <ion-button
-              size="medium"
-              expand="full"
-              color="primary"
-              type="submit"
-              @click="validateAndSignUp"
-              >Sign Up</ion-button
-            >
-            <div class="line-between">
-              <br />
-              <hr />
-              already have an account ?
-              <hr />
-              <br />
-            </div>
-            <router-link to="/login"
-              ><ion-button expand="full">Log In</ion-button></router-link
-            >
-            <ion-item v-if="passwordsDoNotMatch" lines="none" color="danger">
-              Passwords do not match
-            </ion-item>
-          </ion-col>
-          <ion-col size=""></ion-col>
         </ion-row>
       </ion-grid>
     </ion-content>
@@ -155,6 +198,15 @@ import {
 import { defineComponent } from "vue";
 import axios from "axios";
 import qs from "qs";
+import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth";
+import AlertMessage from "@/components/AlertMessage.vue";
+
+GoogleAuth.initialize({
+  clientId:
+    "706582238302-k3e6bqv81en6u97gf8l5pq883p773236.apps.googleusercontent.com",
+  scopes: ["profile", "email"],
+  grantOfflineAccess: true,
+});
 
 export default defineComponent({
   components: {
@@ -167,6 +219,7 @@ export default defineComponent({
     IonLabel,
     IonInput,
     IonButton,
+    AlertMessage,
   },
   data() {
     return {
@@ -176,28 +229,121 @@ export default defineComponent({
       password: "",
       confirmPassword: "",
       passwordsDoNotMatch: false,
+      errorMessage: "",
+      createPasswordView: false,
+      user: {
+        email: "",
+        givenName: "",
+        familyName: "",
+        imageUrl: "",
+      },
+      g_password: "",
+      g_confirmPassword: "",
     };
   },
   methods: {
+    async continueWithGoogle() {
+      this.user = await GoogleAuth.signIn();
+
+      await axios
+        .post(
+          "/control-center/user.php",
+          qs.stringify({
+            checkEmailExists: "checkEmailExists",
+            email: this.user.email,
+          })
+        )
+        .then((res) => {
+          if (res.data.value == true) {
+            axios
+              .post(
+                "/control-center/login.php",
+                qs.stringify({
+                  email: this.user.email,
+                  loginWithGoogle: "loginWithGoogle",
+                })
+              )
+              .then(
+                (res) => {
+                  console.log(res.data);
+                  if (res.data.token) {
+                    localStorage.setItem("token", res.data.token);
+                    location.href = "/";
+                  } else if (res.data.errorMessage) {
+                    this.errorMessage = res.data.errorMessage;
+                  } else if (res.data.command) {
+                    if (res.data.command == "verify-ip") {
+                      this.verifyIP(res.data);
+                    }
+                    this.errorMessage = "send";
+                  }
+                },
+                (err) => {
+                  console.log(err);
+                  this.errorMessage = "Cannot connect to server";
+                }
+              );
+          } else if (res.data.value == false) {
+            this.createPasswordView = true;
+          }
+        });
+    },
+    async onSignUpp() {
+      if (
+        this.g_password.trim() === "" ||
+        this.g_confirmPassword.trim() === ""
+      ) {
+        this.errorMessage = "Please fill in all required fields.";
+        return;
+      }
+
+      if (this.g_password !== this.g_confirmPassword) {
+        this.errorMessage = "Passwords do not match.";
+        return;
+      }
+
+      axios
+        .post(
+          "/control-center/sign_up.php",
+          qs.stringify({
+            first_name: this.user.givenName,
+            last_name: this.user.familyName,
+            profile_img: this.user.imageUrl.replace("s96", "s512"),
+            email_adress: this.user.email,
+            password: this.g_password,
+            login_with_google: true,
+          })
+        )
+        .then((res) => {
+          if (res.data.token) {
+            localStorage.setItem("token", res.data.token);
+            location.href = "/pending-verification";
+          } else {
+            this.errorMessage =
+              "Sorry, an error occurred. Please try again later.";
+          }
+        });
+    },
+
     async validateAndSignUp() {
       if (
         this.firstName.trim() === "" ||
         this.email.trim() === "" ||
         this.password.trim() === ""
       ) {
-        alert("Please fill in all required fields.");
+        this.errorMessage = "Please fill in all required fields.";
         return;
       }
 
       if (this.password !== this.confirmPassword) {
-        this.passwordsDoNotMatch = true;
+        this.errorMessage = "Passwords do not match";
         return;
       }
 
       const emailExists = await this.emailAlreadyExists();
 
       if (emailExists == true) {
-        alert("This email has already been used.");
+        this.errorMessage = "This email has already been used.";
         return;
       }
 
@@ -227,6 +373,7 @@ export default defineComponent({
             last_name: this.lastName,
             email_adress: this.email,
             password: this.password,
+            login_with_google: false,
           })
         )
         .then((res) => {
@@ -234,9 +381,16 @@ export default defineComponent({
             localStorage.setItem("token", res.data.token);
             location.href = "/pending-verification";
           } else {
-            alert("Sorry, an error occurred. Please try again later.");
+            this.errorMessage =
+              "Sorry, an error occurred. Please try again later.";
           }
         });
+    },
+    verifyIP(data) {
+      localStorage.setItem("verification_email", data.verification_email);
+      localStorage.setItem("verification_name", data.verification_name);
+      localStorage.setItem("verification_token", data.verification_token);
+      location.href = "/login/verification/";
     },
   },
 });

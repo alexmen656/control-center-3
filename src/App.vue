@@ -70,6 +70,7 @@ import qs from "qs";
 import { getUserData } from "@/userData";
 import offlineTools from "@/offline/tools.json";
 import offlinePages from "@/offline/pages.json";
+import { SplashScreen } from "@capacitor/splash-screen";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAF53AYFblvyoeCHvXqUT--C5lnYf095VY",
@@ -139,7 +140,8 @@ export default defineComponent({
       // account_active: false
     };
   },
-  mounted() {
+  async mounted() {
+    await SplashScreen.hide();
     this.$watch(
       () => this.$route.params,
       () => {
@@ -223,33 +225,27 @@ export default defineComponent({
       if (isOnline.value) {
         //   alert("changed2");
 
-        axios
-          .post("/control-center/pages.php")
-          .then((response) => {
-            pages.value = response.data;
-            const foundPage = pages.value.find((p) => p["url"] === paramUrl);
+        axios.post("/control-center/pages.php").then((response) => {
+          pages.value = response.data;
+          const foundPage = pages.value.find((p) => p["url"] === paramUrl);
 
-            if (!foundPage) {
-              return;
-            }
+          if (!foundPage) {
+            return;
+          }
 
-            page.value = foundPage;
-            document.title = page.value.title;
-          });
+          page.value = foundPage;
+          document.title = page.value.title;
+        });
 
-        axios
-          .get("/control-center/sidebar.php")
-          .then((response) => {
-            tools.value = response.data.tools;
-            projects.value = response.data.projects;
-            localStorage.setItem("tools", JSON.stringify(tools.value));
-            localStorage.setItem("projects", JSON.stringify(projects.value));
-          });
+        axios.get("/control-center/sidebar.php").then((response) => {
+          tools.value = response.data.tools;
+          projects.value = response.data.projects;
+          localStorage.setItem("tools", JSON.stringify(tools.value));
+          localStorage.setItem("projects", JSON.stringify(projects.value));
+        });
 
         axios
-          .get(
-            "/control-center/bookmarks.php?getBookmarks=getBookmarks"
-          )
+          .get("/control-center/bookmarks.php?getBookmarks=getBookmarks")
           .then((response) => {
             bookmarks.value = response.data;
             localStorage.setItem("bookmarks", JSON.stringify(bookmarks.value));
@@ -310,9 +306,7 @@ export default defineComponent({
     updateSidebar() {
       const bookmarks = ref([]);
       axios
-        .get(
-          "/control-center/bookmarks.php?getBookmarks=getBookmarks"
-        )
+        .get("/control-center/bookmarks.php?getBookmarks=getBookmarks")
         .then((response) => {
           this.bookmarks = response.data;
           localStorage.setItem("bookmarks", this.bookmarks);

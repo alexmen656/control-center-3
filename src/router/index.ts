@@ -186,6 +186,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/PendingVerification.vue'),
   },
   {
+    path: '/my-account/account-security',
+    component: () => import('../views/AccountSecurity.vue'),
+  },
+  {
     path: '/:url(.*)',
     component: () => import('../views/PageViev.vue'),
   }

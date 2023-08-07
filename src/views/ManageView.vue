@@ -15,10 +15,7 @@
                 </ion-item>
                 <ion-item-options>
                   <!--    <ion-item-option @click="favorite(project)">Favorisieren</ion-item-option>-->
-                  <ion-item-option
-                    @click="info(project)"
-                    color="medium"
-                    
+                  <ion-item-option @click="info(project)" color="medium"
                     ><ion-icon
                       class="delete-icon"
                       name="information-circle-outline"
@@ -148,8 +145,8 @@ export default defineComponent({
     }
 
     function info(project) {
-     // this.$router.push('/project/'+project.link+'/info');
-     location.href = '/project/'+project.link+'/info';
+      // this.$router.push('/project/'+project.link+'/info');
+      location.href = "/project/" + project.link + "/info";
     }
     function submit() {
       if (this.name != "") {
@@ -185,7 +182,7 @@ export default defineComponent({
       favorite,
       deleteee,
       submit,
-      info
+      info,
     };
   },
 });

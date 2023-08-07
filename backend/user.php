@@ -20,22 +20,34 @@ if ($headers['Authorization']) {
         } elseif (isset($_REQUEST['updateProfileImage']) && isset($_REQUEST['data']) && isset($_REQUEST['name'])) {
             $baseData = escape_string($_REQUEST['data']);
             $fileName = escape_string($_REQUEST['name']);
-            echo 222;
             query("UPDATE control_center_users SET profileImg='$fileName' WHERE loginToken='$token'");
             if (createFile('images/profileImages/' . $fileName, $baseData, 0777)) {
                 echo "file created";
             }
 
+        } elseif (isset($_REQUEST['updateLoginWithGoogle']) && isset($_REQUEST['newValue'])) {
+            $newValue = escape_string($_REQUEST['newValue']);
+            if(query("UPDATE control_center_users SET login_with_google='$newValue' WHERE loginToken='$token'")){
+                echo "Success!";
+            }
         } else {
             $data = fetch_assoc($data);
-            if ($data['profileImg'] != "avatar") {
+            if ($data['profileImg'] != "avatar" && $data['profileImg'] != "google") {
                 $data['profileImg'] = file_get_contents('images/profileImages/' . $data['profileImg']);
+            }elseif($data['profileImg'] == "google"){
+                $userID = $data['userID'];
+                $select = query("SELECT * FROM control_center_google_profile_images WHERE userID=$userID");
+                if(mysqli_num_rows($select) == 1){
+                    $data['profileImg'] = fetch_assoc($select)['image'];
+                }
             }
+
             $json['profileImg'] = $data['profileImg'];
             $json['firstName'] = $data['firstname'];
             $json['lastName'] = $data['lastname'];
             $json['email'] = $data['email'];
             $json['userID'] = $data['userID'];
+            $json['login_with_google'] = $data['login_with_google'];
             $json['accountStatus'] = $data['account_status'];
             echo preg_replace('/^\h*\v+/m', '', echoJson($json));
         }
@@ -53,10 +65,6 @@ if ($headers['Authorization']) {
     $email = escape_string($_POST['email']);
     $data = query("SELECT * FROM control_center_users WHERE email='$email'");
     if (mysqli_num_rows($data) > 0) {
-
-        // $data = fetch_assoc($data);
-        //print_r($data);
-        //$json['token'] = $data['loginToken'];
         $value['value'] = true;
     } else {
         $value['value'] = false;

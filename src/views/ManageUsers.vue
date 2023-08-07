@@ -20,6 +20,7 @@
             <th>Last Name</th>
             <th>E-Mail</th>
             <th>Password</th>
+            <th>Google LogIn</th>
             <th>Account Status</th>
             <th>Approve</th>
           </tr>
@@ -30,7 +31,8 @@
             <td>{{ tr[3] }}</td>
             <td>{{ tr[4] }}</td>
             <td>{{ tr[5] }}</td>
-            <td>{{ tr[7] }}</td>
+            <td>{{ tr[6] }}</td>
+            <td>{{ tr[8] }}</td>
             <td>
               <ion-button color="success" size="small" @click="approve(tr[0])"
                 >Approve</ion-button
