@@ -67,7 +67,7 @@ import { initializeApp } from "firebase/app";
 import { useRoute } from "vue-router";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import qs from "qs";
-import { getUserData } from "@/userData";
+import { loadUserData, getUserData } from "@/userData";
 import offlineTools from "@/offline/tools.json";
 import offlinePages from "@/offline/pages.json";
 import { SplashScreen } from "@capacitor/splash-screen";
@@ -162,6 +162,9 @@ export default defineComponent({
 
     this.loadPageData();
   },
+  async created(){
+    await loadUserData();
+  },
   setup() {
     const pages = ref([]);
     const page = ref({});
@@ -189,8 +192,7 @@ export default defineComponent({
       ) {
         ionRouter.push("/login");
       }
-
-      const userData = await getUserData();
+      const userData = getUserData();
 
       if (
         userData.accountStatus == "pending_verification" &&

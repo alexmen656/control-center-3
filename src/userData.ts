@@ -1,30 +1,65 @@
 import axios from "axios";
 import { ref } from "vue";
-const data = ref({});
+import store from "@/store";
 
-//localStorage.setItem("firstName", "Alex")
-//localStorage.setItem("lastName", "Polan")
-//localStorage.setItem("email", "alexx.polan1@gmail.com")
+interface UserData {
+  profileImg: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  accountStatus: string;
+}
 
-export async function getUserData() {
-  try {
-    if (navigator.onLine) {
-      const response = await axios.post(
+const data = ref<UserData>({
+  profileImg: "",
+  firstName: "",
+  lastName: "",
+  email: "",
+  accountStatus: "",
+});
+
+export async function loadUserData() {
+  if (navigator.onLine) {
+    try {
+      const response = await axios.post<UserData>(
         "https://alex.polan.sk/control-center/user.php"
       );
       data.value = response.data;
-    } else {
-      const daten = {
-        firstName: localStorage.getItem("firstName"),
-        lastName: localStorage.getItem("lastName"),
-        email: localStorage.getItem("email"),
-        accountStatus: localStorage.getItem("email"),
-
-      };
-      data.value = daten;
+      store.commit("updateUser", {
+        valueName: "firstName",
+        newValue: data.value.firstName,
+      });
+      store.commit("updateUser", {
+        valueName: "lastName",
+        newValue: data.value.lastName,
+      });
+      store.commit("updateUser", {
+        valueName: "email",
+        newValue: data.value.email,
+      });
+      store.commit("updateUser", {
+        valueName: "accountStatus",
+        newValue: data.value.accountStatus,
+      });
+      store.commit("updateUser", {
+        valueName: "profileImg",
+        newValue: data.value.profileImg,
+      });
+    } catch (error) {
+      console.error(error);
     }
+  }
+}
 
-    return data.value;
+export function getUserData(): UserData | null {
+  try {
+    return {
+      profileImg: store.state.user.profileImg,
+      firstName: store.state.user.firstName,
+      lastName: store.state.user.lastName,
+      email: store.state.user.email,
+      accountStatus: store.state.user.accountStatus,
+    };
   } catch (error) {
     console.error(error);
     return null;

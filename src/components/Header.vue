@@ -59,13 +59,21 @@ export default defineComponent({
     IonButtons,
     Avatar,
   },
-  async mounted() {
-    const data = await getUserData();
+  data() {
+    return {
+      //user: {},
+    };
+  },
+  created() {
+    const data = getUserData();
+    console.log(data);
     this.user = data;
   },
   setup() {
     const user = ref({});
     const width = document.body.clientWidth;
+    const data = getUserData();
+
     const response = axios
       .post("https://alex.polan.sk/control-center/user.php")
       .then((responseee) => {

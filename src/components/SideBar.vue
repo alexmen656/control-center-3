@@ -3,32 +3,87 @@
     <ion-content>
       <ion-list id="inbox-list">
         <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
-      <ion-item button @click="this.selectedIndex = i" lines="none" detail="false" :router-link="'/' +p.name[0].toLowerCase() + p.name.substring(1)" class="hydrated menu-item" :class="{ selected: this.selectedIndex === i }">
+          <ion-item
+            button
+            @click="this.selectedIndex = i"
+            lines="none"
+            detail="false"
+            :router-link="'/' + p.name[0].toLowerCase() + p.name.substring(1)"
+            class="hydrated menu-item"
+            :class="{ selected: this.selectedIndex === i }"
+          >
             <ion-icon slot="start" :name="p.icon"></ion-icon>
-            <ion-label>{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
+            <ion-label
+              >{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label
+            >
           </ion-item>
-          
         </ion-menu-toggle>
-
-
-
       </ion-list>
-      <ion-note class="projects-headline"><h4>Projects</h4><div><router-link to="/manage/projects/"><ion-icon style="color: var(--ion-color-medium-shade)" name="ellipsis-horizontal-circle-outline"/></router-link><router-link to="/info/projects/"><ion-icon style="color: var(--ion-color-medium-shade)" name="information-circle-outline"></ion-icon></router-link><router-link to="/new/project/"><ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link></div></ion-note>
+      <ion-note class="projects-headline"
+        ><h4>Projects</h4>
+        <div>
+          <router-link to="/manage/projects/"
+            ><ion-icon
+              style="color: var(--ion-color-medium-shade)"
+              name="ellipsis-horizontal-circle-outline" /></router-link
+          ><router-link to="/info/projects/"
+            ><ion-icon
+              style="color: var(--ion-color-medium-shade)"
+              name="information-circle-outline"
+            ></ion-icon></router-link
+          ><router-link to="/new/project/"
+            ><ion-icon
+              style="color: var(--ion-color-medium-shade)"
+              name="add-circle-outline"
+            ></ion-icon
+          ></router-link></div
+      ></ion-note>
       <ion-list>
         <ion-menu-toggle auto-hide="false" v-for="(p, i) in projects" :key="i">
-      <ion-item button lines="none" detail="false" @click="goToProject(p.name)" class="hydrated menu-item"><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
+          <ion-item
+            button
+            lines="none"
+            detail="false"
+            @click="goToProject(p.name)"
+            class="hydrated menu-item"
+            ><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
             <ion-icon slot="start" :name="p.icon"></ion-icon>
-            <ion-label>{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
+            <ion-label
+              >{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label
+            >
           </ion-item>
         </ion-menu-toggle>
       </ion-list>
- 
-      <ion-note class="projects-headline"><h4>Bookmarks</h4><div><router-link to="/manage/bookmarks/"><ion-icon style="color: var(--ion-color-medium-shade)" name="ellipsis-horizontal-circle-outline"/></router-link><router-link to="/info/bookmarks/"><ion-icon style="color: var(--ion-color-medium-shade)" name="information-circle-outline"></ion-icon></router-link><!--<router-link to="/new/bookmark/"><ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>--></div></ion-note>
+
+      <ion-note class="projects-headline"
+        ><h4>Bookmarks</h4>
+        <div>
+          <router-link to="/manage/bookmarks/"
+            ><ion-icon
+              style="color: var(--ion-color-medium-shade)"
+              name="ellipsis-horizontal-circle-outline" /></router-link
+          ><router-link to="/info/bookmarks/"
+            ><ion-icon
+              style="color: var(--ion-color-medium-shade)"
+              name="information-circle-outline"
+            ></ion-icon></router-link
+          ><!--<router-link to="/new/bookmark/"><ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>-->
+        </div></ion-note
+      >
       <ion-list>
         <ion-menu-toggle auto-hide="false" v-for="(p, i) in bookmarks" :key="i">
-      <ion-item button lines="none" detail="false" @click="goToBookmark(p.location)" class="hydrated menu-item"><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
+          <ion-item
+            button
+            lines="none"
+            detail="false"
+            @click="goToBookmark(p.location)"
+            class="hydrated menu-item"
+            ><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
             <ion-icon slot="start" :name="p.icon"></ion-icon>
-            <ion-label>{{ p.title[0].toUpperCase() }}{{ p.title.substring(1) }}</ion-label>
+            <ion-label
+              >{{ p.title[0].toUpperCase()
+              }}{{ p.title.substring(1) }}</ion-label
+            >
           </ion-item>
         </ion-menu-toggle>
       </ion-list>
@@ -37,9 +92,18 @@
 </template>
 
 <script>
-import { IonContent, IonIcon, IonItem, IonLabel, IonList, IonMenu, IonMenuToggle, IonNote } from '@ionic/vue';
-import { defineComponent, ref } from 'vue';
-import axios from 'axios';
+import {
+  IonContent,
+  IonIcon,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonMenu,
+  IonMenuToggle,
+  IonNote,
+} from "@ionic/vue";
+import { defineComponent, ref } from "vue";
+import axios from "axios";
 
 export default defineComponent({
   name: "SideBar",
@@ -51,28 +115,33 @@ export default defineComponent({
     IonMenu,
     IonMenuToggle,
     IonList,
-    IonNote
+    IonNote,
   },
-props: {
-  tools: Array,
-  bookmarks: Array,
-  projects: Array
-},
+  props: {
+    tools: Array,
+    bookmarks: Array,
+    projects: Array,
+  },
   methods: {
-    goToProject(name){
-      window.location.href = '/project/' +(name[0].toLowerCase() + name.substring(1)).replaceAll(` `, `-`).replaceAll(`'`, ``).toLowerCase();
+    goToProject(name) {
+      window.location.href =
+        "/project/" +
+        (name[0].toLowerCase() + name.substring(1))
+          .replaceAll(` `, `-`)
+          .replaceAll(`'`, ``)
+          .toLowerCase();
     },
-    goToBookmark(link){
+    goToBookmark(link) {
       window.location.href = link;
-    }
+    },
   },
 
-  setup(){
+  setup() {
     const selectedIndex = ref(0);
     return {
       selectedIndex,
-    }
-  }
+    };
+  },
 });
 </script>
 
@@ -102,9 +171,9 @@ ion-menu.md ion-list {
   padding: 20px 0;
 }
 
-ion-list{
+ion-list {
   border-bottom: 1px solid var(--ion-color-step-150, #d7d8da);
-margin-bottom: 1rem;
+  margin-bottom: 1rem;
 }
 
 ion-menu.md ion-note {
@@ -212,22 +281,24 @@ ion-item.selected {
   --color: var(--ion-color-primary);
 }
 
-a{
+a {
   text-decoration: none;
   color: red;
 }
 
-ion-header, ion-toolbar, .header{
+ion-header,
+ion-toolbar,
+.header {
   --background: #000;
 }
 
 .mobile-only {
-    display: none;
-  }
+  display: none;
+}
 
-  .desktop-only {
-    display: block;
-  }
+.desktop-only {
+  display: block;
+}
 
 @media only screen and (max-width: 600px) {
   .only-web {
@@ -243,7 +314,8 @@ ion-header, ion-toolbar, .header{
   }
 }
 
-router-link,a {
+router-link,
+a {
   color: red;
 }
 
@@ -256,22 +328,22 @@ a {
 }
 
 .link-container {
-    display: flex;
-    justify-content: center;
-  }
-  ion-footer ion-toolbar {
-    color: #000;
-  }
+  display: flex;
+  justify-content: center;
+}
+ion-footer ion-toolbar {
+  color: #000;
+}
 
-  ion-title {
-    color: white;
-  }
-  .link {
-    text-decoration: none;
-  }
+ion-title {
+  color: white;
+}
+.link {
+  text-decoration: none;
+}
 
-  ion-menu.md ion-item.selected {
-  --background: rgba(255,0,0, 0.14) !important;
+ion-menu.md ion-item.selected {
+  --background: rgba(255, 0, 0, 0.14) !important;
 }
 
 ion-item.selected {
@@ -298,9 +370,9 @@ ion-item:focus {
   margin-top: 12px;
 }
 
-.projects-headline > h4{
+.projects-headline > h4 {
   margin: 0;
-  margin-top: .35rem !important;
+  margin-top: 0.35rem !important;
   padding: 0;
 }
 
@@ -308,4 +380,3 @@ ion-item:focus {
   cursor: default;
 }
 </style>
-
