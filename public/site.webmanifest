@@ -1,0 +1,14 @@
+{
+    "name": "Control Center",
+    "short_name": "Control Center",
+    "icons": [
+        {
+          "src": "/assets/icon/icon.png",
+          "sizes": "512x512",
+          "type": "image&#x2F;png"
+        }
+      ],
+    "theme_color": "#000",
+    "background_color": "#000",
+    "display": "standalone"
+}
