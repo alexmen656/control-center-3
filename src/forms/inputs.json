@@ -1,0 +1,51 @@
+{
+  "title": "Sign Up",
+  "inputs": [
+    {
+      "type": "text",
+      "name": "First Name",
+      "placeholder": "John"
+    },
+    {
+      "type": "text",
+      "name": "Last Name",
+      "placeholder": "Due"
+    },
+    {
+      "type": "email",
+      "name": "email",
+      "placeholder": "Email"
+    },
+    {
+      "type": "number",
+      "name": "Age",
+      "placeholder": "56"
+    },
+    {
+      "type": "select",
+      "name": "Gender",
+      "placeholder": "Select Option",
+      "options": [
+        {
+          "label": "Male",
+          "value": "male"
+        },
+        {
+          "label": "Female",
+          "value": "female"
+        }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "name": "Accept Terms of Use",
+      "default": false
+    }
+  ],
+  "submit": {
+    "type": "button",
+    "fill": "outline",
+    "color": "danger",
+    "label": "Submit"
+  }
+}
