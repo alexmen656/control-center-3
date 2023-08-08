@@ -1,13 +1,13 @@
 <template>
-    <ion-input
-      :value="modelValue"
-      @input="updateContent"
-      :label="label"
-      label-placement="floating"
-      fill="outline"
-      :placeholder="placeholder"
-      :type="type"
-    />
+  <ion-input
+    :value="modelValue"
+    @input="updateContent"
+    :label="label"
+    label-placement="floating"
+    fill="outline"
+    :placeholder="placeholder"
+    :type="type"
+  />
 </template>
 
 <script setup>

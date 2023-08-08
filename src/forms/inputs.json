@@ -3,27 +3,32 @@
   "inputs": [
     {
       "type": "text",
-      "name": "First Name",
+      "name": "first_name",
+      "label": "First Name",
       "placeholder": "John"
     },
     {
       "type": "text",
-      "name": "Last Name",
+      "name": "last_name",
+      "label": "Last Name",
       "placeholder": "Due"
     },
     {
       "type": "email",
       "name": "email",
-      "placeholder": "Email"
+      "label": "Email",
+      "placeholder": "john.doe@example.com"
     },
     {
       "type": "number",
-      "name": "Age",
+      "name": "age",
+      "label": "Age",
       "placeholder": "56"
     },
     {
       "type": "select",
-      "name": "Gender",
+      "name": "gender",
+      "label": "Gender",
       "placeholder": "Select Option",
       "options": [
         {
@@ -38,7 +43,8 @@
     },
     {
       "type": "checkbox",
-      "name": "Accept Terms of Use",
+      "name": "accept-terms-of-use",
+      "label": "Accept Terms of Use",
       "default": false
     }
   ],
