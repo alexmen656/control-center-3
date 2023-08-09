@@ -18,7 +18,9 @@
       :type="input.type"
     />
   </div>
-  <ion-button @click="submit()">Submit</ion-button>
+  <form @submit.prevent="submit">
+    <ion-button type="submit">Submit</ion-button>
+  </form>
   <div v-for="iV in inputValues" :key="iV">
     {{ iV }}
   </div>
@@ -27,7 +29,6 @@
 import FloatingInput from "@/components/FloatingInput.vue";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 import FloatingCheckbox from "@/components/FloatingCheckbox.vue";
-import form from "@/forms/inputs.json";
 
 export default {
   name: "DisplayForm",
@@ -36,13 +37,19 @@ export default {
     FloatingSelect,
     FloatingCheckbox,
   },
+  props: {
+    form: {
+      type: Object,
+      required: true,
+    },
+  },
+  created() {
+    this.inputs = this.form.inputs;
+  },
   data() {
     return {
       inputValues: [],
     };
-  },
-  created() {
-    this.inputs = form.inputs;
   },
   methods: {
     submit() {
@@ -51,7 +58,7 @@ export default {
         formData[input.name] = this.inputValues[index];
       });
 
-      console.log(formData);
+      this.$emit("submit", formData);
     },
   },
 };
