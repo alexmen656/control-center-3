@@ -13,7 +13,7 @@
     <FloatingInput
       v-if="input.type != 'select' && input.type != 'checkbox'"
       v-model="inputValues[index]"
-      :label="input.name"
+      :label="input.label"
       :placeholder="input.placeholder"
       :type="input.type"
     />

@@ -105,12 +105,12 @@ const routes: Array<RouteRecordRaw> = [
   /*{
     path: '/project/:project/',
     component: () => import('../views/ProjectView.vue'),
-  },
+  },*/
   {
     path: '/project/:project/new-tool/',
     component: () => import('../views/NewTool.vue'),
   },
-  {
+  /*{
     path: '/project/:project/filemanager',
     component: () => import('../views/ProjectView.vue'),
   },
