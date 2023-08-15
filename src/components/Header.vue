@@ -23,29 +23,14 @@
 
 <script>
 import {
-  IonApp,
-  IonContent,
-  IonIcon,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonListHeader,
-  IonMenu,
-  IonMenuToggle,
-  IonNote,
-  IonRouterOutlet,
-  IonSplitPane,
-  IonSearchbar,
-  IonButton,
   IonTitle,
-  IonFooter,
   IonMenuButton,
   IonToolbar,
   IonHeader,
   IonButtons,
 } from "@ionic/vue";
 import Avatar from "@/components/AvatarComponent.vue";
-import axios from "axios";
+//import axios from "axios";
 import { defineComponent, ref } from "vue";
 import { getUserData } from "@/userData";
 
@@ -72,13 +57,13 @@ export default defineComponent({
   setup() {
     const user = ref({});
     const width = document.body.clientWidth;
-    const data = getUserData();
+   // const data = getUserData();
 
-    const response = axios
+   /* const response = axios
       .post("https://alex.polan.sk/control-center/user.php")
       .then((responseee) => {
         user.value = responseee.data;
-      }); //, {token: localStorage.getItem('token')
+      });*/ //, {token: localStorage.getItem('token')
 
     const title = width > 380 ? "Control Center" : "CCenter";
 

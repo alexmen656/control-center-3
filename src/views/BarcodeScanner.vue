@@ -45,7 +45,7 @@ export default {
           qs.stringify({ getProductByCode: "getProductByCode", code: text })
         )
         .then((res) => {
-          audio.play().then((kg) => {
+          audio.play().then(() => {
             alert(res.data.title + "\n" + res.data.price + "€");
           });
 
@@ -76,7 +76,7 @@ export default {
             // Senden Sie das Push-Abonnementobjekt an Ihren Server
             axios
               .post("/api/subscribe", subscription)
-              .then((response) => {
+              .then(() => {//response
                 alert("Push-Abonnement erfolgreich gespeichert");
               })
               .catch((error) => {

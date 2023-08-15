@@ -103,7 +103,7 @@ import {
   IonNote,
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
-import axios from "axios";
+//import axios from "axios";
 
 export default defineComponent({
   name: "SideBar",

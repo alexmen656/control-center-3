@@ -110,9 +110,9 @@
 <script>
 import {
   IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
+  //IonHeader,
+  //IonToolbar,
+  //IonTitle,
   IonContent,
   IonList,
   IonItem,

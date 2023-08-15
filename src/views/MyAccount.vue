@@ -88,10 +88,10 @@ import {
   IonCard,
   IonCardHeader,
   IonCardTitle,
-  IonButton,
+  //IonButton,
   IonAvatar,
 } from "@ionic/vue";
-import { defineComponent, ref } from "vue";
+import { defineComponent } from "vue";//, ref
 import { getUserData } from "@/userData";
 import AvatarLarge from "@/components/AvatarLarge.vue";
 

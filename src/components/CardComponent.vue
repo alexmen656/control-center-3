@@ -13,8 +13,8 @@
 </template>
 
 <script>
-import { useRoute } from "vue-router";
-import { defineComponent, ref } from "vue";
+//import { useRoute } from "vue-router";
+import { defineComponent } from "vue";//, ref
 import {
   IonCard,
   IonCardContent,

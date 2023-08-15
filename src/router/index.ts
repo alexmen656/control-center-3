@@ -3,7 +3,7 @@ import { RouteRecordRaw } from 'vue-router';
 //import PageView from '../views/PageViev.vue'
 import LogIn from '../views/LogIn.vue'
 import LogInVerification from '../views/LogInVerification.vue'
-import MessagesView from '../views/MesagesView.vue'
+//import MessagesView from '../views/MesagesView.vue'
 import ChatsView from '../views/ChatsView.vue'
 import DatabasesView from '../views/ Databases.vue'
 import TableDetail from '../views/TableDetail.vue'

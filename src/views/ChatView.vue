@@ -52,8 +52,8 @@
 import Avatar from "@/components/AvatarComponent.vue";
 import axios from "axios";
 import qs from "qs";
-import { ref, onMounted } from "vue";
-import { useRoute } from "vue-router";
+//import { ref, onMounted } from "vue";
+//import { useRoute } from "vue-router";
 import { getUserData } from "@/userData";
 import {
   IonPage,

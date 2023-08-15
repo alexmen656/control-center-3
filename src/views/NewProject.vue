@@ -42,14 +42,11 @@ import axios from "axios";
 import qs from "qs";
 import {
   IonPage,
+  IonGrid,
   IonContent,
   IonCol,
-  IonList,
-  IonCard,
+  IonButton,
   IonInput,
-  IonToolbar,
-  IonTitle,
-  IonHeader,
   IonLabel,
   IonRow,
   IonItem,
@@ -59,11 +56,15 @@ export default {
   name: "NewProject",
 
   components: {
-    IonItem,
-    IonLabel,
-    IonInput,
     IonPage,
+    IonGrid,
     IonContent,
+    IonCol,
+    IonButton,
+    IonInput,
+    IonLabel,
+    IonRow,
+    IonItem,
   },
   data() {
     return {
@@ -81,7 +82,7 @@ export default {
               projectName: this.name,
             })
           )
-          .then((res) => {
+          .then(() => {//res
             alert("Project created successfull");
           });
       } else {

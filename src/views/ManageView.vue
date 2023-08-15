@@ -129,7 +129,7 @@ export default defineComponent({
               projectID: project.id,
             })
           )
-          .then((res) => {
+          .then(() => {//res
             alert("Project deleted successfull");
             axios
               .get("/control-center/projects.php")
@@ -159,7 +159,7 @@ export default defineComponent({
               projectName: this.name,
             })
           )
-          .then((res) => {
+          .then(() => {//res
             alert("Project created successfull");
             console.log("Hier!!");
             axios

@@ -255,7 +255,7 @@ export default defineComponent({
             project: this.$route.params.project,
           })
         )
-        .then((res) => {
+        .then(() => {//res
           axios.post(
             "/control-center/tools.php",
             qs.stringify({

@@ -306,7 +306,7 @@ export default defineComponent({
 
   methods: {
     updateSidebar() {
-      const bookmarks = ref([]);
+ //     const bookmarks = ref([]);
       axios
         .get("/control-center/bookmarks.php?getBookmarks=getBookmarks")
         .then((response) => {

@@ -108,7 +108,7 @@ export default {
             "https://alex.polan.sk/control-center/bookmarks.php?deleteBookmark=deleteBookmark&location=" +
               this.siteLocation
           )
-          .then((response) => {
+          .then(() => {//response
             this.$emit("updateSidebar");
           });
       } else {
@@ -122,7 +122,7 @@ export default {
               "&location=" +
               this.siteLocation
           )
-          .then((response) => {
+          .then(() => {//response
             this.$emit("updateSidebar");
           });
       }

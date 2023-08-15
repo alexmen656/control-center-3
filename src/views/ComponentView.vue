@@ -41,7 +41,7 @@
 <script>
 import axios from "axios";
 import qs from "qs";
-import { useRoute } from "vue-router";
+//import { useRoute } from "vue-router";
 import CodeEditor from "simple-code-editor";
 import { IonButton, IonGrid, IonRow, IonCol } from "@ionic/vue";
 

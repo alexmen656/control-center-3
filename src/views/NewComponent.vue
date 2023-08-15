@@ -58,30 +58,30 @@
 
 <script>
 import axios from "axios";
-import qs from "qs";
 import {
   IonPage,
+  IonGrid,
   IonContent,
   IonCol,
-  IonList,
-  IonCard,
   IonInput,
-  IonToolbar,
-  IonTitle,
-  IonHeader,
   IonLabel,
   IonRow,
   IonItem,
+  IonButton
 } from "@ionic/vue";
 
 export default {
   name: "NewProject",
   components: {
-    IonItem,
-    IonLabel,
-    IonInput,
     IonPage,
+    IonGrid,
     IonContent,
+    IonCol,
+    IonInput,
+    IonLabel,
+    IonRow,
+    IonItem,
+    IonButton
   },
   data() {
     return {

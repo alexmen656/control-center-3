@@ -117,7 +117,7 @@ export default defineComponent({
               project: this.$route.params.project,
             })
           )
-          .then((res) => {
+          .then(() => {//res
             alert("Tool deleted successfull");
             axios
               .post(

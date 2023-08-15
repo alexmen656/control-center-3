@@ -108,7 +108,7 @@ export default defineComponent({
             "/control-center/tools.php",
             qs.stringify({ deleteTool: "deleteTool", toolID: tool.id })
           )
-          .then((res) => {
+          .then(() => {//res
             alert("Tool deleted successfull");
             axios
               .get(

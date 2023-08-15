@@ -142,7 +142,7 @@ import {
   IonIcon,
   IonTitle,
 } from "@ionic/vue";
-import { OverlayEventDetail } from "@ionic/core/components";
+//import { OverlayEventDetail } from "@ionic/core/components";
 import axios from "axios";
 import qs from "qs";
 

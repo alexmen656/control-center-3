@@ -1,8 +1,8 @@
-import {ref, onMounted, watch, resolveComponent} from 'vue';
+import {ref, onMounted, watch} from 'vue';//, resolveComponent
 import { Camera, CameraResultType, CameraSource, CameraPhoto } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Storage } from '@capacitor/storage';
-import axios from 'axios';
+//import axios from 'axios';
 
 
 export interface Photo {
