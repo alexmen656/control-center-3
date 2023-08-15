@@ -183,9 +183,9 @@
 <script>
 import {
   IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
+  //IonHeader,
+//  IonToolbar,
+  //IonTitle,
   IonContent,
   IonGrid,
   IonRow,
@@ -194,6 +194,7 @@ import {
   IonLabel,
   IonInput,
   IonButton,
+
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import axios from "axios";

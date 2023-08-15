@@ -3,7 +3,7 @@
     <ion-content>
       <ion-grid>
         <ion-row>
-          <ion-col size="1"></ion-col>
+          <ion-col size="1" />
           <ion-col size="10" v-if="formView">
             <ion-input
               v-model="title"
@@ -95,10 +95,10 @@
             size="10"
             v-else
           >
-            <ion-list style="width: 100%">
-              <ion-item style="width: 100%">
+            <ion-list class="w100">
+              <ion-item class="w100">
                 <ion-select
-                  aria-label="Fruit"
+                  aria-label="Tool"
                   interface="action-sheet"
                   placeholder="Select Tool"
                   v-model="selectedTool"
@@ -109,13 +109,10 @@
                     v-for="tool in tools"
                     :key="tool.id"
                     :value="tool.name"
-                    ><ion-icon slot="start" :name="tool.icon" />
+                  >
                     {{ tool.name }}</ion-select-option
                   >
-                  <ion-select-option value="form"
-                    ><ion-icon slot="start" name="document-text-outline" />
-                    Form</ion-select-option
-                  >
+                  <ion-select-option value="form"> Form</ion-select-option>
                 </ion-select>
               </ion-item>
             </ion-list>
@@ -125,7 +122,7 @@
               >Submit</ion-button
             >
           </ion-col>
-          <ion-col size="1"></ion-col>
+          <ion-col size="1" />
         </ion-row>
       </ion-grid>
     </ion-content>
@@ -247,9 +244,28 @@ export default defineComponent({
         })),
       };
 
-      const jsonData = JSON.stringify(formData, null, 2);
-      console.log("Created JSON Data:", jsonData);
-      this.jsonData = jsonData;
+      this.jsonData = JSON.stringify(formData, null, 2);
+      axios
+        .post(
+          "/control-center/form.php",
+          qs.stringify({
+            create_form: "create_form",
+            form: this.jsonData,
+            name: this.title.toLowerCase().replace(/\s+/g, "-"),
+            project: this.$route.params.project,
+          })
+        )
+        .then((res) => {
+          axios.post(
+            "/control-center/tools.php",
+            qs.stringify({
+              newTool: "newTool",
+              toolIcon: "document-text-outline",
+              projectName: this.$route.params.project,
+              toolName: this.title,
+            })
+          );
+        });
     },
   },
   components: {
@@ -268,3 +284,8 @@ export default defineComponent({
   },
 });
 </script>
+<style scoped>
+.w100 {
+  width: 100%;
+}
+</style>

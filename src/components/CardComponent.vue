@@ -21,12 +21,12 @@ import {
   IonCardHeader,
   IonCardTitle,
 } from "@ionic/vue";
-import {
-  basketballOutline,
-  medkitOutline,
-  desktopOutline,
-  analyticsOutline,
-  peopleOutline,
+/*import {
+ // basketballOutline,
+//  medkitOutline,
+  //desktopOutline,
+  //analyticsOutline,
+ peopleOutline,
   earthOutline,
   fitnessOutline,
   handRightOutline,
@@ -40,7 +40,7 @@ import {
   rocketOutline,
   bandageOutline,
   search,
-} from "ionicons/icons";
+} from "ionicons/icons";*/
 
 export default defineComponent({
   name: "CardcCmponent",

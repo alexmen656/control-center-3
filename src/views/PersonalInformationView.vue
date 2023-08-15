@@ -126,7 +126,7 @@ import {
 import { defineComponent } from "vue";
 import axios from "axios";
 import qs from "qs";
-import { usePhotoGallery, Photo } from "@/composables/updateProfileImage";
+import { usePhotoGallery } from "@/composables/updateProfileImage";//, Photo
 import { getUserData } from "@/userData";
 
 export default defineComponent({

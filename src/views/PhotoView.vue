@@ -34,7 +34,7 @@ import {
   IonCol,
   IonImg,
 } from "@ionic/vue";
-import { usePhotoGallery, Photo } from "@/composables/usePhotoGallery";
+import { usePhotoGallery } from "@/composables/usePhotoGallery";//, Photo
 //import '@/checkLogin';
 
 export default {

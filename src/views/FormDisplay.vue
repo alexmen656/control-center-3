@@ -1,17 +1,24 @@
 <template>
-  <DisplayForm :form="form" @submit="handleSubmit"></DisplayForm>
+  <div>
+    <DisplayForm :form="form" @submit="handleSubmit" />
+  </div>
 </template>
+
 <script>
 import DisplayForm from "@/components/DisplayForm.vue";
-import form from "@/forms/inputs.json";
+import axios from "axios";
+import qs from "qs";
+import { getForm } from "@/form";
 
 export default {
   name: "FormDisplay",
   components: {
     DisplayForm,
   },
-  created() {
-    this.form = form;
+  data() {
+    return {
+      form: {},
+    };
   },
   methods: {
     handleSubmit(data) {

@@ -190,12 +190,8 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/AccountSecurity.vue'),
   },
   {
-    path: '/display-form',
+    path: '/project/:project/:form',
     component: () => import('../views/FormDisplay.vue'),
-  },
-  {
-    path: '/create-form',
-    component: () => import('../views/CreateForm.vue'),
   },
   {
     path: '/:url(.*)',

@@ -54,7 +54,7 @@ export default {
               project: route.params.project,
             })
           )
-          .then((res) => {
+          .then(() => {//res
             alert("Data successful submitted!!!");
             //reload();
           });
@@ -75,7 +75,7 @@ export default {
               project: route.params.project,
             })
           )
-          .then((res) => {
+          .then(() => {//res
             alert("Data successful changed!!!");
             //reload();
           });

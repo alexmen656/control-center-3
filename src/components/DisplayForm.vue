@@ -29,6 +29,9 @@
 import FloatingInput from "@/components/FloatingInput.vue";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 import FloatingCheckbox from "@/components/FloatingCheckbox.vue";
+import { IonButton } from "@ionic/vue";
+import qs from "qs";
+import axios from "axios";
 
 export default {
   name: "DisplayForm",
@@ -36,21 +39,30 @@ export default {
     FloatingInput,
     FloatingSelect,
     FloatingCheckbox,
-  },
-  props: {
-    form: {
-      type: Object,
-      required: true,
-    },
-  },
-  created() {
-    this.inputs = this.form.inputs;
+    IonButton,
   },
   data() {
     return {
       inputValues: [],
+      inputs: [],
     };
   },
+  created() {
+    axios
+      .post(
+        "/control-center/form.php",
+        qs.stringify({
+          get_form: "get_form",
+          project: this.$route.params.project,
+          form: this.$route.params.form,
+        })
+      )
+      .then((res) => {
+        this.form = res.data.form;
+        this.inputs = this.form.inputs;
+      });
+  },
+  emits: ["submit"],
   methods: {
     submit() {
       const formData = {};
