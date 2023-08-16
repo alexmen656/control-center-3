@@ -80,9 +80,11 @@ export default {
             qs.stringify({
               createProject: "createProject",
               projectName: this.name,
+              projectIcon: this.icon,
             })
           )
-          .then(() => {//res
+          .then(() => {
+            //res
             alert("Project created successfull");
           });
       } else {

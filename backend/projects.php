@@ -26,7 +26,7 @@ if(isset($_POST['createProject']) && isset($_POST['projectName'])){
     file_put_contents("/www/".$href."/main.php", "//Put here main content of your site", 0777);
     chmod("/www/".$href."/main.php", 0777);
     $mainComponent = query("INSERT INTO project_components VALUES (0, 'main.php', 'script', 'Main', 'main', '1234567890', '$projectID')");
-    $pages = query("INSERT INTO control_center_pages VALUES (0, '$url1', '', 'Project Dashboard', '', 0), (0, '$url2', '', 'Create new tool', '', 0), (0, '$url3', '', 'Manage Tools', '', 0), (0, '$url4', '', 'Manage Components', '', 0), (0, '$url5', '', 'Create New Component', '', 0), (0, '$url6', '', 'Project Info', '', 0), (0, '$url7', '', 'Main', '', 0)");
+    $pages = query("INSERT INTO control_center_pages VALUES (0, '$url1', 'true', '', 'Project Dashboard', '', 0), (0, '$url2', 'true', '', 'Create new tool', '', 0), (0, '$url3', 'true', '', 'Manage Tools', '', 0), (0, '$url4', 'true', '', 'Manage Components', '', 0), (0, '$url5', 'true', '', 'Create New Component', '', 0), (0, '$url6', 'true', '', 'Project Info', '', 0), (0, '$url7', 'true', '', 'Main', '', 0)");
     if($mysqli){//$createFolder && $createFile && 
         echo alert('succes', 'The project was created successfully. <a href="/paxar/projects/'.$href.'/">Go to the project</a>');
     }

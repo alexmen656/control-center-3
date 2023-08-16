@@ -75,7 +75,7 @@
               <ion-col size-lg="1"></ion-col>
               <ion-col size="12" size-lg="10"
                 ><!-- size-lg="8"-->
-                <ion-button @click="submit()"> Create </ion-button>
+                <ion-button @click="submit(icon, name)"> Create </ion-button>
               </ion-col>
               <ion-col size-lg="1"></ion-col>
             </ion-row>
@@ -89,14 +89,47 @@
 
 <script>
 import { defineComponent, ref } from "vue";
+import {
+  IonGrid,
+  IonRow,
+  IonCol,
+  IonItem,
+  IonButton,
+  IonContent,
+  IonPage,
+  IonInput,
+  IonLabel,
+  IonItemSliding,
+  IonIcon,
+  IonItemOptions,
+  IonItemOption,
+  IonList,
+} from "@ionic/vue";
 import axios from "axios";
 import qs from "qs";
 
 export default defineComponent({
   name: "ProjectsPage",
+  components: {
+    IonGrid,
+    IonRow,
+    IonCol,
+    IonItem,
+    IonButton,
+    IonContent,
+    IonPage,
+    IonInput,
+    IonLabel,
+    IonItemSliding,
+    IonIcon,
+    IonItemOptions,
+    IonItemOption,
+    IonList,
+  },
   data() {
     return {
       name: "",
+      icon: "",
     };
   },
   setup() {
@@ -113,11 +146,9 @@ export default defineComponent({
         console.error(error);
       });
 
-    // Diese Funktionen können aufgerufen werden, wenn auf die Favoriten- oder Löschen-Schaltfläche geklickt wird.
-    function favorite(project) {
-      // Hier wird eine API-Anfrage an den Server gesendet, um das Projekt als Favorit zu markieren.
+    /* function favorite(project) {
       console.log(`Projekt ${project.id} favorisiert.`);
-    }
+    }*/
 
     function deleteee(project) {
       if (confirm("Do you really want to delte the project?")) {
@@ -129,7 +160,7 @@ export default defineComponent({
               projectID: project.id,
             })
           )
-          .then(() => {//res
+          .then(() => {
             alert("Project deleted successfull");
             axios
               .get("/control-center/projects.php")
@@ -146,26 +177,35 @@ export default defineComponent({
 
     function info(project) {
       // this.$router.push('/project/'+project.link+'/info');
-      location.href = "/project/" + project.link + "/info";
+      location.href = `/project/${project.link}/info`;
     }
-    function submit() {
-      if (this.name != "") {
-        //  console.log("Hier!!");
+
+    return {
+      projects,
+      // favorite,
+      deleteee,
+      info,
+    };
+  },
+  methods: {
+    submit(icon, name) {
+      if (name != "") {
         axios
           .post(
             "/control-center/projects.php",
             qs.stringify({
               createProject: "createProject",
-              projectName: this.name,
+              projectName: name,
+              projectIcon: icon,
             })
           )
-          .then(() => {//res
+          .then(() => {
             alert("Project created successfull");
             console.log("Hier!!");
             axios
               .get("/control-center/projects.php")
               .then((response) => {
-                projects.value = response.data;
+                this.projects = response.data;
               })
               .catch((error) => {
                 console.error(error);
@@ -173,17 +213,9 @@ export default defineComponent({
           });
         this.$emit("updateSidebar");
       } else {
-        alert("Project Name is empty!");
+        alert("Project Name is empty! " + this.name);
       }
-    }
-
-    return {
-      projects,
-      favorite,
-      deleteee,
-      submit,
-      info,
-    };
+    },
   },
 });
 </script>
