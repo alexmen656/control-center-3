@@ -21,9 +21,9 @@
   <form @submit.prevent="submit">
     <ion-button type="submit">Submit</ion-button>
   </form>
-  <div v-for="iV in inputValues" :key="iV">
+  <!--  <div v-for="iV in inputValues" :key="iV">
     {{ iV }}
-  </div>
+  </div>-->
 </template>
 <script>
 import FloatingInput from "@/components/FloatingInput.vue";
