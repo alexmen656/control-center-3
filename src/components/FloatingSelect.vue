@@ -27,7 +27,7 @@ const props = defineProps({
     required: true,
   },
 });
-
+console.log(props.select);
 const emit = defineEmits(["update:modelValue"]);
 
 const modelValue = ref(props.select.value);

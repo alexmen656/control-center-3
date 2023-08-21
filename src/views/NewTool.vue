@@ -4,7 +4,7 @@
       <ion-grid>
         <ion-row>
           <ion-col size="1" />
-          <ion-col size="10" v-if="formView">
+          <ion-col size="10" v-if="!formView">
             <ion-input
               v-model="title"
               @input="logTitle"
@@ -37,7 +37,7 @@
                     aria-label="Type"
                     interface="popover"
                     fill="outline"
-                    @ionChange="onTypeChange(index)"
+                    @ionChange="onTypeChange(index, input.type)"
                   >
                     <ion-select-option
                       v-for="iT in inputTypes"
@@ -78,6 +78,55 @@
                     <ion-button @click="addOption(input)"
                       >Add Option</ion-button
                     >
+                  </ion-col>
+                </ion-row>
+                <ion-row v-if="input.type === 'select2'">
+                  <ion-col size="3">
+                    <ion-label>Options</ion-label>
+                  </ion-col>
+                  <ion-col size="9">
+                    <ion-row>
+                      <ion-col size="12" style="display: flex">
+                        <ion-select
+                          aria-label="Form"
+                          placeholder="Select Form"
+                          interface="popover"
+                          fill="outline"
+                          v-model="input.optionList[0].value"
+                        >
+                          <ion-select-option
+                            v-for="form in forms"
+                            :key="form.form.title"
+                            :value="toName(form.form.title)"
+                            >{{ form.form.title }}</ion-select-option
+                          >
+                        </ion-select>
+
+                        <div v-for="form in forms" :key="form">
+                          <div
+                            v-if="
+                              toName(form.form.title) ==
+                              input.optionList[0].value
+                            "
+                          >
+                            <ion-select
+                              aria-label="Form"
+                              placeholder="Select Form"
+                              interface="popover"
+                              fill="outline"
+                              v-model="input.optionList[1].value"
+                            >
+                              <ion-select-option
+                                v-for="input in form.form.inputs"
+                                :key="input.name"
+                                :value="input.name"
+                                >{{ input.label }}</ion-select-option
+                              >
+                            </ion-select>
+                          </div>
+                        </div>
+                      </ion-col>
+                    </ion-row>
                   </ion-col>
                 </ion-row>
               </ion-row>
@@ -173,9 +222,13 @@ export default defineComponent({
         { value: "tel", label: "Tel" },
         { value: "date", label: "Date" },
         { value: "select", label: "Select" },
+        { value: "select2", label: "Select from Form (Form pipeline)" },
       ],
       jsonData: {},
       title: "",
+      test: "",
+      forms: [],
+      selectedForm: "",
     };
   },
   async created() {
@@ -186,6 +239,18 @@ export default defineComponent({
         name: tool.name,
       }));
     });
+    axios
+      .post(
+        "/control-center/form.php",
+        qs.stringify({
+          get_forms: "get_forms",
+          project: this.$route.params.project,
+        })
+      )
+      .then((res) => {
+        console.log(res);
+        this.forms = res.data;
+      });
   },
   methods: {
     handleSubmit() {
@@ -217,8 +282,13 @@ export default defineComponent({
     removeInput(index) {
       this.formInputs.splice(index, 1);
     },
-    onTypeChange(index) {
-      this.formInputs[index].optionList = [{ value: "" }];
+    onTypeChange(index, type) {
+      console.log(index, type);
+      if (type == "select2") {
+        this.formInputs[index].optionList = [{ value: "" }, { value: "" }];
+      } else {
+        this.formInputs[index].optionList = [{ value: "" }];
+      }
     },
     addOption(input) {
       input.optionList.push({ value: "" });
@@ -235,7 +305,7 @@ export default defineComponent({
           label: input.label,
           placeholder: input.placeholder,
           options:
-            input.type === "select"
+            input.type === "select" || input.type === "select2"
               ? input.optionList.map((option) => ({
                   value: option.value.toLowerCase().replace(/\s+/g, "_"),
                   label: option.value,
@@ -243,7 +313,7 @@ export default defineComponent({
               : [],
         })),
       };
-
+      console.log(formData);
       this.jsonData = JSON.stringify(formData, null, 2);
       axios
         .post(
@@ -255,7 +325,7 @@ export default defineComponent({
             project: this.$route.params.project,
           })
         )
-        .then(() => {//res
+        .then(() => {
           axios.post(
             "/control-center/tools.php",
             qs.stringify({
@@ -266,6 +336,9 @@ export default defineComponent({
             })
           );
         });
+    },
+    toName(name) {
+      return name.replaceAll(" ", "_").toLowerCase();
     },
   },
   components: {

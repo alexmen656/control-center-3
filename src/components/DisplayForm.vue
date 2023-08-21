@@ -4,14 +4,23 @@
       v-model="inputValues[index]"
       :select="input"
       v-if="input.type == 'select'"
-    ></FloatingSelect>
+    />
+    <FloatingSelect
+        v-model="inputValues[index]"
+        :select="input"
+        v-if="input.type == 'select2'"
+      />
     <FloatingCheckbox
       v-model="inputValues[index]"
       :label="input.label"
       v-if="input.type == 'checkbox'"
-    ></FloatingCheckbox>
+    />
     <FloatingInput
-      v-if="input.type != 'select' && input.type != 'checkbox'"
+      v-if="
+        input.type != 'select' &&
+        input.type != 'select2' &&
+        input.type != 'checkbox'
+      "
       v-model="inputValues[index]"
       :label="input.label"
       :placeholder="input.placeholder"
@@ -45,23 +54,64 @@ export default {
     return {
       inputValues: [],
       inputs: [],
+      inputss: [],
+      input: {
+        label: "",
+        name: "",
+        options: [],
+      },
     };
   },
   created() {
-    axios
-      .post(
-        "/control-center/form.php",
-        qs.stringify({
-          get_form: "get_form",
-          project: this.$route.params.project,
-          form: this.$route.params.form,
-        })
-      )
-      .then((res) => {
-        this.form = res.data.form;
-        this.inputs = this.form.inputs;
+  axios
+    .post(
+      "/control-center/form.php",
+      qs.stringify({
+        get_form: "get_form",
+        project: this.$route.params.project,
+        form: this.$route.params.form,
+      })
+    )
+    .then((res) => {
+      this.form = res.data.form;
+      this.inputss = this.form.inputs;
+      this.inputss.forEach(async (input) => {
+        if (input.type == "select2") {
+          console.log(input);
+          const  inputInstance = { ...input }; // Create a copy of the input object
+          await axios
+            .post(
+              "/control-center/form.php",
+              qs.stringify({
+                get_form_data: "get_form_data",
+                project: this.$route.params.project,
+                form: input.options[0].value,
+              })
+            )
+            .then((res) => {
+              console.log(res.data);
+              inputInstance.options = [];
+              inputInstance.label = input.label;
+              inputInstance.name = input.name;
+              inputInstance.type = input.type;
+
+              res.data.forEach((inputt) => {
+                inputInstance.options.push({
+                  value: inputt[input.options[1].value],
+                  label: inputt[input.options[1].value],
+                });
+              });
+            });
+          this.inputs.push(inputInstance);
+          console.log(this.inputs);
+        } else {
+          this.inputs.push(input);
+        }
+        console.log(this.inputs);
       });
-  },
+    });
+},
+
   emits: ["submit"],
   methods: {
     submit() {
@@ -72,6 +122,29 @@ export default {
 
       this.$emit("submit", formData);
     },
+    /*async select2(form, field) {
+      try {
+        const response = await axios.post(
+          "/control-center/form.php",
+          qs.stringify({
+            get_form_data: "get_form_data",
+            project: this.$route.params.project,
+            form: form,
+          })
+        )
+       
+
+        const array = [];
+        response.data.forEach((input, index) => {
+          array.push(input[field]);
+        });
+        return array;
+    
+      } catch (error) {
+        console.error("Error fetching select2 data:", error);
+        return [];
+      }
+    },*/
   },
 };
 </script>

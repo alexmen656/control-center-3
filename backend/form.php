@@ -7,6 +7,7 @@ function mapFieldType($type)
         case 'text':
         case 'email':
         case 'select':
+        case 'select2':
             return 'VARCHAR(255)';
         case 'number':
             return 'INT';
@@ -39,16 +40,12 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
             }
 
             $sql .= ");";
-
             if (query($sql)) {
                 echo $formName . " Created Successfully!!!";
             }
         } else {
             echo "Ungültiges JSON-Format.";
         }
-
-
-
 
     }
 } elseif (isset($_POST['get_form']) && isset($_POST['project']) && isset($_POST['form'])) {
@@ -62,6 +59,52 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
         $json['createdOn'] = $form['created_at'];
         echo echoJson(($json));
     }
+} elseif (isset($_POST['get_form_data']) && isset($_POST['project']) && isset($_POST['form'])) {
+    $form_name = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower(escape_string($_POST['form'])));
+    $project_name = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower(escape_string($_POST['project'])));
+    $table_name = $project_name . "_" . $form_name;
+    //echo $table_name;
+
+    $data = query("SELECT * FROM `$table_name`");
+    $json = array();
+
+    if (mysqli_num_rows($data) > 0) {
+        $field_names_result = query("SHOW COLUMNS FROM `$table_name`");
+        $field_names = array();
+
+        while ($row = mysqli_fetch_assoc($field_names_result)) {
+            $field_names[] = $row['Field'];
+        }
+
+        while ($row = mysqli_fetch_assoc($data)) {
+            $formattedRow = array();
+
+            foreach ($field_names as $field) {
+                $formattedRow[$field] = $row[$field];
+            }
+
+            $json[] = $formattedRow;
+        }
+
+        echo echoJson($json);
+    } else {
+        echo json_encode(array());
+    }
+}
+ elseif (isset($_POST['get_forms']) && isset($_POST['project'])) {
+    $form_name = escape_string($_POST['form']);
+    $project = escape_string($_POST['project']);
+    $forms = query("SELECT * FROM form_settings WHERE project='$project'");
+    $i = 0;
+    foreach ($forms as $form) {
+        $json[$i]['id'] = $form['form_id'];
+        $json[$i]['form'] = json_decode($form['form_json'], true);
+        $json[$i]['createdOn'] = $form['created_at'];
+        $i++;
+    }
+
+    echo echoJson($json);
+
 } elseif (isset($_POST['submit_form']) && isset($_POST['form']) && isset($_POST['form_name']) && isset($_POST['project'])) {
     $form = json_decode($_POST['form'], true);
     $form_name = escape_string($_POST['form_name']);
@@ -93,4 +136,5 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
         echo "Invalid form data format.";
     }
 }
+
 ?>

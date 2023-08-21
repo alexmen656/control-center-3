@@ -12,7 +12,7 @@ if (isset($_POST['newTool']) && isset($_POST['projectName']) && isset($_POST['to
         $order = mysqli_num_rows(query("SELECT * FROM project_tools WHERE projectID='$projectID'")) + 1;
         $query = query("INSERT INTO project_tools VALUES (0,'$toolIcon','$toolName',0,'','$projectID')");
         if ($query) {
-            $url = "project/" . str_replace(" ", "-", strtolower($projectName)) . "/" . str_replace(" ", "-", strtolower($toolName));
+            $url = "project/" . str_replace([" ", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["-", "a", "a", "u", "u", "o", "o"], strtolower($projectName)) . "/" . str_replace([" ", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["-", "a", "a", "u", "u", "o", "o"], strtolower($toolName));
             query("INSERT INTO control_center_pages VALUES (0,'$url', 'true','$toolIcon','$toolName', '', 0)");
             echo "success";
         } else {

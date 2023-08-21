@@ -13,7 +13,7 @@
                   '/project/' +
                     $route.params.project +
                     '/' +
-                    p.name.toLowerCase().replaceAll(' ', '-') +
+                    p.name.toLowerCase().replaceAll(' ', '-').replaceAll('ä', 'a').replaceAll('Ä', 'a').replaceAll('ö', 'o').replaceAll('Ö', 'o').replaceAll('Ü', 'u').replaceAll('ü', 'u') +
                     '/config'
                 )
               "
@@ -24,7 +24,7 @@
                 '/project/' +
                 $route.params.project +
                 '/' +
-                p.name.toLowerCase().replaceAll(' ', '-')
+                p.name.toLowerCase().replaceAll(' ', '-').replaceAll('ä', 'a').replaceAll('Ä', 'a').replaceAll('ö', 'o').replaceAll('Ö', 'o').replaceAll('Ü', 'u').replaceAll('ü', 'u')
               "
               class="hydrated menu-item"
               :class="{ selected: this.selectedIndex === i }"
@@ -77,7 +77,7 @@
                   '/project/components/' +
                     $route.params.project +
                     '/' +
-                    p.name.toLowerCase().replaceAll(' ', '-') +
+                    p.name.toLowerCase().replaceAll(' ', '-').replaceAll('ä', 'a').replaceAll('Ä', 'a').replaceAll('ö', 'o').replaceAll('Ö', 'o').replaceAll('Ü', 'u').replaceAll('ü', 'u') +
                     '/config'
                 )
               "
@@ -88,7 +88,7 @@
                 '/project/' +
                 $route.params.project +
                 '/components/' +
-                p.name.toLowerCase().replaceAll(' ', '-')
+                p.name.toLowerCase().replaceAll(' ', '-').replaceAll('ä', 'a').replaceAll('Ä', 'a').replaceAll('ö', 'o').replaceAll('Ö', 'o').replaceAll('Ü', 'u').replaceAll('ü', 'u')
               "
               class="hydrated menu-item"
               :class="{
