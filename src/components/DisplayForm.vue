@@ -77,7 +77,7 @@ export default {
       this.inputss = this.form.inputs;
       this.inputss.forEach(async (input) => {
         if (input.type == "select2") {
-          console.log(input);
+          //console.log(input);
           const  inputInstance = { ...input }; // Create a copy of the input object
           await axios
             .post(
@@ -89,7 +89,7 @@ export default {
               })
             )
             .then((res) => {
-              console.log(res.data);
+              //console.log(res.data);
               inputInstance.options = [];
               inputInstance.label = input.label;
               inputInstance.name = input.name;
@@ -103,11 +103,11 @@ export default {
               });
             });
           this.inputs.push(inputInstance);
-          console.log(this.inputs);
+          //console.log(this.inputs);
         } else {
           this.inputs.push(input);
         }
-        console.log(this.inputs);
+        //console.log(this.inputs);
       });
     });
 },
@@ -118,6 +118,7 @@ export default {
       const formData = {};
       this.inputs.forEach((input, index) => {
         formData[input.name] = this.inputValues[index];
+        this.inputValues[index] = "";
       });
 
       this.$emit("submit", formData);

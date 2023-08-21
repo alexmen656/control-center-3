@@ -90,8 +90,7 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
     } else {
         echo json_encode(array());
     }
-}
- elseif (isset($_POST['get_forms']) && isset($_POST['project'])) {
+} elseif (isset($_POST['get_forms']) && isset($_POST['project'])) {
     $form_name = escape_string($_POST['form']);
     $project = escape_string($_POST['project']);
     $forms = query("SELECT * FROM form_settings WHERE project='$project'");
@@ -134,6 +133,50 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
         }
     } else {
         echo "Invalid form data format.";
+    }
+} elseif (isset($_POST['delete_entry']) && isset($_POST['entry_id']) && isset($_POST['form_name']) && isset($_POST['project'])) {
+    $id = escape_string($_POST['entry_id']);
+    $form_name = escape_string($_POST['form_name']);
+    $project = escape_string($_POST['project']);
+    $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($form_name));
+
+    $sql = "DELETE FROM $tableName WHERE id='$id'";
+    if (query($sql)) {
+        echo "Entry deleted successfully!";
+    } else {
+        echo "Error deleting entry.";
+    }
+} elseif (
+    isset($_POST['update_entry']) &&
+    isset($_POST['entry_id']) &&
+    isset($_POST['form']) &&
+    isset($_POST['form_name']) &&
+    isset($_POST['project'])
+) {
+    $id = escape_string($_POST['entry_id']);
+    $form = json_decode($_POST['form'], true);
+    $form_name = escape_string($_POST['form_name']);
+    $project = escape_string($_POST['project']);
+
+    if ($form) {
+        $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($form_name));
+        $updates = array();
+
+        foreach ($form as $fieldName => $fieldValue) {
+            $fieldName = escape_string($fieldName);
+            $fieldValue = escape_string($fieldValue);
+            $updates[] = "$fieldName = '$fieldValue'";
+        }
+
+        $updatesStr = implode(', ', $updates);
+
+        $sql = "UPDATE $tableName SET $updatesStr WHERE id='$id'";
+
+        if (query($sql)) {
+            echo "Entry updated successfully!";
+        } else {
+            echo "Error updating entry!";
+        }
     }
 }
 

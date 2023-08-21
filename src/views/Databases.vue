@@ -19,6 +19,7 @@
 
 <script>
 import axios from "axios";
+import qs from 'qs';
 import { defineComponent, ref } from "vue";
 import { IonPage, IonContent, IonCard } from "@ionic/vue";
 
@@ -37,7 +38,7 @@ export default defineComponent({
   setup() {
     const tables = ref([]);
 
-    axios.get("/control-center/mysql.php?getTables=getTables").then((res) => {
+    axios.post("/control-center/mysql.php", qs.stringify({getTables: "getTables"})).then((res) => {
       tables.value = res.data;
     });
 

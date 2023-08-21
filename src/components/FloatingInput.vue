@@ -1,7 +1,8 @@
 <template>
   <ion-input
-    :value="modelValue"
-    @input="updateContent"
+    v-model="modelValue"
+    @ionInput="updateContent"
+    :value="defaultVal"
     :label="label"
     label-placement="floating"
     fill="outline"
@@ -14,13 +15,13 @@
 import { IonInput } from "@ionic/vue";
 
 const props = defineProps({
-  modelValue: String,
+  defaultVal: String,
   label: String,
   placeholder: String,
   type: String,
 });
 
-const emit = defineEmits(["update:modelValue"]); //'update:title',
+const emit = defineEmits(["update:modelValue"]);
 
 const updateContent = (event) => {
   emit("update:modelValue", event.target.value);

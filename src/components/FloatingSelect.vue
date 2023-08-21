@@ -6,6 +6,7 @@
     @ionChange="updateContent"
     interface="popover"
     :placeholder="select.label"
+    :value="defaultVal"
   >
     <ion-select-option
       v-for="option in select.options"
@@ -26,8 +27,12 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  defaultVal: {
+    type: String,
+    required: false,
+  },
 });
-console.log(props.select);
+//console.log(props.select);
 const emit = defineEmits(["update:modelValue"]);
 
 const modelValue = ref(props.select.value);

@@ -8,6 +8,7 @@
 
 <script>
 import axios from "axios";
+import qs from 'qs';
 import { defineComponent, ref } from "vue";
 import TableCard from "@/components/TableCard.vue";
 import { IonContent, IonPage } from "@ionic/vue";
@@ -26,7 +27,7 @@ export default defineComponent({
     const route = useRoute();
 
     axios
-      .get("/control-center/mysql.php?getTableByName=" + route.params.name)
+      .post("/control-center/mysql.php", qs.stringify({getTableByName: route.params.name}))
       .then((res) => {
         labels.value = res.data.labels;
         data.value = res.data.data;
