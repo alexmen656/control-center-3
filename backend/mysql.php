@@ -85,7 +85,50 @@ if ($_POST['getTables']) {
     }
 
     //echo "SELECT * FROM `$tbName`".$sql_limit;
-    if ($data = query("SELECT * FROM `$tbName`" . $sql_limit)) {
+    if ($data = query("SELECT * FROM `$tbName` ORDER BY id" . $sql_limit)) {
+        if (isset($_POST['limit'])) {
+            $num_rows = mysqli_num_rows(query("SELECT * FROM `$tbName`"));
+            if ($num_rows > $limit) {
+                $json['load_more_btn'] = true;
+            }
+        }
+        $gg = 0;
+        $columns = query("SHOW COLUMNS FROM `$tbName`");
+
+        while ($d = fetch_assoc($data)) {
+            $tr = [];
+
+            for ($i = 0; $i < count($columnsArray); $i++) {
+                $tr[] = $d[$columnsArray[$i]];
+
+            }
+            $json['data'][$gg] = $tr;
+            $gg++;
+        }
+    }
+} elseif (isset($_POST['load_more']) && isset($_POST['current_limit']) && isset($_POST['table'])) {
+    $tbName = escape_string($_POST['table']);
+    $current_limit = escape_string($_POST['current_limit']);
+    $new_limit = ($current_limit + 1) * 30;
+    $offset = $current_limit * 30;
+    $json['load_more_btn'] = false;
+    if (mysqli_num_rows(query("SELECT * FROM `$tbName`")) > $new_limit) {
+        $json['load_more_btn'] = true;
+    }
+
+    $i = 0;
+    $columns = query("SHOW COLUMNS FROM `$tbName`");
+    if ($columns) {
+        while ($row = fetch_assoc($columns)) {
+            $columnsArray[] = $row['Field'];
+            $i++;
+        }
+    } else {
+        $json['error'] = "Table " . $tbName . " don't exists";
+    }
+
+    if ($data = query("SELECT * FROM `$tbName` ORDER BY id LIMIT 30 OFFSET " . $offset)) {
+
         $gg = 0;
         $columns = query("SHOW COLUMNS FROM `$tbName`");
 

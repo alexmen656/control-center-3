@@ -8,11 +8,16 @@
             <ion-card>
               <table>
                 <tr>
-                  <th v-for="label in labels" :key="label">{{ label }}</th>
+                  <th
+                    v-for="label in labels.slice(0, 5)"
+                    :key="label"
+                  >
+                    {{ label }}
+                  </th>
                   <th></th>
                 </tr>
                 <tr v-for="tr in data" :key="tr">
-                  <td v-for="td in tr" :key="td">{{ td }}</td>
+                  <td v-for="td in tr.slice(0, 5)" :key="td">{{ td }}</td>
                   <td>
                     <ion-icon @click="deletee(tr[0])" name="trash-outline" />
                   </td>
@@ -22,6 +27,12 @@
                 </tr>
               </table>
             </ion-card>
+            <ion-row
+              v-if="load_more_btn"
+              style="display: flex; justify-content: center"
+            >
+              <ion-button @click="loadMore()">Load More</ion-button>
+            </ion-row>
             <DisplayForm @submit="handleSubmit" /> </ion-col
           ><ion-col size="0" size-md="1" />
         </ion-row>
@@ -81,6 +92,8 @@ export default defineComponent({
       form: {},
       labels: [],
       data: [],
+      load_more_btn: false,
+      current_limit: 0,
     };
   },
   setup() {
@@ -165,8 +178,20 @@ export default defineComponent({
         .then((res) => {
           this.labels = res.data.labels;
           this.data = res.data.data;
+          this.load_more_btn = res.data.load_more_btn;
+          this.current_limit = 1;
         });
     },
+    loadMore(){
+      const table_name = `${this.$route.params.project}_${this.$route.params.form}`;
+      axios.post("/control-center/mysql.php", qs.stringify({load_more: "load_more", current_limit: this.current_limit,table: table_name})).then((res) => {
+        this.current_limit = this.current_limit+1;
+
+        res.data.data.forEach(element =>{
+          this.data.push(element);
+        });
+      });
+    }
   },
 });
 </script>
