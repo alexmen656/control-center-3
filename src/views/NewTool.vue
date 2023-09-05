@@ -4,7 +4,7 @@
       <ion-grid>
         <ion-row>
           <ion-col size="1" />
-          <ion-col size="10" v-if="!formView">
+          <ion-col size="10" v-if="formView">
             <ion-input
               v-model="title"
               @input="logTitle"
@@ -162,6 +162,8 @@
                     {{ tool.name }}</ion-select-option
                   >
                   <ion-select-option value="form"> Form</ion-select-option>
+                  <ion-select-option value="dashboard"> Dashboard (New)</ion-select-option>
+
                 </ion-select>
               </ion-item>
             </ion-list>
@@ -192,6 +194,7 @@ import {
   IonRow,
   IonInput,
   IonLabel,
+  IonChip
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import axios from "axios";
@@ -256,6 +259,14 @@ export default defineComponent({
     handleSubmit() {
       if (this.selectedTool == "form") {
         this.formView = true;
+      }else if (this.selectedTool == "dashboard") {
+        axios.post(
+          "/control-center/dashboard.php",
+          qs.stringify({
+            new_dashboard: "new_dashboard",
+            project: this.$route.params.project,
+          })
+        );
       } else {
         const selectedTool = this.tools.find(
           (tool) => tool.name === this.selectedTool
@@ -354,6 +365,7 @@ export default defineComponent({
     IonRow,
     IonInput,
     IonLabel,
+   // IonChip
   },
 });
 </script>

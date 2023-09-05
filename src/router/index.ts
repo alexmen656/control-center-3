@@ -190,6 +190,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/AccountSecurity.vue'),
   },
   {
+    path: '/project/:project/dashboard/:dashboard',
+    component: () => import('../views/DashboardView.vue'),
+  },
+  {
     path: '/project/:project/:form',
     component: () => import('../views/FormDisplay.vue'),
   },

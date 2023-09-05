@@ -13,7 +13,15 @@
                   '/project/' +
                     $route.params.project +
                     '/' +
-                    p.name.toLowerCase().replaceAll(' ', '-').replaceAll('ä', 'a').replaceAll('Ä', 'a').replaceAll('ö', 'o').replaceAll('Ö', 'o').replaceAll('Ü', 'u').replaceAll('ü', 'u') +
+                    p.name
+                      .toLowerCase()
+                      .replaceAll(' ', '-')
+                      .replaceAll('ä', 'a')
+                      .replaceAll('Ä', 'a')
+                      .replaceAll('ö', 'o')
+                      .replaceAll('Ö', 'o')
+                      .replaceAll('Ü', 'u')
+                      .replaceAll('ü', 'u') +
                     '/config'
                 )
               "
@@ -21,10 +29,31 @@
               lines="none"
               detail="false"
               :router-link="
-                '/project/' +
-                $route.params.project +
-                '/' +
-                p.name.toLowerCase().replaceAll(' ', '-').replaceAll('ä', 'a').replaceAll('Ä', 'a').replaceAll('ö', 'o').replaceAll('Ö', 'o').replaceAll('Ü', 'u').replaceAll('ü', 'u')
+                p.icon == 'bar-chart-outline'
+                  ? '/project/' +
+                    $route.params.project +
+                    '/dashboard/' +
+                    p.name
+                      .toLowerCase()
+                      .replaceAll(' ', '-')
+                      .replaceAll('ä', 'a')
+                      .replaceAll('Ä', 'a')
+                      .replaceAll('ö', 'o')
+                      .replaceAll('Ö', 'o')
+                      .replaceAll('Ü', 'u')
+                      .replaceAll('ü', 'u')
+                  : '/project/' +
+                    $route.params.project +
+                    '/' +
+                    p.name
+                      .toLowerCase()
+                      .replaceAll(' ', '-')
+                      .replaceAll('ä', 'a')
+                      .replaceAll('Ä', 'a')
+                      .replaceAll('ö', 'o')
+                      .replaceAll('Ö', 'o')
+                      .replaceAll('Ü', 'u')
+                      .replaceAll('ü', 'u')
               "
               class="hydrated menu-item"
               :class="{ selected: this.selectedIndex === i }"
@@ -77,7 +106,15 @@
                   '/project/components/' +
                     $route.params.project +
                     '/' +
-                    p.name.toLowerCase().replaceAll(' ', '-').replaceAll('ä', 'a').replaceAll('Ä', 'a').replaceAll('ö', 'o').replaceAll('Ö', 'o').replaceAll('Ü', 'u').replaceAll('ü', 'u') +
+                    p.name
+                      .toLowerCase()
+                      .replaceAll(' ', '-')
+                      .replaceAll('ä', 'a')
+                      .replaceAll('Ä', 'a')
+                      .replaceAll('ö', 'o')
+                      .replaceAll('Ö', 'o')
+                      .replaceAll('Ü', 'u')
+                      .replaceAll('ü', 'u') +
                     '/config'
                 )
               "
@@ -88,7 +125,15 @@
                 '/project/' +
                 $route.params.project +
                 '/components/' +
-                p.name.toLowerCase().replaceAll(' ', '-').replaceAll('ä', 'a').replaceAll('Ä', 'a').replaceAll('ö', 'o').replaceAll('Ö', 'o').replaceAll('Ü', 'u').replaceAll('ü', 'u')
+                p.name
+                  .toLowerCase()
+                  .replaceAll(' ', '-')
+                  .replaceAll('ä', 'a')
+                  .replaceAll('Ä', 'a')
+                  .replaceAll('ö', 'o')
+                  .replaceAll('Ö', 'o')
+                  .replaceAll('Ü', 'u')
+                  .replaceAll('ü', 'u')
               "
               class="hydrated menu-item"
               :class="{
@@ -96,8 +141,16 @@
                   this.selectedIndex === Number(i) + Number(tools.length),
               }"
             >
-              <ion-icon v-if="p.type == 'script'" slot="start" name="code-slash-outline"></ion-icon>
-              <ion-icon v-if="p.type == 'image'" slot="start" name="image-outline"></ion-icon>
+              <ion-icon
+                v-if="p.type == 'script'"
+                slot="start"
+                name="code-slash-outline"
+              ></ion-icon>
+              <ion-icon
+                v-if="p.type == 'image'"
+                slot="start"
+                name="image-outline"
+              ></ion-icon>
               <ion-label
                 >{{ p.name[0].toUpperCase()
                 }}{{ p.name.substring(1) }}</ion-label
