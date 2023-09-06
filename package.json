@@ -29,6 +29,7 @@
     "@ionic/vue": "^7.2.2",
     "@ionic/vue-router": "^7.2.2",
     "@vueup/vue-quill": "^1.1.1",
+    "@vueuse/core": "^10.4.1",
     "axios": "^1.2.6",
     "chart.js": "^4.2.1",
     "cordova-plugin-nativestorage": "^2.3.2",

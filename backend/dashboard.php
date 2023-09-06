@@ -71,4 +71,35 @@ if (isset($_POST['new_dashboard']) && isset($_POST['project'])) { //&& isset($_P
     } else {
         echo "error updating JSON data";
     }
+} elseif (isset($_POST['delete_chart']) && isset($_POST['dashboard']) && isset($_POST['project']) && isset($_POST['chart_index'])) {
+    $dashboardName = escape_string($_POST['dashboard']);
+    $projectName = escape_string($_POST['project']);
+    $chartIndex = (int)$_POST['chart_index']; // Convert to integer for safety
+
+    $fetchJsonQuery = "SELECT dashboard_json FROM control_center_dashboards WHERE dashboard_name = '$dashboardName' AND project = '$projectName'";
+    $existingJson = fetch_assoc(query($fetchJsonQuery))['dashboard_json'];
+    $existingDataArray = json_decode($existingJson, true);
+
+    // Check if the chart index exists in the array
+    if (array_key_exists($chartIndex, $existingDataArray)) {
+        // Remove the chart at the specified index
+        unset($existingDataArray[$chartIndex]);
+
+        // Re-index the array to avoid gaps
+        $existingDataArray = array_values($existingDataArray);
+
+        // Encode the updated JSON
+        $updatedJson = json_encode($existingDataArray);
+
+        $updateJsonQuery = "UPDATE control_center_dashboards SET dashboard_json = '$updatedJson' WHERE dashboard_name = '$dashboardName' AND project = '$projectName'";
+        $updateResult = query($updateJsonQuery);
+
+        if ($updateResult) {
+            echo "success";
+        } else {
+            echo "error updating JSON data";
+        }
+    } else {
+        echo "Chart index not found in the JSON data";
+    }
 }

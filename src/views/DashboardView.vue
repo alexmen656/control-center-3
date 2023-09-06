@@ -27,11 +27,11 @@
         </ion-row>
       </ion-grid>
       <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-        <ion-fab-button>
+        <ion-fab-button id="open_menu">
           <ion-icon name="chevron-up-circle"></ion-icon>
         </ion-fab-button>
         <ion-fab-list side="top">
-          <ion-fab-button id="open-modal">
+          <ion-fab-button @click="setOpen(true)">
             <ion-icon name="add-outline" />
           </ion-fab-button>
           <ion-fab-button @click="edit()">
@@ -39,7 +39,7 @@
           </ion-fab-button>
         </ion-fab-list>
       </ion-fab>
-      <ion-modal ref="modal" trigger="open-modal">
+      <ion-modal :is-open="isOpen" ref="modal">
         <ion-header>
           <ion-toolbar>
             <ion-buttons slot="start">
@@ -92,11 +92,12 @@ import {
   IonFabButton,
   IonFabList,
 } from "@ionic/vue";
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, watch } from "vue";
 import DonutChart from "@/components/DonutChart.vue";
 import PieChart from "@/components/PieChart.vue";
 import { OverlayEventDetail } from "@ionic/core/components";
 import FloatingSelect from "@/components/FloatingSelect.vue";
+import { useMagicKeys, whenever } from "@vueuse/core";
 import qs from "qs";
 import axios from "axios";
 
@@ -179,10 +180,46 @@ export default defineComponent({
       });
 
     if (localStorage.getItem("charts")) {
-        this.loadCharts();
+      this.loadCharts();
     }
   },
+  setup(){
+    const isOpen = ref(false);
+      const setOpen = (open) => {isOpen.value = open; console.log(1);};
+
+      return {
+        isOpen,
+        setOpen
+      }
+  },
   mounted() {
+    const keys = useMagicKeys();
+    const neww = keys["Ctrl+N"];
+    const edit = keys["E+Ctrl"];
+    // const editWindows = keys["E+Ctrl"];
+    //const editMac = keys["E+Command"];
+
+    watch(neww, async (v) => {
+        
+      if (v) //document.getElementById("open_menu").click();
+        if(this.isOpen){
+            this.setOpen(false);
+        }else{this.setOpen(true);}
+      
+
+    });
+
+    watch(edit, (v) => {
+      if (v) this.edit();
+    });
+    /* watch(editWindows, (v) => {
+      if (v) this.edit();
+    });
+
+    watch(editMac, (v) => {
+      if (v) this.edit();
+    });*/
+
     this.$watch(
       () => this.form,
       () => {
@@ -201,10 +238,12 @@ export default defineComponent({
   },
   methods: {
     cancel() {
-      this.$refs.modal.$el.dismiss(null, "cancel");
+     // this.$refs.modal.$el.dismiss(null, "cancel");
+     this.setOpen(false);
     },
     async confirm() {
-      this.$refs.modal.$el.dismiss(null, "confirm");
+      //this.$refs.modal.$el.dismiss(null, "confirm");
+      this.setOpen(false);
       const json = {
         chart_type: this.chart_type,
         form: this.form,
@@ -220,7 +259,15 @@ export default defineComponent({
       } else {
         await localStorage.setItem("charts", JSON.stringify([json]));
       }
-      await axios.post("/control-center/dashboard.php", qs.stringify({new_chart: "new_chart", json: JSON.stringify([json]), dashboard: this.$route.params.dashboard, project: this.$route.params.project}));
+      await axios.post(
+        "/control-center/dashboard.php",
+        qs.stringify({
+          new_chart: "new_chart",
+          json: JSON.stringify([json]),
+          dashboard: this.$route.params.dashboard,
+          project: this.$route.params.project,
+        })
+      );
       this.loadCharts();
 
       this.chart_type = "";
@@ -240,7 +287,7 @@ export default defineComponent({
       }
     },
     async deleteChart(index) {
-      const charts = JSON.parse(localStorage.getItem("charts"));
+    /*  const charts = JSON.parse(localStorage.getItem("charts"));
       const new_charts = [];
       charts.forEach((element, indexx) => {
         if (indexx != index) {
@@ -248,14 +295,22 @@ export default defineComponent({
           new_charts.push(element);
         }
       });
-      await localStorage.setItem("charts", JSON.stringify(new_charts));
+      await localStorage.setItem("charts", JSON.stringify(new_charts));*/
+      await axios.post("/control-center/dashboard.php", qs.stringify({delete_chart: "delete_chart", dashboard: this.$route.params.dashboard, project: this.$route.params.project, chart_index: index, }));
       this.loadCharts();
     },
-    async loadCharts(){
-        this.charts = [];
-        //JSON.parse(localStorage.getItem("charts"))
-        const request = await axios.post("/control-center/dashboard.php", qs.stringify({get_dashboard: "get_dashboard", dashboard: this.$route.params.dashboard, project: this.$route.params.project}));
-        request.data.forEach(async (chart) => {
+    async loadCharts() {
+      this.charts = [];
+      //JSON.parse(localStorage.getItem("charts"))
+      const request = await axios.post(
+        "/control-center/dashboard.php",
+        qs.stringify({
+          get_dashboard: "get_dashboard",
+          dashboard: this.$route.params.dashboard,
+          project: this.$route.params.project,
+        })
+      );
+      request.data.forEach(async (chart) => {
         await axios
           .post(
             "/control-center/form.php",
@@ -297,7 +352,7 @@ export default defineComponent({
             await this.charts.push(new_chart);
           });
       });
-    }
+    },
   },
   components: {
     DonutChart,
