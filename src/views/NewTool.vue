@@ -163,7 +163,7 @@
                   >
                   <ion-select-option value="form"> Form</ion-select-option>
                   <ion-select-option value="dashboard"> Dashboard (New)</ion-select-option>
-
+                  <!--<ion-select-option value="qr_code_scanner"> QR Code Scanner</ion-select-option>-->
                 </ion-select>
               </ion-item>
             </ion-list>

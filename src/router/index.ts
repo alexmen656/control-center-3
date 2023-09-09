@@ -194,6 +194,14 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/DashboardView.vue'),
   },
   {
+    path: '/project/:project/qr-code-scanner',///:qr-code-scanner
+    component: () => import('../views/QrCodeScanner.vue'),
+  },
+  {
+    path: '/project/:project/qr-code-scanner/config',///:qr-code-scanner
+    component: () => import('../views/QrCodeScannerConfig.vue'),
+  },
+  {
     path: '/project/:project/:form',
     component: () => import('../views/FormDisplay.vue'),
   },

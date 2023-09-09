@@ -65,7 +65,7 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
     $table_name = $project_name . "_" . $form_name;
     //echo $table_name;
 
-    $data = query("SELECT * FROM `$table_name`");
+    $data = query("SELECT * FROM `$table_name` LIMIT 100");
     $json = array();
 
     if (mysqli_num_rows($data) > 0) {
