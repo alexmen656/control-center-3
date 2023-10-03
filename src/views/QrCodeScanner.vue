@@ -47,9 +47,9 @@ import {
   IonToolbar,
   IonTitle,
 } from "@ionic/vue";
-import { defineComponent, ref, watch } from "vue";
+import { defineComponent, ref } from "vue";
 
-export default {
+export default defineComponent({
   name: "BarcodeScanner",
   components: {
     StreamBarcodeReader,
@@ -118,7 +118,7 @@ export default {
       console.log(`Ready to start scanning barcodes`);
     },*/
   },
-};
+});
 </script>
 <style>
 @media print {

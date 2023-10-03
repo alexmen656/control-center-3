@@ -48,7 +48,11 @@
 </template>
 
 <script>
-import { Nfc, NfcUtils, NfcTagTechType } from "@capawesome-team/capacitor-nfc";
+import {
+  Nfc,
+  //NfcUtils,
+  //NfcTagTechType
+} from "@capawesome-team/capacitor-nfc";
 import { defineComponent, ref } from "vue";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 import { getConfig } from "@/getToolConfig";

@@ -53,7 +53,7 @@
 import FloatingInput from "@/components/FloatingInput.vue";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 import FloatingCheckbox from "@/components/FloatingCheckbox.vue";
-import { defineComponent, ref } from "vue";
+import { defineComponent } from "vue";
 import {
   IonButton,
   ionContent,

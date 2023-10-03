@@ -11,13 +11,15 @@
 <script>
 import axios from "axios";
 import qs from "qs";
-import { IonPage, IonButton } from "@ionic/vue";
+import { IonPage, IonContent, IonButton } from "@ionic/vue";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 
 export default {
   name: "BarcodeScanner",
   components: {
     IonPage,
+    IonContent,
+    IonButton,
     FloatingSelect,
   },
   data() {

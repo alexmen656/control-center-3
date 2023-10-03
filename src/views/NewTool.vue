@@ -162,7 +162,9 @@
                     {{ tool.name }}</ion-select-option
                   >
                   <ion-select-option value="form"> Form</ion-select-option>
-                  <ion-select-option value="dashboard"> Dashboard (New)</ion-select-option>
+                  <ion-select-option value="dashboard">
+                    Dashboard (New)</ion-select-option
+                  >
                   <!--<ion-select-option value="qr_code_scanner"> QR Code Scanner</ion-select-option>-->
                 </ion-select>
               </ion-item>
@@ -194,7 +196,7 @@ import {
   IonRow,
   IonInput,
   IonLabel,
-  IonChip
+  //IonChip,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import axios from "axios";
@@ -259,7 +261,7 @@ export default defineComponent({
     handleSubmit() {
       if (this.selectedTool == "form") {
         this.formView = true;
-      }else if (this.selectedTool == "dashboard") {
+      } else if (this.selectedTool == "dashboard") {
         axios.post(
           "/control-center/dashboard.php",
           qs.stringify({
@@ -365,7 +367,7 @@ export default defineComponent({
     IonRow,
     IonInput,
     IonLabel,
-   // IonChip
+    // IonChip
   },
 });
 </script>

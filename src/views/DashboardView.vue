@@ -95,9 +95,12 @@ import {
 import { defineComponent, ref, watch } from "vue";
 import DonutChart from "@/components/DonutChart.vue";
 import PieChart from "@/components/PieChart.vue";
-import { OverlayEventDetail } from "@ionic/core/components";
+//import { OverlayEventDetail } from "@ionic/core/components";
 import FloatingSelect from "@/components/FloatingSelect.vue";
-import { useMagicKeys, whenever } from "@vueuse/core";
+import {
+  useMagicKeys,
+  //whenever
+} from "@vueuse/core";
 import qs from "qs";
 import axios from "axios";
 
@@ -183,14 +186,17 @@ export default defineComponent({
       this.loadCharts();
     }
   },
-  setup(){
+  setup() {
     const isOpen = ref(false);
-      const setOpen = (open) => {isOpen.value = open; console.log(1);};
+    const setOpen = (open) => {
+      isOpen.value = open;
+      console.log(1);
+    };
 
-      return {
-        isOpen,
-        setOpen
-      }
+    return {
+      isOpen,
+      setOpen,
+    };
   },
   mounted() {
     const keys = useMagicKeys();
@@ -200,13 +206,13 @@ export default defineComponent({
     //const editMac = keys["E+Command"];
 
     watch(neww, async (v) => {
-        
-      if (v) //document.getElementById("open_menu").click();
-        if(this.isOpen){
-            this.setOpen(false);
-        }else{this.setOpen(true);}
-      
-
+      if (v)
+        if (this.isOpen) {
+          //document.getElementById("open_menu").click();
+          this.setOpen(false);
+        } else {
+          this.setOpen(true);
+        }
     });
 
     watch(edit, (v) => {
@@ -238,8 +244,8 @@ export default defineComponent({
   },
   methods: {
     cancel() {
-     // this.$refs.modal.$el.dismiss(null, "cancel");
-     this.setOpen(false);
+      // this.$refs.modal.$el.dismiss(null, "cancel");
+      this.setOpen(false);
     },
     async confirm() {
       //this.$refs.modal.$el.dismiss(null, "confirm");
@@ -287,7 +293,7 @@ export default defineComponent({
       }
     },
     async deleteChart(index) {
-    /*  const charts = JSON.parse(localStorage.getItem("charts"));
+      /*  const charts = JSON.parse(localStorage.getItem("charts"));
       const new_charts = [];
       charts.forEach((element, indexx) => {
         if (indexx != index) {
@@ -296,7 +302,15 @@ export default defineComponent({
         }
       });
       await localStorage.setItem("charts", JSON.stringify(new_charts));*/
-      await axios.post("/control-center/dashboard.php", qs.stringify({delete_chart: "delete_chart", dashboard: this.$route.params.dashboard, project: this.$route.params.project, chart_index: index, }));
+      await axios.post(
+        "/control-center/dashboard.php",
+        qs.stringify({
+          delete_chart: "delete_chart",
+          dashboard: this.$route.params.dashboard,
+          project: this.$route.params.project,
+          chart_index: index,
+        })
+      );
       this.loadCharts();
     },
     async loadCharts() {

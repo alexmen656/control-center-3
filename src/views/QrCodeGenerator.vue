@@ -37,14 +37,25 @@ import axios from "axios";
 import qs from "qs";
 import { getConfig } from "@/getToolConfig";
 import FloatingSelect from "@/components/FloatingSelect.vue";
-import { IonPage, IonContent } from "@ionic/vue";
+import {
+  IonPage,
+  IonContent,
+  IonGrid,
+  IonRow,
+  IonCol,
+  IonButton,
+} from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 
-export default {
+export default defineComponent({
   name: "BarcodeScanner",
   components: {
     IonPage,
     IonContent,
+    IonGrid,
+    IonRow,
+    IonCol,
+    IonButton,
     FloatingSelect,
   },
   setup() {
@@ -145,7 +156,7 @@ export default {
       return name.replaceAll(" ", "_").toLowerCase();
     },
   },
-};
+});
 </script>
 <style>
 img {
