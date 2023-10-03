@@ -210,6 +210,14 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/QrCodeScannerConfig.vue'),
   },
   {
+    path: '/project/:project/nfc',
+    component: () => import('../views/NFCView.vue'),
+  },
+  {
+    path: '/project/:project/nfc/config',
+    component: () => import('../views/NFCConfigView.vue'),
+  },
+  {
     path: '/project/:project/:form',
     component: () => import('../views/FormDisplay.vue'),
   },
