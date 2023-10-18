@@ -19,7 +19,7 @@
       <ion-grid>
         <ion-row>
           <ion-col>
-            <img v-if="link" alt="Barcode Generator TEC-IT" :src="link" />
+            <img v-if="link" class="img2" alt="Barcode Generator TEC-IT" :src="link" />
 
             <ion-button v-if="link" @click="print()"
               >Print
@@ -196,6 +196,10 @@ h2 {
     display: block !important;
     width: 13cm;
     max-height: 100% !important;
+  }
+
+  .img2 {
+    display: none;
   }
 
   ion-button,

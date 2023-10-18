@@ -71,6 +71,7 @@ import { loadUserData, getUserData } from "@/userData";
 import offlineTools from "@/offline/tools.json";
 import offlinePages from "@/offline/pages.json";
 import { SplashScreen } from "@capacitor/splash-screen";
+import EventBus from "@/event-bus";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAF53AYFblvyoeCHvXqUT--C5lnYf095VY",
@@ -140,6 +141,7 @@ export default defineComponent({
       // account_active: false
     };
   },
+
   async mounted() {
     await SplashScreen.hide();
     this.$watch(
@@ -306,7 +308,8 @@ export default defineComponent({
 
   methods: {
     updateSidebar() {
- //     const bookmarks = ref([]);
+      alert(1);
+      //     const bookmarks = ref([]);
       axios
         .get("/control-center/bookmarks.php?getBookmarks=getBookmarks")
         .then((response) => {

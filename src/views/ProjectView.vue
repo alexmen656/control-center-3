@@ -104,7 +104,6 @@ export default {
     };
   },
   created() {
-    this.$router.push("/project/"+this.$route.params.project+"/qr-code-scanner/");
     axios
       .get(
         "https://alex.polan.sk/control-center/sidebar.php?getSideBarByProjectName=" +

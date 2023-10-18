@@ -169,7 +169,7 @@ export default defineComponent({
 
     },*/
     loadData() {
-      const table_name = `${this.$route.params.project}_${this.$route.params.form}`;
+      const table_name = `${this.$route.params.project.replaceAll("-", "_")}_${this.$route.params.form}`;
       axios
         .post(
           `/control-center/mysql.php`,
@@ -183,7 +183,7 @@ export default defineComponent({
         });
     },
     loadMore(){
-      const table_name = `${this.$route.params.project}_${this.$route.params.form}`;
+      const table_name = `${this.$route.params.project.replaceAll("-", "_")}_${this.$route.params.form}`;
       axios.post("/control-center/mysql.php", qs.stringify({load_more: "load_more", current_limit: this.current_limit,table: table_name})).then((res) => {
         this.current_limit = this.current_limit+1;
 

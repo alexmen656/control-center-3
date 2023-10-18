@@ -237,7 +237,7 @@ export default defineComponent({
     };
   },
   async created() {
-    axios.post("/control-center/modules.php").then((res) => {
+    axios.post("/control-center/modules.php", qs.stringify({project: this.$route.params.project})).then((res) => {
       this.tools = res.data.map((tool, index) => ({
         id: index + 1,
         icon: tool.icon,
@@ -257,6 +257,7 @@ export default defineComponent({
         this.forms = res.data;
       });
   },
+
   methods: {
     handleSubmit() {
       if (this.selectedTool == "form") {
@@ -281,7 +282,9 @@ export default defineComponent({
             projectName: this.$route.params.project,
             toolName: selectedTool.name,
           })
-        );
+        ).then(()=>{
+          this.emitter.emit("updateSidebar");
+        });
       }
     },
     addInput() {
@@ -347,7 +350,9 @@ export default defineComponent({
               projectName: this.$route.params.project,
               toolName: this.title,
             })
-          );
+          ).then(()=>{
+            this.emitter.emit("updateSidebar");
+          });
         });
     },
     toName(name) {

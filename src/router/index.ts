@@ -194,6 +194,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/DashboardView.vue'),
   },
   {
+    path: '/project/:project/module-store',
+    component: () => import('../views/StoreOverview.vue'),
+  },
+  {
     path: '/project/:project/qr-code-generator',///:qr-code-generator
     component: () => import('../views/QrCodeGenerator.vue'),
   },

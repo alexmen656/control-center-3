@@ -53,7 +53,9 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
     $project = escape_string($_POST['project']);
     $query = query("SELECT * FROM form_settings WHERE form_name='$form_name' AND project='$project'");
     if (mysqli_num_rows($query) > 0) {
+        //echo 1;
         $form = fetch_assoc($query);
+       //print_r($form);
         $json['id'] = $form['form_id'];
         $json['form'] = json_decode($form['form_json'], true);
         $json['createdOn'] = $form['created_at'];

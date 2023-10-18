@@ -313,6 +313,7 @@ export default defineComponent({
       // by the reorder group
       event.detail.complete();
     };
+
     axios
       .get(
         "https://alex.polan.sk/control-center/sidebar.php?getSideBarByProjectName=" +
@@ -344,6 +345,19 @@ export default defineComponent({
       handleReorder,
       handleFrontReorder,
     };
+  },
+  created() {
+    this.emitter.on("updateSidebar", () => {
+      axios
+        .get(
+          "https://alex.polan.sk/control-center/sidebar.php?getSideBarByProjectName=" +
+            this.$route.params.project
+        )
+        .then((response) => {
+          this.tools = response.data.tools;
+          this.components = response.data.components;
+        });
+    });
   },
 });
 </script>

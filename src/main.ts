@@ -29,7 +29,8 @@ import "@vueup/vue-quill/dist/vue-quill.snow.css";
 
 /* Theme variables */
 import "./theme/variables.css";
-
+import mitt from "mitt";
+const emitter = mitt();
 const app = createApp(App)
   .use(IonicVue)
   //.use(DropZone)
@@ -37,7 +38,7 @@ const app = createApp(App)
   .use(router);
 
 app.component("QuillEditor", QuillEditor);
-
+app.config.globalProperties.emitter = emitter;
 router.isReady().then(() => {
   app.mount("#app");
 });

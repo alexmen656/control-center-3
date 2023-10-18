@@ -84,8 +84,11 @@ if ($_POST['getTables']) {
         $sql_limit = " LIMIT " . $limit;
     }
 
-    //echo "SELECT * FROM `$tbName`".$sql_limit;
-    if ($data = query("SELECT * FROM `$tbName` ORDER BY id" . $sql_limit)) {
+    $primary_key = fetch_assoc(query("SELECT `COLUMN_NAME` FROM `information_schema`.`COLUMNS` WHERE (`TABLE_SCHEMA` = 'alex01d01') AND (`TABLE_NAME` = '$tbName') AND (`COLUMN_KEY` = 'PRI')"))["COLUMN_NAME"];
+   
+    if (
+        $data = query("SELECT * FROM `$tbName` ORDER BY $primary_key" . $sql_limit)
+    ) {
         if (isset($_POST['limit'])) {
             $num_rows = mysqli_num_rows(query("SELECT * FROM `$tbName`"));
             if ($num_rows > $limit) {
