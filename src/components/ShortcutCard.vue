@@ -1,22 +1,18 @@
 <template>
-  <ion-card @click="redirectToLink(link)" class="shortcut-card">
-    <ion-card-header class="card-header">
-      <ion-card-title>{{ title }}</ion-card-title>
-      <ion-icon class="icon" name="open-outline"></ion-icon>
-    </ion-card-header>
-  </ion-card>
+  <div @click="redirectToLink(link)" class="shortcut-card">
+    <h2>{{ title }}</h2>
+
+    <ion-icon name="chevron-forward-outline" />
+  </div>
 </template>
 
 <script>
-import { IonCard, IonCardHeader, IonCardTitle, IonIcon } from "@ionic/vue";
+import { IonIcon } from "@ionic/vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "ShortcutCard",
   components: {
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
     IonIcon,
   },
   props: {
@@ -38,28 +34,26 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.card-header {
+.shortcut-card {
+  background: black;
+  border-radius: 15px;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  padding-inline: 1.5rem;
+  margin-inline: 10px;
+  justify-content: space-between;
+  height: 100%;
 }
 
-.card-header .icon {
-  margin-left: 5px;
+.shortcut-card > ion-icon{
+  height: 100%;
+  width: 12%;
+  color: red;/*gray*/
 }
 
-ion-card-title {
-  font-family: HelveticaNeue;
-  font-size: 24px;
-
-  letter-spacing: -0.57px;
-  text-align: center;
-  transition: color 0.2s ease-in-out; /* Übergangseffekt auf die Textfarbe */
-  cursor: default;
-}
-
-ion-card:hover > ion-card-header > ion-card-title {
-  color: red !important; /* Textfarbe wird auf Rot geändert */
+h2 {
+  margin: 0;
+  padding-bottom: 1.5rem;
+  padding-top: 1.5rem;
 }
 
 .shortcut-card {

@@ -3,24 +3,43 @@
     <ion-card-header>
       <ion-card-title>Sales</ion-card-title>
     </ion-card-header>
-    <ion-card-content>
-      <p>Current Month: {{ currentSales }}</p>
-      <p>Last Month: {{ lastMonthSales }}</p>
-      <p v-if="increase > 0">Increase: {{ increase }}%</p>
-      <p v-else>Decrease: {{ increase }}%</p>
+    <ion-card-content style="display: flex; align-items: end">
+      <div style="width: 60%">
+        <p>Current Month: {{ trend[3] }}</p>
+        <p>Last Month: {{ trend[2] }}</p>
+        <p v-if="trend[2] < trend[3]">Increase: {{ Math.round(((trend[3] - trend[2]) / trend[2]) * 100) }}%</p>
+        <p v-else>Decrease: {{ Math.round(((trend[3] - trend[2]) / trend[2]) * 100) }}%</p>
+      </div>
+      <div style="width: 40%; height: 75%; display: flex">
+        <trend
+          :data="trend"
+          :gradient="trend[2] > trend[3] ? ['red'] : ['green']"
+          :stroke-width="7"
+          :radius="12"
+          auto-draw
+          smooth
+          :stroke-linecap="round"
+        >
+        </trend>
+      </div>
     </ion-card-content>
   </ion-card>
 </template>
 
 <script>
 //import { useRoute } from "vue-router";
-import { defineComponent } from "vue";//, ref
+import { defineComponent } from "vue"; //, ref
+import Trend from "@ddgll/vue3-trend";
 import {
   IonCard,
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
 } from "@ionic/vue";
+//import TrendChart from "vue-trend-chart";
+
+//import TrendChart from "vue-trend-chart";
+
 /*import {
  // basketballOutline,
 //  medkitOutline,
@@ -43,8 +62,10 @@ import {
 } from "ionicons/icons";*/
 
 export default defineComponent({
-  name: "CardcCmponent",
+  name: "CardComponent",
   components: {
+    //  TrendChart,
+    Trend,
     IonCard,
     IonCardContent,
     IonCardHeader,
@@ -55,6 +76,7 @@ export default defineComponent({
       currentSales: 0,
       lastMonthSales: 0,
       increase: 0,
+      trend: [Math.floor(Math.random() * 1001), Math.floor(Math.random() * 1001), Math.floor(Math.random() * 1001), Math.floor(Math.random() * 1001)],
     };
   },
   mounted() {
@@ -70,6 +92,7 @@ export default defineComponent({
 <style scoped>
 ion-card {
   /* background: #000000;*/
-  border-radius: 20px;
+  border-radius: 18px;
+  padding: .25rem !important;
 }
 </style>
