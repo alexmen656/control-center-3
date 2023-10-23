@@ -35,13 +35,25 @@ export default defineComponent({
 
 <style scoped>
 .shortcut-card {
-  background: black;
   border-radius: 15px;
   display: flex;
   padding-inline: 1.5rem;
   margin-inline: 10px;
   justify-content: space-between;
   height: 100%;
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 1px -2px, rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px 
+}
+
+@media (prefers-color-scheme: dark) {
+  .shortcut-card {
+    background: black;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .shortcut-card {
+    background: white;
+  }
 }
 
 .shortcut-card > ion-icon{
