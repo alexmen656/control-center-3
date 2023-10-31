@@ -19,7 +19,7 @@ if (isset($_POST['deinstall']) && isset($_POST['moduleID']) && isset($_POST['pro
     $module = query("SELECT * FROM module_store_modules WHERE id='$moduleID'");
     if (mysqli_num_rows($module) == 1) {
         $module = fetch_assoc($module);
-        $name = $module['name'];
+        $name = $module['display_name'];
         if (query("DELETE FROM control_center_modules WHERE name='$name' AND project='$project'")) {
             echo "Module '" . $module['name'] . "' deleted successfully";
         }
