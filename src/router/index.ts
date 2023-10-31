@@ -9,6 +9,7 @@ import DatabasesView from '../views/Databases.vue'
 import TableDetail from '../views/TableDetail.vue'
 import MyAccount from '../views/MyAccount.vue'
 import PhotoView from '../views/PhotoView.vue'
+import PinVerification from '../views/PinVerification.vue'
 
 
 
@@ -81,6 +82,10 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/photo',
     component: PhotoView,
+  },
+  {
+    path: '/pin',
+    component: PinVerification,
   },
   {
     path: '/new/site/',

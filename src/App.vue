@@ -1,24 +1,56 @@
 <template>
   <ion-app>
-    <ion-content>
-      <SiteHeader v-if="account_active && token"></SiteHeader>
+    <ion-content
+      v-if="
+        !faceIDAvaible ||
+        authenticated ||
+        $route.path == '/pin' ||
+        $route.path == '/pin/'
+      "
+    >
+      <SiteHeader
+        v-if="
+          account_active &&
+          token &&
+          $route.path != '/pin' &&
+          $route.path != '/pin/'
+        "
+      ></SiteHeader>
       <ion-split-pane content-id="main-content">
-        <SideBar
-          :projects="projects"
-          :tools="tools"
-          :bookmarks="bookmarks"
-          v-if="token && account_active && !$route.params.project"
-        ></SideBar>
-        <ProjectSideBar
-          v-if="token && account_active && $route.params.project"
-        ></ProjectSideBar>
+        <ion-menu
+          content-id="main-content"
+          class="ion-menu"
+          type="overlay"
+        >
+        <ion-content>
+          <SideBar
+            :projects="projects"
+            :tools="tools"
+            :bookmarks="bookmarks"
+            v-if="
+              !$route.params.project &&
+              $route.path != '/pin' &&
+              $route.path != '/pin/'
+            "
+          ></SideBar>
+          <ProjectSideBar
+            v-if="
+              $route.params.project &&
+              $route.path != '/pin' &&
+              $route.path != '/pin/'
+            "
+          ></ProjectSideBar>
+        </ion-content>
+        </ion-menu>
         <div id="main-content">
           <SiteTitle
             v-if="
               token &&
               account_active &&
               page.title &&
-              (page.showTitle == true || page.showTitle == 'true')
+              (page.showTitle == true || page.showTitle == 'true') &&
+              $route.path != '/pin' &&
+              $route.path != '/pin/'
             "
             :icon="page.icon"
             :title="page.title"
@@ -56,6 +88,7 @@ import {
   IonFooter,
   IonToolbar,
   IonContent,
+  IonMenu
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import SiteHeader from "@/components/Header.vue";
@@ -72,6 +105,9 @@ import offlineTools from "@/offline/tools.json";
 import offlinePages from "@/offline/pages.json";
 import { SplashScreen } from "@capacitor/splash-screen";
 import EventBus from "@/event-bus";
+import { Plugins } from "@capacitor/core";
+
+const { FaceId } = Plugins;
 
 const firebaseConfig = {
   apiKey: "AIzaSyAF53AYFblvyoeCHvXqUT--C5lnYf095VY",
@@ -133,11 +169,14 @@ export default defineComponent({
     IonContent,
     IonFooter,
     IonToolbar,
+    IonMenu
     //IonHeader
   },
   data() {
     return {
       token: localStorage.getItem("token"),
+      faceIDAvaible: false,
+      authenticated: false,
       // account_active: false
     };
   },
@@ -165,6 +204,27 @@ export default defineComponent({
     this.loadPageData();
   },
   async created() {
+    this.emitter.on("authenticated", () => {
+      this.authenticated = true;
+    });
+
+    FaceId.isAvailable().then((checkResult) => {
+      this.faceIDAvaible = true;
+      if (checkResult.value) {
+        FaceId.auth()
+          .then(() => {
+            this.authenticated = true;
+            //console.log("authenticated");
+          })
+          .catch((error) => {
+            //console.error(error.message);
+            this.$router.push("/pin");
+          });
+      } else {
+        this.$router.push("/pin");
+      }
+    });
+
     await loadUserData();
   },
   setup() {

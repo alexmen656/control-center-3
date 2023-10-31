@@ -27,7 +27,8 @@ export default defineComponent({
   },
   methods: {
     redirectToLink(link) {
-      window.location.href = link;
+      //window.location.href = link;
+      this.$router.push(link);
     },
   },
 });

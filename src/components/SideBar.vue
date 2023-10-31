@@ -1,6 +1,5 @@
 <template>
-  <ion-menu content-id="main-content" class="ion-menu" type="overlay">
-    <ion-content>
+
       <ion-list id="inbox-list">
         <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
           <ion-item
@@ -87,18 +86,15 @@
           </ion-item>
         </ion-menu-toggle>
       </ion-list>
-    </ion-content>
-  </ion-menu>
+   
 </template>
 
 <script>
 import {
-  IonContent,
   IonIcon,
   IonItem,
   IonLabel,
   IonList,
-  IonMenu,
   IonMenuToggle,
   IonNote,
 } from "@ionic/vue";
@@ -108,11 +104,9 @@ import { defineComponent, ref } from "vue";
 export default defineComponent({
   name: "SideBar",
   components: {
-    IonContent,
     IonIcon,
     IonItem,
     IonLabel,
-    IonMenu,
     IonMenuToggle,
     IonList,
     IonNote,
@@ -124,15 +118,24 @@ export default defineComponent({
   },
   methods: {
     goToProject(name) {
-      window.location.href =
+      /* window.location.href =
         "/project/" +
         (name[0].toLowerCase() + name.substring(1))
           .replaceAll(` `, `-`)
           .replaceAll(`'`, ``)
-          .toLowerCase();
+          .toLowerCase();*/
+
+      this.$router.push(
+        "/project/" +
+          (name[0].toLowerCase() + name.substring(1))
+            .replaceAll(` `, `-`)
+            .replaceAll(`'`, ``)
+            .toLowerCase()
+      );
     },
     goToBookmark(link) {
-      window.location.href = link;
+      // window.location.href = link;
+      this.$router.push(link);
     },
   },
 

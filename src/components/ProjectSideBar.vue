@@ -1,6 +1,5 @@
 <template>
-  <ion-menu content-id="main-content" class="ion-menu" type="overlay">
-    <ion-content>
+ 
       <ion-list id="inbox-list">
         <ion-reorder-group
           :disabled="false"
@@ -183,19 +182,15 @@
           </ion-menu-toggle>
         </ion-reorder-group>
       </ion-list>
-    </ion-content>
-  </ion-menu>
 </template>
 
 <script lang="ts">
 /* eslint-disable */
 import {
-  IonContent,
   IonIcon,
   IonItem,
   IonLabel,
   IonList,
-  IonMenu,
   IonMenuToggle,
   IonReorder,
   IonReorderGroup,
@@ -209,11 +204,9 @@ import { useIonRouter } from "@ionic/vue";
 export default defineComponent({
   name: "ProjectSideBar",
   components: {
-    IonContent,
     IonIcon,
     IonItem,
     IonLabel,
-    IonMenu,
     IonMenuToggle,
     IonList,
     IonReorder,

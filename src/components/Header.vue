@@ -2,7 +2,7 @@
   <ion-header :translucent="true">
     <ion-toolbar class="header">
       <ion-buttons slot="start">
-        <ion-menu-button />
+        <ion-menu-button></ion-menu-button>
       </ion-buttons>
       <ion-title @click="goToStart()">{{ title }}</ion-title>
       <router-link
@@ -61,7 +61,7 @@ export default defineComponent({
   },
   methods: {
     goToStart() {
-      window.location.href = "/";
+     this.$router.push("/");
     },
   },
 });
