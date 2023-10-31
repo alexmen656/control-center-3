@@ -2,10 +2,9 @@
   <ion-header :translucent="true">
     <ion-toolbar class="header">
       <ion-buttons slot="start">
-        <ion-menu-button></ion-menu-button>
+        <ion-menu-button />
       </ion-buttons>
-      <ion-title @click="goToStart()">{{ title }}</ion-title
-      ><!--routerLink="/"-->
+      <ion-title @click="goToStart()">{{ title }}</ion-title>
       <router-link
         style="height: 36px; margin-right: 5px"
         slot="end"
@@ -15,8 +14,8 @@
           :firstName="user.firstName"
           :lastName="user.lastName"
           avatarColor="green"
-        ></Avatar
-      ></router-link>
+        />
+      </router-link>
     </ion-toolbar>
   </ion-header>
 </template>
@@ -30,9 +29,8 @@ import {
   IonButtons,
 } from "@ionic/vue";
 import Avatar from "@/components/AvatarComponent.vue";
-//import axios from "axios";
-import { defineComponent, ref } from "vue";
-import { getUserData } from "@/userData";
+import { defineComponent } from "vue";
+import { loadUserData, getUserData } from "@/userData";
 
 export default defineComponent({
   name: "SiteHeader",
@@ -46,29 +44,18 @@ export default defineComponent({
   },
   data() {
     return {
-      //user: {},
+      user: {},
     };
   },
-  created() {
-    const data = getUserData();
-    console.log(data);
-    this.user = data;
+  async mounted() {
+    await loadUserData();
+    this.user = await getUserData();
   },
   setup() {
-    const user = ref({});
     const width = document.body.clientWidth;
-   // const data = getUserData();
-
-   /* const response = axios
-      .post("https://alex.polan.sk/control-center/user.php")
-      .then((responseee) => {
-        user.value = responseee.data;
-      });*/ //, {token: localStorage.getItem('token')
-
     const title = width > 380 ? "Control Center" : "CCenter";
 
     return {
-      user: user,
       title: title,
     };
   },
