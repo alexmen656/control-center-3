@@ -21,11 +21,9 @@ import "@ionic/vue/css/text-transformation.css";
 import "@ionic/vue/css/flex-utils.css";
 import "@ionic/vue/css/display.css";
 
+/* QuillEditor */
 import { QuillEditor } from "@vueup/vue-quill";
 import "@vueup/vue-quill/dist/vue-quill.snow.css";
-
-//mport DropZone from 'dropzone-vue';
-//import 'dropzone-vue/dist/dropzone-vue.common.css';
 
 /* Theme variables */
 import "./theme/variables.css";
@@ -33,12 +31,11 @@ import mitt from "mitt";
 const emitter = mitt();
 const app = createApp(App)
   .use(IonicVue)
-  //.use(DropZone)
-  // .use(axios)
   .use(router);
 
 app.component("QuillEditor", QuillEditor);
 app.config.globalProperties.emitter = emitter;
+
 router.isReady().then(() => {
   app.mount("#app");
 });

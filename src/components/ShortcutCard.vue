@@ -27,7 +27,6 @@ export default defineComponent({
   },
   methods: {
     redirectToLink(link) {
-      //window.location.href = link;
       this.$router.push(link);
     },
   },
@@ -42,7 +41,8 @@ export default defineComponent({
   margin-inline: 10px;
   justify-content: space-between;
   height: 100%;
-  box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 1px -2px, rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px 
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 1px -2px,
+    rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -57,10 +57,10 @@ export default defineComponent({
   }
 }
 
-.shortcut-card > ion-icon{
+.shortcut-card > ion-icon {
   height: 100%;
   width: 12%;
-  color: red;/*gray*/
+  color: red; /*gray*/
 }
 
 h2 {

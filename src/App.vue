@@ -17,30 +17,26 @@
         "
       ></SiteHeader>
       <ion-split-pane content-id="main-content">
-        <ion-menu
-          content-id="main-content"
-          class="ion-menu"
-          type="overlay"
-        >
-        <ion-content>
-          <SideBar
-            :projects="projects"
-            :tools="tools"
-            :bookmarks="bookmarks"
-            v-if="
-              !$route.params.project &&
-              $route.path != '/pin' &&
-              $route.path != '/pin/'
-            "
-          ></SideBar>
-          <ProjectSideBar
-            v-if="
-              $route.params.project &&
-              $route.path != '/pin' &&
-              $route.path != '/pin/'
-            "
-          ></ProjectSideBar>
-        </ion-content>
+        <ion-menu content-id="main-content" class="ion-menu" type="overlay">
+          <ion-content>
+            <SideBar
+              :projects="projects"
+              :tools="tools"
+              :bookmarks="bookmarks"
+              v-if="
+                !$route.params.project &&
+                $route.path != '/pin' &&
+                $route.path != '/pin/'
+              "
+            ></SideBar>
+            <ProjectSideBar
+              v-if="
+                $route.params.project &&
+                $route.path != '/pin' &&
+                $route.path != '/pin/'
+              "
+            ></ProjectSideBar>
+          </ion-content>
         </ion-menu>
         <div id="main-content">
           <SiteTitle
@@ -88,7 +84,7 @@ import {
   IonFooter,
   IonToolbar,
   IonContent,
-  IonMenu
+  IonMenu,
 } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import SiteHeader from "@/components/Header.vue";
@@ -104,7 +100,6 @@ import { loadUserData, getUserData } from "@/userData";
 import offlineTools from "@/offline/tools.json";
 import offlinePages from "@/offline/pages.json";
 import { SplashScreen } from "@capacitor/splash-screen";
-import EventBus from "@/event-bus";
 import { Plugins } from "@capacitor/core";
 
 const { FaceId } = Plugins;
@@ -169,7 +164,7 @@ export default defineComponent({
     IonContent,
     IonFooter,
     IonToolbar,
-    IonMenu
+    IonMenu,
     //IonHeader
   },
   data() {
@@ -186,7 +181,6 @@ export default defineComponent({
     this.$watch(
       () => this.$route.params,
       () => {
-        //console.log('URL-Parameter wurden geändert');
         this.page = {};
         this.loadPageData();
       }
@@ -195,7 +189,6 @@ export default defineComponent({
     this.$watch(
       () => window.location.pathname.replace("/", ""),
       () => {
-        //console.log('URL-Parameter wurden geändert');
         this.page = {};
         this.loadPageData();
       }
@@ -214,10 +207,8 @@ export default defineComponent({
         FaceId.auth()
           .then(() => {
             this.authenticated = true;
-            //console.log("authenticated");
           })
           .catch((error) => {
-            //console.error(error.message);
             this.$router.push("/pin");
           });
       } else {
@@ -241,8 +232,6 @@ export default defineComponent({
     const isOnline = ref(navigator.onLine);
 
     const loadPageData = async () => {
-      //alert("changed");
-
       if (
         !localStorage.getItem("token") &&
         location.pathname != "/login" &&
@@ -287,8 +276,6 @@ export default defineComponent({
       }
 
       if (isOnline.value) {
-        //   alert("changed2");
-
         axios.post("/control-center/pages.php").then((response) => {
           pages.value = response.data;
           const foundPage = pages.value.find((p) => p["url"] === paramUrl);
@@ -368,8 +355,7 @@ export default defineComponent({
 
   methods: {
     updateSidebar() {
-      alert(1);
-      //     const bookmarks = ref([]);
+      // const bookmarks = ref([]);
       axios
         .get("/control-center/bookmarks.php?getBookmarks=getBookmarks")
         .then((response) => {
@@ -453,17 +439,13 @@ ion-menu.md ion-list#inbox-list {
 ion-menu.md ion-list#inbox-list ion-list-header {
   font-size: 22px;
   font-weight: 600;
-
   min-height: 20px;
 }
 
 ion-menu.md ion-list#labels-list ion-list-header {
   font-size: 16px;
-
   margin-bottom: 18px;
-
   color: #757575;
-
   min-height: 26px;
 }
 
@@ -534,7 +516,6 @@ ion-menu.ios ion-note {
 ion-note {
   display: inline-block;
   font-size: 16px;
-
   color: var(--ion-color-medium-shade);
 }
 

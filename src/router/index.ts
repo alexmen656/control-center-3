@@ -76,10 +76,6 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/LogOutView.vue'),
   },
   {
-    path: '/scanner',
-    component: () => import('../views/BarcodeScanner.vue'),
-  },
-  {
     path: '/photo',
     component: PhotoView,
   },

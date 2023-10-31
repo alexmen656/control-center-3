@@ -59,13 +59,7 @@
 <script>
 import "vue3-circle-progress/dist/circle-progress.css";
 import CircleProgress from "vue3-circle-progress";
-import axios from "axios";
-import qs from "qs";
 import {
-  IonSearchbar,
-  IonPage,
-  IonContent,
-  IonGrid,
   IonRow,
   IonCol,
   IonButton,
