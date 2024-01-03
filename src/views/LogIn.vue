@@ -329,7 +329,9 @@ export default defineComponent({
 </script>
 
 <style scoped>
-
+ion-list {
+  background: var(--ion-background-color);
+}
 #container {
   text-align: center;
   position: absolute;

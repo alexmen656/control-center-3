@@ -1,7 +1,7 @@
 import { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "sk.alex.polan.control-center",
+  appId: "sk.polan.alex.control-center",
   appName: "Control Center",
   webDir: "dist",
   bundledWebRuntime: false,
@@ -24,6 +24,9 @@ const config: CapacitorConfig = {
       forceCodeForRefreshToken: true,
       iosClientId: "706582238302-q1i78up9i9p5ia3tmaurqeerll1ucthg.apps.googleusercontent.com"
     },
+    FirebaseMessaging: {
+      presentationOptions: ["badge", "sound", "alert"]
+    }
   },
 };
 

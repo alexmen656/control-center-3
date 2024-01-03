@@ -4,6 +4,7 @@ import store from "@/store";
 
 interface UserData {
   profileImg: string;
+  userID: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -13,6 +14,7 @@ interface UserData {
 
 const data = ref<UserData>({
   profileImg: "",
+  userID: "",
   firstName: "",
   lastName: "",
   email: "",
@@ -27,6 +29,10 @@ export async function loadUserData() {
         "https://alex.polan.sk/control-center/user.php"
       );
       data.value = response.data;
+      store.commit("updateUser", {
+        valueName: "userID",
+        newValue: data.value.userID,
+      });
       store.commit("updateUser", {
         valueName: "firstName",
         newValue: data.value.firstName,
@@ -61,6 +67,7 @@ export function getUserData(): UserData | null {
   try {
     return {
       profileImg: store.state.user.profileImg,
+      userID: store.state.user.userID,
       firstName: store.state.user.firstName,
       lastName: store.state.user.lastName,
       email: store.state.user.email,

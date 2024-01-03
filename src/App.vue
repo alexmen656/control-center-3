@@ -17,7 +17,12 @@
         "
       ></SiteHeader>
       <ion-split-pane content-id="main-content">
-        <ion-menu content-id="main-content" class="ion-menu" type="overlay">
+        <ion-menu
+          v-if="token && account_active"
+          content-id="main-content"
+          class="ion-menu"
+          type="overlay"
+        >
           <ion-content>
             <SideBar
               :projects="projects"
@@ -101,54 +106,10 @@ import offlineTools from "@/offline/tools.json";
 import offlinePages from "@/offline/pages.json";
 import { SplashScreen } from "@capacitor/splash-screen";
 import { Plugins } from "@capacitor/core";
-
+import { isPlatform } from "@ionic/vue";
+import { FirebaseMessaging } from "@capacitor-firebase/messaging";
+import { firebase_config } from "@/firebase_config";
 const { FaceId } = Plugins;
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAF53AYFblvyoeCHvXqUT--C5lnYf095VY",
-  authDomain: "alexs-blog-371818.firebaseapp.com",
-  projectId: "alexs-blog-371818",
-  storageBucket: "alexs-blog-371818.appspot.com",
-  messagingSenderId: "993142363546",
-  appId: "1:993142363546:web:af5db6e6c5ff5c57105623",
-  measurementId: "G-Y452FKG122",
-};
-
-const app = initializeApp(firebaseConfig);
-let messaging;
-try {
-  messaging = getMessaging();
-  onMessage(messaging, (payload) => {
-    console.log("Message received. ", payload);
-  });
-} catch (err) {
-  console.error("Failed to initialize Firebase Messaging", err);
-}
-
-getToken(messaging, {
-  vapidKey:
-    "BLHOWBaM9Ej23udRuBcV5-hUMw-jVCA6czu7wCOtqtyv54u-0NyeughCPUomwSVdhJGUsC54VGdjb2czi2HeTr4",
-})
-  .then((currentToken) => {
-    if (currentToken) {
-      axios.post(
-        "/control-center/push_notifications_token.php",
-        qs.stringify({
-          newToken: "newToken",
-          token: currentToken,
-          platform: window.navigator.userAgent,
-          userID: "79",
-        })
-      );
-    } else {
-      console.log(
-        "No registration token available. Request permission to generate one."
-      );
-    }
-  })
-  .catch((err) => {
-    console.log("An error occurred while retrieving token. ", err);
-  });
 
 export default defineComponent({
   name: "App",
@@ -172,11 +133,48 @@ export default defineComponent({
       token: localStorage.getItem("token"),
       faceIDAvaible: false,
       authenticated: false,
+      userData: {},
       // account_active: false
     };
   },
-
   async mounted() {
+    await loadUserData();
+    this.userData = await getUserData();
+
+    const checkPermissions = async () => {
+      const result = await FirebaseMessaging.checkPermissions();
+      return result.receive;
+    };
+
+    const requestPermissions = async () => {
+      const result = await FirebaseMessaging.requestPermissions();
+      return result.receive;
+    };
+
+    const getToken = async () => {
+      const result = await FirebaseMessaging.getToken({
+        vapidKey: firebase_config.vapidKey,
+      });
+      return result.token;
+    };
+    if (this.userData) {
+      if (checkPermissions()) {
+        getToken().then((token) => {
+          axios.post(
+            "/control-center/push_notifications_token.php",
+            qs.stringify({
+              newToken: "newToken",
+              token: token,
+              platform: window.navigator.userAgent,
+              userID: this.userData.userID,
+            })
+          );
+        });
+      } else {
+        requestPermissions();
+      }
+    }
+
     await SplashScreen.hide();
     this.$watch(
       () => this.$route.params,
@@ -197,26 +195,27 @@ export default defineComponent({
     this.loadPageData();
   },
   async created() {
+    initializeApp(firebase_config);
     this.emitter.on("authenticated", () => {
       this.authenticated = true;
     });
+    if (isPlatform("ios")) {
+      FaceId.isAvailable().then((checkResult) => {
+        this.faceIDAvaible = true;
 
-    FaceId.isAvailable().then((checkResult) => {
-      this.faceIDAvaible = true;
-      if (checkResult.value) {
-        FaceId.auth()
-          .then(() => {
-            this.authenticated = true;
-          })
-          .catch((error) => {
-            this.$router.push("/pin");
-          });
-      } else {
-        this.$router.push("/pin");
-      }
-    });
-
-    await loadUserData();
+        if (checkResult.value) {
+          FaceId.auth()
+            .then(() => {
+              this.authenticated = true;
+            })
+            .catch((error) => {
+              this.$router.push("/pin");
+            });
+        } else {
+          this.$router.push("/pin");
+        }
+      });
+    }
   },
   setup() {
     const pages = ref([]);
@@ -361,25 +360,6 @@ export default defineComponent({
         .then((response) => {
           this.bookmarks = response.data;
           localStorage.setItem("bookmarks", this.bookmarks);
-        });
-    },
-    subscribe() {
-      getToken(messaging, {
-        vapidKey:
-          "BLHOWBaM9Ej23udRuBcV5-hUMw-jVCA6czu7wCOtqtyv54u-0NyeughCPUomwSVdhJGUsC54VGdjb2czi2HeTr4",
-      })
-        .then((currentToken) => {
-          if (currentToken) {
-            alert(currentToken);
-            console.log(currentToken);
-          } else {
-            console.log(
-              "No registration token available. Request permission to generate one."
-            );
-          }
-        })
-        .catch((err) => {
-          console.log("An error occurred while retrieving token. ", err);
         });
     },
   },

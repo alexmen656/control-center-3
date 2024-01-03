@@ -10,7 +10,7 @@ if ($headers['Authorization']) {
     if (mysqli_num_rows($data) == 1) {
 
 
-        if ($_REQUEST['firstName']) { // && $_POST['name'] && $_POST['email']
+        if (isset($_REQUEST['firstName'])) { // && $_POST['name'] && $_POST['email']
             $firstName = escape_string($_REQUEST['firstName']); //['value'];
             $lastName = escape_string($_REQUEST['lastName']); //['value'];
             $email = escape_string($_REQUEST['email']); //['value'];
