@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <Avatar slot="start" :profileImg="chat.image" avatarColor="blue" />
+        <Avatar slot="start" :profileImg="'https://alex.polan.sk/control-center/'+chat.image" avatarColor="blue" />
         <ion-title slot="start">{{ chat.name }}</ion-title>
       </ion-toolbar>
     </ion-header>

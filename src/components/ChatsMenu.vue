@@ -7,7 +7,7 @@
     >
       <ion-avatar slot="start">
         <Avatar
-          :profileImg="chat.image"
+          :profileImg="'https://alex.polan.sk/control-center/'+chat.image"
           :firstName="chat.users[0].firstname"
           :lastName="chat.users[0].lastname"
           avatarColor="blue"

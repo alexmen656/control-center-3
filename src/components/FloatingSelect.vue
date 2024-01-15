@@ -7,6 +7,7 @@
     interface="popover"
     :placeholder="select.label"
     :value="defaultVal"
+    :multiple="multiple"
   >
     <ion-select-option
       v-for="option in select.options"
@@ -26,6 +27,10 @@ const props = defineProps({
   select: {
     type: Object,
     required: true,
+  },
+  multiple: {
+    type: Boolean,
+    default: false,
   },
   defaultVal: {
     type: String,

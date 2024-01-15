@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         if ($userResult && mysqli_num_rows($userResult) > 0) {
           $userData = fetch_assoc($userResult);
 
-          if($userData['profileImg'] != "avatar"){
+          if($userData['profileImg'] != "avatar" && $userData['profileImg'] != "google"){
             $userData['profileImg'] = file_get_contents('images/profileImages/'.$userData['profileImg']);
         }
         if($userData['userID'] != $userId){
@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
       if($type == 2){
         //wenn Gruppe
-        $group = query("SELECT * FROM control_center_groups WHERE chatID=$chatId");
+        $group = query("SELECT * FROM control_center_groups WHERE chatID='$chatId'");
         if(mysqli_num_rows($group) == 1){
           $group = fetch_assoc($group);
           $name = $group['name'];
@@ -85,11 +85,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 if(isset($_POST['getChatByChatID']) && isset($_POST['chatID']) && isset($_POST['userID'])){
   $chatID = escape_string($_POST['chatID']);
   $userID = escape_string($_POST['userID']);
-  $chat = query("SELECT * FROM control_center_chats WHERE chatID=$chatID");
+  $chat = query("SELECT * FROM control_center_chats WHERE chatID='$chatID'");
 
   if(mysqli_num_rows($chat) == 1){
     $chat = fetch_assoc($chat);
     $type = $chat['type'];
+    $creationTime = $chat['creationTime'];
     $userIds = explode(',', $chat['users']);
     $users = array();
 
@@ -99,7 +100,7 @@ if(isset($_POST['getChatByChatID']) && isset($_POST['chatID']) && isset($_POST['
       if ($userResult && mysqli_num_rows($userResult) > 0) {
         $userData = fetch_assoc($userResult);
 
-        if($userData['profileImg'] != "avatar"){
+        if($userData['profileImg'] != "avatar" && $userData['profileImg'] != "google"){
             $userData['profileImg'] = file_get_contents('images/profileImages/'.$userData['profileImg']);
         }
 
@@ -125,7 +126,7 @@ if(isset($_POST['getChatByChatID']) && isset($_POST['chatID']) && isset($_POST['
 
     if($type == 2){
       //wenn Gruppe
-      $group = query("SELECT * FROM control_center_groups WHERE chatID=$chatID");
+      $group = query("SELECT * FROM control_center_groups WHERE chatID='$chatID'");
       if(mysqli_num_rows($group) == 1){
         $group = fetch_assoc($group);
         $name = $group['name'];
@@ -141,7 +142,7 @@ if(isset($_POST['getChatByChatID']) && isset($_POST['chatID']) && isset($_POST['
     }
 
     $chats[] = array(
-      'chatId' => $chatId,
+      'chatId' => $chatID,
       'creationTime' => $creationTime,
       'type' => $type,
       'image' => $image,

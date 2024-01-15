@@ -3,14 +3,14 @@ include 'head.php';
 
 if(isset($_POST['getMessagesByChatID']) && isset($_POST['chatID'])){
     $chatID = escape_string($_POST['chatID']);
-    $chat = query("SELECT * FROM control_center_chats WHERE chatID=$chatID");
+    $chat = query("SELECT * FROM control_center_chats WHERE chatID='$chatID'");
     if(mysqli_num_rows($chat) == 1){
         $chat = fetch_assoc($chat);
     }else{
         echo echoJSON(["error"=> "Error 23"]);
         $chat = [];
     }
-    $messages = query("SELECT * FROM control_center_messages WHERE chatID=$chatID");
+    $messages = query("SELECT * FROM control_center_messages WHERE chatID='$chatID'");
     if(mysqli_num_rows($messages) > 0){
         $i=0;
         foreach($messages as $m){
