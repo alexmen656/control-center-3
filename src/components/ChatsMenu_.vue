@@ -1,23 +1,33 @@
 <template>
-  <div class="chat-menu">
-    <ion-avatar
+  <ion-list>
+    <ion-item
       v-for="chat in chats"
       :key="chat.chatId"
       @click="goToChat(chat.chatId)"
-      class="avatar"
     >
-      <div
-        v-if="profileImg === 'avatar'"
-        :style="{ 'background-color': 'blue' }"
-        class="avatar"
-      >
-        {{ initials(chat.users[0].firstname, chat.users[0].lastname) }}
-      </div>
-      <img v-else :src="(chat.type == '2' ?'https://alex.polan.sk/control-center/' : '') + chat.image" />
-   
-    </ion-avatar>
-      <router-link class="avatar" to="/messages/new/group"><ion-icon class="add" name="add-circle-outline" /></router-link>
-  </div>
+      <ion-avatar slot="start">
+        <Avatar
+          :profileImg="'https://alex.polan.sk/control-center/'+chat.image"
+          :firstName="chat.users[0].firstname"
+          :lastName="chat.users[0].lastname"
+          avatarColor="blue"
+        /><!-- v-if="chat.type == 1"-->
+      </ion-avatar>
+      <ion-label>
+        <h2>
+          <!-- v-if="chat.type == 1"-->
+          <!--   {{ chat.users[0].firstname }} {{ chat.users[0].lastname }}-->
+          {{ chat.name }}
+        </h2>
+        <!-- <h2 v-if="chat.type == 2">Group</h2>-->
+        <!--   <p>{{ lastMessage(chat.id) }}</p>-->
+      </ion-label>
+    </ion-item>
+    <ion-item router-link="/messages/new/group">
+      <ion-icon name="add-outline" />
+      <h2>New Group</h2>
+    </ion-item>
+  </ion-list>
 </template>
 
 <script>
@@ -32,21 +42,23 @@ import {
   //IonCol,
   //IonRow,
   //IonGrid,
-  //IonLabel,
+  IonLabel,
   IonAvatar,
   IonIcon,
 } from "@ionic/vue";
 
 export default defineComponent({
   components: {
-    //Avatar,
+    Avatar,
     //IonPage,
     //IonHeader,
     //IonContent,
-        //IonCol,
+    IonList,
+    IonItem,
+    //IonCol,
     //IonRow,
     //IonGrid,
-    //IonLabel,
+    IonLabel,
     IonAvatar,
     IonIcon,
   },
@@ -57,16 +69,6 @@ export default defineComponent({
   },
   mounted() {
     this.fetchChats();
-  },
-
-  setup() {
-    const initials = (fn, ln) => {
-      return fn.charAt(0) + ln.charAt(0);
-    }
-
-    return {
-      initials
-    }
   },
   methods: {
     async fetchChats() {
@@ -116,21 +118,5 @@ ion-item {
   border-radius: 20px;
   box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 1px -2px,
     rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px 0px;
-}
-
-.avatar {
-  margin-top: .75rem;
-}
-
-.chat-menu {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.add {
-  height: 64px;
-  width: 64px;
 }
 </style>

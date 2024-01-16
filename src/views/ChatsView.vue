@@ -1,21 +1,22 @@
 <template>
   <ion-page>
-    <ion-content size-lg class="ion-padding">
-      <ion-grid>
-        <ion-row>
-          <ion-col size-lg="3" size="12">
-            <ChatsMenu />
-          </ion-col>
-          <ion-col size-lg="9" size="0">
-            <div style="height: 100%" v-if="$route.params.id">
-              <ChatView />
-            </div>
-            <div v-else class="select-chat-screen">
-              <h2>Select a chat to show messages.</h2>
-            </div>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
+    <ion-content size-lg
+      ><!--class="ion-padding"-->
+      <!--<ion-grid>-->
+      <ion-row>
+        <ion-col size-lg="1" size="12" class="seperate">
+          <ChatsMenu />
+        </ion-col>
+        <ion-col size-lg="11" size="0">
+          <div style="height: 100%" v-if="$route.params.id">
+            <ChatView />
+          </div>
+          <div v-else class="select-chat-screen">
+            <h2>Select a chat to show messages.</h2>
+          </div>
+        </ion-col>
+      </ion-row>
+      <!-- </ion-grid>-->
     </ion-content>
   </ion-page>
 </template>
@@ -32,7 +33,7 @@ import {
   //IonItem,
   IonCol,
   IonRow,
-  IonGrid,
+  //IonGrid,
   //IonLabel,
 } from "@ionic/vue";
 
@@ -52,7 +53,7 @@ export default defineComponent({
     //IonItem,
     IonCol,
     IonRow,
-    IonGrid,
+    //  IonGrid,
     //IonLabel,
   },
   mounted() {
@@ -103,5 +104,15 @@ ion-col {
   height: 100%;
   color: red;
   font-size: 1.5rem;
+}
+
+.seperate {
+  border-right: solid 1px #dedede;
+}
+
+@media (prefers-color-scheme: dark) {
+  .seperate {
+    border-right: solid 1px #77797f;
+  }
 }
 </style>

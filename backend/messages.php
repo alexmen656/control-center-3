@@ -27,6 +27,10 @@ if(isset($_POST['getMessagesByChatID']) && isset($_POST['chatID'])){
                 $user = query("SELECT * FROM control_center_users WHERE userID=$from");
                 if(mysqli_num_rows($user) ==1){
                     $user = fetch_assoc($user);
+
+                    if($user['profileImg'] != "avatar" && $user['profileImg'] != "google"){
+                        $user['profileImg'] = file_get_contents('images/profileImages/'.$user['profileImg']);
+                    } 
                     $json[$i]['user']['firstname'] = $user['firstname'];
                     $json[$i]['user']['lastname'] = $user['lastname'];
                     $json[$i]['user']['profileImg'] = $user['profileImg'];

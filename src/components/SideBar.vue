@@ -289,8 +289,8 @@ a {
   color: red;
 }
 
-ion-header,
-ion-toolbar,
+/*ion-header,
+ion-toolbar,*/
 .header {
   --background: #000;
 }
@@ -338,9 +338,9 @@ ion-footer ion-toolbar {
   color: #000;
 }
 
-ion-title {
+/*ion-title {
   color: white;
-}
+}*/
 .link {
   text-decoration: none;
 }
