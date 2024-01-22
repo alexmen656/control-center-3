@@ -11,15 +11,15 @@
       </ion-toolbar>
     </ion-header>
     <div style="height: 100%">
-      <ion-grid style="overflow-y: scroll; height: 100%">
-        <ion-row style="height: 88%">
+      <ion-grid style="height: 100%">
+        <ion-row style="overflow-y: scroll; height: 88%">
           <ion-col size="12" v-for="message in this.messages" :key="message"
             ><ion-row>
               <ion-col v-if="Number(message.from) != userID" size="9">
                 <div style="display: flex; align-items: end">
                   <Avatar
                     v-if="message.type == 2"
-                    :profileImg="message.user.profileImg"
+                    :profileImg="getProfileImg(message.user.userID)"
                     :firstName="message.user.firstname"
                     :lastName="message.user.lastname"
                     avatarColor="blue"
@@ -28,9 +28,9 @@
                   <div class="message message-user2">{{ message.body }}</div>
                 </div>
               </ion-col>
-              <ion-col v-if="Number(message.from) != userID" size="3"/>
+              <ion-col v-if="Number(message.from) != userID" size="3" />
 
-              <ion-col v-if="message.from == userID" size="3"/>
+              <ion-col v-if="message.from == userID" size="3" />
               <ion-col v-if="message.from == userID" size="9">
                 <div style="display: flex; justify-content: right">
                   <div class="message message-user1">{{ message.body }}</div>
@@ -47,9 +47,11 @@
             <ion-card
               style="padding-top: 0 !important; padding-bottom: 0 !important"
             >
-              <ion-item
-                ><ion-input/>
-                <ion-icon @click="spechToText()" name="mic-outline"/>
+              <ion-item>
+                <form @submit.prevent="sendMessage()">
+                  <ion-input v-model="message" />
+                </form>
+                <ion-icon @click="spechToText()" name="mic-outline" />
                 <label style="height: 24px; width: 22.9667px" for="fileInput">
                   <ion-icon
                     style="
@@ -136,6 +138,7 @@ export default defineComponent({
       messages: [],
       chat: {},
       imageUrl: "",
+      message: "",
     };
   },
   setup() {
@@ -152,6 +155,7 @@ export default defineComponent({
   },
   async mounted() {
     const chatId = this.$route.params.id;
+    this.chatID = chatId;
     const data = await getUserData();
     console.log(data.email);
     this.userID = data.userID;
@@ -159,6 +163,18 @@ export default defineComponent({
     await this.fetchMessages(chatId);
   },
   methods: {
+    getProfileImg(userID) {
+      let block = "0";
+      this.chat.users.forEach((user) => {
+        if (user.userId == userID) {
+          block = user.profileImg;
+        }
+      });
+
+      if (block != "0") {
+        return block;
+      }
+    },
     spechToText() {
       //spech to text
     },
@@ -210,10 +226,26 @@ export default defineComponent({
         console.error("Fehler beim Abrufen der Nachrichten:", error);
       }
     },
+    sendMessage() {
+      if (this.message != "") {
+        axios.post(
+          "/control-center/messages.php",
+          qs.stringify({
+            newMessage: "newMessage",
+            userID: this.userID,
+            message: this.message,
+            chatID: this.chatID,
+          })
+        );
+      }
+    },
   },
 });
 </script>
 <style scoped>
+form {
+  width: 100%;
+}
 .message-user1 {
   background-color: red;
   border-radius: 1rem 1rem 0 1rem;

@@ -29,8 +29,9 @@ if(isset($_POST['getMessagesByChatID']) && isset($_POST['chatID'])){
                     $user = fetch_assoc($user);
 
                     if($user['profileImg'] != "avatar" && $user['profileImg'] != "google"){
-                        $user['profileImg'] = file_get_contents('images/profileImages/'.$user['profileImg']);
+                      //  $user['profileImg'] = file_get_contents('images/profileImages/'.$user['profileImg']);
                     } 
+                    $json[$i]['user']['userID'] = $user['userID'];
                     $json[$i]['user']['firstname'] = $user['firstname'];
                     $json[$i]['user']['lastname'] = $user['lastname'];
                     $json[$i]['user']['profileImg'] = $user['profileImg'];
@@ -50,8 +51,11 @@ if(isset($_POST['getMessagesByChatID']) && isset($_POST['chatID'])){
         echo echoJSON([]);
     }
   
+}elseif(isset($_POST['newMessage']) && isset($_POST['userID']) && isset($_POST['message']) && isset($_POST['chatID'])){
+    $userID = escape_string($_POST['userID']);
+    $message = escape_string($_POST['message']);
+    $chatID = escape_string($_POST['chatID']);
+    query("INSERT INTO control_center_messages VALUES (0, '$userID', '$message', NOW(), '$chatID')");
+
 }
-
-
-
 ?>
