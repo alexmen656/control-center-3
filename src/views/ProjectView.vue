@@ -27,9 +27,7 @@
               </ion-list>
               <ion-item v-else>
                 <ion-label>
-                  <h2>
-                    No tools yet
-                  </h2>
+                  <h2>No tools yet</h2>
                 </ion-label>
               </ion-item>
             </ion-card>
@@ -64,9 +62,7 @@
               </ion-list>
               <ion-item v-else>
                 <ion-label>
-                  <h2>
-                    No components yet
-                  </h2>
+                  <h2>No components yet</h2>
                 </ion-label>
               </ion-item>
             </ion-card>
@@ -88,9 +84,33 @@
 
 <script>
 import axios from "axios";
+import {
+  IonGrid,
+    IonRow,
+    IonCol,
+    IonItem,
+    IonLabel,
+    IonList,
+    IonIcon,
+    IonContent,
+    IonCard,
+    IonPage
+} from "@ionic/vue";
 
 export default {
   name: "ProjectView",
+  components: {
+    IonGrid,
+    IonRow,
+    IonCol,
+    IonItem,
+    IonLabel,
+    IonList,
+    IonIcon,
+    IonContent,
+    IonCard,
+    IonPage
+  },
   data() {
     return {
       /*  users: [

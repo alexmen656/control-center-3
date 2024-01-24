@@ -163,8 +163,12 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/NewComponent.vue'),
   },
   {
-    path: '/project/:project/components/:component(.*)',
+    path: '/project/:project/components/:component',
     component: () => import('../views/ComponentView.vue'),
+  },
+  {
+    path: '/project/:project/components/:component/config',
+    component: () => import('../views/ComponentSettings.vue'),
   },
   {
     path: '/project/:project',

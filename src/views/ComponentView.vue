@@ -4,9 +4,9 @@
       <ion-col size="1" />
       <ion-col size="10" style="display: flex">
         <div
+          v-if="type == 'script'"
           style="
             resize: horizontal;
-      
             overflow: auto;
             width: 20%;
             max-width: 30%;
@@ -15,21 +15,42 @@
         >
           <ion-list lines="inset" class="cmps" ref="el">
             <ion-item v-for="cmp in cmps" :key="cmp">
-              <div style="display: flex; align-items: center; width: 100%; height: 100%;" :class="{ jc_center: isLabelVisible, jc_space: !isLabelVisible}">
-              <ion-icon style="width: 36px; height: 36px;" :name="cmp.icon"/>
-              <ion-label :class="{ label: isLabelVisible }"
-                >{{ cmp.name }} <br />{{ "<" + cmp.tag + "/>" }}</ion-label
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  width: 100%;
+                  height: 100%;
+                "
+                :class="{
+                  jc_center: isLabelVisible,
+                  jc_space: !isLabelVisible,
+                }"
               >
-            </div>
+                <ion-icon style="width: 36px; height: 36px" :name="cmp.icon" />
+                <ion-label :class="{ label: isLabelVisible }"
+                  >{{ cmp.name }} <br />{{ "<" + cmp.tag + "/>" }}</ion-label
+                >
+              </div>
             </ion-item>
             <ion-item>
-              <div style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;">
-
-              <ion-label
-                ><ion-button @click="setOpen(true)"
-                  ><ion-icon name="add-outline"></ion-icon><span :class="{ label: isLabelVisible }">New</span></ion-button
-                ></ion-label
+              <div
+                style="
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  width: 100%;
+                  height: 100%;
+                "
               >
+                <ion-label
+                  ><ion-button @click="setOpen(true)"
+                    ><ion-icon name="add-outline"></ion-icon
+                    ><span :class="{ label: isLabelVisible }"
+                      >New</span
+                    ></ion-button
+                  ></ion-label
+                >
               </div>
             </ion-item>
           </ion-list>
@@ -71,6 +92,45 @@
             :src="'https://alex.polan.sk/' + newHTML"
             alt="Image"
           />
+          <ion-list style="width: 100%" v-if="type === 'menu'">
+            <ion-reorder-group
+              :disabled="false"
+              @ionItemReorder="handleReorder($event)"
+            >
+              <ion-item-sliding v-for="(item, index) in items" :key="item">
+                <ion-item>
+                  <ion-label> {{ item.name }} </ion-label>
+                  <ion-reorder slot="end"></ion-reorder>
+                </ion-item>
+                <ion-item-options>
+                  <ion-item-option @click="deletee(index)"
+                    >Delete</ion-item-option
+                  >
+                </ion-item-options>
+              </ion-item-sliding>
+            </ion-reorder-group>
+
+            <ion-item>
+              <ion-input
+                v-model="item"
+                :value="item"
+                placeholder="Add new Item"
+              />
+              <ion-button @click="newItem" slot="end">Add</ion-button>
+            </ion-item>
+          </ion-list>
+          <!--<code-editor
+            v-if="type === 'menu'"
+            :wrap_code="false"
+            style="overflow-y: scroll !important"
+            v-model="newHTML"
+            width="100%"
+            max_height="600px"
+            :languages="[
+              ['json', 'JSON'],
+            ]"
+          />-->
+
           <span v-if="dateTimeString && component.last_change_by"
             >Last Change: {{ dateTimeString }} by
             {{ component.last_change_by }}</span
@@ -123,17 +183,38 @@
   </ion-modal>
 </template>
 
-<script>
+<script lang="ts">
 import axios from "axios";
 import qs from "qs";
 //import { useRoute } from "vue-router";
 import CodeEditor from "simple-code-editor";
-import { IonButton, IonGrid, IonRow, IonCol, IonModal } from "@ionic/vue";
+import {
+  IonButton,
+  IonGrid,
+  IonRow,
+  IonCol,
+  IonModal,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonReorder,
+  IonReorderGroup,
+  IonHeader,
+  IonToolbar,
+  IonButtons,
+  IonIcon,
+  IonTitle,
+  IonContent,
+  IonInput,
+  IonItemSliding,
+  IonItemOptions,
+  IonItemOption,
+} from "@ionic/vue";
 import { defineComponent, ref } from "vue";
-import FloatingInput from "@/components/FloatingInput.vue";
 import FloatingSelect from "@/components/FloatingSelect.vue";
-import FloatingCheckbox from "@/components/FloatingCheckbox.vue";
 import { useElementSize } from "@vueuse/core";
+import { useRoute } from "vue-router";
+import { trophyOutline } from "ionicons/icons";
 
 export default defineComponent({
   name: "ComponentsView",
@@ -145,24 +226,112 @@ export default defineComponent({
     IonCol,
     IonModal,
     FloatingSelect,
-    //  FloatingInput,
-    // FloatingCheckbox,
+    IonItem,
+    IonLabel,
+    IonList,
+    IonReorder,
+    IonReorderGroup,
+    IonHeader,
+    IonToolbar,
+    IonButtons,
+    IonIcon,
+    IonTitle,
+    IonContent,
+    IonInput,
+    IonItemSliding,
+    IonItemOptions,
+    IonItemOption,
   },
   setup() {
     const isOpen = ref(false);
+    const items = ref([]);
+    const style = ref({});
+    const route = useRoute();
+    const item = ref("");
+    const el = ref(null);
+    const { width, height } = useElementSize(el);
     const setOpen = (open) => {
       isOpen.value = open;
     };
-    const el = ref(null);
-    const { width, height } = useElementSize(el);
+
+    try {
+      axios
+        .post(
+          "/control-center/components.php",
+          qs.stringify({
+            getCoponent: "getCoponent",
+            project: route.params.project,
+            name: route.params.component,
+          })
+        )
+        .then((response) => {
+          if (response.data.type === "menu") {
+            items.value = response.data.content.content;
+            style.value = response.data.content.style;
+          }
+        });
+    } catch (error) {
+      console.error("Error fetching component data:", error);
+    }
+
+    const submit = (items) => {
+      axios
+        .post(
+          "/control-center/components.php",
+          qs.stringify({
+            updateHTML: "updateHTML",
+            project: route.params.project,
+            name: route.params.component,
+            html: JSON.stringify({content: items.value, style: style.value}),
+          })
+        )
+        .then(() => {
+          console.log("Updated successfully");
+        })
+        .catch((error) => {
+          console.error("Error saving component HTML:", error);
+        });
+    };
+
+    const handleReorder = (event) => {
+      items.value = event.detail.complete(items.value);
+      submit(items);
+    };
+
+    const newItem = () => {
+      items.value.push({ name: item.value });
+      submit(items);
+      item.value = "";
+    };
+
+    const deletee = (index) => {
+      const newItems = [];
+      let i = 0;
+      items.value.forEach((item) => {
+        if (i != index) {
+          newItems.push(item);
+        }
+
+        i++;
+      });
+      items.value = newItems;
+      submit(items);
+    };
+
     return {
       isOpen,
       setOpen,
       el,
       width,
       height,
+      handleReorder,
+      items,
+      newItem,
+      item,
+      deletee
     };
   },
+
   data() {
     return {
       isResizable: false, // Überwacht die Größe der Sidebar
@@ -232,26 +401,29 @@ export default defineComponent({
     };
   },
   async mounted() {
-    this.$watch(
-      () => this.width,
-      () => {
-        this.updateSidebarSize();
-      }
-    );
-    this.updateSidebarSize();
+    if (this.type == "script") {
+      this.$watch(
+        () => this.width,
+        () => {
+          this.updateSidebarSize();
+        }
+      );
 
+      this.updateSidebarSize();
+    }
     await this.getComponentData();
   },
 
   beforeUnmount() {
-    document
-      .querySelector(".cmps")
-      .removeEventListener("resize", this.updateSidebarSize);
+    if (this.type == "script") {
+      document
+        .querySelector(".cmps")
+        .removeEventListener("resize", this.updateSidebarSize);
+    }
   },
   methods: {
     updateSidebarSize() {
-      
-      const sidebarElement = document.querySelector(".cmps");
+      const sidebarElement = document.querySelector<HTMLElement>(".cmps");
       if (sidebarElement) {
         const sidebarWidth = sidebarElement.offsetWidth;
         if (sidebarWidth <= 100) {
@@ -283,8 +455,11 @@ export default defineComponent({
         );
 
         this.component = response.data;
-        this.newHTML = this.component.content.trim();
+        this.newHTML = this.component.content;
         this.type = this.component.type;
+        if (this.type != "menu") {
+          this.newHTML = this.newHTML.trim();
+        }
 
         this.updateDateTimeString();
       } catch (error) {
@@ -316,8 +491,10 @@ export default defineComponent({
         });
     },
     updateDateTimeString() {
-      if (new Date(this.component.last_change) != "Invalid Date") {
-        const lastChangeDate = new Date(this.component.last_change);
+      const lastChangeDate = new Date(this.component.last_change);
+
+      if (lastChangeDate) {
+        //!= "Invalid Date"
         const formattedDate = lastChangeDate
           .toLocaleDateString("en-GB")
           .split("/")
@@ -325,8 +502,11 @@ export default defineComponent({
         const formattedTime = lastChangeDate.toLocaleTimeString("en-GB");
         this.dateTimeString = formattedDate + " at " + formattedTime;
       }
-      if (new Date(this.component.createdOn) != "Invalid Date") {
-        const createdOn = new Date(this.component.createdOn);
+
+      const createdOn = new Date(this.component.createdOn);
+
+      if (createdOn) {
+        //!= "Invalid Date"
         const formattedCreatedOnDate = createdOn
           .toLocaleDateString("en-GB")
           .split("/")
@@ -360,14 +540,14 @@ img {
 }
 
 div::-webkit-resizer {
-    background-image: url("https://unpkg.com/ionicons@7.1.0/dist/svg/move-outline.svg");
+  background-image: url("https://unpkg.com/ionicons@7.1.0/dist/svg/move-outline.svg");
 }
 
 .jc_space {
   justify-content: space-between;
 }
 
-.jc_center{
+.jc_center {
   justify-content: center;
 }
 </style>

@@ -19,7 +19,7 @@
                 :value="name"
                 @ionInput="name = $event.target.value"
                 placeholder="Enter Icon Code"
-              ></ion-input>
+              />
             </ion-item>
           </ion-col>
           <ion-col size="12" size-lg="8">
@@ -31,7 +31,7 @@
                 @ionInput="code = $event.target.value"
                 type="text"
                 placeholder="Enter Project Name"
-              ></ion-input>
+              />
             </ion-item>
           </ion-col>
           <ion-col size="12" size-lg="8">
@@ -49,7 +49,41 @@
               </div>
             </div>
             <ion-button @click="submit()"> Create </ion-button>
+            <ion-button @click="submitMenu()"> Create Menu</ion-button>
           </ion-col>
+          <!--<ion-col size="12" size-lg="8">
+            Create new Menu:
+
+            <ion-item
+              @dblclick="
+                code = name
+                  .toLowerCase()
+                  .replaceAll(' ', '-')
+                  .replaceAll(`'`, '')
+              "
+            >
+              <ion-label position="floating">Name</ion-label>
+              <ion-input
+                type="text"
+                v-model="name"
+                :value="name"
+                @ionInput="name = $event.target.value"
+                placeholder="Enter Icon Code"
+              />
+            </ion-item>
+          </ion-col>
+          <ion-col size="12" size-lg="8">
+            <ion-item>
+              <ion-label position="floating">Code</ion-label>
+              <ion-input
+                v-model="code"
+                :value="code"
+                @ionInput="code = $event.target.value"
+                type="text"
+                placeholder="Enter Project Name"
+              />
+            </ion-item>
+          </ion-col>-->
         </ion-row>
       </ion-grid>
     </ion-content>
@@ -58,6 +92,7 @@
 
 <script>
 import axios from "axios";
+import qs from "qs";
 import {
   IonPage,
   IonGrid,
@@ -67,7 +102,7 @@ import {
   IonLabel,
   IonRow,
   IonItem,
-  IonButton
+  IonButton,
 } from "@ionic/vue";
 
 export default {
@@ -81,7 +116,7 @@ export default {
     IonLabel,
     IonRow,
     IonItem,
-    IonButton
+    IonButton,
   },
   data() {
     return {
@@ -196,7 +231,29 @@ export default {
         alert("Name or Code empty!");
       }
     },
-
+    submitMenu() {
+      if (this.name != "" && this.code != "") {
+        axios
+          .post(
+            "/control-center/components.php",
+            qs.stringify({
+              name: this.name,
+              code: this.code,
+              project: this.$route.params.project,
+              newComponent: "newComponent",
+              type: "menu",
+            })
+          )
+          .then(() => {
+            console.log("SUCCESS!!");
+          })
+          .catch(() => {
+            console.log("FAILURE!!");
+          });
+      } else {
+        alert("Name or Code empty!");
+      }
+    },
     removeFile(key) {
       this.files.splice(key, 1);
     },

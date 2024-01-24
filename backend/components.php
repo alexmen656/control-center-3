@@ -31,8 +31,15 @@ if ($headers['Authorization']) {
       $projectID = fetch_assoc(query("SELECT * FROM projects WHERE link='$projectName'"))['projectID'];
       $components = query("SELECT * FROM project_components WHERE projectID='$projectID' AND code='$name' ORDER BY `project_components`.`id` ASC");
       foreach ($components as $c) {
-        if ($c['type'] == "script") {
+        if ($c['type'] == "script" || $c['type'] == "menu") {
           $content = file_get_contents("/www/" . $projectName . "/" . $c['file']);
+          if($c['type'] == "menu"){
+            if(empty($content)){
+              $content = "{'content': [], 'style': {'nav1': '', 'nav2': '', 'par1': '', 'par2': '', 'logo': ''}}";
+            }
+            $content = json_decode($content);
+
+          }
         } elseif ($c['type'] == "audio" || $c['type'] == "video" || $c['type'] == "image") {
           $content = $projectName . "/" . $c['file'];
         }
@@ -50,6 +57,7 @@ if ($headers['Authorization']) {
       $json['type'] = $c['type'];
       $json['content'] = $content;
       echo echoJSON($json);
+      
     } elseif (isset($_POST['deleteComponent']) && isset($_POST['name']) && isset($_POST['project'])) {
 
 
@@ -117,6 +125,10 @@ if ($headers['Authorization']) {
           move_uploaded_file($tmp_name, $file_destination);
         }
 
+      } elseif ($_POST['type'] == 'menu') {
+        $type = "menu";
+        $icon = "menu-outline";
+        $fileName = str_replace(" ", "-", strtolower($code)) . ".json";
       } else {
         $fileName = str_replace(" ", "-", strtolower($code)) . ".php";
       }
@@ -125,6 +137,11 @@ if ($headers['Authorization']) {
       $insert = query("INSERT INTO project_components VALUES(0, '$fileName', '$type', '$name', '$code', NOW(), NOW(), '$userID', '1234567890', '$projectID')");
       $url = "project/" . $projectName . "/components/" . $code;
       query("INSERT INTO control_center_pages VALUES (0, '$url', 'true', '$icon', '$name', '', 0)");
+      if($type == "menu"){
+        $url2=$url."/config";
+        $name2=$name." settings";
+        query("INSERT INTO control_center_pages VALUES (0, '$url2', 'true', 'cog-outline', '$name2', '', 0)");
+      }
       if ($insert) {
         $location = "/www/" . $projectName . "/" . $fileName;
         file_put_contents($location, "", 0777);

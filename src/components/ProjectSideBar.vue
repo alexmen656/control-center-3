@@ -1,129 +1,36 @@
 <template>
- 
-      <ion-list id="inbox-list">
-        <ion-reorder-group
-          :disabled="false"
-          @ionItemReorder="handleReorder($event)"
-        >
-          <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
-            <ion-item
-              @dblclick="
-                goToConfig(
-                  '/project/' +
-                    $route.params.project +
-                    '/' +
-                    p.name
-                      .toLowerCase()
-                      .replaceAll(' ', '-')
-                      .replaceAll('ä', 'a')
-                      .replaceAll('Ä', 'a')
-                      .replaceAll('ö', 'o')
-                      .replaceAll('Ö', 'o')
-                      .replaceAll('Ü', 'u')
-                      .replaceAll('ü', 'u') +
-                    '/config'
-                )
-              "
-              @click="this.selectedIndex = i"
-              lines="none"
-              detail="false"
-              :router-link="
-                p.icon == 'bar-chart-outline'
-                  ? '/project/' +
-                    $route.params.project +
-                    '/dashboard/' +
-                    p.name
-                      .toLowerCase()
-                      .replaceAll(' ', '-')
-                      .replaceAll('ä', 'a')
-                      .replaceAll('Ä', 'a')
-                      .replaceAll('ö', 'o')
-                      .replaceAll('Ö', 'o')
-                      .replaceAll('Ü', 'u')
-                      .replaceAll('ü', 'u')
-                  : '/project/' +
-                    $route.params.project +
-                    '/' +
-                    p.name
-                      .toLowerCase()
-                      .replaceAll(' ', '-')
-                      .replaceAll('ä', 'a')
-                      .replaceAll('Ä', 'a')
-                      .replaceAll('ö', 'o')
-                      .replaceAll('Ö', 'o')
-                      .replaceAll('Ü', 'u')
-                      .replaceAll('ü', 'u')
-              "
-              class="hydrated menu-item"
-              :class="{ selected: this.selectedIndex === i }"
-            >
-              <ion-icon slot="start" :name="p.icon"></ion-icon>
-              <ion-label
-                >{{ p.name[0].toUpperCase()
-                }}{{ p.name.substring(1) }}</ion-label
-              >
-              <ion-reorder slot="end">
-                <ion-icon
-                  v-if="p.hasConfig == 1"
-                  style="cursor: pointer; z-index: 1000"
-                  name="cog-outline"
-                ></ion-icon>
-                <pre v-else></pre>
-              </ion-reorder>
-            </ion-item>
-          </ion-menu-toggle>
-          <ion-menu-toggle
-            auto-hide="false"
-            style="margin-top: 1rem !important"
-          >
-            <ion-item
-              lines="none"
-              detail="false"
-              class="new-tool"
-              :router-link="'/project/' + $route.params.project + '/new-tool/'"
-            >
-              <ion-icon slot="start" name="add"></ion-icon>
-              <ion-label>New Tool</ion-label>
-            </ion-item>
-          </ion-menu-toggle>
-        </ion-reorder-group>
-      </ion-list>
-
-      <ion-list id="inbox-list">
-        <ion-reorder-group
-          :disabled="false"
-          @ionItemReorder="handleFrontReorder($event)"
-        >
-          <ion-menu-toggle
-            auto-hide="false"
-            v-for="(p, i) in components"
-            :key="i"
-          >
-            <ion-item
-              @dblclick="
-                goToConfig(
-                  '/project/components/' +
-                    $route.params.project +
-                    '/' +
-                    p.name
-                      .toLowerCase()
-                      .replaceAll(' ', '-')
-                      .replaceAll('ä', 'a')
-                      .replaceAll('Ä', 'a')
-                      .replaceAll('ö', 'o')
-                      .replaceAll('Ö', 'o')
-                      .replaceAll('Ü', 'u')
-                      .replaceAll('ü', 'u') +
-                    '/config'
-                )
-              "
-              @click="this.selectedIndex = Number(i) + Number(tools.length)"
-              lines="none"
-              detail="false"
-              :router-link="
-                '/project/' +
+  <ion-list id="inbox-list">
+    <ion-reorder-group
+      :disabled="false"
+      @ionItemReorder="handleReorder($event)"
+    >
+      <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
+        <ion-item
+          @dblclick="
+            goToConfig(
+              '/project/' +
                 $route.params.project +
-                '/components/' +
+                '/' +
+                p.name
+                  .toLowerCase()
+                  .replaceAll(' ', '-')
+                  .replaceAll('ä', 'a')
+                  .replaceAll('Ä', 'a')
+                  .replaceAll('ö', 'o')
+                  .replaceAll('Ö', 'o')
+                  .replaceAll('Ü', 'u')
+                  .replaceAll('ü', 'u') +
+                '/config'
+            )
+          "
+          @click="this.selectedIndex = i"
+          lines="none"
+          detail="false"
+          :router-link="
+            p.icon == 'bar-chart-outline'
+              ? '/project/' +
+                $route.params.project +
+                '/dashboard/' +
                 p.name
                   .toLowerCase()
                   .replaceAll(' ', '-')
@@ -133,55 +40,121 @@
                   .replaceAll('Ö', 'o')
                   .replaceAll('Ü', 'u')
                   .replaceAll('ü', 'u')
-              "
-              class="hydrated menu-item"
-              :class="{
-                selected:
-                  this.selectedIndex === Number(i) + Number(tools.length),
-              }"
-            >
-              <ion-icon
-                v-if="p.type == 'script'"
-                slot="start"
-                name="code-slash-outline"
-              ></ion-icon>
-              <ion-icon
-                v-if="p.type == 'image'"
-                slot="start"
-                name="image-outline"
-              ></ion-icon>
-              <ion-label
-                >{{ p.name[0].toUpperCase()
-                }}{{ p.name.substring(1) }}</ion-label
-              >
-              <ion-reorder slot="end">
-                <ion-icon
-                  v-if="p.hasConfig == 1"
-                  style="cursor: pointer; z-index: 1000"
-                  name="cog-outline"
-                ></ion-icon>
-                <pre v-else></pre>
-              </ion-reorder>
-            </ion-item>
-          </ion-menu-toggle>
-          <ion-menu-toggle
-            auto-hide="false"
-            style="margin-top: 1rem !important"
+              : '/project/' +
+                $route.params.project +
+                '/' +
+                p.name
+                  .toLowerCase()
+                  .replaceAll(' ', '-')
+                  .replaceAll('ä', 'a')
+                  .replaceAll('Ä', 'a')
+                  .replaceAll('ö', 'o')
+                  .replaceAll('Ö', 'o')
+                  .replaceAll('Ü', 'u')
+                  .replaceAll('ü', 'u')
+          "
+          class="hydrated menu-item"
+          :class="{ selected: this.selectedIndex === i }"
+        >
+          <ion-icon slot="start" :name="p.icon"/>
+          <ion-label
+            >{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label
           >
-            <ion-item
-              lines="none"
-              detail="false"
-              class="new-tool"
-              :router-link="
-                '/project/' + $route.params.project + '/new/component'
-              "
-            >
-              <ion-icon slot="start" name="add"></ion-icon>
-              <ion-label>New Component</ion-label>
-            </ion-item>
-          </ion-menu-toggle>
-        </ion-reorder-group>
-      </ion-list>
+          <ion-reorder slot="end">
+            <ion-icon
+              v-if="p.hasConfig == 1"
+              style="cursor: pointer; z-index: 1000"
+              name="cog-outline"
+            />
+            <pre v-else></pre>
+          </ion-reorder>
+        </ion-item>
+      </ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false" style="margin-top: 1rem !important">
+        <ion-item
+          lines="none"
+          detail="false"
+          class="new-tool"
+          :router-link="'/project/' + $route.params.project + '/new-tool/'"
+        >
+          <ion-icon slot="start" name="add"/>
+          <ion-label>New Tool</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+    </ion-reorder-group>
+  </ion-list>
+
+  <ion-list id="inbox-list">
+    <ion-reorder-group
+      :disabled="false"
+      @ionItemReorder="handleFrontReorder($event)"
+    >
+      <ion-menu-toggle auto-hide="false" v-for="(p, i) in components" :key="i">
+        <ion-item
+          @dblclick="
+            goToConfig(
+              '/project/'+$route.params.project +'/components/'+
+                p.name
+                  .toLowerCase()
+                  .replaceAll(' ', '-')
+                  .replaceAll('ä', 'a')
+                  .replaceAll('Ä', 'a')
+                  .replaceAll('ö', 'o')
+                  .replaceAll('Ö', 'o')
+                  .replaceAll('Ü', 'u')
+                  .replaceAll('ü', 'u') +
+                '/config'
+            )
+          "
+          @click="this.selectedIndex = Number(i) + Number(tools.length)"
+          lines="none"
+          detail="false"
+          :router-link="
+            '/project/' +
+            $route.params.project +
+            '/components/' +
+            p.name
+              .toLowerCase()
+              .replaceAll(' ', '-')
+              .replaceAll('ä', 'a')
+              .replaceAll('Ä', 'a')
+              .replaceAll('ö', 'o')
+              .replaceAll('Ö', 'o')
+              .replaceAll('Ü', 'u')
+              .replaceAll('ü', 'u')
+          "
+          class="hydrated menu-item"
+          :class="{
+            selected: this.selectedIndex === Number(i) + Number(tools.length),
+          }"
+        >
+          <ion-icon slot="start" :name="getIcon(p.type)" />
+          <ion-label
+            >{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label
+          >
+          <ion-reorder slot="end">
+            <ion-icon
+              v-if="p.hasConfig == 1 || p.type == 'menu'"
+              style="cursor: pointer; z-index: 1000"
+              name="cog-outline"
+            />
+            <pre v-else></pre>
+          </ion-reorder>
+        </ion-item>
+      </ion-menu-toggle>
+      <ion-menu-toggle auto-hide="false" style="margin-top: 1rem !important">
+        <ion-item
+          lines="none"
+          detail="false"
+          class="new-tool"
+          :router-link="'/project/' + $route.params.project + '/new/component'"
+        >
+          <ion-icon slot="start" name="add"/>
+          <ion-label>New Component</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+    </ion-reorder-group>
+  </ion-list>
 </template>
 
 <script lang="ts">
@@ -351,6 +324,19 @@ export default defineComponent({
           this.components = response.data.components;
         });
     });
+  },
+  methods: {
+    getIcon(type) {
+      if (type == "script") {
+        return "code-slash-outline";
+      } else if (type == "image") {
+        return "image-outline";
+      } else if (type == "menu") {
+        return "menu-outline";
+      } else {
+        return "help-outline";
+      }
+    },
   },
 });
 </script>

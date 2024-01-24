@@ -27,8 +27,8 @@ import {
   //IonPage,
   //IonHeader,
   //IonContent,
-  IonList,
-  IonItem,
+  //IonList,
+  //IonItem,
   //IonCol,
   //IonRow,
   //IonGrid,
@@ -49,6 +49,8 @@ export default defineComponent({
     //IonLabel,
     IonAvatar,
     IonIcon,
+    //IonList,
+ // IonItem,
   },
   data() {
     return {
