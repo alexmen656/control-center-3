@@ -8,13 +8,13 @@
     <ion-content>
       <ion-grid>
         <ion-row>
-          <ion-col size="1"></ion-col>
+          <ion-col size="1" />
           <ion-col size="10">
             <ion-card>
               <h2>Tools:</h2>
               <ion-list v-if="tools.length > 0">
                 <ion-item v-for="tool in tools" :key="tool.id">
-                  <ion-icon v-if="tool.icon" :name="tool.icon"></ion-icon>
+                  <ion-icon v-if="tool.icon" :name="tool.icon" />
                   <ion-label>
                     <h2>
                       {{
@@ -33,6 +33,9 @@
             </ion-card>
             <ion-card>
               <h2>Components:</h2>
+              <ion-icon @click="exportWeb()" name="download-outline" />
+              <ion-icon @click="viewWWW()" name="earth-outline" />
+              <a v-if="downloadLink" :href="'https://alex.polan.sk/control-center/website_builder/exports/'+downloadLink" download>{{downloadLink}}</a>
               <ion-list v-if="components.length > 0">
                 <ion-item v-for="component in components" :key="component.id">
                   <ion-icon
@@ -86,15 +89,15 @@
 import axios from "axios";
 import {
   IonGrid,
-    IonRow,
-    IonCol,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonIcon,
-    IonContent,
-    IonCard,
-    IonPage
+  IonRow,
+  IonCol,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonIcon,
+  IonContent,
+  IonCard,
+  IonPage,
 } from "@ionic/vue";
 
 export default {
@@ -109,7 +112,7 @@ export default {
     IonIcon,
     IonContent,
     IonCard,
-    IonPage
+    IonPage,
   },
   data() {
     return {
@@ -121,6 +124,7 @@ export default {
       ],*/
       tools: [],
       components: [],
+      downloadLink: "",
     };
   },
   created() {
@@ -133,6 +137,18 @@ export default {
         this.tools = response.data.tools;
         this.components = response.data.components;
       });
+  },
+  methods: {
+    viewWWW() {
+      window
+        .open("https://alex.polan.sk/" + this.$route.params.project, "_blank")
+        .focus();
+    },
+    exportWeb() {
+      axios.post("https://alex.polan.sk/control-center/website_builder/export.php").then((response) => {
+        this.downloadLink = response.data;
+      });
+    },
   },
 };
 </script>
