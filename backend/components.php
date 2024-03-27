@@ -33,8 +33,8 @@ if ($headers['Authorization']) {
       foreach ($components as $c) {
         if ($c['type'] == "script" || $c['type'] == "menu") {
           $content = file_get_contents("/www/" . $projectName . "/" . $c['file']);
-          if($c['type'] == "menu"){
-            if(empty($content)){
+          if ($c['type'] == "menu") {
+            if (empty($content)) {
               $content = "{'content': [], 'style': {'nav1': '', 'nav2': '', 'par1': '', 'par2': '', 'logo': ''}}";
             }
             $content = json_decode($content);
@@ -57,7 +57,7 @@ if ($headers['Authorization']) {
       $json['type'] = $c['type'];
       $json['content'] = $content;
       echo echoJSON($json);
-      
+
     } elseif (isset($_POST['deleteComponent']) && isset($_POST['name']) && isset($_POST['project'])) {
 
 
@@ -137,14 +137,18 @@ if ($headers['Authorization']) {
       $insert = query("INSERT INTO project_components VALUES(0, '$fileName', '$type', '$name', '$code', NOW(), NOW(), '$userID', '1234567890', '$projectID')");
       $url = "project/" . $projectName . "/components/" . $code;
       query("INSERT INTO control_center_pages VALUES (0, '$url', 'true', '$icon', '$name', '', 0)");
-      if($type == "menu"){
-        $url2=$url."/config";
-        $name2=$name." settings";
+      if ($type == "menu") {
+        $url2 = $url . "/config";
+        $name2 = $name . " settings";
         query("INSERT INTO control_center_pages VALUES (0, '$url2', 'true', 'cog-outline', '$name2', '', 0)");
       }
       if ($insert) {
+        $content = "";
+        if ($type == "menu") {
+          $content = '{"content": [], "style":{}}';
+        }
         $location = "/www/" . $projectName . "/" . $fileName;
-        file_put_contents($location, "", 0777);
+        file_put_contents($location, $content, 0777);
         chmod($location, 0777);
       } else {
         echo "error 1";

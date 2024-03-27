@@ -8,6 +8,7 @@
     fill="outline"
     :placeholder="placeholder"
     :type="type"
+    :disabled="disabled"
   />
 </template>
 
@@ -15,10 +16,26 @@
 import { IonInput } from "@ionic/vue";
 
 const props = defineProps({
-  defaultVal: String,
-  label: String,
-  placeholder: String,
-  type: String,
+  defaultVal: {
+    type: String,
+    required: true,
+  },
+  label: {
+    type: String,
+    required: true,
+  },
+  placeholder: {
+    type: String,
+    required: true,
+  },
+  type: {
+    type: String,
+    required: true,
+  },
+  disabled: {
+    type: Boolean,
+    required: false,
+  },
 });
 
 const emit = defineEmits(["update:modelValue"]);

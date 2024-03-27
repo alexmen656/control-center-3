@@ -175,6 +175,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/ProjectView.vue'),
   },
   {
+    path: '/project/:project/package-manager',
+    component: () => import('../views/PackageManager.vue'),
+  },
+  {
     path: '/project/:project/info',
     component: () => import('../views/ProjectInfo.vue'),
   },

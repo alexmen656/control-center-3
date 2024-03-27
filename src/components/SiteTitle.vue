@@ -1,7 +1,7 @@
 <template>
   <ion-toolbar>
     <ion-title size="large">
-      <ion-icon :name="icon" />
+      <ion-icon v-if="icon" :name="icon" />
       {{ title }}
     </ion-title>
     <span class="actions" slot="end">
