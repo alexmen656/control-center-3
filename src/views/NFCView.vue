@@ -48,11 +48,11 @@
 </template>
 
 <script>
-import {
-  Nfc,
+/*import {
+  //Nfc,
   //NfcUtils,
   //NfcTagTechType
-} from "@capawesome-team/capacitor-nfc";
+} from "@capawesome-team/capacitor-nfc";*/
 import { defineComponent, ref } from "vue";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 import { getConfig } from "@/getToolConfig";
@@ -92,7 +92,7 @@ export default defineComponent({
       },
     };
   },
-  async created() {
+  /*async created() {
     const config = await getConfig("nfc", this.$route.params.project);
     this.config = config;
     await axios
@@ -113,7 +113,7 @@ export default defineComponent({
           };
         });
       });
-  },
+  },*/
   setup() {
     const isOpen = ref(false);
     const setOpen = (open) => {
@@ -125,7 +125,7 @@ export default defineComponent({
       setOpen,
     };
   },
-  methods: {
+  /*methods: {
     toName(name) {
       return name.replaceAll(" ", "_").toLowerCase();
     },
@@ -256,7 +256,7 @@ export default defineComponent({
         }
       }
     },
-  },
+  },*/
 });
 </script>
 <style scoped>
