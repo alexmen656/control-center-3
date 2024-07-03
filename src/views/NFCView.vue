@@ -49,7 +49,11 @@
 
 <script>
 /*import {
+<<<<<<< HEAD
   Nfc,
+=======
+  //Nfc,
+>>>>>>> 9a0b7c649a714802f9821554d121cb3418886636
   //NfcUtils,
   //NfcTagTechType
 } from "@capawesome-team/capacitor-nfc";*/
@@ -92,7 +96,11 @@ export default defineComponent({
       },
     };
   },
+<<<<<<< HEAD
  /* async created() {
+=======
+  /*async created() {
+>>>>>>> 9a0b7c649a714802f9821554d121cb3418886636
     const config = await getConfig("nfc", this.$route.params.project);
     this.config = config;
     await axios
