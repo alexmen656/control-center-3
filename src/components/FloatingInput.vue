@@ -15,7 +15,8 @@
 <script setup>
 import { IonInput } from "@ionic/vue";
 
-const props = defineProps({
+//const props = 
+defineProps({
   defaultVal: {
     type: String,
     required: true,
