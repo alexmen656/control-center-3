@@ -1,4 +1,6 @@
 <template>
+  <div :class="store.theme">
+
   <ion-app>
     <ion-content
       v-if="
@@ -77,6 +79,7 @@
       </ion-toolbar>
     </ion-footer>
   </ion-app>
+  </div>
 </template>
 
 <script>
@@ -109,6 +112,8 @@ import { Plugins } from "@capacitor/core";
 import { isPlatform } from "@ionic/vue";
 import { FirebaseMessaging } from "@capacitor-firebase/messaging";
 import { firebase_config } from "@/firebase_config";
+import { store } from "./theme/theme";
+
 const { FaceId } = Plugins;
 
 export default defineComponent({
@@ -134,6 +139,8 @@ export default defineComponent({
       faceIDAvaible: false,
       authenticated: false,
       userData: {},
+      theme: localStorage.getItem("themeSet"),
+    store,
       // account_active: false
     };
   },
@@ -353,6 +360,11 @@ export default defineComponent({
   },
 
   methods: {
+    setTheme(value) {
+      // @t s-ignore: Object is possibly 'null'.
+      localStorage.setItem("themeSet", value);
+      store.setItem();
+    },
     updateSidebar() {
       // const bookmarks = ref([]);
       axios
@@ -378,11 +390,11 @@ export default defineComponent({
 .error404 > h1 {
   font-size: 3.2rem;
   padding-bottom: 4rem;
-  color: red;
+  color: var(--ion-color-primary);
 }
 
 .btn-red {
-  --background: red !important;
+  --background: var(--ion-color-primary) !important;
 }
 .ion-menu {
   width: 300px;
@@ -436,7 +448,7 @@ ion-menu.md ion-item {
 }
 
 ion-menu.md ion-item.selected {
-  --background: rgba(var(--ion-color-primary-rgb), 0.14);
+  --background: rgba(var(--ion-color-primary-rgb), 0.14);/*var(--ion-color-primary-rgb)*/
 }
 
 ion-menu.md ion-item.selected ion-icon {
@@ -505,7 +517,7 @@ ion-item.selected {
 
 a {
   text-decoration: none;
-  color: red;
+  color: var(--ion-color-primary);
 }
 
 .mobile-only {
@@ -532,15 +544,15 @@ a {
 
 router-link,
 a {
-  color: red;
+  color: var(--ion-color-primary);
 }
 
 ion-menu-button {
-  color: red !important;
+  color: var(--ion-color-primary) !important;
 }
 
 a {
-  color: red !important;
+  color: var(--ion-color-primary) !important;
 }
 
 .link-container {
@@ -552,16 +564,16 @@ a {
   text-decoration: none;
 }
 
-ion-menu.md ion-item.selected {
+/*ion-menu.md ion-item.selected {
   --background: rgba(255, 0, 0, 0.14) !important;
-}
+}*/
 
 ion-item.selected {
-  --color: red !important;
+  --color: var(--ion-color-primary) !important;
 }
 
 ion-menu ion-item.selected ion-icon {
-  color: red !important;
+  color: var(--ion-color-primary) !important;
 }
 
 .list-md.articles {

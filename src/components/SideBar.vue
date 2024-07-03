@@ -153,7 +153,7 @@ ion-menu.md ion-list[data-v-7ba5bd90] {
   padding-top: 56px;
 }
 .btn-red {
-  --background: red !important;
+  --background: var(--ion-color-primary) !important;
 }
 .ion-menu {
   width: 300px;
@@ -286,7 +286,7 @@ ion-item.selected {
 
 a {
   text-decoration: none;
-  color: red;
+  color: var(--ion-color-primary);
 }
 
 /*ion-header,
@@ -319,15 +319,15 @@ ion-toolbar,*/
 
 router-link,
 a {
-  color: red;
+  color: var(--ion-color-primary);
 }
 
 ion-menu-button {
-  color: red !important;
+  color: var(--ion-color-primary) !important;
 }
 
 a {
-  color: red !important;
+  color: var(--ion-color-primary) !important;
 }
 
 .link-container {
@@ -345,20 +345,20 @@ ion-footer ion-toolbar {
   text-decoration: none;
 }
 
-ion-menu.md ion-item.selected {
+/*ion-menu.md ion-item.selected {
   --background: rgba(255, 0, 0, 0.14) !important;
-}
+}*/
 
 ion-item.selected {
-  --color: red !important;
+  --color: var(--ion-color-primary) !important;
 }
 
 ion-menu ion-item.selected ion-icon {
-  color: red !important;
+  color: var(--ion-color-primary) !important;
 }
 
 ion-item:focus {
-  --background: red;
+  --background: var(--ion-color-primary);
 }
 
 .list-md.articles {

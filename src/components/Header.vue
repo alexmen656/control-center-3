@@ -71,7 +71,7 @@ export default defineComponent({
 ion-title {
   font-family: Chalkduster;
   font-size: 28px;
-  color: #ff0000;
+  color: var(--ion-color-primary);/*#ff0000*/
   text-align: left;
   cursor: pointer !important;
 }
@@ -87,7 +87,7 @@ ion-footer ion-toolbar {
 }
 
 ion-title {
-  color: red;
+/*  color: red;*/
 }
 
 ion-header,

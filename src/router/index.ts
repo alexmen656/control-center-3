@@ -182,10 +182,10 @@ const routes: Array<RouteRecordRaw> = [
     path: '/project/:project/info',
     component: () => import('../views/ProjectInfo.vue'),
   },
-  {
+/*  {
     path: '/drop',
     component: () => import('../views/DropZone.vue'),
-  },
+  },*/
   {
     path: '/signup',
     component: () => import('../views/SignUp.vue'),
@@ -233,6 +233,10 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/project/:project/:form',
     component: () => import('../views/FormDisplay.vue'),
+  },
+  {
+    path: '/my-account/preferences',
+    component: () => import('../views/settingsModal.vue'),
   },
   {
     path: '/:url(.*)',

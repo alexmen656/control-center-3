@@ -26,7 +26,9 @@ import { QuillEditor } from "@vueup/vue-quill";
 import "@vueup/vue-quill/dist/vue-quill.snow.css";
 
 /* Theme variables */
-import "./theme/variables.css";
+//import "./theme/variables.css";
+import './theme/variables.scss';
+
 import mitt from "mitt";
 const emitter = mitt();
 const app = createApp(App)
