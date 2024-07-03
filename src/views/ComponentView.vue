@@ -214,7 +214,7 @@ import { defineComponent, ref } from "vue";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 import { useElementSize } from "@vueuse/core";
 import { useRoute } from "vue-router";
-import { trophyOutline } from "ionicons/icons";
+//import { trophyOutline } from "ionicons/icons";
 
 export default defineComponent({
   name: "ComponentsView",

@@ -178,7 +178,7 @@ export default defineComponent({
     spechToText() {
       //spech to text
     },
-    handleFileUpload(event) {
+    handleFileUpload() {//event
       this.edit();
       const fileInput = this.$refs.fileInput;
       const selectedFile = fileInput.files[0];

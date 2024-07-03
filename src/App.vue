@@ -102,7 +102,7 @@ import ProjectSideBar from "@/components/ProjectSideBar.vue";
 import axios from "axios";
 import { initializeApp } from "firebase/app";
 import { useRoute } from "vue-router";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
+//import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import qs from "qs";
 import { loadUserData, getUserData } from "@/userData";
 import offlineTools from "@/offline/tools.json";
@@ -215,7 +215,7 @@ export default defineComponent({
             .then(() => {
               this.authenticated = true;
             })
-            .catch((error) => {
+            .catch(() => {//error
               this.$router.push("/pin");
             });
         } else {

@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import Avatar from "@/components/AvatarComponent.vue";
+//import Avatar from "@/components/AvatarComponent.vue";
 import { defineComponent, ref } from "vue";
 import {
   //IonPage,

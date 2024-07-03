@@ -9,8 +9,8 @@
 
 <script setup>
 import { IonCheckbox } from "@ionic/vue";
-
-const props = defineProps({
+//const props = 
+defineProps({
   modelValue: String,
   label: String
 });

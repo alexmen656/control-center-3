@@ -73,8 +73,8 @@ export function usePhotoGallery(){
 
 
         
-        
-        const savedFile = await Filesystem.writeFile({
+      //  const savedFile =   
+      await Filesystem.writeFile({
             path: fileName,
             data: base64Data,
             directory: Directory.Data
