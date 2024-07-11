@@ -1,109 +1,96 @@
 <template>
   <div :class="store.theme">
-
-  <ion-app>
-    <ion-content
-      v-if="
-        !faceIDAvaible ||
-        authenticated ||
-        $route.path == '/pin' ||
-        $route.path == '/pin/'
-      "
-    >
-      <SiteHeader
+    <ion-app>
+      <ion-content
         v-if="
-          account_active &&
-          token &&
-          $route.path != '/pin' &&
-          $route.path != '/pin/'
+          !faceIDAvaible ||
+          authenticated ||
+          $route.path == '/pin' ||
+          $route.path == '/pin/'
         "
-      ></SiteHeader>
-      <ion-split-pane content-id="main-content">
-        <ion-menu
-          v-if="token && account_active"
-          content-id="main-content"
-          class="ion-menu"
-          type="overlay"
-        >
-          <ion-content>
-            <SideBar
-              :projects="projects"
-              :tools="tools"
-              :bookmarks="bookmarks"
+      >
+        <SiteHeader
+          v-if="
+            account_active &&
+            token &&
+            $route.path != '/pin' &&
+            $route.path != '/pin/'
+          "
+        ></SiteHeader>
+        <ion-split-pane content-id="main-content">
+          <ion-menu
+            v-if="token && account_active"
+            content-id="main-content"
+            class="ion-menu"
+            type="overlay"
+          >
+            <ion-content>
+              <SideBar
+                :projects="projects"
+                :tools="tools"
+                :bookmarks="bookmarks"
+                v-if="
+                  !$route.params.project &&
+                  $route.path != '/pin' &&
+                  $route.path != '/pin/'
+                "
+              ></SideBar>
+              <ProjectSideBar
+                v-if="
+                  $route.params.project &&
+                  $route.path != '/pin' &&
+                  $route.path != '/pin/'
+                "
+              ></ProjectSideBar>
+            </ion-content>
+          </ion-menu>
+          <div id="main-content">
+            <SiteTitle
               v-if="
-                !$route.params.project &&
+                token &&
+                account_active &&
+                page.title &&
+                (page.showTitle == true || page.showTitle == 'true') &&
                 $route.path != '/pin' &&
                 $route.path != '/pin/'
               "
-            ></SideBar>
-            <ProjectSideBar
-              v-if="
-                $route.params.project &&
-                $route.path != '/pin' &&
-                $route.path != '/pin/'
-              "
-            ></ProjectSideBar>
-          </ion-content>
-        </ion-menu>
-        <div id="main-content">
-          <SiteTitle
-            v-if="
-              token &&
-              account_active &&
-              page.title &&
-              (page.showTitle == true || page.showTitle == 'true') &&
-              $route.path != '/pin' &&
-              $route.path != '/pin/'
-            "
-            :icon="page.icon"
-            :title="page.title"
-            @updateSidebar="updateSidebar()"
-          />
-          <ion-router-outlet
-            v-if="page.title"
-            @updateSidebar="updateSidebar()"
-            :class="{
-              showTitle: page.showTitle == true || page.showTitle == 'true',
-            }"
-          ></ion-router-outlet>
-          <div v-else class="error404">
-            <h1>Error 404, Site not found.</h1>
+              :icon="page.icon"
+              :title="page.title"
+              @updateSidebar="updateSidebar()"
+            />
+            <ion-router-outlet
+              v-if="page.title"
+              @updateSidebar="updateSidebar()"
+              :class="{
+                showTitle: page.showTitle == true || page.showTitle == 'true',
+              }"
+            ></ion-router-outlet>
+            <div v-else class="error404">
+              <h1>Error 404, Site not found.</h1>
+            </div>
           </div>
-        </div>
-      </ion-split-pane>
-    </ion-content>
-    <!--<div class="offline" v-if="!isOnline"><h6>You are offline!</h6></div>-->
-    <ion-footer v-if="!isOnline" class="offline" collapse="fade">
-      <ion-toolbar>
-        <ion-title><h6 class="offline-h6">You are offline!</h6></ion-title>
-      </ion-toolbar>
-    </ion-footer>
-  </ion-app>
+        </ion-split-pane>
+      </ion-content>
+      <!--<div class="offline" v-if="!isOnline"><h6>You are offline!</h6></div>-->
+      <ion-footer v-if="!isOnline" class="offline" collapse="fade">
+        <ion-toolbar>
+          <ion-title><h6 class="offline-h6">You are offline!</h6></ion-title>
+        </ion-toolbar>
+      </ion-footer>
+    </ion-app>
   </div>
 </template>
 
 <script>
-import {
-  IonApp,
-  IonRouterOutlet,
-  IonSplitPane,
-  useIonRouter,
-  IonTitle,
-  IonFooter,
-  IonToolbar,
-  IonContent,
-  IonMenu,
-} from "@ionic/vue";
+import { useIonRouter } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import SiteHeader from "@/components/Header.vue";
 import SideBar from "@/components/SideBar.vue";
 import SiteTitle from "@/components/SiteTitle.vue";
 import ProjectSideBar from "@/components/ProjectSideBar.vue";
-import axios from "axios";
 import { initializeApp } from "firebase/app";
 import { useRoute } from "vue-router";
 //import { getMessaging, getToken, onMessage } from "firebase/messaging";
-import qs from "qs";
 import { loadUserData, getUserData } from "@/userData";
 import offlineTools from "@/offline/tools.json";
 import offlinePages from "@/offline/pages.json";
@@ -119,19 +106,10 @@ const { FaceId } = Plugins;
 export default defineComponent({
   name: "App",
   components: {
-    IonApp,
-    IonRouterOutlet,
-    IonSplitPane,
     SiteHeader,
     SideBar,
     ProjectSideBar,
     SiteTitle,
-    IonTitle,
-    IonContent,
-    IonFooter,
-    IonToolbar,
-    IonMenu,
-    //IonHeader
   },
   data() {
     return {
@@ -140,7 +118,7 @@ export default defineComponent({
       authenticated: false,
       userData: {},
       theme: localStorage.getItem("themeSet"),
-    store,
+      store,
       // account_active: false
     };
   },
@@ -167,9 +145,9 @@ export default defineComponent({
     if (this.userData) {
       if (checkPermissions()) {
         getToken().then((token) => {
-          axios.post(
-            "/control-center/push_notifications_token.php",
-            qs.stringify({
+          this.$axios.post(
+            "push_notifications_token.php",
+            this.$qs.stringify({
               newToken: "newToken",
               token: token,
               platform: window.navigator.userAgent,
@@ -215,7 +193,8 @@ export default defineComponent({
             .then(() => {
               this.authenticated = true;
             })
-            .catch(() => {//error
+            .catch(() => {
+              //error
               this.$router.push("/pin");
             });
         } else {
@@ -237,7 +216,7 @@ export default defineComponent({
 
     const isOnline = ref(navigator.onLine);
 
-    const loadPageData = async () => {
+    const loadPageData = async function () {
       if (
         !localStorage.getItem("token") &&
         location.pathname != "/login" &&
@@ -282,7 +261,7 @@ export default defineComponent({
       }
 
       if (isOnline.value) {
-        axios.post("/control-center/pages.php").then((response) => {
+        this.$axios.post("pages.php").then((response) => {
           pages.value = response.data;
           const foundPage = pages.value.find((p) => p["url"] === paramUrl);
 
@@ -294,15 +273,15 @@ export default defineComponent({
           document.title = page.value.title;
         });
 
-        axios.get("/control-center/sidebar.php").then((response) => {
+        this.$axios.get("sidebar.php").then((response) => {
           tools.value = response.data.tools;
           projects.value = response.data.projects;
           localStorage.setItem("tools", JSON.stringify(tools.value));
           localStorage.setItem("projects", JSON.stringify(projects.value));
         });
 
-        axios
-          .get("/control-center/bookmarks.php?getBookmarks=getBookmarks")
+        this.$axios
+          .get("bookmarks.php?getBookmarks=getBookmarks")
           .then((response) => {
             bookmarks.value = response.data;
             localStorage.setItem("bookmarks", JSON.stringify(bookmarks.value));
@@ -365,10 +344,10 @@ export default defineComponent({
       localStorage.setItem("themeSet", value);
       store.setItem();
     },
-    updateSidebar() {
+    updateSidebar: function () {
       // const bookmarks = ref([]);
-      axios
-        .get("/control-center/bookmarks.php?getBookmarks=getBookmarks")
+      this.$axios
+        .get("bookmarks.php?getBookmarks=getBookmarks")
         .then((response) => {
           this.bookmarks = response.data;
           localStorage.setItem("bookmarks", this.bookmarks);
@@ -448,7 +427,10 @@ ion-menu.md ion-item {
 }
 
 ion-menu.md ion-item.selected {
-  --background: rgba(var(--ion-color-primary-rgb), 0.14);/*var(--ion-color-primary-rgb)*/
+  --background: rgba(
+    var(--ion-color-primary-rgb),
+    0.14
+  ); /*var(--ion-color-primary-rgb)*/
 }
 
 ion-menu.md ion-item.selected ion-icon {

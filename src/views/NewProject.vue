@@ -38,34 +38,8 @@
 </template>
 
 <script>
-import axios from "axios";
-import qs from "qs";
-import {
-  IonPage,
-  IonGrid,
-  IonContent,
-  IonCol,
-  IonButton,
-  IonInput,
-  IonLabel,
-  IonRow,
-  IonItem,
-} from "@ionic/vue";
-
 export default {
   name: "NewProject",
-
-  components: {
-    IonPage,
-    IonGrid,
-    IonContent,
-    IonCol,
-    IonButton,
-    IonInput,
-    IonLabel,
-    IonRow,
-    IonItem,
-  },
   data() {
     return {
       name: "",
@@ -74,10 +48,10 @@ export default {
   methods: {
     submit() {
       if (this.name != "") {
-        axios
+        $axios
           .post(
-            "/control-center/projects.php",
-            qs.stringify({
+            "projects.php",
+            this.$qs.stringify({
               createProject: "createProject",
               projectName: this.name,
               projectIcon: this.icon,

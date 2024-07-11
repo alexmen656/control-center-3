@@ -13,9 +13,6 @@
   </ion-page>
 </template>
 <script>
-import axios from "axios";
-import qs from "qs";
-
 export default {
   mounted() {
     const inputs = document.querySelectorAll(".otp-input-fields input");
@@ -81,10 +78,10 @@ export default {
       });
 
       const verification_token = localStorage.getItem("verification_token");
-      axios
+      $axios
         .post(
-          "/control-center/verification.php",
-          qs.stringify({
+          "verification.php",
+          this.$qs.stringify({
             verificationToken: verification_token,
             verificationCode: otp,
           })

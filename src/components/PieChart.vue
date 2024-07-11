@@ -13,7 +13,6 @@ import {
   Colors,
 } from "chart.js";
 import { Pie } from "vue-chartjs";
-import { IonCard } from "@ionic/vue";
 
 ChartJS.register(ArcElement, Tooltip, Legend, Colors);
 
@@ -21,7 +20,6 @@ export default {
   name: "PieChart",
   components: {
     Pie,
-    IonCard,
   },
   props: {
     data: Object,

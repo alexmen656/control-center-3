@@ -108,41 +108,12 @@
 </template>
 
 <script>
-import {
-  IonPage,
-  //IonHeader,
-  //IonToolbar,
-  //IonTitle,
-  IonContent,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonInput,
-  IonButton,
-  IonIcon,
-  IonTextarea,
-  IonAvatar,
-} from "@ionic/vue";
 import { defineComponent } from "vue";
-import axios from "axios";
-import qs from "qs";
 import { usePhotoGallery } from "@/composables/updateProfileImage";//, Photo
 import { getUserData } from "@/userData";
 
 export default defineComponent({
   name: "PersonalInformation",
-  components: {
-    IonPage,
-    IonContent,
-    IonList,
-    IonItem,
-    IonLabel,
-    IonInput,
-    IonButton,
-    IonIcon,
-    IonTextarea,
-    IonAvatar,
-  },
   data() {
     return {
       user: {
@@ -168,8 +139,8 @@ export default defineComponent({
         }
       }
       filteredUser["editData"] = "editData";
-      axios
-        .post("/control-center/user.php?" + qs.stringify(filteredUser), {
+      $axios
+        .post("user.php?" + this.$qs.stringify(filteredUser), {
           headers: {
             "Content-Type": "application/json",
           },

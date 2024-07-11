@@ -59,7 +59,6 @@
 </template>
 
 <script lang="ts">
-import { IonGrid, IonCard, IonRow, IonCol } from "@ionic/vue";
 import { defineComponent } from "vue";
 import CardComponent from "@/components/CardComponent.vue";
 import BarChart from "@/components/BarChart.vue";
@@ -115,10 +114,6 @@ export default defineComponent({
     DonutChart,
     PieChart,
     TableCard,
-    IonGrid,
-    IonCol,
-    IonRow,
-    IonCard,
     ShortcutCard,
   },
 });

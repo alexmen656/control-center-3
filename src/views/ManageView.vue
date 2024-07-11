@@ -89,43 +89,9 @@
 
 <script>
 import { defineComponent, ref } from "vue";
-import {
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonItem,
-  IonButton,
-  IonContent,
-  IonPage,
-  IonInput,
-  IonLabel,
-  IonItemSliding,
-  IonIcon,
-  IonItemOptions,
-  IonItemOption,
-  IonList,
-} from "@ionic/vue";
-import axios from "axios";
-import qs from "qs";
 
 export default defineComponent({
   name: "ProjectsPage",
-  components: {
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonItem,
-    IonButton,
-    IonContent,
-    IonPage,
-    IonInput,
-    IonLabel,
-    IonItemSliding,
-    IonIcon,
-    IonItemOptions,
-    IonItemOption,
-    IonList,
-  },
   data() {
     return {
       name: "",
@@ -137,8 +103,8 @@ export default defineComponent({
 
     // Hier wird eine API-Anfrage an den Server gesendet, um eine Liste von Projekten abzurufen.
     // Der Rückgabewert wird dann der 'projects' Ref-Variable zugewiesen.
-    axios
-      .get("/control-center/projects.php")
+    $axios
+      .get("projects.php")
       .then((response) => {
         projects.value = response.data;
       })
@@ -152,18 +118,18 @@ export default defineComponent({
 
     function deleteee(project) {
       if (confirm("Do you really want to delte the project?")) {
-        axios
+        $axios
           .post(
-            "/control-center/projects.php",
-            qs.stringify({
+            "projects.php",
+            this.$qs.stringify({
               deleteProject: "deleteProject",
               projectID: project.id,
             })
           )
           .then(() => {
             alert("Project deleted successfull");
-            axios
-              .get("/control-center/projects.php")
+            $axios
+              .get("projects.php")
               .then((response) => {
                 projects.value = response.data;
               })
@@ -190,10 +156,10 @@ export default defineComponent({
   methods: {
     submit(icon, name) {
       if (name != "") {
-        axios
+        $axios
           .post(
-            "/control-center/projects.php",
-            qs.stringify({
+            "projects.php",
+            this.$qs.stringify({
               createProject: "createProject",
               projectName: name,
               projectIcon: icon,
@@ -202,8 +168,8 @@ export default defineComponent({
           .then(() => {
             alert("Project created successfull");
             console.log("Hier!!");
-            axios
-              .get("/control-center/projects.php")
+            $axios
+              .get("projects.php")
               .then((response) => {
                 this.projects = response.data;
               })

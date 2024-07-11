@@ -36,7 +36,7 @@
               <ion-icon @click="exportWeb()" name="download-outline" />
               <ion-icon @click="viewWWW()" name="earth-outline" />
               <a v-if="downloadLink" :href="'https://alex.polan.sk/control-center/website_builder/exports/'+downloadLink" download>{{downloadLink}}</a>
-              <ion-list v-if="components.length > 0">
+              <ion-list v-if="components && components.length > 0">
                 <ion-item v-for="component in components" :key="component.id">
                   <ion-icon
                     v-if="component.type == 'script'"
@@ -86,34 +86,8 @@
 </template>
 
 <script>
-import axios from "axios";
-import {
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonIcon,
-  IonContent,
-  IonCard,
-  IonPage,
-} from "@ionic/vue";
-
 export default {
   name: "ProjectView",
-  components: {
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonIcon,
-    IonContent,
-    IonCard,
-    IonPage,
-  },
   data() {
     return {
       /*  users: [
@@ -128,9 +102,9 @@ export default {
     };
   },
   created() {
-    axios
+    this.$axios
       .get(
-        "https://alex.polan.sk/control-center/sidebar.php?getSideBarByProjectName=" +
+        "sidebar.php?getSideBarByProjectName=" +
           this.$route.params.project
       )
       .then((response) => {
@@ -145,7 +119,7 @@ export default {
         .focus();
     },
     exportWeb() {
-      axios.post("https://alex.polan.sk/control-center/website_builder/export.php").then((response) => {
+      this.$axios.post("website_builder/export.php").then((response) => {
         this.downloadLink = response.data;
       });
     },

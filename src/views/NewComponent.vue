@@ -91,33 +91,8 @@
 </template>
 
 <script>
-import axios from "axios";
-import qs from "qs";
-import {
-  IonPage,
-  IonGrid,
-  IonContent,
-  IonCol,
-  IonInput,
-  IonLabel,
-  IonRow,
-  IonItem,
-  IonButton,
-} from "@ionic/vue";
-
 export default {
   name: "NewProject",
-  components: {
-    IonPage,
-    IonGrid,
-    IonContent,
-    IonCol,
-    IonInput,
-    IonLabel,
-    IonRow,
-    IonItem,
-    IonButton,
-  },
   data() {
     return {
       name: "",
@@ -210,8 +185,8 @@ export default {
         formData.append("project", this.$route.params.project);
         formData.append("newComponent", "newComponent");
 
-        axios
-          .post("/control-center/components.php", formData, {
+        $axios
+          .post("components.php", formData, {
             headers: {
               "Content-Type": "multipart/form-data",
             },
@@ -233,10 +208,10 @@ export default {
     },
     submitMenu() {
       if (this.name != "" && this.code != "") {
-        axios
+        $axios
           .post(
-            "/control-center/components.php",
-            qs.stringify({
+            "components.php",
+            this.$qs.stringify({
               name: this.name,
               code: this.code,
               project: this.$route.params.project,

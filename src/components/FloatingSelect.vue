@@ -21,7 +21,6 @@
 
 <script setup>
 import { ref, defineProps, defineEmits } from "vue";
-import { IonSelect, IonSelectOption } from "@ionic/vue";
 
 const props = defineProps({
   select: {

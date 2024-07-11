@@ -45,42 +45,10 @@
 
 <script>
 import { defineComponent, ref } from "vue";
-import axios from "axios";
-import qs from "qs";
 import { useRoute } from "vue-router";
-import {
-  IonPage,
-  IonButton,
-  IonContent,
-  IonItem,
-  IonLabel,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonIcon,
-  IonItemOptions,
-  IonItemOption,
-  IonItemSliding,
-  IonList,
-} from "@ionic/vue";
 
 export default defineComponent({
   name: "ProjectsPage",
-  components: {
-    IonPage,
-    IonButton,
-    IonContent,
-    IonItem,
-    IonLabel,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonIcon,
-    IonItemOptions,
-    IonItemOption,
-    IonItemSliding,
-    IonList,
-  },
   data() {
     return {
       name: "",
@@ -92,9 +60,9 @@ export default defineComponent({
     const tools = ref([]);
     const route = useRoute();
 
-    axios
+    $axios
       .get(
-        "/control-center/sidebar.php?getSideBarByProjectName=" +
+        "sidebar.php?getSideBarByProjectName=" +
           route.params.project
       )
       .then((response) => {
@@ -103,16 +71,16 @@ export default defineComponent({
 
     function deleteee(tool) {
       if (confirm("Do you really want to delete the tool")) {
-        axios
+        $axios
           .post(
-            "/control-center/tools.php",
-            qs.stringify({ deleteTool: "deleteTool", toolID: tool.id })
+            "tools.php",
+            this.$qs.stringify({ deleteTool: "deleteTool", toolID: tool.id })
           )
           .then(() => {//res
             alert("Tool deleted successfull");
-            axios
+            $axios
               .get(
-                "/control-center/sidebar.php?getSideBarByProjectName=" +
+                "sidebar.php?getSideBarByProjectName=" +
                   route.params.project
               )
               .then((response) => {
@@ -128,18 +96,18 @@ export default defineComponent({
     function multi_delete(toolss) {
       if (confirm("Do you really want to delete the tool")) {
         toolss.forEach((tool) => {
-          axios.post(
-            "/control-center/tools.php",
-            qs.stringify({ deleteTool: "deleteTool", toolID: tool })
+          $axios.post(
+            "tools.php",
+            this.$qs.stringify({ deleteTool: "deleteTool", toolID: tool })
           );
         });
 
         this.selectedTools = [];
         this.selectt = false;
 
-        axios
+        $axios
           .get(
-            "/control-center/sidebar.php?getSideBarByProjectName=" +
+            "sidebar.php?getSideBarByProjectName=" +
               route.params.project
           )
           .then((response) => {

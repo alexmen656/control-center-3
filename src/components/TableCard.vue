@@ -12,13 +12,8 @@
 </template>
 
 <script>
-import { IonCard } from "@ionic/vue";
-
 export default {
   name: "TableCard",
-  components: {
-    IonCard,
-  },
   props: {
     labels: Array,
     data: Array,

@@ -58,18 +58,6 @@
 <script>
 //lang="ts"
 import DisplayForm from "@/components/DisplayForm.vue";
-import axios from "axios";
-import qs from "qs";
-import {
-  IonPage,
-  IonContent,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonCard,
-  IonIcon,
-  IonModal,
-} from "@ionic/vue";
 import EditEntry from "@/components/EditEntry.vue";
 import { defineComponent, ref } from "vue";
 
@@ -77,15 +65,7 @@ export default defineComponent({
   name: "FormDisplay",
   components: {
     DisplayForm,
-    IonPage,
-    IonContent,
-    IonGrid,
-    IonRow,
-    IonCol,
     EditEntry,
-    IonCard,
-    IonIcon,
-    IonModal,
   },
   data() {
     return {
@@ -113,10 +93,10 @@ export default defineComponent({
   },
   methods: {
     handleSubmit(data) {
-      axios
+      this.$axios
         .post(
-          "/control-center/form.php",
-          qs.stringify({
+          "form.php",
+          this.$qs.stringify({
             submit_form: "submit_form",
             form: JSON.stringify(data),
             form_name: this.$route.params.form,
@@ -128,10 +108,10 @@ export default defineComponent({
         });
     },
     handleEdit(data) {
-      axios
+      this.$axios
         .post(
-          "/control-center/form.php",
-          qs.stringify({
+          "form.php",
+          this.$qs.stringify({
             update_entry: "update_entry",
             entry_id: this.edit_id,
             form: JSON.stringify(data),
@@ -145,10 +125,10 @@ export default defineComponent({
         });
     },
     deletee(id) {
-      axios
+      this.$axios
         .post(
-          "/control-center/form.php",
-          qs.stringify({
+          "form.php",
+          this.$qs.stringify({
             delete_entry: "delete_entry",
             entry_id: id,
             form_name: this.$route.params.form,
@@ -170,10 +150,10 @@ export default defineComponent({
     },*/
     loadData() {
       const table_name = `${this.$route.params.project.replaceAll("-", "_")}_${this.$route.params.form}`;
-      axios
+      this.$axios
         .post(
-          `/control-center/mysql.php`,
-          qs.stringify({ getTableByName: table_name, limit: 30 })
+          `mysql.php`,
+          this.$qs.stringify({ getTableByName: table_name, limit: 30 })
         )
         .then((res) => {
           this.labels = res.data.labels;
@@ -184,7 +164,7 @@ export default defineComponent({
     },
     loadMore(){
       const table_name = `${this.$route.params.project.replaceAll("-", "_")}_${this.$route.params.form}`;
-      axios.post("/control-center/mysql.php", qs.stringify({load_more: "load_more", current_limit: this.current_limit,table: table_name})).then((res) => {
+      this.$axios.post("mysql.php", this.$this.$qs.stringify({load_more: "load_more", current_limit: this.current_limit,table: table_name})).then((res) => {
         this.current_limit = this.current_limit+1;
 
         res.data.data.forEach(element =>{

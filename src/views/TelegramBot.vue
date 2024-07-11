@@ -14,7 +14,6 @@
 <script>
 import { IonButton, IonInput } from "@ionic/vue";
 import { useRoute } from "vue-router";
-import axios from "axios";
 import qs from "qs";
 
 export default {
@@ -29,9 +28,9 @@ export default {
   },
   mounted() {
     const route = useRoute();
-    axios
+    $axios
       .post(
-        "/control-center/telegram_bot.php",
+        "telegram_bot.php",
         qs.stringify({ getConfig: "getConfig", project: route.params.project })
       )
       .then((res) => {
@@ -41,7 +40,7 @@ export default {
         const repliedMessages = {};
 
         function getUpdates() {
-          axios
+          $axios
             .post(`${baseUrl}/getUpdates`)
             .then((response) => {
               const updates = response.data.result;
@@ -51,7 +50,7 @@ export default {
                 const messageId = message.message_id;
                 if (!repliedMessages[messageId]) {
                   repliedMessages[messageId] = true;
-                  axios.post(`${baseUrl}/sendMessage`, {
+                  $axios.post(`${baseUrl}/sendMessage`, {
                     chat_id: chatId,
                     text: "Hallo",
                   });
@@ -71,12 +70,12 @@ export default {
     sendMessage() {
       const url = "https://api.telegram.org/bot" + this.token + "/sendMessage";
       const fullUrl = url + "?chat_id=" + this.chatID + "&text=" + this.message;
-      axios.post(fullUrl);
+      $axios.post(fullUrl);
 
       //send image
       //const url2 = "https://api.telegram.org/bot" + token + "/sendPhoto";
       //const fullUrl2 = url2 + '?chat_id=796382938&photo=https://www.simplilearn.com/ice9/free_resources_article_thumb/what_is_image_Processing.jpg&caption=Ty mas mega velky penis hahahahahah';
-      //axios.post(fullUrl2);
+      //$axios.post(fullUrl2);
     },
   },
 };

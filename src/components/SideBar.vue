@@ -90,27 +90,11 @@
 </template>
 
 <script>
-import {
-  IonIcon,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonMenuToggle,
-  IonNote,
-} from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 //import axios from "axios";
 
 export default defineComponent({
   name: "SideBar",
-  components: {
-    IonIcon,
-    IonItem,
-    IonLabel,
-    IonMenuToggle,
-    IonList,
-    IonNote,
-  },
   props: {
     tools: Array,
     bookmarks: Array,

@@ -7,27 +7,28 @@
 </template>
 
 <script>
-import axios from "axios";
-import qs from 'qs';
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, getCurrentInstance } from "vue";
 import TableCard from "@/components/TableCard.vue";
-import { IonContent, IonPage } from "@ionic/vue";
 import { useRoute } from "vue-router";
 
 export default defineComponent({
   name: "DatabasesView",
   components: {
     TableCard,
-    IonPage,
-    IonContent,
   },
   setup() {
     const labels = ref([]);
     const data = ref([]);
     const route = useRoute();
+    const { appContext } = getCurrentInstance();
+    const axios = appContext.config.globalProperties.$axios;
+    const qs = appContext.config.globalProperties.$qs;
 
     axios
-      .post("/control-center/mysql.php", qs.stringify({getTableByName: route.params.name}))
+      .post(
+        "mysql.php",
+        qs.stringify({ getTableByName: route.params.name })
+      )
       .then((res) => {
         labels.value = res.data.labels;
         data.value = res.data.data;

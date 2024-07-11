@@ -22,16 +22,9 @@
 </template>
 
 <script>
-import { IonButton, IonInput } from "@ionic/vue";
-import axios from "axios";
-import qs from "qs";
 import { useRoute } from "vue-router";
 
 export default {
-  components: {
-    IonButton,
-    IonInput,
-  },
   data() {
     return {
       token: "",
@@ -44,17 +37,18 @@ export default {
     function submit(token, chat) {
       if (token && chat) {
         console.log(chat);
-        axios
+        $axios
           .post(
-            "/control-center/telegram_bot.php",
-            qs.stringify({
+            "telegram_bot.php",
+            this.$qs.stringify({
               newConfig: "newConfig",
               token: token,
               chatID: chat,
               project: route.params.project,
             })
           )
-          .then(() => {//res
+          .then(() => {
+            //res
             alert("Data successful submitted!!!");
             //reload();
           });
@@ -65,17 +59,18 @@ export default {
 
     function change(token, chat) {
       if (token && chat) {
-        axios
+        this.$axios
           .post(
-            "/control-center/telegram_bot.php",
-            qs.stringify({
+            "telegram_bot.php",
+            this.$qs.stringify({
               changeConfig: "changeConfig",
               token: token,
               chatID: chat,
               project: route.params.project,
             })
           )
-          .then(() => {//res
+          .then(() => {
+            //res
             alert("Data successful changed!!!");
             //reload();
           });
@@ -91,9 +86,9 @@ export default {
   },
   async mounted() {
     const route = useRoute();
-    await axios
+    await $axios
       .post(
-        "/control-center/telegram_bot.php",
+        "telegram_bot.php",
         qs.stringify({ getConfig: "getConfig", project: route.params.project })
       )
       .then((res) => {
@@ -106,10 +101,10 @@ export default {
   methods: {
     async reload() {
       const route = useRoute();
-      await axios
+      await this.$axios
         .post(
-          "/control-center/telegram_bot.php",
-          qs.stringify({
+          "telegram_bot.php",
+          this.$qs.stringify({
             getConfig: "getConfig",
             project: route.params.project,
           })

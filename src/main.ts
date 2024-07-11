@@ -27,16 +27,34 @@ import "@vueup/vue-quill/dist/vue-quill.snow.css";
 
 /* Theme variables */
 //import "./theme/variables.css";
-import './theme/variables.scss';
+import "./theme/variables.scss";
+
+import axios from "axios";
+import qs from "qs";
 
 import mitt from "mitt";
+
+
+import * as IonComponents from '@ionic/vue';
+
+
+
 const emitter = mitt();
-const app = createApp(App)
-  .use(IonicVue)
-  .use(router);
+const app = createApp(App).use(IonicVue).use(router);
+
 
 app.component("QuillEditor", QuillEditor);
+
+Object.keys(IonComponents).forEach(key => {
+  if (/^Ion[A-Z]\w+$/.test(key)) {
+      app.component(key, IonComponents[key]);
+  }
+});
+
 app.config.globalProperties.emitter = emitter;
+app.config.globalProperties.$axios = axios;
+app.config.globalProperties.$qs = qs;
+
 
 router.isReady().then(() => {
   app.mount("#app");

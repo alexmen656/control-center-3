@@ -159,15 +159,6 @@
 
 <script lang="ts">
 /* eslint-disable */
-import {
-  IonIcon,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonMenuToggle,
-  IonReorder,
-  IonReorderGroup,
-} from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import axios from "axios";
 import qs from "qs";
@@ -176,15 +167,6 @@ import { useIonRouter } from "@ionic/vue";
 
 export default defineComponent({
   name: "ProjectSideBar",
-  components: {
-    IonIcon,
-    IonItem,
-    IonLabel,
-    IonMenuToggle,
-    IonList,
-    IonReorder,
-    IonReorderGroup,
-  },
   setup() {
     const selectedIndex = ref(0);
     const tools = ref<{ id: number; order: number }[]>([]);

@@ -30,12 +30,7 @@
 //import { useRoute } from "vue-router";
 import { defineComponent } from "vue"; //, ref
 import Trend from "@ddgll/vue3-trend";
-import {
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
-  IonCardTitle,
-} from "@ionic/vue";
+
 //import TrendChart from "vue-trend-chart";
 
 //import TrendChart from "vue-trend-chart";
@@ -66,10 +61,6 @@ export default defineComponent({
   components: {
     //  TrendChart,
     Trend,
-    IonCard,
-    IonCardContent,
-    IonCardHeader,
-    IonCardTitle,
   },
   data() {
     return {

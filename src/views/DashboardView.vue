@@ -77,21 +77,6 @@
 </template>
 
 <script>
-import {
-  IonGrid,
-  IonCol,
-  IonRow,
-  IonButtons,
-  IonButton,
-  IonModal,
-  IonHeader,
-  IonContent,
-  IonToolbar,
-  IonTitle,
-  IonFab,
-  IonFabButton,
-  IonFabList,
-} from "@ionic/vue";
 import { defineComponent, ref, watch } from "vue";
 import DonutChart from "@/components/DonutChart.vue";
 import PieChart from "@/components/PieChart.vue";
@@ -101,11 +86,14 @@ import {
   useMagicKeys,
   //whenever
 } from "@vueuse/core";
-import qs from "qs";
-import axios from "axios";
 
 export default defineComponent({
   name: "DefaultPage",
+  components: {
+    FloatingSelect,
+    DonutChart,
+    PieChart,
+  },
   data() {
     return {
       editView: false,
@@ -164,10 +152,10 @@ export default defineComponent({
     };
   },
   created() {
-    axios
+    $axios
       .post(
-        "/control-center/form.php",
-        qs.stringify({
+        "form.php",
+        this.$qs.stringify({
           get_forms: "get_forms",
           project: this.$route.params.project,
         })
@@ -265,9 +253,9 @@ export default defineComponent({
       } else {
         await localStorage.setItem("charts", JSON.stringify([json]));
       }
-      await axios.post(
-        "/control-center/dashboard.php",
-        qs.stringify({
+      await $axios.post(
+        "dashboard.php",
+        this.$qs.stringify({
           new_chart: "new_chart",
           json: JSON.stringify([json]),
           dashboard: this.$route.params.dashboard,
@@ -302,9 +290,9 @@ export default defineComponent({
         }
       });
       await localStorage.setItem("charts", JSON.stringify(new_charts));*/
-      await axios.post(
-        "/control-center/dashboard.php",
-        qs.stringify({
+      await $axios.post(
+        "dashboard.php",
+        this.$qs.stringify({
           delete_chart: "delete_chart",
           dashboard: this.$route.params.dashboard,
           project: this.$route.params.project,
@@ -316,19 +304,19 @@ export default defineComponent({
     async loadCharts() {
       this.charts = [];
       //JSON.parse(localStorage.getItem("charts"))
-      const request = await axios.post(
-        "/control-center/dashboard.php",
-        qs.stringify({
+      const request = await $axios.post(
+        "dashboard.php",
+        this.$qs.stringify({
           get_dashboard: "get_dashboard",
           dashboard: this.$route.params.dashboard,
           project: this.$route.params.project,
         })
       );
       request.data.forEach(async (chart) => {
-        await axios
+        await $axios
           .post(
-            "/control-center/form.php",
-            qs.stringify({
+            "form.php",
+            this.$qs.stringify({
               get_form_data: "get_form_data",
               form: chart.form,
               project: this.$route.params.project,
@@ -367,24 +355,6 @@ export default defineComponent({
           });
       });
     },
-  },
-  components: {
-    DonutChart,
-    PieChart,
-    IonGrid,
-    IonCol,
-    IonRow,
-    IonButtons,
-    IonButton,
-    IonModal,
-    IonHeader,
-    IonContent,
-    IonToolbar,
-    IonTitle,
-    FloatingSelect,
-    IonFab,
-    IonFabButton,
-    IonFabList,
   },
 });
 </script>

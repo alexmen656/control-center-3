@@ -14,17 +14,11 @@
   </template>
   
   <script>
-  import axios from "axios";
-  import qs from "qs";
-  import { IonPage, IonContent, IonButton } from "@ionic/vue";
   import FloatingSelect from "@/components/FloatingSelect.vue";
   
   export default {
     name: "BarcodeScanner",
     components: {
-      IonPage,
-      IonContent,
-      IonButton,
       FloatingSelect,
     },
     data() {
@@ -74,10 +68,10 @@
       );
     },
     created() {
-      axios
+      $axios
         .post(
-          "/control-center/form.php",
-          qs.stringify({
+          "form.php",
+          this.$qs.stringify({
             get_forms: "get_forms",
             project: this.$route.params.project,
           })
@@ -95,7 +89,7 @@
     },
     methods: {
       save(){
-          axios.post("/control-center/tools.php", qs.stringify({newToolConfig: "newToolConfig", config: JSON.stringify({form: this.form, form_label: this.form_label}), project: this.$route.params.project, tool: "nfc"}));
+          $axios.post("tools.php", this.$qs.stringify({newToolConfig: "newToolConfig", config: JSON.stringify({form: this.form, form_label: this.form_label}), project: this.$route.params.project, tool: "nfc"}));
       },
       toName(name) {
         return name.replaceAll(" ", "_").toLowerCase();

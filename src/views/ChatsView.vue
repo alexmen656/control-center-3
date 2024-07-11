@@ -25,17 +25,6 @@
 import ChatsMenu from "@/components/ChatsMenu.vue";
 import ChatView from "@/views/ChatView.vue";
 import { defineComponent, ref } from "vue";
-import {
-  IonPage,
-  // IonHeader,
-  IonContent,
-  //IonList,
-  //IonItem,
-  IonCol,
-  IonRow,
-  //IonGrid,
-  //IonLabel,
-} from "@ionic/vue";
 
 export default defineComponent({
   data() {
@@ -46,15 +35,6 @@ export default defineComponent({
   components: {
     ChatsMenu,
     ChatView,
-    IonPage,
-    //IonHeader,
-    IonContent,
-    //IonList,
-    //IonItem,
-    IonCol,
-    IonRow,
-    //  IonGrid,
-    //IonLabel,
   },
   mounted() {
     this.fetchChats();
@@ -65,7 +45,7 @@ export default defineComponent({
       const isOnline = ref(navigator.onLine);
       //alert(isOnline.value);
       if (isOnline.value) {
-        fetch(`/control-center/chats.php?userId=${userId}`)
+        fetch(`chats.php?userId=${userId}`)
           .then((response) => response.json())
           .then((data) => {
             this.chats = data;

@@ -13,8 +13,6 @@
 </template>
 
 <script setup>
-import { IonInput } from "@ionic/vue";
-
 //const props = 
 defineProps({
   defaultVal: {

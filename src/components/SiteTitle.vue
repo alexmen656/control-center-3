@@ -21,10 +21,6 @@
 </template>
 
 <script>
-import axios from "axios";
-import qs from "qs";
-import { IonTitle, IonIcon, IonToolbar } from "@ionic/vue";
-
 export default {
   name: "SiteTitle",
   props: {
@@ -34,11 +30,6 @@ export default {
     icon: {
       type: String,
     },
-  },
-  components: {
-    IonTitle,
-    IonIcon,
-    IonToolbar,
   },
   data() {
     return {
@@ -59,10 +50,10 @@ export default {
     this.$watch(
       () => this.$route.params,
       () => {
-        axios
+        this.$axios
           .post(
             "https://alex.polan.sk/control-center/bookmarks.php?" +
-              qs.stringify({
+              this.$qs.stringify({
                 location: this.siteLocation,
                 checkBookmark: "checkBookmark",
               })
@@ -72,10 +63,10 @@ export default {
           });
       }
     );
-    axios
+    this.$axios
       .post(
         "https://alex.polan.sk/control-center/bookmarks.php?" +
-          qs.stringify({
+          this.$qs.stringify({
             location: this.siteLocation,
             checkBookmark: "checkBookmark",
           })
@@ -103,7 +94,7 @@ export default {
     toggleBookmark() {
       if (this.isBookmark) {
         this.isBookmark = false;
-        axios
+        this.$axios
           .post(
             "https://alex.polan.sk/control-center/bookmarks.php?deleteBookmark=deleteBookmark&location=" +
               this.siteLocation
@@ -113,7 +104,7 @@ export default {
           });
       } else {
         this.isBookmark = true;
-        axios
+        this.$axios
           .post(
             "https://alex.polan.sk/control-center/bookmarks.php?newBookmark=newBookmark&icon=" +
               this.icon +

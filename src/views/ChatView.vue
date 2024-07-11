@@ -89,44 +89,15 @@
 
 <script>
 import Avatar from "@/components/AvatarComponent.vue";
-import axios from "axios";
-import qs from "qs";
 //import { ref, onMounted } from "vue";
 //import { useRoute } from "vue-router";
 import { getUserData } from "@/userData";
 import { defineComponent, ref } from "vue";
 
-import {
-  IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  //IonContent,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonCard,
-  IonInput,
-  IonModal,
-  IonItem,
-} from "@ionic/vue";
-
 export default defineComponent({
   name: "ChatView",
   components: {
     Avatar,
-    IonPage,
-    IonHeader,
-    //IonContent,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonCard,
-    IonInput,
-    IonToolbar,
-    IonTitle,
-    IonModal,
-    IonItem,
   },
   data() {
     return {
@@ -197,9 +168,9 @@ export default defineComponent({
 
     async fetchChat(chatId) {
       try {
-        const response = await axios.post(
-          "/control-center/chats.php",
-          qs.stringify({
+        const response = await $axios.post(
+          "chats.php",
+          this.$qs.stringify({
             getChatByChatID: "getChatByChatID",
             chatID: chatId,
             userID: this.userID,
@@ -213,9 +184,9 @@ export default defineComponent({
     },
     async fetchMessages(chatId) {
       try {
-        const response = await axios.post(
-          "/control-center/messages.php",
-          qs.stringify({
+        const response = await $axios.post(
+          "messages.php",
+          this.$qs.stringify({
             getMessagesByChatID: "getMessagesByChatID",
             chatID: chatId,
           })
@@ -228,9 +199,9 @@ export default defineComponent({
     },
     sendMessage() {
       if (this.message != "") {
-        axios.post(
-          "/control-center/messages.php",
-          qs.stringify({
+        $axios.post(
+          "messages.php",
+          this.$qs.stringify({
             newMessage: "newMessage",
             userID: this.userID,
             message: this.message,

@@ -1,6 +1,7 @@
-import axios from 'axios'
+import axios from "axios";
 
-if(localStorage.getItem('token')){
-    axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
+if (localStorage.getItem("token")) {
+  axios.defaults.headers.common["Authorization"] =
+    localStorage.getItem("token");
 }
-axios.defaults.baseURL = 'https://alex.polan.sk';
+axios.defaults.baseURL = "https://alex.polan.sk/control-center/";

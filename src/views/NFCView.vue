@@ -56,8 +56,7 @@
 import { defineComponent, ref } from "vue";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 //import { getConfig } from "@/getToolConfig";
-//import axios from "axios";
-//import qs from "qs";
+//import $axios from "$axios";
 import {
   IonPage,
   IonButton,
@@ -96,10 +95,10 @@ export default defineComponent({
 
     const config = await getConfig("nfc", this.$route.params.project);
     this.config = config;
-    await axios
+    await $axios
       .post(
-        "/control-center/form.php",
-        qs.stringify({
+        "form.php",
+        this.$qs.stringify({
           get_form_data: "get_form_data",
           form: config.data.form,
           project: this.$route.params.project,
@@ -170,10 +169,10 @@ export default defineComponent({
                 const id = event.nfcTag.id;
                 const hexString = this.bytesToHex(id);
                 console.log("entry:" + this.entry + ", hex:" + hexString);
-                axios
+                $axios
                   .post(
-                    "/control-center/form.php",
-                    qs.stringify({
+                    "form.php",
+                    this.$qs.stringify({
                       get_form_data: "get_form_data",
                       form: "nfc",
                       project: "control_center",
@@ -191,10 +190,10 @@ export default defineComponent({
                       ({ hex }) => hex === hexString
                     ).project;
 
-                    axios
+                    $axios
                       .post(
-                        "/control-center/form.php",
-                        qs.stringify({
+                        "form.php",
+                        this.$qs.stringify({
                           get_form_data: "get_form_data",
                           form: form,
                           project: project,
@@ -238,10 +237,10 @@ export default defineComponent({
                 const id = event.nfcTag.id;
                 const hexString = this.bytesToHex(id);
                 console.log("entry:" + this.entry + ", hex:" + hexString);
-                axios
+                $axios
                   .post(
-                    "/control-center/nfc.php",
-                    qs.stringify({
+                    "nfc.php",
+                    this.$qs.stringify({
                       hex: hexString,
                       entry: this.entry,
                       form: this.config.data.form,

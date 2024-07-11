@@ -50,8 +50,6 @@
 </template>
 <script>
 import FloatingInput from "@/components/FloatingInput.vue";
-import axios from "axios";
-import qs from "qs";
 
 export default {
   name: "ComponentSettings",
@@ -66,10 +64,10 @@ export default {
   },
   created() {
     try {
-      axios
+      $axios
         .post(
-          "/control-center/components.php",
-          qs.stringify({
+          "components.php",
+          this.$qs.stringify({
             getCoponent: "getCoponent",
             project: this.$route.params.project,
             name: this.$route.params.component,
@@ -87,10 +85,10 @@ export default {
   },
   methods: {
     save() {
-      axios
+      $axios
         .post(
-          "/control-center/components.php",
-          qs.stringify({
+          "components.php",
+          this.$qs.stringify({
             updateHTML: "updateHTML",
             project: this.$route.params.project,
             name: this.$route.params.component,

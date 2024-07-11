@@ -21,13 +21,6 @@
 </template>
 
 <script>
-import {
-  IonTitle,
-  IonMenuButton,
-  IonToolbar,
-  IonHeader,
-  IonButtons,
-} from "@ionic/vue";
 import Avatar from "@/components/AvatarComponent.vue";
 import { defineComponent } from "vue";
 import { loadUserData, getUserData } from "@/userData";
@@ -35,11 +28,6 @@ import { loadUserData, getUserData } from "@/userData";
 export default defineComponent({
   name: "SiteHeader",
   components: {
-    IonTitle,
-    IonMenuButton,
-    IonToolbar,
-    IonHeader,
-    IonButtons,
     Avatar,
   },
   data() {

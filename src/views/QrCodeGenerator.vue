@@ -33,29 +33,13 @@
 </template>
 
 <script>
-import axios from "axios";
-import qs from "qs";
 import { getConfig } from "@/getToolConfig";
 import FloatingSelect from "@/components/FloatingSelect.vue";
-import {
-  IonPage,
-  IonContent,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonButton,
-} from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 
 export default defineComponent({
   name: "BarcodeScanner",
   components: {
-    IonPage,
-    IonContent,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonButton,
     FloatingSelect,
   },
   setup() {
@@ -115,10 +99,10 @@ export default defineComponent({
       this.$route.params.project
     );
     this.config = config;
-    await axios
+    await this.$axios
       .post(
-        "/control-center/form.php",
-        qs.stringify({
+        "form.php",
+        this.$qs.stringify({
           get_form_data: "get_form_data",
           form: config.data.form,
           project: this.$route.params.project,

@@ -33,8 +33,6 @@
 
 <script>
 //import HtmlInput from "@/components/HtmlInput.vue";
-import axios from "axios";
-import qs from "qs";
 
 export default {
   name: "NewsletterView",
@@ -49,9 +47,9 @@ export default {
   },
   methods: {
     send() {
-      axios.post(
-        "/control-center/newsletter.php",
-        qs.stringify({ subject: this.subject, email: this.email })
+      $axios.post(
+        "newsletter.php",
+        this.$qs.stringify({ subject: this.subject, email: this.email })
       );
     },
   },

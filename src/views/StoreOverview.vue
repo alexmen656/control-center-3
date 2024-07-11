@@ -36,26 +36,10 @@
 </template>
 <script>
 import lunr from "lunr";
-import axios from "axios";
-import qs from "qs";
 import ModulesListItem from "@/components/ModulesListItem.vue";
-import {
-  IonSearchbar,
-  IonPage,
-  IonContent,
-  IonGrid,
-  IonRow,
-  IonCol,
-} from "@ionic/vue";
 
 export default {
   components: {
-    IonSearchbar,
-    IonPage,
-    IonContent,
-    IonGrid,
-    IonRow,
-    IonCol,
     ModulesListItem,
   },
   data() {
@@ -92,10 +76,10 @@ export default {
   },
   async created() {
     const installedModules = [];
-    axios
+    this.$axios
       .post(
-        "/control-center/modules.php",
-        qs.stringify({ project: this.$route.params.project })
+        "modules.php",
+        this.$qs.stringify({ project: this.$route.params.project })
       )
       .then((response) => {
         if (response.data) {
@@ -105,10 +89,10 @@ export default {
         }
       });
 
-    axios
+    this.$axios
       .post(
-        "/control-center/form.php",
-        qs.stringify({
+        "form.php",
+        this.$qs.stringify({
           get_form_data: "get_form_data",
           form: "modules",
           project: "module_store",
@@ -125,9 +109,9 @@ export default {
         });
       });
 
-    const response = await axios.post(
-      "/control-center/form.php",
-      qs.stringify({
+    const response = await this.$axios.post(
+      "form.php",
+      this.$qs.stringify({
         get_form_data: "get_form_data",
         form: "modules",
         project: "module_store",
@@ -155,9 +139,9 @@ export default {
       this.keyword = event.target.value;
     },
     install(moduleID, index) {
-      axios.post(
-        "https://alex.polan.sk/control-center/install.php",
-        qs.stringify({
+      this.$axios.post(
+        "install.php",
+        this.$qs.stringify({
           install: "install",
           moduleID: moduleID,
           project: this.$route.params.project,
@@ -174,10 +158,10 @@ export default {
       }, 480);
     },
     deinstall(moduleID, index) {
-      axios
+      this.$axios
         .post(
-          "https://alex.polan.sk/control-center/install.php",
-          qs.stringify({
+          "install.php",
+          this.$qs.stringify({
             deinstall: "deinstall",
             moduleID: moduleID,
             project: this.$route.params.project,

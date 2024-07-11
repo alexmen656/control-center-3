@@ -78,19 +78,6 @@
 </template>
 
 <script>
-import {
-  IonContent,
-  IonPage,
-  IonIcon,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  //IonButton,
-  IonAvatar,
-} from "@ionic/vue";
 import { defineComponent } from "vue";//, ref
 import { getUserData } from "@/userData";
 import AvatarLarge from "@/components/AvatarLarge.vue";
@@ -117,17 +104,6 @@ export default defineComponent({
     };
   },
   components: {
-    IonContent,
-    IonPage,
-    IonGrid,
-    IonIcon,
-    IonRow,
-    IonCol,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    //IonButton,
-    IonAvatar,
     AvatarLarge,
   },
   async mounted() {

@@ -59,19 +59,11 @@
 <script>
 import "vue3-circle-progress/dist/circle-progress.css";
 import CircleProgress from "vue3-circle-progress";
-import {
-  IonRow,
-  IonCol,
-  IonButton,
-} from "@ionic/vue";
 
 export default {
   name: "ModulesListItem",
   components: {
     CircleProgress,
-    IonRow,
-    IonCol,
-    IonButton,
   },
   props: {
     modules: {

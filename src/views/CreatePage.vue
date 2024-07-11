@@ -37,9 +37,6 @@
 </template>
 
 <script>
-import axios from "axios";
-import qs from "qs";
-
 export default {
   name: "CreatePage",
   data() {
@@ -56,8 +53,8 @@ export default {
         description: this.description,
         examples: this.examples,
       };
-      await axios
-        .post("/control-center/create.php", qs.stringify(data))
+      await $axios
+        .post("create.php", this.$qs.stringify(data))
         .then(() => {
           // this.$router.push('/');
         })

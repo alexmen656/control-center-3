@@ -8,21 +8,8 @@
 </template>
 
 <script>
-import {
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardContent,
-} from "@ionic/vue";
-
 export default {
   name: "AlertMessage",
-  components: {
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonCardContent,
-  },
   props: {
     message: {},
     color: {

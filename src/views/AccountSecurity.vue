@@ -54,28 +54,10 @@
 </template>
 
 <script>
-import {
-  IonToggle,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonList,
-  IonItem,
-} from "@ionic/vue";
 import { defineComponent } from "vue";
-import axios from "axios";
-import qs from "qs";
 import { getUserData } from "@/userData";
 
 export default defineComponent({
-  components: {
-    IonToggle,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonList,
-    IonItem,
-  },
   data() {
     return {
       user: {},
@@ -88,9 +70,9 @@ export default defineComponent({
   },
   methods: {
     update(event) {
-      axios.post(
-        "/control-center/user.php",
-        qs.stringify({
+      this.$axios.post(
+        "user.php",
+        this.$qs.stringify({
           updateLoginWithGoogle: "updateLoginWithGoogle",
           newValue: event.detail.checked,
         })

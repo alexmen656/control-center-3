@@ -183,24 +183,7 @@
 </template>
 
 <script>
-import {
-  IonButton,
-  IonCol,
-  IonContent,
-  IonGrid,
-  IonItem,
-  IonList,
-  IonPage,
-  IonSelect,
-  IonSelectOption,
-  IonRow,
-  IonInput,
-  IonLabel,
-  //IonChip,
-} from "@ionic/vue";
 import { defineComponent } from "vue";
-import axios from "axios";
-import qs from "qs";
 
 export default defineComponent({
   name: "ToolSelection",
@@ -237,17 +220,17 @@ export default defineComponent({
     };
   },
   async created() {
-    axios.post("/control-center/modules.php", qs.stringify({project: this.$route.params.project})).then((res) => {
+    $axios.post("modules.php", this.$qs.stringify({project: this.$route.params.project})).then((res) => {
       this.tools = res.data.map((tool, index) => ({
         id: index + 1,
         icon: tool.icon,
         name: tool.name,
       }));
     });
-    axios
+    $axios
       .post(
-        "/control-center/form.php",
-        qs.stringify({
+        "form.php",
+        this.$qs.stringify({
           get_forms: "get_forms",
           project: this.$route.params.project,
         })
@@ -263,9 +246,9 @@ export default defineComponent({
       if (this.selectedTool == "form") {
         this.formView = true;
       } else if (this.selectedTool == "dashboard") {
-        axios.post(
-          "/control-center/dashboard.php",
-          qs.stringify({
+        $axios.post(
+          "dashboard.php",
+          this.$qs.stringify({
             new_dashboard: "new_dashboard",
             project: this.$route.params.project,
           })
@@ -274,9 +257,9 @@ export default defineComponent({
         const selectedTool = this.tools.find(
           (tool) => tool.name === this.selectedTool
         );
-        axios.post(
-          "/control-center/tools.php",
-          qs.stringify({
+        $axios.post(
+          "tools.php",
+          this.$qs.stringify({
             newTool: "newTool",
             toolIcon: selectedTool.icon,
             projectName: this.$route.params.project,
@@ -331,10 +314,10 @@ export default defineComponent({
       };
       console.log(formData);
       this.jsonData = JSON.stringify(formData, null, 2);
-      axios
+      $axios
         .post(
-          "/control-center/form.php",
-          qs.stringify({
+          "form.php",
+          this.$qs.stringify({
             create_form: "create_form",
             form: this.jsonData,
             name: this.title.toLowerCase().replace(/\s+/g, "-"),
@@ -342,9 +325,9 @@ export default defineComponent({
           })
         )
         .then(() => {
-          axios.post(
-            "/control-center/tools.php",
-            qs.stringify({
+          $axios.post(
+            "tools.php",
+            this.$qs.stringify({
               newTool: "newTool",
               toolIcon: "document-text-outline",
               projectName: this.$route.params.project,
@@ -358,21 +341,6 @@ export default defineComponent({
     toName(name) {
       return name.replaceAll(" ", "_").toLowerCase();
     },
-  },
-  components: {
-    IonButton,
-    IonCol,
-    IonContent,
-    IonGrid,
-    IonItem,
-    IonList,
-    IonPage,
-    IonSelect,
-    IonSelectOption,
-    IonRow,
-    IonInput,
-    IonLabel,
-    // IonChip
   },
 });
 </script>

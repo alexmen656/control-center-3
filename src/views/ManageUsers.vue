@@ -124,70 +124,44 @@
 <script>
 import TableCard from "@/components/TableCard.vue";
 import AlertMessage from "@/components/AlertMessage.vue";
-import { defineComponent, ref } from "vue";
-import {
-  IonPage,
-  IonButton,
-  IonContent,
-  IonModal,
-  IonItem,
-  IonInput,
-  IonLabel,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonHeader,
-  IonToolbar,
-  IonButtons,
-  IonIcon,
-  IonTitle,
-} from "@ionic/vue";
-//import { OverlayEventDetail } from "@ionic/core/components";
-import axios from "axios";
-import qs from "qs";
+import { defineComponent, ref, getCurrentInstance } from "vue";
 
 export default defineComponent({
   components: {
     TableCard,
-    IonPage,
-    IonButton,
-    IonContent,
-    IonModal,
     AlertMessage,
-    IonItem,
-    IonInput,
-    IonLabel,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonHeader,
-    IonToolbar,
-    IonButtons,
-    IonIcon,
-    IonTitle,
   },
   setup() {
+    const { appContext } = getCurrentInstance();
+    const axios = appContext.config.globalProperties.$axios;
+    const qs = appContext.config.globalProperties.$qs;
+
     const labels = ref([]);
     const data = ref([]);
     const data2 = ref({});
     const pendingVerificationEntries = ref([]);
 
-    axios
-      .post(
-        "/control-center/mysql.php",
-        qs.stringify({ getTableByName: "control_center_users" })
-      )
-      .then((res) => {
-        labels.value = res.data.labels;
-        data.value = res.data.data;
+    const loadUsers = async function() {
+      axios
+        .post(
+          "mysql.php",
+          qs.stringify({ getTableByName: "control_center_users" })
+        )
+        .then((res) => {
+          labels.value = res.data.labels;
+          data.value = res.data.data;
 
-        data2.value = res.data;
+          data2.value = res.data;
 
-        const accountStatusIndex = data2.value.labels.indexOf("account_status");
-        pendingVerificationEntries.value = data2.value.data.filter(
-          (entry) => entry[accountStatusIndex] === "pending_verification"
-        );
-      });
+          const accountStatusIndex =
+            data2.value.labels.indexOf("account_status");
+          pendingVerificationEntries.value = data2.value.data.filter(
+            (entry) => entry[accountStatusIndex] === "pending_verification"
+          );
+        });
+    };
+
+    loadUsers();
 
     return {
       labels,
@@ -211,10 +185,10 @@ export default defineComponent({
     },
     confirm() {
       if (this.password && this.email_adress && this.first_name) {
-        axios
+        this.$axios
           .post(
-            "/control-center/users.php",
-            qs.stringify({
+            "users.php",
+            this.$qs.stringify({
               new_user: "new_user",
               first_name: this.first_name,
               last_name: this.last_name,
@@ -226,10 +200,10 @@ export default defineComponent({
             console.log(res);
             this.successMessage = res.data;
 
-            axios
+            this.$axios
               .post(
-                "/control-center/mysql.php",
-                qs.stringify({ getTableByName: "control_center_users" })
+                "mysql.php",
+                this.$qs.stringify({ getTableByName: "control_center_users" })
               )
               .then((res) => {
                 this.labels = res.data.labels;
@@ -247,20 +221,20 @@ export default defineComponent({
       }
     },
     approve(userID) {
-      axios
+      this.$axios
         .post(
-          "/control-center/users.php",
-          qs.stringify({
+          "users.php",
+          this.$qs.stringify({
             updateAccountStatus: "updateAccountStatus",
             userID: userID,
             newStatus: "active",
           })
         )
         .then(() => {
-          axios
+          this.$axios
             .post(
-              "/control-center/mysql.php",
-              qs.stringify({ getTableByName: "control_center_users" })
+              "mysql.php",
+              this.$qs.stringify({ getTableByName: "control_center_users" })
             )
             .then((res) => {
               this.labels = res.data.labels;

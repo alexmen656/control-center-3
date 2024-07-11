@@ -45,42 +45,10 @@
 
 <script>
 import { defineComponent, ref } from "vue";
-import axios from "axios";
-import qs from "qs";
 import { useRoute } from "vue-router";
-import {
-  IonPage,
-  IonButton,
-  IonContent,
-  IonItem,
-  IonLabel,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonIcon,
-  IonItemOptions,
-  IonItemOption,
-  IonItemSliding,
-  IonList,
-} from "@ionic/vue";
 
 export default defineComponent({
   name: "ProjectsPage",
-  components: {
-    IonPage,
-    IonButton,
-    IonContent,
-    IonItem,
-    IonLabel,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonIcon,
-    IonItemOptions,
-    IonItemOption,
-    IonItemSliding,
-    IonList,
-  },
   data() {
     return {
       name: "",
@@ -92,10 +60,10 @@ export default defineComponent({
     const tools = ref([]);
     const route = useRoute();
 
-    axios
+    $axios
       .post(
-        "/control-center/components.php",
-        qs.stringify({
+        "components.php",
+        this.$qs.stringify({
           getComponentsByProject: "getComponentsByProject",
           project: route.params.project,
         })
@@ -108,10 +76,10 @@ export default defineComponent({
     function deleteee(tool) {
       //alert(tool.name);
       if (confirm("Do you really want to delete the tool")) {
-        axios
+        $axios
           .post(
-            "/control-center/components.php",
-            qs.stringify({
+            "components.php",
+            this.$qs.stringify({
               deleteComponent: "deleteComponent",
               name: tool.code,
               project: this.$route.params.project,
@@ -119,10 +87,10 @@ export default defineComponent({
           )
           .then(() => {//res
             alert("Tool deleted successfull");
-            axios
+            $axios
               .post(
-                "/control-center/components.php",
-                qs.stringify({
+                "components.php",
+                this.$qs.stringify({
                   getComponentsByProject: "getComponentsByProject",
                   project: route.params.project,
                 })
@@ -140,18 +108,18 @@ export default defineComponent({
     function multi_delete(toolss) {
       if (confirm("Do you really want to delete the tool")) {
         toolss.forEach((tool) => {
-          axios.post(
-            "/control-center/components.php",
-            qs.stringify({ deleteCoponent: "deleteCoponent", toolID: tool })
+          $axios.post(
+            "components.php",
+            this.$qs.stringify({ deleteCoponent: "deleteCoponent", toolID: tool })
           );
         });
 
         this.selectedTools = [];
         this.selectt = false;
 
-        axios
+        $axios
           .get(
-            "/control-center/sidebar.php?getSideBarByProjectName=" +
+            "sidebar.php?getSideBarByProjectName=" +
               route.params.project
           )
           .then((response) => {

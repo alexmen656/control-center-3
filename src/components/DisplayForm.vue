@@ -38,9 +38,6 @@
 import FloatingInput from "@/components/FloatingInput.vue";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 import FloatingCheckbox from "@/components/FloatingCheckbox.vue";
-import { IonButton } from "@ionic/vue";
-import qs from "qs";
-import axios from "axios";
 
 export default {
   name: "DisplayForm",
@@ -48,7 +45,6 @@ export default {
     FloatingInput,
     FloatingSelect,
     FloatingCheckbox,
-    IonButton,
   },
   data() {
     return {
@@ -63,10 +59,10 @@ export default {
     };
   },
   created() {
-  axios
+  this.$axios
     .post(
-      "/control-center/form.php",
-      qs.stringify({
+      "form.php",
+      this.$qs.stringify({
         get_form: "get_form",
         project: this.$route.params.project,
         form: this.$route.params.form,
@@ -79,10 +75,10 @@ export default {
         if (input.type == "select2") {
           //console.log(input);
           const  inputInstance = { ...input }; // Create a copy of the input object
-          await axios
+          await this.$axios
             .post(
-              "/control-center/form.php",
-              qs.stringify({
+              "form.php",
+              this.$qs.stringify({
                 get_form_data: "get_form_data",
                 project: this.$route.params.project,
                 form: input.options[0].value,
@@ -125,9 +121,9 @@ export default {
     },
     /*async select2(form, field) {
       try {
-        const response = await axios.post(
+        const response = await this.$axios.post(
           "/control-center/form.php",
-          qs.stringify({
+          this.$qs.stringify({
             get_form_data: "get_form_data",
             project: this.$route.params.project,
             form: form,

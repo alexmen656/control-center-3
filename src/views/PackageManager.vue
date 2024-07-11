@@ -96,42 +96,13 @@
   </ion-page>
 </template>
 <script>
-import {
-  IonItem,
-  IonLabel,
-  IonList,
-  IonContent,
-  IonPage,
-  IonSelect,
-  IonSelectOption,
-  IonItemOptions,
-  IonItemOption,
-  IonItemSliding,
-  IonReorder,
-  IonButton,
-  IonModal,
-} from "@ionic/vue";
+
 import FloatingInput from "@/components/FloatingInput.vue";
 
 import { ref } from "vue";
-import axios from "axios";
-import qs from "qs";
 export default {
   name: "PackageManager",
   components: {
-    IonItem,
-    IonLabel,
-    IonList,
-    IonContent,
-    IonPage,
-    IonSelect,
-    IonSelectOption,
-    IonItemOptions,
-    IonItemOption,
-    IonItemSliding,
-    IonReorder,
-    IonButton,
-    IonModal,
     FloatingInput,
   },
   data() {
@@ -200,9 +171,9 @@ export default {
   },
   async created() {
     const packages2 = [];
-    const packagess = (await axios.post(
-      "/control-center/packages.php",
-      qs.stringify({
+    const packagess = (await $axios.post(
+      "packages.php",
+      this.$qs.stringify({
         getPackages: "getPackages",
         project: this.$route.params.project,
       })
@@ -213,7 +184,7 @@ export default {
       this.packages = packagess;
      // console.log(this.packagess);
     }
-    const packages = (await axios.post("/control-center/packages.php")).data; //.packages
+    const packages = (await $axios.post("packages.php")).data; //.packages
 
     if (packages) {
       packages.forEach((packagee) => {
@@ -249,9 +220,9 @@ export default {
         this.packages.push(packagee);
       });
 
-      axios.post(
-        "/control-center/packages.php",
-        qs.stringify({
+      $axios.post(
+        "packages.php",
+        this.$qs.stringify({
           project: this.$route.params.project,
           packages: this.selectedPackages,
         })

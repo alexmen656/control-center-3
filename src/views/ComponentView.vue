@@ -188,28 +188,6 @@ import axios from "axios";
 import qs from "qs";
 //import { useRoute } from "vue-router";
 import CodeEditor from "simple-code-editor";
-import {
-  IonButton,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonModal,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonReorder,
-  IonReorderGroup,
-  IonHeader,
-  IonToolbar,
-  IonButtons,
-  IonIcon,
-  IonTitle,
-  IonContent,
-  IonInput,
-  IonItemSliding,
-  IonItemOptions,
-  IonItemOption,
-} from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 import { useElementSize } from "@vueuse/core";
@@ -220,27 +198,7 @@ export default defineComponent({
   name: "ComponentsView",
   components: {
     CodeEditor,
-    IonButton,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonModal,
     FloatingSelect,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonReorder,
-    IonReorderGroup,
-    IonHeader,
-    IonToolbar,
-    IonButtons,
-    IonIcon,
-    IonTitle,
-    IonContent,
-    IonInput,
-    IonItemSliding,
-    IonItemOptions,
-    IonItemOption,
   },
   setup() {
     const isOpen = ref(false);
@@ -257,7 +215,7 @@ export default defineComponent({
     try {
       axios
         .post(
-          "/control-center/components.php",
+          "components.php",
           qs.stringify({
             getCoponent: "getCoponent",
             project: route.params.project,
@@ -277,7 +235,7 @@ export default defineComponent({
     const submit = (items) => {
       axios
         .post(
-          "/control-center/components.php",
+          "components.php",
           qs.stringify({
             updateHTML: "updateHTML",
             project: route.params.project,
@@ -446,7 +404,7 @@ export default defineComponent({
     async getComponentData() {
       try {
         const response = await axios.post(
-          "/control-center/components.php",
+          "components.php",
           qs.stringify({
             getCoponent: "getCoponent",
             project: this.$route.params.project,
@@ -470,8 +428,8 @@ export default defineComponent({
       const html = this.newHTML.trim();
       axios
         .post(
-          "/control-center/components.php",
-          qs.stringify({
+          "components.php",
+          this.$qs.stringify({
             updateHTML: "updateHTML",
             project: this.$route.params.project,
             name: this.$route.params.component,

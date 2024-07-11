@@ -35,31 +35,13 @@
 
 <script>
 import { StreamBarcodeReader } from "vue-barcode-reader";
-import axios from "axios";
-import qs from "qs";
 import { getConfig } from "@/getToolConfig";
-import {
-  IonPage,
-  IonButton,
-  IonModal,
-  IonHeader,
-  IonContent,
-  IonToolbar,
-  IonTitle,
-} from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 
 export default defineComponent({
   name: "BarcodeScanner",
   components: {
     StreamBarcodeReader,
-    IonPage,
-    IonButton,
-    IonModal,
-    IonHeader,
-    IonContent,
-    IonToolbar,
-    IonTitle,
   },
   setup() {
     const isOpen = ref(false);
@@ -86,10 +68,10 @@ export default defineComponent({
       this.$route.params.project
     );
     this.config = config;
-    await axios
+    await this.$axios
       .post(
-        "/control-center/form.php",
-        qs.stringify({
+        "form.php",
+        this.$qs.stringify({
           get_form_data: "get_form_data",
           form: config.data.form,
           project: this.$route.params.project,

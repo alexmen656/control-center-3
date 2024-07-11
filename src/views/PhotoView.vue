@@ -22,35 +22,11 @@
 
 <script lang="ts">
 import { camera, trash, close } from "ionicons/icons";
-import {
-  IonPage,
-  IonHeader,
-  IonTitle,
-  IonContent,
-  IonFab,
-  IonFabButton,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonImg,
-} from "@ionic/vue";
 import { usePhotoGallery } from "@/composables/usePhotoGallery";//, Photo
 //import '@/checkLogin';
 
 export default {
   name: "PhotoView",
-  components: {
-    IonPage,
-    IonHeader,
-    IonTitle,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonImg,
-  },
   setup() {
     const { takePhoto, photos } = usePhotoGallery();
     return {

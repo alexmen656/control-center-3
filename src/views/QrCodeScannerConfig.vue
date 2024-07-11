@@ -10,17 +10,11 @@
 </template>
 
 <script>
-import axios from "axios";
-import qs from "qs";
-import { IonPage, IonContent, IonButton } from "@ionic/vue";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 
 export default {
   name: "BarcodeScanner",
   components: {
-    IonPage,
-    IonContent,
-    IonButton,
     FloatingSelect,
   },
   data() {
@@ -70,10 +64,10 @@ export default {
     );
   },
   created() {
-    axios
+    this.$axios
       .post(
-        "/control-center/form.php",
-        qs.stringify({
+        "form.php",
+        this.$qs.stringify({
           get_forms: "get_forms",
           project: this.$route.params.project,
         })
@@ -91,9 +85,9 @@ export default {
   },
   methods: {
     save() {
-      axios.post(
-        "/control-center/tools.php",
-        qs.stringify({
+      this.$axios.post(
+        "tools.php",
+        this.$qs.stringify({
           newToolConfig: "newToolConfig",
           config: JSON.stringify({
             form: this.form,

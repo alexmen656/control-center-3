@@ -23,35 +23,8 @@
 <script>
 //import Avatar from "@/components/AvatarComponent.vue";
 import { defineComponent, ref } from "vue";
-import {
-  //IonPage,
-  //IonHeader,
-  //IonContent,
-  //IonList,
-  //IonItem,
-  //IonCol,
-  //IonRow,
-  //IonGrid,
-  //IonLabel,
-  IonAvatar,
-  IonIcon,
-} from "@ionic/vue";
 
 export default defineComponent({
-  components: {
-    //Avatar,
-    //IonPage,
-    //IonHeader,
-    //IonContent,
-        //IonCol,
-    //IonRow,
-    //IonGrid,
-    //IonLabel,
-    IonAvatar,
-    IonIcon,
-    //IonList,
- // IonItem,
-  },
   data() {
     return {
       chats: [],

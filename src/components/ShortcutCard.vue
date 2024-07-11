@@ -7,14 +7,10 @@
 </template>
 
 <script>
-import { IonIcon } from "@ionic/vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "ShortcutCard",
-  components: {
-    IonIcon,
-  },
   props: {
     link: {
       type: String,

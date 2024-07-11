@@ -27,7 +27,7 @@
                       slot="end"
                     ></ion-radio>
                   </ion-item>
-                  <ion-item   style="--background: #c51162; opacity: 1">
+                  <ion-item style="--background: #c51162; opacity: 1">
                     <ion-label>Pink</ion-label>
                     <ion-label slot="end">(Pro Color)</ion-label>
                     <ion-radio
@@ -44,7 +44,7 @@
                       slot="end"
                     ></ion-radio>
                   </ion-item>
-                  <ion-item   style="--background: #6200ea; opacity: 1">
+                  <ion-item style="--background: #6200ea; opacity: 1">
                     <ion-label>Deep Purple</ion-label>
                     <ion-label slot="end">(Pro Color)</ion-label>
                     <ion-radio
@@ -53,7 +53,7 @@
                       slot="end"
                     ></ion-radio>
                   </ion-item>
-                  <ion-item   style="--background: #304ffe; opacity: 1">
+                  <ion-item style="--background: #304ffe; opacity: 1">
                     <ion-label>Indigo</ion-label>
                     <ion-label slot="end">(Pro Color)</ion-label>
                     <ion-radio
@@ -70,7 +70,7 @@
                       slot="end"
                     ></ion-radio>
                   </ion-item>
-                  <ion-item   style="--background: #0091ea; opacity: 1">
+                  <ion-item style="--background: #0091ea; opacity: 1">
                     <ion-label>Light Blue</ion-label>
                     <ion-label slot="end">(Pro Color)</ion-label>
                     <ion-radio
@@ -80,7 +80,6 @@
                     ></ion-radio>
                   </ion-item>
                   <ion-item
-                     
                     style="--background: #00b8d4; color: black; opacity: 1"
                   >
                     <ion-label>Cyan</ion-label>
@@ -92,7 +91,6 @@
                     ></ion-radio>
                   </ion-item>
                   <ion-item
-                     
                     style="--background: #00bfa5; color: black; opacity: 1"
                   >
                     <ion-label>Teal</ion-label>
@@ -103,7 +101,7 @@
                       slot="end"
                     ></ion-radio>
                   </ion-item>
-                  <ion-item   style="--background: #00c853; opacity: 1">
+                  <ion-item style="--background: #00c853; opacity: 1">
                     <ion-label>Green</ion-label>
                     <ion-label slot="end">(Pro Color)</ion-label>
                     <ion-radio
@@ -121,7 +119,6 @@
                     ></ion-radio>
                   </ion-item>
                   <ion-item
-                     
                     style="--background: #aeea00; color: black; opacity: 1"
                   >
                     <ion-label>Lime</ion-label>
@@ -133,7 +130,6 @@
                     ></ion-radio>
                   </ion-item>
                   <ion-item
-                    
                     style="--background: #ffd600; color: black; opacity: 1"
                   >
                     <ion-label>Yellow</ion-label>
@@ -145,7 +141,6 @@
                     ></ion-radio>
                   </ion-item>
                   <ion-item
-                     
                     style="--background: #ffab00; color: black; opacity: 1"
                   >
                     <ion-label>Amber</ion-label>
@@ -157,7 +152,6 @@
                     ></ion-radio>
                   </ion-item>
                   <ion-item
-                     
                     style="--background: #ff6d00; color: black; opacity: 1"
                   >
                     <ion-label>Orange</ion-label>
@@ -168,7 +162,7 @@
                       slot="end"
                     ></ion-radio>
                   </ion-item>
-                  <ion-item   style="--background: #dd2c00; opacity: 1">
+                  <ion-item style="--background: #dd2c00; opacity: 1">
                     <ion-label>Deep Orange</ion-label>
                     <ion-label slot="end">(Pro Color)</ion-label>
                     <ion-radio
@@ -203,23 +197,6 @@
 import { defineComponent } from "vue";
 import router from "@/router";
 import { store } from "@/theme/theme";
-import {
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonMenuButton,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  IonAccordionGroup,
-  IonAccordion,
-  IonCard,
-  IonItem,
-  IonList,
-  IonLabel,
-  IonRadio,
-  IonRadioGroup,
-} from "@ionic/vue";
 import { closeSharp, saveSharp } from "ionicons/icons";
 export default defineComponent({
   data() {
@@ -228,24 +205,6 @@ export default defineComponent({
     };
   },
   name: "FolderPage",
-  components: {
-    IonButtons,
-    IonContent,
-    IonHeader,
-    IonMenuButton,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-    IonAccordionGroup,
-    IonAccordion,
-    IonCard,
-    IonItem,
-    IonList,
-    IonLabel,
-    IonRadio,
-    IonRadioGroup,
-  },
-
   methods: {
     setTheme() {
       // @ts -ignore: Object is possibly 'null'.
@@ -255,7 +214,6 @@ export default defineComponent({
     },
   },
 
-  
   setup() {
     return {
       closeSharp,

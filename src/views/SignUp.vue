@@ -181,24 +181,7 @@
 </template>
 
 <script>
-import {
-  IonPage,
-  //IonHeader,
-//  IonToolbar,
-  //IonTitle,
-  IonContent,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonItem,
-  IonLabel,
-  IonInput,
-  IonButton,
-
-} from "@ionic/vue";
 import { defineComponent } from "vue";
-import axios from "axios";
-import qs from "qs";
 import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth";
 import AlertMessage from "@/components/AlertMessage.vue";
 
@@ -211,15 +194,6 @@ GoogleAuth.initialize({
 
 export default defineComponent({
   components: {
-    IonPage,
-    IonContent,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonItem,
-    IonLabel,
-    IonInput,
-    IonButton,
     AlertMessage,
   },
   data() {
@@ -246,20 +220,20 @@ export default defineComponent({
     async continueWithGoogle() {
       this.user = await GoogleAuth.signIn();
 
-      await axios
+      await $axios
         .post(
-          "/control-center/user.php",
-          qs.stringify({
+          "user.php",
+          this.$qs.stringify({
             checkEmailExists: "checkEmailExists",
             email: this.user.email,
           })
         )
         .then((res) => {
           if (res.data.value == true) {
-            axios
+            $axios
               .post(
-                "/control-center/login.php",
-                qs.stringify({
+                "login.php",
+                this.$qs.stringify({
                   email: this.user.email,
                   loginWithGoogle: "loginWithGoogle",
                 })
@@ -303,10 +277,10 @@ export default defineComponent({
         return;
       }
 
-      axios
+      $axios
         .post(
-          "/control-center/sign_up.php",
-          qs.stringify({
+          "sign_up.php",
+          this.$qs.stringify({
             first_name: this.user.givenName,
             last_name: this.user.familyName,
             profile_img: this.user.imageUrl.replace("s96", "s512"),
@@ -352,9 +326,9 @@ export default defineComponent({
     },
     async emailAlreadyExists() {
       try {
-        const response = await axios.post(
-          "/control-center/user.php",
-          qs.stringify({
+        const response = await $axios.post(
+          "user.php",
+          this.$qs.stringify({
             checkEmailExists: "checkEmailExists",
             email: this.email,
           })
@@ -366,10 +340,10 @@ export default defineComponent({
       }
     },
     signUp() {
-      axios
+      $axios
         .post(
-          "/control-center/sign_up.php",
-          qs.stringify({
+          "sign_up.php",
+          this.$qs.stringify({
             first_name: this.firstName,
             last_name: this.lastName,
             email_adress: this.email,

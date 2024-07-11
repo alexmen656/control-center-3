@@ -18,27 +18,23 @@
 </template>
 
 <script>
-import axios from "axios";
-import qs from 'qs';
-import { defineComponent, ref } from "vue";
-import { IonPage, IonContent, IonCard } from "@ionic/vue";
+import { defineComponent, ref, getCurrentInstance } from "vue";
 
 export default defineComponent({
   name: "DatabasesView",
-  components: {
-    IonPage,
-    IonContent,
-    IonCard,
-  },
   data() {
     return {
       labels: ["Table Name"],
     };
   },
   setup() {
+    const { appContext } = getCurrentInstance();
+    const axios = appContext.config.globalProperties.$axios;
+    const qs = appContext.config.globalProperties.$qs;
+
     const tables = ref([]);
 
-    axios.post("/control-center/mysql.php", qs.stringify({getTables: "getTables"})).then((res) => {
+    axios.post("mysql.php", qs.stringify({getTables: "getTables"})).then((res) => {
       tables.value = res.data;
     });
 

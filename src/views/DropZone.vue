@@ -76,8 +76,6 @@ progress {
 
 <script>
 /*
-import axios from 'axios';
-
   export default {
     
       Variables used by the drag and drop component
@@ -185,7 +183,7 @@ import axios from 'axios';
           formData.append('newComponent', 'newComponent');
         }
 
-        axios.post( '/control-center/components.php',
+        $axios.post( 'components.php',
           formData,
           {
             headers: {

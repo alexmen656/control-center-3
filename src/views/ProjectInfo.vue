@@ -32,9 +32,6 @@
 </template>
 
 <script>
-import axios from "axios";
-import qs from "qs";
-
 export default {
   name: "ProjectInfo",
   data() {
@@ -46,10 +43,10 @@ export default {
     };
   },
   created() {
-    axios
+    this.$axios
       .post(
-        "/control-center/projects.php",
-        qs.stringify({
+        "projects.php",
+        this.$qs.stringify({
           getProjectInfo: "getProjectInfo",
           project: this.$route.params.project,
         })

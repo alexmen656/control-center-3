@@ -38,7 +38,6 @@
 </template>
 
 <script>
-import axios from "axios";
 import FloatingInput from "@/components/FloatingInput.vue";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 import { getUsers } from "@/getData";
@@ -112,8 +111,8 @@ export default {
     formData.append("name", this.groupName);
     formData.append("participants", this.selectedParticipants);
 
-    axios
-      .post("/control-center/groups.php", formData)
+    $axios
+      .post("groups.php", formData)
       .then((response) => {
         if (response.data.success) {
           const imagePath = response.data.path;
@@ -125,8 +124,8 @@ export default {
           };
 
           // Send the group data to your backend or perform any required actions
-          axios
-            .post("/control-center/groups.php", groupData)
+          $axios
+            .post("groups.php", groupData)
             .then((response) => {
               // Handle the response from the server
               console.log(response.data);

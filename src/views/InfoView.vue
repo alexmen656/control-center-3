@@ -31,8 +31,6 @@
 </template>
 
 <script>
-import axios from "axios";
-
 export default {
   name: "InfoView",
   data() {
@@ -48,8 +46,8 @@ export default {
   methods: {
     async fetchFunctionData() {
       try {
-        const response = await axios.get(
-          `/control-center/info.php?function=${this.functionName}`
+        const response = await $axios.get(
+          `info.php?function=${this.functionName}`
         );
         this.functionData = response.data;
       } catch (error) {

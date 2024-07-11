@@ -99,32 +99,8 @@
 
 <script>
 import { ref } from "vue";
-import {
-  IonPage,
-  IonContent,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonInput,
-  IonSelect,
-  IonSelectOption,
-  IonButton,
-  IonLabel,
-} from "@ionic/vue";
 
 export default {
-  components: {
-    IonPage,
-    IonContent,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonInput,
-    IonSelect,
-    IonSelectOption,
-    IonButton,
-    IonLabel,
-  },
   data() {
     return {
       formInputs: [

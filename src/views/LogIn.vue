@@ -143,16 +143,6 @@
 <script lang="ts">
 import axios from "axios";
 import qs from "qs";
-import {
-  IonButton,
-  IonLabel,
-  IonItem,
-  IonRow,
-  IonCol,
-  IonContent,
-  IonList,
-  IonInput,
-} from "@ionic/vue";
 import { defineComponent } from "vue";
 import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth";
 import AlertMessage from "@/components/AlertMessage.vue";
@@ -192,14 +182,6 @@ export default defineComponent({
     };
   },
   components: {
-    IonButton,
-    IonLabel,
-    IonItem,
-    IonRow,
-    IonCol,
-    IonContent,
-    IonList,
-    IonInput,
     AlertMessage,
   },
   methods: {
@@ -208,7 +190,7 @@ export default defineComponent({
 
       await axios
         .post(
-          "/control-center/user.php",
+          "user.php",
           qs.stringify({
             checkEmailExists: "checkEmailExists",
             email: this.user.email,
@@ -218,7 +200,7 @@ export default defineComponent({
           if (res.data.value == true) {
             axios
               .post(
-                "/control-center/login.php",
+                "login.php",
                 qs.stringify({
                   email: this.user.email,
                   loginWithGoogle: "loginWithGoogle",
@@ -265,7 +247,7 @@ export default defineComponent({
 
       axios
         .post(
-          "/control-center/sign_up.php",
+          "sign_up.php",
           qs.stringify({
             first_name: this.user.givenName,
             last_name: this.user.familyName,
@@ -293,8 +275,8 @@ export default defineComponent({
       } else {
         await axios
           .post(
-            "/control-center/login.php",
-            qs.stringify({ email: this.username, password: this.password })
+            "login.php",
+            this.$qs.stringify({ email: this.username, password: this.password })
           )
           .then(
             (res) => {
