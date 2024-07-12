@@ -29,9 +29,9 @@
         ></ShortcutCard
       ></ion-col>
 
-      <ion-col size="12" size-lg="12" size-xl="9">
-        <ion-grid>
-          <ion-row>
+      <ion-col class="no-padding" size="12" size-lg="12" size-xl="9">
+        <ion-grid class="no-padding">
+          <ion-row class="no-padding">
             <ion-col size="12"
               ><ion-card><BarChart></BarChart></ion-card
             ></ion-col>
@@ -42,9 +42,9 @@
         </ion-grid>
       </ion-col>
 
-      <ion-col size="12" size-lg="6" size-xl="3">
-        <ion-grid>
-          <ion-row>
+      <ion-col class="no-padding" size="12" size-lg="6" size-xl="3">
+        <ion-grid class="no-padding">
+          <ion-row class="no-padding">
             <ion-col size="12" size-lg="12" size-xl="12"
               ><DonutChart :data="data" :options="options"></DonutChart
             ></ion-col>
@@ -118,3 +118,8 @@ export default defineComponent({
   },
 });
 </script>
+<style scoped>
+.no-padding {
+  padding: 0 !important;
+}
+</style>

@@ -3,7 +3,7 @@
     <ion-content>
       <ion-grid>
         <ion-row>
-          <ion-col size="12" size-lg="8"> Create a new project </ion-col>
+          <!--   <ion-col size="12" size-lg="8"> Create a new project </ion-col>-->
           <ion-col size="12" size-lg="8">
             <ion-item>
               <ion-label position="floating">Icon</ion-label>
@@ -13,7 +13,14 @@
                 :value="icon"
                 @ionInput="icon = $event.target.value"
                 placeholder="Enter Icon Code"
-              ></ion-input>
+              >
+              </ion-input>
+              <ion-icon
+                class="input-icon"
+                slot="end"
+                size="large"
+                :name="icon ? icon : 'help-circle-outline'"
+              ></ion-icon>
             </ion-item>
           </ion-col>
           <ion-col size="12" size-lg="8">
@@ -43,6 +50,7 @@ export default {
   data() {
     return {
       name: "",
+      icon: "",
     };
   },
   methods: {
@@ -68,3 +76,10 @@ export default {
   },
 };
 </script>
+<style scoped>
+.input-icon {
+  height: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+</style>

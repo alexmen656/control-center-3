@@ -1,92 +1,89 @@
 <template>
-
-      <ion-list id="inbox-list">
-        <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
-          <ion-item
-            button
-            @click="this.selectedIndex = i"
-            lines="none"
-            detail="false"
-            :router-link="'/' + p.name[0].toLowerCase() + p.name.substring(1)"
-            class="hydrated menu-item"
-            :class="{ selected: this.selectedIndex === i }"
-          >
-            <ion-icon slot="start" :name="p.icon"></ion-icon>
-            <ion-label
-              >{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label
-            >
-          </ion-item>
-        </ion-menu-toggle>
-      </ion-list>
-      <ion-note class="projects-headline"
-        ><h4>Projects</h4>
-        <div>
-          <router-link to="/manage/projects/"
-            ><ion-icon
-              style="color: var(--ion-color-medium-shade)"
-              name="ellipsis-horizontal-circle-outline" /></router-link
-          ><router-link to="/info/projects/"
-            ><ion-icon
-              style="color: var(--ion-color-medium-shade)"
-              name="information-circle-outline"
-            ></ion-icon></router-link
-          ><router-link to="/new/project/"
-            ><ion-icon
-              style="color: var(--ion-color-medium-shade)"
-              name="add-circle-outline"
-            ></ion-icon
-          ></router-link></div
-      ></ion-note>
-      <ion-list>
-        <ion-menu-toggle auto-hide="false" v-for="(p, i) in projects" :key="i">
-          <ion-item
-            button
-            lines="none"
-            detail="false"
-            @click="goToProject(p.name)"
-            class="hydrated menu-item"
-            ><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
-            <ion-icon slot="start" :name="p.icon"></ion-icon>
-            <ion-label
-              >{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label
-            >
-          </ion-item>
-        </ion-menu-toggle>
-      </ion-list>
-
-      <ion-note class="projects-headline"
-        ><h4>Bookmarks</h4>
-        <div>
-          <router-link to="/manage/bookmarks/"
-            ><ion-icon
-              style="color: var(--ion-color-medium-shade)"
-              name="ellipsis-horizontal-circle-outline" /></router-link
-          ><router-link to="/info/bookmarks/"
-            ><ion-icon
-              style="color: var(--ion-color-medium-shade)"
-              name="information-circle-outline"
-            ></ion-icon></router-link
-          ><!--<router-link to="/new/bookmark/"><ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>-->
-        </div></ion-note
+  <ion-list id="inbox-list">
+    <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
+      <ion-item
+        button
+        @click="this.selectedIndex = i"
+        lines="none"
+        detail="false"
+        :router-link="'/' + p.name[0].toLowerCase() + p.name.substring(1)"
+        class="hydrated menu-item"
+        :class="{ selected: this.selectedIndex === i }"
       >
-      <ion-list>
-        <ion-menu-toggle auto-hide="false" v-for="(p, i) in bookmarks" :key="i">
-          <ion-item
-            button
-            lines="none"
-            detail="false"
-            @click="goToBookmark(p.location)"
-            class="hydrated menu-item"
-            ><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
-            <ion-icon slot="start" :name="p.icon"></ion-icon>
-            <ion-label
-              >{{ p.title[0].toUpperCase()
-              }}{{ p.title.substring(1) }}</ion-label
-            >
-          </ion-item>
-        </ion-menu-toggle>
-      </ion-list>
-   
+        <ion-icon slot="start" :name="p.icon"></ion-icon>
+        <ion-label
+          >{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label
+        >
+      </ion-item>
+    </ion-menu-toggle>
+  </ion-list>
+  <ion-note class="projects-headline"
+    ><h4>Projects</h4>
+    <div>
+      <router-link to="/manage/projects/"
+        ><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="ellipsis-horizontal-circle-outline" /></router-link
+      ><router-link to="/info/projects/"
+        ><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="information-circle-outline"
+        ></ion-icon></router-link
+      ><router-link to="/new/project/"
+        ><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="add-circle-outline"
+        ></ion-icon
+      ></router-link></div
+  ></ion-note>
+  <ion-list>
+    <ion-menu-toggle auto-hide="false" v-for="(p, i) in projects" :key="i">
+      <ion-item
+        button
+        lines="none"
+        detail="false"
+        @click="goToProject(p.name)"
+        class="hydrated menu-item"
+        ><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
+        <ion-icon slot="start" :name="p.icon ? p.icon : 'folder-outline'"></ion-icon>
+        <ion-label
+          >{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label
+        >
+      </ion-item>
+    </ion-menu-toggle>
+  </ion-list>
+
+  <ion-note class="projects-headline"
+    ><h4>Bookmarks</h4>
+    <div>
+      <router-link to="/manage/bookmarks/"
+        ><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="ellipsis-horizontal-circle-outline" /></router-link
+      ><router-link to="/info/bookmarks/"
+        ><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="information-circle-outline"
+        ></ion-icon></router-link
+      ><!--<router-link to="/new/bookmark/"><ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>-->
+    </div></ion-note
+  >
+  <ion-list>
+    <ion-menu-toggle auto-hide="false" v-for="(p, i) in bookmarks" :key="i">
+      <ion-item
+        button
+        lines="none"
+        detail="false"
+        @click="goToBookmark(p.location)"
+        class="hydrated menu-item"
+        ><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
+        <ion-icon slot="start" :name="p.icon ? p.icon : 'help-circle-outline'"></ion-icon>
+        <ion-label
+          >{{ p.title[0].toUpperCase() }}{{ p.title.substring(1) }}</ion-label
+        >
+      </ion-item>
+    </ion-menu-toggle>
+  </ion-list>
 </template>
 
 <script>
@@ -132,7 +129,7 @@ export default defineComponent({
 });
 </script>
 
-<style>
+<style scoped>
 ion-menu.md ion-list[data-v-7ba5bd90] {
   padding-top: 56px;
 }
@@ -359,8 +356,18 @@ ion-item:focus {
 
 .projects-headline > h4 {
   margin: 0;
-  margin-top: 0.35rem !important;
+  /*margin-top: 0.35rem !important;*/
   padding: 0;
+}
+
+.projects-headline > div {
+display: flex;
+}
+
+.projects-headline > div > a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .menu-item {

@@ -80,6 +80,7 @@ http://ionicframework.com/docs/theming/ */
    * Material Design Dark Theme
    * -------------------------------------------
    */
+   @media (prefers-color-scheme: dark) {
 
 .md body {
   --ion-background-color: #121212;
@@ -118,6 +119,7 @@ http://ionicframework.com/docs/theming/ */
 
   --ion-card-background: #1e1e1e;
 }
+   }
 
 .darkRed {
   --ion-color-primary: #c51162;

@@ -32,10 +32,29 @@
               </ion-item>
             </ion-card>
             <ion-card>
-              <h2>Components:</h2>
-              <ion-icon @click="exportWeb()" name="download-outline" />
-              <ion-icon @click="viewWWW()" name="earth-outline" />
-              <a v-if="downloadLink" :href="'https://alex.polan.sk/control-center/website_builder/exports/'+downloadLink" download>{{downloadLink}}</a>
+              <h2 class="components-heading">
+                Components:
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  "
+                >
+                  <ion-icon @click="exportWeb()" name="download-outline" />
+                  <ion-icon @click="viewWWW()" name="earth-outline" />
+                </div>
+              </h2>
+
+              <a
+                v-if="downloadLink"
+                :href="
+                  'https://alex.polan.sk/control-center/website_builder/exports/' +
+                  downloadLink
+                "
+                download
+                >{{ downloadLink }}</a
+              >
               <ion-list v-if="components && components.length > 0">
                 <ion-item v-for="component in components" :key="component.id">
                   <ion-icon
@@ -103,10 +122,7 @@ export default {
   },
   created() {
     this.$axios
-      .get(
-        "sidebar.php?getSideBarByProjectName=" +
-          this.$route.params.project
-      )
+      .get("sidebar.php?getSideBarByProjectName=" + this.$route.params.project)
       .then((response) => {
         this.tools = response.data.tools;
         this.components = response.data.components;
@@ -133,5 +149,18 @@ ion-icon {
 
 ion-card:first-of-type {
   margin-bottom: 2rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  ion-list,
+  ion-item {
+    background: black;
+    --background: black;
+  }
+}
+
+.components-heading {
+  display: flex;
+  justify-content: space-between;
 }
 </style>

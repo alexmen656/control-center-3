@@ -48,17 +48,24 @@
                 >
                   <ion-card class="tall-card">
                     <ion-card-header>
+                      <ion-icon
+                        color="primary"
+                        size="large"
+                        :name="card.icon"
+                      ></ion-icon>
+
                       <ion-card-title>
-                        <ion-icon
+                        <!-- <ion-icon
                           name="log-out-outline"
                           slot="start"
-                        ></ion-icon>
+                        ></ion-icon>-->
+
                         <router-link
                           :to="
                             '/my-account/' +
-                            card.replaceAll(` `, `-`).toLowerCase()
+                            card.title.replaceAll(` `, `-`).toLowerCase()
                           "
-                          >{{ card }}</router-link
+                          >{{ card.title }}</router-link
                         >
                       </ion-card-title>
                     </ion-card-header>
@@ -78,7 +85,7 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";//, ref
+import { defineComponent } from "vue"; //, ref
 import { getUserData } from "@/userData";
 import AvatarLarge from "@/components/AvatarLarge.vue";
 
@@ -91,14 +98,34 @@ export default defineComponent({
       selectedTheme: "light",
       userData: {},
       cards: [
+        {
+          title: "Personal Information",
+          icon: "information-outline",
+        },
+        {
+          title: "Settings",
+          icon: "cog-outline",
+        },
+        {
+          title: "Preferences",
+          icon: "sunny-outline",
+        },
+        {
+          title: "Account Security",
+          icon: "key-outline",
+        },
+        {
+          title: "My Team",
+          icon: "people-outline",
+        },
+        {
+          title: "My Projects",
+          icon: "folder-outline",
+        },
         //  "Logout",
-        "Personal Information",
-        "Settings",
-        "Preferences",
-        "Account Security",
+
         //"App Theme",
-        "My Team",
-        "My Projects",
+
         // "photo",
       ],
     };
@@ -113,6 +140,10 @@ export default defineComponent({
 </script>
 
 <style scoped>
+ion-card-header {
+  justify-content: center;
+  align-items: center;
+}
 ion-avatar {
   display: block;
   margin: 0 auto;
@@ -134,9 +165,9 @@ ion-card-title {
 }
 
 ion-card {
-  border-radius: 10px;
-  padding-top: 30px;
-  padding-bottom: 30px;
+  border-radius: 18px;
+  /* padding-top: 30px;
+  padding-bottom: 30px;*/
   height: 100%;
   display: flex;
   justify-content: center;

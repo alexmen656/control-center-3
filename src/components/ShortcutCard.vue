@@ -2,7 +2,7 @@
   <div @click="redirectToLink(link)" class="shortcut-card">
     <h2>{{ title }}</h2>
 
-    <ion-icon name="chevron-forward-outline" />
+    <ion-icon color="primary" name="chevron-forward-outline" />
   </div>
 </template>
 
@@ -56,7 +56,7 @@ export default defineComponent({
 .shortcut-card > ion-icon {
   height: 100%;
   width: 12%;
-  color: red; /*gray*/
+ /* color: red; /*gray*/
 }
 
 h2 {
