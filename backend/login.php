@@ -2,7 +2,7 @@
 include 'head.php';
 $headers = getRequestHeaders();
 
-if ($_POST['email'] && $_POST['password']) {
+if (isset($_POST['email']) && isset($_POST['password'])) {
 
     $email = escape_string($_POST['email']);
     $password = escape_string($_POST['password']);
@@ -55,7 +55,7 @@ if ($_POST['email'] && $_POST['password']) {
         $data = fetch_assoc($select);
 
         if ($data["login_with_google"] == "true") {
-            $ip = $_SERVER['HTTP_CLIENT_IP'] ? $_SERVER['HTTP_CLIENT_IP'] : ($_SERVER['HTTP_X_FORWARDED_FOR'] ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR']);
+            $ip = $_SERVER['HTTP_CLIENT_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
             $userID = $data['userID'];
             $check = query("SELECT * FROM control_center_login_log WHERE `ip`='$ip' AND `userID`='$userID' AND `action`='successfull'");
             if (mysqli_num_rows($check) > 0) {

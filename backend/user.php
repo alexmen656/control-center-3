@@ -2,7 +2,7 @@
 include 'head.php';
 $headers = getRequestHeaders();
 
-if ($headers['Authorization']) {
+if (isset($headers['Authorization'])) {
 
 
     $token = escape_string($headers['Authorization']);

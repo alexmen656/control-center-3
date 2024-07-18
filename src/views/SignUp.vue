@@ -220,7 +220,7 @@ export default defineComponent({
     async continueWithGoogle() {
       this.user = await GoogleAuth.signIn();
 
-      await $axios
+      await this.$axios
         .post(
           "user.php",
           this.$qs.stringify({
@@ -230,7 +230,7 @@ export default defineComponent({
         )
         .then((res) => {
           if (res.data.value == true) {
-            $axios
+            this.$axios
               .post(
                 "login.php",
                 this.$qs.stringify({
@@ -277,7 +277,7 @@ export default defineComponent({
         return;
       }
 
-      $axios
+      this.$axios
         .post(
           "sign_up.php",
           this.$qs.stringify({
@@ -326,7 +326,7 @@ export default defineComponent({
     },
     async emailAlreadyExists() {
       try {
-        const response = await $axios.post(
+        const response = await this.$axios.post(
           "user.php",
           this.$qs.stringify({
             checkEmailExists: "checkEmailExists",
@@ -340,7 +340,7 @@ export default defineComponent({
       }
     },
     signUp() {
-      $axios
+      this.$axios
         .post(
           "sign_up.php",
           this.$qs.stringify({
