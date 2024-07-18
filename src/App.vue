@@ -164,6 +164,23 @@ export default defineComponent({
     this.$watch(
       () => this.$route.params,
       () => {
+        //alert(location.pathname);
+        if (location.pathname.includes("project")) {
+          const project = this.$route.params.project;
+          this.$axios
+            .post(
+              "projects.php",
+              this.$qs.stringify({
+                checkUserPermissions: "checkUserPermissions",
+                project: project,
+              })
+            )
+            .then((res) => {
+              if (!res.data.success) {
+                this.$router.push("/no-permission");
+              }
+            });
+        }
         this.page = {};
         this.loadPageData();
       }
@@ -172,6 +189,25 @@ export default defineComponent({
     this.$watch(
       () => window.location.pathname.replace("/", ""),
       () => {
+        //if (this.authenticated == true) {
+        if (window.location.pathname.includes("projects")) {
+          alert(1);
+          const project = this.$route.params.project;
+          this.$axios
+            .post(
+              "projects.php",
+              this.$qs.stringify({
+                checkUserPermissions: "checkUserPermissions",
+                project: project,
+              })
+            )
+            .then((res) => {
+              if (!res.data.success) {
+                this.$router.push("/no-permission");
+              }
+            });
+        }
+        //}
         this.page = {};
         this.loadPageData();
       }
@@ -201,6 +237,23 @@ export default defineComponent({
           this.$router.push("/pin");
         }
       });
+    }
+
+    if (location.pathname.includes("project")) {
+      const project = this.$route.params.project;
+      this.$axios
+        .post(
+          "projects.php",
+          this.$qs.stringify({
+            checkUserPermissions: "checkUserPermissions",
+            project: project,
+          })
+        )
+        .then((res) => {
+          if (!res.data.success) {
+            this.$router.push("/no-permission");
+          }
+        });
     }
   },
   setup() {

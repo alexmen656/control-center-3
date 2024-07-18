@@ -11,7 +11,7 @@
           <ion-col size="1" />
           <ion-col size="10">
             <ion-card>
-              <h2>Tools:</h2>
+              <h2 class="info-card-heading">Tools</h2>
               <ion-list v-if="tools.length > 0">
                 <ion-item v-for="tool in tools" :key="tool.id">
                   <ion-icon v-if="tool.icon" :name="tool.icon" />
@@ -21,7 +21,7 @@
                         tool.name.charAt(0).toUpperCase() + tool.name.slice(1)
                       }}
                     </h2>
-                    <p>Zugriffsrechte:</p>
+                    <!--  <p>Zugriffsrechte:</p>-->
                   </ion-label>
                 </ion-item>
               </ion-list>
@@ -32,8 +32,8 @@
               </ion-item>
             </ion-card>
             <ion-card>
-              <h2 class="components-heading">
-                Components:
+              <h2 class="info-card-heading">
+                Components
                 <div
                   style="
                     display: flex;
@@ -88,6 +88,39 @@
                 </ion-label>
               </ion-item>
             </ion-card>
+
+            <ion-card>
+              <h2 class="info-card-heading">
+                Users
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  "
+                >
+                  <ion-icon @click="setOpen(true)" name="add" />
+                </div>
+              </h2>
+              <ion-list v-if="users.length > 0">
+                <ion-item v-for="user in users" :key="user.id">
+                  <!-- <ion-icon v-if="tool.icon" :name="tool.icon" />-->
+                  <ion-label>
+                    <h2>
+                      {{
+                        user.name.charAt(0).toUpperCase() + user.name.slice(1)
+                      }}
+                    </h2>
+                    <p>Permissions: Read, Edit & Write</p>
+                  </ion-label>
+                </ion-item>
+              </ion-list>
+              <ion-item v-else>
+                <ion-label>
+                  <h2>An error occured</h2>
+                </ion-label>
+              </ion-item>
+            </ion-card>
           </ion-col>
           <ion-col size="1"></ion-col>
         </ion-row>
@@ -100,13 +133,45 @@
             </ion-label>
           </ion-item>
         </ion-list>-->
+
+      <!-- Modal -->
+      <ion-modal :is-open="isOpen" ref="modal">
+        <ion-header>
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button color="primary" @click="cancel()">Cancel</ion-button>
+            </ion-buttons>
+            <ion-title style="text-align: center">Invite User</ion-title>
+            <ion-buttons slot="end">
+              <ion-button color="primary" :strong="true" @click="confirm()"
+                >Confirm</ion-button
+              >
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <FloatingInput
+            defaultVal=""
+            label="Email"
+            placeholder="john.due@control-center.eu"
+            type="email"
+            v-model="email"
+          />
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
 
 <script>
+import FloatingInput from "@/components/FloatingInput.vue";
+import { ref } from "vue";
+
 export default {
   name: "ProjectView",
+  components: {
+    FloatingInput,
+  },
   data() {
     return {
       /*  users: [
@@ -117,7 +182,21 @@ export default {
       ],*/
       tools: [],
       components: [],
+      users: [],
       downloadLink: "",
+      email: "",
+    };
+  },
+  setup() {
+    const isOpen = ref(false);
+    const setOpen = (open) => {
+      isOpen.value = open;
+      console.log(1);
+    };
+
+    return {
+      isOpen,
+      setOpen,
     };
   },
   created() {
@@ -126,6 +205,17 @@ export default {
       .then((response) => {
         this.tools = response.data.tools;
         this.components = response.data.components;
+      });
+    this.$axios
+      .post(
+        "projects.php",
+        this.$qs.stringify({
+          getProjectUsers: "getProjectUsers",
+          project: this.$route.params.project,
+        })
+      )
+      .then((response2) => {
+        this.users = response2.data;
       });
   },
   methods: {
@@ -139,16 +229,37 @@ export default {
         this.downloadLink = response.data;
       });
     },
+    cancel() {
+      this.setOpen(false);
+    },
+    async confirm() {
+      this.setOpen(false);
+      this.$axios
+        .post(
+          "projects.php",
+          this.$qs.stringify({
+            addUserToProject: "addUserToProject",
+            project: this.$route.params.project,
+            email: this.email,
+          })
+        )
+        .then(() => {
+          alert("User Invite Success");
+        });
+    },
   },
 };
 </script>
 <style scoped>
+ion-card {
+  border-radius: 28px;
+}
 ion-icon {
   margin-right: 0.75rem;
 }
 
-ion-card:first-of-type {
-  margin-bottom: 2rem;
+ion-card:first-of-type, ion-card:nth-of-type(2) {
+  margin-bottom: 1rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -159,7 +270,10 @@ ion-card:first-of-type {
   }
 }
 
-.components-heading {
+.info-card-heading {
+  padding-left: .8rem;
+  margin-top: 8px;
+  margin-bottom: 4px;
   display: flex;
   justify-content: space-between;
 }
