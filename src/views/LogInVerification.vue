@@ -70,7 +70,7 @@ export default {
       }
     }
 
-    function submit() {
+    const submit = () => {
       let otp = "";
       inputs.forEach((input) => {
         otp += input.value;
@@ -78,7 +78,7 @@ export default {
       });
 
       const verification_token = localStorage.getItem("verification_token");
-      $axios
+      this.$axios
         .post(
           "verification.php",
           this.$qs.stringify({

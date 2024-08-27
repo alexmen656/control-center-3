@@ -12,7 +12,7 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
         $data = fetch_assoc($select);
 
         if ($password === $data['password']) {
-            $ip = $_SERVER['HTTP_CLIENT_IP'] ? $_SERVER['HTTP_CLIENT_IP'] : ($_SERVER['HTTP_X_FORWARDED_FOR'] ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR']);
+            $ip = $_SERVER['HTTP_CLIENT_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
             $userID = $data['userID'];
             $check = query("SELECT * FROM control_center_login_log WHERE `ip`='$ip' AND `userID`='$userID' AND `action`='successfull'");
             if (mysqli_num_rows($check) > 0) {
@@ -36,7 +36,7 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 mail(
                     $data['firstname'] . " " . $data['lastname'] . "<" . $data['email'] . ">",
                     "OTP Code",
-                    "Yout Otp code is " . $code,
+                    "Your Otp code is " . $code,
                     $headers
                 );
             }
