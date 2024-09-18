@@ -56,7 +56,7 @@ export default {
   methods: {
     submit() {
       if (this.name != "") {
-        $axios
+        this.$axios
           .post(
             "projects.php",
             this.$qs.stringify({

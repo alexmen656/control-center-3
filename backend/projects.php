@@ -23,6 +23,8 @@ if (isset($headers['Authorization'])) {
         $url7 = "project/" . $href . "/components/main";
         $url8 = "project/" . $href . "/module-store";
         $url9 = "project/" . $href . "/package-manager";
+        //$url9 = "project/" . $href . "/package-manager";
+
 
 
         mkdir("/www/" . $href, 0777);
@@ -36,7 +38,16 @@ if (isset($headers['Authorization'])) {
         $pages = query("INSERT INTO control_center_pages VALUES (0, '$url1', 'true', '', 'Project Dashboard', '', 0), (0, '$url2', 'true', '', 'Create new tool', '', 0), (0, '$url3', 'true', '', 'Manage Tools', '', 0), (0, '$url4', 'true', '', 'Manage Components', '', 0), (0, '$url5', 'true', '', 'Create New Component', '', 0), (0, '$url6', 'true', '', 'Project Info', '', 0), (0, '$url7', 'true', '', 'Main', '', 0), (0, '$url8', 'false', '', 'Module Store', '', 0), (0, '$url9', 'true', '', 'Package Manager', '', 0)");
         query("INSERT INTO project_tools (`id`, `icon`, `name`, `link`, `hasConfig`, `order`, `projectID`) VALUES (0, 'storefront-outline', 'Module Store', 'module-store', 0, 0, '$projectID')");
         if ($mysqli) {//$createFolder && $createFile && 
-            echo alert('succes', 'The project was created successfully. <a href="/paxar/projects/' . $href . '/">Go to the project</a>');
+            $token = escape_string($headers['Authorization']);
+            $data = query("SELECT * FROM control_center_users WHERE loginToken='$token'");
+            if (mysqli_num_rows($data) == 1) {
+                $data = fetch_assoc($data);
+                $userID = $data['userID'];
+                if(query("INSERT INTO control_center_user_projects VALUES (0, $userID, '$projectID', 1)")){
+                    echo alert('succes', 'The project was created successfully. <a href="/paxar/projects/' . $href . '/">Go to the project</a>');
+                }
+            }
+
         }
 
     } elseif (isset($_POST['deleteProject']) && isset($_POST['projectID'])) {

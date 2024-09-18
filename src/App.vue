@@ -165,7 +165,8 @@ export default defineComponent({
       () => this.$route.params,
       () => {
         //alert(location.pathname);
-        if (location.pathname.includes("project")) {
+        //alert(location.pathname);
+        if (location.pathname.includes("project") && location.pathname != "/new/project/" && location.pathname != "/new/project") {
           const project = this.$route.params.project;
           this.$axios
             .post(

@@ -93,6 +93,7 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
         echo json_encode(array());
     }
 } elseif (isset($_POST['get_forms']) && isset($_POST['project'])) {
+    $json = [];
    // $form_name = escape_string($_POST['form']);
     $project = escape_string($_POST['project']);
     $forms = query("SELECT * FROM form_settings WHERE project='$project'");
