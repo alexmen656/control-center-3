@@ -147,12 +147,17 @@ import { defineComponent } from "vue";
 import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth";
 import AlertMessage from "@/components/AlertMessage.vue";
 
+try {
 GoogleAuth.initialize({
   clientId:
     "706582238302-k3e6bqv81en6u97gf8l5pq883p773236.apps.googleusercontent.com",
   scopes: ["profile", "email"],
   grantOfflineAccess: true,
 });
+
+} catch {
+        console.log("error");
+      }
 
 if (localStorage.getItem("token")) {
   //location.href = "/home";
@@ -186,7 +191,11 @@ export default defineComponent({
   },
   methods: {
     async continueWithGoogle() {
-      this.user = await GoogleAuth.signIn();
+      try {
+        this.user = await GoogleAuth.signIn();
+      } catch {
+        console.log("error");
+      }
 
       await axios
         .post(

@@ -68,7 +68,7 @@
       ><!--<router-link to="/new/bookmark/"><ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>-->
     </div></ion-note
   >
-  <ion-list>
+  <ion-list v-if="bookmarks.length > 0">
     <ion-menu-toggle auto-hide="false" v-for="(p, i) in bookmarks" :key="i">
       <ion-item
         button

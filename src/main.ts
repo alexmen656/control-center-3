@@ -38,6 +38,7 @@ import mitt from "mitt";
 import * as IonComponents from '@ionic/vue';
 
 
+const debug = false;
 
 const emitter = mitt();
 const app = createApp(App).use(IonicVue).use(router);
@@ -55,6 +56,13 @@ app.config.globalProperties.emitter = emitter;
 app.config.globalProperties.$axios = axios;
 app.config.globalProperties.$qs = qs;
 
+if(debug){
+app.config.errorHandler = (err, vm, info) => {
+  console.error("Error:", err);
+  console.error("Vue component:", vm);
+  console.error("Additional info:", info);
+};
+}
 
 router.isReady().then(() => {
   app.mount("#app");

@@ -143,7 +143,7 @@ export default defineComponent({
   },
   async created() {
     this.$axios.post("modules.php", this.$qs.stringify({ project: this.$route.params.project })).then((res) => {
-      if (res.data && res.data.length() > 0) {
+      if (res.data && res.data.length > 0) {
         this.tools = res.data.map((tool, index) => ({
           id: index + 1,
           icon: tool.icon,

@@ -103,6 +103,8 @@ import { store } from "./theme/theme";
 
 const { FaceId } = Plugins;
 
+const fmg = FirebaseMessaging;
+
 export default defineComponent({
   name: "App",
   components: {
@@ -125,24 +127,34 @@ export default defineComponent({
   async mounted() {
     await loadUserData();
     this.userData = await getUserData();
+    
+    const checkSupported = async () => {
+      if ('Notification' in window) {
+        return true;
+      }else{
+        return false;
+      }
+    }
 
     const checkPermissions = async () => {
-      const result = await FirebaseMessaging.checkPermissions();
+      const result = await fmg.checkPermissions();
       return result.receive;
     };
 
     const requestPermissions = async () => {
-      const result = await FirebaseMessaging.requestPermissions();
+      const result = await fmg.requestPermissions();
       return result.receive;
     };
 
     const getToken = async () => {
-      const result = await FirebaseMessaging.getToken({
+      const result = await fmg.getToken({
         vapidKey: firebase_config.vapidKey,
       });
       return result.token;
     };
+
     if (this.userData) {
+      if(checkSupported() == true ){
       if (checkPermissions()) {
         getToken().then((token) => {
           this.$axios.post(
@@ -157,6 +169,7 @@ export default defineComponent({
         });
       } else {
         requestPermissions();
+      }
       }
     }
 
@@ -222,9 +235,10 @@ export default defineComponent({
       this.authenticated = true;
     });
     if (isPlatform("ios")) {
+      if(FaceId){
       FaceId.isAvailable().then((checkResult) => {
         this.faceIDAvaible = true;
-
+     //   if(checkResult){
         if (checkResult.value) {
           FaceId.auth()
             .then(() => {
@@ -237,7 +251,12 @@ export default defineComponent({
         } else {
           this.$router.push("/pin");
         }
+        
+      //  }
       });
+      } else {
+        console.log("FaceID Plugin could not be loaded.");
+      }
     }
 
     if (location.pathname.includes("project")) {
