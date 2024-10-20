@@ -30,6 +30,7 @@ npm-debug.log*
 /dist/*
 /ios
 /ios/*
+/.env
 /node_modules
 /platforms
 /plugins
