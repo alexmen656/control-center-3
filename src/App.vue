@@ -1,5 +1,6 @@
 <template>
-  <div :class="store.theme">
+  <LoadingSpinner v-if="loading" />
+  <div v-if="!loading" :class="store.theme">
     <ion-app>
       <ion-content
         v-if="
@@ -127,14 +128,14 @@ export default defineComponent({
   async mounted() {
     await loadUserData();
     this.userData = await getUserData();
-    
+
     const checkSupported = async () => {
-      if ('Notification' in window) {
+      if ("Notification" in window) {
         return true;
-      }else{
+      } else {
         return false;
       }
-    }
+    };
 
     const checkPermissions = async () => {
       const result = await fmg.checkPermissions();
@@ -154,22 +155,22 @@ export default defineComponent({
     };
 
     if (this.userData) {
-      if(checkSupported() == true ){
-      if (checkPermissions()) {
-        getToken().then((token) => {
-          this.$axios.post(
-            "push_notifications_token.php",
-            this.$qs.stringify({
-              newToken: "newToken",
-              token: token,
-              platform: window.navigator.userAgent,
-              userID: this.userData.userID,
-            })
-          );
-        });
-      } else {
-        requestPermissions();
-      }
+      if (checkSupported() == true) {
+        if (checkPermissions()) {
+          getToken().then((token) => {
+            this.$axios.post(
+              "push_notifications_token.php",
+              this.$qs.stringify({
+                newToken: "newToken",
+                token: token,
+                platform: window.navigator.userAgent,
+                userID: this.userData.userID,
+              })
+            );
+          });
+        } else {
+          requestPermissions();
+        }
       }
     }
 
@@ -179,7 +180,11 @@ export default defineComponent({
       () => {
         //alert(location.pathname);
         //alert(location.pathname);
-        if (location.pathname.includes("project") && location.pathname != "/new/project/" && location.pathname != "/new/project") {
+        if (
+          location.pathname.includes("project") &&
+          location.pathname != "/new/project/" &&
+          location.pathname != "/new/project"
+        ) {
           const project = this.$route.params.project;
           this.$axios
             .post(
@@ -235,25 +240,25 @@ export default defineComponent({
       this.authenticated = true;
     });
     if (isPlatform("ios")) {
-      if(FaceId){
-      FaceId.isAvailable().then((checkResult) => {
-        this.faceIDAvaible = true;
-     //   if(checkResult){
-        if (checkResult.value) {
-          FaceId.auth()
-            .then(() => {
-              this.authenticated = true;
-            })
-            .catch(() => {
-              //error
-              this.$router.push("/pin");
-            });
-        } else {
-          this.$router.push("/pin");
-        }
-        
-      //  }
-      });
+      if (FaceId) {
+        FaceId.isAvailable().then((checkResult) => {
+          this.faceIDAvaible = true;
+          //   if(checkResult){
+          if (checkResult.value) {
+            FaceId.auth()
+              .then(() => {
+                this.authenticated = true;
+              })
+              .catch(() => {
+                //error
+                this.$router.push("/pin");
+              });
+          } else {
+            this.$router.push("/pin");
+          }
+
+          //  }
+        });
       } else {
         console.log("FaceID Plugin could not be loaded.");
       }
@@ -285,6 +290,7 @@ export default defineComponent({
     const account_active = ref({});
     const route = useRoute();
     const ionRouter = useIonRouter();
+    const loading = ref(true);
     let paramUrl = "";
 
     const isOnline = ref(navigator.onLine);
@@ -344,6 +350,7 @@ export default defineComponent({
 
           page.value = foundPage;
           document.title = page.value.title;
+          loading.value = false;
         });
 
         this.$axios.get("sidebar.php").then((response) => {
@@ -408,6 +415,7 @@ export default defineComponent({
       loadPageData: loadPageData,
       isOnline: isOnline,
       account_active: account_active,
+      loading: loading,
     };
   },
 

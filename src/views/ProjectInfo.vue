@@ -1,7 +1,8 @@
 <template>
   <ion-page>
     <ion-content>
-      <ion-grid>
+      <LoadingSpinner v-if="loading" />
+      <ion-grid v-if="!loading">
         <ion-row>
           <ion-col></ion-col>
           <ion-col size="11">
@@ -14,7 +15,7 @@
                 <ion-label position="floating">Created On</ion-label>
                 <ion-input disabled :value="creationDate"></ion-input>
               </ion-item>
-              <!--  <ion-item>
+                         <!--  <ion-item>
           <ion-label>Internes Projekt?</ion-label>
           <ion-checkbox v-model="isInternal"></ion-checkbox>
         </ion-item>
@@ -32,14 +33,18 @@
 </template>
 
 <script>
+import LoadingSpinner from "@/components/LoadingSpinner.vue";
+
 export default {
   name: "ProjectInfo",
+  components: {
+    LoadingSpinner,
+  },
   data() {
     return {
       projectName: "",
       creationDate: "",
-      //isInternal: false,
-      //hasWebsite: false,
+      loading: true,
     };
   },
   created() {
@@ -56,6 +61,7 @@ export default {
         this.creationDate = new Date(res.data.createdOn)
           .toLocaleDateString("en-GB")
           .replaceAll("/", ".");
+        this.loading = false;
       });
   },
 };
