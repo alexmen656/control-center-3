@@ -84,7 +84,7 @@ export default {
   },
   methods: {
     save() {
-      $axios.post(
+      this.$axios.post(
         "tools.php",
         this.$qs.stringify({
           newToolConfig: "newToolConfig",

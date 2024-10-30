@@ -14,18 +14,34 @@ if (isset($headers['Authorization'])) {
         //$createFile = createFile("/www/paxar/projects/".$href."/index.php", "", 0777);
         $projectID = generateRandomString(20);
         $mysqli = query("INSERT INTO projects VALUES (0, '$icon', '$name', '$href', CURDATE(), '$projectID')");
-        $url1 = "project/" . $href;
-        $url2 = "project/" . $href . "/new-tool";
-        $url3 = "project/" . $href . "/manage/tools";
-        $url4 = "project/" . $href . "/manage/components";
-        $url5 = "project/" . $href . "/new/component";
-        $url6 = "project/" . $href . "/info";
-        $url7 = "project/" . $href . "/components/main";
-        $url8 = "project/" . $href . "/module-store";
-        $url9 = "project/" . $href . "/package-manager";
+        $endpoints = [
+            "",
+            "new-tool",
+            "manage/tools",
+            "manage/components",
+            "new/component",
+            "info",
+            "components/main",
+            "module-store",
+            "package-manager"
+        ];
+
+        $urls = [];
+        foreach ($endpoints as $endpoint) {
+            $urls[] = "project/" . $href . ($endpoint ? "/" . $endpoint : "");
+        }
+
+        // Zugriff auf die URLs
+        $url1 = $urls[0];
+        $url2 = $urls[1];
+        $url3 = $urls[2];
+        $url4 = $urls[3];
+        $url5 = $urls[4];
+        $url6 = $urls[5];
+        $url7 = $urls[6];
+        $url8 = $urls[7];
+        $url9 = $urls[8];
         //$url9 = "project/" . $href . "/package-manager";
-
-
 
         mkdir("/www/" . $href, 0777);
         echo $href;
@@ -43,7 +59,7 @@ if (isset($headers['Authorization'])) {
             if (mysqli_num_rows($data) == 1) {
                 $data = fetch_assoc($data);
                 $userID = $data['userID'];
-                if(query("INSERT INTO control_center_user_projects VALUES (0, $userID, '$projectID', 1)")){
+                if (query("INSERT INTO control_center_user_projects VALUES (0, $userID, '$projectID', 1)")) {
                     echo alert('succes', 'The project was created successfully. <a href="/paxar/projects/' . $href . '/">Go to the project</a>');
                 }
             }
@@ -119,18 +135,18 @@ if (isset($headers['Authorization'])) {
             echo "No project found";
         }
     } elseif (isset($_POST['checkUserPermissions']) && isset($_POST['project'])) {
-       // echo 1;
+        // echo 1;
         $link = escape_string($_POST['project']);
         $token = escape_string($headers['Authorization']);
         $data = query("SELECT * FROM control_center_users WHERE loginToken='$token'");
         if (mysqli_num_rows($data) == 1) {
-          //  echo 2;
+            //  echo 2;
             $userID = fetch_assoc($data)['userID'];
             $query = query("SELECT * FROM projects WHERE link='$link'");
             if (mysqli_num_rows($query) == 1) {
                 $projectID = fetch_assoc($query)['projectID'];
-              //  echo 3;
-              //  echo "SELECT * FROM control_center_user_projects WHERE userID=$userID AND projectID='$projectID'";
+                //  echo 3;
+                //  echo "SELECT * FROM control_center_user_projects WHERE userID=$userID AND projectID='$projectID'";
                 $check = query("SELECT * FROM control_center_user_projects WHERE userID=$userID AND projectID='$projectID'");
                 if (mysqli_num_rows($check) == 1) {
                     $json = ["success" => "authorized"];
@@ -147,17 +163,30 @@ if (isset($headers['Authorization'])) {
 
 
     } else {
-        $projects = query("SELECT * FROM projects");
-        $i = 0;
-        foreach ($projects as $p) {
-            $json[$i]["id"] = $p['id'];
-            $json[$i]["icon"] = $p['icon'];
-            $json[$i]["name"] = $p['name'];
-            $json[$i]["link"] = $p['link'];
-            $i++;
-        }
+        //echo 1;
+        $token = escape_string($headers['Authorization']);
+        $data = query("SELECT * FROM control_center_users WHERE loginToken='$token'");
+        if (mysqli_num_rows($data) == 1) {
+            //echo 2;
+            $userID = fetch_assoc($data)['userID'];
+            $projects = query("SELECT * FROM control_center_user_projects WHERE userID='$userID'");
+            $i = 0;
+            foreach ($projects as $p) {
+                $projectID = $p['projectID'];
+                $project = query("SELECT * FROM projects WHERE projectID='$projectID'");
+                if (mysqli_num_rows($project) == 1) {
+                    $project = fetch_assoc($project);
+                    $json[$i]["id"] = $project['id'];
+                    $json[$i]["icon"] = $project['icon'];
+                    $json[$i]["name"] = $project['name'];
+                    $json[$i]["link"] = $project['link'];
 
+                }
+                $i++;
+            }
+        }
         echo echoJson($json);
+
     }
 }
 

@@ -10,7 +10,6 @@ function getName($n)
         $index = rand(0, strlen($characters) - 1);
         $randomString .= $characters[$index];
     }
-
     return $randomString;
 }
 
@@ -25,7 +24,7 @@ if (isset($_POST['new_dashboard']) && isset($_POST['project'])) { //&& isset($_P
         $dashboardName = strtolower($name);
         $insert = query("INSERT INTO control_center_dashboards VALUES (0, '$dashboardName', '[]', '$projectName', NOW(), NOW())"); //$json
         if ($insert) {
-            $link = str_replace(" ", "-", $name).strtolower();
+            $link = strtolower(str_replace(" ", "-", $name));
             $query = query("INSERT INTO project_tools VALUES (0,'bar-chart-outline','$name', '$link',0,'','$projectID')");
             if ($query) {
                 $url = "project/" . str_replace([" ", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["-", "a", "a", "u", "u", "o", "o"], strtolower($projectName)) . "/dashboard/" . str_replace([" ", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["-", "a", "a", "u", "u", "o", "o"], strtolower($name));

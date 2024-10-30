@@ -181,10 +181,16 @@ export default defineComponent({
         //alert(location.pathname);
         //alert(location.pathname);
         if (
-          location.pathname.includes("project") &&
           location.pathname != "/new/project/" &&
-          location.pathname != "/new/project"
+          location.pathname != "/new/project" &&
+          location.pathname != "/info/projects/" &&
+          location.pathname != "/info/projects" &&
+          location.pathname != "/manage/projects/" &&
+          location.pathname != "/manage/projects" &&
+          location.pathname.includes("project")
         ) {
+          //alert(1);
+          //console.log("NOT EQUAL");
           const project = this.$route.params.project;
           this.$axios
             .post(
@@ -209,7 +215,15 @@ export default defineComponent({
       () => window.location.pathname.replace("/", ""),
       () => {
         //if (this.authenticated == true) {
-        if (window.location.pathname.includes("projects")) {
+        if (
+          location.pathname != "/new/project/" &&
+          location.pathname != "/new/project" &&
+          location.pathname != "/info/projects/" &&
+          location.pathname != "/info/projects" &&
+          location.pathname != "/manage/projects/" &&
+          location.pathname != "/manage/projects" &&
+          location.pathname.includes("project")
+        ) {
           alert(1);
           const project = this.$route.params.project;
           this.$axios
@@ -264,7 +278,15 @@ export default defineComponent({
       }
     }
 
-    if (location.pathname.includes("project")) {
+    if (
+      location.pathname != "/new/project/" &&
+      location.pathname != "/new/project" &&
+      location.pathname != "/info/projects/" &&
+      location.pathname != "/info/projects" &&
+      location.pathname != "/manage/projects/" &&
+      location.pathname != "/manage/projects" &&
+      location.pathname.includes("project")
+    ) {
       const project = this.$route.params.project;
       this.$axios
         .post(

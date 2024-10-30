@@ -176,7 +176,9 @@ export default defineComponent({
             new_dashboard: "new_dashboard",
             project: this.$route.params.project,
           })
-        );
+        ).then(() => {
+          this.emitter.emit("updateSidebar");
+        });
       } else {
         const selectedTool = this.tools.find(
           (tool) => tool.name === this.selectedTool

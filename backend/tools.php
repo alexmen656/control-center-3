@@ -2,11 +2,12 @@
 include 'head.php';
 
 if (isset($_POST['newTool']) && isset($_POST['projectName']) && isset($_POST['toolName'])) {
+    //echo 1;
     $projectName = escape_string($_POST['projectName']);
     $toolName = escape_string($_POST['toolName']);
     $toolIcon = escape_string($_POST['toolIcon']);
     $link = strtolower(str_replace(['Ä', 'ä', 'Ü', 'ü', 'Ö', 'ö', ' '], ['a', 'a', 'u', 'u', 'o', 'o', '-'], $toolName));
-    echo $tool;
+    //echo $tool;
     $projectID = query("SELECT * FROM projects WHERE link='$projectName'");
     if (mysqli_num_rows($projectID) == 1) {
         $projectID = fetch_assoc($projectID)['projectID'];

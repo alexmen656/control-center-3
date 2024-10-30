@@ -88,7 +88,7 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, getCurrentInstance } from "vue";
 
 export default defineComponent({
   name: "ProjectsPage",
@@ -99,11 +99,13 @@ export default defineComponent({
     };
   },
   setup() {
+    const { appContext } = getCurrentInstance();
+    const axios = appContext.config.globalProperties.$axios;
     const projects = ref([]);
 
     // Hier wird eine API-Anfrage an den Server gesendet, um eine Liste von Projekten abzurufen.
     // Der Rückgabewert wird dann der 'projects' Ref-Variable zugewiesen.
-    $axios
+    axios
       .get("projects.php")
       .then((response) => {
         projects.value = response.data;
@@ -118,7 +120,7 @@ export default defineComponent({
 
     function deleteee(project) {
       if (confirm("Do you really want to delte the project?")) {
-        $axios
+        this.$axios
           .post(
             "projects.php",
             this.$qs.stringify({
@@ -128,7 +130,7 @@ export default defineComponent({
           )
           .then(() => {
             alert("Project deleted successfull");
-            $axios
+            this.$axios
               .get("projects.php")
               .then((response) => {
                 projects.value = response.data;
@@ -156,7 +158,7 @@ export default defineComponent({
   methods: {
     submit(icon, name) {
       if (name != "") {
-        $axios
+        this.$axios
           .post(
             "projects.php",
             this.$qs.stringify({
@@ -168,7 +170,7 @@ export default defineComponent({
           .then(() => {
             alert("Project created successfull");
             console.log("Hier!!");
-            $axios
+            this.$axios
               .get("projects.php")
               .then((response) => {
                 this.projects = response.data;

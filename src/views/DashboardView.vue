@@ -152,7 +152,7 @@ export default defineComponent({
     };
   },
   created() {
-    $axios
+    this.$axios
       .post(
         "form.php",
         this.$qs.stringify({
@@ -253,7 +253,7 @@ export default defineComponent({
       } else {
         await localStorage.setItem("charts", JSON.stringify([json]));
       }
-      await $axios.post(
+      await this.$axios.post(
         "dashboard.php",
         this.$qs.stringify({
           new_chart: "new_chart",
@@ -290,7 +290,7 @@ export default defineComponent({
         }
       });
       await localStorage.setItem("charts", JSON.stringify(new_charts));*/
-      await $axios.post(
+      await this.$axios.post(
         "dashboard.php",
         this.$qs.stringify({
           delete_chart: "delete_chart",
@@ -304,7 +304,7 @@ export default defineComponent({
     async loadCharts() {
       this.charts = [];
       //JSON.parse(localStorage.getItem("charts"))
-      const request = await $axios.post(
+      const request = await this.$axios.post(
         "dashboard.php",
         this.$qs.stringify({
           get_dashboard: "get_dashboard",
@@ -313,7 +313,7 @@ export default defineComponent({
         })
       );
       request.data.forEach(async (chart) => {
-        await $axios
+        await this.$axios
           .post(
             "form.php",
             this.$qs.stringify({
@@ -358,3 +358,14 @@ export default defineComponent({
   },
 });
 </script>
+<style scoped>
+@media (prefers-color-scheme: dark) {
+  ion-fab-button {
+    --background: var(--ion-color-primary);
+  }
+
+  ion-fab-button > ion-icon {
+    color: white;
+  }
+}
+</style>

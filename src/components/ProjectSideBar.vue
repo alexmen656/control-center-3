@@ -4,7 +4,22 @@
       :disabled="false"
       @ionItemReorder="handleReorder($event)"
     >
+      <ion-menu-toggle auto-hide="false">
+        <ion-item
+          @click="this.selectedIndex = 0"
+          lines="none"
+          detail="false"
+          :router-link="'/project/' + $route.params.project + '/'"
+          class="hydrated menu-item"
+          :class="{ selected: this.selectedIndex === 0 }"
+        >
+          <ion-icon slot="start" name="apps-outline" />
+          <ion-label>Overview</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+
       <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
+        <!-- {{ i }}-->
         <ion-item
           @dblclick="
             goToConfig(
@@ -23,7 +38,7 @@
                 '/config'
             )
           "
-          @click="this.selectedIndex = i"
+          @click="this.selectedIndex = i + 1"
           lines="none"
           detail="false"
           :router-link="
@@ -54,9 +69,9 @@
                   .replaceAll('ü', 'u')
           "
           class="hydrated menu-item"
-          :class="{ selected: this.selectedIndex === i }"
+          :class="{ selected: this.selectedIndex === i + 1 }"
         >
-          <ion-icon slot="start" :name="p.icon"/>
+          <ion-icon slot="start" :name="p.icon" />
           <ion-label
             >{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label
           >
@@ -77,7 +92,7 @@
           class="new-tool"
           :router-link="'/project/' + $route.params.project + '/new-tool/'"
         >
-          <ion-icon slot="start" name="add"/>
+          <ion-icon slot="start" name="add" />
           <ion-label>New Tool</ion-label>
         </ion-item>
       </ion-menu-toggle>
@@ -93,7 +108,9 @@
         <ion-item
           @dblclick="
             goToConfig(
-              '/project/'+$route.params.project +'/components/'+
+              '/project/' +
+                $route.params.project +
+                '/components/' +
                 p.name
                   .toLowerCase()
                   .replaceAll(' ', '-')
@@ -106,7 +123,7 @@
                 '/config'
             )
           "
-          @click="this.selectedIndex = Number(i) + Number(tools.length)"
+          @click="this.selectedIndex = Number(i) + Number(tools.length) + 1"
           lines="none"
           detail="false"
           :router-link="
@@ -125,7 +142,7 @@
           "
           class="hydrated menu-item"
           :class="{
-            selected: this.selectedIndex === Number(i) + Number(tools.length),
+            selected: this.selectedIndex === Number(i) + Number(tools.length) + 1,
           }"
         >
           <ion-icon slot="start" :name="getIcon(p.type)" />
@@ -149,7 +166,7 @@
           class="new-tool"
           :router-link="'/project/' + $route.params.project + '/new/component'"
         >
-          <ion-icon slot="start" name="add"/>
+          <ion-icon slot="start" name="add" />
           <ion-label>New Component</ion-label>
         </ion-item>
       </ion-menu-toggle>
@@ -217,10 +234,7 @@ export default defineComponent({
           list[schluesselMitWertEins] = event.detail.to.toString();
 
           console.log(list);
-          axios.post(
-            "https://alex.polan.sk/control-center/test.php",
-            qs.stringify({ list: JSON.stringify(list) })
-          );
+          axios.post("test.php", qs.stringify({ list: JSON.stringify(list) }));
         } else {
           // console.log("Der Schlüssel mit dem Wert " + event.detail.from +" ist: " + schluesselMitWertEins);
           for (const [key, value] of Object.entries(list)) {
@@ -239,10 +253,7 @@ export default defineComponent({
           list[schluesselMitWertEins] = event.detail.to.toString();
 
           console.log(list);
-          axios.post(
-            "https://alex.polan.sk/control-center/test.php",
-            qs.stringify({ list: JSON.stringify(list) })
-          );
+          axios.post("test.php", qs.stringify({ list: JSON.stringify(list) }));
         }
       } else {
         console.log(
@@ -263,10 +274,7 @@ export default defineComponent({
     };
 
     axios
-      .get(
-        "https://alex.polan.sk/control-center/sidebar.php?getSideBarByProjectName=" +
-          route.params.project
-      )
+      .get("sidebar.php?getSideBarByProjectName=" + route.params.project)
       .then((response) => {
         tools.value = response.data.tools;
         components.value = response.data.components;
@@ -298,8 +306,7 @@ export default defineComponent({
     this.emitter.on("updateSidebar", () => {
       axios
         .get(
-          "https://alex.polan.sk/control-center/sidebar.php?getSideBarByProjectName=" +
-            this.$route.params.project
+          "sidebar.php?getSideBarByProjectName=" + this.$route.params.project
         )
         .then((response) => {
           this.tools = response.data.tools;

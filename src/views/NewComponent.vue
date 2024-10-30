@@ -91,8 +91,10 @@
 </template>
 
 <script>
-export default {
-  name: "NewProject",
+import { defineComponent } from "vue";
+
+export default defineComponent({
+  name: "NewComponent",
   data() {
     return {
       name: "",
@@ -185,7 +187,7 @@ export default {
         formData.append("project", this.$route.params.project);
         formData.append("newComponent", "newComponent");
 
-        $axios
+        this.$axios
           .post("components.php", formData, {
             headers: {
               "Content-Type": "multipart/form-data",
@@ -196,11 +198,12 @@ export default {
               );
             }.bind(this),
           })
-          .then(function () {
+          .then(() =>{
             console.log("SUCCESS!!");
+            this.emitter.emit("updateSidebar");
           })
-          .catch(function () {
-            console.log("FAILURE!!");
+          .catch((err) => {
+            console.log("FAILURE!!", err);
           });
       } else {
         alert("Name or Code empty!");
@@ -208,7 +211,7 @@ export default {
     },
     submitMenu() {
       if (this.name != "" && this.code != "") {
-        $axios
+        this.$axios
           .post(
             "components.php",
             this.$qs.stringify({
@@ -221,6 +224,7 @@ export default {
           )
           .then(() => {
             console.log("SUCCESS!!");
+            this.emitter.emit("updateSidebar");
           })
           .catch(() => {
             console.log("FAILURE!!");
@@ -233,7 +237,7 @@ export default {
       this.files.splice(key, 1);
     },
   },
-};
+});
 </script>
 <style>
 form {

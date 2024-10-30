@@ -16,7 +16,7 @@
                 <ion-item v-for="tool in tools" :key="tool.id">
                   <ion-icon v-if="tool.icon" :name="tool.icon" />
                   <ion-label>
-                    <h2>
+                    <h2 @click="goToTool(tool.name)">
                       {{
                         tool.name.charAt(0).toUpperCase() + tool.name.slice(1)
                       }}
@@ -247,6 +247,24 @@ export default {
           alert("User Invite Success");
         });
     },
+    goToTool(tool) {
+      //alert("/project/"+this.$route.params.project+"/"+tool.toLowerCase().replaceAll(" ", "-"));
+      if (tool.toLowerCase().includes("dashboard-")) {
+        this.$router.push(
+          "/project/" +
+            this.$route.params.project +
+            "/dashboard/" +
+            tool.toLowerCase().replaceAll(" ", "-")
+        );
+      }else{
+        this.$router.push(
+          "/project/" +
+            this.$route.params.project +
+            "/" +
+            tool.toLowerCase().replaceAll(" ", "-")
+        );
+      }
+    },
   },
 };
 </script>
@@ -258,7 +276,8 @@ ion-icon {
   margin-right: 0.75rem;
 }
 
-ion-card:first-of-type, ion-card:nth-of-type(2) {
+ion-card:first-of-type,
+ion-card:nth-of-type(2) {
   margin-bottom: 1rem;
 }
 
@@ -271,7 +290,7 @@ ion-card:first-of-type, ion-card:nth-of-type(2) {
 }
 
 .info-card-heading {
-  padding-left: .8rem;
+  padding-left: 0.8rem;
   margin-top: 8px;
   margin-bottom: 4px;
   display: flex;

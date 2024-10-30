@@ -83,6 +83,7 @@
         >
       </ion-item>
     </ion-menu-toggle>
+    {{ version }}
   </ion-list>
 </template>
 
@@ -96,6 +97,11 @@ export default defineComponent({
     tools: Array,
     bookmarks: Array,
     projects: Array,
+  },
+  data() {
+    return {
+      version: process.env.VUE_APP_VERSION ?? "0.0.0",
+    };
   },
   methods: {
     goToProject(name) {
