@@ -10,7 +10,7 @@
         <p v-if="trend[2] < trend[3]">Increase: {{ Math.round(((trend[3] - trend[2]) / trend[2]) * 100) }}%</p>
         <p v-else>Decrease: {{ Math.round(((trend[3] - trend[2]) / trend[2]) * 100) }}%</p>
       </div>
-      <div style="width: 40%; height: 75%; display: flex">
+      <div style="width: 40%; height: 80%; display: flex">
         <trend
           :data="trend"
           :gradient="trend[2] > trend[3] ? ['red'] : ['green']"
@@ -83,7 +83,15 @@ export default defineComponent({
 <style scoped>
 ion-card {
   /* background: #000000;*/
-  border-radius: 18px;
-  padding: .25rem !important;
+  border-radius: 20px;
+  padding: .20rem !important;
+}
+
+ion-card-title {
+  font-size: 1.5rem;
+}
+
+ion-card-header {
+  padding-bottom: 12px;
 }
 </style>

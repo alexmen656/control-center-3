@@ -165,13 +165,16 @@ ion-card-title {
 }
 
 ion-card {
-  border-radius: 18px;
+  border-radius: 22px;
   /* padding-top: 30px;
   padding-bottom: 30px;*/
   height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: .25rem;
+  margin-bottom: .5rem;
+  margin-inline: .5rem;
 }
 
 ion-avatar {
@@ -200,6 +203,7 @@ ion-avatar {
 ion-col {
   padding-left: 0 !important;
   padding-right: 0 !important;
+  margin-bottom: .5rem;
 }
 
 ion-row {
@@ -211,6 +215,6 @@ ion-button {
 }
 
 a {
-  margin-top: 1rem;
+  margin-top: .5rem;
 }
 </style>

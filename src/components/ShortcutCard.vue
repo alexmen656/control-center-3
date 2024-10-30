@@ -31,7 +31,7 @@ export default defineComponent({
 
 <style scoped>
 .shortcut-card {
-  border-radius: 15px;
+  border-radius: 18px;
   display: flex;
   padding-inline: 1.5rem;
   margin-inline: 10px;
