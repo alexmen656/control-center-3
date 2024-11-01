@@ -28,6 +28,8 @@ import "@vueup/vue-quill/dist/vue-quill.snow.css";
 /* Theme variables */
 //import "./theme/variables.css";
 import "./theme/variables.scss";
+import "./theme/app.css";
+
 
 import axios from "axios";
 import qs from "qs";

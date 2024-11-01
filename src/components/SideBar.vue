@@ -76,6 +76,7 @@
         detail="false"
         @click="goToBookmark(p.location)"
         class="hydrated menu-item"
+        v-if="p.title"
         ><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
         <ion-icon slot="start" :name="p.icon ? p.icon : 'help-circle-outline'"></ion-icon>
         <ion-label

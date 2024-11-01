@@ -2,22 +2,8 @@
   <LoadingSpinner v-if="loading" />
   <div v-if="!loading" :class="store.theme">
     <ion-app>
-      <ion-content
-        v-if="
-          !faceIDAvaible ||
-          authenticated ||
-          $route.path == '/pin' ||
-          $route.path == '/pin/'
-        "
-      >
-        <SiteHeader
-          v-if="
-            account_active &&
-            token &&
-            $route.path != '/pin' &&
-            $route.path != '/pin/'
-          "
-        ></SiteHeader>
+      <ion-content v-if="showContent">
+        <SiteHeader v-if="showHeader"></SiteHeader>
         <ion-split-pane content-id="main-content">
           <ion-menu
             v-if="token && account_active"
@@ -30,31 +16,14 @@
                 :projects="projects"
                 :tools="tools"
                 :bookmarks="bookmarks"
-                v-if="
-                  !$route.params.project &&
-                  $route.path != '/pin' &&
-                  $route.path != '/pin/'
-                "
+                v-if="showSideBar"
               ></SideBar>
-              <ProjectSideBar
-                v-if="
-                  $route.params.project &&
-                  $route.path != '/pin' &&
-                  $route.path != '/pin/'
-                "
-              ></ProjectSideBar>
+              <ProjectSideBar v-if="showProjectSideBar"></ProjectSideBar>
             </ion-content>
           </ion-menu>
           <div id="main-content">
             <SiteTitle
-              v-if="
-                token &&
-                account_active &&
-                page.title &&
-                (page.showTitle == true || page.showTitle == 'true') &&
-                $route.path != '/pin' &&
-                $route.path != '/pin/'
-              "
+              v-if="showSiteTitle"
               :icon="page.icon"
               :title="page.title"
               @updateSidebar="updateSidebar()"
@@ -63,7 +32,7 @@
               v-if="page.title"
               @updateSidebar="updateSidebar()"
               :class="{
-                showTitle: page.showTitle == true || page.showTitle == 'true',
+                showTitle: showTitle,
               }"
             ></ion-router-outlet>
             <div v-else class="error404">
@@ -84,7 +53,7 @@
 
 <script>
 import { useIonRouter } from "@ionic/vue";
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, onMounted } from "vue";
 import SiteHeader from "@/components/Header.vue";
 import SideBar from "@/components/SideBar.vue";
 import SiteTitle from "@/components/SiteTitle.vue";
@@ -101,6 +70,13 @@ import { isPlatform } from "@ionic/vue";
 import { FirebaseMessaging } from "@capacitor-firebase/messaging";
 import { firebase_config } from "@/firebase_config";
 import { store } from "./theme/theme";
+import axios from "axios";
+import qs from "qs";
+import { saveLocal, loadFromLocalStorage } from "@/utils/localStorageHelpers";
+import {
+  checkPendingVerification,
+  checkLoginStatus,
+} from "@/utils/authHelpers";
 
 const { FaceId } = Plugins;
 
@@ -117,7 +93,7 @@ export default defineComponent({
   data() {
     return {
       token: localStorage.getItem("token"),
-      faceIDAvaible: false,
+      faceIDAvailble: false,
       authenticated: false,
       userData: {},
       theme: localStorage.getItem("themeSet"),
@@ -125,11 +101,223 @@ export default defineComponent({
       // account_active: false
     };
   },
+  computed: {
+    showContent() {
+      return (
+        !this.faceIDAvailble ||
+        this.authenticated ||
+        this.$route.path === "/pin" ||
+        this.$route.path === "/pin/"
+      );
+    },
+    showHeader() {
+      return (
+        this.account_active &&
+        this.token &&
+        this.$route.path !== "/pin" &&
+        this.$route.path !== "/pin/"
+      );
+    },
+    showSideBar() {
+      return (
+        !this.$route.params.project &&
+        this.$route.path !== "/pin" &&
+        this.$route.path !== "/pin/"
+      );
+    },
+    showProjectSideBar() {
+      return (
+        this.$route.params.project &&
+        this.$route.path !== "/pin" &&
+        this.$route.path !== "/pin/"
+      );
+    },
+    showSiteTitle() {
+      return (
+        this.token &&
+        this.account_active &&
+        this.page.title &&
+        (this.page.showTitle === true || this.page.showTitle === "true") &&
+        this.$route.path !== "/pin" &&
+        this.$route.path !== "/pin/"
+      );
+    },
+    showTitle() {
+      return this.page.showTitle === true || this.page.showTitle === "true";
+    },
+  },
+  setup() {
+    const page = ref({});
+    const tools = ref([]);
+    const projects = ref([]);
+    const bookmarks = ref([]);
+    const account_active = ref({});
+    const route = useRoute();
+    const ionRouter = useIonRouter();
+    const loading = ref(true);
+    const isOnline = ref(navigator.onLine);
+    const paths = ref([
+      "/new/project/",
+      "/new/project",
+      "/info/projects/",
+      "/info/projects",
+      "/manage/projects/",
+      "/manage/projects",
+    ]);
+
+    const updateDocumentTitle = (title) => {
+      document.title = title;
+    };
+
+    const handleOnlineStatus = () => {
+      isOnline.value = navigator.onLine;
+      if (isOnline.value) {
+        loadUserData().then(() => {
+          loadPageData("Online");
+        });
+      }
+    };
+
+    const loadPageData = async function (launcher) {
+      checkLoginStatus();
+      const userData = getUserData();
+      console.log(launcher);
+      checkPendingVerification(userData);
+
+      if (userData.accountStatus == "pending_verification") {
+        account_active.value = false;
+      } else {
+        account_active.value = true;
+      }
+
+      const paramUrl =
+        route.params?.url ||
+        window.location.pathname.replace(/\/$/, "").replace(/^\//, "");
+
+      if (isOnline.value) {
+        axios.post("pages.php").then((res) => {
+          const foundPage = res.data.find((p) => p["url"] === paramUrl);
+          page.value = foundPage || page.value;
+          updateDocumentTitle(page.value.title);
+          loading.value = false;
+        });
+
+        Promise.all([
+          axios.get("sidebar.php"),
+          axios.get("bookmarks.php?getBookmarks=getBookmarks"),
+        ])
+          .then(([sidebarResponse, bookmarksResponse]) => {
+            tools.value = sidebarResponse.data.tools;
+            projects.value = sidebarResponse.data.projects;
+            bookmarks.value = bookmarksResponse.data;
+
+            saveLocal("tools", tools.value);
+            saveLocal("projects", projects.value);
+            saveLocal("bookmarks", bookmarks.value);
+          })
+          .catch((error) => {
+            console.error("Error loading data:", error);
+          });
+      } else {
+        const foundPage = offlinePages.find((p) => p["url"] === paramUrl);
+        page.value = foundPage || page.value;
+        updateDocumentTitle(page.value.title);
+        tools.value = loadFromLocalStorage("tools", offlineTools.tools);
+        projects.value = loadFromLocalStorage("projects", offlineTools.tools);
+        bookmarks.value = loadFromLocalStorage("bookmarks", offlineTools.tools);
+      }
+    };
+
+    const handleRouteChange = () => {
+      if (
+        !paths.value.includes(location.pathname) &&
+        location.pathname.includes("project")
+      ) {
+        checkUserPermissions(route.params.project);
+      }
+      page.value = {};
+      loadUserData().then(() => {
+        loadPageData("Route");
+      });
+    };
+
+    const checkUserPermissions = async (project) => {
+      try {
+        const res = await axios.post(
+          "projects.php",
+          qs.stringify({
+            checkUserPermissions: "checkUserPermissions",
+            project: project.replace("ü", "ue"),
+          })
+        );
+        if (!res.data.success) {
+          ionRouter.push("/no-permission");
+        }
+      } catch (error) {
+        console.error("Error checking user permissions:", error);
+      }
+    };
+
+    window.addEventListener("online", handleOnlineStatus);
+    window.addEventListener("offline", handleOnlineStatus);
+
+    onMounted(() => {
+      handleOnlineStatus();
+      handleRouteChange();
+    });
+
+    return {
+      page,
+      tools,
+      projects,
+      bookmarks,
+      loadPageData,
+      isOnline,
+      account_active,
+      loading,
+      handleRouteChange,
+      checkUserPermissions,
+      paths,
+    };
+  },
+  created() {
+    initializeApp(firebase_config);
+    this.emitter.on("authenticated", () => {
+      this.authenticated = true;
+    });
+    if (isPlatform("ios")) {
+      if (FaceId) {
+        FaceId.isAvailable().then((checkResult) => {
+          this.faceIDAvailble = true;
+          if (checkResult.value) {
+            FaceId.auth()
+              .then(() => {
+                this.authenticated = true;
+              })
+              .catch(() => {
+                this.goTo("/pin");
+              });
+          } else {
+            this.goTo("/pin");
+          }
+        });
+      } else {
+        console.log("FaceID Plugin could not be loaded.");
+      }
+    }
+
+    if (
+      !this.paths.includes(location.pathname) &&
+      location.pathname.includes("project")
+    ) {
+      this.checkUserPermissions(this.$route.params.project);
+    }
+  },
   async mounted() {
     await loadUserData();
     this.userData = await getUserData();
 
-    const checkSupported = async () => {
+    const checkSupported = () => {
       if ("Notification" in window) {
         return true;
       } else {
@@ -158,9 +346,9 @@ export default defineComponent({
       if (checkSupported() == true) {
         if (checkPermissions()) {
           getToken().then((token) => {
-            this.$axios.post(
+            axios.post(
               "push_notifications_token.php",
-              this.$qs.stringify({
+              qs.stringify({
                 newToken: "newToken",
                 token: token,
                 platform: window.navigator.userAgent,
@@ -175,543 +363,29 @@ export default defineComponent({
     }
 
     await SplashScreen.hide();
-    this.$watch(
-      () => this.$route.params,
-      () => {
-        //alert(location.pathname);
-        //alert(location.pathname);
-        if (
-          location.pathname != "/new/project/" &&
-          location.pathname != "/new/project" &&
-          location.pathname != "/info/projects/" &&
-          location.pathname != "/info/projects" &&
-          location.pathname != "/manage/projects/" &&
-          location.pathname != "/manage/projects" &&
-          location.pathname.includes("project")
-        ) {
-          //alert(1);
-          //console.log("NOT EQUAL");
-          const project = this.$route.params.project;
-          this.$axios
-            .post(
-              "projects.php",
-              this.$qs.stringify({
-                checkUserPermissions: "checkUserPermissions",
-                project: project,
-              })
-            )
-            .then((res) => {
-              if (!res.data.success) {
-                this.$router.push("/no-permission");
-              }
-            });
-        }
-        this.page = {};
-        this.loadPageData();
-      }
-    );
+    this.$watch(() => this.$route.params, this.handleRouteChange);
 
     this.$watch(
       () => window.location.pathname.replace("/", ""),
-      () => {
-        //if (this.authenticated == true) {
-        if (
-          location.pathname != "/new/project/" &&
-          location.pathname != "/new/project" &&
-          location.pathname != "/info/projects/" &&
-          location.pathname != "/info/projects" &&
-          location.pathname != "/manage/projects/" &&
-          location.pathname != "/manage/projects" &&
-          location.pathname.includes("project")
-        ) {
-          alert(1);
-          const project = this.$route.params.project;
-          this.$axios
-            .post(
-              "projects.php",
-              this.$qs.stringify({
-                checkUserPermissions: "checkUserPermissions",
-                project: project,
-              })
-            )
-            .then((res) => {
-              if (!res.data.success) {
-                this.$router.push("/no-permission");
-              }
-            });
-        }
-        //}
-        this.page = {};
-        this.loadPageData();
-      }
+      this.handleRouteChange
     );
 
-    this.loadPageData();
+    this.loadPageData("Mounted");
   },
-  async created() {
-    initializeApp(firebase_config);
-    this.emitter.on("authenticated", () => {
-      this.authenticated = true;
-    });
-    if (isPlatform("ios")) {
-      if (FaceId) {
-        FaceId.isAvailable().then((checkResult) => {
-          this.faceIDAvaible = true;
-          //   if(checkResult){
-          if (checkResult.value) {
-            FaceId.auth()
-              .then(() => {
-                this.authenticated = true;
-              })
-              .catch(() => {
-                //error
-                this.$router.push("/pin");
-              });
-          } else {
-            this.$router.push("/pin");
-          }
-
-          //  }
-        });
-      } else {
-        console.log("FaceID Plugin could not be loaded.");
-      }
-    }
-
-    if (
-      location.pathname != "/new/project/" &&
-      location.pathname != "/new/project" &&
-      location.pathname != "/info/projects/" &&
-      location.pathname != "/info/projects" &&
-      location.pathname != "/manage/projects/" &&
-      location.pathname != "/manage/projects" &&
-      location.pathname.includes("project")
-    ) {
-      const project = this.$route.params.project;
-      this.$axios
-        .post(
-          "projects.php",
-          this.$qs.stringify({
-            checkUserPermissions: "checkUserPermissions",
-            project: project,
-          })
-        )
-        .then((res) => {
-          if (!res.data.success) {
-            this.$router.push("/no-permission");
-          }
-        });
-    }
-  },
-  setup() {
-    const pages = ref([]);
-    const page = ref({});
-    const tools = ref([]);
-    const projects = ref([]);
-    const bookmarks = ref([]);
-    const account_active = ref({});
-    const route = useRoute();
-    const ionRouter = useIonRouter();
-    const loading = ref(true);
-    let paramUrl = "";
-
-    const isOnline = ref(navigator.onLine);
-
-    const loadPageData = async function () {
-      if (
-        !localStorage.getItem("token") &&
-        location.pathname != "/login" &&
-        location.pathname != "/login/verification/" &&
-        location.pathname != "/login/" &&
-        location.pathname != "/login/verification" &&
-        location.pathname != "/signup" &&
-        location.pathname != "/signup/"
-      ) {
-        ionRouter.push("/login");
-      }
-      const userData = getUserData();
-
-      if (
-        userData.accountStatus == "pending_verification" &&
-        location.pathname != "/pending_verification" &&
-        location.pathname != "/pending_verification/"
-      ) {
-        location.href = "/pending_verification";
-      } else if (
-        userData.accountStatus != "pending_verification" &&
-        (location.pathname == "/pending_verification" ||
-          location.pathname == "/pending_verification/")
-      ) {
-        location.href = "/home";
-      }
-
-      if (userData.accountStatus == "pending_verification") {
-        account_active.value = false;
-      } else {
-        account_active.value = true;
-      }
-
-      if (!route.params || !route.params.url) {
-        console.error("Route params or URL not defined.");
-        paramUrl = window.location.pathname.replace("/", "");
-        if (paramUrl.charAt(paramUrl.length - 1) == "/") {
-          paramUrl = paramUrl.slice(0, -1);
-        }
-      } else {
-        paramUrl = route.params.url;
-      }
-
-      if (isOnline.value) {
-        this.$axios.post("pages.php").then((response) => {
-          pages.value = response.data;
-          const foundPage = pages.value.find((p) => p["url"] === paramUrl);
-
-          if (!foundPage) {
-            return;
-          }
-
-          page.value = foundPage;
-          document.title = page.value.title;
-          loading.value = false;
-        });
-
-        this.$axios.get("sidebar.php").then((response) => {
-          tools.value = response.data.tools;
-          projects.value = response.data.projects;
-          localStorage.setItem("tools", JSON.stringify(tools.value));
-          localStorage.setItem("projects", JSON.stringify(projects.value));
-        });
-
-        this.$axios
-          .get("bookmarks.php?getBookmarks=getBookmarks")
-          .then((response) => {
-            bookmarks.value = response.data;
-            localStorage.setItem("bookmarks", JSON.stringify(bookmarks.value));
-          });
-      } else {
-        pages.value = offlinePages;
-        const foundPage = pages.value.find((p) => p["url"] === paramUrl);
-
-        if (!foundPage) {
-          return;
-        } else {
-          page.value = foundPage;
-          document.title = page.value.title;
-        }
-
-        if (localStorage.getItem("tools")) {
-          tools.value = JSON.parse(localStorage.getItem("tools"));
-        } else {
-          tools.value = offlineTools.tools;
-        }
-
-        if (localStorage.getItem("projects")) {
-          projects.value = JSON.parse(localStorage.getItem("projects"));
-        } else {
-          projects.value = offlineTools.tools;
-        }
-
-        if (localStorage.getItem("bookmarks")) {
-          bookmarks.value = JSON.parse(localStorage.getItem("bookmarks"));
-        } else {
-          bookmarks.value = offlineTools.tools;
-        }
-      }
-    };
-
-    window.addEventListener("online", () => {
-      isOnline.value = true;
-      loadPageData();
-    });
-
-    window.addEventListener("offline", () => {
-      isOnline.value = false;
-      loadPageData();
-    });
-
-    return {
-      page: page,
-      tools: tools,
-      projects: projects,
-      bookmarks: bookmarks,
-      loadPageData: loadPageData,
-      isOnline: isOnline,
-      account_active: account_active,
-      loading: loading,
-    };
-  },
-
   methods: {
+    goTo(location) {
+      this.$router.push(location);
+    },
     setTheme(value) {
-      // @t s-ignore: Object is possibly 'null'.
+      // @ts-ignore: Object is possibly 'null'.
       localStorage.setItem("themeSet", value);
       store.setItem();
     },
-    updateSidebar: function () {
-      // const bookmarks = ref([]);
-      this.$axios
-        .get("bookmarks.php?getBookmarks=getBookmarks")
-        .then((response) => {
-          this.bookmarks = response.data;
-          localStorage.setItem("bookmarks", this.bookmarks);
-        });
+    async updateSidebar() {
+      const res = await axios.get("bookmarks.php?getBookmarks=getBookmarks");
+      this.bookmarks = res.data;
+      localStorage.setItem("bookmarks", this.bookmarks);
     },
   },
 });
 </script>
-
-<style>
-.error404 {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.error404 > h1 {
-  font-size: 3.2rem;
-  padding-bottom: 4rem;
-  color: var(--ion-color-primary);
-}
-
-.btn-red {
-  --background: var(--ion-color-primary) !important;
-}
-.ion-menu {
-  width: 300px;
-}
-
-ion-menu ion-content {
-  --background: var(--ion-item-background, var(--ion-background-color, #fff));
-}
-
-ion-menu.md ion-content {
-  --padding-start: 8px;
-  --padding-end: 8px;
-  --padding-top: 46px;
-  --padding-bottom: 20px;
-}
-
-ion-menu.md ion-list {
-  padding: 20px 0;
-}
-
-ion-menu.md ion-note {
-  margin-bottom: 30px;
-}
-
-ion-menu.md ion-list-header,
-ion-menu.md ion-note {
-  padding-left: 10px;
-}
-
-ion-menu.md ion-list#inbox-list {
-  border-bottom: 1px solid var(--ion-color-step-150, #d7d8da);
-}
-
-ion-menu.md ion-list#inbox-list ion-list-header {
-  font-size: 22px;
-  font-weight: 600;
-  min-height: 20px;
-}
-
-ion-menu.md ion-list#labels-list ion-list-header {
-  font-size: 16px;
-  margin-bottom: 18px;
-  color: #757575;
-  min-height: 26px;
-}
-
-ion-menu.md ion-item {
-  --padding-start: 10px;
-  --padding-end: 10px;
-  border-radius: 4px;
-}
-
-ion-menu.md ion-item.selected {
-  --background: rgba(
-    var(--ion-color-primary-rgb),
-    0.14
-  ); /*var(--ion-color-primary-rgb)*/
-}
-
-ion-menu.md ion-item.selected ion-icon {
-  color: var(--ion-color-primary);
-}
-
-ion-menu.md ion-item ion-icon {
-  color: #616e7e;
-}
-
-ion-menu.md ion-item ion-label {
-  font-weight: 500;
-}
-
-ion-menu.ios ion-content {
-  --padding-bottom: 20px;
-}
-
-ion-menu.ios ion-list {
-  padding: 20px 0 0 0;
-}
-
-ion-menu.ios ion-note {
-  line-height: 24px;
-  margin-bottom: 20px;
-}
-
-ion-menu.ios ion-item {
-  --padding-start: 16px;
-  --padding-end: 16px;
-  --min-height: 50px;
-}
-
-ion-menu.ios ion-item.selected ion-icon {
-  color: var(--ion-color-primary);
-}
-
-ion-menu.ios ion-item ion-icon {
-  font-size: 24px;
-  color: #73849a;
-}
-
-ion-menu.ios ion-list#labels-list ion-list-header {
-  margin-bottom: 8px;
-}
-
-ion-menu.ios ion-list-header,
-ion-menu.ios ion-note {
-  padding-left: 16px;
-  padding-right: 16px;
-}
-
-ion-menu.ios ion-note {
-  margin-bottom: 8px;
-}
-
-ion-note {
-  display: inline-block;
-  font-size: 16px;
-  color: var(--ion-color-medium-shade);
-}
-
-ion-item.selected {
-  --color: var(--ion-color-primary);
-}
-
-a {
-  text-decoration: none;
-  color: var(--ion-color-primary);
-}
-
-.mobile-only {
-  display: none;
-}
-
-.desktop-only {
-  display: block;
-}
-
-@media only screen and (max-width: 600px) {
-  .only-web {
-    display: none;
-  }
-
-  .mobile-only {
-    display: block;
-  }
-
-  .desktop-only {
-    display: none;
-  }
-}
-
-router-link,
-a {
-  color: var(--ion-color-primary);
-}
-
-ion-menu-button {
-  color: var(--ion-color-primary) !important;
-}
-
-a {
-  color: var(--ion-color-primary) !important;
-}
-
-.link-container {
-  display: flex;
-  justify-content: center;
-}
-
-.link {
-  text-decoration: none;
-}
-
-/*ion-menu.md ion-item.selected {
-  --background: rgba(255, 0, 0, 0.14) !important;
-}*/
-
-ion-item.selected {
-  --color: var(--ion-color-primary) !important;
-}
-
-ion-menu ion-item.selected ion-icon {
-  color: var(--ion-color-primary) !important;
-}
-
-.list-md.articles {
-  background: var(--ion-background-color);
-}
-
-#main-content {
-  /*padding-top: 100px !important;*/
-  margin-top: 56px !important;
-  width: 100%;
-}
-h1 {
-  z-index: 6666;
-}
-
-ion-router-outlet.showTitle {
-  margin-top: 45px;
-}
-
-ion-router-outlet {
-  width: 100%;
-}
-
-@media (prefers-color-scheme: dark) {
-  ion-card {
-    --background: black;
-  }
-}
-
-@media only screen and (min-width: 600px) {
-  ion-card {
-    padding: 1rem;
-    border-radius: 20px;
-  }
-}
-
-.offline {
-  background-color: #212121 !important;
-  z-index: 100000;
-}
-
-.offline-h6 {
-  text-align: center !important;
-  width: 100%;
-  color: #fff;
-  margin: 0.25rem;
-}
-
-ion-list {
-  background-color: var(--ion-background-color);
-}
-
-ion-list {
-  border: none !important;
-}
-</style>
