@@ -100,6 +100,10 @@ const routes: Array<RouteRecordRaw> = [
    component: () => import('../views/TelegramBot.vue'),
   },
   {
+    path: '/filesystem/',
+    component: () => import('../views/FileSystem.vue'),
+  },
+  {
     path: '/info/icons/',
     component: () => import('../views/AllIcons.vue'),
   },
