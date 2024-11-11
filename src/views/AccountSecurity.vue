@@ -16,6 +16,17 @@
               >LogIn with Google</ion-toggle
             >
           </ion-item>
+          <ion-item>
+            <ion-toggle
+              slot="start"
+              color="success"
+              :checked="login_with_microsoft"
+              labelPlacement="start"
+              aria-label="LogIn with Google"
+              @ionChange="update2($event)"
+              >LogIn with Microsoft</ion-toggle
+            >
+          </ion-item>
           <!-- Coming Soon-->
           <!--
             <ion-item>
@@ -62,21 +73,59 @@ export default defineComponent({
     return {
       user: {},
       login_with_google: false,
+      login_with_microsoft: false,
     };
   },
   async created() {
     this.user = await getUserData();
-    this.login_with_google = this.user.login_with_google;
+    const login_wg = this.user.login_with_google;
+    if (typeof login_wg === 'string' && login_wg.toLowerCase() == "microsoft") {
+      this.login_with_microsoft = true;
+      console.log("login with microsoft");
+    } else if (login_wg == true) {
+      console.log("login with google");
+      this.login_with_google = true;
+    }
   },
   methods: {
     update(event) {
+      this.login_with_google = event.detail.checked;
+
+      if(event.detail.checked){
+        this.login_with_microsoft = false;
+      }
+
       this.$axios.post(
         "user.php",
         this.$qs.stringify({
           updateLoginWithGoogle: "updateLoginWithGoogle",
-          newValue: event.detail.checked,
+          newValue: event.detail.checked.toString(),
         })
-      );
+      ).then((response) => {
+        console.log(response.data);
+      });
+    },
+    update2(event) {
+      this.login_with_microsoft = event.detail.checked;
+
+      if (event.detail.checked) {
+        this.login_with_google = false;
+        this.$axios.post(
+          "user.php",
+          this.$qs.stringify({
+            updateLoginWithGoogle: "updateLoginWithGoogle",
+            newValue: "Microsoft",
+          })
+        );
+      } else {
+        this.$axios.post(
+          "user.php",
+          this.$qs.stringify({
+            updateLoginWithGoogle: "updateLoginWithGoogle",
+            newValue: false,
+          })
+        );
+      }
     },
   },
 });

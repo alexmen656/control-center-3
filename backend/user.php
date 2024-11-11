@@ -47,7 +47,13 @@ if (isset($headers['Authorization'])) {
             $json['lastName'] = $data['lastname'];
             $json['email'] = $data['email'];
             $json['userID'] = $data['userID'];
-            $json['login_with_google'] = $data['login_with_google'];
+            if($data['login_with_google'] == 'true'){
+                $json['login_with_google'] = true;
+            }elseif($data['login_with_google'] == 'false'){
+                $json['login_with_google'] = false;
+            }else{
+                $json['login_with_google'] = $data['login_with_google'];
+            }
             $json['accountStatus'] = $data['account_status'];
             echo preg_replace('/^\h*\v+/m', '', echoJson($json));
         }

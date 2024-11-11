@@ -12,6 +12,7 @@
   "dependencies": {
     "@achrinza/node-ipc": "^10.1.10",
     "@awesome-cordova-plugins/native-storage": "^6.6.0",
+    "@azure/msal-browser": "^3.27.0",
     "@capacitor-firebase/messaging": "^5.4.1",
     "@capacitor/app": "5.0.7",
     "@capacitor/camera": "^5.0.9",

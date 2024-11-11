@@ -11,6 +11,8 @@ if (isset($_POST['first_name']) && isset($_POST['email_adress']) && isset($_POST
     $img = 'avatar';
     if ($login_with_google == 'true') {
         $img = 'google';
+    }else if($login_with_google == 'microsoft'){
+        $img = 'avatar';
     }
 
     if (query("INSERT INTO control_center_users VALUES(0, '$img', '$first_name', '$last_name', '$email_adress', '$password', '$login_with_google', '$token', 'pending_verification')")) {

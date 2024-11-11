@@ -54,7 +54,7 @@
                 fill="outline"
               ></ion-input>
             </ion-item>
-            <ion-button @click="onSignUpp()" type="submit" expand="block">
+            <ion-button @click="onSignUp()" type="submit" expand="block">
               Continue</ion-button
             >
           </ion-col>
@@ -168,6 +168,40 @@
                       alt=""
                     />Continue with Google</ion-button
                   >
+                  <ion-button
+                    class="lomi"
+                    type="button"
+                    expand="block"
+                    @click="loginWM"
+                    ><svg
+                      height="20"
+                      aria-hidden="true"
+                      viewBox="0 0 25 25"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      itemprop="logo"
+                      itemscope="itemscope"
+                    >
+                      <path
+                        d="M11.5216 0.5H0V11.9067H11.5216V0.5Z"
+                        fill="#f25022"
+                      ></path>
+                      <path
+                        d="M24.2418 0.5H12.7202V11.9067H24.2418V0.5Z"
+                        fill="#7fba00"
+                      ></path>
+                      <path
+                        d="M11.5216 13.0933H0V24.5H11.5216V13.0933Z"
+                        fill="#00a4ef"
+                      ></path>
+                      <path
+                        d="M24.2418 13.0933H12.7202V24.5H24.2418V13.0933Z"
+                        fill="#ffb900"
+                      ></path>
+                    </svg>
+                    <pre></pre>
+                    Continue with Microsoft</ion-button
+                  >
                 </ion-col>
                 <ion-col size-md="3" size="0"></ion-col>
               </ion-row>
@@ -184,17 +218,21 @@
 import { defineComponent } from "vue";
 import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth";
 import AlertMessage from "@/components/AlertMessage.vue";
+import { msalInstance } from "@/msalConfig";
+import axios from "axios";
+import qs from "qs";
+
 
 try {
-GoogleAuth.initialize({
-  clientId:
-    "706582238302-k3e6bqv81en6u97gf8l5pq883p773236.apps.googleusercontent.com",
-  scopes: ["profile", "email"],
-  grantOfflineAccess: true,
-});
+  GoogleAuth.initialize({
+    clientId:
+      "706582238302-k3e6bqv81en6u97gf8l5pq883p773236.apps.googleusercontent.com",
+    scopes: ["profile", "email"],
+    grantOfflineAccess: true,
+  });
 } catch {
-        console.log("error");
-      }
+  console.log("error");
+}
 
 export default defineComponent({
   components: {
@@ -222,27 +260,26 @@ export default defineComponent({
   },
   methods: {
     async continueWithGoogle() {
-
       try {
         this.user = await GoogleAuth.signIn();
       } catch {
         console.log("error");
       }
 
-      await this.$axios
+      await axios
         .post(
           "user.php",
-          this.$qs.stringify({
+          qs.stringify({
             checkEmailExists: "checkEmailExists",
             email: this.user.email,
           })
         )
         .then((res) => {
           if (res.data.value == true) {
-            this.$axios
+            axios
               .post(
                 "login.php",
-                this.$qs.stringify({
+                qs.stringify({
                   email: this.user.email,
                   loginWithGoogle: "loginWithGoogle",
                 })
@@ -268,11 +305,12 @@ export default defineComponent({
                 }
               );
           } else if (res.data.value == false) {
+            this.loginWith = "google";
             this.createPasswordView = true;
           }
         });
     },
-    async onSignUpp() {
+    async onSignUp() {
       if (
         this.g_password.trim() === "" ||
         this.g_confirmPassword.trim() === ""
@@ -286,16 +324,23 @@ export default defineComponent({
         return;
       }
 
-      this.$axios
+      let lwg = "false";
+      if (this.loginWith == "google") {
+        lwg = "true";
+      } else if (this.loginWith == "microsoft") {
+        lwg = "Microsoft";
+      }
+
+      axios
         .post(
           "sign_up.php",
-          this.$qs.stringify({
+          qs.stringify({
             first_name: this.user.givenName,
             last_name: this.user.familyName,
             profile_img: this.user.imageUrl.replace("s96", "s512"),
             email_adress: this.user.email,
             password: this.g_password,
-            login_with_google: true,
+            login_with_google: lwg,
           })
         )
         .then((res) => {
@@ -308,7 +353,6 @@ export default defineComponent({
           }
         });
     },
-
     async validateAndSignUp() {
       if (
         this.firstName.trim() === "" ||
@@ -370,12 +414,120 @@ export default defineComponent({
           }
         });
     },
+    async loginWM() {
+      if (this.msalInteractionInProgress) {
+        console.log("Eine Interaktion ist bereits im Gange.");
+        return;
+      }
+
+      this.msalInteractionInProgress = true;
+
+      try {
+        const loginRequest = {
+          scopes: ["user.read"], // Berechtigungen, die du benötigst
+        };
+        await msalInstance.loginPopup(loginRequest); //const loginResponse =
+        //console.log("Login erfolgreich:", loginResponse);
+
+        // Rufe das Access-Token ab
+        const tokenResponse = await msalInstance.acquireTokenSilent({
+          scopes: ["User.Read"],
+          account: msalInstance.getAllAccounts()[0], // Verwende das erste Konto, das angemeldet ist
+        });
+
+        //console.log("Access-Token erhalten:", tokenResponse.accessToken);
+
+        // Rufe automatisch Benutzerinformationen ab
+        const userData = await this.fetchUserData(tokenResponse.accessToken);
+        //console.log("Benutzerdaten:", userData);
+
+        // Setze die Benutzerdaten
+        this.user.email = userData.mail || userData.userPrincipalName;
+        this.user.givenName = userData.givenName;
+        this.user.familyName = userData.surname;
+        this.user.imageUrl = userData.photo || "";
+
+        // Überprüfe, ob die E-Mail existiert
+        await axios
+          .post(
+            "user.php",
+            qs.stringify({
+              checkEmailExists: "checkEmailExists",
+              email: this.user.email,
+            })
+          )
+          .then((res) => {
+            if (res.data.value == true) {
+              axios
+                .post(
+                  "login.php",
+                  qs.stringify({
+                    email: this.user.email,
+                    loginWithMicrosoft: "microsoft",
+                  })
+                )
+                .then(
+                  (res) => {
+                    console.log(res.data);
+                    if (res.data.token) {
+                      localStorage.setItem("token", res.data.token);
+                      location.href = "/";
+                    } else if (res.data.errorMessage) {
+                      this.errorMessage = res.data.errorMessage;
+                    } else if (res.data.command) {
+                      if (res.data.command == "verify-ip") {
+                        this.verifyIP(res.data);
+                      }
+                      this.errorMessage = "send";
+                    }
+                  },
+                  (err) => {
+                    console.log(err);
+                    this.errorMessage = "Cannot connect to server";
+                  }
+                );
+            } else if (res.data.value == false) {
+              this.loginWith = "microsoft";
+              this.createPasswordView = true;
+            }
+          });
+      } catch (error) {
+        console.error("Fehler beim Login:", error);
+      } finally {
+        this.msalInteractionInProgress = false;
+      }
+    },
     verifyIP(data) {
       localStorage.setItem("verification_email", data.verification_email);
       localStorage.setItem("verification_name", data.verification_name);
       localStorage.setItem("verification_token", data.verification_token);
       location.href = "/login/verification/";
     },
+    async fetchUserData(accessToken) {
+      try {
+        const response = await fetch("https://graph.microsoft.com/v1.0/me", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (!response.ok)
+          throw new Error("Fehler beim Abrufen der Benutzerinformationen");
+
+        const userData = await response.json();
+        return userData;
+      } catch (error) {
+        console.error("Fehler beim Abrufen der Benutzerdaten:", error);
+      }
+    },
+  },
+  async mounted() {
+    await msalInstance.initialize(); // Initialisiere hier
+
+    // Stelle sicher, dass die MSAL-Instanz initialisiert wird
+    if (!msalInstance.getAllAccounts().length) {
+      await msalInstance.initialize(); // Initialisiere hier
+    }
   },
 });
 </script>
@@ -410,5 +562,10 @@ ion-content {
     width: 60%;
     height: 60%;
   }
+}
+
+ion-button.lomi {
+  --background: black;
+  color: white;
 }
 </style>
