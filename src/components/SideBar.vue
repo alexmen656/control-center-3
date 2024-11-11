@@ -42,7 +42,7 @@
         button
         lines="none"
         detail="false"
-        @click="goToProject(p.name)"
+        @click="goToProject(p.link)"
         class="hydrated menu-item"
         ><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
         <ion-icon slot="start" :name="p.icon ? p.icon : 'folder-outline'"></ion-icon>

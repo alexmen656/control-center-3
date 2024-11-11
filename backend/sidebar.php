@@ -87,6 +87,8 @@ if ($headers['Authorization']) {
                     $json['projects'][$i]["id"] = $project['id'];
                     $json['projects'][$i]["icon"] = $project['icon'];
                     $json['projects'][$i]["name"] = $project['name'];
+                    $json['projects'][$i]["link"] = $project['link'];
+                    
                 }
                 $i++;
 
