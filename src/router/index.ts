@@ -119,11 +119,11 @@ const routes: Array<RouteRecordRaw> = [
     path: '/project/:project/new-tool/',
     component: () => import('../views/NewTool.vue'),
   },
-  /*{
-    path: '/project/:project/filemanager',
-    component: () => import('../views/ProjectView.vue'),
-  },
   {
+    path: '/project/:project/filesystem',
+    component: () => import('../views/ProjectFileSystem.vue'),
+  },
+  /*{
     path: '/project/:project/databases',
     component: () => import('../views/ProjectView.vue'),
   },*/

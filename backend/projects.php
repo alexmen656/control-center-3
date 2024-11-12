@@ -3,6 +3,30 @@ include "head.php";
 
 $headers = getRequestHeaders();
 
+function createFileSystemMainDir($projectID)
+{
+
+    mkdir("/data/project_filesystems/" . $projectID, 0777);
+    echo "/data/project_filesystems/" . $projectID;
+    $chmod = chmod("/data/project_filesystems/" . $projectID, 0777);
+    //$chmod = true;
+    if ($chmod) {
+        return true;
+    } else {
+        return false;
+    }
+}
+function createFileSystem($projectID)
+{
+    if (query("INSERT INTO project_filesystem VALUES (0, '', '', NULL, 0, '$projectID')")) {
+        if (createFileSystemMainDir($projectID)) {
+            return true;
+        }
+    } else {
+        return false;
+    }
+}
+
 if (isset($headers['Authorization'])) {
     //echo 0;
     if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
@@ -23,7 +47,8 @@ if (isset($headers['Authorization'])) {
             "info",
             "components/main",
             "module-store",
-            "package-manager"
+            "package-manager",
+            "filesystem"
         ];
 
         $urls = [];
@@ -41,18 +66,21 @@ if (isset($headers['Authorization'])) {
         $url7 = $urls[6];
         $url8 = $urls[7];
         $url9 = $urls[8];
+        $url10 = $urls[9];
+
         //$url9 = "project/" . $href . "/package-manager";
 
         mkdir("/www/" . $href, 0777);
-        echo $href;
+        //echo $href;
         chmod("/www/" . $href, 0777);
         file_put_contents("/www/" . $href . "/index.php", str_replace(array('[{[pLink]}]', '[{[pName]}]', '[{[pID]}]'), array($href, $name, $projectID), file_get_contents("templates/website/index.php")), 0777);
         chmod("/www/" . $href . "/index.php", 0777);
         file_put_contents("/www/" . $href . "/main.php", "//Put here main content of your site", 0777);
         chmod("/www/" . $href . "/main.php", 0777);
         $mainComponent = query("INSERT INTO project_components VALUES (0, 'main.php', 'script', 'Main', 'main', NOW(), NOW(), 'System', '1234567890', '$projectID')");
-        $pages = query("INSERT INTO control_center_pages VALUES (0, '$url1', 'true', '', 'Project Dashboard', '', 0), (0, '$url2', 'true', '', 'Create new tool', '', 0), (0, '$url3', 'true', '', 'Manage Tools', '', 0), (0, '$url4', 'true', '', 'Manage Components', '', 0), (0, '$url5', 'true', '', 'Create New Component', '', 0), (0, '$url6', 'true', '', 'Project Info', '', 0), (0, '$url7', 'true', '', 'Main', '', 0), (0, '$url8', 'false', '', 'Module Store', '', 0), (0, '$url9', 'true', '', 'Package Manager', '', 0)");
-        query("INSERT INTO project_tools (`id`, `icon`, `name`, `link`, `hasConfig`, `order`, `projectID`) VALUES (0, 'storefront-outline', 'Module Store', 'module-store', 0, 0, '$projectID')");
+        $pages = query("INSERT INTO control_center_pages VALUES (0, '$url1', 'true', '', 'Project Dashboard', '', 0), (0, '$url2', 'true', '', 'Create new tool', '', 0), (0, '$url3', 'true', '', 'Manage Tools', '', 0), (0, '$url4', 'true', '', 'Manage Components', '', 0), (0, '$url5', 'true', '', 'Create New Component', '', 0), (0, '$url6', 'true', '', 'Project Info', '', 0), (0, '$url7', 'true', '', 'Main', '', 0), (0, '$url8', 'false', '', 'Module Store', '', 0), (0, '$url9', 'true', '', 'Package Manager', '', 0), (0, '$url10', 'true', 'file-tray-full-outlinepr', 'Filesystem', '', 0)");
+        query("INSERT INTO project_tools (`id`, `icon`, `name`, `link`, `hasConfig`, `order`, `projectID`) VALUES (0, 'file-tray-full-outline', 'Filesystem', 'filesystem', 0, 0, '$projectID'), (0, 'storefront-outline', 'Module Store', 'module-store', 0, 1, '$projectID')");
+
         if ($mysqli) {//$createFolder && $createFile && 
             $token = escape_string($headers['Authorization']);
             $data = query("SELECT * FROM control_center_users WHERE loginToken='$token'");
@@ -60,7 +88,9 @@ if (isset($headers['Authorization'])) {
                 $data = fetch_assoc($data);
                 $userID = $data['userID'];
                 if (query("INSERT INTO control_center_user_projects VALUES (0, $userID, '$projectID', 1)")) {
-                    echo alert('succes', 'The project was created successfully. <a href="/paxar/projects/' . $href . '/">Go to the project</a>');
+                    if (createFileSystem($projectID)) {
+                        echo alert('succes', 'The project was created successfully. <a href="/paxar/projects/' . $href . '/">Go to the project</a>');
+                    }
                 }
             }
 
