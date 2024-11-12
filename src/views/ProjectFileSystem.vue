@@ -408,4 +408,8 @@ hr {
   width: 90%;
   background: #fff;
 }
+
+#file-drag-drop {
+  height: 3rem;
+}
 </style>
