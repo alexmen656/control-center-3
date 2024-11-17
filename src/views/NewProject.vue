@@ -68,6 +68,7 @@ export default {
           .then(() => {
             //res
             alert("Project created successfull");
+            this.emitter.emit("updateSidebar");
           });
       } else {
         alert("Project Name is empty!");

@@ -285,6 +285,7 @@ export default defineComponent({
     this.emitter.on("authenticated", () => {
       this.authenticated = true;
     });
+
     if (isPlatform("ios")) {
       if (FaceId) {
         FaceId.isAvailable().then((checkResult) => {
@@ -314,6 +315,10 @@ export default defineComponent({
     }
   },
   async mounted() {
+    this.emitter.on("updateSidebar", async () => {
+      await this.updateSidebar();
+    });
+
     await loadUserData();
     this.userData = await getUserData();
 
@@ -385,6 +390,10 @@ export default defineComponent({
       const res = await axios.get("bookmarks.php?getBookmarks=getBookmarks");
       this.bookmarks = res.data;
       localStorage.setItem("bookmarks", this.bookmarks);
+      const res2 = await axios.get("sidebar.php");
+      this.projects = res2.data.projects;
+      localStorage.setItem("projects", this.projects);
+      console.log("Sidebar updated");
     },
   },
 });
