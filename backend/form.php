@@ -10,6 +10,7 @@ function mapFieldType($type)
         case 'select2':
             return 'VARCHAR(255)';
         case 'number':
+        case 'operation':
             return 'INT';
         case 'checkbox':
             return 'BOOLEAN';
