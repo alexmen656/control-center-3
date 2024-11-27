@@ -79,8 +79,15 @@ if (isset($headers['Authorization'])) {
         chmod("/www/" . $href . "/main.php", 0777);
         $mainComponent = query("INSERT INTO project_components VALUES (0, 'main.php', 'script', 'Main', 'main', NOW(), NOW(), 'System', '1234567890', '$projectID')");
         $pages = query("INSERT INTO control_center_pages VALUES (0, '$url1', 'true', '', 'Project Dashboard', '', 0), (0, '$url2', 'true', '', 'Create new tool', '', 0), (0, '$url3', 'true', '', 'Manage Tools', '', 0), (0, '$url4', 'true', '', 'Manage Components', '', 0), (0, '$url5', 'true', '', 'Create New Component', '', 0), (0, '$url6', 'true', '', 'Project Info', '', 0), (0, '$url7', 'true', '', 'Main', '', 0), (0, '$url8', 'false', '', 'Module Store', '', 0), (0, '$url9', 'true', '', 'Package Manager', '', 0), (0, '$url10', 'true', 'file-tray-full-outlinepr', 'Filesystem', '', 0)");
+        foreach($urls as $u){
+            $page = query("SELECT * FROM control_center_pages WHERE url='$u'");
+            if(mysqli_num_rows($page) == 1){
+                $page = fetch_assoc($page);
+                $pageID = $page['id'];
+                query("INSERT INTO control_center_project_views VALUES (0, $pageID, '$projectID')");
+            }
+        }
         query("INSERT INTO project_tools (`id`, `icon`, `name`, `link`, `hasConfig`, `order`, `projectID`) VALUES (0, 'file-tray-full-outline', 'Filesystem', 'filesystem', 0, 0, '$projectID'), (0, 'storefront-outline', 'Module Store', 'module-store', 0, 1, '$projectID')");
-
         if ($mysqli) {//$createFolder && $createFile && 
             $token = escape_string($headers['Authorization']);
             $data = query("SELECT * FROM control_center_users WHERE loginToken='$token'");
@@ -147,6 +154,35 @@ if (isset($headers['Authorization'])) {
         } else {
             echo "No project found";
         }
+    }elseif (isset($_POST['getProjectViews']) && isset($_POST['project'])) {
+        $link = escape_string($_POST['project']);
+        $query = query("SELECT * FROM projects WHERE link='$link'");
+        if (mysqli_num_rows($query) == 1) {
+            $projectID = fetch_assoc($query)['projectID'];
+            $views = query("SELECT * FROM control_center_project_views WHERE projectID='$projectID'");
+            if (mysqli_num_rows($views) > 0) {
+
+                $i = 0;
+
+                foreach ($views as $view) {
+                    $viewID = $view['pageID'];
+                    $view = fetch_assoc(query("SELECT * FROM control_center_pages WHERE id='$viewID'"));
+                    $json[$i]['id'] = $view['id'];
+                    $json[$i]['name'] = $view['title'];
+                    $json[$i]['url'] = $view['url'];
+                    $json[$i]['icon'] = $view['icon'];
+                    $i++;
+                }
+                echo echoJSON($json);
+            } else {
+                echo echoJSON([]);
+
+            }
+
+        } else {
+            echo "No project found";
+        }
+
     } elseif (isset($_POST['addUserToProject']) && isset($_POST['project']) && isset($_POST['email'])) {
         $link = escape_string($_POST['project']);
         $email = escape_string($_POST['email']);

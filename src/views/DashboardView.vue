@@ -20,6 +20,11 @@
               :data="chart.data"
               :options="options"
             />
+            <ShortcutCard
+              v-if="chart.chart_type == 'card'"
+              :link="'/' + chart.url"
+              :title="chart.name"
+            />
             <ion-button v-if="editView" @click="deleteChart(index)"
               >Delete Chart</ion-button
             >
@@ -54,7 +59,17 @@
           </ion-toolbar>
         </ion-header>
         <ion-content class="ion-padding">
-          <FloatingSelect v-model="form" :select="select" />
+          <FloatingSelect v-model="comp" :select="comp_select" />
+          <FloatingSelect
+            v-if="comp === 'card'"
+            v-model="view"
+            :select="view_select"
+          />
+          <FloatingSelect
+            v-if="comp === 'chart'"
+            v-model="form"
+            :select="select"
+          />
           <FloatingSelect
             v-if="form"
             v-model="form_data"
@@ -80,6 +95,8 @@
 import { defineComponent, ref, watch } from "vue";
 import DonutChart from "@/components/DonutChart.vue";
 import PieChart from "@/components/PieChart.vue";
+import ShortcutCard from "@/components/ShortcutCard.vue";
+
 //import { OverlayEventDetail } from "@ionic/core/components";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 import {
@@ -93,12 +110,15 @@ export default defineComponent({
     FloatingSelect,
     DonutChart,
     PieChart,
+    ShortcutCard,
   },
   data() {
     return {
       editView: false,
       charts: [],
       form: "",
+      view: "",
+      comp: "",
       options: {
         responsive: true,
       },
@@ -107,6 +127,23 @@ export default defineComponent({
       password: "",
       inputs: [{}],
       inputValues: [],
+      comp_select: {
+        type: "select",
+        name: "comp",
+        label: "Component",
+        placeholder: "Chart",
+        options: [
+          { value: "card", label: "Card" },
+          { value: "chart", label: "Chart" },
+        ],
+      },
+      view_select: {
+        type: "select",
+        name: "view",
+        label: "View",
+        placeholder: "Overview",
+        options: [],
+      },
       select: {
         type: "select",
         name: "form",
@@ -169,7 +206,23 @@ export default defineComponent({
           });
         });
       });
-
+    this.$axios
+      .post(
+        "projects.php",
+        this.$qs.stringify({
+          getProjectViews: "getProjectViews",
+          project: this.$route.params.project,
+        })
+      )
+      .then((res) => {
+        this.views = res.data;
+        res.data.forEach((view) => {
+          this.view_select.options.push({
+            value: view.id,
+            label: view.name,
+          });
+        });
+      });
     if (localStorage.getItem("charts")) {
       this.loadCharts();
     }
@@ -236,38 +289,64 @@ export default defineComponent({
       this.setOpen(false);
     },
     async confirm() {
-      //this.$refs.modal.$el.dismiss(null, "confirm");
       this.setOpen(false);
-      const json = {
-        chart_type: this.chart_type,
-        form: this.form,
-        label: this.form_label,
-        data: this.form_data,
-      };
 
-      let chartsData = localStorage.getItem("charts");
-      if (chartsData) {
-        chartsData = JSON.parse(chartsData);
-        chartsData.push(json);
-        await localStorage.setItem("charts", JSON.stringify(chartsData));
-      } else {
-        await localStorage.setItem("charts", JSON.stringify([json]));
+      if (this.comp === "chart") {
+        //this.$refs.modal.$el.dismiss(null, "confirm");
+        const json = {
+          chart_type: this.chart_type,
+          form: this.form,
+          label: this.form_label,
+          data: this.form_data,
+        };
+
+        let chartsData = localStorage.getItem("charts");
+        if (chartsData) {
+          chartsData = JSON.parse(chartsData);
+          chartsData.push(json);
+          await localStorage.setItem("charts", JSON.stringify(chartsData));
+        } else {
+          await localStorage.setItem("charts", JSON.stringify([json]));
+        }
+        await this.$axios.post(
+          "dashboard.php",
+          this.$qs.stringify({
+            new_chart: "new_chart",
+            json: JSON.stringify([json]),
+            dashboard: this.$route.params.dashboard,
+            project: this.$route.params.project,
+          })
+        );
+        this.loadCharts();
+
+        this.chart_type = "";
+        this.form = "";
+        this.form_label = "";
+        this.form_data = "";
+      } else if (this.comp === "card") {
+        const viewObject = this.views.find((view) => view.id === this.view);
+        if (viewObject) {
+          viewObject.chart_type = "card";
+          let cardsData = localStorage.getItem("charts");
+          if (cardsData) {
+            cardsData = JSON.parse(cardsData);
+            cardsData.push(viewObject);
+            await localStorage.setItem("charts", JSON.stringify(cardsData));
+          } else {
+            await localStorage.setItem("charts", JSON.stringify([viewObject]));
+          }
+          await this.$axios.post(
+            "dashboard.php",
+            this.$qs.stringify({
+              new_chart: "new_chart",
+              json: JSON.stringify([viewObject]),
+              dashboard: this.$route.params.dashboard,
+              project: this.$route.params.project,
+            })
+          );
+          this.loadCharts();
+        }
       }
-      await this.$axios.post(
-        "dashboard.php",
-        this.$qs.stringify({
-          new_chart: "new_chart",
-          json: JSON.stringify([json]),
-          dashboard: this.$route.params.dashboard,
-          project: this.$route.params.project,
-        })
-      );
-      this.loadCharts();
-
-      this.chart_type = "";
-      this.form = "";
-      this.form_label = "";
-      this.form_data = "";
     },
 
     toName(name) {
@@ -313,46 +392,54 @@ export default defineComponent({
         })
       );
       request.data.forEach(async (chart) => {
-        await this.$axios
-          .post(
-            "form.php",
-            this.$qs.stringify({
-              get_form_data: "get_form_data",
-              form: chart.form,
-              project: this.$route.params.project,
-            })
-          )
-          .then(async (res) => {
-            const data = [];
-            const labels = [];
+        if (
+          chart.chart_type == "pie_chart" ||
+          chart.chart_type == "donut_chart"
+        ) {
+          await this.$axios
+            .post(
+              "form.php",
+              this.$qs.stringify({
+                get_form_data: "get_form_data",
+                form: chart.form,
+                project: this.$route.params.project,
+              })
+            )
+            .then(async (res) => {
+              const data = [];
+              const labels = [];
 
-            res.data.forEach((element) => {
-              data.push(Number(element[chart.data]));
+              res.data.forEach((element) => {
+                data.push(Number(element[chart.data]));
+              });
+
+              res.data.forEach((element) => {
+                labels.push(element[chart.label]);
+              });
+
+              const new_chart = {
+                chart_type: chart.chart_type,
+                data: {
+                  labels: labels,
+                  datasets: [
+                    {
+                      label:
+                        chart.data.charAt(0).toUpperCase() +
+                        chart.data.slice(1),
+                      data: data,
+                      borderWidth: 0,
+                    },
+                  ],
+                  canDismiss: false,
+                  presentingElement: undefined,
+                },
+              };
+
+              await this.charts.push(new_chart);
             });
-
-            res.data.forEach((element) => {
-              labels.push(element[chart.label]);
-            });
-
-            const new_chart = {
-              chart_type: chart.chart_type,
-              data: {
-                labels: labels,
-                datasets: [
-                  {
-                    label:
-                      chart.data.charAt(0).toUpperCase() + chart.data.slice(1),
-                    data: data,
-                    borderWidth: 0,
-                  },
-                ],
-                canDismiss: false,
-                presentingElement: undefined,
-              },
-            };
-
-            await this.charts.push(new_chart);
-          });
+        } else if (chart.chart_type == "card") {
+          this.charts.push(chart);
+        }
       });
     },
   },
