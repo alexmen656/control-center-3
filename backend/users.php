@@ -6,6 +6,7 @@ if (isset($_POST['new_user']) && isset($_POST['first_name']) && isset($_POST['em
     $last_name = escape_string($_POST['last_name']);
     $email_adress = escape_string($_POST['email_adress']);
     $password = escape_string($_POST['password']);
+    $password = password_hash($password, PASSWORD_DEFAULT);
     $token = bin2hex(random_bytes(72));
     if (query("INSERT INTO control_center_users VALUES(0, '', '$first_name', '$last_name', '$email_adress', '$password', 'false', '$token', 'active')")) {
         echo "User created successful";

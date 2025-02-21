@@ -11,7 +11,7 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
     if ($select) {
         $data = fetch_assoc($select);
 
-        if ($password === $data['password']) {
+        if (password_verify($password, $data['password'])) {
             $ip = $_SERVER['HTTP_CLIENT_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
             $userID = $data['userID'];
             $check = query("SELECT * FROM control_center_login_log WHERE `ip`='$ip' AND `userID`='$userID' AND `action`='successfull'");
@@ -31,12 +31,11 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 $userID = $data['userID'];
                 $code = rand(100000, 999999);
                 $insert = query("INSERT INTO control_center_login_log VALUES ('0','$ip','$email','$userID','processing','$verificationToken', $code ,NOW(),'')");
-                $headers = 'From: Control Center<ems@kamala.aglo.eu>' . "\r\n" . 'Reply-To: ems@kamala.aglo.eu';
-
+                $headers = 'From: Control Center<ems@alex.polan.sk>' . "\r\n" . 'Reply-To: Control Center<ems@alex.polan.sk>';
                 mail(
                     $data['firstname'] . " " . $data['lastname'] . "<" . $data['email'] . ">",
-                    "OTP Code",
-                    "Your Otp code is " . $code,
+                    "Your OTP Code",
+                    "Your Otp code is " . $code . "\n Do not share this code with anyone!",
                     $headers
                 );
             }
@@ -74,12 +73,11 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 $userID = $data['userID'];
                 $code = rand(100000, 999999);
                 $insert = query("INSERT INTO control_center_login_log VALUES ('0','$ip','$email','$userID','processing','$verificationToken', $code ,NOW(),'')");
-                $headers = 'From: Control Center<ems@kamala.aglo.eu>' . "\r\n" . 'Reply-To: ems@kamala.aglo.eu';
-
+                $headers = 'From: Control Center<ems@alex.polan.sk>' . "\r\n" . 'Reply-To: Control Center<ems@alex.polan.sk>';
                 mail(
                     $data['firstname'] . " " . $data['lastname'] . "<" . $data['email'] . ">",
-                    "OTP Code",
-                    "Your Otp code is " . $code,
+                    "Your OTP Code",
+                    "Your Otp code is " . $code . "\n Do not share this code with anyone!",
                     $headers
                 );
             }
@@ -117,12 +115,11 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 $userID = $data['userID'];
                 $code = rand(100000, 999999);
                 $insert = query("INSERT INTO control_center_login_log VALUES ('0','$ip','$email','$userID','processing','$verificationToken', $code ,NOW(),'')");
-                $headers = 'From: Control Center<ems@kamala.aglo.eu>' . "\r\n" . 'Reply-To: ems@kamala.aglo.eu';
-
+                $headers = 'From: Control Center<ems@alex.polan.sk>' . "\r\n" . 'Reply-To: Control Center<ems@alex.polan.sk>';
                 mail(
                     $data['firstname'] . " " . $data['lastname'] . "<" . $data['email'] . ">",
-                    "OTP Code",
-                    "Your Otp code is " . $code,
+                    "Your OTP Code",
+                    "Your Otp code is " . $code . "\n Do not share this code with anyone!",
                     $headers
                 );
             }

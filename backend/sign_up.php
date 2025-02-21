@@ -6,6 +6,7 @@ if (isset($_POST['first_name']) && isset($_POST['email_adress']) && isset($_POST
     $last_name = escape_string($_POST['last_name']);
     $email_adress = escape_string($_POST['email_adress']);
     $password = escape_string($_POST['password']);
+    $password = password_hash($password, PASSWORD_DEFAULT);
     $login_with_google = escape_string($_POST['login_with_google']);
     $token = bin2hex(random_bytes(72));
     $img = 'avatar';
