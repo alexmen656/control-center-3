@@ -239,6 +239,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/NFCConfigView.vue'),
   },
   {
+    path: '/project/:project/:form/config',
+    component: () => import('../views/FormConfig.vue'),
+  },
+  {
     path: '/project/:project/:form',
     component: () => import('../views/FormDisplay.vue'),
   },

@@ -15,8 +15,8 @@ if (isset($_POST['newTool']) && isset($_POST['projectName']) && isset($_POST['to
         $query = query("INSERT INTO project_tools VALUES (0,'$toolIcon','$toolName', '$link',0,'','$projectID')");
         if ($query) {
             $url = "project/" . str_replace([" ", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["-", "a", "a", "u", "u", "o", "o"], strtolower($projectName)) . "/" . str_replace([" ", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["-", "a", "a", "u", "u", "o", "o"], strtolower($toolName));
-            $config_url = $url."/config";
-            $config_name = $toolName." Config";
+            $config_url = $url . "/config";
+            $config_name = $toolName . " Config";
             query("INSERT INTO control_center_pages VALUES (0,'$url', 'true','$toolIcon','$toolName', '', 0)");
             query("INSERT INTO control_center_pages VALUES (0,'$config_url', 'true','cog-outline','$config_name', '', 0)");
             echo "success";
@@ -57,8 +57,13 @@ if (isset($_POST['newTool']) && isset($_POST['projectName']) && isset($_POST['to
     if (mysqli_num_rows($projectID) == 1) {
         $projectID = fetch_assoc($projectID)['projectID'];
         $toolID = fetch_assoc(query("SELECT * FROM project_tools WHERE projectID='$projectID' AND link='$tool'"))['id'];
-        $config = fetch_assoc(query("SELECT * FROM project_tools_config WHERE tool_id='$toolID'"))['config_json'];
-        echo echoJson(json_decode($config));
+        $query = query("SELECT * FROM project_tools_config WHERE tool_id='$toolID'");
+        if (mysqli_num_rows($query) == 1) {
+            $config = fetch_assoc($query)['config_json'];
+            echo echoJson(json_decode($config));
+        } else {
+            echo echoJson([]);
+        }
     }
 } elseif (isset($_POST['deleteTool']) && isset($_POST['toolID'])) {
     $toolID = escape_string($_POST['toolID']);
