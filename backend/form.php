@@ -39,8 +39,9 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
                 $type = mapFieldType($field['type']);
                 $sql .= ", $name $type";
             }
-
+            $sql .= ", created_at DATETIME DEFAULT CURRENT_TIMESTAMP";
             $sql .= ");";
+
             if (query($sql)) {
                 echo $formName . " Created Successfully!!!";
             }
@@ -56,7 +57,7 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
     if (mysqli_num_rows($query) > 0) {
         //echo 1;
         $form = fetch_assoc($query);
-       //print_r($form);
+        //print_r($form);
         $json['id'] = $form['form_id'];
         $json['form'] = json_decode($form['form_json'], true);
         $json['createdOn'] = $form['created_at'];
@@ -83,7 +84,9 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
             $formattedRow = array();
 
             foreach ($field_names as $field) {
-                $formattedRow[$field] = $row[$field];
+             //   if ($field != 'created_at') {
+                    $formattedRow[$field] = $row[$field];
+               // }
             }
 
             $json[] = $formattedRow;
@@ -95,7 +98,7 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
     }
 } elseif (isset($_POST['get_forms']) && isset($_POST['project'])) {
     $json = [];
-   // $form_name = escape_string($_POST['form']);
+    // $form_name = escape_string($_POST['form']);
     $project = escape_string($_POST['project']);
     $forms = query("SELECT * FROM form_settings WHERE project='$project'");
     $i = 0;

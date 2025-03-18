@@ -33,7 +33,20 @@
         <ion-grid class="no-padding">
           <ion-row class="no-padding">
             <ion-col size="12"
-              ><ion-card><BarChart></BarChart></ion-card
+              ><ion-card
+                ><BarChart
+                  :data="{
+                    labels: ['January', 'February', 'March', 'April', 'May'],
+                    datasets: [
+                      {
+                        label: 'Verkäufe',
+                        data: [40, 20, 12, 300, 123],
+                        backgroundColor: '#f87979',
+                        title: 'cvf',
+                      },
+                    ],
+                  }"
+                ></BarChart></ion-card
             ></ion-col>
             <ion-col size="12"
               ><TableCard :labels="labels" :data="tableData"></TableCard
@@ -100,12 +113,8 @@ export default defineComponent({
       isBookmark: false,
       email: "",
       password: "",
-      inputs: [
-        {
-
-        }
-      ],
-      inputValues: []
+      inputs: [{}],
+      inputValues: [],
     };
   },
   components: {

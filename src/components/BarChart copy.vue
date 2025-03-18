@@ -1,5 +1,5 @@
 <template>
-  <Bar id="my-chart-id" :options="chartOptions" :data="data" />
+  <Bar id="my-chart-id" :options="chartOptions" :data="chartData" />
 </template>
 
 <script>
@@ -26,9 +26,19 @@ ChartJS.register(
 export default {
   name: "BarChart",
   components: { Bar },
-  props: ["data"],
   data() {
     return {
+      chartData: {
+        labels: ["January", "February", "March", "April", "May"],
+        datasets: [
+          {
+            label: "Verkäufe",
+            data: [40, 20, 12, 300, 123],
+            backgroundColor: "#f87979",
+            title: "cvf",
+          },
+        ],
+      },
       chartOptions: {
         responsive: true,
       },

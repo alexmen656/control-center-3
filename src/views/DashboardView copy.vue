@@ -1,11 +1,63 @@
 <template>
   <ion-page>
     <ion-content>
-      <DashboardDisplay
-        :charts="charts"
-        :editView="editView"
-        @deleteChart="deleteChart"
-      />
+      <ion-grid>
+        <ion-row>
+          <ion-col
+            v-for="(chart, index) in charts"
+            v-show="
+              chart.chart_type != 'date_bar_chart' &&
+              chart.chart_type != 'bar_chart'
+            "
+            :key="index"
+            size="12"
+            size-lg="6"
+            size-xl="4"
+          >
+            <DonutChart
+              v-if="chart.chart_type == 'donut_chart'"
+              :data="chart.data"
+              :options="options"
+            />
+            <PieChart
+              v-if="chart.chart_type == 'pie_chart'"
+              :data="chart.data"
+              :options="options"
+            />
+            <ShortcutCard
+              v-if="chart.chart_type == 'card'"
+              :link="'/' + chart.url"
+              :title="chart.name"
+            />
+            <ion-button v-if="editView" @click="deleteChart(index)"
+              >Delete Chart</ion-button
+            >
+          </ion-col>
+          <ion-col
+            v-for="(chart, index) in charts"
+            v-show="
+              chart.chart_type == 'date_bar_chart' ||
+              chart.chart_type == 'bar_chart'
+            "
+            :key="index"
+            size="12"
+            size-lg="12"
+            size-xl="8"
+          >
+            <ion-card
+              v-if="
+                chart.chart_type == 'date_bar_chart' ||
+                chart.chart_type == 'bar_chart'
+              "
+            >
+              <BarChart :data="chart.data" :options="options" />
+            </ion-card>
+            <ion-button v-if="editView" @click="deleteChart(index)"
+              >Delete Chart</ion-button
+            >
+          </ion-col>
+        </ion-row>
+      </ion-grid>
       <ion-fab slot="fixed" vertical="bottom" horizontal="end">
         <ion-fab-button id="open_menu">
           <ion-icon name="chevron-up-circle"></ion-icon>
@@ -80,7 +132,11 @@
 
 <script>
 import { defineComponent, ref, watch } from "vue";
-import DashboardDisplay from "@/components/DashboardDisplay.vue";
+import DonutChart from "@/components/DonutChart.vue";
+import PieChart from "@/components/PieChart.vue";
+import ShortcutCard from "@/components/ShortcutCard.vue";
+import BarChart from "@/components/BarChart.vue";
+
 //import { OverlayEventDetail } from "@ionic/core/components";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 import {
@@ -92,7 +148,10 @@ export default defineComponent({
   name: "DefaultPage",
   components: {
     FloatingSelect,
-    DashboardDisplay,
+    DonutChart,
+    PieChart,
+    ShortcutCard,
+    BarChart,
   },
   data() {
     return {
@@ -459,172 +518,79 @@ export default defineComponent({
               const data = [];
               const labels = [];
 
+              /*chartData: {
+        labels: ["January", "February", "March", "April", "May"],
+        datasets: [
+          {
+            label: "Verkäufe",
+            data: [40, 20, 12, 300, 123],
+            backgroundColor: "#f87979",
+            title: "cvf",
+          },
+        ]*/
+              //  if (chart_type == "date_bar_chart") {
+              //  data = v
+              // } else {
+              console.log("chart.data: ", res.data);
+
               if (chart.chart_type == "date_bar_chart") {
                 if (chart.date_stamps == "hours") {
-                  const groupedData = {};
-                  console.log("res.data.hours", res.data);
-                  res.data.forEach((element) => {
-                    const dateTime = element.created_at.split(" ");
-                    const date = dateTime[0];
-                    const hour = dateTime[1].split(":")[0];
-                    const dateHour = `${date} ${hour}:00:00`;
-                    console.log("created at", element.created_at);
-                    if (!groupedData[dateHour]) {
-                      groupedData[dateHour] = 0;
-                    }
-                    console.log("please add", Number(element.anzahl));
-                    groupedData[dateHour] += Number(element.anzahl);
-                  });
-                  console.log("grouped-data", groupedData);
-                  const now = new Date();
-                  for (let i = 9; i >= 0; i--) {
-                    const date = new Date(now);
-                    date.setHours(now.getHours() - i + 1); // + 1
-                    const dateString =
-                      date.toISOString().split(":")[0] + ":00:00";
-                    console.log("dateString", dateString);
-                    data.push(
-                      groupedData[dateString.replace("T", " ")] || 0.00001
-                    );
-                  }
-                  console.log("Hour-Data", data);
+                  data.push(0);
+                  data.push(0);
+                  data.push(0);
+                  data.push(12);
+                  data.push(0);
+                  data.push(0);
+                  data.push(0);
                 } else if (chart.date_stamps == "days") {
-                  const groupedData = {};
-                  console.log("res.data", res.data);
-                  res.data.forEach((element) => {
-                    const date = element.created_at.split(" ")[0]; // Nur das Datum ohne Zeit
-                    console.log("created at", element.created_at);
-                    if (!groupedData[date]) {
-                      groupedData[date] = 0;
-                    }
-                    console.log("please add", Number(element.anzahl));
-                    groupedData[date] += Number(element.anzahl);
-                  });
-                  console.log("grouped-data", groupedData);
-                  const today = new Date();
-                  for (let i = 6; i >= 0; i--) {
-                    const date = new Date(today);
-                    date.setDate(today.getDate() - i);
-                    const dateString = date.toISOString().split("T")[0]; // Format: YYYY-MM-DD
-                    data.push(groupedData[dateString] || 0.00001);
-                  }
-                  console.log("Day-Data", data);
+                  data.push(0);
+                  data.push(0);
+                  data.push(0);
+                  data.push(12);
+                  data.push(0);
+                  data.push(0);
+                  data.push(0);
                 } else if (chart.date_stamps == "weeks") {
-                  const groupedData = {};
-                  console.log("res.data", res.data);
-                  res.data.forEach((element) => {
-                    const date = new Date(element.created_at.split(" ")[0]);
-                    const weekStart = new Date(
-                      date.setDate(date.getDate() - date.getDay())
-                    ); // Get the start of the week (Sunday)
-                    const weekStartString = weekStart
-                      .toISOString()
-                      .split("T")[0];
-                    console.log("created at", element.created_at);
-                    if (!groupedData[weekStartString]) {
-                      groupedData[weekStartString] = 0;
-                    }
-                    console.log("please add", Number(element.anzahl));
-                    groupedData[weekStartString] += Number(element.anzahl);
-                  });
-                  console.log("grouped-data", groupedData);
-                  const today = new Date();
-                  for (let i = 9; i >= 0; i--) {
-                    const date = new Date(today);
-                    date.setDate(today.getDate() - i * 7); // Subtract weeks
-                    const weekStart = new Date(
-                      date.setDate(date.getDate() - date.getDay())
-                    ); // Get the start of the week (Sunday)
-                    const weekStartString = weekStart
-                      .toISOString()
-                      .split("T")[0];
-                    data.push(groupedData[weekStartString] || 0.00001);
-                  }
-                  console.log("Week-Data", data);
+                  data.push(0);
+                  data.push(0);
+                  data.push(0);
+                  data.push(12);
+                  data.push(0);
+                  data.push(0);
+                  data.push(0);
                 } else if (chart.date_stamps == "months") {
-                  const groupedData = {};
-                  console.log("res.data", res.data);
-                  res.data.forEach((element) => {
-                    const date = new Date(element.created_at.split(" ")[0]);
-                    const monthStart = new Date(
-                      date.getFullYear(),
-                      date.getMonth(),
-                      1
-                    ); // Get the start of the month
-                    const monthStartString = monthStart
-                      .toISOString()
-                      .split("T")[0];
-                    console.log("created at", element.created_at);
-                    if (!groupedData[monthStartString]) {
-                      groupedData[monthStartString] = 0;
-                    }
-                    console.log("please add", Number(element.anzahl));
-                    groupedData[monthStartString] += Number(element.anzahl);
-                  });
-                  console.log("grouped-data", groupedData);
-                  const today = new Date();
-                  for (let i = 5; i >= 0; i--) {
-                    const date = new Date(today);
-                    date.setMonth(today.getMonth() - i); // Subtract months
-                    const monthStart = new Date(
-                      date.getFullYear(),
-                      date.getMonth(),
-                      1
-                    ); // Get the start of the month
-                    const monthStartString = monthStart
-                      .toISOString()
-                      .split("T")[0];
-                    data.push(groupedData[monthStartString] || 0.00001);
-                  }
-                  console.log("Month-Data", data);
+                  data.push(0);
+                  data.push(0);
+                  data.push(0);
+                  data.push(12);
+                  data.push(0);
+                  data.push(0);
+                  data.push(0);
                 } else if (chart.date_stamps == "years") {
-                  const groupedData = {};
-                  console.log("res.data", res.data);
-                  res.data.forEach((element) => {
-                    const date = new Date(element.created_at.split(" ")[0]);
-                    const yearStart = new Date(date.getFullYear(), 0, 1); // Get the start of the year
-                    const yearStartString = yearStart
-                      .toISOString()
-                      .split("T")[0];
-                    console.log("created at", element.created_at);
-                    if (!groupedData[yearStartString]) {
-                      groupedData[yearStartString] = 0;
-                    }
-                    console.log("please add", Number(element.anzahl));
-                    groupedData[yearStartString] += Number(element.anzahl);
-                  });
-                  console.log("grouped-data", groupedData);
-                  const today = new Date();
-                  for (let i = 2; i >= 0; i--) {
-                    const date = new Date(today);
-                    date.setFullYear(today.getFullYear() - i); // Subtract years
-                    const yearStart = new Date(date.getFullYear(), 0, 1); // Get the start of the year
-                    const yearStartString = yearStart
-                      .toISOString()
-                      .split("T")[0];
-                    //labels.push(date.getFullYear().toString()); // Add the year name to labels
-                    data.push(groupedData[yearStartString] || 0.00001); // Add the corresponding data
-                  }
+                  data.push(0);
+                  data.push(0);
+                  data.push(0);
+                  data.push(12);
+                  data.push(0);
+                  data.push(0);
+                  data.push(0);
                 }
               } else {
                 res.data.forEach((element) => {
                   data.push(Number(element[chart.data]));
                 });
               }
+              // }
 
               if (chart.chart_type == "date_bar_chart") {
+                //console.log("date_bar_chart", chart.date_stamps);
                 if (chart.date_stamps == "hours") {
-                  const now = new Date();
-                  for (let i = 9; i >= 0; i--) {
-                    const date = new Date(now);
-                    date.setHours(now.getHours() - i); // + 1
-                    const hours = date.getHours().toString().padStart(2, "0");
-                    const dateString = `${hours}:00`; // Format: HH:00
-                    labels.push(dateString);
-                    //data.push(groupedData[dateString] || 0);
-                  }
-                  console.log("Hour-Data", data);
+                  res.data.forEach((element) => {
+                    labels.push(element[chart.date_stamps]);
+                  });
                 } else if (chart.date_stamps == "days") {
+                  //alert(1);
+
                   const today = new Date();
                   for (let i = 6; i >= 0; i--) {
                     const date = new Date(today);
@@ -632,39 +598,17 @@ export default defineComponent({
                     labels.push(date.toISOString().split("T")[0]); // Format: YYYY-MM-DD
                   }
                 } else if (chart.date_stamps == "weeks") {
-                  const today = new Date();
-                  for (let i = 9; i >= 0; i--) {
-                    const date = new Date(today);
-                    date.setDate(today.getDate() - i * 7); // Subtract weeks
-                    const weekStart = new Date(
-                      date.setDate(date.getDate() - date.getDay())
-                    ); // Get the start of the week (Sunday)
-                    labels.push(weekStart.toISOString().split("T")[0]); // Format: YYYY-MM-DD
-                  }
+                  res.data.forEach((element) => {
+                    labels.push(element[chart.date_stamps]);
+                  });
                 } else if (chart.date_stamps == "months") {
-                  const today = new Date();
-                  for (let i = 5; i >= 0; i--) {
-                    const date = new Date(today);
-                    date.setMonth(today.getMonth() - i); // Subtract months
-                    const monthName = date.toLocaleString("default", {
-                      month: "long",
-                    }); // Get the month name
-                    labels.push(monthName); // Add the month name to labels
-                    /*const monthStart = new Date(
-                      date.getFullYear(),
-                      date.getMonth(),
-                      1
-                    );*/ // Get the start of the month
-                    // labels.push(monthStart.toISOString().split("T")[0]); // Format: YYYY-MM-DD
-                  }
+                  res.data.forEach((element) => {
+                    labels.push(element[chart.date_stamps]);
+                  });
                 } else if (chart.date_stamps == "years") {
-                  const today = new Date();
-                  for (let i = 2; i >= 0; i--) {
-                    const date = new Date(today);
-                    date.setFullYear(today.getFullYear() - i); // Subtract years
-                    const yearName = date.getFullYear().toString(); // Get the year name
-                    labels.push(yearName); // Add the year name to labels
-                  }
+                  res.data.forEach((element) => {
+                    labels.push(element[chart.date_stamps]);
+                  });
                 }
               } else {
                 res.data.forEach((element) => {
@@ -677,6 +621,26 @@ export default defineComponent({
                 chart.chart_type == "date_bar_chart" ||
                 chart.chart_type == "bar_chart"
               ) {
+                //alert("date_bar_chart");
+                /*
+
+                {
+        labels: ["January", "February", "March", "April", "May"],
+        datasets: [
+          {
+            label: "Verkäufe",
+            data: [40, 20, 12, 300, 123],
+            backgroundColor: "#f87979",
+            title: "cvf",
+          },
+        ],
+      }
+
+      */
+                /* console.log(
+                  "wtf: ",
+                  chart.data.charAt(0).toUpperCase() + chart.data.slice(1)
+                 );*/
                 new_chart = {
                   chart_type: chart.chart_type,
                   data: {
@@ -686,6 +650,11 @@ export default defineComponent({
                         label:
                           chart.data.charAt(0).toUpperCase() +
                           chart.data.slice(1),
+
+                        // chart.chart_type == "bar_chart"
+                        //   ? chart.data.charAt(0).toUpperCase() +
+                        //       chart.data.slice(1)
+                        // : "",
                         data: data,
                         backgroundColor: "#f87979",
                         title: "cvf",
