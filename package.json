@@ -27,7 +27,7 @@
     "@capacitor/storage": "^1.2.5",
     "@codetrix-studio/capacitor-google-auth": "^3.3.6",
     "@ddgll/vue3-trend": "^1.0.3",
-    "@firebase/messaging": "^0.12.7",
+    "@firebase/messaging": "^0.12.17",
     "@ionic/cli": "^7.2.0",
     "@ionic/core": "^7.8.2",
     "@ionic/pwa-elements": "^3.2.2",
