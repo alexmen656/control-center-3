@@ -55,7 +55,7 @@
     "phonegap-plugin-barcodescanner": "^8.1.0",
     "qs": "^6.12.0",
     "quill-blot-formatter": "^1.0.5",
-    "quill-html-edit-button": "^2.2.13",
+    "quill-html-edit-button": "^3.0.0",
     "quill-image-drop-module": "^1.0.3",
     "quill-magic-url": "^4.2.0",
     "register-service-worker": "^1.7.2",
