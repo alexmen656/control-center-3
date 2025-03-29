@@ -231,6 +231,19 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/QrCodeScannerConfig.vue'),
   },
   {
+    path: '/project/:project/chat-app',
+    component: () => import('../views/ChatApp.vue'),
+  },
+  {
+    path: '/project/:project/chat-app/chat/:id',
+    name: 'ChatDetail',
+    component: () => import('../views/ChatDetail.vue'),
+  },
+  {
+    path: '/project/:project/chat-app/config',
+    component: () => import('../views/ChatAppConfig.vue'),
+  },
+  {
     path: '/project/:project/nfc',
     component: () => import('../views/NFCView.vue'),
   },
