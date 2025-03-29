@@ -37,7 +37,7 @@
     "@vue/cli-service": "^5.0.8",
     "@vueup/vue-quill": "^1.2.0",
     "@vueuse/core": "^10.9.0",
-    "axios": "^1.6.8",
+    "axios": "^1.8.2",
     "capacitor-face-id": "^2.0.2",
     "chart.js": "^4.4.2",
     "cordova-plugin-nativestorage": "^2.3.2",
