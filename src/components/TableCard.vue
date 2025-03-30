@@ -1,12 +1,14 @@
 <template>
   <ion-card>
     <table>
-      <tr>
-        <th v-for="label in labels" :key="label">{{ label }}</th>
-      </tr>
-      <tr v-for="tr in data" :key="tr">
-        <td v-for="td in tr" :key="td">{{ td }}</td>
-      </tr>
+      <tbody>
+        <tr>
+          <th v-for="label in labels" :key="label">{{ label }}</th>
+        </tr>
+        <tr v-for="tr in data" :key="tr">
+          <td v-for="td in tr" :key="td">{{ td }}</td>
+        </tr>
+      </tbody>
     </table>
   </ion-card>
 </template>

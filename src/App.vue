@@ -65,7 +65,7 @@ import { loadUserData, getUserData } from "@/userData";
 import offlineTools from "@/offline/tools.json";
 import offlinePages from "@/offline/pages.json";
 import { SplashScreen } from "@capacitor/splash-screen";
-import { Plugins } from "@capacitor/core";
+//import { Plugins } from "@capacitor/core";
 import { isPlatform } from "@ionic/vue";
 import { FirebaseMessaging } from "@capacitor-firebase/messaging";
 import { firebase_config } from "@/firebase_config";
@@ -78,7 +78,7 @@ import {
   checkLoginStatus,
 } from "@/utils/authHelpers";
 
-const { FaceId } = Plugins;
+//const { FaceId } = Plugins;
 
 const fmg = FirebaseMessaging;
 

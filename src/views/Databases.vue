@@ -3,6 +3,7 @@
     <ion-content>
       <ion-card>
         <table>
+        <tbody>
           <tr>
             <th v-for="label in labels" :key="label">{{ label }}</th>
           </tr>
@@ -11,6 +12,7 @@
               <router-link :to="'/databases/table/' + td">{{ td }}</router-link>
             </td>
           </tr>
+        </tbody>
         </table>
       </ion-card>
     </ion-content>

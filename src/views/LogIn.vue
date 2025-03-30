@@ -14,14 +14,14 @@
                 <picture>
                   <source
                     media="(min-width:465px)"
-                    srcset="assets/logo_inline_large.png"
+                    srcset="/assets/logo_inline_large.png"
                   />
                   <source
                     media="(max-width:465px)"
-                    srcset="assets/logo_block_large.png"
+                    srcset="/assets/logo_block_large.png"
                   />
                   <img
-                    src="assets/logo_inline_large.png"
+                    src="/assets/logo_inline_large.png"
                     alt="Control Center Logo"
                     style="width: auto"
                   />

@@ -22,8 +22,8 @@ import "@ionic/vue/css/flex-utils.css";
 import "@ionic/vue/css/display.css";
 
 /* QuillEditor */
-import { QuillEditor } from "@vueup/vue-quill";
-import "@vueup/vue-quill/dist/vue-quill.snow.css";
+//import { QuillEditor } from "@vueup/vue-quill";
+//import "@vueup/vue-quill/dist/vue-quill.snow.css";
 
 /* Theme variables */
 //import "./theme/variables.css";
@@ -46,7 +46,7 @@ const emitter = mitt();
 const app = createApp(App).use(IonicVue).use(router);
 
 
-app.component("QuillEditor", QuillEditor);
+//app.component("QuillEditor", QuillEditor);
 
 Object.keys(IonComponents).forEach(key => {
   if (/^Ion[A-Z]\w+$/.test(key)) {
