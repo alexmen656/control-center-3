@@ -1,0 +1,22 @@
+{
+  "apiKey": {
+    "type": "text",
+    "label": "API Key",
+    "placeholder": "Enter your API key",
+    "default": ""
+  },
+  "environment": {
+    "type": "select",
+    "label": "Environment",
+    "options": [
+      { "value": "dev", "label": "Development" },
+      { "value": "prod", "label": "Production" }
+    ],
+    "default": "dev"
+  },
+  "enableFeatureX": {
+    "type": "checkbox",
+    "label": "Enable Feature X",
+    "default": false
+  }
+}

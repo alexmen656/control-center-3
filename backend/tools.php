@@ -70,14 +70,21 @@ if (isset($_POST['newTool']) && isset($_POST['projectName']) && isset($_POST['to
 
     if (mysqli_num_rows($projectID) == 1) {
         $projectID = fetch_assoc($projectID)['projectID'];
-        $toolID = fetch_assoc(query("SELECT * FROM project_tools WHERE projectID='$projectID' AND link='$tool'"))['id'];
-        $query = query("SELECT * FROM project_tools_config WHERE tool_id='$toolID'");
-        if (mysqli_num_rows($query) == 1) {
-            $config = fetch_assoc($query)['config_json'];
-            echo echoJson(json_decode($config));
+        $toolID_query = query("SELECT * FROM project_tools WHERE projectID='$projectID' AND link='$tool'");
+        if ($toolID_query && mysqli_num_rows($toolID_query) > 0) { // Ensure query result is valid and not empty
+            $toolID = fetch_assoc($toolID_query)['id'];
+            $query = query("SELECT * FROM project_tools_config WHERE tool_id='$toolID'");
+            if (mysqli_num_rows($query) == 1) {
+                $config = fetch_assoc($query)['config_json'];
+                echo echoJson(json_decode($config));
+            } else {
+                echo echoJson([]);
+            }
         } else {
-            echo echoJson([]);
+            echo "error 1"; // Tool not found
         }
+    } else {
+        echo "error 1"; // Project not found
     }
 } elseif (isset($_POST['deleteTool']) && isset($_POST['toolID'])) {
     $toolID = escape_string($_POST['toolID']);

@@ -10,10 +10,9 @@
 
 <script>
 import FloatingSelect from "@/components/FloatingSelect.vue";
-import { ToolConfigService } from "@/services/ToolConfigService";
 
 export default {
-  name: "QrCodeGeneratorConfig",
+  name: "BarcodeScanner",
   components: {
     FloatingSelect,
   },
@@ -84,16 +83,19 @@ export default {
       });
   },
   methods: {
-    async save() {
-      try {
-        await ToolConfigService.saveToolConfig(this.$route.params.project, "qr-code-generator", {
-          form: this.form,
-          form_label: this.form_label,
-        });
-        console.log("Config saved successfully");
-      } catch (error) {
-        console.error("Failed to save config:", error);
-      }
+    save() {
+      this.$axios.post(
+        "tools.php",
+        this.$qs.stringify({
+          newToolConfig: "newToolConfig",
+          config: JSON.stringify({
+            form: this.form,
+            form_label: this.form_label,
+          }),
+          project: this.$route.params.project,
+          tool: "qr-code-generator",
+        })
+      );
     },
     toName(name) {
       return name.replaceAll(" ", "_").toLowerCase();
@@ -101,7 +103,6 @@ export default {
   },
 };
 </script>
-
 <style>
 @media print {
   .img-box {

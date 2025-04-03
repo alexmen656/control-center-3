@@ -11,9 +11,6 @@ import MyAccount from '../views/MyAccount.vue'
 import PhotoView from '../views/PhotoView.vue'
 import PinVerification from '../views/PinVerification.vue'
 
-
-
-
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
@@ -95,9 +92,9 @@ const routes: Array<RouteRecordRaw> = [
     path: '/new/project/',
     component: () => import('../views/NewProject.vue'),
   },
-  {    
-   path: '/telegram/bot',
-   component: () => import('../views/TelegramBot.vue'),
+  {
+    path: '/telegram/bot',
+    component: () => import('../views/TelegramBot.vue'),
   },
   {
     path: '/filesystem/',
@@ -190,10 +187,10 @@ const routes: Array<RouteRecordRaw> = [
     path: '/project/:project/info',
     component: () => import('../views/ProjectInfo.vue'),
   },
-/*  {
-    path: '/drop',
-    component: () => import('../views/DropZone.vue'),
-  },*/
+  /*  {
+      path: '/drop',
+      component: () => import('../views/DropZone.vue'),
+    },*/
   {
     path: '/signup',
     component: () => import('../views/SignUp.vue'),
@@ -250,7 +247,35 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/project/:project/nfc/config',
     component: () => import('../views/NFCConfigView.vue'),
-  },
+  }
+]
+
+const modules = import.meta.glob('@/modules/*/routes.ts', { eager: true });
+
+for (const path in modules) {
+  const moduleRoutes = (modules[path] as { default: RouteRecordRaw[] }).default;
+
+  // Extract the module name from the folder name instead of the file name
+  const moduleName = path.split('/').slice(-2, -1)[0]?.replace(/[^a-zA-Z0-9]/g, '-')?.toLowerCase() || 'default-module';
+
+  // Modify each route to prepend `/project/:project/`
+  const transformedRoutes = moduleRoutes.map(route => ({
+    ...route,
+    path: `/project/:project${route.path.startsWith('/') ? '' : '/'}${route.path}`,
+  }));
+
+  // Add the `/config` route for each module
+  const configRoute: RouteRecordRaw = {
+    path: `/project/:project/${moduleName}/config`,
+    name: `${moduleName}-config`,
+    component: () => import(`@/views/ConfigView.vue`),
+  };
+
+  routes.push(...transformedRoutes, configRoute);
+}
+
+// Add the specified routes
+routes.push(
   {
     path: '/project/:project/:form/config',
     component: () => import('../views/FormConfig.vue'),
@@ -267,7 +292,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/:url(.*)',
     component: () => import('../views/PageViev.vue'),
   }
-]
+);
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
