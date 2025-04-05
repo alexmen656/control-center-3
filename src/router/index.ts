@@ -101,6 +101,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/FileSystem.vue'),
   },
   {
+    path: '/pages/',
+    component: () => import('../views/ManagePages.vue'),
+  },
+  {
     path: '/info/icons/',
     component: () => import('../views/AllIcons.vue'),
   },
