@@ -30,8 +30,17 @@ if (isset($_POST['newTool']) && isset($_POST['projectName']) && isset($_POST['to
             $url = "project/" . str_replace([" ", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["-", "a", "a", "u", "u", "o", "o"], strtolower($projectName)) . "/" . str_replace([" ", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["-", "a", "a", "u", "u", "o", "o"], strtolower($toolName));
             $config_url = $url . "/config";
             $config_name = $toolName . " Config";
-            query("INSERT INTO control_center_pages VALUES (0,'$url', 'true','$toolIcon','$toolName', '', 0)");
+            $true = "true";
+            if($toolName == "Mail"){
+                $true = "false";
+            }
+            query("INSERT INTO control_center_pages VALUES (0,'$url', '$true','$toolIcon','$toolName', '', 0)");
             query("INSERT INTO control_center_pages VALUES (0,'$config_url', 'true','cog-outline','$config_name', '', 0)");
+
+            if($toolName == "Mail"){
+                $mail_url = $url . "/email";
+                query("INSERT INTO control_center_pages VALUES (0,'$mail_url', 'false','$toolIcon','$toolName', '', 0)");
+            }
             echo "success";
 
         } else {

@@ -1,0 +1,26 @@
+{
+  "user": {
+    "type": "text",
+    "label": "User",
+    "placeholder": "johndoe",
+    "default": ""
+  },
+  "password": {
+    "type": "text",
+    "label": "Password",
+    "placeholder": "a-very-strong-password",
+    "default": ""
+  },
+  "host": {
+    "type": "text",
+    "label": "Host",
+    "placeholder": "imap.control-center.eu",
+    "default": ""
+  },
+  "port": {
+    "type": "text",
+    "label": "Port",
+    "placeholder": "993",
+    "default": ""
+  }
+}
