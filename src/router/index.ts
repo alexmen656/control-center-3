@@ -105,6 +105,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/ManagePages.vue'),
   },
   {
+    path: '/notepad/',
+    component: () => import('../views/NotePad.vue'),
+  },
+  {
     path: '/info/icons/',
     component: () => import('../views/AllIcons.vue'),
   },
