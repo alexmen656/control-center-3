@@ -1,18 +1,10 @@
 <template>
   <ion-list id="inbox-list">
-    <ion-reorder-group
-      :disabled="false"
-      @ionItemReorder="handleReorder($event)"
-    >
+    <ion-reorder-group :disabled="false" @ionItemReorder="handleReorder($event)">
       <ion-menu-toggle auto-hide="false">
-        <ion-item
-          @click="this.selectedIndex = 0"
-          lines="none"
-          detail="false"
-          :router-link="'/project/' + $route.params.project + '/'"
-          class="hydrated menu-item"
-          :class="{ selected: this.selectedIndex === 0 }"
-        >
+        <ion-item @click="this.selectedIndex = 0" lines="none" detail="false"
+          :router-link="'/project/' + $route.params.project + '/'" class="hydrated menu-item"
+          :class="{ selected: this.selectedIndex === 0 }">
           <ion-icon slot="start" name="apps-outline" />
           <ion-label>Overview</ion-label>
         </ion-item>
@@ -20,113 +12,90 @@
 
       <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
         <!-- {{ i }}-->
-        <ion-item
-          @dblclick="
-            goToConfig(
-              '/project/' +
-                $route.params.project +
-                '/' +
-                p.name
-                  .toLowerCase()
-                  .replaceAll(' ', '-')
-                  .replaceAll('ä', 'a')
-                  .replaceAll('Ä', 'a')
-                  .replaceAll('ö', 'o')
-                  .replaceAll('Ö', 'o')
-                  .replaceAll('Ü', 'u')
-                  .replaceAll('ü', 'u') +
-                '/config'
-            )
-          "
-          @click="this.selectedIndex = i + 1"
-          lines="none"
-          detail="false"
-          :router-link="
-            p.icon == 'bar-chart-outline'
+        <ion-item @dblclick="
+          goToConfig(
+            '/project/' +
+            $route.params.project +
+            '/' +
+            p.name
+              .toLowerCase()
+              .replaceAll(' ', '-')
+              .replaceAll('ä', 'a')
+              .replaceAll('Ä', 'a')
+              .replaceAll('ö', 'o')
+              .replaceAll('Ö', 'o')
+              .replaceAll('Ü', 'u')
+              .replaceAll('ü', 'u') +
+            '/config'
+          )
+          " @click="this.selectedIndex = i + 1" lines="none" detail="false" :router-link="p.icon == 'bar-chart-outline'
               ? '/project/' +
-                $route.params.project +
-                '/dashboard/' +
-                p.name
-                  .toLowerCase()
-                  .replaceAll(' ', '-')
-                  .replaceAll('ä', 'a')
-                  .replaceAll('Ä', 'a')
-                  .replaceAll('ö', 'o')
-                  .replaceAll('Ö', 'o')
-                  .replaceAll('Ü', 'u')
-                  .replaceAll('ü', 'u')
+              $route.params.project +
+              '/dashboard/' +
+              p.name
+                .toLowerCase()
+                .replaceAll(' ', '-')
+                .replaceAll('ä', 'a')
+                .replaceAll('Ä', 'a')
+                .replaceAll('ö', 'o')
+                .replaceAll('Ö', 'o')
+                .replaceAll('Ü', 'u')
+                .replaceAll('ü', 'u')
               : '/project/' +
-                $route.params.project +
-                '/' +
-                p.name
-                  .toLowerCase()
-                  .replaceAll(' ', '-')
-                  .replaceAll('ä', 'a')
-                  .replaceAll('Ä', 'a')
-                  .replaceAll('ö', 'o')
-                  .replaceAll('Ö', 'o')
-                  .replaceAll('Ü', 'u')
-                  .replaceAll('ü', 'u')
-          "
-          class="hydrated menu-item"
-          :class="{ selected: this.selectedIndex === i + 1 }"
-        >
+              $route.params.project +
+              '/' +
+              p.name
+                .toLowerCase()
+                .replaceAll(' ', '-')
+                .replaceAll('ä', 'a')
+                .replaceAll('Ä', 'a')
+                .replaceAll('ö', 'o')
+                .replaceAll('Ö', 'o')
+                .replaceAll('Ü', 'u')
+                .replaceAll('ü', 'u')
+            " class="hydrated menu-item" :class="{ selected: this.selectedIndex === i + 1 }">
           <ion-icon slot="start" :name="p.icon" />
-          <ion-label
-            >{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label
-          >
+          <ion-label>{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
           <ion-reorder slot="end">
-            <ion-icon
-              v-if="p.hasConfig == 1"
-              style="cursor: pointer; z-index: 1000"
-              name="cog-outline"
-            />
+            <ion-icon v-if="p.hasConfig == 1" style="cursor: pointer; z-index: 1000" name="cog-outline" />
             <pre v-else></pre>
           </ion-reorder>
         </ion-item>
       </ion-menu-toggle>
       <ion-menu-toggle auto-hide="false" style="margin-top: 1rem !important">
-        <ion-item
-          lines="none"
-          detail="false"
-          class="new-tool"
-          :router-link="'/project/' + $route.params.project + '/new-tool/'"
-        >
+        <ion-item lines="none" detail="false" class="new-tool"
+          :router-link="'/project/' + $route.params.project + '/new-tool/'">
           <ion-icon slot="start" name="add" />
           <ion-label>New Tool</ion-label>
         </ion-item>
       </ion-menu-toggle>
     </ion-reorder-group>
   </ion-list>
-
+  <ion-note class="projects-headline">
+    <h4>Componets</h4>
+    <div>
+      <router-link :to="'/project/' + $route.params.project + '/components'"
+        ><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="ellipsis-horizontal-circle-outline" /></router-link
+      ><router-link to="/info/projects/"
+        ><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="information-circle-outline"
+        ></ion-icon></router-link
+      ><router-link :to="'/project/' + $route.params.project + '/new/component'"
+        ><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="add-circle-outline"
+        ></ion-icon
+      ></router-link></div
+  >
+  </ion-note>
   <ion-list id="inbox-list">
-    <ion-reorder-group
-      :disabled="false"
-      @ionItemReorder="handleFrontReorder($event)"
-    >
+    <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
       <ion-menu-toggle auto-hide="false" v-for="(p, i) in components" :key="i">
-        <ion-item
-          @dblclick="
-            goToConfig(
-              '/project/' +
-                $route.params.project +
-                '/components/' +
-                p.name
-                  .toLowerCase()
-                  .replaceAll(' ', '-')
-                  .replaceAll('ä', 'a')
-                  .replaceAll('Ä', 'a')
-                  .replaceAll('ö', 'o')
-                  .replaceAll('Ö', 'o')
-                  .replaceAll('Ü', 'u')
-                  .replaceAll('ü', 'u') +
-                '/config'
-            )
-          "
-          @click="this.selectedIndex = Number(i) + Number(tools.length) + 1"
-          lines="none"
-          detail="false"
-          :router-link="
+        <ion-item @dblclick="
+          goToConfig(
             '/project/' +
             $route.params.project +
             '/components/' +
@@ -138,38 +107,187 @@
               .replaceAll('ö', 'o')
               .replaceAll('Ö', 'o')
               .replaceAll('Ü', 'u')
+              .replaceAll('ü', 'u') +
+            '/config'
+          )
+          " @click="this.selectedIndex = Number(i) + Number(tools.length) + 1" lines="none" detail="false"
+          :router-link="'/project/' +
+            $route.params.project +
+            '/components/' +
+            p.name
+              .toLowerCase()
+              .replaceAll(' ', '-')
+              .replaceAll('ä', 'a')
+              .replaceAll('Ä', 'a')
+              .replaceAll('ö', 'o')
+              .replaceAll('Ö', 'o')
+              .replaceAll('Ü', 'u')
               .replaceAll('ü', 'u')
-          "
-          class="hydrated menu-item"
-          :class="{
+            " class="hydrated menu-item" :class="{
             selected: this.selectedIndex === Number(i) + Number(tools.length) + 1,
-          }"
-        >
+          }">
           <ion-icon slot="start" :name="getIcon(p.type)" />
-          <ion-label
-            >{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label
-          >
+          <ion-label>{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
           <ion-reorder slot="end">
-            <ion-icon
-              v-if="p.hasConfig == 1 || p.type == 'menu'"
-              style="cursor: pointer; z-index: 1000"
-              name="cog-outline"
-            />
+            <ion-icon v-if="p.hasConfig == 1 || p.type == 'menu'" style="cursor: pointer; z-index: 1000"
+              name="cog-outline" />
             <pre v-else></pre>
           </ion-reorder>
         </ion-item>
       </ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false" style="margin-top: 1rem !important">
-        <ion-item
-          lines="none"
-          detail="false"
-          class="new-tool"
-          :router-link="'/project/' + $route.params.project + '/new/component'"
-        >
+    <!-- <ion-menu-toggle auto-hide="false" style="margin-top: 1rem !important">
+        <ion-item lines="none" detail="false" class="new-tool"
+          :router-link="'/project/' + $route.params.project + '/new/component'">
           <ion-icon slot="start" name="add" />
           <ion-label>New Component</ion-label>
         </ion-item>
+      </ion-menu-toggle>--> 
+    </ion-reorder-group>
+  </ion-list>
+  <ion-note class="projects-headline">
+    <h4>Services</h4>
+    <div>
+     <!-- <router-link to="/manage/projects/"
+        ><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="ellipsis-horizontal-circle-outline" /></router-link
+      >--><router-link  to="/info/services/"
+        ><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="information-circle-outline"
+        ></ion-icon></router-link
+      ><router-link :to="'/project/' + $route.params.project + '/new/service'"
+        ><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="add-circle-outline"
+        ></ion-icon
+      ></router-link></div
+  >
+  </ion-note>
+  <ion-list id="inbox-list">
+    <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
+      <ion-menu-toggle auto-hide="false" v-for="(p, i) in components" :key="i">
+        <ion-item @dblclick="
+          goToConfig(
+            '/project/' +
+            $route.params.project +
+            '/components/' +
+            p.name
+              .toLowerCase()
+              .replaceAll(' ', '-')
+              .replaceAll('ä', 'a')
+              .replaceAll('Ä', 'a')
+              .replaceAll('ö', 'o')
+              .replaceAll('Ö', 'o')
+              .replaceAll('Ü', 'u')
+              .replaceAll('ü', 'u') +
+            '/config'
+          )
+          " @click="this.selectedIndex = Number(i) + Number(tools.length) + 1" lines="none" detail="false"
+          :router-link="'/project/' +
+            $route.params.project +
+            '/components/' +
+            p.name
+              .toLowerCase()
+              .replaceAll(' ', '-')
+              .replaceAll('ä', 'a')
+              .replaceAll('Ä', 'a')
+              .replaceAll('ö', 'o')
+              .replaceAll('Ö', 'o')
+              .replaceAll('Ü', 'u')
+              .replaceAll('ü', 'u')
+            " class="hydrated menu-item" :class="{
+            selected: this.selectedIndex === Number(i) + Number(tools.length) + 1,
+          }">
+          <ion-icon slot="start" :name="getIcon(p.type)" />
+          <ion-label>Push Messages</ion-label>
+          <ion-reorder slot="end">
+            <ion-icon v-if="p.hasConfig == 1 || p.type == 'menu'" style="cursor: pointer; z-index: 1000"
+              name="cog-outline" />
+            <pre v-else></pre>
+          </ion-reorder>
+        </ion-item>
       </ion-menu-toggle>
+         <!-- <ion-menu-toggle auto-hide="false" style="margin-top: 1rem !important">
+        <ion-item lines="none" detail="false" class="new-tool"
+          :router-link="'/project/' + $route.params.project + '/new/component'">
+          <ion-icon slot="start" name="add" />
+          <ion-label>New Component</ion-label>
+        </ion-item>
+      </ion-menu-toggle>--> 
+    </ion-reorder-group>
+  </ion-list>
+  <ion-note class="projects-headline">
+    <h4>APIs</h4>
+    <div>
+      <!---<router-link to="/manage/projects/"
+        ><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="ellipsis-horizontal-circle-outline" /></router-link
+      >--><router-link to="/info/apis/"
+        ><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="information-circle-outline"
+        ></ion-icon></router-link
+      ><router-link  :to="'/project/' + $route.params.project + '/new/api'"
+        ><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="add-circle-outline"
+        ></ion-icon
+      ></router-link></div
+  >
+  </ion-note>
+  <ion-list id="inbox-list">
+    <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
+      <ion-menu-toggle auto-hide="false" v-for="(p, i) in components" :key="i">
+        <ion-item @dblclick="
+          goToConfig(
+            '/project/' +
+            $route.params.project +
+            '/components/' +
+            p.name
+              .toLowerCase()
+              .replaceAll(' ', '-')
+              .replaceAll('ä', 'a')
+              .replaceAll('Ä', 'a')
+              .replaceAll('ö', 'o')
+              .replaceAll('Ö', 'o')
+              .replaceAll('Ü', 'u')
+              .replaceAll('ü', 'u') +
+            '/config'
+          )
+          " @click="this.selectedIndex = Number(i) + Number(tools.length) + 1" lines="none" detail="false"
+          :router-link="'/project/' +
+            $route.params.project +
+            '/components/' +
+            p.name
+              .toLowerCase()
+              .replaceAll(' ', '-')
+              .replaceAll('ä', 'a')
+              .replaceAll('Ä', 'a')
+              .replaceAll('ö', 'o')
+              .replaceAll('Ö', 'o')
+              .replaceAll('Ü', 'u')
+              .replaceAll('ü', 'u')
+            " class="hydrated menu-item" :class="{
+            selected: this.selectedIndex === Number(i) + Number(tools.length) + 1,
+          }">
+          <ion-icon slot="start" :name="getIcon(p.type)" />
+          <ion-label>Weather API</ion-label>
+          <ion-reorder slot="end">
+            <ion-icon v-if="p.hasConfig == 1 || p.type == 'menu'" style="cursor: pointer; z-index: 1000"
+              name="cog-outline" />
+            <pre v-else></pre>
+          </ion-reorder>
+        </ion-item>
+      </ion-menu-toggle>
+         <!-- <ion-menu-toggle auto-hide="false" style="margin-top: 1rem !important">
+        <ion-item lines="none" detail="false" class="new-tool"
+          :router-link="'/project/' + $route.params.project + '/new/component'">
+          <ion-icon slot="start" name="add" />
+          <ion-label>New Component</ion-label>
+        </ion-item>
+      </ion-menu-toggle>--> 
     </ion-reorder-group>
   </ion-list>
 </template>
@@ -212,9 +330,9 @@ export default defineComponent({
         if (Number(event.detail.to) < Number(event.detail.from)) {
           console.log(
             "Der Schlüssel mit dem Wert " +
-              event.detail.from +
-              " ist: " +
-              schluesselMitWertEins
+            event.detail.from +
+            " ist: " +
+            schluesselMitWertEins
           );
           for (const [key, value] of Object.entries(list)) {
             console.log(
@@ -339,5 +457,29 @@ ion-item.new-tool {
 
 ion-item.new-tool ion-label {
   color: #fff;
+}
+
+.projects-headline {
+  display: flex;
+  margin: 0 !important;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.projects-headline>h4 {
+  margin: 0;
+  /*margin-top: 0.35rem !important;*/
+  padding: 0;
+}
+
+.projects-headline > div {
+display: flex;
+}
+
+.projects-headline > div > a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>
