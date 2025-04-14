@@ -11,8 +11,20 @@ if ($headers['Authorization']) {
         $userData = fetch_assoc($userData);
         $userID = $userData['userID'];
 
+        // Get project details by link
+        if (isset($_POST['getProject']) && isset($_POST['project'])) {
+            $projectName = escape_string($_POST['project']);
+            $project = query("SELECT * FROM projects WHERE link='$projectName'");
+            
+            if (mysqli_num_rows($project) == 1) {
+                $projectData = fetch_assoc($project);
+                echo echoJSON($projectData);
+            } else {
+                echo echoJSON(['error' => 'Project not found']);
+            }
+        }
         // Get all services for a project
-        if (isset($_POST['getServices']) && isset($_POST['project'])) {
+        elseif (isset($_POST['getServices']) && isset($_POST['project'])) {
             $projectName = escape_string($_POST['project']);
             $projectID = fetch_assoc(query("SELECT * FROM projects WHERE link='$projectName'"))['projectID'];
 

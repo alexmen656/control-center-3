@@ -36,6 +36,12 @@
                     <ion-badge color="warning" v-else-if="service.status === 'maintenance'">Maintenance</ion-badge>
                     <ion-badge color="danger" v-else-if="service.status === 'inactive'">Inactive</ion-badge>
                   </ion-label>
+                  <ion-button fill="clear" slot="end" @click="viewService(service)">
+                    <ion-icon slot="icon-only" name="eye-outline"></ion-icon>
+                  </ion-button>
+                  <ion-button fill="clear" slot="end" @click="viewServiceLogs(service)">
+                    <ion-icon slot="icon-only" name="list-outline"></ion-icon>
+                  </ion-button>
                 </ion-item>
                 <ion-item-options>
                   <ion-item-option @click="editService(service)" color="primary">
@@ -146,6 +152,14 @@ export default defineComponent({
           console.error("Error loading services:", error);
           this.$toast.error("Failed to load services");
         });
+    },
+    viewService(service) {
+      // Navigate to the service view
+      this.$router.push(`/project/${this.$route.params.project}/services/${service.link}`);
+    },
+    viewServiceLogs(service) {
+      // Navigate to the service view with logs section
+      this.$router.push(`/project/${this.$route.params.project}/services/${service.link}`);
     },
     editService(service) {
       this.editingService = { ...service };
