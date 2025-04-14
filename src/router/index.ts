@@ -282,6 +282,20 @@ for (const path in modules) {
   routes.push(...transformedRoutes, configRoute);
 }
 
+const services = import.meta.glob('@/user_services/*/routes.ts', { eager: true });
+
+for (const path in services) {
+  const serviceRoutes = (services[path] as { default: RouteRecordRaw[] }).default;
+
+  // Modify each route to prepend `/project/:project/`
+  const transformedRoutes = serviceRoutes.map(route => ({
+    ...route,
+    path: `/project/:project${route.path.startsWith('/') ? '/services' : '/services/'}${route.path}`,
+  }));
+
+  routes.push(...transformedRoutes);
+}
+
 // Add the specified routes
 routes.push(
   {

@@ -59,8 +59,21 @@ if ($headers['Authorization']) {
             $z++;
         }
 
-
-
+        // Get services for this project
+        $services = query("SELECT * FROM project_services WHERE projectID='$projectID'");
+        
+        if (mysqli_num_rows($services) == 0) {
+            $json['services'] = [];
+        } else {
+            $s = 0;
+            foreach ($services as $service) {
+                $json['services'][$s]["id"] = $service['id'];
+                $json['services'][$s]["icon"] = $service['icon'];
+                $json['services'][$s]["name"] = $service['name'];
+                $json['services'][$s]["link"] = $service['link'];
+                $s++;
+            }
+        }
 
     } else {
         $tools = query("SELECT * FROM tools");

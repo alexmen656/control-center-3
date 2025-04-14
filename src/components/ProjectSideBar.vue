@@ -166,55 +166,16 @@
   </ion-note>
   <ion-list id="inbox-list">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
-      <ion-menu-toggle auto-hide="false" v-for="(p, i) in components" :key="i">
-        <ion-item @dblclick="
-          goToConfig(
-            '/project/' +
-            $route.params.project +
-            '/components/' +
-            p.name
-              .toLowerCase()
-              .replaceAll(' ', '-')
-              .replaceAll('ä', 'a')
-              .replaceAll('Ä', 'a')
-              .replaceAll('ö', 'o')
-              .replaceAll('Ö', 'o')
-              .replaceAll('Ü', 'u')
-              .replaceAll('ü', 'u') +
-            '/config'
-          )
-          " @click="this.selectedIndex = Number(i) + Number(tools.length) + 1" lines="none" detail="false"
-          :router-link="'/project/' +
-            $route.params.project +
-            '/components/' +
-            p.name
-              .toLowerCase()
-              .replaceAll(' ', '-')
-              .replaceAll('ä', 'a')
-              .replaceAll('Ä', 'a')
-              .replaceAll('ö', 'o')
-              .replaceAll('Ö', 'o')
-              .replaceAll('Ü', 'u')
-              .replaceAll('ü', 'u')
-            " class="hydrated menu-item" :class="{
-            selected: this.selectedIndex === Number(i) + Number(tools.length) + 1,
-          }">
-          <ion-icon slot="start" :name="getIcon(p.type)" />
-          <ion-label>Push Messages</ion-label>
-          <ion-reorder slot="end">
-            <ion-icon v-if="p.hasConfig == 1 || p.type == 'menu'" style="cursor: pointer; z-index: 1000"
-              name="cog-outline" />
-            <pre v-else></pre>
-          </ion-reorder>
+      <ion-menu-toggle auto-hide="false" v-for="(p, i) in services" :key="i">
+        <ion-item @click="this.selectedIndex = Number(i) + Number(tools.length) + Number(components.length) + 1" 
+          lines="none" detail="false"
+          :router-link="'/project/' + $route.params.project + '/services/'+ p.link" class="hydrated menu-item" :class="{
+            selected: this.selectedIndex === Number(i) + Number(tools.length) + Number(components.length) + 1,
+          }"><!-- target="_blank"-->
+          <ion-icon slot="start" :name="p.icon || 'cog-outline'" />
+          <ion-label>{{ p.name }}</ion-label>
         </ion-item>
       </ion-menu-toggle>
-         <!-- <ion-menu-toggle auto-hide="false" style="margin-top: 1rem !important">
-        <ion-item lines="none" detail="false" class="new-tool"
-          :router-link="'/project/' + $route.params.project + '/new/component'">
-          <ion-icon slot="start" name="add" />
-          <ion-label>New Component</ion-label>
-        </ion-item>
-      </ion-menu-toggle>--> 
     </ion-reorder-group>
   </ion-list>
   <ion-note class="projects-headline">
@@ -305,8 +266,8 @@ export default defineComponent({
   setup() {
     const selectedIndex = ref(0);
     const tools = ref<{ id: number; order: number }[]>([]);
-
     const components = ref([]);
+    const services = ref([]);
     const route = useRoute();
     const ionRouter = useIonRouter();
     const list = {} as any;
@@ -396,6 +357,7 @@ export default defineComponent({
       .then((response) => {
         tools.value = response.data.tools;
         components.value = response.data.components;
+        services.value = response.data.services || [];
         //console.log(components);
         tools.value.forEach((element) => {
           // console.log(element.id);
@@ -415,6 +377,7 @@ export default defineComponent({
       tools: tools,
       selectedIndex,
       components: components,
+      services: services,
       goToConfig,
       handleReorder,
       handleFrontReorder,
@@ -429,6 +392,7 @@ export default defineComponent({
         .then((response) => {
           this.tools = response.data.tools;
           this.components = response.data.components;
+          this.services = response.data.services || [];
         });
     });
   },
