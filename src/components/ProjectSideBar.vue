@@ -147,11 +147,11 @@
   <ion-note class="projects-headline">
     <h4>Services</h4>
     <div>
-     <!-- <router-link to="/manage/projects/"
+      <router-link :to="'/project/' + $route.params.project + '/manage/services'"
         ><ion-icon
           style="color: var(--ion-color-medium-shade)"
           name="ellipsis-horizontal-circle-outline" /></router-link
-      >--><router-link  to="/info/services/"
+      ><router-link  to="/info/services/"
         ><ion-icon
           style="color: var(--ion-color-medium-shade)"
           name="information-circle-outline"
@@ -200,55 +200,23 @@
   </ion-note>
   <ion-list id="inbox-list">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
-      <ion-menu-toggle auto-hide="false" v-for="(p, i) in components" :key="i">
-        <ion-item @dblclick="
-          goToConfig(
-            '/project/' +
-            $route.params.project +
-            '/components/' +
-            p.name
-              .toLowerCase()
-              .replaceAll(' ', '-')
-              .replaceAll('ä', 'a')
-              .replaceAll('Ä', 'a')
-              .replaceAll('ö', 'o')
-              .replaceAll('Ö', 'o')
-              .replaceAll('Ü', 'u')
-              .replaceAll('ü', 'u') +
-            '/config'
-          )
-          " @click="this.selectedIndex = Number(i) + Number(tools.length) + 1" lines="none" detail="false"
-          :router-link="'/project/' +
-            $route.params.project +
-            '/components/' +
-            p.name
-              .toLowerCase()
-              .replaceAll(' ', '-')
-              .replaceAll('ä', 'a')
-              .replaceAll('Ä', 'a')
-              .replaceAll('ö', 'o')
-              .replaceAll('Ö', 'o')
-              .replaceAll('Ü', 'u')
-              .replaceAll('ü', 'u')
-            " class="hydrated menu-item" :class="{
-            selected: this.selectedIndex === Number(i) + Number(tools.length) + 1,
+      <ion-menu-toggle auto-hide="false">
+        <ion-item 
+          @click="this.selectedIndex = Number(tools.length) + Number(components.length) + Number(services.length) + 1" 
+          lines="none" 
+          detail="false"
+          :router-link="'/project/' + $route.params.project + '/apis/weather-api'" 
+          class="hydrated menu-item" 
+          :class="{
+            selected: this.selectedIndex === Number(tools.length) + Number(components.length) + Number(services.length) + 1,
           }">
-          <ion-icon slot="start" :name="getIcon(p.type)" />
+          <ion-icon slot="start" name="cloud-outline" />
           <ion-label>Weather API</ion-label>
           <ion-reorder slot="end">
-            <ion-icon v-if="p.hasConfig == 1 || p.type == 'menu'" style="cursor: pointer; z-index: 1000"
-              name="cog-outline" />
-            <pre v-else></pre>
+            <ion-icon style="cursor: pointer; z-index: 1000" name="cog-outline" />
           </ion-reorder>
         </ion-item>
       </ion-menu-toggle>
-         <!-- <ion-menu-toggle auto-hide="false" style="margin-top: 1rem !important">
-        <ion-item lines="none" detail="false" class="new-tool"
-          :router-link="'/project/' + $route.params.project + '/new/component'">
-          <ion-icon slot="start" name="add" />
-          <ion-label>New Component</ion-label>
-        </ion-item>
-      </ion-menu-toggle>--> 
     </ion-reorder-group>
   </ion-list>
 </template>
@@ -385,6 +353,7 @@ export default defineComponent({
   },
   created() {
     this.emitter.on("updateSidebar", () => {
+      //alert(1);
       axios
         .get(
           "sidebar.php?getSideBarByProjectName=" + this.$route.params.project

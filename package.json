@@ -71,6 +71,7 @@
     "vue-quill-editor": "^3.0.6",
     "vue-router": "^4.5.0",
     "vue-template-compiler": "^2.7.16",
+    "vue-toastification": "^1.7.14",
     "vue2-editor": "^2.10.3",
     "vue3-circle-progress": "^1.0.7",
     "vuex": "^4.1.0",

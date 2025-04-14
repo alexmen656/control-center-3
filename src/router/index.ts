@@ -220,6 +220,22 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/StoreOverview.vue'),
   },
   {
+    path: '/project/:project/new/service',
+    component: () => import('../views/NewService.vue'),
+  },
+  {
+    path: '/project/:project/manage/services',
+    component: () => import('../views/ManageServices.vue'),
+  },
+  {
+    path: '/project/:project/services/:service',
+    component: () => import('../views/ServiceView.vue'),
+  },
+  {
+    path: '/project/:project/services/:service/config',
+    component: () => import('../views/ServiceConfigView.vue'),
+  },
+  {
     path: '/project/:project/qr-code-generator',///:qr-code-generator
     component: () => import('../views/QrCodeGenerator.vue'),
   },

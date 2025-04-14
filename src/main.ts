@@ -39,6 +39,8 @@ import mitt from "mitt";
 
 import * as IonComponents from '@ionic/vue';
 
+import { ToastService } from "./services/ToastService";
+
 
 const debug = false;
 
@@ -57,6 +59,7 @@ Object.keys(IonComponents).forEach(key => {
 app.config.globalProperties.emitter = emitter;
 app.config.globalProperties.$axios = axios;
 app.config.globalProperties.$qs = qs;
+app.config.globalProperties.$toast = ToastService;
 
 if(debug){
 app.config.errorHandler = (err, vm, info) => {
