@@ -174,6 +174,7 @@
           }"><!-- target="_blank"-->
           <ion-icon slot="start" :name="p.icon || 'cog-outline'" />
           <ion-label>{{ p.name }}</ion-label>
+          <span class="service-status-indicator" :class="{ 'status-up': p.status === 'up', 'status-down': p.status === 'down' }"></span>
         </ion-item>
       </ion-menu-toggle>
     </ion-reorder-group>
@@ -414,5 +415,20 @@ display: flex;
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.service-status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-left: 8px;
+}
+
+.service-status-indicator.status-up {
+  background-color: green;
+}
+
+.service-status-indicator.status-down {
+  background-color: red;
 }
 </style>
