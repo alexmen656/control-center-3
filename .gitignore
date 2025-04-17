@@ -38,4 +38,5 @@ npm-debug.log*
 /backend/images/groups/*
 /backend/images/profileImages/*
 /local_server/node_modules/
+/local_server/firebase-service-account.json
 /copilot_yap
