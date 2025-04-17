@@ -37,4 +37,5 @@ npm-debug.log*
 /www
 /backend/images/groups/*
 /backend/images/profileImages/*
-/local_server/node_modules
+/local_server/node_modules/
+/copilot_yap

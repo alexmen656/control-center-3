@@ -66,6 +66,10 @@ if ($method === 'GET') {
         $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 100;
         $offset = isset($_GET['offset']) ? intval($_GET['offset']) : 0;
         $type = isset($_GET['type']) ? escape_string($_GET['type']) : null;
+        $start_date = isset($_GET['start_date']) ? escape_string($_GET['start_date']) : null;
+        $end_date = isset($_GET['end_date']) ? escape_string($_GET['end_date']) : null;
+        $message = isset($_GET['message']) ? escape_string($_GET['message']) : null;
+        $is_ping = isset($_GET['is_ping']) ? (bool)$_GET['is_ping'] : false;
         
         // Build query
         $sql = "SELECT * FROM control_center_services_logs WHERE 1=1";
@@ -82,8 +86,25 @@ if ($method === 'GET') {
             $sql .= " AND type='$type'";
         }
         
-        $sql .= " ORDER BY timestamp DESC LIMIT $limit OFFSET $offset";
+        if ($message) {
+            $sql .= " AND message LIKE '%$message%'";
+        }
         
+        if ($start_date) {
+            $sql .= " AND timestamp >= '$start_date'";
+        }
+        
+        if ($end_date) {
+            $sql .= " AND timestamp <= '$end_date'";
+        }
+        
+        // Special filter for ping logs (used for status tracking)
+        if ($is_ping) {
+            $sql .= " AND (data LIKE '%\"ping\":true%' OR message='Service status ping')";
+        }
+        
+        $sql .= " ORDER BY timestamp DESC LIMIT $limit OFFSET $offset";
+      //  echo $sql;
         $logs = query($sql);
         $result = [];
         

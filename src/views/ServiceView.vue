@@ -36,60 +36,26 @@
               </ion-card-content>
             </ion-card>
 
-            <!-- Service Logs Section -->
-            <ion-card v-if="service">
-              <ion-card-header>
-                <ion-card-title>
-                  <div class="logs-header">
-                    <div>
-                      <ion-icon name="list" style="vertical-align: middle; margin-right: 10px;"></ion-icon>
-                      Service Logs
-                    </div>
-                    <div class="logs-filters">
-                      <ion-select v-model="logTypeFilter" placeholder="Filter by type" interface="popover">
-                        <ion-select-option value="">All Types</ion-select-option>
-                        <ion-select-option value="info">Info</ion-select-option>
-                        <ion-select-option value="warn">Warning</ion-select-option>
-                        <ion-select-option value="error">Error</ion-select-option>
-                        <ion-select-option value="success">Success</ion-select-option>
-                      </ion-select>
-                      <ion-button size="small" @click="fetchLogs">
-                        <ion-icon slot="icon-only" name="refresh"></ion-icon>
-                      </ion-button>
-                    </div>
-                  </div>
-                </ion-card-title>
-              </ion-card-header>
+            <!-- Service Status History Section -->
+            <ion-card v-if="service && projectId">
               <ion-card-content>
-                <div class="logs-container">
-                  <ion-list v-if="logs.length > 0">
-                    <ion-item v-for="log in logs" :key="log.id" lines="full" button @click="showLogDetails(log)">
-                      <ion-icon :name="getLogIcon(log.type)" :color="getLogColor(log.type)" slot="start"></ion-icon>
-                      <ion-label>
-                        <div class="log-header">
-                          <span class="log-message">{{ log.message }}</span>
-                          <span class="log-time">{{ formatDate(log.timestamp) }}</span>
-                        </div>
-                        <p class="log-env" v-if="log.environment">
-                          Environment: {{ log.environment }}
-                        </p>
-                      </ion-label>
-                    </ion-item>
-                  </ion-list>
-                  <div v-else-if="!loadingLogs" class="empty-logs">
-                    <ion-icon name="document-text-outline" size="large"></ion-icon>
-                    <p>No logs available for this service</p>
-                  </div>
-                  <div v-if="loadingLogs" class="loading-logs">
-                    <ion-spinner name="circular"></ion-spinner>
-                    <p>Loading logs...</p>
-                  </div>
-                  
-                  <ion-infinite-scroll @ionInfinite="loadMoreLogs($event)" threshold="100px">
-                    <ion-infinite-scroll-content loading-spinner="circular" loading-text="Loading more logs...">
-                    </ion-infinite-scroll-content>
-                  </ion-infinite-scroll>
-                </div>
+                <ServiceStatusHistory
+                  title="Service Status Überwachung"
+                  :projectId="projectId"
+                  :service="service.link"
+                />
+              </ion-card-content>
+            </ion-card>
+
+            <!-- Service Logs Section -->
+            <ion-card v-if="service && projectId">
+              <ion-card-content>
+                <ServiceLogs
+                  title="Service Logs"
+                  :projectId="projectId"
+                  :service="service.link"
+                  :limit="logLimit"
+                />
               </ion-card-content>
             </ion-card>
 
@@ -188,11 +154,15 @@
 
 <script>
 import ApiKeyManager from '../components/ApiKeyManager.vue';
+import ServiceStatusHistory from '../components/ServiceStatusHistory.vue';
+import ServiceLogs from '../components/ServiceLogs.vue';
 
 export default {
   name: 'ServiceView',
   components: {
-    ApiKeyManager
+    ApiKeyManager,
+    ServiceStatusHistory,
+    ServiceLogs
   },
   data() {
     return {
