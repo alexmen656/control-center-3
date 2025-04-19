@@ -30,6 +30,9 @@ import "@ionic/vue/css/display.css";
 import "./theme/variables.scss";
 import "./theme/app.css";
 
+// Fix for highlight.js import issue with simple-code-editor
+import * as hljs from 'highlight.js';
+window.hljs = hljs;
 
 import axios from "axios";
 import qs from "qs";
