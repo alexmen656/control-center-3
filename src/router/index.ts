@@ -167,20 +167,24 @@ const routes: Array<RouteRecordRaw> = [
     path: '/project/:project/:url(.*)',
     component: () => import('../views/ProjectView.vue'),
   },*/
+  /*{
+    path: '/project/:project/pages',
+    component: () => import('../views/PagesView.vue'),
+  },*/
   {
-    path: '/project/:project/components',
-    component: () => import('../views/ComponentsView.vue'),
+    path: '/project/:project/manage/pages',
+    component: () => import('../views/PagesView.vue'),
   },
   {
-    path: '/project/:project/new/component',
+    path: '/project/:project/new/page',
     component: () => import('../views/NewComponent.vue'),
   },
   {
-    path: '/project/:project/components/:component',
-    component: () => import('../views/ComponentView.vue'),
+    path: '/project/:project/page/:page',
+    component: () => import('../views/PageView.vue'),
   },
   {
-    path: '/project/:project/components/:component/config',
+    path: '/project/:project/page/:page/config',
     component: () => import('../views/ComponentSettings.vue'),
   },
   {

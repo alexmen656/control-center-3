@@ -72,18 +72,18 @@
     </ion-reorder-group>
   </ion-list>
   <ion-note class="projects-headline">
-    <h4>Componets</h4>
+    <h4>Pages</h4>
     <div>
-      <router-link :to="'/project/' + $route.params.project + '/components'"
+      <router-link :to="'/project/' + $route.params.project + '/manage/pages'"
         ><ion-icon
           style="color: var(--ion-color-medium-shade)"
           name="ellipsis-horizontal-circle-outline" /></router-link
-      ><router-link to="/info/projects/"
+      ><router-link to="/info/pages/"
         ><ion-icon
           style="color: var(--ion-color-medium-shade)"
           name="information-circle-outline"
         ></ion-icon></router-link
-      ><router-link :to="'/project/' + $route.params.project + '/new/component'"
+      ><router-link :to="'/project/' + $route.params.project + '/new/page'"
         ><ion-icon
           style="color: var(--ion-color-medium-shade)"
           name="add-circle-outline"
@@ -98,7 +98,7 @@
           goToConfig(
             '/project/' +
             $route.params.project +
-            '/components/' +
+            '/page/' +
             p.name
               .toLowerCase()
               .replaceAll(' ', '-')
@@ -113,7 +113,7 @@
           " @click="this.selectedIndex = Number(i) + Number(tools.length) + 1" lines="none" detail="false"
           :router-link="'/project/' +
             $route.params.project +
-            '/components/' +
+            '/page/' +
             p.name
               .toLowerCase()
               .replaceAll(' ', '-')

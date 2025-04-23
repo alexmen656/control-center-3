@@ -42,10 +42,10 @@ if (isset($headers['Authorization'])) {
             "",
             "new-tool",
             "manage/tools",
-            "manage/components",
-            "new/component",
+            "manage/pages",
+            "new/page",
             "info",
-            "components/main",
+            "page/main",
             "module-store",
             "package-manager",
             "filesystem"
@@ -77,8 +77,8 @@ if (isset($headers['Authorization'])) {
         chmod("/www/" . $href . "/index.php", 0777);
         file_put_contents("/www/" . $href . "/main.php", "//Put here main content of your site", 0777);
         chmod("/www/" . $href . "/main.php", 0777);
-        $mainComponent = query("INSERT INTO project_components VALUES (0, 'main.php', 'script', 'Main', 'main', NOW(), NOW(), 'System', '1234567890', '$projectID')");
-        $pages = query("INSERT INTO control_center_pages VALUES (0, '$url1', 'true', '', 'Project Dashboard', '', 0), (0, '$url2', 'true', '', 'Create new tool', '', 0), (0, '$url3', 'true', '', 'Manage Tools', '', 0), (0, '$url4', 'true', '', 'Manage Components', '', 0), (0, '$url5', 'true', '', 'Create New Component', '', 0), (0, '$url6', 'true', '', 'Project Info', '', 0), (0, '$url7', 'true', '', 'Main', '', 0), (0, '$url8', 'false', '', 'Module Store', '', 0), (0, '$url9', 'true', '', 'Package Manager', '', 0), (0, '$url10', 'true', 'file-tray-full-outlinepr', 'Filesystem', '', 0)");
+        $mainComponent = query("INSERT INTO project_components VALUES (0, 'main.php', 'script', 'Main', 'main', NOW(), NOW(), 'System', '1234567890', '$projectID', NULL)");
+        $pages = query("INSERT INTO control_center_pages VALUES (0, '$url1', 'true', '', 'Project Dashboard', '', 0), (0, '$url2', 'true', '', 'Create new tool', '', 0), (0, '$url3', 'true', '', 'Manage Tools', '', 0), (0, '$url4', 'true', '', 'Manage Pages', '', 0), (0, '$url5', 'true', '', 'Create New Component', '', 0), (0, '$url6', 'true', '', 'Project Info', '', 0), (0, '$url7', 'true', '', 'Main', '', 0), (0, '$url8', 'false', '', 'Module Store', '', 0), (0, '$url9', 'true', '', 'Package Manager', '', 0), (0, '$url10', 'true', 'file-tray-full-outlinepr', 'Filesystem', '', 0)");
         foreach($urls as $u){
             $page = query("SELECT * FROM control_center_pages WHERE url='$u'");
             if(mysqli_num_rows($page) == 1){
