@@ -56,6 +56,27 @@ if ($headers['Authorization']) {
             // $json['tools'][$z]["icon"] = $c['icon'];
             $json['components'][$z]["name"] = $c['name'];
             $json['components'][$z]["type"] = $c['type'];
+            
+            // Add 3 test subcomponents for each component
+            $componentId = $c['id'];
+            $json['componentSubItems'][$componentId] = [
+                [
+                    'id' => $componentId . '-sub1',
+                    'name' => 'Sub 1 for ' . $c['name'],
+                    'type' => 'script'
+                ],
+                [
+                    'id' => $componentId . '-sub2',
+                    'name' => 'Sub 2 for ' . $c['name'],
+                    'type' => 'image'
+                ],
+                [
+                    'id' => $componentId . '-sub3',
+                    'name' => 'Sub 3 for ' . $c['name'],
+                    'type' => 'menu'
+                ]
+            ];
+            
             $z++;
         }
 
