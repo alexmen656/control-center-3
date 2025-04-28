@@ -26,31 +26,49 @@
             <!--  <ion-item-divider>-->
               <!-- <ion-label>Components ({{ page.components ? page.components.length : 0 }})</ion-label>--> 
              <!-- </ion-item-divider>-->
-              <ion-item v-if="page.components && page.components.length > 0" 
+             
+              <ion-reorder-group :disabled="!isComponentReorderingEnabled" @ionItemReorder="handleComponentReorder($event)">
+                <ion-item-sliding v-if="page.components && page.components.length > 0" 
                         v-for="(component, index) in page.components" 
-                        :key="component.component_id"
+                        :key="component.component_id">
+                  <ion-item
                         :button="true"
                         @click="selectComponent(component)">
-                <ion-icon name="code-outline" slot="start"></ion-icon>
-                <ion-label>
-                  <h3>{{ getComponentName(component, index) }}</h3>
-                  <p>ID: {{ component.component_id }}</p>
-                  <p>Position: {{ component.position }}</p>
-                </ion-label>
-                <ion-badge v-if="currentComponentId === component.component_id" color="primary" slot="end">Selected</ion-badge>
-              </ion-item>
-              <ion-item v-if="!page.components || page.components.length === 0">
-                <ion-label color="medium">
-                  <p>No components available</p>
-                </ion-label>
-              </ion-item>
-              <!-- Add New Component Button -->
-              <ion-item button @click="openNewComponentModal()">
-                <ion-icon name="add-circle-outline" slot="start" color="primary"></ion-icon>
-                <ion-label color="primary">
-                  <h3>Add new component</h3>
-                </ion-label>
-              </ion-item>
+                    <div class="component-icon-container">
+                      <ion-icon name="code-outline" class="component-icon"></ion-icon>
+                    </div>
+                    <ion-label>
+                      <h3>{{ getComponentName(component, index) }}</h3>
+                      <p>ID: {{ component.component_id }}</p>
+                      <p>Position: {{ component.position }}</p>
+                    </ion-label>
+                    <ion-badge v-if="currentComponentId === component.component_id" color="primary" slot="end">Selected</ion-badge>
+                    <ion-reorder slot="end"></ion-reorder>
+                  </ion-item>
+                  <ion-item-options side="end">
+                    <ion-item-option color="danger" @click="confirmDeleteComponent(component)">
+                      <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                    </ion-item-option>
+                  </ion-item-options>
+                </ion-item-sliding>
+                <ion-item v-if="!page.components || page.components.length === 0">
+                  <ion-label color="medium">
+                    <p>No components available</p>
+                  </ion-label>
+                </ion-item>
+              </ion-reorder-group>
+              
+              <!-- Component Management Buttons -->
+              <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                <ion-button size="small" fill="outline" @click="toggleComponentReordering">
+                  <ion-icon :name="isComponentReorderingEnabled ? 'checkmark-outline' : 'reorder-three-outline'" slot="start"></ion-icon>
+                  {{ isComponentReorderingEnabled ? 'Done Reordering' : 'Reorder Components' }}
+                </ion-button>
+                <ion-button size="small" color="primary" @click="openNewComponentModal()">
+                  <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+                  Add Component
+                </ion-button>
+              </div>
             </ion-list>
           </ion-card-content>
         </ion-card>
@@ -75,26 +93,8 @@
             </div>
           </ion-card-content>
         </ion-card>
-
-          <!--   <div v-if="type == 'script'" style="width: 100%;">
-          <ion-list lines="inset" class="cmps">
-            <ion-item v-for="cmp in cmps" :key="cmp">
-              <div style="display: flex; align-items: center; width: 100%;">
-                <ion-icon style="width: 36px; height: 36px; margin-right: 10px;" :name="cmp.icon" />
-                <ion-label>{{ cmp.name }} &lt;{{ cmp.tag }}/&gt;</ion-label>
-              </div>
-            </ion-item>
-       <ion-item>
-              <div style="display: flex; justify-content: center; align-items: center; width: 100%;">
-                <ion-button @click="setOpen(true)">
-                  <ion-icon name="add-outline"></ion-icon>
-                  <span>New Component</span>
-                </ion-button>
-              </div>
-            </ion-item>
-          </ion-list>
-        </div>-->
-
+        
+        <!-- Rest of template content... -->
         <div v-if="type === 'menu'" style="width: 100%;">
           <ion-list style="width: 100%">
             <ion-reorder-group :disabled="false" @ionItemReorder="handleReorder($event)">
@@ -125,6 +125,25 @@
       <ion-col size="1" />
     </ion-row>
   </ion-grid>
+  
+  <!-- Component-Deletion Alert -->
+  <ion-alert
+    :is-open="isDeleteComponentAlertOpen"
+    header="Delete Component"
+    message="Are you sure you want to delete this component? This action cannot be undone."
+    :buttons="[
+      {
+        text: 'Cancel',
+        role: 'cancel',
+        handler: () => { isDeleteComponentAlertOpen = false; }
+      },
+      {
+        text: 'Delete',
+        role: 'confirm',
+        handler: () => { deleteComponent(); }
+      }
+    ]"
+  ></ion-alert>
   
   <ion-modal :is-open="isOpen" ref="modal">
     <ion-header>
@@ -183,7 +202,7 @@ export default defineComponent({
     const setOpen = (open) => {
       isOpen.value = open;
     };
-
+    
     try {
       axios
         .post(
@@ -314,6 +333,9 @@ export default defineComponent({
       newComponentHTML: "",
       availableTemplates: [],
       selectedTemplateId: null,
+      isComponentReorderingEnabled: false,
+      isDeleteComponentAlertOpen: false,
+      componentToDelete: null,
     };
   },
   async mounted() {
@@ -555,16 +577,206 @@ export default defineComponent({
       this.isNewComponentModal = true;
       this.setOpen(true);
     },
+    toggleComponentReordering() {
+      this.isComponentReorderingEnabled = !this.isComponentReorderingEnabled;
+    },
+    confirmDeleteComponent(component) {
+      this.componentToDelete = component;
+      this.isDeleteComponentAlertOpen = true;
+    },
+    deleteComponent() {
+      if (!this.componentToDelete) return;
+      
+      const componentId = this.componentToDelete.component_id;
+      
+      // Send request to delete component
+      axios.post(
+        "web_pages.php",
+        qs.stringify({
+          deleteComponent: "deleteComponent",
+          project: this.$route.params.project,
+          pageName: this.$route.params.page,
+          component_id: componentId
+        })
+      )
+      .then(response => {
+        if (response.data.success) {
+          // Remove component from local array
+          this.page.components = this.page.components.filter(c => c.component_id !== componentId);
+          
+          // Clear current component if it was the deleted one
+          if (this.currentComponentId === componentId) {
+            this.currentComponent = null;
+            this.currentComponentHTML = "";
+            this.currentComponentId = null;
+          }
+          
+          // Show success message
+          this.$ionic.toastController
+            .create({
+              message: "Component deleted successfully",
+              duration: 2000,
+              position: "bottom",
+              color: "success"
+            })
+            .then(toast => toast.present());
+            
+          // Update sidebar if needed
+          this.emitter.emit("updateSidebar");
+        } else {
+          // Show error message
+          this.$ionic.toastController
+            .create({
+              message: "Error deleting component: " + (response.data.message || "Unknown error"),
+              duration: 3000,
+              position: "bottom",
+              color: "danger"
+            })
+            .then(toast => toast.present());
+        }
+      })
+      .catch(error => {
+        console.error("Error deleting component:", error);
+        
+        // Show error message
+        this.$ionic.toastController
+          .create({
+            message: "Error deleting component. Please try again.",
+            duration: 3000,
+            position: "bottom",
+            color: "danger"
+          })
+          .then(toast => toast.present());
+      });
+      
+      // Reset delete dialog state
+      this.componentToDelete = null;
+      this.isDeleteComponentAlertOpen = false;
+    },
+    handleComponentReorder(event) {
+      // Complete the reorder and get the new array ordering
+      const reorderedComponents = event.detail.complete(this.page.components);
+      
+      // Update the positions
+      const reorderedComponentsWithPositions = reorderedComponents.map((component, index) => {
+        component.position = index + 1; // Position is 1-based in most backend implementations
+        return component;
+      });
+      
+      // Update local data
+      this.page.components = reorderedComponentsWithPositions;
+      
+      // Save the new order to the backend
+      this.saveComponentOrdering();
+      
+      // Show success message
+      this.$ionic.toastController
+        .create({
+          message: "Component order updated",
+          duration: 2000,
+          position: "bottom",
+          color: "success"
+        })
+        .then(toast => toast.present());
+    },
+    saveComponentOrdering() {
+      // Extract just the component IDs and positions
+      const componentPositions = this.page.components.map(component => ({
+        component_id: component.component_id,
+        position: component.position
+      }));
+      
+      // Send the updated ordering to the backend
+      axios.post(
+        "web_pages.php",
+        qs.stringify({
+          updateComponentsOrder: "updateComponentsOrder",
+          project: this.$route.params.project,
+          pageName: this.$route.params.page,
+          components: JSON.stringify(componentPositions)
+        })
+      )
+      .then(response => {
+        if (!response.data.success) {
+          console.error("Error saving component order:", response.data.message);
+          
+          // Show error message
+          this.$ionic.toastController
+            .create({
+              message: "Error saving component order",
+              duration: 2000,
+              position: "bottom",
+              color: "danger"
+            })
+            .then(toast => toast.present());
+        }
+      })
+      .catch(error => {
+        console.error("Error saving component order:", error);
+        
+        // Show error message
+        this.$ionic.toastController
+          .create({
+            message: "Error saving component order",
+            duration: 2000,
+            position: "bottom",
+            color: "danger"
+          })
+          .then(toast => toast.present());
+      });
+    },
   },
 });
 </script>
 
-<style>
+<style scoped>
 .component-code-container {
   background-color: #f8f8f8;
   border: 1px solid #ddd;
   padding: 10px;
   border-radius: 4px;
+}
+
+.component-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--ion-color-light);
+  margin-right: 16px;
+}
+
+.component-icon {
+  font-size: 20px;
+  color: var(--ion-color-primary);
+}
+
+/* Dark mode optimizations */
+@media (prefers-color-scheme: dark) {
+  .component-icon-container {
+    background-color: var(--ion-color-dark-shade);
+  }
+  
+  ion-list {
+    --ion-background-color: #000;
+    --ion-item-background: #000;
+  }
+  
+  ion-item {
+    --ion-background-color: #000;
+    --background: #000;
+  }
+  
+  .component-code-container {
+    background-color: #1e1e1e;
+    border-color: #333;
+  }
+  
+  pre {
+    color: var(--ion-color-light);
+  }
 }
 
 img {

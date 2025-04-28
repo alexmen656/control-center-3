@@ -414,6 +414,146 @@ if ($headers['Authorization']) {
           'message' => 'Project not found'
         ]);
       }
+    } elseif (isset($_POST['updateComponentsOrder']) && isset($_POST['project']) && isset($_POST['pageName']) && isset($_POST['components'])) {
+      $project = escape_string($_POST['project']);
+      $pageName = escape_string($_POST['pageName']);
+      $componentsData = json_decode($_POST['components'], true);
+      
+      if (!is_array($componentsData)) {
+        echo json_encode([
+          'success' => false,
+          'message' => 'Invalid components data format'
+        ]);
+        exit;
+      }
+      
+      // Get project ID first
+      $projectQuery = query("SELECT id FROM control_center_web_builder_projects WHERE name='$project'");
+      if (mysqli_num_rows($projectQuery) == 1) {
+        $projectData = fetch_assoc($projectQuery);
+        $projectId = $projectData['id'];
+        
+        // Find page ID
+        $pageQuery = query("SELECT id FROM control_center_web_builder_pages WHERE project_id='$projectId' AND slug='$pageName'");
+        if (mysqli_num_rows($pageQuery) == 1) {
+          $pageData = fetch_assoc($pageQuery);
+          $pageId = $pageData['id'];
+          
+          // Begin transaction for updating all component positions
+          mysqli_begin_transaction($con);
+          
+          $success = true;
+          foreach ($componentsData as $component) {
+            if (!isset($component['component_id']) || !isset($component['position'])) {
+              $success = false;
+              break;
+            }
+            
+            $componentId = escape_string($component['component_id']);
+            $position = (int)$component['position'];
+            
+            // Update the component position
+            query("UPDATE control_center_web_builder_components 
+                  SET position='$position', updated_at=NOW() 
+                  WHERE page_id='$pageId' AND component_id='$componentId'");
+            
+            if (mysqli_affected_rows($con) <= 0) {
+              $success = false;
+              break;
+            }
+          }
+          
+          if ($success) {
+            // Commit changes if all updates were successful
+            mysqli_commit($con);
+            echo json_encode([
+              'success' => true,
+              'message' => 'Component order updated successfully'
+            ]);
+          } else {
+            // Rollback changes if any update failed
+            mysqli_rollback($con);
+            echo json_encode([
+              'success' => false,
+              'message' => 'Failed to update component order'
+            ]);
+          }
+        } else {
+          echo json_encode([
+            'success' => false,
+            'message' => 'Page not found'
+          ]);
+        }
+      } else {
+        echo json_encode([
+          'success' => false,
+          'message' => 'Project not found'
+        ]);
+      }
+    } elseif (isset($_POST['deleteComponent']) && isset($_POST['project']) && isset($_POST['pageName']) && isset($_POST['component_id'])) {
+      $project = escape_string($_POST['project']);
+      $pageName = escape_string($_POST['pageName']);
+      $componentId = escape_string($_POST['component_id']);
+      
+      // Get project ID first
+      $projectQuery = query("SELECT id FROM control_center_web_builder_projects WHERE name='$project'");
+      if (mysqli_num_rows($projectQuery) == 1) {
+        $projectData = fetch_assoc($projectQuery);
+        $projectId = $projectData['id'];
+        
+        // Find page ID
+        $pageQuery = query("SELECT id FROM control_center_web_builder_pages WHERE project_id='$projectId' AND slug='$pageName'");
+        if (mysqli_num_rows($pageQuery) == 1) {
+          $pageData = fetch_assoc($pageQuery);
+          $pageId = $pageData['id'];
+          
+          // Check if component exists
+          $componentQuery = query("SELECT id FROM control_center_web_builder_components WHERE page_id='$pageId' AND component_id='$componentId'");
+          if (mysqli_num_rows($componentQuery) == 1) {
+            // Delete the component
+            query("DELETE FROM control_center_web_builder_components WHERE page_id='$pageId' AND component_id='$componentId'");
+            
+            if (mysqli_affected_rows($con) > 0) {
+              // Renumber remaining components to ensure consistent positions
+              $remainingComponents = query("SELECT id, position FROM control_center_web_builder_components 
+                                           WHERE page_id='$pageId' 
+                                           ORDER BY position ASC");
+              
+              $position = 1;
+              while ($component = fetch_assoc($remainingComponents)) {
+                $componentDbId = $component['id'];
+                query("UPDATE control_center_web_builder_components SET position='$position', updated_at=NOW() WHERE id='$componentDbId'");
+                $position++;
+              }
+              
+              echo json_encode([
+                'success' => true,
+                'message' => 'Component deleted successfully'
+              ]);
+            } else {
+              echo json_encode([
+                'success' => false,
+                'message' => 'Failed to delete component'
+              ]);
+            }
+          } else {
+            echo json_encode([
+              'success' => false,
+              'message' => 'Component not found'
+            ]);
+          }
+        } else {
+          echo json_encode([
+            'success' => false,
+            'message' => 'Page not found'
+          ]);
+        }
+      } else {
+        echo json_encode([
+          'success' => false,
+          'message' => 'Project not found'
+        ]);
+      }
     } else {
       // If no valid request is made, return an error
       echo json_encode([
