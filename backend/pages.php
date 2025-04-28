@@ -33,6 +33,7 @@ function useTemplate2($temp,$data=[]){
   }
 
 $i=0;
+// Get regular pages
 $pages = query("SELECT * FROM control_center_pages");
 foreach($pages as $p){
     $pageID = $p['pageID'];
@@ -48,6 +49,78 @@ foreach($pages as $p){
     $json[$i]['html']= useTemplate2($p['html'], $replaces);
     $json[$i]['pageID']=$p['pageID'];
     $i++;
+}
+
+// Get all webbuilder projects
+$webbuilderProjects = query("SELECT id, name, description FROM control_center_web_builder_projects");
+foreach($webbuilderProjects as $project) {
+    $projectId = $project['id'];
+    $projectName = $project['name'];
+    $projectSlug = strtolower(str_replace(" ", "-", $projectName));
+    
+    // Get all pages for this project
+    $projectPages = query("SELECT id, name, slug, title, meta_description, is_home FROM control_center_web_builder_pages WHERE project_id='$projectId'");
+    
+    foreach($projectPages as $page) {
+        $pageId = $page['id'];
+        $pageName = $page['name'];
+        $pageSlug = $page['slug'];
+        
+        // Get all components for this page
+        $components = query("SELECT id, component_id, html_code, position, original_template_id FROM control_center_web_builder_components WHERE page_id='$pageId' ORDER BY position ASC");
+        
+        // Combine all HTML code from components for the page view
+     /*   $htmlContent = "";
+        foreach($components as $component) {
+            $htmlContent .= $component['html_code'] . "\n";
+        }*/
+        
+        // Add the page to the JSON response
+        $json[$i]['id'] = "web_" . $projectId . "_" . $pageId;
+        $json[$i]['url'] = "project/" . $projectSlug . "/page/" . $pageSlug;
+        $json[$i]['showTitle'] = true;
+        $json[$i]['icon'] = $page['is_home'] ? "home-outline" : "document-outline";
+        $json[$i]['title'] = $page['title'] ?: $pageName;
+        $json[$i]['html'] = "";
+        $json[$i]['pageID'] = "web_" . $projectId . "_" . $pageId;
+     /*   $json[$i]['meta_description'] = $page['meta_description'];
+        $json[$i]['is_webbuilder'] = true;
+        $json[$i]['project_id'] = $projectId;
+        $json[$i]['page_id'] = $pageId;*/
+        $i++;
+        
+        // Add individual component routes
+        foreach($components as $component) {
+            $componentId = $component['component_id'];
+            // Create a meaningful name for the component
+            $componentName = "Component " . ($component['position'] + 1);
+            
+            // Check if this is a template-based component and get the template name
+            if (!empty($component['original_template_id'])) {
+                $templateQuery = query("SELECT title FROM control_center_web_builder_templates WHERE id=" . $component['original_template_id']);
+                if (mysqli_num_rows($templateQuery) > 0) {
+                    $template = fetch_assoc($templateQuery);
+                    $componentName = $template['title'];
+                }
+            }
+            
+            // Add component as a route
+            $json[$i]['id'] = "component_" . $component['id'];
+            $json[$i]['url'] = "project/" . $projectSlug . "/page/" . $pageSlug . "/" .str_replace(["ö", "ü", "ä", " "], ["oe", "ue", "ae", "-"], strtolower($componentName));// $componentId;
+            $json[$i]['showTitle'] = true;
+            $json[$i]['icon'] = "cube-outline";
+            $json[$i]['title'] = $componentName;
+            $json[$i]['html'] = "";
+            $json[$i]['pageID'] = "component_" . $component['id'];
+            /*$json[$i]['is_webbuilder'] = true;
+            $json[$i]['is_component'] = true;
+            $json[$i]['project_id'] = $projectId;
+            $json[$i]['page_id'] = $pageId;
+            $json[$i]['component_id'] = $componentId;
+            $json[$i]['position'] = $component['position'];*/
+            $i++;
+        }
+    }
 }
 
 echo echoJson($json);

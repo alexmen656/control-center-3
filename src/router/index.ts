@@ -188,6 +188,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/ComponentSettings.vue'),
   },
   {
+    path: '/project/:project/page/:page/:component',
+    component: () => import('../views/PageComponent.vue'),
+  },
+  {
     path: '/project/:project',
     component: () => import('../views/ProjectView.vue'),
   },

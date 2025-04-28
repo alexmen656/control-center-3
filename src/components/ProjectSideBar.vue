@@ -85,15 +85,30 @@
   </ion-note>
   <ion-list id="inbox-list">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
-        <template v-for="(component, i) in components" :key="i">
-          <!-- Parent component -->
-          <ion-menu-toggle auto-hide="false">
-            <ion-item @dblclick="
-              goToConfig(
-                '/project/' +
+      <template v-for="(component, i) in components" :key="i">
+        <!-- Parent component -->
+        <ion-menu-toggle auto-hide="false">
+          <ion-item @dblclick="
+            goToConfig(
+              '/project/' +
+              $route.params.project +
+              '/page/' +
+              component.name
+                .toLowerCase()
+                .replaceAll(' ', '-')
+                .replaceAll('ä', 'a')
+                .replaceAll('Ä', 'a')
+                .replaceAll('ö', 'o')
+                .replaceAll('Ö', 'o')
+                .replaceAll('Ü', 'u')
+                .replaceAll('ü', 'u') +
+              '/config'
+            )
+            " @click="toggleComponentExpanded(component.id)" lines="none" detail="false" :router-link="'/project/' +
                 $route.params.project +
                 '/page/' +
-                component.name
+                component.slug
+                /*component.name
                   .toLowerCase()
                   .replaceAll(' ', '-')
                   .replaceAll('ä', 'a')
@@ -101,59 +116,53 @@
                   .replaceAll('ö', 'o')
                   .replaceAll('Ö', 'o')
                   .replaceAll('Ü', 'u')
-                  .replaceAll('ü', 'u') +
-                '/config'
-              )
-              " @click="toggleComponentExpanded(component.id)" lines="none" detail="false" :router-link="'/project/' +
-                $route.params.project +
-                '/page/' +
-                component.name
-                  .toLowerCase()
-                  .replaceAll(' ', '-')
-                  .replaceAll('ä', 'a')
-                  .replaceAll('Ä', 'a')
-                  .replaceAll('ö', 'o')
-                  .replaceAll('Ö', 'o')
-                  .replaceAll('Ü', 'u')
-                  .replaceAll('ü', 'u')
+                  .replaceAll('ü', 'u')*/
                 " class="hydrated menu-item parent-component" :class="{
                   selected: selectedIndex === Number(i) + Number(tools.length) + 1,
                 }">
-              <ion-icon slot="start" :name="getIcon(component.type)" />
-              <ion-label>{{ component.name[0].toUpperCase() }}{{ component.name.substring(1) }}</ion-label>
-              <ion-icon :name="isComponentExpanded(component.id) ? 'chevron-down-outline' : 'chevron-forward-outline'" slot="end"></ion-icon>
-              <ion-reorder slot="end">
-                <ion-icon v-if="component.hasConfig == 1 || component.type == 'menu'"
-                  style="cursor: pointer; z-index: 1000" name="cog-outline" />
-                <pre v-else></pre>
-              </ion-reorder>
+            <ion-icon slot="start" :name="getIcon(component.type)" />
+            <ion-label>{{ component.name[0].toUpperCase() }}{{ component.name.substring(1) }}</ion-label>
+            <ion-icon :name="isComponentExpanded(component.id) ? 'chevron-down-outline' : 'chevron-forward-outline'"
+              slot="end"></ion-icon>
+            <ion-reorder slot="end">
+              <ion-icon v-if="component.hasConfig == 1 || component.type == 'menu'"
+                style="cursor: pointer; z-index: 1000" name="cog-outline" />
+              <pre v-else></pre>
+            </ion-reorder>
+          </ion-item>
+        </ion-menu-toggle>
+
+        <!-- Sub components with improved tree structure -->
+        <div v-if="isComponentExpanded(component.id)" class="sub-components">
+          <ion-menu-toggle auto-hide="false" v-for="(subComp, j) in getSubComponents(component.id)" :key="`${i}-${j}`"
+            class="sub-item-container">
+            <div class="horizontal-tree-line"></div>
+            <ion-item @click="selectedIndex = Number(i) + Number(tools.length) + 1 + Number(j) + 0.1" lines="none"
+              detail="false" :router-link="'/project/' +
+                $route.params.project +
+                '/page/' +
+                component.slug
+                /*component.name
+                  .toLowerCase()
+                  .replaceAll(' ', '-')
+                  .replaceAll('ä', 'a')
+                  .replaceAll('Ä', 'a')
+                  .replaceAll('ö', 'o')
+                  .replaceAll('Ö', 'o')
+                  .replaceAll('Ü', 'u')
+                  .replaceAll('ü', 'u')*/
+                + '/' +
+                subComp.name
+                  .toLowerCase()
+                  .replaceAll(' ', '-')" class="hydrated menu-item sub-component-item" :class="{
+                      selected: selectedIndex === Number(i) + Number(tools.length) + 1 + Number(j) + 0.1,
+                    }">
+            <!--  <ion-icon :name="getIcon(subComp.type)" /><--slot="start"---->
+              <ion-label>{{ subComp.name }}</ion-label>
             </ion-item>
           </ion-menu-toggle>
-
-          <!-- Sub components with improved tree structure -->
-          <div v-if="isComponentExpanded(component.id)" class="sub-components">
-            <ion-menu-toggle auto-hide="false" v-for="(subComp, j) in getSubComponents(component.id)" :key="`${i}-${j}`" class="sub-item-container">
-              <div class="horizontal-tree-line"></div>
-              <ion-item 
-                @click="selectedIndex = Number(i) + Number(tools.length) + 1 + Number(j) + 0.1" 
-                lines="none" 
-                detail="false" 
-                :router-link="'/project/' +
-                  $route.params.project +
-                  '/page/' +
-                  subComp.name
-                    .toLowerCase()
-                    .replaceAll(' ', '-')" 
-                class="hydrated menu-item sub-component-item" 
-                :class="{
-                  selected: selectedIndex === Number(i) + Number(tools.length) + 1 + Number(j) + 0.1,
-                }">
-                <ion-icon slot="start" :name="getIcon(subComp.type)" />
-                <ion-label>{{ subComp.name }}</ion-label>
-              </ion-item>
-            </ion-menu-toggle>
-          </div>
-        </template>
+        </div>
+      </template>
     </ion-reorder-group>
   </ion-list>
   <ion-note class="projects-headline">
@@ -459,7 +468,8 @@ ion-item.new-tool ion-label {
   left: 0;
   width: 0;
   border-left: 1px dashed var(--ion-color-medium-shade);
-  height: 83.6%; /* Nur bis 85% der Höhe, nicht bis ganz zum Ende */
+  height: 83.6%;
+  /* Nur bis 85% der Höhe, nicht bis ganz zum Ende */
 }
 
 .sub-components-wrapper {
@@ -477,9 +487,11 @@ ion-item.new-tool ion-label {
 .sub-component-item::before {
   content: '';
   position: absolute;
-  left: -16px; /* Wichtig: weiter links, damit es an der vertikalen Linie beginnt */
+  left: -16px;
+  /* Wichtig: weiter links, damit es an der vertikalen Linie beginnt */
   top: 50%;
-  width: 16px; /* Länger, um die gesamte Strecke abzudecken */
+  width: 16px;
+  /* Länger, um die gesamte Strecke abzudecken */
   height: 1px;
   background-color: var(--ion-color-medium-shade);
   border-top: 1px dashed var(--ion-color-medium-shade);
@@ -494,7 +506,8 @@ ion-item.new-tool ion-label {
   top: 50%;
   bottom: -8px;
   width: 1px;
-  background-color: var(--ion-background-color); /* Gleiche Farbe wie der Hintergrund */
+  background-color: var(--ion-background-color);
+  /* Gleiche Farbe wie der Hintergrund */
   z-index: 9998;
 }
 
