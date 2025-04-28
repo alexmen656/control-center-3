@@ -279,6 +279,10 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/project/:project/nfc/config',
     component: () => import('../views/NFCConfigView.vue'),
+  },
+  {
+    path: '/project/:project/web-builder',
+    component: () => import('../views/WebBuilderView.vue'),
   }
 ]
 

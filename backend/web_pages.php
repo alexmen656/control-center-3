@@ -228,15 +228,24 @@ if ($headers['Authorization']) {
           'message' => 'Project not found'
         ]);
       }
-    } elseif (isset($_POST['newPage']) && isset($_POST['name']) && isset($_POST['code']) && isset($_POST['project'])) {
+    } elseif (isset($_POST['newPage']) && isset($_POST['name']) && isset($_POST['project'])) {
       $pageName = escape_string($_POST['name']);
       $project = escape_string($_POST['project']);
-      $code = escape_string($_POST['code']);
+      $code = isset($_POST['code']) ? escape_string($_POST['code']) : '';
       
-      // Generate slug from the name
-      $slug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $pageName));
-      $slug = preg_replace('/-+/', '-', $slug); // Replace multiple dashes with single dash
-      $slug = trim($slug, '-'); // Remove leading/trailing dashes
+      // Verwende den benutzerdefinierten Slug, wenn vorhanden, oder generiere einen
+      if (isset($_POST['slug']) && !empty($_POST['slug'])) {
+        $slug = escape_string($_POST['slug']);
+        // Slug bereinigen
+        $slug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $slug));
+        $slug = preg_replace('/-+/', '-', $slug); // Mehrfach-Bindestriche durch einen ersetzen
+        $slug = trim($slug, '-'); // Führende/abschließende Bindestriche entfernen
+      } else {
+        // Slug aus dem Namen generieren
+        $slug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $pageName));
+        $slug = preg_replace('/-+/', '-', $slug); // Replace multiple dashes with single dash
+        $slug = trim($slug, '-'); // Remove leading/trailing dashes
+      }
       
       // Get project ID first
       $projectQuery = query("SELECT id FROM control_center_web_builder_projects WHERE name='$project'");
@@ -254,24 +263,151 @@ if ($headers['Authorization']) {
           exit;
         }
         
-        // Set is_home to 1 if this is the first page in the project
-        $isHome = 0;
-        $pageCountQuery = query("SELECT COUNT(*) as count FROM control_center_web_builder_pages WHERE project_id='$projectId'");
-        if (mysqli_num_rows($pageCountQuery) == 1) {
-          $countData = fetch_assoc($pageCountQuery);
-          if ($countData['count'] == 0) {
-            $isHome = 1;
+        // Starten einer Transaktion für atomare Operationen
+        mysqli_begin_transaction($con);
+        
+        try {
+          // Prüfe, ob die Seite als Homepage markiert sein soll
+          $isHome = isset($_POST['is_home']) && $_POST['is_home'] == 1 ? 1 : 0;
+          
+          // Falls das die erste Seite im Projekt ist, mach sie zur Homepage
+          if ($isHome == 0) {
+            $pageCountQuery = query("SELECT COUNT(*) as count FROM control_center_web_builder_pages WHERE project_id='$projectId'");
+            $countData = fetch_assoc($pageCountQuery);
+            if ($countData['count'] == 0) {
+              $isHome = 1;
+            }
+          }
+          
+          // Wenn diese Seite die Homepage sein soll, setze den Homepage-Status aller anderen Seiten zurück
+          if ($isHome == 1) {
+            //echo "UPDATE control_center_web_builder_pages SET is_home=0 WHERE project_id='$projectId'";
+            query("UPDATE control_center_web_builder_pages SET is_home=0 WHERE project_id=$projectId");
+          }
+          
+          // Set default title if not provided or use provided title
+          $title = isset($_POST['title']) ? escape_string($_POST['title']) : $pageName;
+          $metaDescription = isset($_POST['meta_description']) ? escape_string($_POST['meta_description']) : '';
+          
+          // Create the page
+          query("INSERT INTO control_center_web_builder_pages 
+                (project_id, name, slug, title, meta_description, is_home, created_at, updated_at) 
+                VALUES ('$projectId', '$pageName', '$slug', '$title', '$metaDescription', '$isHome', NOW(), NOW())");
+          
+          $pageId = mysqli_insert_id($con);
+          
+          if ($pageId > 0) {
+            // If page creation was successful and we have initial HTML code, create a component
+            if (!empty($code)) {
+              // Generate UUID for component_id
+              $uuid = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+                mt_rand(0, 0xffff),
+                mt_rand(0, 0x0fff) | 0x4000,
+                mt_rand(0, 0x3fff) | 0x8000,
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+              );
+              
+              query("INSERT INTO control_center_web_builder_components 
+                    (page_id, component_id, html_code, position) 
+                    VALUES ('$pageId', '$uuid', '$code', '0')");
+            }
+            
+            // Commit der Transaktion, wenn alles erfolgreich war
+            mysqli_commit($con);
+            
+            echo json_encode([
+              'success' => true,
+              'message' => 'Page created successfully',
+              'page_id' => $pageId,
+              'slug' => $slug
+            ]);
+          } else {
+            // Rollback bei Fehler
+            mysqli_rollback($con);
+            
+            echo json_encode([
+              'success' => false,
+              'message' => 'Failed to create page'
+            ]);
+          }
+        } catch (Exception $e) {
+          // Rollback bei jeder Exception
+          mysqli_rollback($con);
+          
+          echo json_encode([
+            'success' => false,
+            'message' => 'Error processing request: ' . $e->getMessage()
+          ]);
+        }
+      } else {
+        echo json_encode([
+          'success' => false,
+          'message' => 'Project not found'
+        ]);
+      }
+    } elseif (isset($_POST['createPage'])) {
+      $project = escape_string($_POST['project']);
+      $pageName = escape_string($_POST['name']);
+      
+      // Verwende den benutzerdefinierten Slug, wenn vorhanden, oder generiere einen
+      if (isset($_POST['slug']) && !empty($_POST['slug'])) {
+        $slug = escape_string($_POST['slug']);
+        // Slug bereinigen
+        $slug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $slug));
+        $slug = preg_replace('/-+/', '-', $slug); // Mehrfach-Bindestriche durch einen ersetzen
+        $slug = trim($slug, '-'); // Führende/abschließende Bindestriche entfernen
+      } else {
+        // Slug aus dem Namen generieren
+        $slug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $pageName));
+        $slug = preg_replace('/-+/', '-', $slug);
+        $slug = trim($slug, '-');
+      }
+      
+      // Optionale Parameter für Metatitel und Beschreibung
+      $title = isset($_POST['title']) ? escape_string($_POST['title']) : $pageName;
+      $metaDescription = isset($_POST['meta_description']) ? escape_string($_POST['meta_description']) : '';
+      
+      // Bestimmen, ob es die Homepage sein soll
+      $isHome = isset($_POST['is_home']) && $_POST['is_home'] == 1 ? 1 : 0;
+      
+      // Get project ID first
+      $projectQuery = query("SELECT id FROM control_center_web_builder_projects WHERE name='$project'");
+      if (mysqli_num_rows($projectQuery) == 1) {
+        $projectData = fetch_assoc($projectQuery);
+        $projectId = $projectData['id'];
+        
+        // Prüfen, ob bereits eine Seite mit diesem Namen oder Slug existiert
+        $pageCheck = query("SELECT id FROM control_center_web_builder_pages WHERE project_id='$projectId' AND (name='$pageName' OR slug='$slug')");
+        if (mysqli_num_rows($pageCheck) > 0) {
+          echo json_encode([
+            'success' => false,
+            'message' => 'Eine Seite mit diesem Namen oder URL-Slug existiert bereits'
+          ]);
+          exit;
+        }
+        
+        // Wenn diese Seite die Homepage sein soll, stelle sicher, dass keine andere Seite als Homepage markiert ist
+        if ($isHome == 1) {
+          query("UPDATE control_center_web_builder_pages SET is_home=0 WHERE project_id='$projectId'");
+        } 
+        // Wenn keine Homepage gesetzt ist und dies die erste Seite ist, mache sie automatisch zur Homepage
+        else if ($isHome == 0) {
+          $homeCheck = query("SELECT COUNT(*) as count FROM control_center_web_builder_pages WHERE project_id='$projectId' AND is_home=1");
+          $homeData = fetch_assoc($homeCheck);
+          if ($homeData['count'] == 0) {
+            $pageCountQuery = query("SELECT COUNT(*) as count FROM control_center_web_builder_pages WHERE project_id='$projectId'");
+            $countData = fetch_assoc($pageCountQuery);
+            if ($countData['count'] == 0) {
+              $isHome = 1;
+            }
           }
         }
         
-        // Set default title if not provided
-        $title = isset($_POST['title']) ? escape_string($_POST['title']) : $pageName;
-        $metaDescription = isset($_POST['description']) ? escape_string($_POST['description']) : '';
-        
         // Create the page
         query("INSERT INTO control_center_web_builder_pages 
-              (project_id, name, slug, title, meta_description, is_home) 
-              VALUES ('$projectId', '$pageName', '$slug', '$title', '$metaDescription', '$isHome')");
+              (project_id, name, slug, title, meta_description, is_home, created_at, updated_at) 
+              VALUES ('$projectId', '$pageName', '$slug', '$title', '$metaDescription', '$isHome', NOW(), NOW())");
         
         $pageId = mysqli_insert_id($con);
         
@@ -310,7 +446,7 @@ if ($headers['Authorization']) {
           'message' => 'Project not found'
         ]);
       }
-    } elseif (isset($_POST['getTemplates']) && isset($_POST['project'])) {
+    } elseif (isset($_POST['getTemplates'])) {
       $project = escape_string($_POST['project']);
       
       // Get project ID first
