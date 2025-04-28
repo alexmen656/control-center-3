@@ -41,6 +41,7 @@
                     justify-content: center;
                   "
                 >
+                  <ion-icon @click="openWebBuilder()" name="globe-outline" style="margin-right: 8px;" />
                   <ion-icon @click="exportWeb()" name="download-outline" />
                   <ion-icon @click="viewWWW()" name="earth-outline" />
                 </div>
@@ -223,6 +224,16 @@ export default {
       window
         .open("https://alex.polan.sk/" + this.$route.params.project, "_blank")
         .focus();
+    },
+    openWebBuilder() {
+      // Öffne den Web Builder für das aktuelle Projekt
+      const project = this.$route.params.project;
+      
+      // Konstruiere URL für den Web Builder
+      const url = `https://web-builder.control-center.eu/project/${project}`;
+      
+      // Öffne in einem neuen Tab
+      window.open(url, '_blank').focus();
     },
     exportWeb() {
       this.$axios.post("website_builder/export.php").then((response) => {

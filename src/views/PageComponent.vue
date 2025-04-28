@@ -84,8 +84,14 @@
                ['python', 'Python'], */
               ['html', 'HTML'],
             ]" />
-          <ion-button v-if="type === 'script' && currentComponent" @click="saveComponentHtml()" color="primary">Save
-            Component</ion-button>
+          <div style="display: flex; justify-content: space-between; width: 100%;">
+            <ion-button v-if="type === 'script' && currentComponent" @click="openWebBuilder()" color="tertiary">
+              <ion-icon name="globe-outline" slot="start"></ion-icon>
+              Open in Web Builder
+            </ion-button>
+            <ion-button v-if="type === 'script' && currentComponent" @click="saveComponentHtml()" color="primary">Save
+              Component</ion-button>
+          </div>
           <ion-button v-if="type === 'script' && !currentComponent" @click="openNewComponentModal()"
             color="primary">Create New Component</ion-button>
           <img v-if="type === 'image'" :src="'https://alex.polan.sk/' + currentHtml" alt="Image" />
@@ -564,7 +570,26 @@ export default defineComponent({
       } catch (error) {
         console.error("Error creating component:", error);
       }
-    }
+    },
+    openWebBuilder() {
+      // Benutze die Projekt- und Seiten-Parameter, um zur entsprechenden Seite im Web Builder zu navigieren
+      const project = this.$route.params.project;
+      const page = this.$route.params.page;
+      
+      // Konstruiere den URL für den Web Builder
+      const url = `https://web-builder.control-center.eu/editor/${project}/${page}`;
+      
+      // Öffne in einem neuen Tab
+      window.open(url, '_blank');
+      
+      // Zeige Bestätigung
+      this.$ionicController.toastController.create({
+        message: "Opening Web Builder in a new tab",
+        duration: 2000,
+        position: "bottom",
+        color: "tertiary"
+      }).then(toast => toast.present());
+    },
   }
 });
 </script>

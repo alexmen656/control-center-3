@@ -64,10 +64,16 @@
                   <ion-icon :name="isComponentReorderingEnabled ? 'checkmark-outline' : 'reorder-three-outline'" slot="start"></ion-icon>
                   {{ isComponentReorderingEnabled ? 'Done Reordering' : 'Reorder Components' }}
                 </ion-button>
-                <ion-button size="small" color="primary" @click="openNewComponentModal()">
-                  <ion-icon name="add-circle-outline" slot="start"></ion-icon>
-                  Add Component
-                </ion-button>
+                <div>
+                  <ion-button size="small" color="tertiary" @click="openWebBuilder()">
+                    <ion-icon name="globe-outline" slot="start"></ion-icon>
+                    Open in Web Builder
+                  </ion-button>
+                  <ion-button size="small" color="primary" @click="openNewComponentModal()">
+                    <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+                    Add Component
+                  </ion-button>
+                </div>
               </div>
             </ion-list>
           </ion-card-content>
@@ -724,6 +730,28 @@ export default defineComponent({
           })
           .then(toast => toast.present());
       });
+    },
+    
+    openWebBuilder() {
+      // Benutze die Projekt- und Seiten-Parameter, um zur entsprechenden Seite im Web Builder zu navigieren
+      const project = this.$route.params.project;
+      const page = this.$route.params.page;
+      
+      // Konstruiere den URL für den Web Builder
+      const url = `https://web-builder.control-center.eu/editor/${project}/${page}`;
+      
+      // Öffne in einem neuen Tab
+      window.open(url, '_blank');
+      
+      // Zeige Bestätigung
+      this.$ionic.toastController
+        .create({
+          message: "Opening Web Builder in a new tab",
+          duration: 2000,
+          position: "bottom",
+          color: "tertiary"
+        })
+        .then(toast => toast.present());
     },
   },
 });
