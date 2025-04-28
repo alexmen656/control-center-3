@@ -8,22 +8,24 @@
         <!-- Page Metadata Card -->
         <ion-card style="width: 100%; margin-bottom: 1rem;">
           <ion-card-header>
-            <ion-card-title>{{ page.title || page.name }}</ion-card-title>
-            <ion-card-subtitle>{{ page.is_home ? '(Homepage)' : '' }}</ion-card-subtitle>
+            <ion-card-title>{{page.name }} <!--page.title || --><ion-note>{{ page.is_home ? '(Homepage)' : '' }}</ion-note>
+            </ion-card-title>
+            <!--<ion-card-subtitle>{{ page.is_home ? '(Homepage)' : '' }}</ion-card-subtitle>-->
           </ion-card-header>
           <ion-card-content>
             <ion-list>
               <ion-item>
                 <ion-label>
-                  <h2>Page Details</h2>
-                  <p><strong>Name:</strong> {{ page.name }}</p>
-                  <p><strong>Slug:</strong> {{ page.slug }}</p>
-                  <p><strong>Meta Description:</strong> {{ page.meta_description || 'None' }}</p>
+                 <!-- <h2>Page Details</h2>-->
+                  <p class="page-metadata"><strong>Name:</strong> {{ page.name }}</p>
+                  <p class="page-metadata"><strong>Slug:</strong> {{ page.slug }}</p>
+                  <p class="page-metadata"><strong>Meta Title:</strong> {{ page.title || 'None' }}</p>
+                  <p class="page-metadata"><strong>Meta Description:</strong> {{ page.meta_description || 'None' }}</p>
                 </ion-label>
               </ion-item>
-              <ion-item-divider>
-                <ion-label>Components ({{ page.components ? page.components.length : 0 }})</ion-label>
-              </ion-item-divider>
+            <!--  <ion-item-divider>-->
+              <!-- <ion-label>Components ({{ page.components ? page.components.length : 0 }})</ion-label>--> 
+             <!-- </ion-item-divider>-->
               <ion-item v-if="page.components && page.components.length > 0" 
                         v-for="(component, index) in page.components" 
                         :key="component.component_id"
@@ -74,7 +76,7 @@
           </ion-card-content>
         </ion-card>
 
-        <div v-if="type == 'script'" style="width: 100%;">
+          <!--   <div v-if="type == 'script'" style="width: 100%;">
           <ion-list lines="inset" class="cmps">
             <ion-item v-for="cmp in cmps" :key="cmp">
               <div style="display: flex; align-items: center; width: 100%;">
@@ -82,7 +84,7 @@
                 <ion-label>{{ cmp.name }} &lt;{{ cmp.tag }}/&gt;</ion-label>
               </div>
             </ion-item>
-            <ion-item>
+       <ion-item>
               <div style="display: flex; justify-content: center; align-items: center; width: 100%;">
                 <ion-button @click="setOpen(true)">
                   <ion-icon name="add-outline"></ion-icon>
@@ -91,7 +93,7 @@
               </div>
             </ion-item>
           </ion-list>
-        </div>
+        </div>-->
 
         <div v-if="type === 'menu'" style="width: 100%;">
           <ion-list style="width: 100%">
@@ -130,9 +132,9 @@
         <ion-buttons slot="start">
           <ion-button style="color: red" @click="setOpen(false)">Cancel</ion-button>
         </ion-buttons>
-        <ion-title style="text-align: center">{{ isNewComponentModal ? 'Add Component from Template' : 'Create Page' }}</ion-title>
+        <ion-title style="text-align: center">Add Component from Template</ion-title>
         <ion-buttons slot="end">
-          <ion-button style="color: red" :strong="true" @click="isNewComponentModal ? confirmNewComponent() : confirm()">{{ isNewComponentModal ? 'Add' : 'Confirm' }}</ion-button>
+          <ion-button style="color: red" :strong="true" @click="confirmNewComponent()">Add</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -151,7 +153,6 @@
           </ion-item>
         </ion-radio-group>
       </ion-list>
-      <FloatingSelect v-if="!isNewComponentModal" v-model="cmp" :select="select" />
     </ion-content>
   </ion-modal>
 </ion-content>
@@ -288,39 +289,6 @@ export default defineComponent({
       createdOn: "",
       currentComponentId: null,
       cmps: [],
-      select: {
-        type: "select",
-        name: "page",
-        label: "Page",
-        placeholder: "Page",
-        options: [
-          {
-            value: "google_maps",
-            label: "Google Maps",
-            icon: "location-outline",
-          },
-          {
-            value: "slider",
-            label: "Image Slider",
-            icon: "image-outline",
-          },
-          {
-            value: "navbar",
-            label: "Navbar",
-            icon: "menu-outline",
-          },
-          {
-            value: "footer",
-            label: "Footer",
-            icon: "footsteps-outline",
-          },
-          {
-            value: "searchbar",
-            label: "Searchbar",
-            icon: "search-circle-outline",
-          },
-        ],
-      },
       Pages: {
         slider: {
           inputs: [
@@ -609,5 +577,22 @@ img {
 
 .jc_center {
   justify-content: center;
+}
+
+ion-card-content, ion-card-header {
+  padding: 0 !important;
+}
+
+ion-card-content ion-item {
+  --padding-start: 0;
+}
+
+ion-label p {
+  text-align: left;
+  margin-left: 0;
+}
+
+.page-metadata {
+  font-size: 1rem !important;
 }
 </style>

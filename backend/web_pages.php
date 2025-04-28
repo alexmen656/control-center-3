@@ -203,7 +203,7 @@ if ($headers['Authorization']) {
                   (page_id, component_id, html_code, position) 
                   VALUES ('$pageId', '$uuid', '$htmlContent', '$position')");
             
-            if (mysqli_insert_id() > 0) {
+            if (mysqli_insert_id($con) > 0) {
               echo json_encode([
                 'success' => true,
                 'message' => 'Component added successfully',
@@ -273,7 +273,7 @@ if ($headers['Authorization']) {
               (project_id, name, slug, title, meta_description, is_home) 
               VALUES ('$projectId', '$pageName', '$slug', '$title', '$metaDescription', '$isHome')");
         
-        $pageId = mysqli_insert_id();
+        $pageId = mysqli_insert_id($con);
         
         if ($pageId > 0) {
           // If page creation was successful and we have initial HTML code, create a component
@@ -384,7 +384,7 @@ if ($headers['Authorization']) {
                   (page_id, component_id, html_code, position, original_template_id) 
                   VALUES ('$pageId', '$uuid', '$htmlContent', '$position', '$templateId')");
             
-            if (mysqli_insert_id() > 0) {
+            if (mysqli_insert_id($con) > 0) {
               echo json_encode([
                 'success' => true,
                 'message' => 'Component added successfully',
