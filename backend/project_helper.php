@@ -206,17 +206,39 @@ function setupWebBuilderProject($projectID, $href, $name, $userID = 1) {
     // Zuerst prüfen, ob der Benutzer in der Web Builder Tabelle existiert
     $userExists = query("SELECT id FROM control_center_web_builder_users WHERE id='$userID'");
     
-    // Wenn der Benutzer nicht existiert, Standard-Admin-Benutzer (ID 1) verwenden
-    // oder bei Bedarf einen neuen Benutzer anlegen
+    // Wenn der Benutzer nicht existiert, einen neuen Benutzer anlegen
     if (mysqli_num_rows($userExists) == 0) {
-        $userID = 1; // Admin-Benutzer
+        // Benutzerinformationen aus der Haupttabelle holen
+        $userData = fetch_assoc(query("SELECT * FROM control_center_users WHERE userID='$userID'"));
+        
+        if ($userData) {
+            // Benutzer in der Web Builder Tabelle anlegen
+            $firstName = escape_string($userData['firstname']);
+            $lastName = escape_string($userData['lastname']);
+            $email = escape_string($userData['email']);
+            $currentDate = date('Y-m-d H:i:s');
+            
+            query("INSERT INTO control_center_web_builder_users 
+                  (id, name, email, created_at, updated_at) 
+                  VALUES ('$userID', '$firstName $lastName', '$email', '$currentDate', '$currentDate')");
+                  
+            // Wenn das nicht geklappt hat, Admin-Benutzer verwenden
+            if (mysqli_affected_rows($con) == 0) {
+                $userID = 1; // Admin-Benutzer
+            }
+        } else {
+            $userID = 1; // Admin-Benutzer, wenn keine Benutzerdaten gefunden wurden
+        }
     }
     
     // Erstelle einen Eintrag in der control_center_web_builder_projects Tabelle
+    // mit eindeutiger Referenz zum Control Center Projekt
     $currentDate = date('Y-m-d H:i:s');
+    $description = "Web Builder Project for $name (Control Center Project ID: $projectID)";
+    
     query("INSERT INTO control_center_web_builder_projects 
            (name, description, user_id, created_at, updated_at) 
-           VALUES ('$name', 'Web Builder Project for $name', '$userID', '$currentDate', '$currentDate')");
+           VALUES ('$name', '$description', '$userID', '$currentDate', '$currentDate')");
            
     $webBuilderProjectId = mysqli_insert_id($con);
     
@@ -225,6 +247,30 @@ function setupWebBuilderProject($projectID, $href, $name, $userID = 1) {
         query("INSERT INTO control_center_web_builder_pages 
                (project_id, name, slug, title, meta_description, is_home, created_at, updated_at) 
                VALUES ('$webBuilderProjectId', 'Home', 'home', 'Homepage', 'Welcome to the $name website', 1, '$currentDate', '$currentDate')");
+               
+        // Erstelle eine erste HTML-Komponente für die Homepage
+        $homepageId = mysqli_insert_id($con);
+        if ($homepageId) {
+            // Generiere UUID für die Komponente
+            $uuid = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+              mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+              mt_rand(0, 0xffff),
+              mt_rand(0, 0x0fff) | 0x4000,
+              mt_rand(0, 0x3fff) | 0x8000,
+              mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+            );
+            
+            $defaultHTML = "<div class=\"container mt-5\"><h1>Welcome to $name</h1><p>This is your new homepage. Start editing to customize it!</p></div>";
+            
+            query("INSERT INTO control_center_web_builder_components 
+                  (page_id, component_id, html_code, position, created_at, updated_at) 
+                  VALUES ('$homepageId', '$uuid', '$defaultHTML', 0, '$currentDate', '$currentDate')");
+        }
+        
+        // Auch einen Benutzer-Projekt-Eintrag in der Web Builder Tabelle erstellen
+        query("INSERT INTO control_center_user_projects 
+               (userID, projectID, role, created_at, updated_at) 
+               VALUES ('$userID', '$webBuilderProjectId', 'owner', '$currentDate', '$currentDate')");
     }
     
     return $webBuilderProjectId;
