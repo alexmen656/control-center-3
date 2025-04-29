@@ -89,6 +89,10 @@
               <ion-icon name="globe-outline" slot="start"></ion-icon>
               Open in Web Builder
             </ion-button>
+            <ion-button v-if="type === 'script' && currentComponent" @click="insertFormData()" color="secondary">
+              <ion-icon name="list-outline" slot="start"></ion-icon>
+              Insert Form Data
+            </ion-button>
             <ion-button v-if="type === 'script' && currentComponent" @click="saveComponentHtml()" color="primary">Save
               Component</ion-button>
           </div>
@@ -125,6 +129,73 @@
       <ion-col size="1" />
     </ion-row>
   </ion-grid>
+  
+  <!-- Form Data Modal -->
+  <ion-modal :is-open="isFormDataModalOpen" @didDismiss="closeFormDataModal()">
+    <ion-header>
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-button color="danger" @click="closeFormDataModal()">Cancel</ion-button>
+        </ion-buttons>
+        <ion-title>Insert Form Data</ion-title>
+        <ion-buttons slot="end">
+          <ion-button color="primary" :strong="true" @click="insertFormTemplate()">Insert</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <ion-list>
+        <ion-item>
+          <ion-label position="stacked">Select Form</ion-label>
+          <ion-select v-model="selectedFormName" interface="action-sheet" @ionChange="loadFormFields()">
+            <ion-select-option v-for="form in availableForms" :key="form.id" :value="form.form.title">
+              {{ form.form.title }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Display Type</ion-label>
+          <ion-select v-model="displayType" interface="action-sheet">
+            <ion-select-option value="all">All Entries (foreach)</ion-select-option>
+            <ion-select-option value="single">Single Entry by ID</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item v-if="displayType === 'single'">
+          <ion-label position="stacked">Entry ID</ion-label>
+          <ion-input v-model="entryId" type="number" min="1" placeholder="Enter ID of the entry to display"></ion-input>
+        </ion-item>
+
+        <ion-item v-if="formFields.length > 0">
+          <ion-label position="stacked">Available Fields</ion-label>
+          <ion-select v-model="selectedFields" multiple="true" interface="action-sheet">
+            <ion-select-option v-for="field in formFields" :key="field" :value="field">
+              {{ field }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+      </ion-list>
+
+      <div v-if="selectedFormName && formFields.length > 0">
+        <ion-item-divider>
+          <ion-label>Preview</ion-label>
+        </ion-item-divider>
+        <div class="code-preview">
+          <pre>{{ generateFormTemplate() }}</pre>
+        </div>
+        <p class="helper-text" v-if="displayType === 'all'">
+          This will insert a template that displays all items from the "{{ selectedFormName }}" form.
+          The template will be processed during publishing.
+        </p>
+        <p class="helper-text" v-if="displayType === 'single'">
+          This will insert a template that displays the item with ID {{ entryId }} from the "{{ selectedFormName }}" form.
+          The template will be processed during publishing.
+        </p>
+      </div>
+    </ion-content>
+  </ion-modal>
+
   <ion-modal :is-open="isOpen" ref="modal">
     <ion-header>
       <ion-toolbar>
@@ -297,7 +368,15 @@ export default defineComponent({
           }
           // Will be populated with templates from the API
         ]
-      }
+      },
+      // Form Data
+      isFormDataModalOpen: false,
+      availableForms: [],
+      selectedFormName: "",
+      formFields: [],
+      selectedFields: [],
+      displayType: "all",
+      entryId: null,
     };
   },
   async mounted() {
@@ -590,6 +669,108 @@ export default defineComponent({
         color: "tertiary"
       }).then(toast => toast.present());
     },
+    // Form Data Methods
+    insertFormData() {
+      this.isFormDataModalOpen = true;
+      this.loadAvailableForms();
+    },
+    async loadAvailableForms() {
+      try {
+        const response = await this.$axios.post(
+          "form.php",
+          this.$qs.stringify({
+            get_forms: "get_forms",
+            project: this.$route.params.project,
+          })
+        );
+
+        if (response.data && response.data.length > 0) {
+          this.availableForms = response.data;
+          console.log("Available forms:", this.availableForms);
+        } else {
+          console.log("No forms found");
+          this.availableForms = [];
+        }
+      } catch (error) {
+        console.error("Error loading forms:", error);
+        this.availableForms = [];
+      }
+    },
+    async loadFormFields() {
+      if (!this.selectedFormName) return;
+      
+      try {
+        // Find the form data structure
+        const selectedForm = this.availableForms.find(form => form.form.title === this.selectedFormName);
+        if (selectedForm && selectedForm.form && selectedForm.form.inputs) {
+          // Extract field names from the inputs
+          this.formFields = selectedForm.form.inputs.map(input => input.name);
+          this.selectedFields = [...this.formFields]; // Select all fields by default
+        } else {
+          this.formFields = [];
+          this.selectedFields = [];
+        }
+      } catch (error) {
+        console.error("Error loading form fields:", error);
+        this.formFields = [];
+        this.selectedFields = [];
+      }
+    },
+    generateFormTemplate() {
+      if (!this.selectedFormName || !this.selectedFields || this.selectedFields.length === 0) {
+        return "<!-- Select a form and fields first -->";
+      }
+      
+      // Create the form data template
+      const formName = this.selectedFormName;
+      
+      // Generate field template for each selected field
+      const fieldsTemplate = this.selectedFields.map(field => {
+        return `    <div class="form-field">
+      <strong>${field}:</strong> {{ item.${field} }}
+    </div>`;
+      }).join('\n');
+      
+      // Complete template with foreach or single syntax based on display type
+      if (this.displayType === 'single' && this.entryId) {
+        // Single item template
+        return `<!-- single:${formName}:${this.entryId} -->
+<div class="form-item">
+${fieldsTemplate}
+</div>
+<!-- endsingle:${formName} -->`;
+      } else {
+        // Foreach template (all items)
+        return `<!-- foreach:${formName} -->
+<div class="form-item">
+${fieldsTemplate}
+</div>
+<!-- endforeach:${formName} -->`;
+      }
+    },
+    insertFormTemplate() {
+      if (!this.currentHtml) this.currentHtml = "";
+      
+      // Get the template
+      const template = this.generateFormTemplate();
+      
+      // Insert it at the current cursor position or at the end
+      this.currentHtml += "\n" + template;
+      
+      // Close the modal
+      this.closeFormDataModal();
+      
+      // Show success message
+      this.$ionicController.toastController.create({
+        message: `Form data template for "${this.selectedFormName}" inserted`,
+        duration: 2000,
+        position: "bottom",
+        color: "success"
+      }).then(toast => toast.present());
+    },
+    closeFormDataModal() {
+      this.isFormDataModalOpen = false;
+    }
   }
 });
 </script>
