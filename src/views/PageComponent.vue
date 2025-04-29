@@ -175,6 +175,25 @@
             </ion-select-option>
           </ion-select>
         </ion-item>
+        
+        <ion-item-divider>
+          <ion-label>Text Transformations</ion-label>
+        </ion-item-divider>
+        
+        <ion-item v-if="formFields.length > 0">
+          <ion-label position="stacked">Field Transformations</ion-label>
+          <ion-list lines="none">
+            <ion-item v-for="field in selectedFields" :key="`transform-${field}`">
+              <ion-label>{{ field }}</ion-label>
+              <ion-select v-model="fieldTransformations[field]" interface="action-sheet" placeholder="None">
+                <ion-select-option value="none">None</ion-select-option>
+                <ion-select-option value="capitalize">Capitalize</ion-select-option>
+                <ion-select-option value="uppercase">UPPERCASE</ion-select-option>
+                <ion-select-option value="lowercase">lowercase</ion-select-option>
+              </ion-select>
+            </ion-item>
+          </ion-list>
+        </ion-item>
       </ion-list>
 
       <div v-if="selectedFormName && formFields.length > 0">
@@ -377,6 +396,7 @@ export default defineComponent({
       selectedFields: [],
       displayType: "all",
       entryId: null,
+      fieldTransformations: {}
     };
   },
   async mounted() {
@@ -672,13 +692,18 @@ export default defineComponent({
     // Form Data Methods
     insertFormData() {
       this.isFormDataModalOpen = true;
+      this.fieldTransformations = {}; // Reset transformations
+      this.displayType = 'all'; // Reset display type
+      this.entryId = null; // Reset entry ID
+      this.selectedFormName = ""; // Reset form name
+      this.selectedFields = []; // Reset selected fields
       this.loadAvailableForms();
     },
     async loadAvailableForms() {
       try {
-        const response = await this.$axios.post(
+        const response = await axios.post(
           "form.php",
-          this.$qs.stringify({
+          qs.stringify({
             get_forms: "get_forms",
             project: this.$route.params.project,
           })
@@ -706,6 +731,12 @@ export default defineComponent({
           // Extract field names from the inputs
           this.formFields = selectedForm.form.inputs.map(input => input.name);
           this.selectedFields = [...this.formFields]; // Select all fields by default
+          
+          // Reset transformations for the new fields
+          this.fieldTransformations = {};
+          this.formFields.forEach(field => {
+            this.fieldTransformations[field] = 'none';
+          });
         } else {
           this.formFields = [];
           this.selectedFields = [];
@@ -724,10 +755,19 @@ export default defineComponent({
       // Create the form data template
       const formName = this.selectedFormName;
       
-      // Generate field template for each selected field
+      // Generate field template for each selected field with transformations
       const fieldsTemplate = this.selectedFields.map(field => {
+        // Check if a transformation is selected for this field
+        const transformation = this.fieldTransformations[field] || 'none';
+        let valueExpression = `item.${field}`;
+        
+        // Add transformation filters when needed
+        if (transformation !== 'none') {
+          valueExpression = `item.${field}|${transformation}`;
+        }
+        
         return `    <div class="form-field">
-      <strong>${field}:</strong> {{ item.${field} }}
+      <strong>${field}:</strong> {{ ${valueExpression} }}
     </div>`;
       }).join('\n');
       

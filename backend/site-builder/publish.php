@@ -93,6 +93,58 @@ function processFormData($htmlContent, $projectName, $pdo) {
     return $htmlContent;
 }
 
+// Process text transformations in values
+function applyTextTransformation($text, $transformation) {
+    if (!$text || !is_string($text)) return $text;
+    
+    // Debug: Log the transformation being applied
+    error_log("Applying transformation '$transformation' to text: '$text'");
+    
+    switch ($transformation) {
+        case 'capitalize':
+            // Special handling for acronyms and model designations
+            if (preg_match('/^[A-Z0-9]+$/', $text)) {
+                // If text is all caps or a model designation, preserve it
+                $result = $text;
+            } else {
+                // Check for common car model patterns (like A4, Q7)
+                if (preg_match('/^[A-Z][0-9]$/', $text)) {
+                    $result = $text;
+                } else {
+                    // For normal text: capitalize first letter of each word
+                    $words = explode(' ', strtolower($text));
+                    foreach ($words as &$word) {
+                        // Check if word is an acronym before lowercase was applied
+                        if (preg_match('/^[A-Z]{2,}$/', $word)) {
+                            $word = strtoupper($word);
+                        } else {
+                            $word = ucfirst($word);
+                        }
+                    }
+                    $result = implode(' ', $words);
+                }
+            }
+            error_log("After capitalize: '$result'");
+            return $result;
+            
+        case 'uppercase':
+            // Convert to all uppercase
+            $result = strtoupper($text);
+            error_log("After uppercase: '$result'");
+            return $result;
+            
+        case 'lowercase':
+            // Convert to all lowercase
+            $result = strtolower($text);
+            error_log("After lowercase: '$result'");
+            return $result;
+            
+        default:
+            // No transformation or unknown transformation type
+            return $text;
+    }
+}
+
 // Process foreach form data tags
 function processForEachFormData($htmlContent, $projectName, $pdo) {
     // Find all form data tags using regex
@@ -110,11 +162,42 @@ function processForEachFormData($htmlContent, $projectName, $pdo) {
             if (!empty($formData)) {
                 // Build HTML for each form entry
                 foreach ($formData as $item) {
-                    // Replace all {{ item.field }} with actual data
+                    // Get a copy of the template for this item
                     $itemHtml = $template;
-                    foreach ($item as $field => $value) {
-                        $itemHtml = str_replace("{{ item.{$field} }}", htmlspecialchars($value), $itemHtml);
+                    
+                    // Create a complete list of fields to process
+                    $processedFields = [];
+                    
+                    // Process field value transformations first (like capitalize, uppercase)
+                    $transformPattern = '/\{\{\s*item\.([a-zA-Z0-9_]+)\|([a-z]+)\s*\}\}/';
+                    if (preg_match_all($transformPattern, $itemHtml, $transformMatches, PREG_SET_ORDER)) {
+                        foreach ($transformMatches as $transformMatch) {
+                            $fieldName = $transformMatch[1];
+                            $transformation = $transformMatch[2];
+                            
+                            if (isset($item[$fieldName])) {
+                                // Apply the transformation
+                                $transformedValue = applyTextTransformation($item[$fieldName], $transformation);
+                                
+                                // Replace in template and mark as processed
+                                $itemHtml = str_replace($transformMatch[0], htmlspecialchars($transformedValue), $itemHtml);
+                                $processedFields[$fieldName] = true;
+                            }
+                        }
                     }
+                    
+                    // Process standard field value replacements (for fields not already processed)
+                    $standardPattern = '/\{\{\s*item\.([a-zA-Z0-9_]+)\s*\}\}/';
+                    if (preg_match_all($standardPattern, $itemHtml, $standardMatches, PREG_SET_ORDER)) {
+                        foreach ($standardMatches as $standardMatch) {
+                            $fieldName = $standardMatch[1];
+                            
+                            if (isset($item[$fieldName]) && !isset($processedFields[$fieldName])) {
+                                $itemHtml = str_replace($standardMatch[0], htmlspecialchars($item[$fieldName]), $itemHtml);
+                            }
+                        }
+                    }
+                    
                     $replacement .= $itemHtml;
                 }
             }
@@ -143,11 +226,42 @@ function processSingleFormEntry($htmlContent, $projectName, $pdo) {
             $formEntry = getSingleFormEntry($formName, $entryId, $projectName, $pdo);
             
             if (!empty($formEntry)) {
-                // Replace all {{ item.field }} with actual data from the single entry
+                // Process the template with actual data from the single entry
                 $itemHtml = $template;
-                foreach ($formEntry as $field => $value) {
-                    $itemHtml = str_replace("{{ item.{$field} }}", htmlspecialchars($value), $itemHtml);
+                
+                // Create a complete list of fields to process
+                $processedFields = [];
+                
+                // Process field value transformations first (like capitalize, uppercase)
+                $transformPattern = '/\{\{\s*item\.([a-zA-Z0-9_]+)\|([a-z]+)\s*\}\}/';
+                if (preg_match_all($transformPattern, $itemHtml, $transformMatches, PREG_SET_ORDER)) {
+                    foreach ($transformMatches as $transformMatch) {
+                        $fieldName = $transformMatch[1];
+                        $transformation = $transformMatch[2];
+                        
+                        if (isset($formEntry[$fieldName])) {
+                            // Apply the transformation
+                            $transformedValue = applyTextTransformation($formEntry[$fieldName], $transformation);
+                            
+                            // Replace in template and mark as processed
+                            $itemHtml = str_replace($transformMatch[0], htmlspecialchars($transformedValue), $itemHtml);
+                            $processedFields[$fieldName] = true;
+                        }
+                    }
                 }
+                
+                // Process standard field value replacements
+                $standardPattern = '/\{\{\s*item\.([a-zA-Z0-9_]+)\s*\}\}/';
+                if (preg_match_all($standardPattern, $itemHtml, $standardMatches, PREG_SET_ORDER)) {
+                    foreach ($standardMatches as $standardMatch) {
+                        $fieldName = $standardMatch[1];
+                        
+                        if (isset($formEntry[$fieldName]) && !isset($processedFields[$fieldName])) {
+                            $itemHtml = str_replace($standardMatch[0], htmlspecialchars($formEntry[$fieldName]), $itemHtml);
+                        }
+                    }
+                }
+                
                 $replacement = $itemHtml;
             }
             
