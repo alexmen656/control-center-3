@@ -1,8 +1,10 @@
 <template>
   <ion-toolbar>
     <ion-title size="large">
-      <ion-icon v-if="icon" :name="icon" />
-      {{ title }}
+      <div class="title-container">
+      <ion-icon class="before-title" v-if="icon" :name="icon" />
+      <span class="h2">{{ title }}</span>
+      </div>
     </ion-title>
     <span class="actions" slot="end">
       <ion-icon
@@ -127,12 +129,22 @@ h1 {
   margin-top: 55px !important;
 }
 
-ion-icon {
-  font-size: 1rem;
+.h2 {
+  margin: 0;
+  font-size: 1.4rem;
 }
 
-ion-title {
-  display: flex;
+ion-icon {
+font-size: 1rem;
+}
+
+ion-icon.before-title {
+  font-size: 1.25rem;
+  margin-right: 0.275rem;
+}
+
+.title-container {
+  display: flex !important;
   align-items: center;
   color: black;
 }
