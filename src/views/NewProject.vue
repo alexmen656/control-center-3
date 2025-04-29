@@ -3,11 +3,14 @@
     <ion-content>
       <ion-grid>
         <ion-row>
-          <ion-col size="12" size-lg="8">
+          <ion-col size="0" size-lg="1"></ion-col>
+          <ion-col size="12" size-lg="10"><ion-grid><ion-row>
+
+          <ion-col size="12"><!-- size-lg="8"-->
             <h2>Create a new project</h2>
           </ion-col>
           
-          <ion-col size="12" size-lg="8">
+          <ion-col size="12"><!-- size-lg="8"-->
             <ion-item>
               <ion-label position="floating">Icon</ion-label>
               <ion-input
@@ -27,7 +30,7 @@
             </ion-item>
           </ion-col>
           
-          <ion-col size="12" size-lg="8">
+          <ion-col size="12"><!-- size-lg="8"-->
             <ion-item>
               <ion-label position="floating">Project Name</ion-label>
               <ion-input
@@ -40,11 +43,11 @@
             </ion-item>
           </ion-col>
           
-          <ion-col size="12" size-lg="8">
+          <ion-col size="12"><!-- size-lg="8"-->
             <project-template-selector v-model="selectedTemplateId" />
           </ion-col>
           
-          <ion-col size="12" size-lg="8" class="ion-margin-top">
+          <ion-col size="12" class="ion-margin-top"><!-- size-lg="8"-->
             <div class="action-buttons">
               <ion-button @click="createWithoutTemplate" :disabled="!name">Create Empty Project</ion-button>
               <ion-button 
@@ -55,6 +58,8 @@
               </ion-button>
             </div>
           </ion-col>
+        </ion-row></ion-grid></ion-col>
+          <ion-col size="0" size-lg="1"></ion-col>
         </ion-row>
       </ion-grid>
     </ion-content>

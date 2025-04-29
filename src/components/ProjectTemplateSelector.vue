@@ -42,10 +42,10 @@
           :class="{ 'selected': selectedTemplateId === template.id }"
           @click="selectTemplate(template.id)"
         >
-          <img v-if="template.thumbnail" :src="template.thumbnail" :alt="template.name" class="template-image" />
+         <!-- <img v-if="template.thumbnail" :src="template.thumbnail" :alt="template.name" class="template-image" />
           <div v-else class="template-placeholder-image">
             <ion-icon :name="getCategoryIcon(template.category)"></ion-icon>
-          </div>
+          </div>-->
           <ion-card-header>
             <ion-card-title>{{ template.name }}</ion-card-title>
             <ion-card-subtitle>{{ template.description }}</ion-card-subtitle>
@@ -373,5 +373,10 @@ ion-card.selected {
   color: var(--ion-color-medium-shade);
   font-size: 14px;
   font-weight: 600;
+}
+
+ion-card-header, ion-card-content {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
 }
 </style>
