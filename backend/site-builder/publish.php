@@ -80,6 +80,17 @@ function copyAssets($outputDir) {
     } else {
         echo "Warning: Could not find styles.css in assets directory<br>";
     }
+    
+    // Copy form_submit.php to published directory for form handling
+    $sourceFormSubmit = __DIR__ . '/form_submit.php';
+    $destFormSubmit = $outputDir . 'form_submit.php';
+    
+    if (file_exists($sourceFormSubmit)) {
+        copy($sourceFormSubmit, $destFormSubmit);
+        echo "Copied form_submit.php to published directory<br>";
+    } else {
+        echo "Warning: Could not find form_submit.php in site-builder directory<br>";
+    }
 }
 
 // Process form data in HTML content
@@ -273,6 +284,150 @@ function processSingleFormEntry($htmlContent, $projectName, $pdo) {
     return $htmlContent;
 }
 
+// Process embedded forms in HTML content
+function processFormTags($htmlContent, $projectName, $outputDir, $pdo) {
+    // Pattern to match form tags
+    $pattern = '/<!-- form:([^>]+) -->/';
+    
+    if (preg_match_all($pattern, $htmlContent, $matches, PREG_SET_ORDER)) {
+        foreach ($matches as $match) {
+            $formName = trim($match[1]);
+            
+            // Generate form HTML
+            $formHtml = generateFormHtml($formName, $projectName, $pdo);
+            
+            // Replace the form tag with the generated form HTML
+            $htmlContent = str_replace($match[0], $formHtml, $htmlContent);
+        }
+    }
+    
+    return $htmlContent;
+}
+
+// Generate HTML for a form
+function generateFormHtml($formName, $projectName, $pdo) {
+    try {
+        // Get form settings
+        $stmt = $pdo->prepare("SELECT * FROM form_settings WHERE form_name = :form_name AND project = :project");
+        $stmt->execute(['form_name' => $formName, 'project' => $projectName]);
+        $formSettings = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$formSettings) {
+            return "<div class='error-message'>Form '$formName' not found</div>";
+        }
+        
+        $formData = json_decode($formSettings['form_json'], true);
+        
+        if (!$formData || !isset($formData['inputs'])) {
+            return "<div class='error-message'>Invalid form configuration</div>";
+        }
+        
+        // Start building the form HTML
+        $formId = "form_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", " "], ["_", "a", "a", "u", "u", "o", "o", "_"], strtolower($formName));
+        $formHtml = "<div class='web-form-container'>\n";
+        
+        // Add form title if available
+        if (isset($formData['title']) && !empty($formData['title'])) {
+            $formHtml .= "  <h3 class='form-title'>" . htmlspecialchars($formData['title']) . "</h3>\n";
+        }
+        
+        // Add form description if available
+        if (isset($formData['description']) && !empty($formData['description'])) {
+            $formHtml .= "  <p class='form-description'>" . htmlspecialchars($formData['description']) . "</p>\n";
+        }
+        
+        // Start form tag with submission endpoint
+        $formHtml .= "  <form id='{$formId}' class='web-form' action='form_submit.php' method='post'>\n";
+        $formHtml .= "    <input type='hidden' name='form_name' value='" . htmlspecialchars($formName) . "'>\n";
+        $formHtml .= "    <input type='hidden' name='project' value='" . htmlspecialchars($projectName) . "'>\n";
+        
+        // Add form fields
+        foreach ($formData['inputs'] as $input) {
+            $formHtml .= "    <div class='form-group'>\n";
+            
+            if ($input['type'] === 'select' || $input['type'] === 'select2') {
+                // Select dropdown
+                $formHtml .= "      <label for='{$input['name']}'>" . htmlspecialchars($input['label']) . ($input['required'] ? " *" : "") . "</label>\n";
+                $formHtml .= "      <select name='{$input['name']}' id='{$input['name']}'" . ($input['required'] ? " required" : "") . ">\n";
+                $formHtml .= "        <option value=''>" . ($input['placeholder'] ? htmlspecialchars($input['placeholder']) : "Please select") . "</option>\n";
+                
+                if (isset($input['options']) && is_array($input['options'])) {
+                    foreach ($input['options'] as $option) {
+                        if (isset($option['value'], $option['label'])) {
+                            $formHtml .= "        <option value='" . htmlspecialchars($option['value']) . "'>" . htmlspecialchars($option['label']) . "</option>\n";
+                        }
+                    }
+                }
+                
+                $formHtml .= "      </select>\n";
+            } elseif ($input['type'] === 'checkbox') {
+                // Checkbox
+                $formHtml .= "      <div class='checkbox-group'>\n";
+                $formHtml .= "        <input type='checkbox' name='{$input['name']}' id='{$input['name']}' value='1'>\n";
+                $formHtml .= "        <label for='{$input['name']}'>" . htmlspecialchars($input['label']) . "</label>\n";
+                $formHtml .= "      </div>\n";
+            } else {
+                // Standard inputs (text, email, number, etc.)
+                $inputType = in_array($input['type'], ['text', 'email', 'number', 'tel', 'date', 'password']) ? $input['type'] : 'text';
+                $formHtml .= "      <label for='{$input['name']}'>" . htmlspecialchars($input['label']) . ($input['required'] ? " *" : "") . "</label>\n";
+                $formHtml .= "      <input type='{$inputType}' name='{$input['name']}' id='{$input['name']}'" . 
+                             ($input['placeholder'] ? " placeholder='" . htmlspecialchars($input['placeholder']) . "'" : "") .
+                             ($input['required'] ? " required" : "") . ">\n";
+            }
+            
+            $formHtml .= "    </div>\n";
+        }
+        
+        // Add submit button
+        $formHtml .= "    <div class='form-group'>\n";
+        $formHtml .= "      <button type='submit' class='submit-btn'>Submit</button>\n";
+        $formHtml .= "    </div>\n";
+        
+        // Add form status message container
+        $formHtml .= "    <div class='form-status' id='{$formId}_status'></div>\n";
+        $formHtml .= "  </form>\n";
+        
+        // Add JavaScript for form submission handling
+        $formHtml .= "  <script>\n";
+        $formHtml .= "    document.getElementById('{$formId}').addEventListener('submit', function(e) {\n";
+        $formHtml .= "      e.preventDefault();\n";
+        $formHtml .= "      var form = this;\n";
+        $formHtml .= "      var statusDiv = document.getElementById('{$formId}_status');\n";
+        $formHtml .= "      \n";
+        $formHtml .= "      statusDiv.innerHTML = '<div class=\"loading\">Submitting...</div>';\n";
+        $formHtml .= "      \n";
+        $formHtml .= "      // Collect form data\n";
+        $formHtml .= "      var formData = new FormData(form);\n";
+        $formHtml .= "      \n";
+        $formHtml .= "      // Send form data via fetch API\n";
+        $formHtml .= "      fetch(form.action, {\n";
+        $formHtml .= "        method: 'POST',\n";
+        $formHtml .= "        body: formData\n";
+        $formHtml .= "      })\n";
+        $formHtml .= "      .then(response => response.json())\n";
+        $formHtml .= "      .then(data => {\n";
+        $formHtml .= "        if (data.success) {\n";
+        $formHtml .= "          statusDiv.innerHTML = '<div class=\"success\">' + data.message + '</div>';\n";
+        $formHtml .= "          form.reset();\n";
+        $formHtml .= "        } else {\n";
+        $formHtml .= "          statusDiv.innerHTML = '<div class=\"error\">' + (data.message || 'An error occurred') + '</div>';\n";
+        $formHtml .= "        }\n";
+        $formHtml .= "      })\n";
+        $formHtml .= "      .catch(error => {\n";
+        $formHtml .= "        statusDiv.innerHTML = '<div class=\"error\">Network error. Please try again.</div>';\n";
+        $formHtml .= "        console.error('Error:', error);\n";
+        $formHtml .= "      });\n";
+        $formHtml .= "    });\n";
+        $formHtml .= "  </script>\n";
+        
+        $formHtml .= "</div>\n";
+        
+        return $formHtml;
+    } catch (PDOException $e) {
+        return "<div class='error-message'>Error generating form: " . htmlspecialchars($e->getMessage()) . "</div>";
+    }
+}
+
 // Get single form entry from database by ID
 function getSingleFormEntry($formName, $entryId, $projectName, $pdo) {
     try {
@@ -378,6 +533,10 @@ foreach ($pages as $page) {
     foreach ($components as $component) {
         // Process form data in HTML code before showing
         $processedHtml = processFormData($component['html_code'], $project['name'], $pdo);
+        
+        // Process form tags
+        $processedHtml = processFormTags($processedHtml, $project['name'], $outputDir, $pdo);
+        
         echo $processedHtml . "\n";
     }
     

@@ -93,6 +93,10 @@
               <ion-icon name="list-outline" slot="start"></ion-icon>
               Insert Form Data
             </ion-button>
+            <ion-button v-if="type === 'script' && currentComponent" @click="insertForm()" color="medium">
+              <ion-icon name="document-text-outline" slot="start"></ion-icon>
+              Insert Form
+            </ion-button>
             <ion-button v-if="type === 'script' && currentComponent" @click="saveComponentHtml()" color="primary">Save
               Component</ion-button>
           </div>
@@ -210,6 +214,63 @@
         <p class="helper-text" v-if="displayType === 'single'">
           This will insert a template that displays the item with ID {{ entryId }} from the "{{ selectedFormName }}" form.
           The template will be processed during publishing.
+        </p>
+      </div>
+    </ion-content>
+  </ion-modal>
+
+  <!-- Insert Form Modal -->
+  <ion-modal :is-open="isFormModalOpen" @didDismiss="closeFormModal()">
+    <ion-header>
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-button color="danger" @click="closeFormModal()">Cancel</ion-button>
+        </ion-buttons>
+        <ion-title>Insert Form</ion-title>
+        <ion-buttons slot="end">
+          <ion-button color="primary" :strong="true" @click="insertFormCode()">Insert</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <ion-list>
+        <ion-item>
+          <ion-label position="stacked">Select Form</ion-label>
+          <ion-select v-model="formToInsert" interface="action-sheet">
+            <ion-select-option v-for="form in availableForms" :key="form.id" :value="form.form.title">
+              {{ form.form.title }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+        
+        <ion-item-divider>
+          <ion-label>Form Settings</ion-label>
+        </ion-item-divider>
+        
+        <ion-item>
+          <ion-label position="stacked">Submit Button Text</ion-label>
+          <ion-input v-model="formSubmitText" placeholder="Submit"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Success Message</ion-label>
+          <ion-input v-model="formSuccessMessage" placeholder="Form submitted successfully!"></ion-input>
+        </ion-item>
+        
+        <ion-item>
+          <ion-checkbox v-model="formCustomStyling">Add custom styling</ion-checkbox>
+        </ion-item>
+      </ion-list>
+
+      <div v-if="formToInsert">
+        <ion-item-divider>
+          <ion-label>Preview</ion-label>
+        </ion-item-divider>
+        <div class="code-preview">
+          <pre>{{ generateFormCode() }}</pre>
+        </div>
+        <p class="helper-text">
+          This will insert a form that users can fill out and submit. The data will be stored in the "{{ formToInsert }}" form table.
         </p>
       </div>
     </ion-content>
@@ -390,13 +451,19 @@ export default defineComponent({
       },
       // Form Data
       isFormDataModalOpen: false,
+      isFormModalOpen: false,
       availableForms: [],
       selectedFormName: "",
       formFields: [],
       selectedFields: [],
       displayType: "all",
       entryId: null,
-      fieldTransformations: {}
+      fieldTransformations: {},
+      // Insert Form
+      formToInsert: "",
+      formSubmitText: "Submit",
+      formSuccessMessage: "Form submitted successfully!",
+      formCustomStyling: false,
     };
   },
   async mounted() {
@@ -699,6 +766,14 @@ export default defineComponent({
       this.selectedFields = []; // Reset selected fields
       this.loadAvailableForms();
     },
+    insertForm() {
+      this.isFormModalOpen = true;
+      this.formToInsert = ""; // Reset form
+      this.formSubmitText = "Submit"; // Reset submit text
+      this.formSuccessMessage = "Form submitted successfully!"; // Reset success message
+      this.formCustomStyling = false; // Reset styling option
+      this.loadAvailableForms();
+    },
     async loadAvailableForms() {
       try {
         const response = await axios.post(
@@ -788,6 +863,35 @@ ${fieldsTemplate}
 <!-- endforeach:${formName} -->`;
       }
     },
+    generateFormCode() {
+      if (!this.formToInsert) {
+        return "<!-- Select a form first -->";
+      }
+      
+      // Find the selected form to get its fields
+      const selectedForm = this.availableForms.find(form => form.form.title === this.formToInsert);
+      
+      if (!selectedForm || !selectedForm.form || !selectedForm.form.inputs) {
+        return "<!-- Form structure not found -->";
+      }
+      
+      // Create a proper form tag with the form tag
+      let formCode = `<!-- form:${this.formToInsert} -->`;
+      
+      // For preview purposes, show what the form will look like
+      formCode += `\n\n<!-- 
+This will insert a fully functional form with the following fields:
+${selectedForm.form.inputs.map(input => `- ${input.label} (${input.type})`).join('\n')}
+
+The form will be processed during publishing and will include:
+- All form fields with proper HTML structure
+- Submit button with text: "${this.formSubmitText}"
+- Success message: "${this.formSuccessMessage}"
+- JavaScript for AJAX submission
+-->`;
+      
+      return formCode;
+    },
     insertFormTemplate() {
       if (!this.currentHtml) this.currentHtml = "";
       
@@ -808,9 +912,33 @@ ${fieldsTemplate}
         color: "success"
       }).then(toast => toast.present());
     },
+    insertFormCode() {
+      if (!this.currentHtml) this.currentHtml = "";
+      if (!this.formToInsert) return;
+      
+      // Get the form code
+      const formCode = this.generateFormCode();
+      
+      // Insert it at the current cursor position or at the end
+      this.currentHtml += "\n" + formCode;
+      
+      // Close the modal
+      this.closeFormModal();
+      
+      // Show success message
+      this.$ionicController.toastController.create({
+        message: `Form "${this.formToInsert}" inserted`,
+        duration: 2000,
+        position: "bottom",
+        color: "success"
+      }).then(toast => toast.present());
+    },
     closeFormDataModal() {
       this.isFormDataModalOpen = false;
-    }
+    },
+    closeFormModal() {
+      this.isFormModalOpen = false;
+    },
   }
 });
 </script>
