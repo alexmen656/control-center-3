@@ -474,14 +474,21 @@ ion-card-header {
   justify-content: center;
   flex-direction: column;
   height: 100%;
+  padding: 8px;
 }
 
-ion-card-header > img, ion-icon {
+ion-card-header > img {
+  height: 75%;
+  width: 75%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+ion-card-header > ion-icon {
   height: 75%;
   width: 75%;
 }
 
-/* Image preview modal styles */
 .image-preview-modal {
   --width: 90%;
   --max-width: 800px;
