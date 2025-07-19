@@ -1,8 +1,7 @@
 <template>
   <ion-input
-    v-model="modelValue"
+    :model-value="modelValue || defaultVal"
     @ionInput="updateContent"
-    :value="defaultVal"
     :label="label"
     label-placement="floating"
     fill="outline"
@@ -15,9 +14,15 @@
 <script setup>
 //const props = 
 defineProps({
+  modelValue: {
+    type: String,
+    required: false,
+    default: "",
+  },
   defaultVal: {
     type: String,
-    required: true,
+    required: false,
+    default: "",
   },
   label: {
     type: String,
