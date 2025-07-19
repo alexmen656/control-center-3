@@ -1,7 +1,11 @@
 <template>
   <ion-page>
     <ion-content>
-      <div class="file-system-grid" @dragover.prevent @drop="handleRootDrop">
+      <div class="file-system-grid"
+           @dragover.prevent="handleRootDragOver"
+           @drop="handleRootDrop"
+           @dragenter.prevent="handleRootDragEnter"
+           @dragleave="handleRootDragLeave">
         <ion-grid>
           <ion-row>
             <ion-col 
@@ -169,7 +173,13 @@
             </ion-buttons>
           </ion-toolbar>
         </ion-header>
-        <ion-content class="folder-modal-content">
+        <ion-content 
+          class="folder-modal-content"
+          @dragover.prevent="handleModalDragOver"
+          @dragenter.prevent="handleModalDragEnter"
+          @dragleave="handleModalDragLeave"
+          @drop="handleModalDrop"
+        >
           <div v-if="selectedFolder && (!selectedFolder.children || selectedFolder.children.length === 0)" 
                style="padding: 40px; text-align: center; color: #666;">
             <ion-icon name="folder-open" style="font-size: 48px; margin-bottom: 16px;"></ion-icon>
@@ -266,6 +276,10 @@ export default defineComponent({
       // Folder modal data
       folderModalOpen: false,
       selectedFolder: null,
+      // Root drag state
+      isRootDragOver: false,
+      // Modal drag state
+      isModalDragOver: false,
     };
   },
   mounted() {
@@ -302,10 +316,20 @@ export default defineComponent({
           }
         }.bind(this)
       );
+
+      // Add global drop listener for modal to root drag & drop
+      document.addEventListener('dragover', this.globalDragOver);
+      document.addEventListener('drop', this.globalDrop);
     }
 
     // Daten vom Server abrufen
     this.fetchFileSystemData();
+  },
+
+  beforeUnmount() {
+    // Clean up global listeners
+    document.removeEventListener('dragover', this.globalDragOver);
+    document.removeEventListener('drop', this.globalDrop);
   },
   methods: {
     shortenName(name) {
@@ -352,10 +376,45 @@ export default defineComponent({
 
     handleRootDrop(event) {
       event.preventDefault();
+      
+      console.log('Root drop event triggered');
+      
+      // Check if it's a file being dragged from within a folder (modal)
+      const dragData = event.dataTransfer.getData('application/json');
+      console.log('Drag data:', dragData);
+      
+      if (dragData) {
+        // Moving existing file from folder to root
+        const data = JSON.parse(dragData);
+        console.log('Parsed drag data:', data);
+        if (data.type === 'existing-file') {
+          console.log('Moving file to root:', data.file);
+          this.moveFileToRoot(data.file);
+          return;
+        }
+      }
+      
+      // Otherwise it's new files from computer
+      console.log('Processing new files from computer, count:', event.dataTransfer.files.length);
       for (let i = 0; i < event.dataTransfer.files.length; i++) {
         this.files.push(event.dataTransfer.files[i]);
       }
       this.submit("");
+    },
+
+    handleRootDragOver(event) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+    },
+
+    handleRootDragEnter(event) {
+      event.preventDefault();
+      // No visual indicator needed for root drag
+    },
+
+    handleRootDragLeave(event) {
+      event.preventDefault();
+      // No visual state to reset
     },
 
     submit(dir) {
@@ -393,20 +452,18 @@ export default defineComponent({
       }
     },
 
-    fetchFileSystemData() {
-      axios
-        .get("filesystem.php")
-        .then((response) => {
-          console.log('Raw file system data:', response.data); // Debug log
-          this.fileSystem = this.processFileSystemData(response.data);
-          console.log('Processed file system data:', this.fileSystem); // Debug log
-        })
-        .catch((error) => {
-          console.error(
-            "Es gab ein Problem beim Abrufen der Dateisystemdaten:",
-            error
-          );
-        });
+    async fetchFileSystemData() {
+      try {
+        const response = await axios.get("filesystem.php");
+        console.log('Raw file system data:', response.data); // Debug log
+        this.fileSystem = this.processFileSystemData(response.data);
+        console.log('Processed file system data:', this.fileSystem); // Debug log
+      } catch (error) {
+        console.error(
+          "Es gab ein Problem beim Abrufen der Dateisystemdaten:",
+          error
+        );
+      }
     },
 
     processFileSystemData(items) {
@@ -491,6 +548,19 @@ export default defineComponent({
       this.selectedFolder = null;
     },
 
+    updateSelectedFolder() {
+      // Update the selected folder with fresh data from fileSystem
+      if (this.selectedFolder && this.folderModalOpen) {
+        const updatedFolder = this.fileSystem.find(item => 
+          item.type === 'folder' && item.name === this.selectedFolder.name
+        );
+        if (updatedFolder) {
+          this.selectedFolder = updatedFolder;
+          console.log('Updated selected folder with fresh data:', updatedFolder);
+        }
+      }
+    },
+
     // Image preview methods
     isImageFile(filename) {
       const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i;
@@ -532,6 +602,7 @@ export default defineComponent({
 
     // Enhanced drag and drop for moving files between folders
     handleDragStart(event, file) {
+      console.log('Starting drag for file:', file.name, 'from location:', file.location);
       event.dataTransfer.setData('application/json', JSON.stringify({
         type: 'existing-file',
         file: file
@@ -599,6 +670,98 @@ export default defineComponent({
       } catch (error) {
         console.error('Error moving file:', error);
       }
+    },
+
+    async moveFileToRoot(file) {
+      try {
+        console.log('moveFileToRoot called with:', file);
+        const formData = new FormData();
+        formData.append('action', 'move');
+        formData.append('sourceFile', file.location);
+        formData.append('targetFolder', ''); // Empty string for root directory
+        
+        console.log('Sending move request to backend...');
+        const response = await axios.post('filesystem.php', formData);
+        console.log('Backend response:', response.data);
+        
+        if (response.data.success) {
+          console.log('File moved to root successfully!');
+          await this.fetchFileSystemData(); // Refresh the file system
+          // Update the modal with refreshed folder data
+          this.updateSelectedFolder();
+          // Keep modal open so user can continue working with other files
+        } else {
+          console.error('Failed to move file to root:', response.data.message);
+        }
+      } catch (error) {
+        console.error('Error moving file to root:', error);
+      }
+    },
+
+    // Modal drag handlers
+    handleModalDragOver(event) {
+      event.preventDefault();
+      console.log('Modal drag over');
+    },
+
+    handleModalDragEnter(event) {
+      event.preventDefault();
+      console.log('Modal drag enter');
+      // Only set drag state if we're entering from outside
+      if (!this.isModalDragOver) {
+        this.isModalDragOver = true;
+      }
+    },
+
+    handleModalDragLeave(event) {
+      event.preventDefault();
+      console.log('Modal drag leave');
+      // Only reset drag state if we're really leaving the modal content area
+      if (!event.currentTarget.contains(event.relatedTarget)) {
+        this.isModalDragOver = false;
+      }
+    },
+
+    handleModalDrop(event) {
+      event.preventDefault();
+      console.log('Modal drop - preventing default behavior');
+      this.isModalDragOver = false;
+      // Do nothing - we want the file to be moved to root instead
+      // The actual move happens when dropped outside the modal
+    },
+
+    // Global drag handlers for modal to root functionality
+    globalDragOver(event) {
+      // Check if we're dragging a file from modal
+      const dragData = event.dataTransfer?.types?.includes('application/json');
+      if (dragData && this.folderModalOpen) {
+        event.preventDefault();
+        console.log('Global drag over detected');
+      }
+    },
+
+    globalDrop(event) {
+      // Only handle if modal is open and we have drag data
+      if (!this.folderModalOpen) return;
+      
+      try {
+        const dragData = event.dataTransfer.getData('application/json');
+        console.log('Global drop event, drag data:', dragData);
+        
+        if (dragData) {
+          event.preventDefault();
+          const data = JSON.parse(dragData);
+          if (data.type === 'existing-file') {
+            console.log('Moving file to root via global drop:', data.file);
+            this.moveFileToRoot(data.file);
+          }
+        }
+      } catch (error) {
+        console.log('Global drop error (normal if dragging from outside):', error);
+      }
+      
+      // Reset modal drag state
+      this.isModalDragOver = false;
     },
   },
 });
@@ -1008,4 +1171,8 @@ progress {
 .folder-modal-content {
   padding: 16px;
 }
+
+/* Root drag and drop styling */
+
+/* Modal drag styling removed - no longer needed */
 </style>
