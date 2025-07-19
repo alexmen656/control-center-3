@@ -64,6 +64,59 @@ function getDirectoryStructure($parentId = 0)
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['action']) && $_POST['action'] === 'move') {
+        // Handle file moving between folders
+        $sourceFile = escape_string($_POST['sourceFile']);
+        $targetFolder = escape_string($_POST['targetFolder']);
+        
+        try {
+            // Get source file info from database
+            $sourceQuery = query("SELECT * FROM control_center_filesystem WHERE location = '$sourceFile'");
+            $sourceData = $sourceQuery->fetch_assoc();
+            
+            if (!$sourceData) {
+                echo json_encode(['success' => false, 'message' => 'Source file not found']);
+                exit;
+            }
+            
+            // Get target folder info
+            $targetQuery = query("SELECT * FROM control_center_filesystem WHERE name = '$targetFolder' AND type = 0");
+            $targetData = $targetQuery->fetch_assoc();
+            
+            if (!$targetData) {
+                echo json_encode(['success' => false, 'message' => 'Target folder not found']);
+                exit;
+            }
+            
+            // Build new file paths
+            $oldFilePath = '/data/filesystem/' . $sourceFile;
+            $newLocation = $targetFolder . '/' . $sourceData['name'];
+            $newFilePath = '/data/filesystem/' . $newLocation;
+            
+            // Move the actual file
+            if (file_exists($oldFilePath)) {
+                if (rename($oldFilePath, $newFilePath)) {
+                    // Update database
+                    $updateQuery = query("UPDATE control_center_filesystem SET location = '$newLocation', parent = {$targetData['id']} WHERE id = {$sourceData['id']}");
+                    
+                    if ($updateQuery) {
+                        echo json_encode(['success' => true, 'message' => 'File moved successfully']);
+                    } else {
+                        // Rollback file move if database update fails
+                        rename($newFilePath, $oldFilePath);
+                        echo json_encode(['success' => false, 'message' => 'Database update failed']);
+                    }
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Failed to move file']);
+                }
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Source file does not exist']);
+            }
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+        exit;
+    } else {
     if (isset($_POST['directory']) && isset($_POST['name'])) {
         if (isset($_POST['project'])) {
             $project = escape_string($_POST['project']);
@@ -183,6 +236,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+    } // Close the else block for the move action
 } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if (isset($_GET['project'])) {
         $project = escape_string($_GET['project']);

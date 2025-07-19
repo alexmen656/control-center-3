@@ -8,9 +8,16 @@
               <ion-card
                 @click="item.type === 'folder' && toggleFolder(item)"
                 @dblclick="item.type === 'file' && isImageFile(item.name) && previewImage(item)"
-                @dragover.prevent
-                @drop="item.type === 'folder' && handleDrop($event, item)"
-                :class="{ 'image-file': item.type === 'file' && isImageFile(item.name) }"
+                @dragover.prevent="item.type === 'folder' && handleDragOver($event)"
+                @dragenter.prevent="item.type === 'folder' && handleDragEnter($event)"
+                @dragleave="item.type === 'folder' && handleDragLeave($event)"
+                @drop="item.type === 'folder' && handleFolderDrop($event, item)"
+                :draggable="item.type === 'file'"
+                @dragstart="item.type === 'file' && handleDragStart($event, item)"
+                :class="{ 
+                  'image-file': item.type === 'file' && isImageFile(item.name),
+                  'drag-over': item.type === 'folder' && item.isDragOver
+                }"
               >
                 <ion-card-header>
                   <img
@@ -250,11 +257,8 @@ export default defineComponent({
     },
 
     handleDrop(event, folder) {
-      event.preventDefault();
-      for (let i = 0; i < event.dataTransfer.files.length; i++) {
-        this.files.push(event.dataTransfer.files[i]);
-      }
-      this.submit(folder.name);
+      // Keep old method for backward compatibility
+      this.handleFolderDrop(event, folder);
     },
 
     handleRootDrop(event) {
@@ -377,6 +381,82 @@ export default defineComponent({
     onImageError() {
       this.imageError = true;
       this.imageLoaded = false;
+    },
+
+    removeFile(index) {
+      this.files.splice(index, 1);
+      this.getImagePreviews();
+    },
+
+    // Enhanced drag and drop for moving files between folders
+    handleDragStart(event, file) {
+      event.dataTransfer.setData('application/json', JSON.stringify({
+        type: 'existing-file',
+        file: file
+      }));
+      event.dataTransfer.effectAllowed = 'move';
+    },
+
+    handleDragOver(event) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+    },
+
+    handleDragEnter(event, folder) {
+      event.preventDefault();
+      folder.isDragOver = true;
+    },
+
+    handleDragLeave(event) {
+      event.preventDefault();
+      // Find the folder and remove drag state
+      this.fileSystem.forEach(item => {
+        if (item.type === 'folder') {
+          item.isDragOver = false;
+        }
+      });
+    },
+
+    handleFolderDrop(event, folder) {
+      event.preventDefault();
+      folder.isDragOver = false;
+      
+      // Check if it's a file from computer or existing file
+      const dragData = event.dataTransfer.getData('application/json');
+      
+      if (dragData) {
+        // Moving existing file between folders
+        const data = JSON.parse(dragData);
+        if (data.type === 'existing-file') {
+          this.moveFileToFolder(data.file, folder);
+        }
+      } else if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+        // Uploading new files from computer
+        for (let i = 0; i < event.dataTransfer.files.length; i++) {
+          this.files.push(event.dataTransfer.files[i]);
+        }
+        this.submit(folder.name);
+      }
+    },
+
+    async moveFileToFolder(file, targetFolder) {
+      try {
+        const formData = new FormData();
+        formData.append('action', 'move');
+        formData.append('sourceFile', file.location);
+        formData.append('targetFolder', targetFolder.name);
+        
+        const response = await axios.post('filesystem.php', formData);
+        
+        if (response.data.success) {
+          console.log('File moved successfully!');
+          this.fetchFileSystemData(); // Refresh the file system
+        } else {
+          console.error('Failed to move file:', response.data.message);
+        }
+      } catch (error) {
+        console.error('Error moving file:', error);
+      }
     },
   },
 });
@@ -564,5 +644,24 @@ ion-card.image-file {
 /* Cursor pointer for clickable image files */
 ion-card.image-file {
   cursor: pointer;
+}
+
+/* Drag and drop styling */
+ion-card[draggable="true"] {
+  cursor: grab;
+}
+
+ion-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+ion-card.drag-over {
+  background-color: var(--ion-color-primary-tint);
+  border: 2px dashed var(--ion-color-primary);
+  transform: scale(1.02);
+}
+
+ion-card.drag-over ion-card-header {
+  opacity: 0.8;
 }
 </style>
