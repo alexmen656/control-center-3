@@ -107,25 +107,38 @@ class AISchemaGenerator {
     }
     
     private function buildPrompt($description, $context) {
-        return "Analysiere diese Beschreibung und erstelle ein passendes Datenbankschema:
+        return "Analysiere diese Beschreibung und erstelle ein VOLLSTÄNDIGES, PRAXISTAUGLICHES Datenbankschema:
 
 BESCHREIBUNG: $description" . ($context ? "\n\nZUSÄTZLICHER KONTEXT: $context" : "") . "
 
+WICHTIGE REGELN:
+1. Denke an ALLE Felder die ein echtes Business braucht - nicht nur das Minimum!
+2. Bei E-Commerce/Shop: Name, Preis, Beschreibung, Kategorie, Bilder, Lagerbestand, SKU/Artikelnummer
+3. Bei Kunden: Vor-/Nachname, Email, Telefon, Adresse, Kundentyp, Registrierungsdatum
+4. Bei Produkten: Detaillierte Eigenschaften je nach Produkttyp
+5. Verwende realistische deutsche Select-Optionen
+6. Mindestens 4-8 Felder für praktische Nutzung
+7. Datenbankfeldnamen: lowercase_mit_underscores
+
+BEISPIEL FÜR 'BANKNOTEN VERKAUFEN':
+- name (Banknotenname)
+- denomination (Nennwert) 
+- currency (Währung - select: EUR, USD, CHF, etc.)
+- year (Ausgabejahr)
+- condition (Zustand - select: Kassenfrisch, Sehr gut, Gut, etc.)
+- price (Verkaufspreis)
+- quantity (Verfügbare Anzahl)
+- description (Detailbeschreibung)
+- image_url (Bildpfad)
+- serial_number (Seriennummer)
+- category (Kategorie - select: Historisch, Modern, Sammler, etc.)
+
 AUFGABE:
-1. Erkenne den Zweck und die Art der Daten
-2. Bestimme sinnvolle Felder die benötigt werden
-3. Wähle passende Feldtypen (text, email, number, textarea, select, checkbox, date, time)
-4. Definiere welche Felder Pflichtfelder sein sollten
-5. Erstelle für select-Felder realistische Optionen
-6. Verwende deutsche Labels die benutzerfreundlich sind
-7. Verwende für 'name' lowercase mit underscores (z.B. 'first_name', 'product_price')
+Erstelle ein Schema mit MINDESTENS 6-10 sinnvollen Feldern.
+Denke wie ein Geschäftsinhaber: Was brauche ich wirklich zum Verwalten?
+Sei großzügig mit nützlichen Feldern - lieber zu viele als zu wenige!
 
-BEISPIELE FÜR GUTE SCHEMAS:
-- Produktverwaltung: name, price, category (select), description (textarea), in_stock (checkbox)
-- Kundenverwaltung: first_name, last_name, email, phone, address (textarea), customer_type (select)
-- Veranstaltungen: event_name, event_date (date), location, max_participants (number), description (textarea)
-
-Erstelle ein Schema das praktisch und vollständig ist, aber nicht überladen.";
+Feldtypen: text, email, number, textarea, select, checkbox, date, time";
     }
     
     private function makeOpenAIRequest($data) {
