@@ -255,9 +255,8 @@ export default defineComponent({
           });
         });
       });
-    if (localStorage.getItem("charts")) {
-      this.loadCharts();
-    }
+    // Immer Charts laden, nicht nur wenn localStorage existiert
+    this.loadCharts();
   },
   setup() {
     const isOpen = ref(false);

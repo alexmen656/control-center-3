@@ -316,6 +316,9 @@
                   <ion-select-option value="dashboard">
                     Dashboard (New)</ion-select-option
                   >
+                  <ion-select-option value="ai_dashboard">
+                    AI Dashboard Generator</ion-select-option
+                  >
                   <!--<ion-select-option value="qr_code_scanner"> QR Code Scanner</ion-select-option>-->
                 </ion-select>
               </ion-item>
@@ -440,6 +443,9 @@ export default defineComponent({
           .then(() => {
             this.emitter.emit("updateSidebar");
           });
+      } else if (this.selectedTool == "ai_dashboard") {
+        // Navigate to AI Dashboard Generator
+        this.$router.push(`/project/${this.$route.params.project}/ai-dashboard-generator`);
       } else {
         const selectedTool = this.tools.find(
           (tool) => tool.name === this.selectedTool

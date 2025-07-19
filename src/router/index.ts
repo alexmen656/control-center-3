@@ -162,6 +162,10 @@ const routes: Array<RouteRecordRaw> = [
     path: '/project/:project/newsletter',
     component: () => import('../views/NewsletterView.vue'),
   },
+  {
+    path: '/project/:project/ai-dashboard-generator',
+    component: () => import('../views/AIDashboardGenerator.vue'),
+  },
   /*
   {
     path: '/project/:project/:url(.*)',
