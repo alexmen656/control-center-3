@@ -4,7 +4,15 @@
       <div class="file-system-grid" @dragover.prevent @drop="handleRootDrop">
         <ion-grid>
           <ion-row>
-            <ion-col size="2" v-for="item in fileSystem" :key="item.name">
+            <ion-col 
+              size="6" 
+              size-sm="4" 
+              size-md="3" 
+              size-lg="2" 
+              size-xl="2" 
+              v-for="item in fileSystem" 
+              :key="item.name"
+            >
               <ion-card
                 @click="item.type === 'folder' && toggleFolder(item)"
                 @dblclick="item.type === 'file' && isImageFile(item.name) && previewImage(item)"
@@ -78,8 +86,10 @@
         </div>
 
         <div>
-          <input v-model="newFolderName" placeholder="Neuer Ordnername" />
-          <button @click="createFolder">Ordner erstellen</button>
+          <div class="folder-creation">
+            <input v-model="newFolderName" placeholder="Neuer Ordnername" class="folder-input" />
+            <button @click="createFolder" class="folder-button">Ordner erstellen</button>
+          </div>
         </div>
       </div>
       
@@ -518,6 +528,45 @@ ion-card {
   aspect-ratio: 1 / 1;
   padding: 0;
   text-align: center;
+  min-height: 120px; /* Ensure minimum height for mobile */
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  ion-card {
+    min-height: 100px;
+    margin-bottom: 8px;
+  }
+  
+  ion-card-header {
+    padding: 4px !important;
+    font-size: 0.85rem;
+  }
+  
+  ion-card-header > img {
+    max-height: 60%;
+  }
+  
+  ion-card-header > ion-icon {
+    height: 60%;
+    width: 60%;
+  }
+  
+  .file-system-grid {
+    padding: 8px;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 769px) and (max-width: 1024px) {
+  ion-card {
+    min-height: 110px;
+  }
+  
+  ion-card-header {
+    padding: 6px;
+    font-size: 0.9rem;
+  }
 }
 
 ion-row {
@@ -663,5 +712,84 @@ ion-card.drag-over {
 
 ion-card.drag-over ion-card-header {
   opacity: 0.8;
+}
+
+/* Folder creation styling */
+.folder-creation {
+  display: flex;
+  gap: 10px;
+  margin: 16px;
+  align-items: center;
+}
+
+.folder-input {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid var(--ion-color-light);
+  border-radius: 8px;
+  font-size: 16px;
+  background: var(--ion-color-light-tint);
+}
+
+.folder-input:focus {
+  border-color: var(--ion-color-primary);
+  outline: none;
+}
+
+.folder-button {
+  padding: 12px 20px;
+  background: var(--ion-color-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.folder-button:hover {
+  background: var(--ion-color-primary-shade);
+}
+
+/* Progress bar mobile optimization */
+progress {
+  width: 100%;
+  max-width: 400px;
+  margin: auto;
+  display: block;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+/* Mobile specific adjustments */
+@media (max-width: 768px) {
+  .folder-creation {
+    flex-direction: column;
+    margin: 12px;
+  }
+  
+  .folder-input {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
+  .folder-button {
+    width: 100%;
+    padding: 14px;
+  }
+  
+  progress {
+    width: calc(100% - 32px);
+    margin: 16px;
+  }
+  
+  .drop-files {
+    font-size: 16px;
+    padding: 16px;
+  }
+  
+  #file-drag-drop {
+    margin: 16px;
+  }
 }
 </style>
