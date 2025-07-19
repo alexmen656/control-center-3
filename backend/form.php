@@ -8,7 +8,11 @@ function mapFieldType($type)
         case 'email':
         case 'select':
         case 'select2':
+        case 'time':
+        case 'date':
             return 'VARCHAR(255)';
+        case 'textarea':
+            return 'TEXT';
         case 'number':
         case 'operation':
             return 'INT';

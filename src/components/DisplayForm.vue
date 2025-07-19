@@ -15,6 +15,13 @@
       :label="input.label"
       v-if="input.type == 'checkbox'"
     />
+    <FloatingTextarea
+      v-model="inputValues[index]"
+      :label="input.label"
+      :placeholder="input.placeholder"
+      v-if="input.type == 'textarea'"
+      @change="checkOperation(input.label, inputValues[index])"
+    />
     <FloatingInput
       v-if="input.type == 'operation'"
       v-model="inputValues[index]"
@@ -28,6 +35,7 @@
         input.type != 'select' &&
         input.type != 'select2' &&
         input.type != 'checkbox' &&
+        input.type != 'textarea' &&
         input.type != 'operation'
       "
       v-model="inputValues[index]"
@@ -48,6 +56,7 @@
 import FloatingInput from "@/components/FloatingInput.vue";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 import FloatingCheckbox from "@/components/FloatingCheckbox.vue";
+import FloatingTextarea from "@/components/FloatingTextarea.vue";
 
 export default {
   name: "DisplayForm",
@@ -55,6 +64,7 @@ export default {
     FloatingInput,
     FloatingSelect,
     FloatingCheckbox,
+    FloatingTextarea,
   },
   data() {
     return {

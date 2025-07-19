@@ -31,11 +31,19 @@
         :defaultVal="defaults_values[input.name]"
         v-if="input.type == 'checkbox'"
       />
+      <FloatingTextarea
+        v-model="inputValues[index]"
+        :defaultVal="defaults_values[input.name]"
+        :label="input.label"
+        :placeholder="input.placeholder"
+        v-if="input.type == 'textarea'"
+      />
       <FloatingInput
         v-if="
           input.type != 'select' &&
           input.type != 'select2' &&
-          input.type != 'checkbox'
+          input.type != 'checkbox' &&
+          input.type != 'textarea'
         "
         v-model="inputValues[index]"
         :defaultVal="defaults_values[input.name]"
@@ -53,6 +61,7 @@
 import FloatingInput from "@/components/FloatingInput.vue";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 import FloatingCheckbox from "@/components/FloatingCheckbox.vue";
+import FloatingTextarea from "@/components/FloatingTextarea.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
@@ -61,6 +70,7 @@ export default defineComponent({
     FloatingInput,
     FloatingSelect,
     FloatingCheckbox,
+    FloatingTextarea,
   },
   props: {
     data: String,
