@@ -5,13 +5,107 @@
         <ion-row>
           <ion-col size="1" />
           <ion-col size="10" v-if="formView">
-            <ion-input
-              v-model="title"
-              @input="logTitle"
-              label="Form Title"
-              label-placement="floating"
-              fill="outline"
-            />
+            <!-- AI Schema Generator Section -->
+            <ion-card v-if="!showManualForm" class="ai-card">
+              <ion-card-header>
+                <ion-card-title>
+                  <ion-icon name="sparkles" color="primary"></ion-icon>
+                  AI Schema Generator
+                </ion-card-title>
+                <ion-card-subtitle>
+                  Beschreibe dein gewünschtes Formular und die AI erstellt automatisch die passende Struktur
+                </ion-card-subtitle>
+              </ion-card-header>
+              
+              <ion-card-content>
+                <ion-item>
+                  <ion-label position="stacked">Beschreibung *</ion-label>
+                  <ion-textarea 
+                    v-model="aiDescription"
+                    placeholder="z.B. 'Produktverwaltung mit Namen, Preisen und Kategorien' oder 'Kundenverwaltung mit Kontaktdaten'"
+                    rows="3"
+                    maxlength="500"
+                  ></ion-textarea>
+                </ion-item>
+                
+                <ion-item>
+                  <ion-label position="stacked">Zusätzlicher Kontext (optional)</ion-label>
+                  <ion-textarea 
+                    v-model="aiContext"
+                    placeholder="Weitere Details oder spezielle Anforderungen..."
+                    rows="2"
+                    maxlength="300"
+                  ></ion-textarea>
+                </ion-item>
+                
+                <ion-item>
+                  <ion-label>
+                    <ion-icon name="logo-openai" color="primary"></ion-icon>
+                    ChatGPT Schema Generator
+                  </ion-label>
+                  <ion-note slot="end" color="success">Empfohlen</ion-note>
+                </ion-item>
+                
+                <div class="ai-buttons">
+                  <ion-button 
+                    expand="block" 
+                    @click="generateAiSchema" 
+                    :disabled="!aiDescription.trim() || isGeneratingAi"
+                    color="primary"
+                  >
+                    <ion-icon name="sparkles" slot="start"></ion-icon>
+                    {{ isGeneratingAi ? 'Generiere Schema...' : 'AI Schema generieren' }}
+                    <ion-spinner v-if="isGeneratingAi" slot="end"></ion-spinner>
+                  </ion-button>
+                  
+                  <ion-button 
+                    fill="outline" 
+                    expand="block" 
+                    @click="showManualForm = true"
+                    style="margin-top: 8px;"
+                  >
+                    <ion-icon name="create-outline" slot="start"></ion-icon>
+                    Manuell erstellen
+                  </ion-button>
+                </div>
+                
+                <!-- Quick Examples -->
+                <div class="examples-section">
+                  <ion-label class="examples-label">Beispiele:</ion-label>
+                  <div class="examples-chips">
+                    <ion-chip 
+                      v-for="example in aiExamples" 
+                      :key="example"
+                      @click="aiDescription = example"
+                      class="example-chip"
+                    >
+                      {{ example }}
+                    </ion-chip>
+                  </div>
+                </div>
+              </ion-card-content>
+            </ion-card>
+            
+            <!-- Manual Form Creation (existing form) -->
+            <div v-if="showManualForm">
+              <div class="form-header">
+                <ion-input
+                  v-model="title"
+                  @input="logTitle"
+                  label="Form Title"
+                  label-placement="floating"
+                  fill="outline"
+                />
+                <ion-button 
+                  fill="clear" 
+                  @click="showManualForm = false"
+                  color="medium"
+                  class="back-to-ai-btn"
+                >
+                  <ion-icon name="arrow-back" slot="start"></ion-icon>
+                  Zurück zur AI
+                </ion-button>
+              </div>
             <form @submit.prevent="submitForm">
               <ion-row v-for="(input, index) in formInputs" :key="index">
                 <ion-col size="3">
@@ -193,6 +287,7 @@
                 </ion-col>
               </ion-row>
             </form>
+            </div>
             <div v-html="jsonData"></div>
           </ion-col>
           <ion-col
@@ -274,6 +369,19 @@ export default defineComponent({
       test: "",
       forms: [],
       selectedForm: "",
+      // AI Properties
+      showManualForm: false,
+      aiDescription: '',
+      aiContext: '',
+      isGeneratingAi: false,
+      aiExamples: [
+        'Produktverwaltung mit Namen, Preisen und Kategorien',
+        'Kundendatenbank mit Kontaktinformationen',
+        'Mitarbeiterverwaltung mit Abteilungen',
+        'Bestellsystem mit Artikeln und Adressen',
+        'Veranstaltungsplaner mit Terminen',
+        'Aufgabenverwaltung mit Prioritäten'
+      ]
     };
   },
   computed: {
@@ -423,11 +531,131 @@ export default defineComponent({
     toName(name) {
       return name.replaceAll(" ", "_").toLowerCase();
     },
+    
+    // AI Methods
+    async generateAiSchema() {
+      if (!this.aiDescription.trim()) return;
+      
+      this.isGeneratingAi = true;
+      
+      try {
+        const formData = new FormData();
+        formData.append('generate_ai_schema', '1');
+        formData.append('description', this.aiDescription);
+        formData.append('context', this.aiContext);
+        
+        const response = await this.$axios.post('ai_schema_generator.php', formData);
+        
+        if (response.data.success) {
+          const schema = response.data.schema;
+          
+          // Apply AI generated schema to current form
+          this.title = schema.title || '';
+          this.formInputs = schema.inputs.map(input => ({
+            label: input.label,
+            placeholder: input.label,
+            type: input.type,
+            optionList: input.options ? input.options.map(opt => ({ value: opt })) : [{ value: "" }]
+          }));
+          
+          // Switch to manual form view to show the generated schema
+          this.showManualForm = true;
+          
+          // Show success message
+          this.showToast('AI Schema erfolgreich generiert! Du kannst es jetzt bearbeiten.', 'success');
+        } else {
+          this.showToast(response.data.message || 'Fehler beim Generieren des Schemas', 'danger');
+        }
+      } catch (error) {
+        console.error('Error generating AI schema:', error);
+        this.showToast('Netzwerkfehler beim Generieren des Schemas', 'danger');
+      } finally {
+        this.isGeneratingAi = false;
+      }
+    },
+    
+    async showToast(message, color = 'medium') {
+      if (this.$ionic && this.$ionic.toastController) {
+        const toast = await this.$ionic.toastController.create({
+          message,
+          duration: 3000,
+          color,
+          position: 'top'
+        });
+        await toast.present();
+      }
+    },
   },
 });
 </script>
 <style scoped>
 .w100 {
   width: 100%;
+}
+
+/* AI Integration Styles */
+.ai-card {
+  margin-bottom: 20px;
+  border-left: 4px solid var(--ion-color-primary);
+}
+
+.ai-card ion-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-buttons {
+  margin-top: 16px;
+}
+
+.examples-section {
+  margin-top: 20px;
+}
+
+.examples-label {
+  font-weight: 600;
+  color: var(--ion-color-primary);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.examples-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.example-chip {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.example-chip:hover {
+  transform: scale(1.05);
+}
+
+.form-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.back-to-ai-btn {
+  flex-shrink: 0;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .form-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .examples-chips {
+    justify-content: center;
+  }
 }
 </style>
