@@ -16,19 +16,33 @@
           <table>
             <thead>
               <tr>
-                <th>User ID</th>
-                <th>Profile Image</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>E-Mail</th>
-                <th>Password</th>
-                <th>Google LogIn</th>
-                <th>Account Status</th>
-                <th>Approve</th>
+                <th 
+                  v-for="(label, index) in verificationLabels" 
+                  :key="label"
+                  @click="sortVerificationBy(index)"
+                  class="sortable-header"
+                >
+                  {{ label }}
+                  <span class="sort-indicator">
+                    <ion-icon 
+                      v-if="verificationSortColumn === index && verificationSortDirection === 'asc'" 
+                      name="chevron-up-outline"
+                    ></ion-icon>
+                    <ion-icon 
+                      v-else-if="verificationSortColumn === index && verificationSortDirection === 'desc'" 
+                      name="chevron-down-outline"
+                    ></ion-icon>
+                    <ion-icon 
+                      v-else 
+                      name="swap-vertical-outline" 
+                      class="sort-default"
+                    ></ion-icon>
+                  </span>
+                </th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="tr in pendingVerificationEntries" :key="tr">
+              <tr v-for="tr in sortedVerificationEntries" :key="tr">
                 <td>{{ tr[0] }}</td>
                 <td>{{ tr[1] }}</td>
                 <td>{{ tr[2] }}</td>
@@ -183,9 +197,57 @@ export default defineComponent({
       last_name: "",
       message: "",
       successMessage: "",
+      verificationSortColumn: null,
+      verificationSortDirection: 'asc',
     };
   },
+  computed: {
+    verificationLabels() {
+      return ['User ID', 'Profile Image', 'First Name', 'Last Name', 'E-Mail', 'Password', 'Google LogIn', 'Account Status', 'Approve'];
+    },
+    sortedVerificationEntries() {
+      if (this.verificationSortColumn === null) {
+        return this.pendingVerificationEntries;
+      }
+      
+      const sorted = [...this.pendingVerificationEntries].sort((a, b) => {
+        const aVal = a[this.verificationSortColumn];
+        const bVal = b[this.verificationSortColumn];
+        
+        // Check if values are numbers
+        const aNum = parseFloat(aVal);
+        const bNum = parseFloat(bVal);
+        
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          // Numeric sort
+          return this.verificationSortDirection === 'asc' ? aNum - bNum : bNum - aNum;
+        } else {
+          // String sort
+          const aStr = String(aVal).toLowerCase();
+          const bStr = String(bVal).toLowerCase();
+          
+          if (this.verificationSortDirection === 'asc') {
+            return aStr.localeCompare(bStr);
+          } else {
+            return bStr.localeCompare(aStr);
+          }
+        }
+      });
+      
+      return sorted;
+    }
+  },
   methods: {
+    sortVerificationBy(columnIndex) {
+      if (this.verificationSortColumn === columnIndex) {
+        // Toggle direction if same column
+        this.verificationSortDirection = this.verificationSortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        // New column, start with ascending
+        this.verificationSortColumn = columnIndex;
+        this.verificationSortDirection = 'asc';
+      }
+    },
     cancel() {
       this.$refs.modal.$el.dismiss(null, "cancel");
     },
@@ -284,6 +346,32 @@ th {
   text-transform: uppercase;
   font-size: 0.9em;
   color: var(--ion-color-medium);
+}
+
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.sortable-header:hover {
+  background-color: var(--ion-color-light);
+}
+
+.sort-indicator {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  font-size: 0.8em;
+}
+
+.sort-default {
+  opacity: 0.3;
+}
+
+.sortable-header:hover .sort-default {
+  opacity: 0.6;
 }
 
 tr:nth-child(even) {

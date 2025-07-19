@@ -10,14 +10,34 @@
                 <table>
                   <thead>
                     <tr>
-                      <th v-for="label in labels.slice(0, 5)" :key="label">
+                      <th 
+                        v-for="(label, index) in labels.slice(0, 5)" 
+                        :key="label"
+                        @click="sortBy(index)"
+                        class="sortable-header"
+                      >
                         {{ label }}
+                        <span class="sort-indicator">
+                          <ion-icon 
+                            v-if="sortColumn === index && sortDirection === 'asc'" 
+                            name="chevron-up-outline"
+                          ></ion-icon>
+                          <ion-icon 
+                            v-else-if="sortColumn === index && sortDirection === 'desc'" 
+                            name="chevron-down-outline"
+                          ></ion-icon>
+                          <ion-icon 
+                            v-else 
+                            name="swap-vertical-outline" 
+                            class="sort-default"
+                          ></ion-icon>
+                        </span>
                       </th>
                       <th></th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="tr in data" :key="tr">
+                    <tr v-for="tr in sortedData" :key="tr">
                       <td v-for="td in tr.slice(0, 5)" :key="td">{{ td }}</td>
                       <td>
                         <ion-icon @click="deletee(tr[0])" name="trash-outline" />
@@ -77,7 +97,42 @@ export default defineComponent({
       data: [],
       load_more_btn: false,
       current_limit: 0,
+      sortColumn: null,
+      sortDirection: 'asc',
     };
+  },
+  computed: {
+    sortedData() {
+      if (this.sortColumn === null) {
+        return this.data;
+      }
+      
+      const sorted = [...this.data].sort((a, b) => {
+        const aVal = a[this.sortColumn];
+        const bVal = b[this.sortColumn];
+        
+        // Check if values are numbers
+        const aNum = parseFloat(aVal);
+        const bNum = parseFloat(bVal);
+        
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          // Numeric sort
+          return this.sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
+        } else {
+          // String sort
+          const aStr = String(aVal).toLowerCase();
+          const bStr = String(bVal).toLowerCase();
+          
+          if (this.sortDirection === 'asc') {
+            return aStr.localeCompare(bStr);
+          } else {
+            return bStr.localeCompare(aStr);
+          }
+        }
+      });
+      
+      return sorted;
+    }
   },
   setup() {
     const isOpenRef = ref(false);
@@ -95,6 +150,16 @@ export default defineComponent({
     this.loadData();
   },
   methods: {
+    sortBy(columnIndex) {
+      if (this.sortColumn === columnIndex) {
+        // Toggle direction if same column
+        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        // New column, start with ascending
+        this.sortColumn = columnIndex;
+        this.sortDirection = 'asc';
+      }
+    },
     handleSubmit(data) {
       this.$axios
         .post(
@@ -222,6 +287,32 @@ th {
   text-transform: uppercase;
   font-size: 0.9em;
   color: var(--ion-color-medium);
+}
+
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.sortable-header:hover {
+  background-color: var(--ion-color-light);
+}
+
+.sort-indicator {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  font-size: 0.8em;
+}
+
+.sort-default {
+  opacity: 0.3;
+}
+
+.sortable-header:hover .sort-default {
+  opacity: 0.6;
 }
 
 tr:nth-child(even) {
