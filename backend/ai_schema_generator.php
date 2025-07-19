@@ -61,7 +61,7 @@ class AISchemaGenerator {
                                     'properties' => [
                                         'name' => [
                                             'type' => 'string',
-                                            'description' => 'Datenbankfeldname (lowercase, underscore)'
+                                            'description' => 'Datenbankfeldname (lowercase, underscore), keine Sonderzeichen außer Unterstrichen erlaubt'
                                         ],
                                         'type' => [
                                             'type' => 'string',

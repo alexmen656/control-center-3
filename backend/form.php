@@ -39,7 +39,7 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
         id INT AUTO_INCREMENT PRIMARY KEY";
 
             foreach ($fields as $field) {
-                $name = $field['name'];
+                $name = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], strtolower($field['name']));
                 $type = mapFieldType($field['type']);
                 $sql .= ", $name $type";
             }
@@ -126,7 +126,7 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
         $values = array();
 
         foreach ($form as $fieldName => $fieldValue) {
-            $fieldName = escape_string($fieldName);
+            $fieldName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], strtolower(escape_string($fieldName)));
             $fieldValue = escape_string($fieldValue);
             $columns[] = $fieldName;
             $values[] = "'$fieldValue'";
@@ -174,7 +174,7 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
         $updates = array();
 
         foreach ($form as $fieldName => $fieldValue) {
-            $fieldName = escape_string($fieldName);
+            $fieldName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], strtolower(escape_string($fieldName)));
             $fieldValue = escape_string($fieldValue);
             $updates[] = "$fieldName = '$fieldValue'";
         }
