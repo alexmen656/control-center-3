@@ -52,6 +52,24 @@
       </ion-item>
     </ion-menu-toggle>
   </ion-list>
+  
+  <ion-note class="projects-headline">
+    <h4>AI Tools</h4>
+  </ion-note>
+  <ion-list>
+    <ion-menu-toggle auto-hide="false">
+      <ion-item
+        button
+        lines="none"
+        detail="false"
+        router-link="/ai-website-generator"
+        class="hydrated menu-item"
+      >
+        <ion-icon slot="start" name="rocket-outline"></ion-icon>
+        <ion-label>AI Website Generator</ion-label>
+      </ion-item>
+    </ion-menu-toggle>
+  </ion-list>
 
   <ion-note class="projects-headline"
     ><h4>Bookmarks</h4>

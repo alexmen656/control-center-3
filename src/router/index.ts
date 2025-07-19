@@ -283,8 +283,12 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/project/:project/web-builder',
     component: () => import('../views/WebBuilderView.vue'),
+  },
+  {
+    path: '/ai-website-generator',
+    component: () => import('../views/AIWebsiteGenerator.vue'),
   }
-]
+];
 
 const modules = import.meta.glob('@/modules/*/routes.ts', { eager: true });
 
