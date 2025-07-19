@@ -14,7 +14,7 @@
               :key="item.name"
             >
               <ion-card
-                @click="item.type === 'folder' && toggleFolder(item)"
+                @click="item.type === 'folder' ? openFolderModal(item) : null"
                 @dblclick="item.type === 'file' && isImageFile(item.name) && previewImage(item)"
                 @dragover.prevent="item.type === 'folder' && handleDragOver($event)"
                 @dragenter.prevent="item.type === 'folder' && handleDragEnter($event)"
@@ -29,11 +29,13 @@
               >
                 <ion-card-header>
                   <img
-                    v-if="item.type === 'file' && imageStatus[item.location]"
+                    v-if="item.type === 'file' && isImageFile(item.name)"
                     :src="
                       'https://alex.polan.sk/control-center/file_provider.php?path=' +
                       item.location
                     "
+                    @error="imageStatus[item.location] = false"
+                    @load="imageStatus[item.location] = true"
                   />
 
                   <ion-icon
@@ -48,20 +50,49 @@
                   ></ion-icon>
                   {{ shortenName(item.name) }}
                 </ion-card-header>
-                <ion-card-content v-if="item.open && item.type === 'folder'">
-                  <ion-grid>
+                <ion-card-content v-if="false" style="display: none;">
+                  <!-- Commented out for now - inline folder display -->
+                  <!-- Debug info -->
+                  <div style="font-size: 10px; color: red; padding: 5px;">
+                    DEBUG: open={{ item.open }}, type={{ item.type }}, children={{ item.children ? item.children.length : 'none' }}
+                  </div>
+                  
+                  <div v-if="!item.children || item.children.length === 0" style="padding: 20px; text-align: center; color: #666;">
+                    Ordner ist leer
+                  </div>
+                  <ion-grid v-else>
                     <ion-row>
                       <ion-col
-                        size="12"
+                        size="6"
+                        size-sm="4" 
+                        size-md="6"
+                        size-lg="4"
                         v-for="subItem in item.children"
                         :key="subItem.name"
                       >
-                        <ion-icon
-                          :name="
-                            subItem.type === 'folder' ? 'folder' : 'document'
-                          "
-                        ></ion-icon>
-                        {{ subItem.name }}
+                        <ion-card
+                          class="sub-item-card"
+                          @dblclick="subItem.type === 'file' && isImageFile(subItem.name) && previewImage(subItem)"
+                          :draggable="subItem.type === 'file'"
+                          @dragstart="subItem.type === 'file' && handleDragStart($event, subItem)"
+                          :class="{ 
+                            'image-file': subItem.type === 'file' && isImageFile(subItem.name)
+                          }"
+                        >
+                          <ion-card-header>
+                            <img
+                              v-if="subItem.type === 'file' && isImageFile(subItem.name)"
+                              :src="'https://alex.polan.sk/control-center/file_provider.php?path=' + subItem.location"
+                              @error="imageStatus[subItem.location] = false"
+                              @load="imageStatus[subItem.location] = true"
+                            />
+                            <ion-icon
+                              v-else
+                              :name="subItem.type === 'folder' ? 'folder' : 'document'"
+                            ></ion-icon>
+                            {{ shortenName(subItem.name) }}
+                          </ion-card-header>
+                        </ion-card>
                       </ion-col>
                     </ion-row>
                   </ion-grid>
@@ -125,6 +156,63 @@
           </div>
         </ion-content>
       </ion-modal>
+
+      <!-- Folder Content Modal -->
+      <ion-modal :is-open="folderModalOpen" @did-dismiss="closeFolderModal">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>{{ selectedFolder ? selectedFolder.name : 'Ordner' }}</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="closeFolderModal">
+                <ion-icon name="close"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="folder-modal-content">
+          <div v-if="selectedFolder && (!selectedFolder.children || selectedFolder.children.length === 0)" 
+               style="padding: 40px; text-align: center; color: #666;">
+            <ion-icon name="folder-open" style="font-size: 48px; margin-bottom: 16px;"></ion-icon>
+            <p>Ordner ist leer</p>
+          </div>
+          <ion-grid v-else-if="selectedFolder && selectedFolder.children">
+            <ion-row>
+              <ion-col
+                size="6"
+                size-sm="4" 
+                size-md="3"
+                size-lg="3"
+                v-for="subItem in selectedFolder.children"
+                :key="subItem.name"
+              >
+                <ion-card
+                  class="modal-item-card"
+                  @dblclick="subItem.type === 'file' && isImageFile(subItem.name) && previewImage(subItem)"
+                  :draggable="subItem.type === 'file'"
+                  @dragstart="subItem.type === 'file' && handleDragStart($event, subItem)"
+                  :class="{ 
+                    'image-file': subItem.type === 'file' && isImageFile(subItem.name)
+                  }"
+                >
+                  <ion-card-header>
+                    <img
+                      v-if="subItem.type === 'file' && isImageFile(subItem.name)"
+                      :src="'https://alex.polan.sk/control-center/file_provider.php?path=' + subItem.location"
+                      @error="imageStatus[subItem.location] = false"
+                      @load="imageStatus[subItem.location] = true"
+                    />
+                    <ion-icon
+                      v-else
+                      :name="subItem.type === 'folder' ? 'folder' : 'document'"
+                    ></ion-icon>
+                    {{ shortenName(subItem.name) }}
+                  </ion-card-header>
+                </ion-card>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -175,6 +263,9 @@ export default defineComponent({
       previewImageName: "",
       imageLoaded: false,
       imageError: false,
+      // Folder modal data
+      folderModalOpen: false,
+      selectedFolder: null,
     };
   },
   mounted() {
@@ -222,18 +313,6 @@ export default defineComponent({
         return name.slice(0, 8) + "..." + name.slice(-7);
       }
       return name;
-    },
-    async getImage(location) {
-      console.log(1);
-      try {
-        const res = await axios.get(
-          "https://alex.polan.sk/control-center/file_provider.php?path=" +
-            location
-        );
-        this.imageStatus[location] = res.status === 200;
-      } catch (error) {
-        this.imageStatus.push(location, false);
-      }
     },
     determineDragAndDropCapable() {
       const div = document.createElement("div");
@@ -318,13 +397,9 @@ export default defineComponent({
       axios
         .get("filesystem.php")
         .then((response) => {
-          this.fileSystem = response.data;
-          // Bildstatus für jedes Element abrufen
-          this.fileSystem.forEach((item) => {
-            if (item.type === "file") {
-              this.getImage(item.location);
-            }
-          });
+          console.log('Raw file system data:', response.data); // Debug log
+          this.fileSystem = this.processFileSystemData(response.data);
+          console.log('Processed file system data:', this.fileSystem); // Debug log
         })
         .catch((error) => {
           console.error(
@@ -332,6 +407,45 @@ export default defineComponent({
             error
           );
         });
+    },
+
+    processFileSystemData(items) {
+      return items.map(item => {
+        const processedItem = { ...item };
+        
+        if (item.type === 'folder') {
+          // Initialize folder-specific properties
+          processedItem.open = false;
+          processedItem.isDragOver = false;
+          
+          // Recursively process children if they exist
+          if (item.children && Array.isArray(item.children) && item.children.length > 0) {
+            processedItem.children = this.processFileSystemData(item.children);
+          }
+        }
+        
+        return processedItem;
+      });
+    },
+
+    initializeFolderStates(items) {
+      items.forEach(item => {
+        if (item.type === 'folder') {
+          // Initialize 'open' property if it doesn't exist
+          if (!Object.prototype.hasOwnProperty.call(item, 'open')) {
+            item.open = false;
+          }
+          // Initialize 'isDragOver' property
+          if (!Object.prototype.hasOwnProperty.call(item, 'isDragOver')) {
+            item.isDragOver = false;
+          }
+          
+          // Recursively initialize children if they exist
+          if (item.children && item.children.length > 0) {
+            this.initializeFolderStates(item.children);
+          }
+        }
+      });
     },
 
     createFolder() {
@@ -356,7 +470,25 @@ export default defineComponent({
     },
 
     toggleFolder(folder) {
+      // Commented out for now - using modal instead
+      console.log('Toggling folder:', folder.name, 'current state:', folder.open);
       folder.open = !folder.open;
+      console.log('New state:', folder.open);
+      
+      // Force Vue to update the DOM
+      this.$forceUpdate();
+    },
+
+    // New folder modal methods
+    openFolderModal(folder) {
+      console.log('Opening folder modal for:', folder.name, 'children:', folder.children);
+      this.selectedFolder = folder;
+      this.folderModalOpen = true;
+    },
+
+    closeFolderModal() {
+      this.folderModalOpen = false;
+      this.selectedFolder = null;
     },
 
     // Image preview methods
@@ -791,5 +923,89 @@ progress {
   #file-drag-drop {
     margin: 16px;
   }
+  
+  .sub-item-card {
+    min-height: 80px;
+  }
+  
+  .sub-item-card ion-card-header {
+    padding: 4px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Sub-item cards styling */
+.sub-item-card {
+  cursor: pointer;
+  transition: transform 0.2s;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  text-align: center;
+  min-height: 100px;
+  margin: 4px 0;
+  background: var(--ion-color-light-tint);
+  border: 1px solid var(--ion-color-light-shade);
+}
+
+.sub-item-card:hover {
+  transform: scale(1.03);
+  background: var(--ion-color-light);
+}
+
+.sub-item-card ion-card-header {
+  padding: 6px;
+  font-size: 0.8rem;
+}
+
+.sub-item-card ion-card-header > img {
+  height: 60%;
+  width: 60%;
+  object-fit: cover;
+  border-radius: 3px;
+}
+
+.sub-item-card ion-card-header > ion-icon {
+  height: 60%;
+  width: 60%;
+}
+
+/* Modal item cards styling */
+.modal-item-card {
+  cursor: pointer;
+  transition: transform 0.2s;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  text-align: center;
+  min-height: 120px;
+  margin: 8px 0;
+  background: var(--ion-color-light);
+  border: 1px solid var(--ion-color-medium);
+}
+
+.modal-item-card:hover {
+  transform: scale(1.05);
+  background: var(--ion-color-light-shade);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.modal-item-card ion-card-header {
+  padding: 8px;
+  font-size: 0.85rem;
+}
+
+.modal-item-card ion-card-header > img {
+  height: 70%;
+  width: 70%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.modal-item-card ion-card-header > ion-icon {
+  height: 70%;
+  width: 70%;
+}
+
+.folder-modal-content {
+  padding: 16px;
 }
 </style>
