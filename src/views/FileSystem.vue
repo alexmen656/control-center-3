@@ -7,8 +7,10 @@
             <ion-col size="2" v-for="item in fileSystem" :key="item.name">
               <ion-card
                 @click="item.type === 'folder' && toggleFolder(item)"
+                @dblclick="item.type === 'file' && isImageFile(item.name) && previewImage(item)"
                 @dragover.prevent
                 @drop="item.type === 'folder' && handleDrop($event, item)"
+                :class="{ 'image-file': item.type === 'file' && isImageFile(item.name) }"
               >
                 <ion-card-header>
                   <img
@@ -73,13 +75,57 @@
           <button @click="createFolder">Ordner erstellen</button>
         </div>
       </div>
+      
+      <!-- Image Preview Modal -->
+      <ion-modal :is-open="imagePreviewOpen" @did-dismiss="closeImagePreview">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>{{ previewImageName }}</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="closeImagePreview">
+                <ion-icon name="close"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="image-preview-content">
+          <div class="image-container">
+            <img 
+              :src="previewImageUrl" 
+              :alt="previewImageName"
+              class="preview-image"
+              @load="imageLoaded = true"
+              @error="imageError = true"
+            />
+            <div v-if="!imageLoaded && !imageError" class="loading-spinner">
+              <ion-spinner></ion-spinner>
+              <p>Lade Bild...</p>
+            </div>
+            <div v-if="imageError" class="error-message">
+              <ion-icon name="alert-circle"></ion-icon>
+              <p>Fehler beim Laden des Bildes</p>
+            </div>
+          </div>
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
 
 <script>
 import { defineComponent } from "vue";
-import { IonPage, IonContent, IonIcon } from "@ionic/vue";
+import { 
+  IonPage, 
+  IonContent, 
+  IonIcon, 
+  IonModal, 
+  IonHeader, 
+  IonToolbar, 
+  IonTitle, 
+  IonButtons, 
+  IonButton, 
+  IonSpinner 
+} from "@ionic/vue";
 import axios from "axios";
 
 export default defineComponent({
@@ -88,6 +134,13 @@ export default defineComponent({
     IonPage,
     IonContent,
     IonIcon,
+    IonModal,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonButtons,
+    IonButton,
+    IonSpinner,
   },
   data() {
     return {
@@ -99,6 +152,12 @@ export default defineComponent({
       fileSystem: [],
       newFolderName: "", // Neuer Ordnername
       imageStatus: {}, // Status der Bilder
+      // Image preview data
+      imagePreviewOpen: false,
+      previewImageUrl: "",
+      previewImageName: "",
+      imageLoaded: false,
+      imageError: false,
     };
   },
   mounted() {
@@ -285,6 +344,40 @@ export default defineComponent({
     toggleFolder(folder) {
       folder.open = !folder.open;
     },
+
+    // Image preview methods
+    isImageFile(filename) {
+      const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i;
+      return imageExtensions.test(filename);
+    },
+
+    previewImage(file) {
+      if (this.isImageFile(file.name)) {
+        this.previewImageUrl = `https://alex.polan.sk/control-center/file_provider.php?path=${file.location}`;
+        this.previewImageName = file.name;
+        this.imagePreviewOpen = true;
+        this.imageLoaded = false;
+        this.imageError = false;
+      }
+    },
+
+    closeImagePreview() {
+      this.imagePreviewOpen = false;
+      this.previewImageUrl = '';
+      this.previewImageName = '';
+      this.imageLoaded = false;
+      this.imageError = false;
+    },
+
+    onImageLoad() {
+      this.imageLoaded = true;
+      this.imageError = false;
+    },
+
+    onImageError() {
+      this.imageError = true;
+      this.imageLoaded = false;
+    },
   },
 });
 </script>
@@ -386,5 +479,83 @@ ion-card-header {
 ion-card-header > img, ion-icon {
   height: 75%;
   width: 75%;
+}
+
+/* Image preview modal styles */
+.image-preview-modal {
+  --width: 90%;
+  --max-width: 800px;
+  --height: auto;
+  --max-height: 90%;
+}
+
+.image-preview-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.image-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 200px;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.loading-spinner, .error-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+}
+
+.loading-spinner ion-spinner {
+  margin-bottom: 10px;
+}
+
+.error-message {
+  color: var(--ion-color-danger);
+}
+
+.error-message ion-icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.preview-title {
+  margin-top: 16px;
+  text-align: center;
+  font-weight: 500;
+  color: var(--ion-color-dark);
+  word-break: break-all;
+}
+
+/* Enhanced hover effect for image files */
+ion-card.image-file:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+ion-card.image-file {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Cursor pointer for clickable image files */
+ion-card.image-file {
+  cursor: pointer;
 }
 </style>
