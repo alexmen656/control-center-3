@@ -6,26 +6,32 @@
           ><ion-col size="0" size-md="1" />
           <ion-col size="12" size-md="10">
             <ion-card>
-              <table>
-                <tr>
-                  <th
-                    v-for="label in labels.slice(0, 5)"
-                    :key="label"
-                  >
-                    {{ label }}
-                  </th>
-                  <th></th>
-                </tr>
-                <tr v-for="tr in data" :key="tr">
-                  <td v-for="td in tr.slice(0, 5)" :key="td">{{ td }}</td>
-                  <td>
-                    <ion-icon @click="deletee(tr[0])" name="trash-outline" />
-                  </td>
-                  <td>
-                    <ion-icon @click="edit(tr[0])" name="create-outline" />
-                  </td>
-                </tr>
-              </table>
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th
+                        v-for="label in labels.slice(0, 5)"
+                        :key="label"
+                      >
+                        {{ label }}
+                      </th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="tr in data" :key="tr">
+                      <td v-for="td in tr.slice(0, 5)" :key="td">{{ td }}</td>
+                      <td>
+                        <ion-icon @click="deletee(tr[0])" name="trash-outline" />
+                      </td>
+                      <td>
+                        <ion-icon @click="edit(tr[0])" name="create-outline" />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </ion-card>
             <ion-row
               v-if="load_more_btn"
@@ -177,10 +183,16 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.table-container {
+  overflow-x: auto;
+  width: 100%;
+}
+
 table {
   font-family: arial, sans-serif;
   border-collapse: collapse;
   width: 100%;
+  min-width: 600px; /* Minimum width to ensure all columns are visible */
 }
 
 td,
@@ -188,6 +200,7 @@ th {
   border: none;
   text-align: left;
   padding: 8px;
+  white-space: nowrap; /* Prevent text wrapping in cells */
 }
 
 tr:nth-child(even) {

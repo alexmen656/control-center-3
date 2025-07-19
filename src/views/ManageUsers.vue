@@ -12,34 +12,40 @@
       </h2>
 
       <ion-card v-if="pendingVerificationEntries.length > 0">
-        <table>
-          <tr>
-            <th>User ID</th>
-            <th>Profile Image</th>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>E-Mail</th>
-            <th>Password</th>
-            <th>Google LogIn</th>
-            <th>Account Status</th>
-            <th>Approve</th>
-          </tr>
-          <tr v-for="tr in pendingVerificationEntries" :key="tr">
-            <td>{{ tr[0] }}</td>
-            <td>{{ tr[1] }}</td>
-            <td>{{ tr[2] }}</td>
-            <td>{{ tr[3] }}</td>
-            <td>{{ tr[4] }}</td>
-            <td>{{ tr[5] }}</td>
-            <td>{{ tr[6] }}</td>
-            <td>{{ tr[8] }}</td>
-            <td>
-              <ion-button color="success" size="small" @click="approve(tr[0])"
-                >Approve</ion-button
-              >
-            </td>
-          </tr>
-        </table>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>User ID</th>
+                <th>Profile Image</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>E-Mail</th>
+                <th>Password</th>
+                <th>Google LogIn</th>
+                <th>Account Status</th>
+                <th>Approve</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="tr in pendingVerificationEntries" :key="tr">
+                <td>{{ tr[0] }}</td>
+                <td>{{ tr[1] }}</td>
+                <td>{{ tr[2] }}</td>
+                <td>{{ tr[3] }}</td>
+                <td>{{ tr[4] }}</td>
+                <td>{{ tr[5] }}</td>
+                <td>{{ tr[6] }}</td>
+                <td>{{ tr[8] }}</td>
+                <td>
+                  <ion-button color="success" size="small" @click="approve(tr[0])"
+                    >Approve</ion-button
+                  >
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </ion-card>
 
       <ion-button id="open-modal">
@@ -253,10 +259,16 @@ export default defineComponent({
 });
 </script>
 <style scoped>
+.table-container {
+  overflow-x: auto;
+  width: 100%;
+}
+
 table {
   font-family: arial, sans-serif;
   border-collapse: collapse;
   width: 100%;
+  min-width: 800px; /* Minimum width to ensure all columns are visible */
 }
 
 td,
@@ -264,6 +276,7 @@ th {
   border: none;
   text-align: left;
   padding: 8px;
+  white-space: nowrap; /* Prevent text wrapping in cells */
 }
 
 tr:nth-child(even) {
