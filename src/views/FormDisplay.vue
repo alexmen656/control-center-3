@@ -203,6 +203,13 @@ th {
   white-space: nowrap; /* Prevent text wrapping in cells */
 }
 
+th {
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.9em;
+  color: var(--ion-color-medium);
+}
+
 tr:nth-child(even) {
   background-color: #e9e9e9;
 }

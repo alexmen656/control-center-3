@@ -35,7 +35,7 @@ table {
   font-family: arial, sans-serif;
   border-collapse: collapse;
   width: 100%;
-  min-width: 600px; /* Minimum width to ensure readability */
+  min-width: 600px;
 }
 
 td,
@@ -43,7 +43,14 @@ th {
   border: none;
   text-align: left;
   padding: 8px;
-  white-space: nowrap; /* Prevent text wrapping in cells */
+  white-space: nowrap;
+}
+
+th {
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.9em;
+  color: var(--ion-color-medium);
 }
 
 tr:nth-child(even) {
