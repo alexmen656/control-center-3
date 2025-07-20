@@ -339,6 +339,7 @@ export default defineComponent({
         formData.append('description', this.description);
         formData.append('context', this.context);
         formData.append('provider', this.selectedProvider);
+        formData.append('project', this.$route.params.project || '');
         
         const response = await this.$axios.post('ai_schema_generator.php', formData);
         

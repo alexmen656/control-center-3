@@ -39,12 +39,24 @@
                 </ion-item>
                 
                 <ion-item>
+                  <!--<ion-label>-->
+                    <ion-icon name="logo-openai" color="primary"></ion-icon>
+                   <!-- Andere Forms beachten-->
+                          <FloatingCheckbox 
+                    v-model="checkForms"
+                    label="Andere Forms beachten"
+                  />
+                 <!--</ion-label>-->
+                </ion-item>
+
+                <ion-item>
                   <ion-label>
                     <ion-icon name="logo-openai" color="primary"></ion-icon>
                     ChatGPT Schema Generator
                   </ion-label>
                   <ion-note slot="end" color="success">Empfohlen</ion-note>
                 </ion-item>
+
                 
                 <div class="ai-buttons">
                   <ion-button 
@@ -338,15 +350,20 @@
 
 <script>
 import { defineComponent } from "vue";
+import FloatingCheckbox from "@/components/FloatingCheckbox.vue";
 
 export default defineComponent({
   name: "ToolSelection",
+  components: {
+    FloatingCheckbox,
+  },
   data() {
     return {
       tools: [],
       selectedTool: "",
       name: "",
       formView: false,
+      checkForms: false,
       formInputs: [
         {
           label: "",
@@ -552,6 +569,8 @@ export default defineComponent({
         formData.append('generate_ai_schema', '1');
         formData.append('description', this.aiDescription);
         formData.append('context', this.aiContext);
+        formData.append('checkForms', this.checkForms);
+        formData.append('project', this.$route.params.project || '');
         
         const response = await this.$axios.post('ai_schema_generator.php', formData);
         

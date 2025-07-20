@@ -19,12 +19,17 @@ class AISchemaGenerator {
     /**
      * Generiert Schema mit OpenAI GPT mit Structured Output
      */
-    public function generateSchema($description, $context = '') {
+    public function generateSchema($description, $checkForms='false', $context = '', $project = '') {
         if (empty($this->openaiApiKey)) {
             return $this->generateSimpleSchema($description);
         }
         
-        $prompt = $this->buildPrompt($description, $context);
+        $existingForms = [];
+        if ($checkForms === 'true' && !empty($project)) {
+            $existingForms = $this->getExistingForms($project);
+        }
+        
+        $prompt = $this->buildPrompt($description, $context, $existingForms);
         
         $data = [
             'model' => 'gpt-4o-mini',
@@ -65,8 +70,8 @@ class AISchemaGenerator {
                                         ],
                                         'type' => [
                                             'type' => 'string',
-                                            'enum' => ['text', 'email', 'number', 'textarea', 'select', 'checkbox', 'date', 'time'],
-                                            'description' => 'Feldtyp'
+                                            'enum' => ['text', 'email', 'number', 'textarea', 'select', 'select2', 'checkbox', 'date', 'time'],
+                                            'description' => 'Feldtyp - select2 für Referenzen zu anderen Formularen'
                                         ],
                                         'label' => [
                                             'type' => 'string',
@@ -81,7 +86,7 @@ class AISchemaGenerator {
                                             'items' => [
                                                 'type' => 'string'
                                             ],
-                                            'description' => 'Optionen für select-Felder'
+                                            'description' => 'Optionen für select-Felder oder Form-Name für select2'
                                         ]
                                     ],
                                     'required' => ['name', 'type', 'label', 'required', 'options'],
@@ -106,10 +111,35 @@ class AISchemaGenerator {
         return $this->generateSimpleSchema($description);
     }
     
-    private function buildPrompt($description, $context) {
+    private function buildPrompt($description, $context, $existingForms = []) {
+        $formsContext = "";
+        
+        if (!empty($existingForms)) {
+            $formsContext = "\n\nBEREITS VORHANDENE FORMULARE/TABELLEN IN DIESEM PROJEKT:\n";
+            foreach ($existingForms as $form) {
+                $formsContext .= "TABELLE: " . $form['title'] . "\n";
+                $formsContext .= "FELDER: ";
+                foreach ($form['inputs'] as $field) {
+                    $formsContext .= $field['name'] . " (" . $field['type'] . ", " . $field['label'] . "), ";
+                }
+                $formsContext = rtrim($formsContext, ', ') . "\n\n";
+            }
+            
+            $formsContext .= "WICHTIG: Nutze NUR existierende Tabellen für SELECT2!\n";
+            $formsContext .= "- Verfügbare Tabellen für select2-Referenzen: " . implode(', ', array_column($existingForms, 'title')) . "\n";
+            $formsContext .= "- SELECT2 Format: \"tabellenname\" als einzige Option (String, nicht Object!)\n";
+            $formsContext .= "- NIEMALS nicht-existierende Tabellen referenzieren!\n";
+            $formsContext .= "- Wenn keine passende Tabelle existiert → verwende normales SELECT oder TEXT\n\n";
+        } else {
+            $formsContext = "\n\nKEINE BESTEHENDEN FORMULARE VORHANDEN!\n";
+            $formsContext .= "- Verwende KEIN SELECT2, da keine Tabellen zum Referenzieren existieren\n";
+            $formsContext .= "- Nutze nur: text, email, number, textarea, select, checkbox, date, time\n\n";
+        }
+       
+        
         return "Analysiere diese Beschreibung und erstelle ein VOLLSTÄNDIGES, PRAXISTAUGLICHES Datenbankschema:
 
-BESCHREIBUNG: $description" . ($context ? "\n\nZUSÄTZLICHER KONTEXT: $context" : "") . "
+BESCHREIBUNG: $description" . ($context ? "\n\nZUSÄTZLICHER KONTEXT: $context" : "") . $formsContext . "
 
 WICHTIGE REGELN:
 1. Denke an ALLE Felder die ein echtes Business braucht - nicht nur das Minimum!
@@ -119,6 +149,23 @@ WICHTIGE REGELN:
 5. Verwende realistische deutsche Select-Optionen
 6. Mindestens 4-8 Felder für praktische Nutzung
 7. Datenbankfeldnamen: lowercase_mit_underscores
+
+FELDTYPEN VERSTEHEN:
+- text, email, number, textarea, date, time = Standard-Eingabefelder
+- select = Dropdown mit festen Optionen (z.B. Kategorien: Elektronik, Kleidung, Bücher)
+- select2 = Referenz zu einem anderen Formular (Foreign Key) - VERWENDE DAS für Verknüpfungen!
+- checkbox = Ja/Nein Felder
+
+SELECT2 BEISPIELE (nur wenn passende Tabelle existiert):
+- Wenn Autos-Tabelle existiert → auto_id (select2, options: [\"autos\"])
+- select2 options sind IMMER strings: [\"tabellenname1\", \"tabellenname2\"]
+- Wenn Kunden-Tabelle existiert → kunde_id (select2, options: [\"kunden\"])
+- NIEMALS erfundene Tabellen verwenden!
+
+SELECT2 JSON FORMAT:
+- Typ: \"select2\"  
+- Options: [\"exact_table_name\"] (nur ein String mit Tabellennamen)
+- Beispiel: {\"name\": \"auto_id\", \"type\": \"select2\", \"options\": [\"autos\"]}
 
 BEISPIEL FÜR 'BANKNOTEN VERKAUFEN':
 - name (Banknotenname)
@@ -138,7 +185,10 @@ Erstelle ein Schema mit MINDESTENS 6-10 sinnvollen Feldern.
 Denke wie ein Geschäftsinhaber: Was brauche ich wirklich zum Verwalten?
 Sei großzügig mit nützlichen Feldern - lieber zu viele als zu wenige!
 
-Feldtypen: text, email, number, textarea, select, checkbox, date, time";
+Feldtypen: text, email, number, textarea, select, select2, checkbox, date, time
+
+WICHTIG: Wenn bestehende Formulare vorhanden sind, verwende SELECT2 für Verknüpfungen!
+Beispiel: Lagerbestand braucht Produktreferenz → verwende select2 statt alle Produktdaten zu duplizieren";
     }
     
     private function makeOpenAIRequest($data) {
@@ -219,7 +269,7 @@ Feldtypen: text, email, number, textarea, select, checkbox, date, time";
         }
         
         // Validiere jedes Input-Feld
-        $validTypes = ['text', 'email', 'number', 'textarea', 'select', 'checkbox', 'date', 'time'];
+        $validTypes = ['text', 'email', 'number', 'textarea', 'select', 'select2', 'checkbox', 'date', 'time'];
         
         foreach ($schema['inputs'] as &$input) {
             if (!isset($input['name'])) continue;
@@ -233,11 +283,56 @@ Feldtypen: text, email, number, textarea, select, checkbox, date, time";
                 $input['required'] = false;
             }
             
+            // Validiere select2 spezifisch
+            if ($input['type'] === 'select2') {
+                if (!isset($input['options']) || !is_array($input['options']) || empty($input['options'])) {
+                    // Kein options Array oder leer → konvertiere zu text
+                    error_log("Schema Validation: select2 ohne gültige options → konvertiert zu text");
+                    $input['type'] = 'text';
+                    $input['options'] = [];
+                } else {
+                    // Prüfe ob Form existiert (jetzt als String, nicht Object)
+                    $referenced_form = $input['options'][0] ?? '';
+                    if (!$this->formExists($referenced_form)) {
+                        error_log("Schema Validation: select2 referenziert nicht-existierende Form '$referenced_form' → konvertiert zu text");
+                        $input['type'] = 'text';
+                        $input['options'] = [];
+                    } else {
+                        // Konvertiere String zu Object für Frontend
+                        $input['options'] = [['value' => $referenced_form]];
+                    }
+                }
+            }
+            
             // Bereinige den Namen für Datenbank-Kompatibilität
             $input['name'] = preg_replace('/[^a-z0-9_]/', '_', strtolower($input['name']));
         }
         
         return $schema;
+    }
+    
+    private function formExists($formName) {
+        // Implementiere Form-Existenz-Check
+        // Für jetzt return true, kann später erweitert werden
+        return true;
+    }
+    
+    /**
+     * Lade bestehende Formulare des Projekts
+     */
+    private function getExistingForms($project) {
+        $formsQuery = "SELECT * FROM form_settings WHERE project = '" . escape_string($project) . "'";
+        $formsResult = query($formsQuery);
+        
+        $existingForms = [];
+        while ($row = fetch_assoc($formsResult)) {
+            $formData = json_decode($row['form_json'], true);
+            if ($formData && isset($formData['title']) && isset($formData['inputs'])) {
+                $existingForms[] = $formData;
+            }
+        }
+        
+        return $existingForms;
     }
     
     /**
@@ -302,6 +397,9 @@ Feldtypen: text, email, number, textarea, select, checkbox, date, time";
 if (isset($_POST['generate_ai_schema'])) {
     $description = escape_string($_POST['description'] ?? '');
     $context = escape_string($_POST['context'] ?? '');
+    $checkForms = escape_string($_POST['checkForms'] ?? '');
+    $project = escape_string($_POST['project'] ?? '');
+
     
     if (empty($description)) {
         echo json_encode([
@@ -312,7 +410,7 @@ if (isset($_POST['generate_ai_schema'])) {
     }
     
     $generator = new AISchemaGenerator();
-    $schema = $generator->generateSchema($description, $context);
+    $schema = $generator->generateSchema($description, $checkForms, $context, $project);
     
     if ($schema) {
         echo json_encode([
@@ -382,6 +480,7 @@ function mapFieldType($type) {
         case 'text':
         case 'email':
         case 'select':
+        case 'select2':
         case 'time':
         case 'date':
             return 'VARCHAR(255)';
