@@ -1,0 +1,76 @@
+
+Analysiere diese Beschreibung und erstelle ein VOLLSTÄNDIGES, PRAXISTAUGLICHES Datenbankschema:
+
+BESCHREIBUNG: generiere ein form passend zur form autos mit 8 feldern
+
+BEREITS VORHANDENE FORMULARE/TABELLEN IN DIESEM PROJEKT:
+TABELLE: Autos
+FELDER: marke (text, Marke), model (text, Model)
+
+TABELLE: Verkauft
+FELDER: marke (select2, Marke), model (select2, Model), preis (number, Preis)
+
+TABELLE: really_good_test
+FELDER: select1 (select, select1), select2 (select2, select2)
+
+WICHTIG: Nutze NUR existierende Tabellen und Felder für SELECT2!
+- Verfügbare Tabellen für select2-Referenzen:
+    • Autos: marke, model
+    • Verkauft: marke, model, preis
+    • really_good_test: select1, select2
+- SELECT2 Format: "tabellenname" als einzige Option (String, nicht Object!)
+- NIEMALS nicht-existierende Tabellen referenzieren!
+- Wenn keine passende Tabelle existiert → verwende normales SELECT oder TEXT
+
+
+
+WICHTIGE REGELN:
+1. Denke an ALLE Felder die ein echtes Business braucht - nicht nur das Minimum!
+2. Bei E-Commerce/Shop: Name, Preis, Beschreibung, Kategorie, Bilder, Lagerbestand, SKU/Artikelnummer
+3. Bei Kunden: Vor-/Nachname, Email, Telefon, Adresse, Kundentyp, Registrierungsdatum
+4. Bei Produkten: Detaillierte Eigenschaften je nach Produkttyp
+5. Verwende realistische deutsche Select-Optionen
+6. Mindestens 4-8 Felder für praktische Nutzung
+7. Datenbankfeldnamen: lowercase_mit_underscores
+
+FELDTYPEN VERSTEHEN:
+- text, email, number, textarea, date, time = Standard-Eingabefelder
+- select = Dropdown mit festen Optionen (z.B. Kategorien: Elektronik, Kleidung, Bücher)
+- select2 = Referenz zu einem anderen Formular (Foreign Key) - VERWENDE DAS für Verknüpfungen!
+- checkbox = Ja/Nein Felder
+
+SELECT2 BEISPIELE (nur wenn passende Tabelle existiert):
+- Wenn Autos-Tabelle existiert → auto_id (select2, options: ["autos", "name"])
+- select2 options sind IMMER 2 strings: ["tabellenname", "feldname"]
+- Wenn Kunden-Tabelle existiert → kunde_id (select2, options: ["kunden", "name"])
+- NIEMALS erfundene Tabellen verwenden!
+- NIEMALS erfundene Felder verwenden!
+
+SELECT2 JSON FORMAT:
+- Typ: "select2"  
+- Options: ["exact_table_name", "field_name"] (Tabellenname UND Feldname!)
+- Beispiel: {"name": "auto_id", "type": "select2", "options": ["autos", "name"]}
+- BEIDE Werte sind Pflicht: ["form", "field"]
+
+BEISPIEL FÜR 'BANKNOTEN VERKAUFEN':
+- name (Banknotenname)
+- denomination (Nennwert) 
+- currency (Währung - select: EUR, USD, CHF, etc.)
+- year (Ausgabejahr)
+- condition (Zustand - select: Kassenfrisch, Sehr gut, Gut, etc.)
+- price (Verkaufspreis)
+- quantity (Verfügbare Anzahl)
+- description (Detailbeschreibung)
+- image_url (Bildpfad)
+- serial_number (Seriennummer)
+- category (Kategorie - select: Historisch, Modern, Sammler, etc.)
+
+AUFGABE:
+Erstelle ein Schema mit MINDESTENS 6-10 sinnvollen Feldern.
+Denke wie ein Geschäftsinhaber: Was brauche ich wirklich zum Verwalten?
+Sei großzügig mit nützlichen Feldern - lieber zu viele als zu wenige!
+
+Feldtypen: text, email, number, textarea, select, select2, checkbox, date, time
+
+WICHTIG: Wenn bestehende Formulare vorhanden sind, verwende SELECT2 für Verknüpfungen!
+Beispiel: Lagerbestand braucht Produktreferenz → verwende select2 statt alle Produktdaten zu duplizieren{"success":true,"schema":{"title":"Auto Verkauf Formular","description":"Formular zur Erfassung von Verkaufsdaten f\u00fcr Autos.","inputs":[{"name":"auto_id","type":"select2","label":"Auto","required":true,"optionList":[{"value":"autos"},{"value":"id"}]},{"name":"preis","type":"number","label":"Preis","required":true,"options":[]},{"name":"beschreibung","type":"textarea","label":"Beschreibung","required":false,"options":[]},{"name":"verkaufsdatum","type":"date","label":"Verkaufsdatum","required":true,"options":[]},{"name":"kunde_id","type":"select2","label":"Kunde","required":true,"optionList":[{"value":"kunden"},{"value":"name"}]},{"name":"zustand","type":"select","label":"Zustand","required":true,"options":["Neu","Gebraucht","Sehr gut","Gut","Akzeptabel"]},{"name":"garantie","type":"checkbox","label":"Garantie vorhanden","required":false,"options":[]},{"name":"lagerbestand","type":"number","label":"Lagerbestand","required":true,"options":[]},{"name":"kategorie","type":"select","label":"Kategorie","required":true,"options":["Limousine","Kombi","SUV","Coup\u00e9","Cabriolet"]}]}}

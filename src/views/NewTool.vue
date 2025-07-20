@@ -583,9 +583,12 @@ export default defineComponent({
             label: input.label,
             placeholder: input.label,
             type: input.type,
-            optionList: input.options ? input.options.map(opt => ({ value: opt })) : [{ value: "" }]
+            // Für select2 mit optionList vom Backend verwenden, sonst aus options konvertieren
+            optionList: input.optionList ? input.optionList : 
+                       (input.options ? input.options.map(opt => ({ value: opt })) : [{ value: "" }])
           }));
           
+          console.log(this.formInputs);
           // Switch to manual form view to show the generated schema
           this.showManualForm = true;
           

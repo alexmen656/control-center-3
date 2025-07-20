@@ -1,0 +1,134 @@
+{
+    "success": true,
+    "schema": {
+        "title": "Neuer Lagerbestand f\u00fcr Autos",
+        "description": "Formular zur Erstellung einer neuen Firma mit Lagerbestand f\u00fcr Autos.",
+        "inputs": [
+            {
+                "name": "firma_name",
+                "type": "text",
+                "label": "Firmenname (Name der Firma)",
+                "required": true,
+                "options": []
+            },
+            {
+                "name": "auto_id",
+                "type": "select2",
+                "label": "Auto",
+                "required": true,
+                "options": [
+                    {
+                        "value": "autos"
+                    }
+                ]
+            },
+            {
+                "name": "lagerbestand",
+                "type": "number",
+                "label": "Lagerbestand (Anzahl der verf\u00fcgbaren Autos)",
+                "required": true,
+                "options": []
+            },
+            {
+                "name": "preis",
+                "type": "number",
+                "label": "Preis pro Auto (in Euro)",
+                "required": true,
+                "options": []
+            },
+            {
+                "name": "beschreibung",
+                "type": "textarea",
+                "label": "Beschreibung der Firma und des Lagerbestands",
+                "required": false,
+                "options": []
+            },
+            {
+                "name": "kategorie",
+                "type": "select",
+                "label": "Kategorie",
+                "required": true,
+                "options": [
+                    "Limousine",
+                    "SUV",
+                    "Kombi",
+                    "Coup\u00e9",
+                    "Sportwagen"
+                ]
+            },
+            {
+                "name": "kontakt_email",
+                "type": "email",
+                "label": "Kontakt E-Mail",
+                "required": true,
+                "options": []
+            },
+            {
+                "name": "kontakt_telefon",
+                "type": "text",
+                "label": "Kontakt Telefon",
+                "required": false,
+                "options": []
+            },
+            {
+                "name": "registrierungsdatum",
+                "type": "date",
+                "label": "Registrierungsdatum der Firma",
+                "required": true,
+                "options": []
+            },
+            {
+                "name": "standort",
+                "type": "text",
+                "label": "Standort der Firma (Stadt, Adresse)",
+                "required": false,
+                "options": []
+            }
+        ]
+    }
+}
+
+
+
+
+{
+    "title": "really_good_test",
+    "inputs": [
+        {
+            "type": "select",
+            "name": "select1",
+            "label": "select1",
+            "placeholder": "h1",
+            "options": [
+                {
+                    "value": "haha",
+                    "label": "haha"
+                },
+                {
+                    "value": "hahaha",
+                    "label": "hahaha"
+                },
+                {
+                    "value": "hahahaha",
+                    "label": "hahahaha"
+                }
+            ]
+        },
+        {
+            "type": "select2",
+            "name": "select2",
+            "label": "select2",
+            "placeholder": "h2",
+            "options": [
+                {
+                    "value": "autos",
+                    "label": "autos"
+                },
+                {
+                    "value": "marke",
+                    "label": "marke"
+                }
+            ]
+        }
+    ]
+}

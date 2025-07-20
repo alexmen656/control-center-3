@@ -125,8 +125,13 @@ class AISchemaGenerator {
                 $formsContext = rtrim($formsContext, ', ') . "\n\n";
             }
             
-            $formsContext .= "WICHTIG: Nutze NUR existierende Tabellen für SELECT2!\n";
-            $formsContext .= "- Verfügbare Tabellen für select2-Referenzen: " . implode(', ', array_column($existingForms, 'title')) . "\n";
+            $formsContext .= "WICHTIG: Nutze NUR existierende Tabellen und Felder für SELECT2!\n";
+            $formsContext .= "- Verfügbare Tabellen für select2-Referenzen:\n";
+            foreach ($existingForms as $form) {
+                $formsContext .= "    • " . $form['title'] . ": ";
+                $fieldNames = array_map(function($f) { return $f['name']; }, $form['inputs']);
+                $formsContext .= implode(', ', $fieldNames) . "\n";
+            }
             $formsContext .= "- SELECT2 Format: \"tabellenname\" als einzige Option (String, nicht Object!)\n";
             $formsContext .= "- NIEMALS nicht-existierende Tabellen referenzieren!\n";
             $formsContext .= "- Wenn keine passende Tabelle existiert → verwende normales SELECT oder TEXT\n\n";
@@ -135,9 +140,8 @@ class AISchemaGenerator {
             $formsContext .= "- Verwende KEIN SELECT2, da keine Tabellen zum Referenzieren existieren\n";
             $formsContext .= "- Nutze nur: text, email, number, textarea, select, checkbox, date, time\n\n";
         }
-       
-        
-        return "Analysiere diese Beschreibung und erstelle ein VOLLSTÄNDIGES, PRAXISTAUGLICHES Datenbankschema:
+
+return "Analysiere diese Beschreibung und erstelle ein VOLLSTÄNDIGES, PRAXISTAUGLICHES Datenbankschema:
 
 BESCHREIBUNG: $description" . ($context ? "\n\nZUSÄTZLICHER KONTEXT: $context" : "") . $formsContext . "
 
@@ -149,6 +153,7 @@ WICHTIGE REGELN:
 5. Verwende realistische deutsche Select-Optionen
 6. Mindestens 4-8 Felder für praktische Nutzung
 7. Datenbankfeldnamen: lowercase_mit_underscores
+8. Statt dem Wort Tabelle wird oft 'Form' verwendet.
 
 FELDTYPEN VERSTEHEN:
 - text, email, number, textarea, date, time = Standard-Eingabefelder
@@ -157,15 +162,17 @@ FELDTYPEN VERSTEHEN:
 - checkbox = Ja/Nein Felder
 
 SELECT2 BEISPIELE (nur wenn passende Tabelle existiert):
-- Wenn Autos-Tabelle existiert → auto_id (select2, options: [\"autos\"])
-- select2 options sind IMMER strings: [\"tabellenname1\", \"tabellenname2\"]
-- Wenn Kunden-Tabelle existiert → kunde_id (select2, options: [\"kunden\"])
+- Wenn Autos-Tabelle existiert → auto_id (select2, options: [\"autos\", \"name\"])
+- select2 options sind IMMER 2 strings: [\"tabellenname\", \"feldname\"]
+- Wenn Kunden-Tabelle existiert → kunde_id (select2, options: [\"kunden\", \"name\"])
 - NIEMALS erfundene Tabellen verwenden!
+- NIEMALS erfundene Felder verwenden!
 
 SELECT2 JSON FORMAT:
 - Typ: \"select2\"  
-- Options: [\"exact_table_name\"] (nur ein String mit Tabellennamen)
-- Beispiel: {\"name\": \"auto_id\", \"type\": \"select2\", \"options\": [\"autos\"]}
+- Options: [\"exact_table_name\", \"field_name\"] (Tabellenname UND Feldname!)
+- Beispiel: {\"name\": \"auto_id\", \"type\": \"select2\", \"options\": [\"autos\", \"name\"]}
+- BEIDE Werte sind Pflicht: [\"form\", \"field\"]
 
 BEISPIEL FÜR 'BANKNOTEN VERKAUFEN':
 - name (Banknotenname)
@@ -285,21 +292,28 @@ Beispiel: Lagerbestand braucht Produktreferenz → verwende select2 statt alle P
             
             // Validiere select2 spezifisch
             if ($input['type'] === 'select2') {
-                if (!isset($input['options']) || !is_array($input['options']) || empty($input['options'])) {
-                    // Kein options Array oder leer → konvertiere zu text
-                    error_log("Schema Validation: select2 ohne gültige options → konvertiert zu text");
+                if (!isset($input['options']) || !is_array($input['options']) || count($input['options']) < 2) {
+                    // Kein options Array oder zu wenig Werte → konvertiere zu text
+                    error_log("Schema Validation: select2 braucht [form, field] → konvertiert zu text");
                     $input['type'] = 'text';
                     $input['options'] = [];
                 } else {
-                    // Prüfe ob Form existiert (jetzt als String, nicht Object)
+                    // AI liefert [form, field] - konvertiere zu optionList
                     $referenced_form = $input['options'][0] ?? '';
+                    $referenced_field = $input['options'][1] ?? '';
+                    
                     if (!$this->formExists($referenced_form)) {
                         error_log("Schema Validation: select2 referenziert nicht-existierende Form '$referenced_form' → konvertiert zu text");
                         $input['type'] = 'text';
                         $input['options'] = [];
                     } else {
-                        // Konvertiere String zu Object für Frontend
-                        $input['options'] = [['value' => $referenced_form]];
+                        // Konvertiere zu optionList Format für Frontend
+                        $input['optionList'] = [
+                            ['value' => $referenced_form],     // Form name (von AI)
+                            ['value' => $referenced_field]     // Field name (von AI)
+                        ];
+                        // Entferne alte options property
+                        unset($input['options']);
                     }
                 }
             }
