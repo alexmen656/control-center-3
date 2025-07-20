@@ -204,8 +204,9 @@ function setupWebBuilderProject($projectID, $href, $name, $userID = 1) {
     global $con;
     
     // Zuerst prüfen, ob der Benutzer in der Web Builder Tabelle existiert
-    $userExists = query("SELECT id FROM control_center_web_builder_users WHERE id='$userID'");
-    
+    //$userExists = query("SELECT id FROM control_center_web_builder_users WHERE id='$userID'");
+    $username = escape_string("user_$userID"). "_". $userID;
+    $userExists = query("SELECT id, username FROM control_center_web_builder_users WHERE username='user_$userID' OR username='$username' OR id='$userID'");
     // Wenn der Benutzer nicht existiert, einen neuen Benutzer anlegen
     if (mysqli_num_rows($userExists) == 0) {
         // Benutzerinformationen aus der Haupttabelle holen
@@ -219,9 +220,9 @@ function setupWebBuilderProject($projectID, $href, $name, $userID = 1) {
             $currentDate = date('Y-m-d H:i:s');
             
             query("INSERT INTO control_center_web_builder_users 
-                  (id, name, email, created_at, updated_at) 
-                  VALUES ('$userID', '$firstName $lastName', '$email', '$currentDate', '$currentDate')");
-                  
+                  (id, username, email, created_at, updated_at) 
+                  VALUES ('$userID', 'user_$userID', '$email', '$currentDate', '$currentDate')");
+                  //$firstName $lastName
             // Wenn das nicht geklappt hat, Admin-Benutzer verwenden
             if (mysqli_affected_rows($con) == 0) {
                 $userID = 1; // Admin-Benutzer
@@ -229,8 +230,11 @@ function setupWebBuilderProject($projectID, $href, $name, $userID = 1) {
         } else {
             $userID = 1; // Admin-Benutzer, wenn keine Benutzerdaten gefunden wurden
         }
+    }else{
+        // Benutzer existiert bereits, also verwenden wir die vorhandene ID
+        $userID = mysqli_fetch_assoc($userExists)['id'];
     }
-    
+
     // Erstelle einen Eintrag in der control_center_web_builder_projects Tabelle
     // mit eindeutiger Referenz zum Control Center Projekt
     $currentDate = date('Y-m-d H:i:s');
@@ -269,8 +273,12 @@ function setupWebBuilderProject($projectID, $href, $name, $userID = 1) {
         
         // Auch einen Benutzer-Projekt-Eintrag in der Web Builder Tabelle erstellen
         query("INSERT INTO control_center_user_projects 
-               (userID, projectID, role, created_at, updated_at) 
-               VALUES ('$userID', '$webBuilderProjectId', 'owner', '$currentDate', '$currentDate')");
+               (userID, projectID, role) 
+               VALUES ('$userID', '$webBuilderProjectId', 'owner')");
+
+
+// , created_at, updated_at
+// /, '$currentDate', '$currentDate'
     }
     
     return $webBuilderProjectId;
