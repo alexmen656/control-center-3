@@ -123,5 +123,24 @@ foreach($webbuilderProjects as $project) {
     }
 }
 
+$tables = [];
+$result = query("SHOW TABLES");
+if ($result && mysqli_num_rows($result) > 0) {
+    while ($row = mysqli_fetch_row($result)) {
+        $tables[] = $row[0];
+    }
+}
+
+foreach ($tables as $table) {
+    $json[$i]['id'] = 'table_' . $table;
+    $json[$i]['url'] = 'databases/table/' . $table;
+    $json[$i]['showTitle'] = true;
+    $json[$i]['icon'] = 'grid-outline';
+    $json[$i]['title'] = $table;
+    $json[$i]['html'] = '';
+    $json[$i]['pageID'] = 'table_' . $table;
+    $i++;
+}
+
 echo echoJson($json);
 ?>
