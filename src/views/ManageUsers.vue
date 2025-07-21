@@ -7,7 +7,7 @@
       />
       <UserTableCard :labels="labels" :data="data" @refresh="loadUsers" />
 
-      <h2 v-if="pendingVerificationEntries.length > 0">
+      <h2 style="margin-left: 10px;" v-if="pendingVerificationEntries.length > 0">
         Waiting for verification
       </h2>
 
@@ -66,7 +66,7 @@
         </div>
       </ion-card>
 
-      <ion-button id="open-modal">
+      <ion-button style="margin-left: 10px;" id="open-modal">
         <ion-icon name="add-outline" />
         New User
       </ion-button>

@@ -295,6 +295,12 @@ th {
   background-color: var(--ion-color-light);
 }
 
+@media (prefers-color-scheme: dark) {
+  .sortable-header:hover {
+    background-color: var(--ion-color-step-150, #2223);
+  }
+}
+
 .sort-indicator {
   display: inline-flex;
   align-items: center;

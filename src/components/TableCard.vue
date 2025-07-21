@@ -299,5 +299,9 @@ tr:nth-child(even) {
   .search-container {
     border-bottom-color: var(--ion-color-dark);
   }
+
+   .sortable-header:hover {
+    background-color: var(--ion-color-step-150, #2223);
+  }
 }
 </style>
