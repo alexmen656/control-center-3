@@ -54,8 +54,10 @@
                 <input
                   type="text"
                   v-model="editValue"
+                  ref="editInput"
                   @blur="saveEdit(rowIndex, colIndex)"
                   @keyup.enter="saveEdit(rowIndex, colIndex)"
+                  @keyup.esc="cancelEdit"
                 />
               </template>
               <template v-else>
@@ -190,6 +192,12 @@ export default defineComponent({
     saveEdit(rowIndex, colIndex) {
       if (this.editingCell) {
         this.$emit('updateField', rowIndex, this.labels[colIndex], this.editValue);
+        this.editingCell = null;
+        this.editValue = '';
+      }
+    },
+    cancelEdit() {
+      if (this.editingCell) {
         this.editingCell = null;
         this.editValue = '';
       }
