@@ -11,11 +11,11 @@
                   <thead>
                     <tr>
                       <th
-                        v-for="(label, index) in labels.slice(0, 5)"
+                        v-for="(label, index) in labels"
                         :key="label"
                         @click="sortBy(index)"
                         class="sortable-header"
-                      >
+                      ><!--.slice(0, 5)-->
                         {{ label }}
                         <span class="sort-indicator">
                           <ion-icon 
@@ -38,7 +38,7 @@
                   </thead>
                   <tbody>
                     <tr v-for="tr in sortedData" :key="tr">
-                      <td v-for="td in tr.slice(0, 5)" :key="td">{{ td }}</td>
+                      <td v-for="td in tr" :key="td">{{ td }}</td><!--.slice(0, 5)-->
                       <td>
                         <ion-icon @click="deletee(tr[0])" name="trash-outline" />
                       </td>
