@@ -53,7 +53,14 @@
                     <ion-item button @click="changeStatus(tr[labels.indexOf('userID')], 'inactive'); openPopover = null">Deaktivieren</ion-item>
                   </ion-list>
                 </ion-popover>
-                <ion-chip :color="td === 'active' ? 'success' : (td === 'pending_verification' ? 'warning' : (td === 'inactive' ? 'danger' : 'medium'))" class="chip-dropdown" @click="onChipClick($event, tr[labels.indexOf('userID')])">
+                <ion-chip
+                  :color="td === 'active' ? 'success' : (td === 'pending_verification' ? 'warning' : (td === 'inactive' ? 'danger' : 'medium'))"
+                  :class="['chip-dropdown',
+                    td === 'active' ? 'success' :
+                    td === 'pending_verification' ? 'warning' :
+                    td === 'inactive' ? 'danger' : 'medium']"
+                  @click="onChipClick($event, tr[labels.indexOf('userID')])"
+                >
                   {{ String(td).charAt(0).toUpperCase() + String(td).slice(1) }}
                   <ion-icon name="chevron-down-outline" style="margin-left:4px;font-size:14px;vertical-align:middle;" />
                 </ion-chip>
@@ -352,5 +359,60 @@ tr:nth-child(even) {
   .search-container {
     border-bottom-color: var(--ion-color-dark);
   }
+}
+
+.chip-dropdown {
+  cursor: pointer;
+  box-shadow: none !important;
+  border: 1px solid var(--ion-color-step-150, #2223);
+  background: var(--ion-color-step-50, #2221);
+  opacity: 0.85;
+  transition: box-shadow 0.2s, border 0.2s, opacity 0.2s;
+}
+.chip-dropdown.success:hover {
+  border: 1.5px solid var(--ion-color-success, #2dd36f);
+  opacity: 1;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
+}
+.chip-dropdown.warning:hover {
+  border: 1.5px solid var(--ion-color-warning, #ffc409);
+  opacity: 1;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
+}
+.chip-dropdown.danger:hover {
+  border: 1.5px solid var(--ion-color-danger, #eb445a);
+  opacity: 1;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
+}
+.chip-dropdown.medium:hover {
+  border: 1.5px solid var(--ion-color-medium, #92949c);
+  opacity: 1;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
+}
+
+ion-popover {
+  --box-shadow: 0 2px 8px 0 rgba(0,0,0,0.10);
+  --background: var(--ion-background-color, #222);
+  --border-radius: 8px;
+  --min-width: 160px;
+  --max-width: 220px;
+  --padding: 0;
+}
+ion-popover ion-list {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 8px;
+}
+ion-popover ion-item {
+  font-size: 0.98em;
+  background: transparent;
+  color: var(--ion-color-medium);
+  border-radius: 6px;
+  margin: 2px 0;
+  transition: background 0.15s;
+}
+ion-popover ion-item:hover {
+  background: var(--ion-color-step-150, #2223);
+  color: var(--ion-color-primary, #3880ff);
 }
 </style>
