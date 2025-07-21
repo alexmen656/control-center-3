@@ -202,7 +202,18 @@ export default defineComponent({
         this.editValue = '';
       }
     },
-  }
+    handleGlobalKeydown(event) {
+      if (event.key === 'Escape' && this.editingCell) {
+        this.cancelEdit();
+      }
+    },
+  },
+  mounted() {
+    window.addEventListener('keydown', this.handleGlobalKeydown);
+  },
+  beforeUnmount() {
+    window.removeEventListener('keydown', this.handleGlobalKeydown);
+  },
 });
 </script>
 
