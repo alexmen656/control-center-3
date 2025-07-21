@@ -47,13 +47,13 @@
           <tr v-for="tr in filteredAndSortedData" :key="tr">
             <td v-for="(td, idx) in tr" :key="idx">
               <template v-if="labels[idx] === 'account_status'">
-                <ion-popover :is-open="openPopover === tr[labels.indexOf('userID')]" @didDismiss="openPopover = null">
+                <ion-popover :is-open="openPopover === tr[labels.indexOf('userID')]" @didDismiss="openPopover = null" :event="popoverEvent" side="bottom" alignment="center">
                   <ion-list>
                     <ion-item button @click="changeStatus(tr[labels.indexOf('userID')], 'active'); openPopover = null">Aktivieren</ion-item>
                     <ion-item button @click="changeStatus(tr[labels.indexOf('userID')], 'inactive'); openPopover = null">Deaktivieren</ion-item>
                   </ion-list>
                 </ion-popover>
-                <ion-chip :color="td === 'active' ? 'success' : (td === 'pending_verification' ? 'warning' : (td === 'inactive' ? 'danger' : 'medium'))" class="chip-dropdown" @click="openPopover = tr[labels.indexOf('userID')]">
+                <ion-chip :color="td === 'active' ? 'success' : (td === 'pending_verification' ? 'warning' : (td === 'inactive' ? 'danger' : 'medium'))" class="chip-dropdown" @click="onChipClick($event, tr[labels.indexOf('userID')])">
                   {{ String(td).charAt(0).toUpperCase() + String(td).slice(1) }}
                   <ion-icon name="chevron-down-outline" style="margin-left:4px;font-size:14px;vertical-align:middle;" />
                 </ion-chip>
@@ -94,7 +94,8 @@ export default defineComponent({
       sortColumn: null,
       sortDirection: 'asc',
       searchQuery: '',
-      openPopover: null
+      openPopover: null,
+      popoverEvent: null
     };
   },
   computed: {
@@ -176,7 +177,7 @@ export default defineComponent({
       return String(text).replace(regex, '<mark class="search-highlight">$1</mark>');
     },
     async deactivateUser(userID) {
-      if (!confirm('User wirklich deaktivieren?')) return;
+     // if (!confirm('User wirklich deaktivieren?')) return;
       try {
         await this.$root.$options.appContext.config.globalProperties.$axios.post(
           'users.php',
@@ -191,7 +192,7 @@ export default defineComponent({
       }
     },
     async changeStatus(userID, newStatus) {
-      if (!confirm(`User wirklich auf ${newStatus} setzen?`)) return;
+      //if (!confirm(`User wirklich auf ${newStatus} setzen?`)) return;
       try {
         await this.$axios.post(
           'users.php',
@@ -205,6 +206,10 @@ export default defineComponent({
       } catch (e) {
         alert('Fehler beim Statuswechsel');
       }
+    },
+    onChipClick(event, userID) {
+      this.popoverEvent = event;
+      this.openPopover = userID;
     }
   }
 });
