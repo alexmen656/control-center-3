@@ -18,8 +18,8 @@
           :radius="12"
           auto-draw
           smooth
-          :stroke-linecap="round"
-        >
+          stroke-linecap="round"
+        ><!--          :stroke-linecap="round"-->
         </trend>
       </div>
     </ion-card-content>

@@ -208,7 +208,7 @@ export default defineComponent({
         ])
           .then(([sidebarResponse, bookmarksResponse]) => {
             tools.value = sidebarResponse.data.tools;
-            projects.value = sidebarResponse.data.projects;
+            projects.value = Object.values(sidebarResponse.data.projects);
             bookmarks.value = bookmarksResponse.data;
 
             saveLocal("tools", tools.value);
@@ -391,7 +391,7 @@ export default defineComponent({
       this.bookmarks = res.data;
       localStorage.setItem("bookmarks", this.bookmarks);
       const res2 = await axios.get("sidebar.php");
-      this.projects = res2.data.projects;
+      this.projects = Object.values(res2.data.projects);
       localStorage.setItem("projects", this.projects);
       console.log("Sidebar updated");
     },
