@@ -58,6 +58,7 @@ import SiteHeader from "@/components/Header.vue";
 import SideBar from "@/components/SideBar.vue";
 import SiteTitle from "@/components/SiteTitle.vue";
 import ProjectSideBar from "@/components/ProjectSideBar.vue";
+import LoadingSpinner from "@/components/LoadingSpinner.vue";
 import { initializeApp } from "firebase/app";
 import { useRoute } from "vue-router";
 //import { getMessaging, getToken, onMessage } from "firebase/messaging";
@@ -89,6 +90,7 @@ export default defineComponent({
     SideBar,
     ProjectSideBar,
     SiteTitle,
+    LoadingSpinner,
   },
   data() {
     return {
