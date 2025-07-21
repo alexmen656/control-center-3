@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, getCurrentInstance, computed } from "vue";
+import { defineComponent, ref, getCurrentInstance, computed, onMounted, onUnmounted } from "vue";
 
 export default defineComponent({
   name: "DatabasesView",
@@ -70,6 +70,26 @@ export default defineComponent({
       });
     });
 
+    function handleKeydown(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        if (!showSearch.value) {
+          toggleSearch();
+        }
+      }
+    }
+
+    onMounted(() => {
+      if (typeof window !== 'undefined') {
+        window.addEventListener('keydown', handleKeydown);
+      }
+    });
+    onUnmounted(() => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('keydown', handleKeydown);
+      }
+    });
+
     function toggleSearch() {
       showSearch.value = !showSearch.value;
       if (!showSearch.value) search.value = "";
@@ -77,6 +97,7 @@ export default defineComponent({
 
     function highlightMatch(text, search) {
       if (!search) return text;
+      // Properly escape special regex characters
       const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
       return String(text).replace(regex, '<mark class="highlight">$1</mark>');
     }
