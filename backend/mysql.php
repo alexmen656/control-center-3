@@ -25,7 +25,7 @@ function echoJson($json)
     return json_encode($json, JSON_PRETTY_PRINT);
 }
 
-if ($_POST['getTables']) {
+if (isset($_POST['getTables']) && $_POST['getTables']) {
     //echo 12345678;
     $tables = query("SHOW TABLES");
     $i = 0;
@@ -145,6 +145,21 @@ if ($_POST['getTables']) {
             $json['data'][$gg] = $tr;
             $gg++;
         }
+    }
+} elseif (isset($_POST['updateField']) && isset($_POST['tableName']) && isset($_POST['fieldName']) && isset($_POST['newValue']) && isset($_POST['rowIndex'])) {
+    $tableName = escape_string($_POST['tableName']);
+    $fieldName = escape_string($_POST['fieldName']);
+    $newValue = escape_string($_POST['newValue']);
+    $rowIndex = (int)$_POST['rowIndex'];
+
+    $primaryKey = fetch_assoc(query("SELECT `COLUMN_NAME` FROM `information_schema`.`COLUMNS` WHERE (`TABLE_SCHEMA` = 'alex01d01') AND (`TABLE_NAME` = '$tableName') AND (`COLUMN_KEY` = 'PRI')"))["COLUMN_NAME"];
+
+    $primaryKeyValue = fetch_assoc(query("SELECT `$primaryKey` FROM `$tableName` LIMIT $rowIndex, 1"))[$primaryKey];
+
+    if (query("UPDATE `$tableName` SET `$fieldName` = '$newValue' WHERE `$primaryKey` = '$primaryKeyValue'")) {
+        $json['success'] = true;
+    } else {
+        $json['error'] = "Failed to update the field.";
     }
 }
 
