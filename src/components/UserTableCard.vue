@@ -51,6 +51,7 @@
                   <ion-list>
                     <ion-item button @click="changeStatus(tr[labels.indexOf('userID')], 'active'); openPopover = null">Aktivieren</ion-item>
                     <ion-item button @click="changeStatus(tr[labels.indexOf('userID')], 'inactive'); openPopover = null">Deaktivieren</ion-item>
+                    <ion-item button @click="changeStatus(tr[labels.indexOf('userID')], 'pending_verification'); openPopover = null">Pending Review</ion-item>
                   </ion-list>
                 </ion-popover>
                 <ion-chip
