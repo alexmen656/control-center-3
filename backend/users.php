@@ -19,15 +19,35 @@ if (isset($_POST['new_user']) && isset($_POST['first_name']) && isset($_POST['em
         echo "Account status updated";
     }
 
+} elseif (isset($_REQUEST['deactivateUser']) && isset($_REQUEST['userID'])) {
+    $userID = escape_string($_REQUEST['userID']);
+    if (query("UPDATE control_center_users SET account_status='inactive' WHERE userID='$userID'")) {
+        echo "User deaktiviert";
+    } else {
+        echo "Fehler beim Deaktivieren";
+    }
 } elseif (isset($_REQUEST['getAllUsers'])) {
     $json = [];
-    $i = 0;
-    $users = query("SELECT * FROM control_center_users");
+    $labels = [
+        "userID",
+        "profileImg",
+        "firstname",
+        "lastname",
+        "email",
+        "password",
+        "login_with_google",
+       // "loginToken",
+        "account_status"
+    ];
+    $json['labels'] = $labels;
+    $json['data'] = [];
+    $users = query("SELECT userID, profileImg, firstname, lastname, email, password, login_with_google, account_status FROM control_center_users");// loginToken,
     foreach ($users as $u) {
-        $json[$i]["userID"] = $u["userID"];
-        $json[$i]["firstName"] = $u["firstname"];
-        $json[$i]["lastName"] = $u["lastname"];
-        $i++;
+        $tr = [];
+        foreach ($labels as $col) {
+            $tr[] = $u[$col];
+        }
+        $json['data'][] = $tr;
     }
     echo echoJson($json);
 }
