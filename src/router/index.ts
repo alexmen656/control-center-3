@@ -277,6 +277,14 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/ChatAppConfig.vue'),
   },
   {
+    path: '/project/:project/my-tasks',
+    component: () => import('../views/MyTasks.vue'),
+  },
+  {
+    path: '/project/:project/my-tasks/config',
+    component: () => import('../views/ConfigView.vue'),
+  },
+  {
     path: '/project/:project/nfc',
     component: () => import('../views/NFCView.vue'),
   },
