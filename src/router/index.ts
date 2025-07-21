@@ -299,7 +299,11 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/ai-website-generator',
     component: () => import('../views/AIWebsiteGenerator.vue'),
-  }
+  },
+  {
+    path: '/no-permission',
+    component: () => import('../views/NoPermission.vue'),
+  },
 ];
 
 const modules = import.meta.glob('@/modules/*/routes.ts', { eager: true });
