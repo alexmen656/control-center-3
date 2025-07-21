@@ -217,7 +217,7 @@ export default defineComponent({
 
     },*/
     loadData() {
-      const table_name = `${this.$route.params.project.replaceAll("-", "_")}_${this.$route.params.form}`;
+      const table_name = `${this.$route.params.project.replaceAll("-", "_")}_${this.$route.params.form.replaceAll("-", "_")}`;
       this.$axios
         .post(
           `mysql.php`,

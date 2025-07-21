@@ -33,7 +33,7 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
 
         if ($data && isset($data['title'], $data['inputs'])) {
             $title = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($data['title']));
-            $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . $title;
+            $tableName = str_replace(["-", " ", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "_", "a", "a", "u", "u", "o", "o"], strtolower($project . "_" . $title));
             $fields = $data['inputs'];
             $sql = "CREATE TABLE $tableName (
         id INT AUTO_INCREMENT PRIMARY KEY";
@@ -46,6 +46,7 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
             $sql .= ", created_at DATETIME DEFAULT CURRENT_TIMESTAMP";
             $sql .= ");";
 
+            //echo $sql;
             if (query($sql)) {
                 echo $formName . " Created Successfully!!!";
             }
