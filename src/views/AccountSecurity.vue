@@ -27,6 +27,16 @@
               >LogIn with Microsoft</ion-toggle
             >
           </ion-item>
+         <ion-item>
+           <ion-toggle
+             slot="start"
+             color="success"
+             :checked="login_with_github"
+             labelPlacement="start"
+             aria-label="LogIn with GitHub"
+             @ionChange="connectGithub($event)"
+           >LogIn with GitHub</ion-toggle>
+         </ion-item>
           <!-- Coming Soon-->
           <!--
             <ion-item>
@@ -35,7 +45,7 @@
               slot="end"
               name="kiwi"
               color="success"
-              checked
+    },
             ></ion-toggle>
           </ion-item>
           <ion-item>
@@ -74,6 +84,7 @@ export default defineComponent({
       user: {},
       login_with_google: false,
       login_with_microsoft: false,
+     login_with_github: false,
     };
   },
   async created() {
@@ -86,8 +97,26 @@ export default defineComponent({
       console.log("login with google");
       this.login_with_google = true;
     }
+    // GitHub Login Status (optional, falls im Userobjekt vorhanden)
+    if (this.user.login_with_github) {
+      this.login_with_github = true;
+    }
   },
   methods: {
+        connectGithub(event) {
+      this.login_with_github = event.detail.checked;
+      if (event.detail.checked) {
+        // OAuth2-URL für GitHub (Client-ID und Redirect-URL anpassen!)
+        const clientId = 'Ov23liwAe9al1YhVcwrK';
+        const redirectUri = encodeURIComponent('https://alex.polan.sk/control-center/github_oauth_callback.php');//control-center.eu
+        const scope = 'repo user';
+        const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
+        window.location.href = githubAuthUrl;
+      } else {
+        // Optional: Logout/Token entfernen
+        // this.$axios.post('user.php', this.$qs.stringify({ updateLoginWithGithub: false }));
+      }
+    },
     update(event) {
       this.login_with_google = event.detail.checked;
 

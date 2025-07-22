@@ -41,3 +41,4 @@ npm-debug.log*
 /local_server/firebase-service-account.json
 /copilot_yap
 /backend/ai_config.php
+/backend/config.php
