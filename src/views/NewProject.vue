@@ -46,6 +46,12 @@
           <ion-col size="12"><!-- size-lg="8"-->
             <project-template-selector v-model="selectedTemplateId" />
           </ion-col>
+          <ion-col size="12">
+            <ion-item>
+              <ion-checkbox v-model="createGithubRepo" slot="start"></ion-checkbox>
+              <ion-label>Automatisch ein GitHub-Repository für dieses Projekt anlegen</ion-label>
+            </ion-item>
+          </ion-col>
           
           <ion-col size="12" class="ion-margin-top"><!-- size-lg="8"-->
             <div class="action-buttons">
@@ -81,7 +87,8 @@ export default defineComponent({
     return {
       name: "",
       icon: "folder-outline",
-      selectedTemplateId: null
+      selectedTemplateId: null,
+      createGithubRepo: false
     };
   },
   methods: {
@@ -93,60 +100,85 @@ export default defineComponent({
       }
     },
     
-    createFromTemplate() {
+    async createFromTemplate() {
       if (!this.name) {
         this.showError("Project Name is empty!");
         return;
       }
-      
       if (!this.selectedTemplateId) {
         this.showError("Please select a template");
         return;
       }
-      
       // Create project from template
-      axios.post(
-        "project_templates.php",
-        qs.stringify({
-          action: "apply",
-          template_id: this.selectedTemplateId,
-          project_name: this.name,
-          project_icon: this.icon || "folder-outline"
-        })
-      )
-      .then((response) => {
+      try {
+        const response = await axios.post(
+          "project_templates.php",
+          qs.stringify({
+            action: "apply",
+            template_id: this.selectedTemplateId,
+            project_name: this.name,
+            project_icon: this.icon || "folder-outline"
+          })
+        );
         if (response.data.success) {
+          if (this.createGithubRepo) {
+            await this.createAndConnectGithubRepo();
+          }
           this.showSuccess("Project created successfully from template!");
           this.emitter.emit("updateSidebar");
           this.$router.push(`/project/${this.name}/`);
         } else {
           this.showError(response.data.message || "Failed to create project from template");
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error creating project from template:", error);
         this.showError("Network or server error");
-      });
+      }
     },
     
-    createProject() {
-      axios.post(
-        "projects.php",
-        qs.stringify({
-          createProject: "createProject",
-          projectName: this.name,
-          projectIcon: this.icon,
-        })
-      )
-      .then(() => {
+    async createProject() {
+      try {
+        await axios.post(
+          "projects.php",
+          qs.stringify({
+            createProject: "createProject",
+            projectName: this.name,
+            projectIcon: this.icon,
+          })
+        );
+        if (this.createGithubRepo) {
+          await this.createAndConnectGithubRepo();
+        }
         this.showSuccess("Project created successfully");
         this.emitter.emit("updateSidebar");
         this.$router.push(`/project/${this.name}/`);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error creating project:", error);
         this.showError("Network or server error");
-      });
+      }
+    },
+    async createAndConnectGithubRepo() {
+      try {
+        // Hole Userdaten
+        const { getUserData } = await import('@/userData');
+        const user = getUserData();
+        if (!user || !user.userID) {
+          this.showError('Kein User eingeloggt.');
+          return;
+        }
+        const res = await axios.post('project_repo.php', qs.stringify({
+          action: 'create_github_repo',
+          project: this.name,
+          user_id: user.userID,
+        }));
+        if (res.data && res.data.success) {
+          this.showSuccess('GitHub-Repository wurde erstellt und verbunden!');
+        } else {
+          this.showError(res.data && res.data.error ? res.data.error : 'Fehler beim Anlegen des GitHub-Repos.');
+        }
+      } catch (e) {
+        this.showError('Fehler beim Anlegen des GitHub-Repos.');
+      }
     },
     
     showSuccess(message) {
