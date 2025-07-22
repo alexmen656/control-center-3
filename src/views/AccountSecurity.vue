@@ -6,43 +6,13 @@
         <h2>Login Options</h2>
         <ion-list>
           <ion-item>
-            <ion-toggle
-              slot="start"
-              color="success"
-              :checked="login_with_google"
-              labelPlacement="start"
-              aria-label="LogIn with Google"
-              @ionChange="update($event)"
-              >LogIn with Google</ion-toggle
-            >
+            <ion-toggle slot="start" color="success" :checked="login_with_google" labelPlacement="start"
+              aria-label="LogIn with Google" @ionChange="update($event)">LogIn with Google</ion-toggle>
           </ion-item>
           <ion-item>
-            <ion-toggle
-              slot="start"
-              color="success"
-              :checked="login_with_microsoft"
-              labelPlacement="start"
-              aria-label="LogIn with Google"
-              @ionChange="update2($event)"
-              >LogIn with Microsoft</ion-toggle
-            >
+            <ion-toggle slot="start" color="success" :checked="login_with_microsoft" labelPlacement="start"
+              aria-label="LogIn with Google" @ionChange="update2($event)">LogIn with Microsoft</ion-toggle>
           </ion-item>
-         <ion-item>
-           <ion-toggle
-             slot="start"
-             color="success"
-             :checked="login_with_github"
-             labelPlacement="start"
-             aria-label="LogIn with GitHub"
-             @ionChange="connectGithub($event)"
-           >LogIn with GitHub</ion-toggle>
-           <ion-item slot="end">
-            <span v-if="login_with_github && githubAccount" style="margin-left:1em;display:inline-block;vertical-align:middle;">
-              <ion-icon name="logo-github" style="font-size:1.2em;vertical-align:middle;"></ion-icon>
-              <span style="vertical-align:middle;">{{ githubAccount.login }}<span v-if="githubAccount.name"> ({{ githubAccount.name }})</span></span>
-            </span>
-           </ion-item>
-         </ion-item>
           <!-- Coming Soon-->
           <!--
             <ion-item>
@@ -76,6 +46,22 @@
         </ion-list>
       </ion-col>
       <ion-col size="1"></ion-col>
+      <ion-col size="1"></ion-col>
+      <ion-col size="10">
+        <h2>Connected Accounts</h2>
+        <ion-list>
+          <ion-item button v-if="!login_with_github || !githubAccount" @click="connectGithub({ detail: { checked: true } })">
+            <ion-icon name="logo-github" style="font-size:1.5em;vertical-align:middle;margin-right:0.5em;"></ion-icon>
+            <span style="vertical-align:middle;color:#888;">Connect your GitHub account now</span>
+          </ion-item>
+          <ion-item v-else>
+            <ion-icon name="logo-github" style="font-size:1.5em;vertical-align:middle;margin-right:0.5em;"></ion-icon>
+            <ion-label>GitHub</ion-label>
+            <span style="vertical-align:middle;">{{ githubAccount.login }}<span v-if="githubAccount.name"> ({{ githubAccount.name }})</span></span>
+          </ion-item>
+        </ion-list>
+      </ion-col>
+      <ion-col size="1"></ion-col>
     </ion-row>
   </ion-grid>
 </template>
@@ -90,8 +76,8 @@ export default defineComponent({
       user: {},
       login_with_google: false,
       login_with_microsoft: false,
-     login_with_github: false,
-     githubAccount: null,
+      login_with_github: false,
+      githubAccount: null,
     };
   },
   async created() {
@@ -126,7 +112,7 @@ export default defineComponent({
     }
   },
   methods: {
-        connectGithub(event) {
+    connectGithub(event) {
       this.login_with_github = event.detail.checked;
       if (event.detail.checked) {
         // OAuth2-URL für GitHub (Client-ID und Redirect-URL anpassen!)
@@ -146,7 +132,7 @@ export default defineComponent({
     update(event) {
       this.login_with_google = event.detail.checked;
 
-      if(event.detail.checked){
+      if (event.detail.checked) {
         this.login_with_microsoft = false;
       }
 
