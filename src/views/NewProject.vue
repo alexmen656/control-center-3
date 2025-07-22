@@ -51,6 +51,9 @@
               <ion-checkbox v-model="createGithubRepo" slot="start"></ion-checkbox>
               <ion-label>Automatisch ein GitHub-Repository für dieses Projekt anlegen</ion-label>
             </ion-item>
+            <ion-note color="medium" class="ion-margin-start" style="font-size:0.95em;">
+              If you wish to connect an existing repository, you can do it later in the project info.
+            </ion-note>
           </ion-col>
           
           <ion-col size="12" class="ion-margin-top"><!-- size-lg="8"-->
