@@ -28,6 +28,25 @@
                 </template>
               </ion-item>
               <ion-item>
+                <ion-label>Project Domain</ion-label>
+                <template v-if="loadingDomain">
+                  <ion-spinner name="crescent" />
+                </template>
+                <template v-else>
+                  <div v-if="connectedDomain">
+                    <ion-badge color="primary">{{ connectedDomain }}</ion-badge>
+                  </div>
+                  <div v-else>
+                    <ion-input v-model="domainInput" placeholder="subdomain" style="max-width:180px;display:inline-block;" />
+                    <span>.sites.control-center.eu</span>
+                    <ion-button size="small" @click="connectDomain" :disabled="!domainInput || domainInput.length < 3">Connect</ion-button>
+                  </div>
+                </template>
+              </ion-item>
+              <ion-item v-if="domainError">
+                <ion-text color="danger">{{ domainError }}</ion-text>
+              </ion-item>
+              <ion-item>
                 <ion-label position="floating">Created On</ion-label>
                 <ion-input disabled :value="creationDate"></ion-input>
               </ion-item>
@@ -86,6 +105,10 @@ export default {
       repos: [],
       openRepoModal: false,
       repoError: '',
+      loadingDomain: true,
+      connectedDomain: null,
+      domainInput: '',
+      domainError: '',
     };
   },
   methods: {
@@ -134,6 +157,50 @@ export default {
         this.loadingRepo = false;
       }
     },
+    async fetchConnectedDomain() {
+      this.loadingDomain = true;
+      this.domainError = '';
+      try {
+        const user = getUserData();
+        const res = await this.$axios.post('project_domain.php', this.$qs.stringify({
+          action: 'get',
+          project: this.$route.params.project,
+        }));
+        this.connectedDomain = res.data.domain;
+      } catch (e) {
+        this.connectedDomain = null;
+      } finally {
+        this.loadingDomain = false;
+      }
+    },
+    async connectDomain() {
+      this.domainError = '';
+      const user = getUserData();
+      if (!user || !user.userID) {
+        this.domainError = 'Kein User.';
+        return;
+      }
+      if (!/^[a-z0-9-]+$/.test(this.domainInput)) {
+        this.domainError = 'Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.';
+        return;
+      }
+      try {
+        const res = await this.$axios.post('project_domain.php', this.$qs.stringify({
+          action: 'connect',
+          project: this.$route.params.project,
+          user_id: user.userID,
+          domain: this.domainInput,
+        }));
+        if (res.data && res.data.success) {
+          this.connectedDomain = res.data.domain;
+          this.domainInput = '';
+        } else {
+          this.domainError = res.data && res.data.error ? res.data.error : 'Fehler beim Verbinden.';
+        }
+      } catch (e) {
+        this.domainError = 'Fehler beim Verbinden.';
+      }
+    },
     async connectRepo(repo) {
       this.repoError = '';
       try {
@@ -176,6 +243,7 @@ export default {
         this.loading = false;
       });
     this.fetchConnectedRepo();
+    this.fetchConnectedDomain();
   },
 };
 </script>
