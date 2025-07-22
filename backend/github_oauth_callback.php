@@ -32,11 +32,23 @@ $data = json_decode($response, true);
 
 if (isset($data['access_token'])) {
     $access_token = $data['access_token'];
-    // TODO: Speichere das Token in der Datenbank oder Session für den User
-    // Beispiel: $_SESSION['github_access_token'] = $access_token;
-    // Weiterleitung ins Frontend mit Status
-    header('Location: ' . $frontend_url . '?github_connected=1');
-    exit;
+    // User-ID aus state-Parameter extrahieren (z.B. state=user_12345)
+    $userID = 0;
+    if (isset($_GET['state']) && preg_match('/user_(\\d+)/', $_GET['state'], $matches)) {
+        $userID = intval($matches[1]);
+    }
+    if ($userID > 0) {
+        require_once __DIR__ . '/head.php';
+        $access_token_esc = escape_string($access_token);
+        $userID_esc = escape_string($userID);
+        query("DELETE FROM control_center_github_tokens WHERE userID='$userID_esc'");
+        query("INSERT INTO control_center_github_tokens (userID, github_token) VALUES ('$userID_esc', '$access_token_esc')");
+        header('Location: ' . $frontend_url . '?github_connected=1');
+        exit;
+    } else {
+        header('Location: ' . $frontend_url . '?github_error=nouser');
+        exit;
+    }
 } else {
     header('Location: ' . $frontend_url . '?github_error=1');
     exit;

@@ -110,7 +110,10 @@ export default defineComponent({
         const clientId = 'Ov23liwAe9al1YhVcwrK';
         const redirectUri = encodeURIComponent('https://alex.polan.sk/control-center/github_oauth_callback.php');//control-center.eu
         const scope = 'repo user';
-        const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
+        // User-ID für state-Parameter
+        const userId = this.user && this.user.userID ? this.user.userID : '';
+        const state = userId ? `user_${userId}` : '';
+        const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&state=${state}`;
         window.location.href = githubAuthUrl;
       } else {
         // Optional: Logout/Token entfernen
