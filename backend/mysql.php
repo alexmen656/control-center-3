@@ -11,8 +11,12 @@ if (!in_array($host_domain, $allowed_origins, false)) {
 session_start();
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Headers: *');
+
 header('Content-Type: application/json');
 include '/www/paxar/components/php_head.php';
+
+// Fix: $json immer initialisieren
+$json = [];
 
 function randomNumber()
 {
@@ -64,7 +68,7 @@ if (isset($_POST['getTables']) && $_POST['getTables']) {
     }
 
 
-} elseif ($_POST['getTableByName']) {
+} elseif (isset($_POST['getTableByName']) && $_POST['getTableByName']) {
     $i = 0;
     $tbName = escape_string($_POST['getTableByName']);
     $columns = query("SHOW COLUMNS FROM `$tbName`");
