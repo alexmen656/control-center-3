@@ -23,8 +23,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
         $insert = query("INSERT INTO control_center_project_domains (project, domain, user_id) VALUES ('$project', '$fullDomain', '$user_id')");
+        $setHomepageResult = null;
         if ($insert) {
-            echo json_encode(['success' => true, 'domain' => $fullDomain]);
+            // Versuche, falls Repo verbunden, das homepage-Feld zu setzen
+            $repoRes = query("SELECT * FROM control_center_project_repos WHERE project='$project' LIMIT 1");
+            if ($repoRow = fetch_assoc($repoRes)) {
+                $tokenRes = query("SELECT github_token FROM control_center_github_tokens WHERE userID='" . escape_string($user_id) . "' LIMIT 1");
+                if ($tokenRow = fetch_assoc($tokenRes)) {
+                    $token = $tokenRow['github_token'];
+                    $ownerRepo = $repoRow['repo_full_name'];
+                    $apiUrl = 'https://api.github.com/repos/' . $ownerRepo;
+                    $data = [ 'homepage' => 'https://' . $fullDomain ];
+                    $opts = [
+                        'http' => [
+                            'method' => 'PATCH',
+                            'header' => "Authorization: token $token\r\nUser-Agent: ControlCenter\r\nAccept: application/vnd.github.v3+json\r\nContent-Type: application/json\r\n",
+                            'content' => json_encode($data)
+                        ]
+                    ];
+                    $context = stream_context_create($opts);
+                    $result = @file_get_contents($apiUrl, false, $context);
+                    $setHomepageResult = $result ? json_decode($result, true) : null;
+                }
+            }
+            echo json_encode(['success' => true, 'domain' => $fullDomain, 'github_homepage_set' => $setHomepageResult]);
         } else {
             echo json_encode(['error' => 'Insert failed']);
         }
