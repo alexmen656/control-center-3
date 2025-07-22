@@ -36,6 +36,12 @@
              aria-label="LogIn with GitHub"
              @ionChange="connectGithub($event)"
            >LogIn with GitHub</ion-toggle>
+           <ion-item slot="end">
+            <span v-if="login_with_github && githubAccount" style="margin-left:1em;display:inline-block;vertical-align:middle;">
+              <ion-icon name="logo-github" style="font-size:1.2em;vertical-align:middle;"></ion-icon>
+              <span style="vertical-align:middle;">{{ githubAccount.login }}<span v-if="githubAccount.name"> ({{ githubAccount.name }})</span></span>
+            </span>
+           </ion-item>
          </ion-item>
           <!-- Coming Soon-->
           <!--
@@ -85,6 +91,7 @@ export default defineComponent({
       login_with_google: false,
       login_with_microsoft: false,
      login_with_github: false,
+     githubAccount: null,
     };
   },
   async created() {
@@ -97,9 +104,25 @@ export default defineComponent({
       console.log("login with google");
       this.login_with_google = true;
     }
-    // GitHub Login Status (optional, falls im Userobjekt vorhanden)
-    if (this.user.login_with_github) {
-      this.login_with_github = true;
+    // GitHub Login Status & Info prüfen
+    if (this.user.userID) {
+      try {
+        const res = await this.$axios.get(`github_token_status.php?userID=${this.user.userID}`);
+        this.login_with_github = !!(res.data && res.data.connected);
+        if (this.login_with_github) {
+          const infoRes = await this.$axios.get(`github_token_info.php?userID=${this.user.userID}`);
+          if (infoRes.data && infoRes.data.login) {
+            this.githubAccount = infoRes.data;
+          } else {
+            this.githubAccount = null;
+          }
+        } else {
+          this.githubAccount = null;
+        }
+      } catch (e) {
+        this.login_with_github = false;
+        this.githubAccount = null;
+      }
     }
   },
   methods: {
