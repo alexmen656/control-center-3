@@ -6,68 +6,51 @@
           <ion-col size="0" size-lg="1"></ion-col>
           <ion-col size="12" size-lg="10"><ion-grid><ion-row>
 
-          <ion-col size="12"><!-- size-lg="8"-->
-            <h2>Create a new project</h2>
-          </ion-col>
-          
-          <ion-col size="12"><!-- size-lg="8"-->
-            <ion-item>
-              <ion-label position="floating">Icon</ion-label>
-              <ion-input
-                type="text"
-                v-model="icon"
-                :value="icon"
-                @ionInput="icon = $event.target.value"
-                placeholder="Enter Icon Code"
-              >
-              </ion-input>
-              <ion-icon
-                class="input-icon"
-                slot="end"
-                size="large"
-                :name="icon ? icon : 'help-circle-outline'"
-              ></ion-icon>
-            </ion-item>
-          </ion-col>
-          
-          <ion-col size="12"><!-- size-lg="8"-->
-            <ion-item>
-              <ion-label position="floating">Project Name</ion-label>
-              <ion-input
-                v-model="name"
-                :value="name"
-                @ionInput="name = $event.target.value"
-                type="text"
-                placeholder="Enter Project Name"
-              ></ion-input>
-            </ion-item>
-          </ion-col>
-          
-          <ion-col size="12"><!-- size-lg="8"-->
-            <project-template-selector v-model="selectedTemplateId" />
-          </ion-col>
-          <ion-col size="12">
-            <ion-item>
-              <ion-checkbox v-model="createGithubRepo" slot="start"></ion-checkbox>
-              <ion-label>Automatisch ein GitHub-Repository für dieses Projekt anlegen</ion-label>
-            </ion-item>
-            <ion-note color="medium" class="ion-margin-start" style="font-size:0.95em;">
-              If you wish to connect an existing repository, you can do it later in the project info.
-            </ion-note>
-          </ion-col>
-          
-          <ion-col size="12" class="ion-margin-top"><!-- size-lg="8"-->
-            <div class="action-buttons">
-              <ion-button @click="createWithoutTemplate" :disabled="!name">Create Empty Project</ion-button>
-              <ion-button 
-                @click="createFromTemplate" 
-                color="primary"
-                :disabled="!name || !selectedTemplateId">
-                Create From Template
-              </ion-button>
-            </div>
-          </ion-col>
-        </ion-row></ion-grid></ion-col>
+                <ion-col size="12"><!-- size-lg="8"-->
+                  <h2>Create a new project</h2>
+                </ion-col>
+
+                <ion-col size="12"><!-- size-lg="8"-->
+                  <ion-item>
+                    <ion-label position="floating">Icon</ion-label>
+                    <ion-input type="text" v-model="icon" :value="icon" @ionInput="icon = $event.target.value"
+                      placeholder="Enter Icon Code">
+                    </ion-input>
+                    <ion-icon class="input-icon" slot="end" size="large"
+                      :name="icon ? icon : 'help-circle-outline'"></ion-icon>
+                  </ion-item>
+                </ion-col>
+
+                <ion-col size="12"><!-- size-lg="8"-->
+                  <ion-item>
+                    <ion-label position="floating">Project Name</ion-label>
+                    <ion-input v-model="name" :value="name" @ionInput="name = $event.target.value" type="text"
+                      placeholder="Enter Project Name"></ion-input>
+                  </ion-item>
+                </ion-col>
+
+                <ion-col size="12"><!-- size-lg="8"-->
+                  <project-template-selector v-model="selectedTemplateId" />
+                </ion-col>
+                <ion-col size="12">
+                  <ion-item>
+                    <ion-checkbox v-model="createGithubRepo" slot="start"></ion-checkbox>
+                    <ion-label>Automatisch ein GitHub-Repository für dieses Projekt anlegen</ion-label>
+                  </ion-item>
+                  <ion-note color="medium" class="ion-margin-start" style="font-size:0.95em;">
+                    If you wish to connect an existing repository, you can do it later in the project info.
+                  </ion-note>
+                </ion-col>
+
+                <ion-col size="12" class="ion-margin-top"><!-- size-lg="8"-->
+                  <div class="action-buttons">
+                    <ion-button @click="createWithoutTemplate" :disabled="!name">Create Empty Project</ion-button>
+                    <ion-button @click="createFromTemplate" color="primary" :disabled="!name || !selectedTemplateId">
+                      Create From Template
+                    </ion-button>
+                  </div>
+                </ion-col>
+              </ion-row></ion-grid></ion-col>
           <ion-col size="0" size-lg="1"></ion-col>
         </ion-row>
       </ion-grid>
@@ -102,7 +85,7 @@ export default defineComponent({
         this.showError("Project Name is empty!");
       }
     },
-    
+
     async createFromTemplate() {
       if (!this.name) {
         this.showError("Project Name is empty!");
@@ -138,7 +121,7 @@ export default defineComponent({
         this.showError("Network or server error");
       }
     },
-    
+
     async createProject() {
       try {
         await axios.post(
@@ -206,7 +189,7 @@ export default defineComponent({
         this.showError('Fehler beim Anlegen des GitHub-Repos.');
       }
     },
-    
+
     showSuccess(message) {
       if (this.$ionic && this.$ionic.toastController) {
         this.$ionic.toastController.create({
@@ -219,7 +202,7 @@ export default defineComponent({
         alert(message);
       }
     },
-    
+
     showError(message) {
       if (this.$ionic && this.$ionic.toastController) {
         this.$ionic.toastController.create({
