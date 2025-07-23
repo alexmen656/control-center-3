@@ -14,6 +14,8 @@ header('Access-Control-Allow-Headers: *');
 header('Access-Control-Allow-Methods: *');
 header('Content-Type: application/json');
 include '/www/paxar/components/php_head.php';
+include_once 'jwt_helper.php';
+include_once 'config.php';
 
 function randomNumber()
 {
@@ -26,12 +28,19 @@ function echoJson($json)
     return json_encode($json, JSON_PRETTY_PRINT);
 }
 
+// JWT prüfen
 $headers = getRequestHeaders();
+if (isset($headers['Authorization'])) {
+    $token = $headers['Authorization'];
+    $payload = SimpleJWT::verify($token, $jwt_secret);
+    if (!$payload || empty($payload['sub'])) {
+        header('HTTP/1.1 401 Unauthorized');
+        echo json_encode(['error' => 'No valid token']);
+        exit;
+    }
+    $userID = intval($payload['sub']);
 
-if ($headers['Authorization']) {
-    //$projects = 
     if (isset($_REQUEST['getSideBarByProjectName'])) {
-
         $projectName = $_REQUEST['getSideBarByProjectName'];
         $projectData = fetch_assoc(query("SELECT * FROM projects WHERE link='$projectName'"));
         $projectID = $projectData['projectID'];
@@ -157,27 +166,20 @@ if ($headers['Authorization']) {
             $i++;
         }
 
-
-        $token = escape_string($headers['Authorization']);
-        $data = query("SELECT * FROM control_center_users WHERE loginToken='$token'");
-        if (mysqli_num_rows($data) == 1) {
-            $userID = fetch_assoc($data)['userID'];
-            $projects = query("SELECT * FROM control_center_user_projects WHERE userID='$userID'");
-            $i = 0;
-            foreach ($projects as $p) {
-                $projectID = $p['projectID'];
-                $project = query("SELECT * FROM projects WHERE projectID='$projectID'");
-                if (mysqli_num_rows($project) == 1) {
-                    $project = fetch_assoc($project);
-                    $json['projects'][$i]["id"] = $project['id'];
-                    $json['projects'][$i]["icon"] = $project['icon'];
-                    $json['projects'][$i]["name"] = $project['name'];
-                    $json['projects'][$i]["link"] = $project['link'];
-                    
-                }
-                $i++;
-
+        // Projekte für den eingeloggten User (aus JWT)
+        $projects = query("SELECT * FROM control_center_user_projects WHERE userID='$userID'");
+        $i = 0;
+        foreach ($projects as $p) {
+            $projectID = $p['projectID'];
+            $project = query("SELECT * FROM projects WHERE projectID='$projectID'");
+            if (mysqli_num_rows($project) == 1) {
+                $project = fetch_assoc($project);
+                $json['projects'][$i]["id"] = $project['id'];
+                $json['projects'][$i]["icon"] = $project['icon'];
+                $json['projects'][$i]["name"] = $project['name'];
+                $json['projects'][$i]["link"] = $project['link'];
             }
+            $i++;
         }
     }
 
