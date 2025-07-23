@@ -69,9 +69,13 @@
                     <ion-badge color="primary">{{ connectedDomain }}</ion-badge>
                   </div>
                   <div v-else>
-                    <ion-input v-model="domainInput" placeholder="subdomain" style="max-width:180px;display:inline-block;" />
+                    <ion-input v-model="domainInput" placeholder="subdomain" style="max-width:180px;display:inline-block;"
+                      :disabled="!connectedVercelProject" />
                     <span>.sites.control-center.eu</span>
-                    <ion-button size="small" @click="connectDomain" :disabled="!domainInput || domainInput.length < 3">Connect</ion-button>
+                    <ion-button size="small" @click="connectDomain" :disabled="!domainInput || domainInput.length < 3 || !connectedVercelProject">Connect</ion-button>
+                    <ion-text color="medium" v-if="!connectedVercelProject" style="display:block;margin-top:4px;">
+                      Bitte zuerst ein Vercel-Projekt verbinden.
+                    </ion-text>
                   </div>
                 </template>
               </ion-item>
