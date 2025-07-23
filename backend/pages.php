@@ -8,6 +8,26 @@ $host_domain = implode('.', array_slice(explode('.', $request_host), -2));
   //  header('HTTP/1.0 403 Forbidden');
     //die('You are not allowed to access this.');     
 //}
+
+include_once 'jwt_helper.php';
+include_once 'config.php';
+
+// JWT prüfen
+$headers = getallheaders();
+if (isset($headers['Authorization'])) {
+    $token = $headers['Authorization'];
+    $payload = SimpleJWT::verify($token, $jwt_secret);
+    if (!$payload) {
+        header('HTTP/1.1 401 Unauthorized');
+        echo json_encode(['error' => 'No valid token']);
+        exit;
+    }
+} else {
+    header('HTTP/1.1 401 Unauthorized');
+    echo json_encode(['error' => 'No valid token']);
+    exit;
+}
+
 session_start();
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Headers: *');
