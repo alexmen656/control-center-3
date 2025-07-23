@@ -50,6 +50,7 @@
       <ion-col size="10">
         <h2>Connected Accounts</h2>
         <ion-list>
+          <!-- GitHub -->
           <ion-item button v-if="!login_with_github || !githubAccount" @click="connectGithub({ detail: { checked: true } })">
             <ion-icon name="logo-github" style="font-size:1.5em;vertical-align:middle;margin-right:0.5em;"></ion-icon>
             <span style="vertical-align:middle;color:#888;">Connect your GitHub account now</span>
@@ -58,6 +59,16 @@
             <ion-icon name="logo-github" style="font-size:1.5em;vertical-align:middle;margin-right:0.5em;"></ion-icon>
             <ion-label>GitHub</ion-label>
             <span style="vertical-align:middle;">{{ githubAccount.login }}<span v-if="githubAccount.name"> ({{ githubAccount.name }})</span></span>
+          </ion-item>
+          <!-- Vercel -->
+          <ion-item button v-if="!vercelConnected" @click="connectVercel()">
+            <ion-icon name="logo-vercel" style="font-size:1.5em;vertical-align:middle;margin-right:0.5em;"></ion-icon><!--color:#38d996;-->
+            <span style="vertical-align:middle;color:#888;">Connect your Vercel account now</span>
+          </ion-item>
+          <ion-item v-else>
+            <ion-icon name="logo-vercel" style="font-size:1.5em;vertical-align:middle;margin-right:0.5em;"></ion-icon><!--color:#38d996;-->
+            <ion-label>Vercel</ion-label>
+            <span style="vertical-align:middle;">Verbunden</span>
           </ion-item>
         </ion-list>
       </ion-col>
@@ -78,6 +89,7 @@ export default defineComponent({
       login_with_microsoft: false,
       login_with_github: false,
       githubAccount: null,
+      vercelConnected: false,
     };
   },
   async created() {
@@ -105,14 +117,25 @@ export default defineComponent({
         } else {
           this.githubAccount = null;
         }
+        // Vercel Status
+        const vercelRes = await this.$axios.get(`vercel_token_status.php?userID=${this.user.userID}`);
+        this.vercelConnected = !!(vercelRes.data && vercelRes.data.connected);
       } catch (e) {
         this.login_with_github = false;
         this.githubAccount = null;
+        this.vercelConnected = false;
       }
     }
   },
   methods: {
     connectGithub(event) {
+    },
+    connectVercel() {
+      const clientSlug = 'control-center';
+      const userId = this.user && this.user.userID ? this.user.userID : '';
+      const state = userId ? `user_${userId}` : '';
+      const vercelAuthUrl = `https://vercel.com/integrations/${clientSlug}/new?state=${state}`;
+      window.location.href = vercelAuthUrl;
       this.login_with_github = event.detail.checked;
       if (event.detail.checked) {
         // OAuth2-URL für GitHub (Client-ID und Redirect-URL anpassen!)
