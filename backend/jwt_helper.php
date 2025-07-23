@@ -35,4 +35,19 @@ class SimpleJWT {
                 throw new Exception('Unsupported algorithm');
         }
     }
+
+    public static function verify($jwt, $key) {
+        $parts = explode('.', $jwt);
+        if (count($parts) !== 3) return false;
+        list($headb64, $payloadb64, $sigb64) = $parts;
+        $header = json_decode(self::base64UrlDecode($headb64), true);
+        $payload = json_decode(self::base64UrlDecode($payloadb64), true);
+        $sig = self::base64UrlDecode($sigb64);
+        if (!$header || !$payload || !$sig) return false;
+        if (empty($payload['exp']) || time() > $payload['exp']) return false;
+        $alg = isset($header['alg']) ? $header['alg'] : 'HS256';
+        $valid_sig = self::sign($headb64 . '.' . $payloadb64, $key, $alg);
+        if (!hash_equals($valid_sig, $sig)) return false;
+        return $payload;
+    }
 }

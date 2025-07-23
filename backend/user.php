@@ -7,25 +7,8 @@ $headers = getRequestHeaders();
 
 if (isset($headers['Authorization'])) {
     $token = $headers['Authorization'];
-    // JWT prüfen und dekodieren
-    $parts = explode('.', $token);
-    if (count($parts) !== 3) {
-        echo "No valid token";
-        exit;
-    }
-    $header = json_decode(base64_decode(strtr($parts[0], '-_', '+/')), true);
-    $payload = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true);
-    $sig = base64_decode(strtr($parts[2], '-_', '+/'));
-    if (!$header || !$payload || !$sig) {
-        echo "No valid token";
-        exit;
-    }
-    if (empty($payload['exp']) || time() > $payload['exp']) {
-        echo "No valid token";
-        exit;
-    }
-    $valid_sig = SimpleJWT::sign($parts[0] . '.' . $parts[1], $jwt_secret, $header['alg']);
-    if (!hash_equals($valid_sig, $sig)) {
+    $payload = SimpleJWT::verify($token, $jwt_secret);
+    if (!$payload || empty($payload['sub'])) {
         echo "No valid token";
         exit;
     }
