@@ -119,42 +119,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
-                // === cloudns.net CNAME setzen ===
-                $cloudnsResult = null;
-                $cloudns_auth_id = isset($cloudns_auth_id) ? $cloudns_auth_id : '';
-                $cloudns_auth_password = isset($cloudns_auth_password) ? $cloudns_auth_password : '';
-                $cloudns_zone = isset($cloudns_zone) ? $cloudns_zone : 'sites.control-center.eu';
-                $cloudns_api_url = 'https://api.cloudns.net/dns/add-record.json';
-                $cloudns_post = http_build_query([
-                    'auth-id' => $cloudns_auth_id,
-                    'auth-password' => $cloudns_auth_password,
-                    'domain-name' => $cloudns_zone,
-                    'record-type' => 'CNAME',
-                    'host' => $domain, // nur subdomain
-                    'record' => $cnameTarget,
-                    'ttl' => 300
+                // === Cloudflare CNAME setzen ===
+                $cloudflareResult = null;
+                $cloudflare_zone_id = isset($cloudflare_zone_id) ? $cloudflare_zone_id : '';
+                $cloudflare_api_token = isset($cloudflare_api_token) ? $cloudflare_api_token : '';
+                $cloudflare_api_url = "https://api.cloudflare.com/client/v4/zones/$cloudflare_zone_id/dns_records";
+                $cloudflare_post = json_encode([
+                    'type' => 'CNAME',
+                    'name' => $fullDomain,
+                    'content' => $cnameTarget,
+                    'ttl' => 300,
+                    'proxied' => false
                 ]);
-                error_log('[cloudns] POST: ' . $cloudns_post);
+                error_log('[cloudflare] POST: ' . $cloudflare_post);
                 $opts = [
                     'http' => [
                         'method' => 'POST',
-                        'header' => "Content-type: application/x-www-form-urlencoded\r\n",
-                        'content' => $cloudns_post
+                        'header' => "Authorization: Bearer $cloudflare_api_token\r\nContent-Type: application/json\r\n",
+                        'content' => $cloudflare_post
                     ]
                 ];
                 $context = stream_context_create($opts);
-                $cloudns_response = @file_get_contents($cloudns_api_url, false, $context);
-                error_log('[cloudns] RESPONSE: ' . $cloudns_response);
-                $cloudnsResult = $cloudns_response ? json_decode($cloudns_response, true) : null;
+                $cloudflare_response = @file_get_contents($cloudflare_api_url, false, $context);
+                error_log('[cloudflare] RESPONSE: ' . $cloudflare_response);
+                $cloudflareResult = $cloudflare_response ? json_decode($cloudflare_response, true) : null;
                 // Fehlerbehandlung: Falls Fehler, Insert rückgängig machen
-                if (!$cloudns_response || (isset($cloudnsResult['status']) && $cloudnsResult['status'] == 'Failed')) {
+                if (!$cloudflare_response || (isset($cloudflareResult['success']) && !$cloudflareResult['success'])) {
                     query("DELETE FROM control_center_project_domains WHERE project='$project' AND domain='$fullDomain'");
-                    $errMsg = isset($cloudnsResult['statusDescription']) ? $cloudnsResult['statusDescription'] : 'cloudns API Fehler';
-                    error_log('[cloudns] ERROR: ' . $errMsg);
-                    echo json_encode(['error' => 'cloudns: ' . $errMsg]);
+                    $errMsg = isset($cloudflareResult['errors'][0]['message']) ? $cloudflareResult['errors'][0]['message'] : 'Cloudflare API Fehler';
+                    error_log('[cloudflare] ERROR: ' . $errMsg);
+                    echo json_encode(['error' => 'cloudflare: ' . $errMsg]);
                     exit;
                 }
-                echo json_encode(['success' => true, 'domain' => $fullDomain, 'vercel' => $vercelResult, 'cloudns' => $cloudnsResult, 'github_homepage_set' => $setHomepageResult]);
+                echo json_encode(['success' => true, 'domain' => $fullDomain, 'vercel' => $vercelResult, 'cloudflare' => $cloudflareResult, 'github_homepage_set' => $setHomepageResult]);
            
         } else {
             echo json_encode(['error' => 'Insert failed']);
