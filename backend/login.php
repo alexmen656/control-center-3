@@ -1,7 +1,7 @@
 <?php
-$jwt_secret = 'dein_geheimer_schluessel_123'; // Setze hier einen sicheren Key!
 include 'head.php';
 include_once 'jwt_helper.php';
+include_once 'config.php';
 $headers = getRequestHeaders();
 
 if (isset($_POST['email']) && isset($_POST['password'])) {

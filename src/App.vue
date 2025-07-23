@@ -5,36 +5,17 @@
       <ion-content v-if="showContent">
         <SiteHeader v-if="showHeader"></SiteHeader>
         <ion-split-pane content-id="main-content">
-          <ion-menu
-            v-if="token && account_active"
-            content-id="main-content"
-            class="ion-menu"
-            type="overlay"
-          >
+          <ion-menu v-if="token && account_active" content-id="main-content" class="ion-menu" type="overlay">
             <ion-content>
-              <SideBar
-                :projects="projects"
-                :tools="tools"
-                :bookmarks="bookmarks"
-                v-if="showSideBar"
-              ></SideBar>
+              <SideBar :projects="projects" :tools="tools" :bookmarks="bookmarks" v-if="showSideBar"></SideBar>
               <ProjectSideBar v-if="showProjectSideBar"></ProjectSideBar>
             </ion-content>
           </ion-menu>
           <div id="main-content">
-            <SiteTitle
-              v-if="showSiteTitle"
-              :icon="page.icon"
-              :title="page.title"
-              @updateSidebar="updateSidebar()"
-            />
-            <ion-router-outlet
-              v-if="page.title"
-              @updateSidebar="updateSidebar()"
-              :class="{
-                showTitle: showTitle,
-              }"
-            ></ion-router-outlet>
+            <SiteTitle v-if="showSiteTitle" :icon="page.icon" :title="page.title" @updateSidebar="updateSidebar()" />
+            <ion-router-outlet v-if="page.title" @updateSidebar="updateSidebar()" :class="{
+              showTitle: showTitle,
+            }"></ion-router-outlet>
             <div v-else class="error404">
               <h1>Error 404, Site not found.</h1>
             </div>
@@ -44,7 +25,9 @@
       <!--<div class="offline" v-if="!isOnline"><h6>You are offline!</h6></div>-->
       <ion-footer v-if="!isOnline" class="offline" collapse="fade">
         <ion-toolbar>
-          <ion-title><h6 class="offline-h6">You are offline!</h6></ion-title>
+          <ion-title>
+            <h6 class="offline-h6">You are offline!</h6>
+          </ion-title>
         </ion-toolbar>
       </ion-footer>
     </ion-app>
@@ -297,38 +280,56 @@ export default defineComponent({
       paths,
     };
   },
-  created() {
-    initializeApp(firebase_config);
-    this.emitter.on("authenticated", () => {
-      this.authenticated = true;
-    });
-
-    if (isPlatform("ios")) {
-      if (FaceId) {
-        FaceId.isAvailable().then((checkResult) => {
-          this.faceIDAvailble = true;
-          if (checkResult.value) {
-            FaceId.auth()
-              .then(() => {
-                this.authenticated = true;
-              })
-              .catch(() => {
-                this.goTo("/pin");
-              });
-          } else {
-            this.goTo("/pin");
-          }
+  async created() {
+    if (this.token) {
+      try {
+        const res = await axios.post("token_verify.php", {}, {
+          headers: { Authorization: this.token }
         });
-      } else {
-        console.log("FaceID Plugin could not be loaded.");
-      }
-    }
+        if (!res.data.valid) {
+          localStorage.removeItem("token");
+          this.token = null;
+          this.$router.push("/login");
 
-    if (
-      !this.paths.includes(location.pathname) &&
-      location.pathname.includes("project")
-    ) {
-      this.checkUserPermissions(this.$route.params.project);
+          initializeApp(firebase_config);
+          this.emitter.on("authenticated", () => {
+            this.authenticated = true;
+          });
+
+          if (isPlatform("ios")) {
+            if (FaceId) {
+              FaceId.isAvailable().then((checkResult) => {
+                this.faceIDAvailble = true;
+                if (checkResult.value) {
+                  FaceId.auth()
+                    .then(() => {
+                      this.authenticated = true;
+                    })
+                    .catch(() => {
+                      this.goTo("/pin");
+                    });
+                } else {
+                  this.goTo("/pin");
+                }
+              });
+            } else {
+              console.log("FaceID Plugin could not be loaded.");
+            }
+          }
+
+          if (
+            !this.paths.includes(location.pathname) &&
+            location.pathname.includes("project")
+          ) {
+            this.checkUserPermissions(this.$route.params.project);
+          }
+
+        }
+      } catch (e) {
+        localStorage.removeItem("token");
+        this.token = null;
+        this.$router.push("/login");
+      }
     }
   },
   async mounted() {
