@@ -12,10 +12,16 @@ $host_domain = implode('.', array_slice(explode('.', $request_host), -2));
 //  die('You are not allowed to access this.');     
 //}
 session_start();
+
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Headers: *');
 header('Access-Control-Allow-Methods: *');
 header('Content-Type: application/json');
+// OPTIONS-Requests (Preflight) direkt beantworten
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 include '/www/paxar/components/php_head.php';
 
 // JWT prüfen

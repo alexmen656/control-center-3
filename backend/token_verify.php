@@ -1,7 +1,12 @@
 <?php
 include_once 'jwt_helper.php';
 include_once 'config.php';
-include_once 'head.php';
+include '/www/paxar/components/php_head.php';
+
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Headers: *');
+header('Access-Control-Allow-Methods: *');
+header('Content-Type: application/json');
 
 $headers = getallheaders();
 $auth = isset($headers['Authorization']) ? $headers['Authorization'] : null;

@@ -1,8 +1,5 @@
 <?php
 include 'head.php';
-include_once 'jwt_helper.php';
-include_once 'config.php';
-
 $headers = getRequestHeaders();
 
 if (isset($headers['Authorization'])) {

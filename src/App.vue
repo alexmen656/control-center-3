@@ -102,44 +102,38 @@ export default defineComponent({
     };
   },
   computed: {
+    isJwtValid() {
+      if (!this.token) return false;
+      try {
+        const payload = JSON.parse(atob(this.token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+        return payload.exp && Date.now() / 1000 < payload.exp;
+      } catch (e) {
+        return false;
+      }
+    },
     showContent() {
       return (
-        !this.faceIDAvailble ||
-        this.authenticated ||
-        this.$route.path === "/pin" ||
-        this.$route.path === "/pin/"
+        (!this.faceIDAvailble || this.authenticated || this.$route.path === "/pin" || this.$route.path === "/pin/")
       );
     },
     showHeader() {
       return (
-        this.account_active &&
-        this.token &&
-        this.$route.path !== "/pin" &&
-        this.$route.path !== "/pin/"
+        this.account_active && this.token && this.isJwtValid && this.$route.path !== "/pin" && this.$route.path !== "/pin/"
       );
     },
     showSideBar() {
       return (
-        !this.$route.params.project &&
-        this.$route.path !== "/pin" &&
-        this.$route.path !== "/pin/"
+        !this.$route.params.project && this.isJwtValid && this.$route.path !== "/pin" && this.$route.path !== "/pin/"
       );
     },
     showProjectSideBar() {
       return (
-        this.$route.params.project &&
-        this.$route.path !== "/pin" &&
-        this.$route.path !== "/pin/"
+        this.$route.params.project && this.isJwtValid && this.$route.path !== "/pin" && this.$route.path !== "/pin/"
       );
     },
     showSiteTitle() {
       return (
-        this.token &&
-        this.account_active &&
-        this.page.title &&
-        (this.page.showTitle === true || this.page.showTitle === "true") &&
-        this.$route.path !== "/pin" &&
-        this.$route.path !== "/pin/"
+        this.token && this.isJwtValid && this.account_active && this.page.title && (this.page.showTitle === true || this.page.showTitle === "true") && this.$route.path !== "/pin" && this.$route.path !== "/pin/"
       );
     },
     showTitle() {
@@ -195,29 +189,45 @@ export default defineComponent({
         window.location.pathname.replace(/\/$/, "").replace(/^\//, "");
 
       if (isOnline.value) {
-        axios.post("pages.php").then((res) => {
-          const foundPage = res.data.find((p) => p["url"] === paramUrl);
-          page.value = foundPage || page.value;
-          updateDocumentTitle(page.value.title);
-          loading.value = false;
-        });
+        if (route.path !== "/login") {
 
-        Promise.all([
-          axios.get("sidebar.php"),
-          axios.get("bookmarks.php?getBookmarks=getBookmarks"),
-        ])
-          .then(([sidebarResponse, bookmarksResponse]) => {
-            tools.value = sidebarResponse.data.tools;
-            projects.value = Object.values(sidebarResponse.data.projects);
-            bookmarks.value = bookmarksResponse.data;
 
-            saveLocal("tools", tools.value);
-            saveLocal("projects", projects.value);
-            saveLocal("bookmarks", bookmarks.value);
-          })
-          .catch((error) => {
-            console.error("Error loading data:", error);
+          axios.post("pages.php").then((res) => {
+            const foundPage = res.data.find((p) => p["url"] === paramUrl);
+            page.value = foundPage || page.value;
+            updateDocumentTitle(page.value.title);
+            loading.value = false;
           });
+
+          Promise.all([
+            axios.get("sidebar.php"),
+            axios.get("bookmarks.php?getBookmarks=getBookmarks"),
+          ])
+            .then(([sidebarResponse, bookmarksResponse]) => {
+              tools.value = sidebarResponse.data.tools;
+              projects.value = Object.values(sidebarResponse.data.projects);
+              bookmarks.value = bookmarksResponse.data;
+
+              saveLocal("tools", tools.value);
+              saveLocal("projects", projects.value);
+              saveLocal("bookmarks", bookmarks.value);
+            })
+            .catch((error) => {
+              console.error("Error loading data:", error);
+            });
+        } else {
+          loading.value = false;
+          page.value = {
+            "id": "9",
+            "url": "login",
+            "showTitle": "true",
+            "icon": "",
+            "title": "Login",
+            "html": "",
+            "pageID": "0"
+          };
+          updateDocumentTitle(page.value.title);
+        }
       } else {
         const foundPage = offlinePages.find((p) => p["url"] === paramUrl);
         page.value = foundPage || page.value;
@@ -281,7 +291,7 @@ export default defineComponent({
     };
   },
   async created() {
-    if (this.token) {
+    if (this.token && this.$route.path !== "/login") {
       try {
         const res = await axios.post("token_verify.php", {}, {
           headers: { Authorization: this.token }

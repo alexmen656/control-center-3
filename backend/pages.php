@@ -1,4 +1,15 @@
 <?php
+session_start();
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Headers: *');
+header('Access-Control-Allow-Methods: *');
+header('Content-Type: application/json');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 $origin_url = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'];
 $allowed_origins = ['alexsblog.de', 'localhost:8100', 'polan.sk', 'http://localhost:8100/login', 'http://localhost:8100', 'localhost']; // replace with query for domains.
 $request_host = parse_url($origin_url, PHP_URL_HOST);
@@ -11,6 +22,7 @@ $host_domain = implode('.', array_slice(explode('.', $request_host), -2));
 
 include_once 'jwt_helper.php';
 include_once 'config.php';
+include '/www/paxar/components/php_head.php';
 
 // JWT prüfen
 $headers = getallheaders();
@@ -27,12 +39,6 @@ if (isset($headers['Authorization'])) {
     echo json_encode(['error' => 'No valid token']);
     exit;
 }
-
-session_start();
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Headers: *');
-header('Content-Type: application/json');
-include '/www/paxar/components/php_head.php';
 
 function randomNumber(){
     $rand = rand(100000, 999999);
