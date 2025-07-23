@@ -8,16 +8,13 @@ $headers = getRequestHeaders();
  * Hauptprogrammlogik
  */
 if (isset($headers['Authorization'])) {
-    $token = escape_string($headers['Authorization']);
-    $userData = getUserByToken($token);
-    
-    if (!$userData) {
+    $token = $headers['Authorization'];
+    $payload = SimpleJWT::verify($token, $jwt_secret);
+    if (!$payload || empty($payload['sub'])) {
         echo jsonResponse("Unauthorized access", false);
         exit;
     }
-    
-    $userID = $userData['userID'];
-    
+    $userID = intval($payload['sub']);
     // Handler für verschiedene Anfragen
     if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
         // Neues Projekt erstellen
