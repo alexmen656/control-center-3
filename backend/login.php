@@ -1,5 +1,7 @@
 <?php
+$jwt_secret = 'dein_geheimer_schluessel_123'; // Setze hier einen sicheren Key!
 include 'head.php';
+include_once 'jwt_helper.php';
 $headers = getRequestHeaders();
 
 if (isset($_POST['email']) && isset($_POST['password'])) {
@@ -17,8 +19,17 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
             $check = query("SELECT * FROM control_center_login_log WHERE `ip`='$ip' AND `userID`='$userID' AND `action`='successfull'");
             if (mysqli_num_rows($check) > 0) {
 
-                $token = $data['loginToken'];
-                $json['token'] = $token;
+
+                // JWT generieren
+                $payload = [
+                    'sub' => $data['userID'],
+                    'email' => $data['email'],
+                    'firstname' => $data['firstname'],
+                    'iat' => time(),
+                    'exp' => time() + 60*60*24*7 // 7 Tage gültig
+                ];
+                $jwt = SimpleJWT::encode($payload, $jwt_secret);
+                $json['token'] = $jwt;
                 $json['firstname'] = $data['firstname'];
 
             } else {
@@ -59,8 +70,16 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
             $check = query("SELECT * FROM control_center_login_log WHERE `ip`='$ip' AND `userID`='$userID' AND `action`='successfull'");
             if (mysqli_num_rows($check) > 0) {
 
-                $token = $data['loginToken'];
-                $json['token'] = $token;
+
+                $payload = [
+                    'sub' => $data['userID'],
+                    'email' => $data['email'],
+                    'firstname' => $data['firstname'],
+                    'iat' => time(),
+                    'exp' => time() + 60*60*24*7
+                ];
+                $jwt = SimpleJWT::encode($payload, $jwt_secret);
+                $json['token'] = $jwt;
                 $json['firstname'] = $data['firstname'];
 
             } else {
@@ -101,8 +120,16 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
             $check = query("SELECT * FROM control_center_login_log WHERE `ip`='$ip' AND `userID`='$userID' AND `action`='successfull'");
             if (mysqli_num_rows($check) > 0) {
 
-                $token = $data['loginToken'];
-                $json['token'] = $token;
+
+                $payload = [
+                    'sub' => $data['userID'],
+                    'email' => $data['email'],
+                    'firstname' => $data['firstname'],
+                    'iat' => time(),
+                    'exp' => time() + 60*60*24*7
+                ];
+                $jwt = SimpleJWT::encode($payload, $jwt_secret);
+                $json['token'] = $jwt;
                 $json['firstname'] = $data['firstname'];
 
             } else {
