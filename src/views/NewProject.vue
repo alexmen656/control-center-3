@@ -169,13 +169,36 @@ export default defineComponent({
           this.showError('Kein User eingeloggt.');
           return;
         }
+        // 1. GitHub-Repo anlegen
         const res = await axios.post('project_repo.php', qs.stringify({
           action: 'create_github_repo',
           project: this.name,
           user_id: user.userID,
         }));
+        let repo_full_name = '';
+        let repo_id = '';
+        if (res.data && res.data.success && res.data.repo) {
+          repo_full_name = res.data.repo.full_name || '';
+          repo_id = res.data.repo.id || '';
+        }
         if (res.data && res.data.success) {
           this.showSuccess('GitHub-Repository wurde erstellt und verbunden!');
+          try {
+            const vercelRes = await axios.post('project_vercel.php', qs.stringify({
+              action: 'create_vercel_project',
+              project: this.name,
+              user_id: user.userID,
+              repo_full_name: repo_full_name,
+              repo_id: repo_id,
+            }));
+            if (vercelRes.data && vercelRes.data.success) {
+              this.showSuccess('Vercel-Projekt wurde automatisch erstellt und verbunden!');
+            } else {
+              this.showError(vercelRes.data && vercelRes.data.error ? vercelRes.data.error : 'Fehler beim Anlegen des Vercel-Projekts.');
+            }
+          } catch (e) {
+            this.showError('Fehler beim Anlegen des Vercel-Projekts.');
+          }
         } else {
           this.showError(res.data && res.data.error ? res.data.error : 'Fehler beim Anlegen des GitHub-Repos.');
         }
