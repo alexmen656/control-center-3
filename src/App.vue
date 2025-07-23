@@ -94,7 +94,22 @@ export default defineComponent({
   },
   data() {
     return {
-      token: localStorage.getItem("token"),
+      token: (() => {
+        const t = localStorage.getItem("token");
+        if (!t) return null;
+        try {
+          const payload = JSON.parse(atob(t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+          if (payload.exp && Date.now() / 1000 < payload.exp) {
+            return t;
+          } else {
+            localStorage.removeItem("token");
+            return null;
+          }
+        } catch (e) {
+          localStorage.removeItem("token");
+          return null;
+        }
+      })(),
       faceIDAvailble: false,
       authenticated: false,
       userData: {},
