@@ -24,8 +24,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $insert = query("INSERT INTO control_center_project_domains (project, domain, user_id) VALUES ('$project', '$fullDomain', '$user_id')");
         $setHomepageResult = null;
+        $vercelResult = null;
         if ($insert) {
-            // Versuche, falls Repo verbunden, das homepage-Feld zu setzen
+            // === Vercel Domain Connect ===
+            $vercelRes = query("SELECT * FROM control_center_project_vercel_projects WHERE project='$project' LIMIT 1");
+            if ($vercelRow = fetch_assoc($vercelRes)) {
+                $vercel_project_id = $vercelRow['vercel_project_id'];
+                $vercelTokenRes = query("SELECT vercel_token FROM control_center_vercel_tokens WHERE userID='" . escape_string($user_id) . "' LIMIT 1");
+                if ($vercelTokenRow = fetch_assoc($vercelTokenRes)) {
+                    $vercel_token = $vercelTokenRow['vercel_token'];
+                    $vercelApiUrl = "https://api.vercel.com/v10/projects/{$vercel_project_id}/domains";
+                    $vercelData = [ 'name' => $fullDomain ];
+                    $vercelOpts = [
+                        'http' => [
+                            'method' => 'POST',
+                            'header' => "Authorization: Bearer $vercel_token\r\nUser-Agent: ControlCenter\r\nAccept: application/json\r\nContent-Type: application/json\r\n",
+                            'content' => json_encode($vercelData)
+                        ]
+                    ];
+                    $vercelContext = stream_context_create($vercelOpts);
+                    $vercelResponse = @file_get_contents($vercelApiUrl, false, $vercelContext);
+                    $vercelResult = $vercelResponse ? json_decode($vercelResponse, true) : null;
+                    // Fehlerbehandlung: Falls Fehler, Insert rückgängig machen
+                    if (!$vercelResponse || (isset($vercelResult['error']) && $vercelResult['error'])) {
+                        // Rollback Domain-Insert
+                        query("DELETE FROM control_center_project_domains WHERE project='$project' AND domain='$fullDomain'");
+                        $errMsg = isset($vercelResult['error']['message']) ? $vercelResult['error']['message'] : 'Vercel API Fehler';
+                        echo json_encode(['error' => 'Vercel: ' . $errMsg]);
+                        exit;
+                    }
+                } else {
+                    // Kein Vercel-Token gefunden
+                    query("DELETE FROM control_center_project_domains WHERE project='$project' AND domain='$fullDomain'");
+                    echo json_encode(['error' => 'Kein Vercel-Token gefunden.']);
+                    exit;
+                }
+            } else {
+                // Kein Vercel-Projekt verknüpft
+                query("DELETE FROM control_center_project_domains WHERE project='$project' AND domain='$fullDomain'");
+                echo json_encode(['error' => 'Kein Vercel-Projekt verknüpft.']);
+                exit;
+            }
+
+            // === GitHub Homepage setzen (wie bisher) ===
             $repoRes = query("SELECT * FROM control_center_project_repos WHERE project='$project' LIMIT 1");
             if ($repoRow = fetch_assoc($repoRes)) {
                 $tokenRes = query("SELECT github_token FROM control_center_github_tokens WHERE userID='" . escape_string($user_id) . "' LIMIT 1");
@@ -46,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $setHomepageResult = $result ? json_decode($result, true) : null;
                 }
             }
-            echo json_encode(['success' => true, 'domain' => $fullDomain, 'github_homepage_set' => $setHomepageResult]);
+            echo json_encode(['success' => true, 'domain' => $fullDomain, 'vercel' => $vercelResult, 'github_homepage_set' => $setHomepageResult]);
         } else {
             echo json_encode(['error' => 'Insert failed']);
         }
