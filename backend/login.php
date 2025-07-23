@@ -103,11 +103,21 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 $code = rand(100000, 999999);
                 $insert = query("INSERT INTO control_center_login_log VALUES ('0','$ip','$email','$userID','processing','$verificationToken', $code ,NOW(),'')");
                 $headers = 'From: Control Center<ems@alex.polan.sk>' . "\r\n" . 'Reply-To: Control Center<ems@alex.polan.sk>';
+                $mailBody = "<html><body style='font-family: Arial, sans-serif; background: #f6f6f6; padding: 0; margin: 0;'>"
+                    . "<div style='max-width: 480px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 32px 24px;'>"
+                    . "<div style='text-align:center; margin-bottom: 24px;'><img src='https://alex.polan.sk/control-center/assets/logo_inline_large.png' alt='Control Center Logo' style='max-width: 120px;'></div>"
+                    . "<h2 style='color: #222; text-align:center; margin-bottom: 12px;'>Dein Einmal-Code</h2>"
+                    . "<p style='font-size: 16px; color: #444; text-align:center;'>Hallo <b>" . htmlspecialchars($data['firstname']) . "</b>,<br><br>"
+                    . "um dich sicher einzuloggen, gib bitte folgenden Code ein:</p>"
+                    . "<div style='font-size: 2.2em; letter-spacing: 0.2em; color: #0078d4; font-weight: bold; text-align:center; margin: 24px 0 16px 0;'>" . $code . "</div>"
+                    . "<p style='font-size: 15px; color: #888; text-align:center;'>Dieser Code ist nur für dich bestimmt und <b>gilt nur für kurze Zeit</b>.<br>Teile ihn niemals mit anderen Personen.</p>"
+                    . "<div style='margin-top: 32px; text-align:center;'><small style='color:#bbb;'>Wenn du diese E-Mail nicht angefordert hast, kannst du sie ignorieren.<br>Mit freundlichen Grüßen,<br>Dein Control Center Team</small></div>"
+                    . "</div></body></html>";
                 mail(
                     $data['firstname'] . " " . $data['lastname'] . "<" . $data['email'] . ">",
-                    "Your OTP Code",
-                    "Your Otp code is " . $code . "\n Do not share this code with anyone!",
-                    $headers
+                    "Dein Control Center Einmal-Code",
+                    $mailBody,
+                    $headers . "\r\nContent-type: text/html; charset=UTF-8"
                 );
             }
         } else {
@@ -153,11 +163,21 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 $code = rand(100000, 999999);
                 $insert = query("INSERT INTO control_center_login_log VALUES ('0','$ip','$email','$userID','processing','$verificationToken', $code ,NOW(),'')");
                 $headers = 'From: Control Center<ems@alex.polan.sk>' . "\r\n" . 'Reply-To: Control Center<ems@alex.polan.sk>';
+                $mailBody = "<html><body style='font-family: Arial, sans-serif; background: #f6f6f6; padding: 0; margin: 0;'>"
+                    . "<div style='max-width: 480px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 32px 24px;'>"
+                    . "<div style='text-align:center; margin-bottom: 24px;'><img src='https://alex.polan.sk/control-center/assets/logo_inline_large.png' alt='Control Center Logo' style='max-width: 120px;'></div>"
+                    . "<h2 style='color: #222; text-align:center; margin-bottom: 12px;'>Dein Einmal-Code</h2>"
+                    . "<p style='font-size: 16px; color: #444; text-align:center;'>Hallo <b>" . htmlspecialchars($data['firstname']) . "</b>,<br><br>"
+                    . "um dich sicher einzuloggen, gib bitte folgenden Code ein:</p>"
+                    . "<div style='font-size: 2.2em; letter-spacing: 0.2em; color: #0078d4; font-weight: bold; text-align:center; margin: 24px 0 16px 0;'>" . $code . "</div>"
+                    . "<p style='font-size: 15px; color: #888; text-align:center;'>Dieser Code ist nur für dich bestimmt und <b>gilt nur für kurze Zeit</b>.<br>Teile ihn niemals mit anderen Personen.</p>"
+                    . "<div style='margin-top: 32px; text-align:center;'><small style='color:#bbb;'>Wenn du diese E-Mail nicht angefordert hast, kannst du sie ignorieren.<br>Mit freundlichen Grüßen,<br>Dein Control Center Team</small></div>"
+                    . "</div></body></html>";
                 mail(
                     $data['firstname'] . " " . $data['lastname'] . "<" . $data['email'] . ">",
-                    "Your OTP Code",
-                    "Your Otp code is " . $code . "\n Do not share this code with anyone!",
-                    $headers
+                    "Dein Control Center Einmal-Code",
+                    $mailBody,
+                    $headers . "\r\nContent-type: text/html; charset=UTF-8"
                 );
             }
         } else {
