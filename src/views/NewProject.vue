@@ -191,7 +191,9 @@ export default defineComponent({
     },
 
     showSuccess(message) {
-      if (this.$ionic && this.$ionic.toastController) {
+      if (this.$toast && typeof this.$toast.success === 'function') {
+        this.$toast.success(message);
+      } else if (this.$ionic && this.$ionic.toastController) {
         this.$ionic.toastController.create({
           message,
           duration: 2000,
@@ -204,7 +206,9 @@ export default defineComponent({
     },
 
     showError(message) {
-      if (this.$ionic && this.$ionic.toastController) {
+      if (this.$toast && typeof this.$toast.error === 'function') {
+        this.$toast.error(message);
+      } else if (this.$ionic && this.$ionic.toastController) {
         this.$ionic.toastController.create({
           message,
           duration: 3000,
