@@ -141,6 +141,11 @@ export default defineComponent({
       return this.page.showTitle === true || this.page.showTitle === "true";
     },
   },
+  watch: {
+    '$route'() {
+      this.checkMonacoRoute();
+    }
+  },
   setup() {
     const page = ref({});
     const tools = ref([]);
@@ -246,6 +251,7 @@ export default defineComponent({
       ) {
         checkUserPermissions(route.params.project);
       }
+      
       page.value = {};
       loadUserData().then(() => {
         loadPageData("Route");
@@ -405,6 +411,7 @@ export default defineComponent({
     );
 
     this.loadPageData("Mounted");
+    this.checkMonacoRoute();
   },
   methods: {
     onSidebarToggled(isCollapsed) {
@@ -412,6 +419,12 @@ export default defineComponent({
     },
     toggleSidebar() {
       this.isMenuCollapsed = !this.isMenuCollapsed;
+    },
+    checkMonacoRoute() {
+      // Auto-collapse sidebar for Monaco editor
+      if (this.$route.path.includes('/monaco')) {
+        this.isMenuCollapsed = true;
+      }
     },
     goTo(location) {
       this.$router.push(location);
