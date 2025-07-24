@@ -1,5 +1,5 @@
 <template>
-  <ion-list id="inbox-list">
+  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed }">
     <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
       <ion-item
         button
@@ -8,18 +8,19 @@
         detail="false"
         :router-link="'/' + p.name[0].toLowerCase() + p.name.substring(1)"
         class="hydrated menu-item"
-        :class="{ selected: this.selectedIndex === i }"
+        :class="{ selected: this.selectedIndex === i, collapsed: isCollapsed }"
+        :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''"
       >
         <ion-icon slot="start" :name="p.icon"></ion-icon>
-        <ion-label
+        <ion-label v-if="!isCollapsed"
           >{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label
         >
       </ion-item>
     </ion-menu-toggle>
   </ion-list>
-  <ion-note class="projects-headline"
-    ><h4>Projects</h4>
-    <div>
+  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }"
+    ><h4 v-if="!isCollapsed">Projects</h4>
+    <div v-if="!isCollapsed">
       <router-link to="/manage/projects/"
         ><ion-icon
           style="color: var(--ion-color-medium-shade)"
@@ -36,7 +37,7 @@
         ></ion-icon
       ></router-link></div
   ></ion-note>
-  <ion-list>
+  <ion-list :class="{ collapsed: isCollapsed }">
     <ion-menu-toggle auto-hide="false" v-for="(p, i) in projects" :key="i">
       <ion-item
         button
@@ -44,19 +45,21 @@
         detail="false"
         @click="goToProject(p.link)"
         class="hydrated menu-item"
+        :class="{ collapsed: isCollapsed }"
+        :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''"
         ><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
         <ion-icon slot="start" :name="p.icon ? p.icon : 'folder-outline'"></ion-icon>
-        <ion-label
+        <ion-label v-if="!isCollapsed"
           >{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label
         >
       </ion-item>
     </ion-menu-toggle>
   </ion-list>
   
-  <ion-note class="projects-headline">
-    <h4>AI Tools</h4>
+  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
+    <h4 v-if="!isCollapsed">AI Tools</h4>
   </ion-note>
-  <ion-list>
+  <ion-list :class="{ collapsed: isCollapsed }">
     <ion-menu-toggle auto-hide="false">
       <ion-item
         button
@@ -64,16 +67,18 @@
         detail="false"
         router-link="/ai-website-generator"
         class="hydrated menu-item"
+        :class="{ collapsed: isCollapsed }"
+        :data-tooltip="isCollapsed ? 'AI Website Generator' : ''"
       >
         <ion-icon slot="start" name="rocket-outline"></ion-icon>
-        <ion-label>AI Website Generator</ion-label>
+        <ion-label v-if="!isCollapsed">AI Website Generator</ion-label>
       </ion-item>
     </ion-menu-toggle>
   </ion-list>
 
-  <ion-note class="projects-headline"
-    ><h4>Bookmarks</h4>
-    <div>
+  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }"
+    ><h4 v-if="!isCollapsed">Bookmarks</h4>
+    <div v-if="!isCollapsed">
       <router-link to="/manage/bookmarks/"
         ><ion-icon
           style="color: var(--ion-color-medium-shade)"
@@ -86,7 +91,7 @@
       ><!--<router-link to="/new/bookmark/"><ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>-->
     </div></ion-note
   >
-  <ion-list v-if="bookmarks.length > 0">
+  <ion-list v-if="bookmarks.length > 0" :class="{ collapsed: isCollapsed }">
     <ion-menu-toggle auto-hide="false" v-for="(p, i) in bookmarks" :key="i">
       <ion-item
         button
@@ -94,15 +99,17 @@
         detail="false"
         @click="goToBookmark(p.location)"
         class="hydrated menu-item"
+        :class="{ collapsed: isCollapsed }"
+        :data-tooltip="isCollapsed ? (p.title[0].toUpperCase() + p.title.substring(1)) : ''"
         v-if="p.title"
         ><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
         <ion-icon slot="start" :name="p.icon ? p.icon : 'help-circle-outline'"></ion-icon>
-        <ion-label
+        <ion-label v-if="!isCollapsed"
           >{{ p.title[0].toUpperCase() }}{{ p.title.substring(1) }}</ion-label
         >
       </ion-item>
     </ion-menu-toggle>
-    {{ version }}
+    <div v-if="!isCollapsed">{{ version }}</div>
   </ion-list>
 </template>
 
@@ -116,6 +123,10 @@ export default defineComponent({
     tools: Array,
     bookmarks: Array,
     projects: Array,
+    isCollapsed: {
+      type: Boolean,
+      default: false
+    }
   },
   data() {
     return {
@@ -123,6 +134,10 @@ export default defineComponent({
     };
   },
   methods: {
+    toggleSidebar() {
+      // Emit event to parent to toggle collapsed state
+      this.$emit('sidebarToggled', !this.isCollapsed);
+    },
     goToProject(name) {
       /* window.location.href =
         "/project/" +
@@ -397,5 +412,146 @@ display: flex;
 
 .menu-item {
   cursor: default;
+}
+
+/* Sidebar Toggle Button - REMOVED */
+
+/* Collapsed Sidebar Styles */
+.collapsed.projects-headline {
+  display: none;
+}
+
+/* Section Dividers */
+.collapsed ion-list {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 60px !important;
+  border-bottom: 1px solid var(--ion-color-step-200);
+  margin-bottom: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+.collapsed ion-list:last-child {
+  border-bottom: none;
+  margin-bottom: 0 !important;
+}
+
+.collapsed .menu-item {
+  justify-content: center !important;
+  --padding-start: 0 !important;
+  --padding-end: 0 !important;
+  --inner-padding-start: 0 !important;
+  --inner-padding-end: 0 !important;
+  --min-height: 48px;
+  width: 100% !important;
+  max-width: 60px !important;
+  overflow: hidden !important;
+  margin: 1px 0 !important;
+}
+
+.collapsed .menu-item ion-icon {
+  margin: 0 !important;
+  font-size: 28px !important;
+  color: var(--ion-color-medium);
+}
+
+.collapsed .menu-item:hover ion-icon {
+  color: var(--ion-color-primary) !important;
+}
+
+.collapsed .menu-item.selected {
+  --background: var(--ion-color-primary-tint) !important;
+}
+
+.collapsed .menu-item.selected ion-icon {
+  color: var(--ion-color-primary) !important;
+}
+
+.collapsed {
+  text-align: center;
+  width: 100% !important;
+  max-width: 60px !important;
+  overflow: hidden !important;
+}
+
+/* Ensure icons are centered in collapsed state */
+.collapsed ion-item {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 60px !important;
+  --inner-padding-end: 0 !important;
+  --inner-padding-start: 0 !important;
+  --padding-start: 0 !important;
+  --padding-end: 0 !important;
+  --border-radius: 8px;
+  margin: 1px 2px !important;
+}
+
+.collapsed ion-item:hover {
+  --background: var(--ion-color-step-100);
+}
+
+/* Force collapse the menu content */
+.ion-menu.collapsed-menu ion-content {
+  width: 76px !important;
+  max-width: 76px !important;
+  overflow: hidden !important;
+  --padding-start: 0 !important;
+  --padding-end: 0 !important;
+}
+
+.ion-menu.collapsed-menu ion-list {
+  width: 60px !important;
+  max-width: 60px !important;
+  padding: 20px 0 !important;
+}
+
+/* Hide version and other text elements when collapsed */
+.collapsed + div {
+  display: none;
+}
+
+/* Add tooltip-like behavior on hover in collapsed state */
+.collapsed .menu-item:hover {
+  position: relative;
+  overflow: visible;
+}
+
+.collapsed .menu-item:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--ion-color-dark, #222);
+  color: var(--ion-color-light, #fff);
+  padding: 8px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 1001;
+  margin-left: 12px;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  animation: fadeInTooltip 0.2s ease-in-out forwards;
+}
+
+@keyframes fadeInTooltip {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+.inner-scroll {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 </style>

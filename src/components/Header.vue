@@ -4,7 +4,7 @@
       <ion-buttons slot="start">
         <ion-menu-button></ion-menu-button>
       </ion-buttons>
-      <ion-title @click="goToStart()">{{ title }}</ion-title>
+      <ion-title @click="goToStart()" @dblclick="toggleSidebar()">{{ title }}</ion-title>
       <router-link
         style="height: 36px; margin-right: 5px"
         slot="end"
@@ -27,6 +27,7 @@ import { loadUserData, getUserData } from "@/userData";
 
 export default defineComponent({
   name: "SiteHeader",
+  emits: ['toggleSidebar'],
   components: {
     Avatar,
   },
@@ -50,6 +51,9 @@ export default defineComponent({
   methods: {
     goToStart() {
      this.$router.push("/");
+    },
+    toggleSidebar() {
+      this.$emit('toggleSidebar');
     },
   },
 });

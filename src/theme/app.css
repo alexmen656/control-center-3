@@ -15,9 +15,180 @@
   .btn-red {
     --background: var(--ion-color-primary) !important;
   }
+  /* Menu styling */
   .ion-menu {
-    width: 300px;
+    width: 300px !important;
+    transition: width 0.3s ease !important;
   }
+  
+  .ion-menu.collapsed-menu {
+    width: 76px !important;
+    min-width: 76px !important;
+    max-width: 76px !important;
+    transition: width 0.3s ease !important;
+    overflow: hidden !important;
+  }
+
+  /* Force collapsed menu content to match width */
+  .ion-menu.collapsed-menu ion-content {
+    width: 76px !important;
+    min-width: 76px !important;
+    max-width: 76px !important;
+    overflow: hidden !important;
+  }
+
+  /* Collapsed menu items - Fix selected state */
+  .ion-menu.collapsed-menu .collapsed .menu-item.selected {
+    --background: var(--ion-color-primary-tint) !important;
+    background: var(--ion-color-primary-tint) !important;
+  }
+
+  .ion-menu.collapsed-menu .collapsed .menu-item.selected ion-icon {
+    color: var(--ion-color-primary) !important;
+  }
+
+  /* Fix hover effect - override Ionic defaults */
+  .ion-menu.collapsed-menu .collapsed .menu-item:hover {
+    --background: var(--ion-color-step-100) !important;
+    background: var(--ion-color-step-100) !important;
+  }
+
+  .ion-menu.collapsed-menu .collapsed .menu-item:hover ion-icon {
+    color: var(--ion-color-primary) !important;
+  }
+
+  /* Fix padding consistency */
+  .ion-menu.collapsed-menu .collapsed ion-item {
+    --padding-start: 0 !important;
+    --padding-end: 0 !important;
+    --inner-padding-start: 0 !important;
+    --inner-padding-end: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin: 1px 0 !important;
+    width: 60px !important;
+    max-width: 60px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  /* Ensure all collapsed items are centered */
+  .ion-menu.collapsed-menu ion-item {
+    --padding-start: 0 !important;
+    --padding-end: 0 !important;
+    --inner-padding-start: 0 !important;
+    --inner-padding-end: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin: 1px 0 !important;
+    width: 60px !important;
+    max-width: 60px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  /* Ensure all collapsed items are centered */
+  .ion-menu.collapsed-menu ion-item {
+    --padding-start: 0 !important;
+    --padding-end: 0 !important;
+    --inner-padding-start: 0 !important;
+    --inner-padding-end: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin: 1px 0 !important;
+    width: 60px !important;
+    max-width: 60px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  /* Section dividers instead of large spacing */
+  .ion-menu.collapsed-menu .collapsed ion-list {
+    border-bottom: 1px solid var(--ion-color-step-200) !important;
+    margin-bottom: 8px !important;
+    padding-bottom: 8px !important;
+    width: 60px !important;
+    max-width: 60px !important;
+  }
+
+  .ion-menu.collapsed-menu .collapsed ion-list:last-child {
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Force all ion-lists in collapsed mode to have dividers */
+  .ion-menu.collapsed-menu ion-list {
+    border-bottom: 1px solid var(--ion-color-step-200) !important;
+    margin-bottom: 8px !important;
+    padding-bottom: 8px !important;
+    width: 60px !important;
+    max-width: 60px !important;
+    padding: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .ion-menu.collapsed-menu ion-list:last-child {
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Reduce horizontal spacing between icons in same group */
+  .ion-menu.collapsed-menu .collapsed .menu-item {
+    margin: 1px 0 !important;
+    min-height: 48px !important;
+  }
+
+  /* Icon styling for collapsed menu */
+  .ion-menu.collapsed-menu .collapsed ion-icon {
+    font-size: 28px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    color: var(--ion-color-medium) !important;
+    display: block !important;
+    text-align: center !important;
+    width: 100% !important;
+    position: relative !important;
+    left: 0 !important;
+    transform: translateX(0) !important;
+  }
+
+  .ion-menu.collapsed-menu ion-icon {
+    font-size: 28px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    color: var(--ion-color-medium) !important;
+    display: block !important;
+    text-align: center !important;
+    width: 100% !important;
+    position: relative !important;
+    left: 0 !important;
+    transform: translateX(0) !important;
+  }
+
+  .ion-menu.collapsed-menu .collapsed .menu-item.selected ion-icon {
+    color: var(--ion-color-primary) !important;
+  }
+
+  .ion-menu.collapsed-menu .collapsed .menu-item:hover ion-icon {
+    color: var(--ion-color-primary) !important;
+  }
+
+  .ion-menu.collapsed-menu ion-item.selected ion-icon {
+    color: var(--ion-color-primary) !important;
+  }
+
+  .ion-menu.collapsed-menu ion-item:hover ion-icon {
+    color: var(--ion-color-primary) !important;
+  }
+
+  /* Force collapsed lists to proper width */
   
   ion-menu ion-content {
     --background: var(--ion-item-background, var(--ion-background-color, #fff));
@@ -65,12 +236,51 @@
     --padding-end: 10px;
     border-radius: 4px;
   }
+
+  /* Override Ionic defaults for collapsed menu */
+  .ion-menu.collapsed-menu ion-item {
+    --padding-start: 0 !important;
+    --padding-end: 0 !important;
+    border-radius: 8px !important;
+    margin: 1px 2px !important;
+    width: 56px !important;
+    max-width: 56px !important;
+  }
+
+  .ion-menu.collapsed-menu ion-item:hover {
+    --background: var(--ion-color-step-100) !important;
+    background: var(--ion-color-step-100) !important;
+    border-radius: 8px !important;
+  }
+
+  /* Fix rosa active effect - override all Ionic selected states */
+  .ion-menu.collapsed-menu ion-item.selected {
+    --background: var(--ion-color-step-100) !important;
+    background: var(--ion-color-step-100) !important;
+  }
+
+  .ion-menu.collapsed-menu .collapsed .menu-item.selected {
+    --background: var(--ion-color-step-100) !important;
+    background: var(--ion-color-step-100) !important;
+  }
   
   ion-menu.md ion-item.selected {
-    --background: rgba(
-      var(--ion-color-primary-rgb),
-      0.14
-    ); /*var(--ion-color-primary-rgb)*/
+    --background: rgba(var(--ion-color-primary-rgb), 0.14) !important;
+  }
+
+  /* Completely override rosa tint for collapsed menu */
+  .ion-menu.collapsed-menu ion-item.selected,
+  .ion-menu.collapsed-menu .collapsed .menu-item.selected,
+  .collapsed .menu-item.selected,
+  ion-menu.md ion-item.selected {
+    --background: rgba(var(--ion-color-primary-rgb), 0.14) !important;
+    /*background: rgba(var(--ion-color-primary-rgb), 0.14) !important;*/
+  }
+
+  /* Override specific Ionic selected states for collapsed menu */
+  .ion-menu.collapsed-menu ion-menu.md ion-item.selected {
+    --background: rgba(var(--ion-color-primary-rgb), 0.14) !important;
+    /*background: rgba(var(--ion-color-primary-rgb), 0.14) !important;*/
   }
   
   ion-menu.md ion-item.selected ion-icon {

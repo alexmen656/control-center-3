@@ -1,12 +1,21 @@
 <template>
-  <ion-list id="inbox-list">
+  <!-- Sidebar Toggle Button -->
+  <div class="sidebar-toggle">
+    <ion-button fill="clear" @click="toggleSidebar" size="small">
+      <ion-icon :name="isCollapsed ? 'chevron-forward-outline' : 'chevron-back-outline'"></ion-icon>
+    </ion-button>
+  </div>
+  
+  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed }">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleReorder($event)">
       <ion-menu-toggle auto-hide="false">
         <ion-item @click="this.selectedIndex = 0" lines="none" detail="false"
-          :router-link="'/project/' + $route.params.project + '/'" class="hydrated menu-item"
-          :class="{ selected: this.selectedIndex === 0 }">
+          :router-link="'/project/' + $route.params.project + '/'" 
+          class="hydrated menu-item"
+          :class="{ selected: this.selectedIndex === 0, collapsed: isCollapsed }"
+          :data-tooltip="isCollapsed ? 'Overview' : ''">
           <ion-icon slot="start" name="apps-outline" />
-          <ion-label>Overview</ion-label>
+          <ion-label v-if="!isCollapsed">Overview</ion-label>
         </ion-item>
       </ion-menu-toggle>
 
@@ -53,16 +62,18 @@
               .replaceAll('Ö', 'o')
               .replaceAll('Ü', 'u')
               .replaceAll('ü', 'u')
-            " class="hydrated menu-item" :class="{ selected: this.selectedIndex === i + 1 }">
+            " class="hydrated menu-item" 
+            :class="{ selected: this.selectedIndex === i + 1, collapsed: isCollapsed }"
+            :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''">
           <ion-icon slot="start" :name="p.icon" />
-          <ion-label>{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
-          <ion-reorder slot="end">
+          <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
+          <ion-reorder v-if="!isCollapsed" slot="end">
             <ion-icon v-if="p.hasConfig == 1" style="cursor: pointer; z-index: 1000" name="cog-outline" />
             <pre v-else></pre>
           </ion-reorder>
         </ion-item>
       </ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false" style="margin-top: 1rem !important">
+      <ion-menu-toggle auto-hide="false" style="margin-top: 1rem !important" v-if="!isCollapsed">
         <ion-item lines="none" detail="false" class="new-tool"
           :router-link="'/project/' + $route.params.project + '/new-tool/'">
           <ion-icon slot="start" name="add" />
@@ -71,9 +82,9 @@
       </ion-menu-toggle>
     </ion-reorder-group>
   </ion-list>
-  <ion-note class="projects-headline">
-    <h4>Pages</h4>
-    <div>
+  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
+    <h4 v-if="!isCollapsed">Pages</h4>
+    <div v-if="!isCollapsed">
       <router-link :to="'/project/' + $route.params.project + '/manage/pages'"><ion-icon
           style="color: var(--ion-color-medium-shade)"
           name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/pages/"><ion-icon
@@ -165,9 +176,9 @@
       </template>
     </ion-reorder-group>
   </ion-list>
-  <ion-note class="projects-headline">
-    <h4>Services</h4>
-    <div>
+  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
+    <h4 v-if="!isCollapsed">Services</h4>
+    <div v-if="!isCollapsed">
       <router-link :to="'/project/' + $route.params.project + '/manage/services'"><ion-icon
           style="color: var(--ion-color-medium-shade)"
           name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/services/"><ion-icon
@@ -177,16 +188,19 @@
           style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>
     </div>
   </ion-note>
-  <ion-list id="inbox-list">
+  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed }">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
       <ion-menu-toggle auto-hide="false" v-for="(p, i) in services" :key="i">
         <ion-item @click="this.selectedIndex = Number(i) + Number(tools.length) + Number(components.length) + 1"
           lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/services/' + p.link"
-          class="hydrated menu-item" :class="{
+          class="hydrated menu-item" 
+          :class="{
             selected: this.selectedIndex === Number(i) + Number(tools.length) + Number(components.length) + 1,
-          }"><!-- target="_blank"-->
+            collapsed: isCollapsed
+          }"
+          :data-tooltip="isCollapsed ? p.name : ''"><!-- target="_blank"-->
           <ion-icon slot="start" :name="p.icon || 'cog-outline'" />
-          <ion-label>{{ p.name }}</ion-label>
+          <ion-label v-if="!isCollapsed">{{ p.name }}</ion-label>
           <span class="service-status-indicator"
             :class="{ 'status-up': p.status === 'up', 'status-down': p.status === 'down' }"></span>
         </ion-item>
@@ -228,7 +242,7 @@
 
 <script lang="ts">
 /* eslint-disable */
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, computed } from "vue";
 import axios from "axios";
 import qs from "qs";
 import { useRoute } from "vue-router";
@@ -237,7 +251,14 @@ import { layersOutline, gridOutline, documentsOutline } from 'ionicons/icons';
 
 export default defineComponent({
   name: "ProjectSideBar",
-  setup() {
+  props: {
+    isCollapsed: {
+      type: Boolean,
+      default: false
+    }
+  },
+  emits: ['sidebarToggled'],
+  setup(props, { emit }) {
     const selectedIndex = ref(0);
     const tools = ref<{ id: number; order: number }[]>([]);
     const components = ref([]);
@@ -248,6 +269,10 @@ export default defineComponent({
     const componentsExpanded = ref(true);
     const expandedComponents = ref<{ [key: string]: boolean }>({});
     const componentSubItems = ref<{ [key: string]: any[] }>({});
+
+    const toggleSidebar = () => {
+      emit('sidebarToggled', !props.isCollapsed);
+    };
 
     const handleFrontReorder = (event: CustomEvent) => {
       console.log(1);
@@ -371,6 +396,8 @@ export default defineComponent({
       toggleComponentExpanded,
       isComponentExpanded,
       getSubComponents,
+      isCollapsed: computed(() => props.isCollapsed),
+      toggleSidebar,
     };
   },
   created() {
@@ -611,5 +638,136 @@ ion-item.new-tool ion-label {
   position: relative;
   display: block;
   width: 100%;
+}
+
+/* Sidebar Toggle Button - REMOVED */
+
+/* Collapsed Sidebar Styles */
+.collapsed.projects-headline {
+  display: none;
+}
+
+/* Section Dividers */
+.collapsed ion-list {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 60px !important;
+  border-bottom: 1px solid var(--ion-color-step-200);
+  margin-bottom: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+.collapsed ion-list:last-child {
+  border-bottom: none;
+  margin-bottom: 0 !important;
+}
+
+.collapsed .menu-item {
+  justify-content: center !important;
+  --padding-start: 0 !important;
+  --padding-end: 0 !important;
+  --inner-padding-start: 0 !important;
+  --inner-padding-end: 0 !important;
+  --min-height: 48px;
+  width: 100% !important;
+  max-width: 60px !important;
+  overflow: hidden !important;
+  margin: 1px 0 !important;
+}
+
+.collapsed .menu-item ion-icon {
+  margin: 0 !important;
+  font-size: 28px !important;
+  color: var(--ion-color-medium);
+}
+
+.collapsed .menu-item:hover ion-icon {
+  color: var(--ion-color-primary) !important;
+}
+
+.collapsed .menu-item.selected {
+  --background: var(--ion-color-primary-tint) !important;
+}
+
+.collapsed .menu-item.selected ion-icon {
+  color: var(--ion-color-primary) !important;
+}
+
+.collapsed {
+  text-align: center;
+  width: 100% !important;
+  max-width: 60px !important;
+  overflow: hidden !important;
+}
+
+/* Ensure icons are centered in collapsed state */
+.collapsed ion-item {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 60px !important;
+  --inner-padding-end: 0 !important;
+  --inner-padding-start: 0 !important;
+  --padding-start: 0 !important;
+  --padding-end: 0 !important;
+  --border-radius: 8px;
+  margin: 1px 2px !important;
+}
+
+.collapsed ion-item:hover {
+  --background: var(--ion-color-step-100);
+}
+
+/* Force collapse the menu content */
+.ion-menu.collapsed-menu ion-content {
+  width: 76px !important;
+  max-width: 76px !important;
+  overflow: hidden !important;
+  --padding-start: 0 !important;
+  --padding-end: 0 !important;
+}
+
+.ion-menu.collapsed-menu ion-list {
+  width: 60px !important;
+  max-width: 60px !important;
+  padding: 0 !important;
+}
+
+/* Add tooltip-like behavior on hover in collapsed state */
+.collapsed .menu-item:hover {
+  position: relative;
+  overflow: visible;
+}
+
+.collapsed .menu-item:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--ion-color-dark, #222);
+  color: var(--ion-color-light, #fff);
+  padding: 8px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 1001;
+  margin-left: 12px;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  animation: fadeInTooltip 0.2s ease-in-out forwards;
+}
+
+@keyframes fadeInTooltip {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
 }
 </style>

@@ -3,12 +3,12 @@
   <div v-if="!loading" :class="store.theme">
     <ion-app>
       <ion-content v-if="showContent">
-        <SiteHeader v-if="showHeader"></SiteHeader>
-        <ion-split-pane content-id="main-content">
-          <ion-menu v-if="token && account_active" content-id="main-content" class="ion-menu" type="overlay">
+        <SiteHeader v-if="showHeader" @toggleSidebar="toggleSidebar"></SiteHeader>
+        <ion-split-pane content-id="main-content" :class="{ 'collapsed-sidebar': isMenuCollapsed }">
+          <ion-menu v-if="token && account_active" content-id="main-content" :class="['ion-menu', { 'collapsed-menu': isMenuCollapsed }]" type="overlay">
             <ion-content>
-              <SideBar :projects="projects" :tools="tools" :bookmarks="bookmarks" v-if="showSideBar"></SideBar>
-              <ProjectSideBar v-if="showProjectSideBar"></ProjectSideBar>
+              <SideBar :projects="projects" :tools="tools" :bookmarks="bookmarks" :isCollapsed="isMenuCollapsed" v-if="showSideBar" @sidebarToggled="onSidebarToggled"></SideBar>
+              <ProjectSideBar :isCollapsed="isMenuCollapsed" v-if="showProjectSideBar" @sidebarToggled="onSidebarToggled"></ProjectSideBar>
             </ion-content>
           </ion-menu>
           <div id="main-content">
@@ -98,6 +98,7 @@ export default defineComponent({
       userData: {},
       theme: localStorage.getItem("themeSet"),
       store,
+      isMenuCollapsed: false,
       // account_active: false
     };
   },
@@ -406,6 +407,12 @@ export default defineComponent({
     this.loadPageData("Mounted");
   },
   methods: {
+    onSidebarToggled(isCollapsed) {
+      this.isMenuCollapsed = isCollapsed;
+    },
+    toggleSidebar() {
+      this.isMenuCollapsed = !this.isMenuCollapsed;
+    },
     goTo(location) {
       this.$router.push(location);
     },
