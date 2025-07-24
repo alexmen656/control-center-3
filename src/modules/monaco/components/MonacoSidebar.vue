@@ -53,8 +53,8 @@
             No commits yet
           </div>
           <div v-for="commit in recentCommits" :key="commit.hash" class="commit-item">
-            <div class="commit-hash">{{ commit.hash.substring(0, 7) }}</div>
-            <div class="commit-message">{{ commit.message }}</div>
+            <div class="commit-hash" @dblclick="openCommitOnGitHub(commit)">{{ commit.hash.substring(0, 7) }}</div>
+            <div class="commit-message" @dblclick="openCommitOnGitHub(commit)">{{ commit.message }}</div>
             <div class="commit-author">{{ commit.author }}</div>
             <div class="commit-date">{{ formatDate(commit.date) }}</div>
           </div>
@@ -90,7 +90,7 @@
           <div v-if="deployments.length === 0" class="no-deployments">
             No deployments yet
           </div>
-          <div v-for="deployment in deployments" :key="deployment.id" class="deployment-item">
+          <div v-for="deployment in deployments" :key="deployment.id" class="deployment-item" @dblclick="openDeploymentInspector(deployment)">
             <div class="deployment-status" :class="deployment.state">
               <ion-icon :name="getDeploymentIcon(deployment.state)"></ion-icon>
             </div>
@@ -155,7 +155,8 @@ const loadDeployments = async () => {
         url: deployment.url,
         state: deployment.readyState,
         commit: deployment.meta?.githubCommitSha,
-        created: deployment.created
+        created: deployment.created,
+        inspectorUrl: deployment.inspectorUrl
       })) || []
     }
   } catch (error) {
@@ -381,6 +382,22 @@ function formatDate(date) {
   if (minutes < 60) return `${minutes}m ago`;
   if (hours < 24) return `${hours}h ago`;
   return `${days}d ago`;
+}
+
+function openCommitOnGitHub(commit) {
+  // Passe ggf. die URL-Struktur an dein Repo an
+  const repo = projectName;
+  const hash = commit.hash;
+  // Beispiel: https://github.com/<owner>/<repo>/commit/<hash>
+  // Owner ggf. dynamisch holen, hier als Platzhalter 'alexmen656'
+  const url = `https://github.com/alexmen656/${repo}/commit/${hash}`;
+  window.open(url, '_blank');
+}
+
+function openDeploymentInspector(deployment) {
+  if (deployment.inspectorUrl) {
+    window.open(deployment.inspectorUrl, '_blank');
+  }
 }
 
 // Initialize
