@@ -1,11 +1,4 @@
 <template>
-  <!-- Sidebar Toggle Button -->
-  <div class="sidebar-toggle">
-    <ion-button fill="clear" @click="toggleSidebar" size="small">
-      <ion-icon :name="isCollapsed ? 'chevron-forward-outline' : 'chevron-back-outline'"></ion-icon>
-    </ion-button>
-  </div>
-  
   <ion-list id="inbox-list" :class="{ collapsed: isCollapsed }">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleReorder($event)">
       <ion-menu-toggle auto-hide="false">
@@ -94,7 +87,7 @@
           name="add-circle-outline"></ion-icon></router-link>
     </div>
   </ion-note>
-  <ion-list id="inbox-list">
+  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed }">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
       <template v-for="(component, i) in components" :key="i">
         <!-- Parent component -->
@@ -130,12 +123,14 @@
                   .replaceAll('ü', 'u')*/
                 " class="hydrated menu-item parent-component" :class="{
                   selected: selectedIndex === Number(i) + Number(tools.length) + 1,
-                }">
+                  collapsed: isCollapsed
+                }"
+                :data-tooltip="isCollapsed ? component.name : ''">
             <ion-icon slot="start" :name="getIcon(component.type)" />
-            <ion-label>{{ component.name[0].toUpperCase() }}{{ component.name.substring(1) }}</ion-label>
-            <ion-icon :name="isComponentExpanded(component.id) ? 'chevron-down-outline' : 'chevron-forward-outline'"
+            <ion-label v-if="!isCollapsed">{{ component.name[0].toUpperCase() }}{{ component.name.substring(1) }}</ion-label>
+            <ion-icon v-if="!isCollapsed" :name="isComponentExpanded(component.id) ? 'chevron-down-outline' : 'chevron-forward-outline'"
               slot="end"></ion-icon>
-            <ion-reorder slot="end">
+            <ion-reorder v-if="!isCollapsed" slot="end">
               <ion-icon v-if="component.hasConfig == 1 || component.type == 'menu'"
                 style="cursor: pointer; z-index: 1000" name="cog-outline" />
               <pre v-else></pre>
@@ -144,7 +139,7 @@
         </ion-menu-toggle>
 
         <!-- Sub components with improved tree structure -->
-        <div v-if="isComponentExpanded(component.id)" class="sub-components">
+        <div v-if="isComponentExpanded(component.id) && !isCollapsed" class="sub-components">
           <ion-menu-toggle auto-hide="false" v-for="(subComp, j) in getSubComponents(component.id)" :key="`${i}-${j}`"
             class="sub-item-container">
             <div class="horizontal-tree-line"></div>
@@ -207,7 +202,7 @@
       </ion-menu-toggle>
     </ion-reorder-group>
   </ion-list>
-  <ion-note class="projects-headline">
+  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
     <h4>APIs</h4>
     <div>
       <!---<router-link to="/manage/projects/"
@@ -220,7 +215,7 @@
           name="add-circle-outline"></ion-icon></router-link>
     </div>
   </ion-note>
-  <ion-list id="inbox-list">
+  <ion-list id="inbox-list" v-if="!isCollapsed">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
       <ion-menu-toggle auto-hide="false">
         <ion-item
@@ -732,7 +727,17 @@ ion-item.new-tool ion-label {
 .ion-menu.collapsed-menu ion-list {
   width: 60px !important;
   max-width: 60px !important;
-  padding: 0 !important;
+  padding: 20px 0 !important;
+}
+
+/* Hide version and other text elements when collapsed */
+.collapsed + div {
+  display: none;
+}
+
+/* Hide version and other text elements when collapsed */
+.collapsed + div {
+  display: none;
 }
 
 /* Add tooltip-like behavior on hover in collapsed state */
@@ -758,6 +763,11 @@ ion-item.new-tool ion-label {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   opacity: 0;
   animation: fadeInTooltip 0.2s ease-in-out forwards;
+}
+
+.inner-scroll {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
 @keyframes fadeInTooltip {
