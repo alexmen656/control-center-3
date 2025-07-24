@@ -96,7 +96,7 @@
             </div>
             <div class="deployment-info">
               <div class="deployment-url">
-                <a :href="deployment.url" target="_blank">{{ deployment.url }}</a>
+                <a :href="'https://' + deployment.url" target="_blank">{{ deployment.url }}</a>
               </div>
               <div class="deployment-commit">{{ deployment.commit?.substring(0, 7) }}</div>
               <div class="deployment-date">{{ formatDate(deployment.created) }}</div>
@@ -153,9 +153,9 @@ const loadDeployments = async () => {
       deployments.value = response.data.deployments.deployments?.map(deployment => ({
         id: deployment.uid,
         url: deployment.url,
-        state: deployment.state,
+        state: deployment.readyState,
         commit: deployment.meta?.githubCommitSha,
-        created: new Date(deployment.createdAt)
+        created: deployment.created
       })) || []
     }
   } catch (error) {
@@ -359,17 +359,28 @@ const getDeploymentIcon = (state) => {
   }
 }
 
-const formatDate = (date) => {
-  const now = new Date()
-  const diff = now - new Date(date)
-  const minutes = Math.floor(diff / (1000 * 60))
-  const hours = Math.floor(diff / (1000 * 60 * 60))
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  
-  if (minutes < 1) return 'just now'
-  if (minutes < 60) return `${minutes}m ago`
-  if (hours < 24) return `${hours}h ago`
-  return `${days}d ago`
+function formatDate(date) {
+  // Vercel: Millisekunden (number), GitHub: ISO-String
+  let dateObj;
+  if (typeof date === 'number') {
+    dateObj = new Date(date);
+    console.log(date, dateObj);
+  } else if (typeof date === 'string' && /^\d+$/.test(date)) {
+    dateObj = new Date(Number(date));
+    console.log(date, dateObj);
+  } else {
+    dateObj = new Date(date);
+    console.log(date, dateObj);
+  }
+  const now = new Date();
+  const diff = now - dateObj;
+  const minutes = Math.floor(diff / (1000 * 60));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  return `${days}d ago`;
 }
 
 // Initialize
@@ -388,7 +399,7 @@ onMounted(async () => {
 
 <style scoped>
 .monaco-sidebar {
-  width: 250px;
+  width: 280px;
   background: var(--vscode-sideBar-background, #252526);
   color: var(--vscode-sideBar-foreground, #cccccc);
   border-right: 1px solid var(--vscode-sideBar-border, #2b2b2b);
