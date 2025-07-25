@@ -1,4 +1,3 @@
-
 <template>
   <div class="monaco-container">
     <MonacoSidebar class="sidebar" />
@@ -22,6 +21,9 @@ import { VueMonacoEditor } from '@guolao/vue-monaco-editor'
 import MonacoSidebar from './MonacoSidebar.vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
+import { ToastService } from "@/services/ToastService";
+
+const toast = ToastService
 
 const route = useRoute()
 const projectName = route.params.project || 'default-project'
@@ -127,16 +129,26 @@ const initializeProject = async () => {
 
 onMounted(() => {
   initializeProject()
-  
+
   // Listen for file open events from sidebar
   window.addEventListener('monaco-open-file', (event) => {
     loadFile(event.detail.path)
   })
-  
+
   // Listen for file refresh events from sidebar
   window.addEventListener('monaco-refresh-file', (event) => {
     if (event.detail.path === currentFile.value) {
       loadFile(currentFile.value)
+    }
+  })
+
+  // Prevent default action for Command + S and trigger save with toast notification
+  window.addEventListener('keydown', async (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === 's') {
+      event.preventDefault()
+      await saveFile(currentFile.value, code.value)
+      toast.success('Successfully saved!', 30)
+      console.log('Command + S was pressed, file saved.')
     }
   })
 })
