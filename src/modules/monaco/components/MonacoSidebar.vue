@@ -54,6 +54,10 @@
           <ion-icon name="download-outline"></ion-icon>
           {{ isPulling ? 'Pulling...' : 'Pull' }}
         </ion-button>
+        <ion-button fill="clear" size="small" @click="pushToGitHub" :disabled="isPushing">
+          <ion-icon name="cloud-upload-outline"></ion-icon>
+          {{ isPushing ? 'Pushing...' : 'Push' }}
+        </ion-button>
       </div>
       
       <div class="section-content">
@@ -193,6 +197,7 @@ const route = useRoute()
 const commitMessage = ref('')
 const isCommitting = ref(false)
 const isPulling = ref(false)
+const isPushing = ref(false)
 const isDeploying = ref(false)
 const changedFiles = ref([])
 const recentCommits = ref([])
@@ -444,6 +449,33 @@ const pullFromGitHub = async () => {
     alert('Pull failed: ' + error.message)
   } finally {
     isPulling.value = false
+  }
+}
+
+const pushToGitHub = async () => {
+  console.log('Pushing to GitHub...')
+  isPushing.value = true
+  
+  try {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+      action: 'push'
+    })
+    
+    if (response.data.success) {
+      console.log('Push successful:', response.data)
+      alert(`Push erfolgreich! ${response.data.commits_count} Commits wurden zu GitHub gepusht.`)
+      
+      // Refresh git status after push
+      await refreshGitStatus()
+    } else {
+      console.error('Push failed:', response.data.message)
+      alert('Push failed: ' + response.data.message)
+    }
+  } catch (error) {
+    console.error('Push failed:', error)
+    alert('Push failed: ' + error.message)
+  } finally {
+    isPushing.value = false
   }
 }
 

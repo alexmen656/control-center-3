@@ -337,37 +337,58 @@ function createProjectDirectories($href, $name, $projectID) {
  */
 function createMonacoProjectDirectory($href, $name, $userID) {
     // Create project data directory for Monaco IDE
-    $dataDir = "/data/projects/" . $userID . "/" . $href;
+    $dataDir = __DIR__ . "/../data/projects/" . $userID . "/" . $href;
     
     if (!is_dir($dataDir)) {
-        mkdir($dataDir, 0755, true);
+        mkdir($dataDir, 0777, true);
     }
     
-    // Initialize git repository
-    $cwd = getcwd();
-    chdir($dataDir);
-    
-    // Initialize git if not exists
-    if (!is_dir('.git')) {
-        exec('git init 2>&1', $output, $returnCode);
-        if ($returnCode === 0) {
-            // Set basic git config
-            exec('git config user.email "ide@controlcenter.dev" 2>&1');
-            exec('git config user.name "Control Center IDE" 2>&1');
-            
-            // Create initial files
-            file_put_contents('README.md', "# " . $name . "\n\nCreated with Control Center IDE\n");
-            file_put_contents('main.js', "// Welcome to " . $name . "\nconsole.log('Hello World!');\n");
-            file_put_contents('style.css', "/* Styles for " . $name . " */\nbody {\n    font-family: Arial, sans-serif;\n}\n");
-            file_put_contents('index.html', "<!DOCTYPE html>\n<html>\n<head>\n    <title>" . $name . "</title>\n    <link rel=\"stylesheet\" href=\"style.css\">\n</head>\n<body>\n    <h1>Welcome to " . $name . "</h1>\n    <script src=\"main.js\"></script>\n</body>\n</html>");
-            
-            // Initial commit
-            exec('git add . 2>&1');
-            exec('git commit -m "Initial project setup" 2>&1');
+    // Initialize Monaco IDE metadata instead of git
+    if (!file_exists($dataDir . '/.monaco_initialized')) {
+        // Create initial Monaco IDE metadata files
+        file_put_contents($dataDir . '/.monaco_initialized', json_encode([
+            'initialized' => true,
+            'created' => date('c'),
+            'project_name' => $name
+        ]));
+        
+        file_put_contents($dataDir . '/.monaco_staged.json', '{}');
+        file_put_contents($dataDir . '/.monaco_lastcommit.json', '{}');
+        file_put_contents($dataDir . '/.monaco_commits.json', '[]');
+        
+        // Create initial files
+        //file_put_contents($dataDir . '/README.md', "# " . $name . "\n\nCreated with Control Center IDE\n");
+        file_put_contents($dataDir . '/main.js', "// Welcome to " . $name . "\nconsole.log('Hello World!');\n");
+        file_put_contents($dataDir . '/style.css', "/* Styles for " . $name . " */\nbody {\n    font-family: Arial, sans-serif;\n}\n");
+        file_put_contents($dataDir . '/index.html', "<!DOCTYPE html>\n<html>\n<head>\n    <title>" . $name . "</title>\n    <link rel=\"stylesheet\" href=\"style.css\">\n</head>\n<body>\n    <h1>Welcome to " . $name . "</h1>\n    <script src=\"main.js\"></script>\n</body>\n</html>");
+        
+        // Create initial commit metadata
+        $initialCommit = [
+            'hash' => 'initial-' . time(),
+            'short_hash' => 'initial',
+            'author' => 'Control Center IDE',
+            'email' => 'ide@controlcenter.dev',
+            'date' => date('c'),
+            'message' => 'Initial project setup',
+            'files' => [
+               // ['path' => 'README.md'],
+                ['path' => 'main.js'],
+                ['path' => 'style.css'],
+                ['path' => 'index.html']
+            ],
+            'parents' => []
+        ];
+        
+        file_put_contents($dataDir . '/.monaco_commits.json', json_encode([$initialCommit], JSON_PRETTY_PRINT));
+        
+        // Set last commit state
+        $lastCommit = [];
+        $files = ['main.js', 'style.css', 'index.html'];//'README.md', 
+        foreach ($files as $file) {
+            $lastCommit[$file] = md5(file_get_contents($dataDir . '/' . $file));
         }
+        file_put_contents($dataDir . '/.monaco_lastcommit.json', json_encode($lastCommit, JSON_PRETTY_PRINT));
     }
-    
-    chdir($cwd);
 }
 
 /**

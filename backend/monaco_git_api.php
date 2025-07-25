@@ -11,6 +11,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once 'head.php';
 
+// Fallback für lokale Entwicklung
+if (!function_exists('query')) {
+    function query($sql) {
+        global $servername, $username, $password, $dbname;
+        static $connection = null;
+        
+        if ($connection === null) {
+            $connection = new mysqli($servername, $username, $password, $dbname);
+            if ($connection->connect_error) {
+                die("Connection failed: " . $connection->connect_error);
+            }
+        }
+        
+        return $connection->query($sql);
+    }
+}
+
 function getUserIDFromToken() {
     global $jwt_secret;
     
@@ -37,22 +54,24 @@ function getProjectPath($project, $userID) {
 function getGitHubCredentials($project, $userID) {
     try {
         // Get GitHub token for user
-        $tokenResult = query("SELECT github_token FROM control_center_github_tokens WHERE userID = $userID");
+        $tokenQuery = "SELECT github_token FROM control_center_github_tokens WHERE userID = '$userID' LIMIT 1";
+        $tokenResult = query($tokenQuery);
         
         if (!$tokenResult || mysqli_num_rows($tokenResult) == 0) {
             return null; // No GitHub integration
         }
         
-        $tokenData = fetch_assoc($tokenResult);
+        $tokenData = mysqli_fetch_assoc($tokenResult);
         
         // Get repository info for project
-        $repoResult = query("SELECT repo_full_name FROM control_center_project_repos WHERE project = '" . escape_string($project) . "'");
+        $repoQuery = "SELECT repo_full_name FROM control_center_project_repos WHERE project = '$project' LIMIT 1";
+        $repoResult = query($repoQuery);
         
         if (!$repoResult || mysqli_num_rows($repoResult) == 0) {
             return null; // No repository linked
         }
         
-        $repoData = fetch_assoc($repoResult);
+        $repoData = mysqli_fetch_assoc($repoResult);
         
         // Split repo_full_name into owner/repo
         $repoParts = explode('/', $repoData['repo_full_name']);
@@ -63,9 +82,11 @@ function getGitHubCredentials($project, $userID) {
         return [
             'token' => $tokenData['github_token'],
             'owner' => $repoParts[0],
-            'repo' => $repoParts[1]
+            'repo' => $repoParts[1],
+            'repo_full_name' => $repoData['repo_full_name']
         ];
     } catch (Exception $e) {
+        error_log("GitHub credentials error: " . $e->getMessage());
         return null;
     }
 }
@@ -263,6 +284,128 @@ class GitHubAPI {
         } catch (Exception $e) {
             throw new Exception("Fehler beim Pull von GitHub: " . $e->getMessage());
         }
+    }
+    
+    // Push-Funktion um lokale Changes zu GitHub zu pushen
+    public function pushToGitHub($projectPath, $branch = 'main') {
+        try {
+            $pushedCommits = [];
+            $errors = [];
+            
+            // Lese lokale Commits die noch nicht gepusht wurden
+            $commitsFile = $projectPath . '/.monaco_commits.json';
+            if (!file_exists($commitsFile)) {
+                return [
+                    'success' => true,
+                    'commits_count' => 0,
+                    'message' => 'Keine lokalen Commits zum Pushen gefunden'
+                ];
+            }
+            
+            $localCommits = json_decode(file_get_contents($commitsFile), true) ?: [];
+            
+            // Hole aktuelle Remote Commits
+            $remoteCommits = $this->getCommits(100);
+            $remoteHashes = array_column($remoteCommits, 'sha');
+            
+            // Finde Commits die noch nicht auf GitHub sind
+            $commitsToPush = [];
+            foreach ($localCommits as $commit) {
+                if (!in_array($commit['hash'], $remoteHashes)) {
+                    $commitsToPush[] = $commit;
+                }
+            }
+            
+            if (empty($commitsToPush)) {
+                return [
+                    'success' => true,
+                    'commits_count' => 0,
+                    'message' => 'Alle Commits sind bereits auf GitHub'
+                ];
+            }
+            
+            // Pushe jeden Commit zu GitHub
+            foreach ($commitsToPush as $commit) {
+                try {
+                    // Validiere dass files Array existiert
+                    if (!isset($commit['files']) || !is_array($commit['files'])) {
+                        // Fallback: Alle Dateien im Projekt verwenden
+                        $allFiles = getProjectFiles($projectPath);
+                        $commit['files'] = [];
+                        foreach ($allFiles as $file) {
+                            $relativePath = str_replace($projectPath . '/', '', $file);
+                            if (strpos($relativePath, '.monaco_') !== 0) { // Skip metadata files
+                                $commit['files'][] = ['path' => $relativePath];
+                            }
+                        }
+                    }
+                    
+                    foreach ($commit['files'] as $file) {
+                        $filePath = isset($file['path']) ? $file['path'] : $file;
+                        $fullPath = $projectPath . '/' . $filePath;
+                        
+                        if (file_exists($fullPath)) {
+                            $content = file_get_contents($fullPath);
+                            $sha = null;
+                            
+                            // Hole aktuelle SHA wenn Datei bereits existiert
+                            $existingFile = $this->getFileContent($filePath);
+                            if ($existingFile) {
+                                $sha = $existingFile['sha'];
+                            }
+                            
+                            $this->createOrUpdateFile(
+                                $filePath,
+                                $content,
+                                $commit['message'],
+                                $sha
+                            );
+                        }
+                    }
+                    $pushedCommits[] = $commit;
+                } catch (Exception $e) {
+                    $errors[] = "Fehler bei Commit {$commit['hash']}: " . $e->getMessage();
+                }
+            }
+            
+            // Cleanup: Entferne erfolgreich gepushte Commits aus lokaler Liste
+            if (!empty($pushedCommits)) {
+                $this->cleanupPushedCommits($projectPath, $pushedCommits);
+            }
+            
+            return [
+                'success' => true,
+                'pushed_commits' => $pushedCommits,
+                'commits_count' => count($pushedCommits),
+                'errors' => $errors,
+                'message' => count($pushedCommits) . ' Commits erfolgreich zu GitHub gepusht'
+            ];
+            
+        } catch (Exception $e) {
+            throw new Exception("Fehler beim Push zu GitHub: " . $e->getMessage());
+        }
+    }
+    
+    // Hilfsfunktion: Entferne gepushte Commits aus lokaler Liste
+    private function cleanupPushedCommits($projectPath, $pushedCommits) {
+        $commitsFile = $projectPath . '/.monaco_commits.json';
+        if (!file_exists($commitsFile)) {
+            return;
+        }
+        
+        $allCommits = json_decode(file_get_contents($commitsFile), true) ?: [];
+        $pushedHashes = array_column($pushedCommits, 'hash');
+        
+        // Entferne gepushte Commits aus der Liste
+        $remainingCommits = [];
+        foreach ($allCommits as $commit) {
+            if (!in_array($commit['hash'], $pushedHashes)) {
+                $remainingCommits[] = $commit;
+            }
+        }
+        
+        // Speichere die bereinigte Liste
+        file_put_contents($commitsFile, json_encode($remainingCommits, JSON_PRETTY_PRINT));
     }
     
     private function getRepositoryTree($branch = 'main') {
@@ -571,6 +714,14 @@ function commitChanges($projectPath, $message, $files, $project, $userID) {
     
     // Create commit
     $commitHash = substr(md5($message . time() . json_encode($files)), 0, 40);
+    
+    // Bereite die Datei-Informationen für den Commit vor
+    $commitFiles = [];
+    foreach ($files as $file) {
+        $filePath = is_array($file) ? $file['path'] : $file;
+        $commitFiles[] = ['path' => $filePath];
+    }
+    
     $commitData = [
         'hash' => $commitHash,
         'short_hash' => substr($commitHash, 0, 7),
@@ -578,6 +729,7 @@ function commitChanges($projectPath, $message, $files, $project, $userID) {
         'email' => 'user@controlcenter.dev',
         'date' => date('c'),
         'message' => $message,
+        'files' => $commitFiles,
         'parents' => []
     ];
     
@@ -619,24 +771,6 @@ function commitChanges($projectPath, $message, $files, $project, $userID) {
     ];
 }
 
-function pushToGitHub($projectPath, $project, $userID) {
-    $credentials = getGitHubCredentials($project, $userID);
-    
-    if (!$credentials) {
-        return [
-            'success' => false,
-            'message' => 'No GitHub integration configured for this project'
-        ];
-    }
-    
-    // This would sync local files to GitHub
-    // For now, return success message
-    return [
-        'success' => true,
-        'message' => 'Push to GitHub - feature in development'
-    ];
-}
-
 function pullFromGitHubToLocal($projectPath, $project, $userID) {
     $credentials = getGitHubCredentials($project, $userID);
     
@@ -668,6 +802,42 @@ function pullFromGitHubToLocal($projectPath, $project, $userID) {
         
     } catch (Exception $e) {
         throw new Exception('Pull from GitHub failed: ' . $e->getMessage());
+    }
+}
+
+function pushToGitHub($projectPath, $project, $userID) {
+    $credentials = getGitHubCredentials($project, $userID);
+    
+    if (!$credentials) {
+        throw new Exception('GitHub credentials not found for project');
+    }
+    
+    try {
+        $github = new GitHubAPI($credentials['token'], $credentials['owner'], $credentials['repo']);
+        $result = $github->pushToGitHub($projectPath);
+        
+        // Zusätzliche Sicherheit: Entferne auch hier erfolgreich gepushte Commits
+        if ($result['success'] && !empty($result['pushed_commits'])) {
+            $commitsFile = $projectPath . '/.monaco_commits.json';
+            if (file_exists($commitsFile)) {
+                $allCommits = json_decode(file_get_contents($commitsFile), true) ?: [];
+                $pushedHashes = array_column($result['pushed_commits'], 'hash');
+                
+                $remainingCommits = [];
+                foreach ($allCommits as $commit) {
+                    if (!in_array($commit['hash'], $pushedHashes)) {
+                        $remainingCommits[] = $commit;
+                    }
+                }
+                
+                file_put_contents($commitsFile, json_encode($remainingCommits, JSON_PRETTY_PRINT));
+            }
+        }
+        
+        return $result;
+        
+    } catch (Exception $e) {
+        throw new Exception('Push to GitHub failed: ' . $e->getMessage());
     }
 }
 
