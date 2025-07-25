@@ -230,8 +230,10 @@
 </template>
 
 <script>
+
 import { Chart, LineController, LineElement, PointElement, LinearScale, Title, CategoryScale, BarController, BarElement, DoughnutController, ArcElement, Legend, Tooltip } from 'chart.js';
 Chart.register(LineController, LineElement, PointElement, LinearScale, Title, CategoryScale, BarController, BarElement, DoughnutController, ArcElement, Legend, Tooltip);
+import countryService from '@/services/countryService';
 
 export default {
   name: 'AppStoreDashboard',
@@ -251,24 +253,7 @@ export default {
       currentPage: 1,
       itemsPerPage: 50,
       
-      // Country mapping for flags and names
-      countryNames: {
-        'US': 'USA', 'DE': 'Deutschland', 'GB': 'Großbritannien',
-        'FR': 'Frankreich', 'ES': 'Spanien', 'IT': 'Italien',
-        'JP': 'Japan', 'CN': 'China', 'AU': 'Australien',
-        'CA': 'Kanada', 'BR': 'Brasilien', 'IN': 'Indien',
-        'KR': 'Südkorea', 'MX': 'Mexiko', 'NL': 'Niederlande',
-        'SE': 'Schweden', 'NO': 'Norwegen', 'DK': 'Dänemark',
-        'FI': 'Finnland', 'AT': 'Österreich', 'CH': 'Schweiz'
-      },
-      
-      countryFlags: {
-        'US': '🇺🇸', 'DE': '🇩🇪', 'GB': '🇬🇧', 'FR': '🇫🇷',
-        'ES': '🇪🇸', 'IT': '🇮🇹', 'JP': '🇯🇵', 'CN': '🇨🇳',
-        'AU': '🇦🇺', 'CA': '🇨🇦', 'BR': '🇧🇷', 'IN': '🇮🇳',
-        'KR': '🇰🇷', 'MX': '🇲🇽', 'NL': '🇳🇱', 'SE': '🇸🇪',
-        'NO': '🇳🇴', 'DK': '🇩🇰', 'FI': '🇫🇮', 'AT': '🇦🇹', 'CH': '🇨🇭'
-      }
+      // ...existing code...
     };
   },
   
@@ -627,11 +612,11 @@ export default {
     },
     
     getCountryName(code) {
-      return this.countryNames[code] || code;
+      return countryService.getCountryName(code);
     },
-    
+
     getCountryFlag(code) {
-      return this.countryFlags[code] || '🏳️';
+      return countryService.getCountryFlag(code);
     },
     
     getWeekday(dateStr) {
