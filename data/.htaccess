@@ -1,0 +1,7 @@
+# Deny all access to the data directory for security
+Order Deny,Allow
+Deny from all
+
+# Optional: Allow only local access (uncomment if needed)
+# Allow from 127.0.0.1
+# Allow from ::1

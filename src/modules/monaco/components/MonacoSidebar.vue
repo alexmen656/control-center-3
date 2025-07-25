@@ -1,5 +1,34 @@
 <template>
   <div class="monaco-sidebar">
+    <!-- File Explorer Section -->
+    <div class="sidebar-section">
+      <div class="section-header">
+        <ion-icon name="folder-outline"></ion-icon>
+        <span>Explorer</span>
+        <ion-button fill="clear" size="small" @click="refreshFiles">
+          <ion-icon name="refresh-outline"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" size="small" @click="createNewFile">
+          <ion-icon name="add-outline"></ion-icon>
+        </ion-button>
+      </div>
+      
+      <div class="section-content">
+        <div class="file-tree">
+          <div v-if="projectFiles.length === 0" class="no-files">
+            No files yet
+          </div>
+          <div v-for="file in projectFiles" :key="file.path" class="file-item" @click="openFile(file)">
+            <ion-icon :name="getFileIcon(file)" class="file-icon"></ion-icon>
+            <span class="file-name">{{ file.name }}</span>
+            <ion-button fill="clear" size="small" @click.stop="deleteFile(file)" class="delete-btn">
+              <ion-icon name="trash-outline"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- GitHub Section -->
     <div class="sidebar-section">
       <div class="section-header">
@@ -40,8 +69,14 @@
           <div v-for="file in changedFiles" :key="file.path" class="file-item">
             <div class="file-status" :class="file.status">{{ getStatusIcon(file.status) }}</div>
             <div class="file-path">{{ file.path }}</div>
-            <ion-button fill="clear" size="small" @click="stageFile(file.path)">
+            <ion-button fill="clear" size="small" @click="stageFile(file.path)" v-if="!file.staged">
               <ion-icon name="add-outline"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" size="small" @click="unstageFile(file.path)" v-if="file.staged">
+              <ion-icon name="remove-outline"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" size="small" @click="discardChanges(file.path)" v-if="!file.staged">
+              <ion-icon name="refresh-outline"></ion-icon>
             </ion-button>
           </div>
         </div>
@@ -112,7 +147,6 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
-import qs from 'qs'
 
 const route = useRoute()
 
@@ -123,26 +157,123 @@ const isDeploying = ref(false)
 const changedFiles = ref([])
 const recentCommits = ref([])
 const deployments = ref([])
+const projectFiles = ref([])
 
 // Get project name from route
 const projectName = route.params.project || 'default-project'
 
+// File Explorer Methods
+const refreshFiles = async () => {
+  try {
+    const response = await axios.get(`file_api.php?project=${projectName}&action=list`)
+    projectFiles.value = flattenFileTree(response.data || [])
+  } catch (error) {
+    console.error('Failed to load files:', error)
+    projectFiles.value = []
+  }
+}
+
+const flattenFileTree = (files, path = '') => {
+  let flattened = []
+  files.forEach(file => {
+    if (file.type === 'file') {
+      flattened.push({
+        name: file.name,
+        path: file.path,
+        type: file.type,
+        size: file.size,
+        modified: file.modified
+      })
+    } else if (file.type === 'directory' && file.children) {
+      flattened = flattened.concat(flattenFileTree(file.children, file.path))
+    }
+  })
+  return flattened
+}
+
+const openFile = (file) => {
+  // Emit event to parent component to open file
+  window.dispatchEvent(new CustomEvent('monaco-open-file', { detail: file }))
+}
+
+const createNewFile = async () => {
+  const fileName = prompt('Enter file name:')
+  if (fileName) {
+    try {
+      await axios.post(`file_api.php?project=${projectName}`, {
+        action: 'create_file',
+        path: fileName,
+        content: ''
+      })
+      await refreshFiles()
+      openFile({ name: fileName, path: fileName })
+    } catch (error) {
+      console.error('Failed to create file:', error)
+      alert('Failed to create file: ' + error.message)
+    }
+  }
+}
+
+const deleteFile = async (file) => {
+  if (confirm(`Are you sure you want to delete ${file.name}?`)) {
+    try {
+      await axios.delete(`file_api.php?project=${projectName}`, {
+        data: { file: file.path }
+      })
+      await refreshFiles()
+      await refreshGitStatus()
+    } catch (error) {
+      console.error('Failed to delete file:', error)
+      alert('Failed to delete file: ' + error.message)
+    }
+  }
+}
+
+const getFileIcon = (file) => {
+  if (file.type === 'directory') return 'folder-outline'
+  
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  switch (ext) {
+    case 'js': return 'logo-javascript'
+    case 'ts': return 'logo-javascript'
+    case 'vue': return 'logo-vue'
+    case 'html': return 'logo-html5'
+    case 'css': return 'logo-css3'
+    case 'json': return 'code-outline'
+    case 'md': return 'document-text-outline'
+    case 'txt': return 'document-outline'
+    default: return 'document-outline'
+  }
+}
+
 // API Methods
 const loadGitData = async () => {
   try {
-    const response = await axios.get(`github_api.php?project=${projectName}&action=commits`)
-    if (response.data.success) {
-      recentCommits.value = response.data.commits.map(commit => ({
-        hash: commit.sha,
-        message: commit.commit.message,
-        author: commit.commit.author.name,
-        date: new Date(commit.commit.author.date)
+    // Load real git changes
+    const changesResponse = await axios.get(`monaco_git_api.php?project=${projectName}&action=changes`)
+    if (changesResponse.data.success) {
+      changedFiles.value = changesResponse.data.changes || []
+    } else {
+      changedFiles.value = []
+    }
+    
+    // Load commit history
+    const commitsResponse = await axios.get(`monaco_git_api.php?project=${projectName}&action=commits`)
+    if (commitsResponse.data.success) {
+      recentCommits.value = commitsResponse.data.commits.map(commit => ({
+        hash: commit.sha || commit.hash,
+        message: commit.message,
+        author: commit.author?.name || commit.author,
+        date: new Date(commit.date || commit.created_at)
       }))
+    } else {
+      recentCommits.value = []
     }
   } catch (error) {
     console.error('Failed to load git data:', error)
-    // Fall back to mock data
-    loadMockGitData()
+    // Only show empty state on error, no mock data
+    changedFiles.value = []
+    recentCommits.value = []
   }
 }
 
@@ -158,68 +289,13 @@ const loadDeployments = async () => {
         created: deployment.created,
         inspectorUrl: deployment.inspectorUrl
       })) || []
+    } else {
+      deployments.value = []
     }
   } catch (error) {
     console.error('Failed to load deployments:', error)
-    // Fall back to mock data
-    loadMockDeployments()
+    deployments.value = []
   }
-}
-
-// Mock data for development fallback
-const loadMockGitData = () => {
-  changedFiles.value = [
-    { path: 'src/components/MonacoEditor.vue', status: 'modified' },
-    { path: 'src/assets/styles.css', status: 'added' },
-    { path: 'package.json', status: 'modified' }
-  ]
-  
-  recentCommits.value = [
-    {
-      hash: 'abc123def456',
-      message: 'Add Monaco editor support',
-      author: 'Developer',
-      date: new Date(Date.now() - 1000 * 60 * 30) // 30 minutes ago
-    },
-    {
-      hash: 'def456ghi789',
-      message: 'Update project sidebar',
-      author: 'Developer',
-      date: new Date(Date.now() - 1000 * 60 * 60 * 2) // 2 hours ago
-    },
-    {
-      hash: 'ghi789jkl012',
-      message: 'Fix responsive layout',
-      author: 'Developer',
-      date: new Date(Date.now() - 1000 * 60 * 60 * 24) // 1 day ago
-    }
-  ]
-}
-
-const loadMockDeployments = () => {
-  deployments.value = [
-    {
-      id: '1',
-      url: 'https://myproject-abc123.vercel.app',
-      state: 'READY',
-      commit: 'abc123def456',
-      created: new Date(Date.now() - 1000 * 60 * 15) // 15 minutes ago
-    },
-    {
-      id: '2',
-      url: 'https://myproject-def456.vercel.app',
-      state: 'ERROR',
-      commit: 'def456ghi789',
-      created: new Date(Date.now() - 1000 * 60 * 60 * 3) // 3 hours ago
-    },
-    {
-      id: '3',
-      url: 'https://myproject-ghi789.vercel.app',
-      state: 'READY',
-      commit: 'ghi789jkl012',
-      created: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2) // 2 days ago
-    }
-  ]
 }
 
 // Methods
@@ -234,7 +310,7 @@ const commitChanges = async () => {
   
   isCommitting.value = true
   try {
-    const response = await axios.post(`github_api.php?project=${projectName}`, {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
       action: 'commit',
       message: commitMessage.value,
       files: changedFiles.value
@@ -246,41 +322,86 @@ const commitChanges = async () => {
         hash: response.data.commit.sha,
         message: response.data.commit.message,
         author: response.data.commit.author.name,
-        date: new Date(response.data.commit.created_at)
+        date: new Date(response.data.commit.date)
       })
       
       // Clear changed files and commit message
       changedFiles.value = []
       commitMessage.value = ''
+      
+      // Refresh git status
+      await refreshGitStatus()
     } else {
       throw new Error(response.data.error || 'Commit failed')
     }
   } catch (error) {
     console.error('Commit failed:', error)
-    // For demo purposes, still add the commit locally
-    recentCommits.value.unshift({
-      hash: Math.random().toString(36).substring(2, 15),
-      message: commitMessage.value,
-      author: 'Current User',
-      date: new Date()
-    })
-    changedFiles.value = []
-    commitMessage.value = ''
+    alert('Commit failed: ' + error.message)
   } finally {
     isCommitting.value = false
   }
 }
 
-const stageFile = (filePath) => {
+const stageFile = async (filePath) => {
   console.log('Staging file:', filePath)
-  // TODO: Implement file staging
+  try {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+      action: 'stage',
+      file: filePath
+    })
+    
+    if (response.data.success) {
+      await refreshGitStatus()
+    } else {
+      console.error('Failed to stage file:', response.data.message)
+    }
+  } catch (error) {
+    console.error('Error staging file:', error)
+  }
+}
+
+const unstageFile = async (filePath) => {
+  console.log('Unstaging file:', filePath)
+  try {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+      action: 'unstage',
+      file: filePath
+    })
+    
+    if (response.data.success) {
+      await refreshGitStatus()
+    } else {
+      console.error('Failed to unstage file:', response.data.message)
+    }
+  } catch (error) {
+    console.error('Error unstaging file:', error)
+  }
+}
+
+const discardChanges = async (filePath) => {
+  if (confirm(`Are you sure you want to discard changes to ${filePath}?`)) {
+    try {
+      const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+        action: 'discard',
+        file: filePath
+      })
+      
+      if (response.data.success) {
+        await refreshGitStatus()
+        // Refresh the file in editor if it's currently open
+        window.dispatchEvent(new CustomEvent('monaco-refresh-file', { detail: { path: filePath } }))
+      } else {
+        console.error('Failed to discard changes:', response.data.message)
+      }
+    } catch (error) {
+      console.error('Error discarding changes:', error)
+    }
+  }
 }
 
 const refreshGitStatus = async () => {
   console.log('Refreshing git status...')
   await loadGitData()
-  // For demo, also refresh mock changed files
-  loadMockGitData()
 }
 
 const deployToVercel = async () => {
@@ -402,12 +523,9 @@ function openDeploymentInspector(deployment) {
 
 // Initialize
 onMounted(async () => {
-  // Load initial mock data
-  loadMockGitData()
-  loadMockDeployments()
-  
-  // Try to load real data
+  // Load real data only
   await Promise.allSettled([
+    refreshFiles(),
     loadGitData(),
     loadDeployments()
   ])
@@ -470,6 +588,60 @@ onMounted(async () => {
   color: var(--vscode-descriptionForeground, #999999);
   margin: 12px 0 6px 0;
   letter-spacing: 0.5px;
+}
+
+/* File Explorer */
+.file-tree {
+  margin-bottom: 16px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.file-item:hover {
+  background: var(--vscode-list-hoverBackground, #2a2d2e);
+}
+
+.file-icon {
+  margin-right: 8px;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.file-name {
+  flex: 1;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.delete-btn {
+  opacity: 0;
+  transition: opacity 0.2s;
+  --color: var(--vscode-errorForeground, #f85149);
+  margin: 0;
+  height: 20px;
+  width: 20px;
+}
+
+.file-item:hover .delete-btn {
+  opacity: 1;
+}
+
+.no-files {
+  padding: 16px 8px;
+  text-align: center;
+  color: var(--vscode-descriptionForeground, #999999);
+  font-size: 13px;
+  font-style: italic;
 }
 
 /* Commit Section */

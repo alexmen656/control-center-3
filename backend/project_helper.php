@@ -307,6 +307,9 @@ function projectExists($name) {
  * @return bool True bei Erfolg, False bei Fehler
  */
 function createProjectDirectories($href, $name, $projectID) {
+    global $userID; // Make userID available
+    
+    // Create web directory
     if (!mkdir("/www/" . $href, 0777, true) || !chmod("/www/" . $href, 0777)) {
         return false;
     }
@@ -323,7 +326,48 @@ function createProjectDirectories($href, $name, $projectID) {
     file_put_contents("/www/" . $href . "/main.php", "//Put here main content of your site", 0777);
     chmod("/www/" . $href . "/main.php", 0777);
     
+    // Create Monaco IDE data directory
+    createMonacoProjectDirectory($href, $name, $userID);
+    
     return true;
+}
+
+/**
+ * Creates a Monaco IDE project directory structure
+ */
+function createMonacoProjectDirectory($href, $name, $userID) {
+    // Create project data directory for Monaco IDE
+    $dataDir = "/data/projects/" . $userID . "/" . $href;
+    
+    if (!is_dir($dataDir)) {
+        mkdir($dataDir, 0755, true);
+    }
+    
+    // Initialize git repository
+    $cwd = getcwd();
+    chdir($dataDir);
+    
+    // Initialize git if not exists
+    if (!is_dir('.git')) {
+        exec('git init 2>&1', $output, $returnCode);
+        if ($returnCode === 0) {
+            // Set basic git config
+            exec('git config user.email "ide@controlcenter.dev" 2>&1');
+            exec('git config user.name "Control Center IDE" 2>&1');
+            
+            // Create initial files
+            file_put_contents('README.md', "# " . $name . "\n\nCreated with Control Center IDE\n");
+            file_put_contents('main.js', "// Welcome to " . $name . "\nconsole.log('Hello World!');\n");
+            file_put_contents('style.css', "/* Styles for " . $name . " */\nbody {\n    font-family: Arial, sans-serif;\n}\n");
+            file_put_contents('index.html', "<!DOCTYPE html>\n<html>\n<head>\n    <title>" . $name . "</title>\n    <link rel=\"stylesheet\" href=\"style.css\">\n</head>\n<body>\n    <h1>Welcome to " . $name . "</h1>\n    <script src=\"main.js\"></script>\n</body>\n</html>");
+            
+            // Initial commit
+            exec('git add . 2>&1');
+            exec('git commit -m "Initial project setup" 2>&1');
+        }
+    }
+    
+    chdir($cwd);
 }
 
 /**
