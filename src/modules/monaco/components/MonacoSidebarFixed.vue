@@ -201,7 +201,7 @@ const projectName = route.params.project || 'default-project'
 // File Explorer Methods
 const refreshFiles = async () => {
   try {
-    const response = await axios.get(`file_api.php?project=${projectName}&action=list`)
+    const response = await axios.get(`/backend/file_api.php?project=${projectName}&action=list`)
     projectFiles.value = flattenFileTree(response.data || [])
   } catch (error) {
     console.error('Failed to load files:', error)
@@ -233,20 +233,19 @@ const openFile = (file) => {
 }
 
 const createNewFile = async () => {
-  const fileName = prompt('Enter file name (with extension):')
+  const fileName = prompt('Enter file name:')
   if (fileName) {
     try {
-      await axios.post(`file_api.php?project=${projectName}`, {
+      await axios.post(`/backend/file_api.php?project=${projectName}`, {
         action: 'create_file',
         path: fileName,
         content: ''
       })
       await refreshFiles()
       openFile({ name: fileName, path: fileName })
-      alert(`File "${fileName}" created successfully!`)
     } catch (error) {
       console.error('Failed to create file:', error)
-      alert('Failed to create file: ' + (error.response?.data?.message || error.message))
+      alert('Failed to create file: ' + error.message)
     }
   }
 }
@@ -255,16 +254,16 @@ const createNewFolder = async () => {
   const folderName = prompt('Enter folder name:')
   if (folderName) {
     try {
-      // Create folder using the create_folder API
-      await axios.post(`file_api.php?project=${projectName}`, {
-        action: 'create_folder',
-        path: folderName
+      // Create folder by creating a .gitkeep file inside it
+      await axios.post(`/backend/file_api.php?project=${projectName}`, {
+        action: 'create_file',
+        path: folderName + '/.gitkeep',
+        content: '# This file keeps the folder in version control'
       })
       await refreshFiles()
-      alert(`Folder "${folderName}" created successfully!`)
     } catch (error) {
       console.error('Failed to create folder:', error)
-      alert('Failed to create folder: ' + error.response?.data?.message || error.message)
+      alert('Failed to create folder: ' + error.message)
     }
   }
 }
@@ -272,7 +271,7 @@ const createNewFolder = async () => {
 const deleteFile = async (file) => {
   if (confirm(`Are you sure you want to delete ${file.name}?`)) {
     try {
-      await axios.delete(`file_api.php?project=${projectName}`, {
+      await axios.delete(`/backend/file_api.php?project=${projectName}`, {
         data: { file: file.path }
       })
       await refreshFiles()
@@ -305,7 +304,7 @@ const getFileIcon = (file) => {
 const loadGitData = async () => {
   try {
     // Load real git changes
-    const changesResponse = await axios.get(`monaco_git_api.php?project=${projectName}&action=changes`)
+    const changesResponse = await axios.get(`/backend/monaco_git_api.php?project=${projectName}&action=changes`)
     if (changesResponse.data.success) {
       changedFiles.value = changesResponse.data.changes || []
     } else {
@@ -313,7 +312,7 @@ const loadGitData = async () => {
     }
     
     // Load commit history
-    const commitsResponse = await axios.get(`monaco_git_api.php?project=${projectName}&action=commits`)
+    const commitsResponse = await axios.get(`/backend/monaco_git_api.php?project=${projectName}&action=commits`)
     if (commitsResponse.data.success) {
       recentCommits.value = commitsResponse.data.commits.map(commit => ({
         hash: commit.sha || commit.hash,
@@ -334,9 +333,9 @@ const loadGitData = async () => {
 
 const loadPullRequests = async () => {
   try {
-    const response = await axios.get(`monaco_pr_api.php?project=${projectName}&action=list`)
+    const response = await axios.get(`/backend/monaco_git_api.php?project=${projectName}&action=pull_requests`)
     if (response.data.success) {
-      pullRequests.value = response.data.data || []
+      pullRequests.value = response.data.pull_requests || []
     } else {
       pullRequests.value = []
     }
@@ -348,7 +347,7 @@ const loadPullRequests = async () => {
 
 const loadDeployments = async () => {
   try {
-    const response = await axios.get(`vercel_api.php?project=${projectName}&action=deployments`)
+    const response = await axios.get(`/backend/vercel_api.php?project=${projectName}&action=deployments`)
     if (response.data.success) {
       deployments.value = response.data.deployments.deployments?.map(deployment => ({
         id: deployment.uid,
@@ -379,7 +378,7 @@ const commitChanges = async () => {
   
   isCommitting.value = true
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+    const response = await axios.post(`/backend/monaco_git_api.php?project=${projectName}`, {
       action: 'commit',
       message: commitMessage.value,
       files: changedFiles.value
@@ -414,7 +413,7 @@ const commitChanges = async () => {
 const stageFile = async (filePath) => {
   console.log('Staging file:', filePath)
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+    const response = await axios.post(`/backend/monaco_git_api.php?project=${projectName}`, {
       action: 'stage',
       file: filePath
     })
@@ -432,7 +431,7 @@ const stageFile = async (filePath) => {
 const unstageFile = async (filePath) => {
   console.log('Unstaging file:', filePath)
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+    const response = await axios.post(`/backend/monaco_git_api.php?project=${projectName}`, {
       action: 'unstage',
       file: filePath
     })
@@ -450,7 +449,7 @@ const unstageFile = async (filePath) => {
 const discardChanges = async (filePath) => {
   if (confirm(`Are you sure you want to discard changes to ${filePath}?`)) {
     try {
-      const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+      const response = await axios.post(`/backend/monaco_git_api.php?project=${projectName}`, {
         action: 'discard',
         file: filePath
       })
@@ -484,10 +483,11 @@ const createPullRequest = async () => {
   
   if (title && headBranch) {
     try {
-      const response = await axios.post(`monaco_pr_api.php?project=${projectName}&action=create`, {
+      const response = await axios.post(`/backend/monaco_git_api.php?project=${projectName}`, {
+        action: 'create_pull_request',
         title: title,
-        base_branch: baseBranch,
-        head_branch: headBranch,
+        base: baseBranch,
+        head: headBranch,
         body: 'Created via Monaco IDE'
       })
       
@@ -499,7 +499,7 @@ const createPullRequest = async () => {
       }
     } catch (error) {
       console.error('Failed to create pull request:', error)
-      alert('Failed to create pull request: ' + (error.response?.data?.message || error.message))
+      alert('Failed to create pull request: ' + error.message)
     }
   }
 }
@@ -521,7 +521,7 @@ const getPRIcon = (state) => {
 const deployToVercel = async () => {
   isDeploying.value = true
   try {
-    const response = await axios.post(`vercel_api.php?project=${projectName}`, {
+    const response = await axios.post(`/backend/vercel_api.php?project=${projectName}`, {
       action: 'deploy',
       gitSource: {
         type: 'github',

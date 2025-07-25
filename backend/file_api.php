@@ -112,6 +112,9 @@ function handlePostRequest($projectPath, $project, $userID) {
         case 'create_file':
             echo json_encode(createProjectFile($projectPath, $input['path'], $input['content'] ?? ''));
             break;
+        case 'create_folder':
+            echo json_encode(createProjectFolder($projectPath, $input['path']));
+            break;
         case 'commit':
             // Redirect to monaco_git_api for git operations
             echo json_encode(['success' => true, 'message' => 'Use monaco_git_api.php for git operations']);
@@ -246,6 +249,31 @@ function deleteFile($projectPath, $file) {
     return [
         'success' => true,
         'path' => $file
+    ];
+}
+
+function createProjectFolder($projectPath, $folderPath) {
+    // Validate path
+    if (empty($folderPath) || strpos($folderPath, '..') !== false) {
+        throw new Exception('Invalid folder path');
+    }
+    
+    $fullFolderPath = $projectPath . '/' . ltrim($folderPath, '/');
+    
+    // Check if folder already exists
+    if (is_dir($fullFolderPath)) {
+        throw new Exception('Folder already exists');
+    }
+    
+    // Create the folder
+    if (!mkdir($fullFolderPath, 0755, true)) {
+        throw new Exception('Failed to create folder');
+    }
+    
+    return [
+        'success' => true,
+        'path' => $folderPath,
+        'message' => 'Folder created successfully'
     ];
 }
 

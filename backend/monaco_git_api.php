@@ -167,6 +167,59 @@ class GitHubAPI {
             return null; // File doesn't exist
         }
     }
+
+    // Pull Request Funktionen
+    public function createPullRequest($title, $body, $head_branch, $base_branch = 'main') {
+        try {
+            $data = [
+                'title' => $title,
+                'body' => $body,
+                'head' => $head_branch,
+                'base' => $base_branch
+            ];
+            
+            return $this->makeRequest("pulls", $data, 'POST');
+        } catch (Exception $e) {
+            throw new Exception("Fehler beim Erstellen des Pull Requests: " . $e->getMessage());
+        }
+    }
+    
+    public function listPullRequests($state = 'open') {
+        try {
+            return $this->makeRequest("pulls?state=" . $state);
+        } catch (Exception $e) {
+            throw new Exception("Fehler beim Abrufen der Pull Requests: " . $e->getMessage());
+        }
+    }
+    
+    public function mergePullRequest($pull_number, $commit_title = null, $commit_message = null, $merge_method = 'merge') {
+        try {
+            $data = [
+                'merge_method' => $merge_method
+            ];
+            
+            if ($commit_title) {
+                $data['commit_title'] = $commit_title;
+            }
+            
+            if ($commit_message) {
+                $data['commit_message'] = $commit_message;
+            }
+            
+            return $this->makeRequest("pulls/{$pull_number}/merge", $data, 'PUT');
+        } catch (Exception $e) {
+            throw new Exception("Fehler beim Mergen des Pull Requests: " . $e->getMessage());
+        }
+    }
+    
+    public function closePullRequest($pull_number) {
+        try {
+            $data = ['state' => 'closed'];
+            return $this->makeRequest("pulls/{$pull_number}", $data, 'PATCH');
+        } catch (Exception $e) {
+            throw new Exception("Fehler beim Schließen des Pull Requests: " . $e->getMessage());
+        }
+    }
 }
 
 try {
