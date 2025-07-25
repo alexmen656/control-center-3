@@ -154,7 +154,6 @@ class AppStoreConnectAPI {
         // Fetch data for each day in the period
         for ($date = clone $startDate; $date <= $endDate; $date->add(new DateInterval('P1D'))) {
             $reportDate = $date->format('Y-m-d');
-            
             try {
                 $url = 'https://api.appstoreconnect.apple.com/v1/salesReports?' . 
                        'filter[reportType]=SALES&' .
@@ -162,16 +161,14 @@ class AppStoreConnectAPI {
                        'filter[frequency]=DAILY&' .
                        'filter[vendorNumber]=' . $this->vendor_number . '&' .
                        'filter[reportDate]=' . $reportDate;
-                
                 $response = $this->makeRequest($url);
                 $tsv = $this->unzipAndParseTSV($response);
                 $dayDownloads = $this->parseTSVData($tsv);
-                
                 $downloads = array_merge($downloads, $dayDownloads);
-                
-                // Add small delay to avoid rate limiting
-                usleep(100000); // 0.1 seconds
-                
+                // Only add delay for periods less than 90 days
+                if ($period < 90) {
+                    usleep(100000); // 0.1 seconds
+                }
             } catch (Exception $e) {
                 // Log error but continue with next date
                 error_log("Failed to fetch data for $reportDate: " . $e->getMessage());
