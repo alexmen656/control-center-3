@@ -5,7 +5,7 @@
     <div class="monaco-editor-container">
       <vue-monaco-editor
         v-model:value="code"
-        language="javascript"
+        :language="language"
         theme="vs-dark"
         :options="editorOptions"
         width="100%"
@@ -28,6 +28,7 @@ const projectName = route.params.project || 'default-project'
 const currentFile = ref('main.js')
 
 const code = ref('// Schreibe hier deinen Code...\nconsole.log("Hello Monaco!")')
+const language = ref('javascript')
 const editorOptions = {
   fontSize: 16,
   minimap: { enabled: false },
@@ -39,6 +40,31 @@ const editorOptions = {
 // Load file content
 const loadFile = async (filename = 'main.js') => {
   try {
+    const languageMap = {
+      'js': 'javascript',
+      'ts': 'typescript',
+      'py': 'python',
+      'html': 'html',
+      'css': 'css',
+      'php': 'php',
+      'md': 'markdown',
+      'json': 'json',
+      'vue': 'vue',
+      'txt': 'plaintext',
+      'c': 'c',
+      'cpp': 'cpp',
+      'java': 'java',
+      'go': 'go',
+      'rb': 'ruby',
+      'sh': 'shell',
+      'lua': 'lua',
+      'swift': 'swift',
+      'kotlin': 'kotlin',
+      'rust': 'rust',
+      // Add more mappings as needed
+    }
+
+    language.value = languageMap[filename.split('.').pop()] || 'javascript'
     const response = await axios.get(`file_api.php?project=${projectName}&action=read&file=${filename}`)
     if (response.data.content !== undefined) {
       code.value = response.data.content
