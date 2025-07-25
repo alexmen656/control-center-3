@@ -50,6 +50,10 @@
         <ion-button fill="clear" size="small" @click="refreshGitStatus">
           <ion-icon name="refresh-outline"></ion-icon>
         </ion-button>
+        <ion-button fill="clear" size="small" @click="pullFromGitHub" :disabled="isPulling">
+          <ion-icon name="download-outline"></ion-icon>
+          {{ isPulling ? 'Pulling...' : 'Pull' }}
+        </ion-button>
       </div>
       
       <div class="section-content">
@@ -188,6 +192,7 @@ const route = useRoute()
 // State
 const commitMessage = ref('')
 const isCommitting = ref(false)
+const isPulling = ref(false)
 const isDeploying = ref(false)
 const changedFiles = ref([])
 const recentCommits = ref([])
@@ -408,6 +413,37 @@ const commitChanges = async () => {
     alert('Commit failed: ' + error.message)
   } finally {
     isCommitting.value = false
+  }
+}
+
+const pullFromGitHub = async () => {
+  console.log('Pulling from GitHub...')
+  isPulling.value = true
+  
+  try {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+      action: 'pull'
+    })
+    
+    if (response.data.success) {
+      console.log('Pull successful:', response.data)
+      alert(`Pull erfolgreich! ${response.data.files_count} Dateien wurden aktualisiert.`)
+      
+      // Refresh file list and git status after pull
+      await refreshFiles()
+      await refreshGitStatus()
+      
+      // Notify parent component about file changes if needed
+      window.dispatchEvent(new CustomEvent('monaco-files-updated', { detail: response.data }))
+    } else {
+      console.error('Pull failed:', response.data.message)
+      alert('Pull failed: ' + response.data.message)
+    }
+  } catch (error) {
+    console.error('Pull failed:', error)
+    alert('Pull failed: ' + error.message)
+  } finally {
+    isPulling.value = false
   }
 }
 

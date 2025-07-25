@@ -220,6 +220,59 @@ class GitHubAPI {
             throw new Exception("Fehler beim Schließen des Pull Requests: " . $e->getMessage());
         }
     }
+    
+    // Pull-Funktion um neueste Changes von GitHub zu holen
+    public function pullFromGitHub($projectPath, $branch = 'main') {
+        try {
+            // Hole alle Dateien vom Repository
+            $tree = $this->getRepositoryTree($branch);
+            $pulledFiles = [];
+            $errors = [];
+            
+            foreach ($tree as $item) {
+                if ($item['type'] === 'blob') { // Das ist eine Datei
+                    try {
+                        $fileData = $this->getFileContent($item['path']);
+                        if ($fileData) {
+                            $localPath = $projectPath . '/' . $item['path'];
+                            
+                            // Erstelle Verzeichnis falls nötig
+                            $dir = dirname($localPath);
+                            if (!is_dir($dir)) {
+                                mkdir($dir, 0755, true);
+                            }
+                            
+                            // Schreibe Datei
+                            file_put_contents($localPath, $fileData['content']);
+                            $pulledFiles[] = $item['path'];
+                        }
+                    } catch (Exception $e) {
+                        $errors[] = "Fehler bei {$item['path']}: " . $e->getMessage();
+                    }
+                }
+            }
+            
+            return [
+                'success' => true,
+                'pulled_files' => $pulledFiles,
+                'files_count' => count($pulledFiles),
+                'errors' => $errors,
+                'message' => count($pulledFiles) . ' Dateien erfolgreich von GitHub geholt'
+            ];
+            
+        } catch (Exception $e) {
+            throw new Exception("Fehler beim Pull von GitHub: " . $e->getMessage());
+        }
+    }
+    
+    private function getRepositoryTree($branch = 'main') {
+        try {
+            $response = $this->makeRequest("git/trees/{$branch}?recursive=1");
+            return $response['tree'] ?? [];
+        } catch (Exception $e) {
+            throw new Exception("Fehler beim Abrufen des Repository-Trees: " . $e->getMessage());
+        }
+    }
 }
 
 try {
@@ -289,6 +342,9 @@ function handlePostRequest($projectPath, $project, $userID) {
             break;
         case 'push':
             echo json_encode(pushToGitHub($projectPath, $project, $userID));
+            break;
+        case 'pull':
+            echo json_encode(pullFromGitHubToLocal($projectPath, $project, $userID));
             break;
         case 'discard':
             echo json_encode(discardChanges($projectPath, $input['file'], $project, $userID));
@@ -579,6 +635,40 @@ function pushToGitHub($projectPath, $project, $userID) {
         'success' => true,
         'message' => 'Push to GitHub - feature in development'
     ];
+}
+
+function pullFromGitHubToLocal($projectPath, $project, $userID) {
+    $credentials = getGitHubCredentials($project, $userID);
+    
+    if (!$credentials) {
+        throw new Exception('GitHub credentials not found');
+    }
+    
+    try {
+        $github = new GitHubAPI($credentials['token'], $credentials['owner'], $credentials['repo']);
+        $result = $github->pullFromGitHub($projectPath);
+        
+        // Update local metadata after successful pull
+        $lastCommitFile = $projectPath . '/.monaco_lastcommit.json';
+        $stagedFile = $projectPath . '/.monaco_staged.json';
+        
+        // Clear staged changes since we pulled fresh content
+        file_put_contents($stagedFile, '{}');
+        
+        // Update last commit metadata
+        $commitData = [
+            'hash' => 'pulled-' . time(),
+            'message' => 'Pulled from GitHub',
+            'timestamp' => time(),
+            'files' => $result['pulled_files']
+        ];
+        file_put_contents($lastCommitFile, json_encode($commitData));
+        
+        return $result;
+        
+    } catch (Exception $e) {
+        throw new Exception('Pull from GitHub failed: ' . $e->getMessage());
+    }
 }
 
 function discardChanges($projectPath, $file, $project, $userID) {
