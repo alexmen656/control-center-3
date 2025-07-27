@@ -11,6 +11,7 @@
         height="100%"
       />
     </div>
+    <div class="markdown-preview" v-html="renderedMarkdown" v-if="language === 'markdown'"></div>
   </div>
 </template>
 
@@ -22,6 +23,7 @@ import MonacoSidebar from './MonacoSidebar.vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { ToastService } from "@/services/ToastService";
+import { marked } from 'marked';
 
 const toast = ToastService
 
@@ -152,6 +154,16 @@ onMounted(() => {
     }
   })
 })
+
+// Markdown rendering
+const renderedMarkdown = ref('');
+watch(code, (newCode) => {
+  if (language.value === 'markdown') {
+    renderedMarkdown.value = marked(newCode);
+  } else {
+    renderedMarkdown.value = '';
+  }
+});
 </script>
 
 
@@ -173,5 +185,14 @@ onMounted(() => {
   flex: 1;
   display: flex;
   overflow: hidden;
+}
+
+.markdown-preview {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  background-color: #f5f5f5;
+  color: #333;
+  border-left: 1px solid #ddd;
 }
 </style>
