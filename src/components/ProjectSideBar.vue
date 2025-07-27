@@ -1,11 +1,11 @@
 <template>
-  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed }">
+  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleReorder($event)">
       <ion-menu-toggle auto-hide="false">
         <ion-item @click="this.selectedIndex = 0" lines="none" detail="false"
           :router-link="'/project/' + $route.params.project + '/'" 
           class="hydrated menu-item"
-          :class="{ selected: this.selectedIndex === 0, collapsed: isCollapsed }"
+          :class="{ selected: this.selectedIndex === 0, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
           :data-tooltip="isCollapsed ? 'Overview' : ''">
           <ion-icon slot="start" name="apps-outline" />
           <ion-label v-if="!isCollapsed">Overview</ion-label>
@@ -56,7 +56,7 @@
               .replaceAll('Ü', 'u')
               .replaceAll('ü', 'u')
             " class="hydrated menu-item" 
-            :class="{ selected: this.selectedIndex === i + 1, collapsed: isCollapsed }"
+            :class="{ selected: this.selectedIndex === i + 1, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
             :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''">
           <ion-icon slot="start" :name="p.icon" />
           <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
@@ -87,7 +87,7 @@
           name="add-circle-outline"></ion-icon></router-link>
     </div>
   </ion-note>
-  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed }">
+  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
       <template v-for="(component, i) in components" :key="i">
         <!-- Parent component -->
@@ -123,7 +123,8 @@
                   .replaceAll('ü', 'u')*/
                 " class="hydrated menu-item parent-component" :class="{
                   selected: selectedIndex === Number(i) + Number(tools.length) + 1,
-                  collapsed: isCollapsed
+                  collapsed: isCollapsed,
+                  hasToBeDarkmode: hasToBeDarkmode
                 }"
                 :data-tooltip="isCollapsed ? component.name : ''">
             <ion-icon slot="start" :name="getIcon(component.type)" />
@@ -161,7 +162,7 @@
                 subComp.name
                   .toLowerCase()
                   .replaceAll(' ', '-')" class="hydrated menu-item sub-component-item" :class="{
-                      selected: selectedIndex === Number(i) + Number(tools.length) + 1 + Number(j) + 0.1,
+                      selected: selectedIndex === Number(i) + Number(tools.length) + 1 + Number(j) + 0.1, hasToBeDarkmode: hasToBeDarkmode
                     }">
             <!--  <ion-icon :name="getIcon(subComp.type)" /><--slot="start"---->
               <ion-label>{{ subComp.name }}</ion-label>
@@ -183,7 +184,7 @@
           style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>
     </div>
   </ion-note>
-  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed }">
+  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
       <ion-menu-toggle auto-hide="false" v-for="(p, i) in services" :key="i">
         <ion-item @click="this.selectedIndex = Number(i) + Number(tools.length) + Number(components.length) + 1"
@@ -191,7 +192,8 @@
           class="hydrated menu-item" 
           :class="{
             selected: this.selectedIndex === Number(i) + Number(tools.length) + Number(components.length) + 1,
-            collapsed: isCollapsed
+            collapsed: isCollapsed,
+            hasToBeDarkmode: hasToBeDarkmode
           }"
           :data-tooltip="isCollapsed ? p.name : ''"><!-- target="_blank"-->
           <ion-icon slot="start" :name="p.icon || 'cog-outline'" />
@@ -222,7 +224,7 @@
           @click="this.selectedIndex = Number(tools.length) + Number(components.length) + Number(services.length) + 1"
           lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/apis/weather-api'"
           class="hydrated menu-item" :class="{
-            selected: this.selectedIndex === Number(tools.length) + Number(components.length) + Number(services.length) + 1,
+            selected: this.selectedIndex === Number(tools.length) + Number(components.length) + Number(services.length) + 1, hasToBeDarkmode: hasToBeDarkmode
           }">
           <ion-icon slot="start" name="cloud-outline" />
           <ion-label>Weather API</ion-label>
@@ -248,6 +250,10 @@ export default defineComponent({
   name: "ProjectSideBar",
   props: {
     isCollapsed: {
+      type: Boolean,
+      default: false
+    },
+    hasToBeDarkmode: {
       type: Boolean,
       default: false
     }
@@ -779,5 +785,13 @@ ion-item.new-tool ion-label {
     opacity: 1;
     transform: translateY(-50%) translateX(0);
   }
+}
+
+ion-list.hasToBeDarkmode {
+  background: /*var(*/#1e1e1e/*, var(--ion-background-color, #fff));*/
+}
+
+.menu-item.hasToBeDarkmode {
+  --background: #1e1e1e !important;
 }
 </style>

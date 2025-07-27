@@ -5,10 +5,10 @@
       <ion-content v-if="showContent">
         <SiteHeader v-if="showHeader" @toggleSidebar="toggleSidebar"></SiteHeader>
         <ion-split-pane content-id="main-content" :class="{ 'collapsed-sidebar': isMenuCollapsed }">
-          <ion-menu v-if="token && account_active" content-id="main-content" :class="['ion-menu', { 'collapsed-menu': isMenuCollapsed }]" type="overlay">
-            <ion-content>
+          <ion-menu v-if="token && account_active" content-id="main-content" :class="['ion-menu', { 'collapsed-menu': isMenuCollapsed, 'hasToBeDarkmode': hasToBeDarkmode }]" type="overlay">
+            <ion-content :class="hasToBeDarkmode ? 'hasToBeDarkmode' : ''">
               <SideBar :projects="projects" :tools="tools" :bookmarks="bookmarks" :isCollapsed="isMenuCollapsed" v-if="showSideBar" @sidebarToggled="onSidebarToggled"></SideBar>
-              <ProjectSideBar :isCollapsed="isMenuCollapsed" v-if="showProjectSideBar" @sidebarToggled="onSidebarToggled"></ProjectSideBar>
+              <ProjectSideBar :isCollapsed="isMenuCollapsed" :hasToBeDarkmode="hasToBeDarkmode" v-if="showProjectSideBar" @sidebarToggled="onSidebarToggled"></ProjectSideBar>
             </ion-content>
           </ion-menu>
           <div id="main-content">
@@ -99,6 +99,7 @@ export default defineComponent({
       theme: localStorage.getItem("themeSet"),
       store,
       isMenuCollapsed: false,
+      hasToBeDarkmode: false,
       // account_active: false
     };
   },
@@ -424,6 +425,10 @@ export default defineComponent({
       // Auto-collapse sidebar for Monaco editor
       if (this.$route.path.includes('/monaco')) {
         this.isMenuCollapsed = true;
+        this.hasToBeDarkmode = true;
+      }else{
+        this.isMenuCollapsed = false;
+        this.hasToBeDarkmode = false;
       }
     },
     goTo(location) {
@@ -446,3 +451,9 @@ export default defineComponent({
   },
 });
 </script>
+<style scoped>
+ion-menu.hasToBeDarkmode, ion-content.hasToBeDarkmode {
+  --background: #1e1e1e;/*#121212;*/
+  border-color: #1e1e1e;
+}
+</style>
