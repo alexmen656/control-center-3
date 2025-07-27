@@ -15,7 +15,7 @@
 
     <!-- Floating AI Assistant Button -->
     <div class="ai-assistant-button" @click="toggleAssistant" :class="{ active: showAssistant }">
-      <i class="ai-icon">🤖</i>
+      <i class="ai-icon">AI</i>
       <span v-if="unreadMessages > 0" class="notification-badge">{{ unreadMessages }}</span>
     </div>
 

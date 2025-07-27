@@ -18,7 +18,7 @@
 
       <div class="section-content">
         <div class="file-tree">
-          <div v-if="projectFiles.length === 0" class="no-files">
+          <div v-if="filteredProjectFiles.length === 0" class="no-files">
             No files yet
             <div class="create-buttons">
               <ion-button size="small" @click="createNewFile">
@@ -31,7 +31,7 @@
               </ion-button>
             </div>
           </div>
-          <div v-for="file in projectFiles" :key="file.path" class="file-item" @click="openFile(file)">
+          <div v-for="file in filteredProjectFiles" :key="file.path" class="file-item" @click="openFile(file)">
             <ion-icon :name="getFileIcon(file)" class="file-icon"></ion-icon>
             <span class="file-name">{{ file.name }}</span>
             <ion-button fill="clear" size="small" @click.stop="deleteFile(file)" class="delete-btn">
@@ -173,7 +173,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 
@@ -191,8 +191,20 @@ const deployments = ref([])
 const projectFiles = ref([])
 const pullRequests = ref([])
 
+// Excluded files state
+const excludedFiles = ref([".monaco_commits.json", ".monaco_git", ".monaco_initialized", ".monaco_lastcommit.json", ".monaco_staged.json"])
+const exclude = ref(true);
 // Get project name from route
 const projectName = route.params.project || 'default-project'
+
+// Computed function to filter projectFiles
+const filteredProjectFiles = computed(() => {
+  if (exclude.value) {
+    return projectFiles.value.filter(file => !excludedFiles.value.includes(file.path));
+  } else {
+    return projectFiles.value;
+  }
+});
 
 // File Explorer Methods
 const refreshFiles = async () => {
@@ -393,7 +405,7 @@ const commitChanges = async () => {
 
     if (response.data.success) {
       console.log('Commit successful:', response.data)
-      
+
       // Add to recent commits
       recentCommits.value.unshift({
         hash: response.data.commit.sha,
@@ -408,7 +420,7 @@ const commitChanges = async () => {
 
       // Refresh git status
       await refreshGitStatus()
-      
+
       alert(`Commit successful! Created commit ${response.data.commit.short_sha || response.data.commit.sha.substring(0, 7)}`)
     } else {
       throw new Error(response.data.error || 'Commit failed')
