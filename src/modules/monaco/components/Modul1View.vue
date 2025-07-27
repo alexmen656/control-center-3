@@ -12,6 +12,18 @@
       />
     </div>
     <div class="markdown-preview" v-html="renderedMarkdown" v-if="language === 'markdown'"></div>
+
+    <!-- Floating AI Assistant Button -->
+    <div class="ai-assistant" @click="toggleAssistant">
+      <span>🤖</span>
+    </div>
+
+    <!-- AI Assistant Modal -->
+    <div v-if="showAssistant" class="ai-modal">
+      <textarea v-model="userQuestion" placeholder="Stelle eine Frage..." />
+      <button @click="askAI">Frage AI</button>
+      <div v-if="aiResponse" class="ai-response">{{ aiResponse }}</div>
+    </div>
   </div>
 </template>
 
@@ -164,6 +176,39 @@ watch(code, (newCode) => {
     renderedMarkdown.value = '';
   }
 });
+
+// AI Assistant state
+const showAssistant = ref(false);
+const userQuestion = ref('');
+const aiResponse = ref('');
+
+const toggleAssistant = () => {
+  showAssistant.value = !showAssistant.value;
+};
+
+const askAI = async () => {
+  if (!userQuestion.value.trim()) {
+    aiResponse.value = 'Bitte stelle eine Frage.';
+    return;
+  }
+
+  try {
+    const response = await axios.post('ai_assistant.php', {
+      question: userQuestion.value,
+      fileContent: code.value,
+      language: language.value
+    });
+
+    if (response.data.success) {
+      aiResponse.value = response.data.answer;
+    } else {
+      aiResponse.value = response.data.message || 'Fehler bei der Verarbeitung der Anfrage.';
+    }
+  } catch (error) {
+    console.error('AI Assistant Error:', error);
+    aiResponse.value = 'Fehler bei der Verbindung zur AI.';
+  }
+};
 </script>
 
 
@@ -194,5 +239,63 @@ watch(code, (newCode) => {
   background-color: #f5f5f5;
   color: #333;
   border-left: 1px solid #ddd;
+}
+
+.ai-assistant {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  background-color: #007bff;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  z-index: 1000;
+}
+
+.ai-modal {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 300px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  z-index: 1000;
+}
+
+.ai-modal textarea {
+  width: 100%;
+  height: 80px;
+  margin-bottom: 8px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: none;
+}
+
+.ai-modal button {
+  width: 100%;
+  padding: 8px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.ai-modal .ai-response {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 </style>
