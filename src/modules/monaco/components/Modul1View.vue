@@ -22,7 +22,8 @@
     <div v-if="showAssistant" class="ai-modal">
       <textarea v-model="userQuestion" placeholder="Stelle eine Frage..." />
       <button @click="askAI">Frage AI</button>
-      <div v-if="aiResponse" class="ai-response">{{ aiResponse }}</div>
+      <button v-if="aiResponse" @click="insertAIResponse">Antwort einfügen</button>
+      <div v-if="aiResponse" class="ai-response" v-html="renderedAIResponse"></div>
     </div>
   </div>
 </template>
@@ -181,6 +182,7 @@ watch(code, (newCode) => {
 const showAssistant = ref(false);
 const userQuestion = ref('');
 const aiResponse = ref('');
+const renderedAIResponse = ref('');
 
 const toggleAssistant = () => {
   showAssistant.value = !showAssistant.value;
@@ -209,6 +211,19 @@ const askAI = async () => {
     aiResponse.value = 'Fehler bei der Verbindung zur AI.';
   }
 };
+
+const insertAIResponse = () => {
+  if (aiResponse.value) {
+    code.value += `\n\n/* AI Response */\n${aiResponse.value}`;
+    toast.success('AI-Antwort wurde eingefügt!', 30);
+  } else {
+    toast.error('Keine AI-Antwort zum Einfügen verfügbar.', 30);
+  }
+};
+
+watch(aiResponse, (newResponse) => {
+  renderedAIResponse.value = marked(newResponse || '');
+});
 </script>
 
 
@@ -263,6 +278,8 @@ const askAI = async () => {
   bottom: 80px;
   right: 20px;
   width: 300px;
+  max-height: 400px; /* Ensure the modal fits within the display */
+  overflow-y: auto; /* Add scrolling for content that exceeds max-height */
   background: white;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -289,6 +306,7 @@ const askAI = async () => {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  margin-top: 8px;
 }
 
 .ai-modal .ai-response {
@@ -297,5 +315,6 @@ const askAI = async () => {
   background-color: #f5f5f5;
   border: 1px solid #ddd;
   border-radius: 4px;
+  word-wrap: break-word; /* Ensure long words break properly */
 }
 </style>
