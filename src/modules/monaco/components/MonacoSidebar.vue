@@ -6,16 +6,16 @@
         <ion-icon name="folder-outline"></ion-icon>
         <span>Explorer</span>
         <ion-button fill="clear" size="small" @click="refreshFiles">
-          <ion-icon name="refresh-outline"></ion-icon>
+          <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
         </ion-button>
         <ion-button fill="clear" size="small" @click="createNewFile">
-          <ion-icon name="document-outline"></ion-icon>
+          <ion-icon slot="icon-only" name="document-outline"></ion-icon>
         </ion-button>
         <ion-button fill="clear" size="small" @click="createNewFolder">
-          <ion-icon name="folder-outline"></ion-icon>
+          <ion-icon slot="icon-only" name="folder-outline"></ion-icon>
         </ion-button>
       </div>
-      
+
       <div class="section-content">
         <div class="file-tree">
           <div v-if="projectFiles.length === 0" class="no-files">
@@ -48,30 +48,25 @@
         <ion-icon name="logo-github"></ion-icon>
         <span>Source Control</span>
         <ion-button fill="clear" size="small" @click="refreshGitStatus">
-          <ion-icon name="refresh-outline"></ion-icon>
+          <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
         </ion-button>
         <ion-button fill="clear" size="small" @click="pullFromGitHub" :disabled="isPulling">
-          <ion-icon name="download-outline"></ion-icon>
-          {{ isPulling ? 'Pulling...' : 'Pull' }}
+          <ion-icon slot="icon-only" name="cloud-download-outline"></ion-icon>
+          <!--{{ isPulling ? 'Pulling...' : 'Pull' }}-->
+        </ion-button>
+        <ion-button fill="clear" size="small" @click="pushToGitHub" :disabled="isPushing">
+          <ion-icon slot="icon-only" name="cloud-upload-outline"></ion-icon>
+          <!--{{ isPushing ? 'Pushing...' : 'Push' }}-->
         </ion-button>
       </div>
-      
+
       <div class="section-content">
         <!-- Commit Input -->
         <div class="commit-input-section">
-          <ion-textarea
-            v-model="commitMessage"
-            placeholder="Message (press Ctrl+Enter to commit)"
-            rows="3"
-            class="commit-textarea"
-            @keydown="handleCommitKeyDown"
-          ></ion-textarea>
-          <ion-button 
-            expand="block" 
-            size="small" 
-            @click="commitChanges"
-            :disabled="!commitMessage.trim() || isCommitting"
-          >
+          <ion-textarea v-model="commitMessage" placeholder="Message (press Ctrl+Enter to commit)" rows="3"
+            class="commit-textarea" @keydown="handleCommitKeyDown"></ion-textarea>
+          <ion-button expand="block" size="small" @click="commitChanges"
+            :disabled="!commitMessage.trim() || isCommitting">
             <ion-icon name="checkmark-outline" slot="start"></ion-icon>
             {{ isCommitting ? 'Committing...' : 'Commit' }}
           </ion-button>
@@ -142,19 +137,13 @@
         <ion-icon name="cloud-outline"></ion-icon>
         <span>Deployments</span>
         <ion-button fill="clear" size="small" @click="refreshDeployments">
-          <ion-icon name="refresh-outline"></ion-icon>
+          <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
         </ion-button>
       </div>
-      
+
       <div class="section-content">
         <!-- Deploy Button -->
-        <ion-button 
-          expand="block" 
-          color="success" 
-          size="small" 
-          @click="deployToVercel"
-          :disabled="isDeploying"
-        >
+        <ion-button expand="block" color="success" size="small" @click="deployToVercel" :disabled="isDeploying">
           <ion-icon name="rocket-outline" slot="start"></ion-icon>
           {{ isDeploying ? 'Deploying...' : 'Deploy' }}
         </ion-button>
@@ -164,7 +153,8 @@
           <div v-if="deployments.length === 0" class="no-deployments">
             No deployments yet
           </div>
-          <div v-for="deployment in deployments" :key="deployment.id" class="deployment-item" @dblclick="openDeploymentInspector(deployment)">
+          <div v-for="deployment in deployments" :key="deployment.id" class="deployment-item"
+            @dblclick="openDeploymentInspector(deployment)">
             <div class="deployment-status" :class="deployment.state">
               <ion-icon :name="getDeploymentIcon(deployment.state)"></ion-icon>
             </div>
@@ -193,6 +183,7 @@ const route = useRoute()
 const commitMessage = ref('')
 const isCommitting = ref(false)
 const isPulling = ref(false)
+const isPushing = ref(false)
 const isDeploying = ref(false)
 const changedFiles = ref([])
 const recentCommits = ref([])
@@ -291,7 +282,7 @@ const deleteFile = async (file) => {
 
 const getFileIcon = (file) => {
   if (file.type === 'directory') return 'folder-outline'
-  
+
   const ext = file.name.split('.').pop()?.toLowerCase()
   switch (ext) {
     case 'js': return 'logo-javascript'
@@ -316,7 +307,7 @@ const loadGitData = async () => {
     } else {
       changedFiles.value = []
     }
-    
+
     // Load commit history
     const commitsResponse = await axios.get(`monaco_git_api.php?project=${projectName}&action=commits`)
     if (commitsResponse.data.success) {
@@ -381,7 +372,7 @@ const handleCommitKeyDown = (event) => {
 
 const commitChanges = async () => {
   if (!commitMessage.value.trim()) return
-  
+
   isCommitting.value = true
   try {
     const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
@@ -389,7 +380,7 @@ const commitChanges = async () => {
       message: commitMessage.value,
       files: changedFiles.value
     })
-    
+
     if (response.data.success) {
       // Add to recent commits
       recentCommits.value.unshift({
@@ -398,11 +389,11 @@ const commitChanges = async () => {
         author: response.data.commit.author.name,
         date: new Date(response.data.commit.date)
       })
-      
+
       // Clear changed files and commit message
       changedFiles.value = []
       commitMessage.value = ''
-      
+
       // Refresh git status
       await refreshGitStatus()
     } else {
@@ -419,20 +410,20 @@ const commitChanges = async () => {
 const pullFromGitHub = async () => {
   console.log('Pulling from GitHub...')
   isPulling.value = true
-  
+
   try {
     const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
       action: 'pull'
     })
-    
+
     if (response.data.success) {
       console.log('Pull successful:', response.data)
       alert(`Pull erfolgreich! ${response.data.files_count} Dateien wurden aktualisiert.`)
-      
+
       // Refresh file list and git status after pull
       await refreshFiles()
       await refreshGitStatus()
-      
+
       // Notify parent component about file changes if needed
       window.dispatchEvent(new CustomEvent('monaco-files-updated', { detail: response.data }))
     } else {
@@ -447,6 +438,33 @@ const pullFromGitHub = async () => {
   }
 }
 
+const pushToGitHub = async () => {
+  console.log('Pushing to GitHub...')
+  isPushing.value = true
+
+  try {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+      action: 'push'
+    })
+
+    if (response.data.success) {
+      console.log('Push successful:', response.data)
+      alert(`Push erfolgreich! ${response.data.commits_count} Commits wurden zu GitHub gepusht.`)
+
+      // Refresh git status after push
+      await refreshGitStatus()
+    } else {
+      console.error('Push failed:', response.data.message)
+      alert('Push failed: ' + response.data.message)
+    }
+  } catch (error) {
+    console.error('Push failed:', error)
+    alert('Push failed: ' + error.message)
+  } finally {
+    isPushing.value = false
+  }
+}
+
 const stageFile = async (filePath) => {
   console.log('Staging file:', filePath)
   try {
@@ -454,7 +472,7 @@ const stageFile = async (filePath) => {
       action: 'stage',
       file: filePath
     })
-    
+
     if (response.data.success) {
       await refreshGitStatus()
     } else {
@@ -472,7 +490,7 @@ const unstageFile = async (filePath) => {
       action: 'unstage',
       file: filePath
     })
-    
+
     if (response.data.success) {
       await refreshGitStatus()
     } else {
@@ -490,7 +508,7 @@ const discardChanges = async (filePath) => {
         action: 'discard',
         file: filePath
       })
-      
+
       if (response.data.success) {
         await refreshGitStatus()
         // Refresh the file in editor if it's currently open
@@ -517,7 +535,7 @@ const createPullRequest = async () => {
   const title = prompt('Enter pull request title:')
   const baseBranch = prompt('Enter base branch (default: main):', 'main')
   const headBranch = prompt('Enter head branch (default: feature):')
-  
+
   if (title && headBranch) {
     try {
       const response = await axios.post(`monaco_pr_api.php?project=${projectName}&action=create`, {
@@ -526,7 +544,7 @@ const createPullRequest = async () => {
         head_branch: headBranch,
         body: 'Created via Monaco IDE'
       })
-      
+
       if (response.data.success) {
         await loadPullRequests()
         alert('Pull request created successfully!')
@@ -565,7 +583,7 @@ const deployToVercel = async () => {
         ref: 'main'
       }
     })
-    
+
     if (response.data.success) {
       // Add new deployment
       deployments.value.unshift({
@@ -575,7 +593,7 @@ const deployToVercel = async () => {
         commit: recentCommits.value[0]?.hash || 'latest',
         created: new Date()
       })
-      
+
       // Simulate deployment completion
       setTimeout(() => {
         if (deployments.value[0]) {
@@ -595,7 +613,7 @@ const deployToVercel = async () => {
       commit: recentCommits.value[0]?.hash || 'latest',
       created: new Date()
     })
-    
+
     setTimeout(() => {
       if (deployments.value[0]) {
         deployments.value[0].state = 'READY'
