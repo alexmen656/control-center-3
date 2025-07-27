@@ -106,12 +106,23 @@ END_REPLACE```';
         }
 
         // Add current question with file context
+        $fileContentTrimmed = trim($fileContent);
+        $isMinimalContent = empty($fileContentTrimmed) || 
+                           strlen($fileContentTrimmed) < 50 ||
+                           strpos($fileContentTrimmed, 'console.log("Hello Monaco!")') !== false ||
+                           preg_match('/^\/\/.*$/', $fileContentTrimmed) ||
+                           count(explode("\n", $fileContentTrimmed)) <= 2;
+        
         $prompt = "The user has asked the following question about a $language file:\n\n" .
                   "Question: $question\n\n" .
                   "File Content:\n$fileContent\n\n";
         
         if ($isAgentMode) {
-            $prompt .= "AGENT MODE: Please provide code changes using the REPLACE format when making modifications.";
+            if ($isMinimalContent) {
+                $prompt .= "AGENT MODE: The file content is minimal or empty. When providing complete new code (like full HTML pages), use an empty OLD_CODE or just the minimal existing content as OLD_CODE. For example:\n\n```REPLACE\nOLD_CODE:\n// Schreibe hier deinen Code...\nconsole.log(\"Hello Monaco!\")\nNEW_CODE:\n[complete new code here]\nEND_REPLACE```\n\nNEVER include END_REPLACE inside the NEW_CODE section.";
+            } else {
+                $prompt .= "AGENT MODE: Please provide code changes using the REPLACE format when making modifications. Be precise with OLD_CODE matching.";
+            }
         } else {
             $prompt .= "Provide a detailed and helpful response.";
         }
@@ -131,7 +142,8 @@ END_REPLACE```';
         $patterns = [
             '/```REPLACE\s*OLD_CODE:\s*(.*?)\s*NEW_CODE:\s*(.*?)\s*END_REPLACE```/s',
             '/```REPLACE\s*OLD_CODE:\s*(.*?)\s*NEW_CODE:\s*(.*?)\s*```/s',
-            '/REPLACE\s*OLD_CODE:\s*(.*?)\s*NEW_CODE:\s*(.*?)\s*END_REPLACE/s'
+            '/REPLACE\s*OLD_CODE:\s*(.*?)\s*NEW_CODE:\s*(.*?)\s*END_REPLACE/s',
+            '/```REPLACE\s*OLD_CODE:\s*(.*?)\s*NEW_CODE:\s*(.*?)(?=\s*(?:```|END_REPLACE))/s'
         ];
         
         foreach ($patterns as $pattern) {
@@ -139,6 +151,13 @@ END_REPLACE```';
                 foreach ($matches as $match) {
                     $oldCode = trim($match[1]);
                     $newCode = trim($match[2]);
+                    
+                    // Clean up any trailing END_REPLACE, closing backticks, or similar markers
+                    $newCode = preg_replace('/\s*(?:END_REPLACE|```)\s*$/', '', $newCode);
+                    $newCode = trim($newCode);
+                    
+                    // Additional cleanup for common issues
+                    $newCode = preg_replace('/END_REPLACE\s*\n?\s*<\//', '</', $newCode);
                     
                     // Skip empty replacements
                     if (!empty($newCode)) {

@@ -247,7 +247,7 @@ const showAssistant = ref(false);
 const userQuestion = ref('');
 const chatHistory = ref([]);
 const isTyping = ref(false);
-const agentMode = ref(false);
+const agentMode = ref(true);
 const unreadMessages = ref(0);
 const chatMessages = ref(null);
 const chatInput = ref(null);
@@ -372,13 +372,32 @@ const askAI = async () => {
 
 const applyReplacement = (replacement) => {
   const oldCode = replacement.oldCode;
-  const newCode = replacement.newCode;
+  let newCode = replacement.newCode;
   
-  // If oldCode is empty, append newCode to the end
-  if (!oldCode.trim()) {
-    code.value += '\n' + newCode;
-    toast.success('Code wurde hinzugefügt!', 30);
-    addSystemMessage('Neuer Code wurde am Ende der Datei hinzugefügt.');
+  // Clean up any trailing END_REPLACE that might have been included
+  newCode = newCode.replace(/\s*END_REPLACE\s*$/, '').trim();
+  
+  // Check if current code is minimal (empty, single line, or just comments)
+  const currentCodeTrimmed = code.value.trim();
+  const isMinimalCode = !currentCodeTrimmed || 
+                        currentCodeTrimmed.split('\n').length <= 2 ||
+                        currentCodeTrimmed.match(/^\/\/.*$/) ||
+                        currentCodeTrimmed.match(/^\/\*.*\*\/$/) ||
+                        currentCodeTrimmed === 'console.log("Hello Monaco!")';
+  
+  // If oldCode is empty or current code is minimal, replace everything or append
+  if (!oldCode.trim() || isMinimalCode) {
+    if (isMinimalCode && newCode.includes('<!DOCTYPE html>')) {
+      // Replace entire content for HTML files
+      code.value = newCode;
+      toast.success('Vollständiger Code wurde eingefügt!', 30);
+      addSystemMessage('Kompletter Code wurde erfolgreich eingefügt.');
+    } else {
+      // Append to existing code
+      code.value += (code.value.trim() ? '\n\n' : '') + newCode;
+      toast.success('Code wurde hinzugefügt!', 30);
+      addSystemMessage('Neuer Code wurde hinzugefügt.');
+    }
     return;
   }
   
@@ -387,39 +406,44 @@ const applyReplacement = (replacement) => {
     code.value = code.value.replace(oldCode, newCode);
     toast.success('Code-Änderung wurde angewendet!', 30);
     addSystemMessage('Code-Änderung wurde erfolgreich angewendet.');
-  } else {
-    // Try with normalized whitespace
-    const normalizedOldCode = oldCode.replace(/\s+/g, ' ').trim();
-    const normalizedCurrentCode = code.value.replace(/\s+/g, ' ').trim();
+    return;
+  }
+  
+  // Try with normalized whitespace
+  const normalizedOldCode = oldCode.replace(/\s+/g, ' ').trim();
+  const normalizedCurrentCode = code.value.replace(/\s+/g, ' ').trim();
+  
+  if (normalizedCurrentCode.includes(normalizedOldCode)) {
+    // Find the original text with original formatting
+    const lines = code.value.split('\n');
+    let found = false;
     
-    if (normalizedCurrentCode.includes(normalizedOldCode)) {
-      // Find the original text with original formatting
-      const lines = code.value.split('\n');
-      let found = false;
-      
-      for (let i = 0; i < lines.length; i++) {
-        const lineSection = lines.slice(i, i + oldCode.split('\n').length).join('\n');
-        if (lineSection.replace(/\s+/g, ' ').trim() === normalizedOldCode) {
-          // Replace the section
-          const beforeLines = lines.slice(0, i);
-          const afterLines = lines.slice(i + oldCode.split('\n').length);
-          code.value = [...beforeLines, newCode, ...afterLines].join('\n');
-          found = true;
-          break;
-        }
+    for (let i = 0; i < lines.length; i++) {
+      const lineSection = lines.slice(i, i + oldCode.split('\n').length).join('\n');
+      if (lineSection.replace(/\s+/g, ' ').trim() === normalizedOldCode) {
+        // Replace the section
+        const beforeLines = lines.slice(0, i);
+        const afterLines = lines.slice(i + oldCode.split('\n').length);
+        code.value = [...beforeLines, newCode, ...afterLines].join('\n');
+        found = true;
+        break;
       }
-      
-      if (found) {
-        toast.success('Code-Änderung wurde angewendet!', 30);
-        addSystemMessage('Code-Änderung wurde erfolgreich angewendet.');
-      } else {
-        toast.error('Code-Abschnitt nicht gefunden.', 30);
-        addSystemMessage('Fehler: Code-Abschnitt konnte nicht gefunden werden.');
-      }
-    } else {
-      toast.error('Code-Abschnitt nicht gefunden. Möglicherweise wurde der Code bereits geändert.', 30);
-      addSystemMessage('Fehler: Code-Abschnitt konnte nicht gefunden werden.');
     }
+    
+    if (found) {
+      toast.success('Code-Änderung wurde angewendet!', 30);
+      addSystemMessage('Code-Änderung wurde erfolgreich angewendet.');
+    } else {
+      // Fallback: append the new code
+      code.value += '\n\n' + newCode;
+      toast.success('Code wurde hinzugefügt (Fallback)!', 30);
+      addSystemMessage('Code wurde als Fallback hinzugefügt, da der ursprüngliche Abschnitt nicht gefunden wurde.');
+    }
+  } else {
+    // Fallback: append the new code
+    code.value += '\n\n' + newCode;
+    toast.success('Code wurde hinzugefügt (Fallback)!', 30);
+    addSystemMessage('Code wurde als Fallback hinzugefügt, da der ursprüngliche Abschnitt nicht gefunden wurde.');
   }
 };
 </script>
