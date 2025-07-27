@@ -25,10 +25,17 @@
         <h3>AI Assistant</h3>
         <div class="chat-controls">
           <button 
+            class="new-chat-btn" 
+            @click="startNewChat"
+            title="Neuer Chat"
+          >
+            🔄
+          </button>
+          <button 
             class="mode-toggle" 
             @click="toggleAgentMode"
             :class="{ active: agentMode }"
-            title="Agent Mode - AI can automatically edit code"
+            :title="agentMode ? 'Agent Mode - AI kann Code bearbeiten' : 'Chat Mode - Nur Antworten'"
           >
             {{ agentMode ? '🔧' : '💬' }}
           </button>
@@ -258,6 +265,13 @@ const toggleAssistant = () => {
   }
 };
 
+const startNewChat = () => {
+  chatHistory.value = [];
+  userQuestion.value = '';
+  addAIMessage('Neuer Chat gestartet! Wie kann ich dir helfen?');
+  toast.success('Neuer Chat gestartet!', 30);
+};
+
 const toggleAgentMode = () => {
   agentMode.value = !agentMode.value;
   addSystemMessage(agentMode.value ? 
@@ -360,13 +374,52 @@ const applyReplacement = (replacement) => {
   const oldCode = replacement.oldCode;
   const newCode = replacement.newCode;
   
+  // If oldCode is empty, append newCode to the end
+  if (!oldCode.trim()) {
+    code.value += '\n' + newCode;
+    toast.success('Code wurde hinzugefügt!', 30);
+    addSystemMessage('Neuer Code wurde am Ende der Datei hinzugefügt.');
+    return;
+  }
+  
+  // Try exact match first
   if (code.value.includes(oldCode)) {
     code.value = code.value.replace(oldCode, newCode);
     toast.success('Code-Änderung wurde angewendet!', 30);
     addSystemMessage('Code-Änderung wurde erfolgreich angewendet.');
   } else {
-    toast.error('Code-Abschnitt nicht gefunden. Möglicherweise wurde der Code bereits geändert.', 30);
-    addSystemMessage('Fehler: Code-Abschnitt konnte nicht gefunden werden.');
+    // Try with normalized whitespace
+    const normalizedOldCode = oldCode.replace(/\s+/g, ' ').trim();
+    const normalizedCurrentCode = code.value.replace(/\s+/g, ' ').trim();
+    
+    if (normalizedCurrentCode.includes(normalizedOldCode)) {
+      // Find the original text with original formatting
+      const lines = code.value.split('\n');
+      let found = false;
+      
+      for (let i = 0; i < lines.length; i++) {
+        const lineSection = lines.slice(i, i + oldCode.split('\n').length).join('\n');
+        if (lineSection.replace(/\s+/g, ' ').trim() === normalizedOldCode) {
+          // Replace the section
+          const beforeLines = lines.slice(0, i);
+          const afterLines = lines.slice(i + oldCode.split('\n').length);
+          code.value = [...beforeLines, newCode, ...afterLines].join('\n');
+          found = true;
+          break;
+        }
+      }
+      
+      if (found) {
+        toast.success('Code-Änderung wurde angewendet!', 30);
+        addSystemMessage('Code-Änderung wurde erfolgreich angewendet.');
+      } else {
+        toast.error('Code-Abschnitt nicht gefunden.', 30);
+        addSystemMessage('Fehler: Code-Abschnitt konnte nicht gefunden werden.');
+      }
+    } else {
+      toast.error('Code-Abschnitt nicht gefunden. Möglicherweise wurde der Code bereits geändert.', 30);
+      addSystemMessage('Fehler: Code-Abschnitt konnte nicht gefunden werden.');
+    }
   }
 };
 </script>
@@ -401,20 +454,20 @@ const applyReplacement = (replacement) => {
   border-left: 1px solid #ddd;
 }
 
-/* AI Assistant Styles */
+/* AI Assistant Styles - CMS Red Theme */
 .ai-assistant-button {
   position: fixed;
   bottom: 20px;
   right: 20px;
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ea0e2b 0%, #cf3c4f 100%);
   color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 20px rgba(234, 14, 43, 0.3);
   cursor: pointer;
   z-index: 1000;
   transition: all 0.3s ease;
@@ -423,11 +476,12 @@ const applyReplacement = (replacement) => {
 
 .ai-assistant-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 25px rgba(234, 14, 43, 0.4);
 }
 
 .ai-assistant-button.active {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: linear-gradient(135deg, #cf3c4f 0%, #ea0e2b 100%);
+  transform: scale(1.1);
 }
 
 .notification-badge {
@@ -444,25 +498,27 @@ const applyReplacement = (replacement) => {
   align-items: center;
   justify-content: center;
   font-weight: bold;
+  animation: pulse 2s infinite;
 }
 
 .ai-chat-modal {
   position: fixed;
   bottom: 90px;
   right: 20px;
-  width: 400px;
-  height: 500px;
+  width: 420px;
+  height: 550px;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 15px 50px rgba(234, 14, 43, 0.2);
   z-index: 1000;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border: 2px solid rgba(234, 14, 43, 0.1);
 }
 
 .chat-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ea0e2b 0%, #cf3c4f 100%);
   color: white;
   padding: 16px;
   display: flex;
@@ -482,6 +538,7 @@ const applyReplacement = (replacement) => {
   align-items: center;
 }
 
+.new-chat-btn,
 .mode-toggle {
   background: rgba(255, 255, 255, 0.2);
   border: none;
@@ -493,12 +550,15 @@ const applyReplacement = (replacement) => {
   transition: all 0.2s ease;
 }
 
+.new-chat-btn:hover,
 .mode-toggle:hover {
   background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
 }
 
 .mode-toggle.active {
   background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 .close-btn {
@@ -520,7 +580,7 @@ const applyReplacement = (replacement) => {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  background: #f8f9fa;
+  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
 }
 
 .message {
@@ -533,13 +593,14 @@ const applyReplacement = (replacement) => {
 }
 
 .message.user .message-content {
-  background: #667eea;
+  background: linear-gradient(135deg, #ea0e2b 0%, #cf3c4f 100%);
   color: white;
   display: inline-block;
   padding: 12px 16px;
   border-radius: 18px 18px 4px 18px;
   max-width: 80%;
   word-wrap: break-word;
+  box-shadow: 0 2px 10px rgba(234, 14, 43, 0.2);
 }
 
 .message.ai .message-content {
@@ -550,6 +611,7 @@ const applyReplacement = (replacement) => {
   border-radius: 18px 18px 18px 4px;
   max-width: 80%;
   word-wrap: break-word;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .message.system .message-content {
@@ -584,21 +646,27 @@ const applyReplacement = (replacement) => {
   border-radius: 8px;
   padding: 12px;
   margin-top: 8px;
+  border-left: 4px solid #ea0e2b;
 }
 
 .apply-btn {
-  background: #28a745;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
   color: white;
   border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
+  padding: 8px 16px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
   margin-bottom: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.2);
 }
 
 .apply-btn:hover {
-  background: #218838;
+  background: linear-gradient(135deg, #218838 0%, #1ea97a 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
 .replacement-preview {
@@ -640,13 +708,14 @@ const applyReplacement = (replacement) => {
   background: white;
   border: 1px solid #e9ecef;
   border-radius: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .typing-indicator span {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #6c757d;
+  background: #ea0e2b;
   animation: typing 1.4s infinite ease-in-out;
 }
 
@@ -668,7 +737,7 @@ const applyReplacement = (replacement) => {
 
 .chat-input textarea {
   flex: 1;
-  border: 1px solid #dee2e6;
+  border: 2px solid #dee2e6;
   border-radius: 20px;
   padding: 10px 16px;
   resize: none;
@@ -676,36 +745,40 @@ const applyReplacement = (replacement) => {
   font-family: inherit;
   min-height: 20px;
   max-height: 80px;
+  transition: border-color 0.2s ease;
 }
 
 .chat-input textarea:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+  border-color: #ea0e2b;
+  box-shadow: 0 0 0 3px rgba(234, 14, 43, 0.1);
 }
 
 .send-btn {
-  background: #667eea;
+  background: linear-gradient(135deg, #ea0e2b 0%, #cf3c4f 100%);
   color: white;
   border: none;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 16px;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(234, 14, 43, 0.2);
 }
 
 .send-btn:hover:not(:disabled) {
-  background: #5a6fd8;
+  background: linear-gradient(135deg, #cf3c4f 0%, #ea0e2b 100%);
   transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(234, 14, 43, 0.3);
 }
 
 .send-btn:disabled {
   background: #6c757d;
   cursor: not-allowed;
+  transform: none;
 }
 
 @keyframes fadeIn {
@@ -718,17 +791,27 @@ const applyReplacement = (replacement) => {
   30% { transform: translateY(-10px); }
 }
 
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 /* Responsive adjustments */
 @media (max-width: 480px) {
   .ai-chat-modal {
     width: calc(100vw - 40px);
-    height: 400px;
+    height: 450px;
     bottom: 90px;
     right: 20px;
   }
   
   .replacement-preview {
     grid-template-columns: 1fr;
+  }
+  
+  .chat-input textarea {
+    font-size: 16px; /* Prevent zoom on iOS */
   }
 }
 </style>

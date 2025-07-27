@@ -51,15 +51,46 @@ class AIAssistant {
         $systemPrompt = 'You are an expert code assistant. Answer user questions based on the provided file content and programming language.';
         
         if ($isAgentMode) {
-            $systemPrompt .= ' In agent mode, when you need to make code changes, use the following format:
+            $systemPrompt .= ' In agent mode, when you need to make code changes, you MUST use the following EXACT format for code replacements:
+
 ```REPLACE
 OLD_CODE:
-[exact code to replace]
+[exact code to replace - must match exactly including all whitespace and indentation]
 NEW_CODE:
 [new code to replace with]
 END_REPLACE```
 
-Be very precise with the OLD_CODE - it should match exactly including whitespace and indentation.';
+IMPORTANT RULES:
+1. Use this format EVERY TIME you want to make code changes in agent mode
+2. The OLD_CODE must match the existing code EXACTLY (including spaces, tabs, newlines)
+3. If adding new content, use an empty OLD_CODE or a small existing anchor point
+4. Always provide working, complete code in NEW_CODE
+5. You can have multiple REPLACE blocks in one response
+6. Explain what you are changing before or after the REPLACE blocks
+
+Example for adding HTML sections:
+```REPLACE
+OLD_CODE:
+    <h1>Welcome to trmt!</h1>
+
+    <script src="main.js"></script>
+NEW_CODE:
+    <h1>Welcome to trmt!</h1>
+
+    <!-- First section -->
+    <section class="content-section">
+        <h2>About Us</h2>
+        <p>This is our about section with important information.</p>
+    </section>
+
+    <!-- Second section -->
+    <section class="content-section">
+        <h2>Our Services</h2>
+        <p>Here we describe our services and what we offer.</p>
+    </section>
+
+    <script src="main.js"></script>
+END_REPLACE```';
         }
 
         $messages = [
@@ -77,8 +108,13 @@ Be very precise with the OLD_CODE - it should match exactly including whitespace
         // Add current question with file context
         $prompt = "The user has asked the following question about a $language file:\n\n" .
                   "Question: $question\n\n" .
-                  "File Content:\n$fileContent\n\n" .
-                  "Provide a detailed and helpful response.";
+                  "File Content:\n$fileContent\n\n";
+        
+        if ($isAgentMode) {
+            $prompt .= "AGENT MODE: Please provide code changes using the REPLACE format when making modifications.";
+        } else {
+            $prompt .= "Provide a detailed and helpful response.";
+        }
 
         $messages[] = [
             'role' => 'user',
@@ -90,14 +126,29 @@ Be very precise with the OLD_CODE - it should match exactly including whitespace
 
     private function extractCodeReplacements($response) {
         $replacements = [];
-        $pattern = '/```REPLACE\s*OLD_CODE:\s*(.*?)\s*NEW_CODE:\s*(.*?)\s*END_REPLACE```/s';
         
-        if (preg_match_all($pattern, $response, $matches, PREG_SET_ORDER)) {
-            foreach ($matches as $match) {
-                $replacements[] = [
-                    'oldCode' => trim($match[1]),
-                    'newCode' => trim($match[2])
-                ];
+        // Try different patterns to catch REPLACE blocks
+        $patterns = [
+            '/```REPLACE\s*OLD_CODE:\s*(.*?)\s*NEW_CODE:\s*(.*?)\s*END_REPLACE```/s',
+            '/```REPLACE\s*OLD_CODE:\s*(.*?)\s*NEW_CODE:\s*(.*?)\s*```/s',
+            '/REPLACE\s*OLD_CODE:\s*(.*?)\s*NEW_CODE:\s*(.*?)\s*END_REPLACE/s'
+        ];
+        
+        foreach ($patterns as $pattern) {
+            if (preg_match_all($pattern, $response, $matches, PREG_SET_ORDER)) {
+                foreach ($matches as $match) {
+                    $oldCode = trim($match[1]);
+                    $newCode = trim($match[2]);
+                    
+                    // Skip empty replacements
+                    if (!empty($newCode)) {
+                        $replacements[] = [
+                            'oldCode' => $oldCode,
+                            'newCode' => $newCode
+                        ];
+                    }
+                }
+                break; // Use first matching pattern
             }
         }
         
