@@ -78,16 +78,16 @@
           <div v-if="changedFiles.length === 0" class="no-changes">
             No changes
           </div>
-          <div v-for="file in changedFiles" :key="file.path" class="file-item">
+          <div v-for="file in changedFiles" :key="file.path || file.file" class="file-item">
             <div class="file-status" :class="file.status">{{ getStatusIcon(file.status) }}</div>
-            <div class="file-path">{{ file.path }}</div>
-            <ion-button fill="clear" size="small" @click="stageFile(file.path)" v-if="!file.staged">
+            <div class="file-path">{{ file.path || file.file }}</div>
+            <ion-button fill="clear" size="small" @click="stageFile(file.path || file.file)" v-if="!file.staged">
               <ion-icon name="add-outline"></ion-icon>
             </ion-button>
-            <ion-button fill="clear" size="small" @click="unstageFile(file.path)" v-if="file.staged">
+            <ion-button fill="clear" size="small" @click="unstageFile(file.path || file.file)" v-if="file.staged">
               <ion-icon name="remove-outline"></ion-icon>
             </ion-button>
-            <ion-button fill="clear" size="small" @click="discardChanges(file.path)" v-if="!file.staged">
+            <ion-button fill="clear" size="small" @click="discardChanges(file.path || file.file)" v-if="!file.staged">
               <ion-icon name="refresh-outline"></ion-icon>
             </ion-button>
           </div>
@@ -366,15 +366,25 @@ const loadDeployments = async () => {
 // Git Methods
 const handleCommitKeyDown = (event) => {
   if (event.ctrlKey && event.key === 'Enter') {
-    commitChanges()
+    event.preventDefault() // Prevent any default behavior
+    if (!isCommitting.value) { // Only commit if not already committing
+      commitChanges()
+    }
   }
 }
 
 const commitChanges = async () => {
   if (!commitMessage.value.trim()) return
+  if (isCommitting.value) return // Prevent multiple commits
 
   isCommitting.value = true
   try {
+    console.log('Committing changes:', {
+      message: commitMessage.value,
+      filesCount: changedFiles.value.length,
+      files: changedFiles.value.map(f => f.path || f.file || f)
+    })
+
     const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
       action: 'commit',
       message: commitMessage.value,
@@ -382,6 +392,8 @@ const commitChanges = async () => {
     })
 
     if (response.data.success) {
+      console.log('Commit successful:', response.data)
+      
       // Add to recent commits
       recentCommits.value.unshift({
         hash: response.data.commit.sha,
@@ -396,6 +408,8 @@ const commitChanges = async () => {
 
       // Refresh git status
       await refreshGitStatus()
+      
+      alert(`Commit successful! Created commit ${response.data.commit.short_sha || response.data.commit.sha.substring(0, 7)}`)
     } else {
       throw new Error(response.data.error || 'Commit failed')
     }

@@ -103,7 +103,12 @@ class GitHubAPI {
     }
     
     private function makeRequest($endpoint, $method = 'GET', $data = null) {
-        $url = "https://api.github.com/repos/{$this->owner}/{$this->repo}/" . ltrim($endpoint, '/');
+        // Handle Git API endpoints differently
+        if (strpos($endpoint, 'git/') === 0) {
+            $url = "https://api.github.com/repos/{$this->owner}/{$this->repo}/" . $endpoint;
+        } else {
+            $url = "https://api.github.com/repos/{$this->owner}/{$this->repo}/" . ltrim($endpoint, '/');
+        }
         
         $headers = [
             'Authorization: token ' . $this->token,
@@ -130,7 +135,7 @@ class GitHubAPI {
         $response = file_get_contents($url, false, $context);
         
         if ($response === false) {
-            throw new Exception("GitHub API request failed: Unable to connect");
+            throw new Exception("GitHub API request failed: Unable to connect to $url");
         }
         
         // Get HTTP response code from headers
@@ -144,6 +149,7 @@ class GitHubAPI {
         if ($httpCode >= 200 && $httpCode < 300) {
             return json_decode($response, true);
         } else {
+            error_log("GitHub API Error: HTTP {$httpCode} for URL: $url, Response: $response");
             throw new Exception("GitHub API request failed: HTTP {$httpCode}");
         }
     }
@@ -242,6 +248,80 @@ class GitHubAPI {
         }
     }
     
+    // Erstelle einen einzigen GitHub-Commit mit mehreren Dateien
+    public function createCommitWithMultipleFiles($files, $message, $branch = 'main') {
+        try {
+            error_log("Creating multi-file commit with " . count($files) . " files using Git Tree API");
+            
+            // Schritt 1: Hole die aktuelle Branch-Referenz
+            $ref = $this->makeRequest("git/refs/heads/{$branch}", 'GET');
+            $latestCommitSha = $ref['object']['sha'];
+            error_log("Latest commit SHA: $latestCommitSha");
+            
+            // Schritt 2: Hole den aktuellen Tree vom letzten Commit
+            $commit = $this->makeRequest("git/commits/{$latestCommitSha}", 'GET');
+            $baseTreeSha = $commit['tree']['sha'];
+            error_log("Base tree SHA: $baseTreeSha");
+            
+            // Schritt 3: Erstelle ein neues Tree mit allen Dateien
+            $treeData = [
+                'base_tree' => $baseTreeSha,
+                'tree' => []
+            ];
+            
+            foreach ($files as $file) {
+                error_log("Processing file for tree: " . $file['path']);
+                
+                // Erstelle Blob für jede Datei
+                $blobData = [
+                    'content' => base64_encode($file['content']),
+                    'encoding' => 'base64'
+                ];
+                
+                $blob = $this->makeRequest('git/blobs', 'POST', $blobData);
+                error_log("Created blob for " . $file['path'] . ": " . $blob['sha']);
+                
+                // Füge zur Tree-Struktur hinzu
+                $treeData['tree'][] = [
+                    'path' => $file['path'],
+                    'mode' => '100644', // Normal file mode
+                    'type' => 'blob',
+                    'sha' => $blob['sha']
+                ];
+            }
+            
+            // Erstelle das neue Tree
+            $tree = $this->makeRequest('git/trees', 'POST', $treeData);
+            error_log("Created new tree: " . $tree['sha']);
+            
+            // Schritt 4: Erstelle den Commit
+            $commitData = [
+                'message' => $message,
+                'tree' => $tree['sha'],
+                'parents' => [$latestCommitSha]
+            ];
+            
+            $newCommit = $this->makeRequest('git/commits', 'POST', $commitData);
+            error_log("Created new commit: " . $newCommit['sha']);
+            
+            // Schritt 5: Update die Branch-Referenz
+            $updateRef = $this->makeRequest("git/refs/heads/{$branch}", 'PATCH', [
+                'sha' => $newCommit['sha']
+            ]);
+            error_log("Updated branch reference successfully");
+            
+            return [
+                'success' => true,
+                'commit' => $newCommit,
+                'files_count' => count($files)
+            ];
+            
+        } catch (Exception $e) {
+            error_log("Multi-file commit failed: " . $e->getMessage());
+            throw new Exception("Fehler beim Erstellen des Multi-File-Commits: " . $e->getMessage());
+        }
+    }
+
     // Pull-Funktion um neueste Changes von GitHub zu holen
     public function pullFromGitHub($projectPath, $branch = 'main') {
         try {
@@ -288,6 +368,8 @@ class GitHubAPI {
     
     // Push-Funktion um lokale Changes zu GitHub zu pushen
     public function pushToGitHub($projectPath, $branch = 'main') {
+        error_log("GitHubAPI::pushToGitHub called for project path: $projectPath");
+        
         try {
             $pushedCommits = [];
             $errors = [];
@@ -295,6 +377,7 @@ class GitHubAPI {
             // Lese lokale Commits die noch nicht gepusht wurden
             $commitsFile = $projectPath . '/.monaco_commits.json';
             if (!file_exists($commitsFile)) {
+                error_log("No commits file found at: $commitsFile");
                 return [
                     'success' => true,
                     'commits_count' => 0,
@@ -303,6 +386,7 @@ class GitHubAPI {
             }
             
             $localCommits = json_decode(file_get_contents($commitsFile), true) ?: [];
+            error_log("Found " . count($localCommits) . " local commits");
             
             // Hole aktuelle Remote Commits
             $remoteCommits = $this->getCommits(100);
@@ -316,6 +400,8 @@ class GitHubAPI {
                 }
             }
             
+            error_log("Found " . count($commitsToPush) . " commits to push");
+            
             if (empty($commitsToPush)) {
                 return [
                     'success' => true,
@@ -326,6 +412,7 @@ class GitHubAPI {
             
             // Pushe jeden Commit zu GitHub
             foreach ($commitsToPush as $commit) {
+                error_log("Processing commit: " . $commit['hash'] . " with message: " . $commit['message']);
                 try {
                     // Validiere dass files Array existiert
                     if (!isset($commit['files']) || !is_array($commit['files'])) {
@@ -340,6 +427,8 @@ class GitHubAPI {
                         }
                     }
                     
+                    // FIXED: Sammle alle Dateien des Commits und erstelle einen einzigen GitHub-Commit
+                    $filesToCommit = [];
                     foreach ($commit['files'] as $file) {
                         $filePath = isset($file['path']) ? $file['path'] : $file;
                         $fullPath = $projectPath . '/' . $filePath;
@@ -348,20 +437,27 @@ class GitHubAPI {
                             $content = file_get_contents($fullPath);
                             $sha = null;
                             
-                            // Hole aktuelle SHA wenn Datei bereits existiert
-                            $existingFile = $this->getFileContent($filePath);
-                            if ($existingFile) {
-                                $sha = $existingFile['sha'];
-                            }
+                            // Hole aktuelle SHA wenn Datei bereits existiert (nicht mehr nötig für Tree API)
+                            // $existingFile = $this->getFileContent($filePath);
+                            // if ($existingFile) {
+                            //     $sha = $existingFile['sha'];
+                            // }
                             
-                            $this->createOrUpdateFile(
-                                $filePath,
-                                $content,
-                                $commit['message'],
-                                $sha
-                            );
+                            $filesToCommit[] = [
+                                'path' => $filePath,
+                                'content' => $content,
+                                'sha' => $sha
+                            ];
                         }
                     }
+                    
+                    // Erstelle einen einzigen Commit mit allen Dateien
+                    if (!empty($filesToCommit)) {
+                        error_log("Creating single GitHub commit with " . count($filesToCommit) . " files");
+                        $this->createCommitWithMultipleFiles($filesToCommit, $commit['message']);
+                        error_log("GitHub commit created successfully");
+                    }
+                    
                     $pushedCommits[] = $commit;
                 } catch (Exception $e) {
                     $errors[] = "Fehler bei Commit {$commit['hash']}: " . $e->getMessage();
@@ -481,9 +577,11 @@ function handlePostRequest($projectPath, $project, $userID) {
             echo json_encode(unstageFile($projectPath, $input['file']));
             break;
         case 'commit':
+            error_log("Commit request received - Project: $project, Message: " . ($input['message'] ?? 'empty') . ", Files count: " . count($input['files'] ?? []));
             echo json_encode(commitChanges($projectPath, $input['message'], $input['files'] ?? [], $project, $userID));
             break;
         case 'push':
+            error_log("Push request received - Project: $project");
             echo json_encode(pushToGitHub($projectPath, $project, $userID));
             break;
         case 'pull':
@@ -700,25 +798,42 @@ function unstageFile($projectPath, $file) {
 }
 
 function commitChanges($projectPath, $message, $files, $project, $userID) {
+    error_log("CommitChanges called - Message: $message, Files: " . json_encode($files));
+    
     // Stage all files if none specified
     if (empty($files)) {
         $changes = getLocalChanges($projectPath);
         $files = array_column($changes['changes'], 'file');
     }
     
-    // Stage the files
+    // Normalize file paths to string array
+    $filePaths = [];
     foreach ($files as $file) {
-        $filePath = is_array($file) ? $file['path'] : $file;
+        if (is_array($file)) {
+            // Handle both { file: "path" } and { path: "path" } structures
+            $filePath = $file['file'] ?? $file['path'] ?? null;
+        } else {
+            $filePath = $file;
+        }
+        
+        if ($filePath && !in_array($filePath, $filePaths)) {
+            $filePaths[] = $filePath;
+        }
+    }
+    
+    error_log("Normalized file paths: " . json_encode($filePaths));
+    
+    // Stage all files at once (instead of one by one)
+    foreach ($filePaths as $filePath) {
         stageFile($projectPath, $filePath);
     }
     
-    // Create commit
-    $commitHash = substr(md5($message . time() . json_encode($files)), 0, 40);
+    // Create single commit with all files
+    $commitHash = substr(md5($message . time() . json_encode($filePaths)), 0, 40);
     
     // Bereite die Datei-Informationen für den Commit vor
     $commitFiles = [];
-    foreach ($files as $file) {
-        $filePath = is_array($file) ? $file['path'] : $file;
+    foreach ($filePaths as $filePath) {
         $commitFiles[] = ['path' => $filePath];
     }
     
@@ -754,6 +869,8 @@ function commitChanges($projectPath, $message, $files, $project, $userID) {
     
     // Clear staged files
     file_put_contents($projectPath . '/.monaco_staged.json', '{}');
+    
+    error_log("Commit completed successfully - Hash: $commitHash, Files: " . count($filePaths));
     
     return [
         'success' => true,
@@ -806,6 +923,8 @@ function pullFromGitHubToLocal($projectPath, $project, $userID) {
 }
 
 function pushToGitHub($projectPath, $project, $userID) {
+    error_log("PushToGitHub called - Project: $project");
+    
     $credentials = getGitHubCredentials($project, $userID);
     
     if (!$credentials) {
@@ -815,6 +934,8 @@ function pushToGitHub($projectPath, $project, $userID) {
     try {
         $github = new GitHubAPI($credentials['token'], $credentials['owner'], $credentials['repo']);
         $result = $github->pushToGitHub($projectPath);
+        
+        error_log("Push completed - Commits pushed: " . ($result['commits_count'] ?? 0));
         
         // Zusätzliche Sicherheit: Entferne auch hier erfolgreich gepushte Commits
         if ($result['success'] && !empty($result['pushed_commits'])) {
@@ -837,6 +958,7 @@ function pushToGitHub($projectPath, $project, $userID) {
         return $result;
         
     } catch (Exception $e) {
+        error_log("Push failed: " . $e->getMessage());
         throw new Exception('Push to GitHub failed: ' . $e->getMessage());
     }
 }
