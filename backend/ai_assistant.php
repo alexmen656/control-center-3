@@ -9,12 +9,12 @@ class AIAssistant {
         $this->openaiApiKey = getenv('OPENAI_API_KEY') ?: '';
     }
 
-    public function processQuestion($question, $fileContent, $language, $isAgentMode = false, $chatHistory = []) {
+    public function processQuestion($question, $fileContent, $language, $isAgentMode = false, $chatHistory = [], $fileName = 'untitled') {
         if (empty($this->openaiApiKey)) {
-            return $this->generateSimpleResponse($question, $fileContent, $language);
+            return $this->generateSimpleResponse($question, $fileContent, $language, $fileName);
         }
 
-        $messages = $this->buildMessages($question, $fileContent, $language, $isAgentMode, $chatHistory);
+        $messages = $this->buildMessages($question, $fileContent, $language, $isAgentMode, $chatHistory, $fileName);
 
         $data = [
             'model' => 'gpt-4o-mini',
@@ -47,7 +47,7 @@ class AIAssistant {
         ];
     }
 
-    private function buildMessages($question, $fileContent, $language, $isAgentMode, $chatHistory) {
+    private function buildMessages($question, $fileContent, $language, $isAgentMode, $chatHistory, $fileName) {
         $systemPrompt = 'You are an expert code assistant. Answer user questions based on the provided file content and programming language.';
         
         if ($isAgentMode) {
@@ -115,7 +115,8 @@ END_REPLACE```';
         
         $prompt = "The user has asked the following question about a $language file:\n\n" .
                   "Question: $question\n\n" .
-                  "File Content:\n$fileContent\n\n";
+                  "File Content:\n$fileContent\n\n" .
+                  "File Name:\n$fileName\n\n";
         
         if ($isAgentMode) {
             if ($isMinimalContent) {
@@ -174,7 +175,7 @@ END_REPLACE```';
         return $replacements;
     }
 
-    private function buildPrompt($question, $fileContent, $language) {
+    private function buildPrompt($question, $fileContent, $fileName, $language) {
         return "The user has asked the following question about a $language file:\n\n" .
                "Question: $question\n\n" .
                "File Content:\n$fileContent\n\n" .
@@ -212,8 +213,8 @@ END_REPLACE```';
         return null;
     }
 
-    private function generateSimpleResponse($question, $fileContent, $language) {
-        return "(Fallback) Your question: '$question' about the $language file was received. File content: \n$fileContent";
+    private function generateSimpleResponse($question, $fileContent, $language, $fileName) {
+        return "(Fallback) Your question: '$question' about the $language file '$fileName' was received. File content: \n$fileContent";
     }
 }
 
@@ -228,6 +229,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $isAgentMode = isset($input['agentMode']) ? $input['agentMode'] : false;
     $chatHistory = isset($input['chatHistory']) ? $input['chatHistory'] : [];
+    $fileName = isset($input['filename']) ? $input['filename'] : 'untitled';
 
     $assistant = new AIAssistant();
     $response = $assistant->processQuestion(
@@ -235,7 +237,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $input['fileContent'], 
         $input['language'], 
         $isAgentMode, 
-        $chatHistory
+        $chatHistory,
+        $fileName
     );
 
     echo json_encode($response);

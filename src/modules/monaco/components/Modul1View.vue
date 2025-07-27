@@ -351,6 +351,7 @@ const askAI = async () => {
 
     const response = await axios.post('ai_assistant.php', {
       question: question,
+      filename: currentFile.value,
       fileContent: code.value,
       language: language.value,
       agentMode: agentMode.value,
