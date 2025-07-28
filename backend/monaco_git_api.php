@@ -1012,15 +1012,105 @@ function discardChanges($projectPath, $file, $project, $userID) {
 }
 
 function getFileDiff($projectPath, $file, $project, $userID) {
-    // Simple diff implementation
+    $filePath = $projectPath . '/' . $file;
+    
+    if (!file_exists($filePath)) {
+        return [
+            'success' => false,
+            'error' => 'File not found'
+        ];
+    }
+    
+    $currentContent = file_get_contents($filePath);
+    
+    // Get content from last commit
+    $lastCommitFile = $projectPath . '/.monaco_lastcommit.json';
+    $lastCommit = file_exists($lastCommitFile) ? json_decode(file_get_contents($lastCommitFile), true) : [];
+    
+    $originalContent = '';
+    
+    // Try to get original content from GitHub first
+    $credentials = getGitHubCredentials($project, $userID);
+    if ($credentials) {
+        try {
+            $github = new GitHubAPI($credentials['token'], $credentials['owner'], $credentials['repo']);
+            $githubFile = $github->getFileContent($file);
+            if ($githubFile) {
+                $originalContent = $githubFile['content'];
+            }
+        } catch (Exception $e) {
+            // Fall through to local backup
+        }
+    }
+    
+    // If no GitHub content, check if it's a new file
+    if (empty($originalContent) && !isset($lastCommit[$file])) {
+        $originalContent = ''; // New file
+    } else if (empty($originalContent)) {
+        // Use a simple placeholder for modified files without original content
+        $originalContent = "// Original content not available\n// This is a modified file";
+    }
+    
+    // Generate simple line-by-line diff
+    $originalLines = explode("\n", $originalContent);
+    $currentLines = explode("\n", $currentContent);
+    
+    $diff = generateLineDiff($originalLines, $currentLines);
+    
     return [
         'success' => true,
         'file' => $file,
-        'diffs' => [
-            'staged_diff' => 'Diff functionality in development',
-            'unstaged_diff' => 'Diff functionality in development'
-        ]
+        'diff' => $diff,
+        'original_content' => $originalContent,
+        'current_content' => $currentContent
     ];
+}
+
+function generateLineDiff($originalLines, $currentLines) {
+    $diff = [];
+    $maxLines = max(count($originalLines), count($currentLines));
+    
+    for ($i = 0; $i < $maxLines; $i++) {
+        $originalLine = isset($originalLines[$i]) ? $originalLines[$i] : null;
+        $currentLine = isset($currentLines[$i]) ? $currentLines[$i] : null;
+        
+        if ($originalLine === null) {
+            // Added line
+            $diff[] = [
+                'type' => 'added',
+                'lineNumber' => $i + 1,
+                'content' => $currentLine
+            ];
+        } else if ($currentLine === null) {
+            // Deleted line
+            $diff[] = [
+                'type' => 'deleted',
+                'lineNumber' => $i + 1,
+                'content' => $originalLine
+            ];
+        } else if ($originalLine !== $currentLine) {
+            // Modified line
+            $diff[] = [
+                'type' => 'deleted',
+                'lineNumber' => $i + 1,
+                'content' => $originalLine
+            ];
+            $diff[] = [
+                'type' => 'added',
+                'lineNumber' => $i + 1,
+                'content' => $currentLine
+            ];
+        } else {
+            // Unchanged line
+            $diff[] = [
+                'type' => 'unchanged',
+                'lineNumber' => $i + 1,
+                'content' => $currentLine
+            ];
+        }
+    }
+    
+    return $diff;
 }
 
 function getBranches($project, $userID) {

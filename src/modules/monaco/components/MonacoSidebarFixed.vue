@@ -50,6 +50,11 @@
         <ion-button fill="clear" size="small" @click="refreshGitStatus">
           <ion-icon name="refresh-outline"></ion-icon>
         </ion-button>
+        <ion-button fill="clear" size="small" @click="toggleAutoRefresh" 
+                    :class="{ 'auto-refresh-active': isAutoRefreshEnabled }"
+                    :title="isAutoRefreshEnabled ? 'Disable auto-refresh' : 'Enable auto-refresh'">
+          <ion-icon :name="isAutoRefreshEnabled ? 'sync' : 'sync-outline'"></ion-icon>
+        </ion-button>
       </div>
       
       <div class="section-content">
@@ -79,16 +84,16 @@
           <div v-if="changedFiles.length === 0" class="no-changes">
             No changes
           </div>
-          <div v-for="file in changedFiles" :key="file.path" class="file-item">
+          <div v-for="file in changedFiles" :key="file.path" class="file-item" @click="viewFileDiff(file.path)">
             <div class="file-status" :class="file.status">{{ getStatusIcon(file.status) }}</div>
             <div class="file-path">{{ file.path }}</div>
-            <ion-button fill="clear" size="small" @click="stageFile(file.path)" v-if="!file.staged">
+            <ion-button fill="clear" size="small" @click.stop="stageFile(file.path)" v-if="!file.staged">
               <ion-icon name="add-outline"></ion-icon>
             </ion-button>
-            <ion-button fill="clear" size="small" @click="unstageFile(file.path)" v-if="file.staged">
+            <ion-button fill="clear" size="small" @click.stop="unstageFile(file.path)" v-if="file.staged">
               <ion-icon name="remove-outline"></ion-icon>
             </ion-button>
-            <ion-button fill="clear" size="small" @click="discardChanges(file.path)" v-if="!file.staged">
+            <ion-button fill="clear" size="small" @click.stop="discardChanges(file.path)" v-if="!file.staged">
               <ion-icon name="refresh-outline"></ion-icon>
             </ion-button>
           </div>
@@ -194,6 +199,10 @@ const recentCommits = ref([])
 const deployments = ref([])
 const projectFiles = ref([])
 const pullRequests = ref([])
+
+// Live update state
+const gitRefreshInterval = ref(null)
+const isAutoRefreshEnabled = ref(true)
 
 // Get project name from route
 const projectName = route.params.project || 'default-project'
@@ -475,6 +484,236 @@ const refreshGitStatus = async () => {
   ])
 }
 
+// Live update methods
+const startLiveGitUpdates = () => {
+  if (gitRefreshInterval.value) {
+    clearInterval(gitRefreshInterval.value)
+  }
+  
+  if (isAutoRefreshEnabled.value) {
+    // Refresh git status every 2 seconds when auto-refresh is enabled
+    gitRefreshInterval.value = setInterval(() => {
+      loadGitData()
+    }, 2000)
+  }
+}
+
+const stopLiveGitUpdates = () => {
+  if (gitRefreshInterval.value) {
+    clearInterval(gitRefreshInterval.value)
+    gitRefreshInterval.value = null
+  }
+}
+
+const toggleAutoRefresh = () => {
+  isAutoRefreshEnabled.value = !isAutoRefreshEnabled.value
+  if (isAutoRefreshEnabled.value) {
+    startLiveGitUpdates()
+  } else {
+    stopLiveGitUpdates()
+  }
+}
+
+// File diff viewer
+const viewFileDiff = async (filePath) => {
+  try {
+    console.log('Loading diff for file:', filePath)
+    const response = await axios.get(`/backend/monaco_git_api.php?project=${projectName}&action=diff&file=${filePath}`)
+    
+    if (response.data.success) {
+      // Create diff viewer window
+      createDiffViewer(filePath, response.data.diff)
+    } else {
+      console.error('Failed to load diff:', response.data.error)
+      alert('Failed to load diff: ' + (response.data.error || 'Unknown error'))
+    }
+  } catch (error) {
+    console.error('Error loading diff:', error)
+    alert('Error loading diff: ' + error.message)
+  }
+}
+
+const createDiffViewer = (filePath, diff) => {
+  // Create a modal window for diff viewing
+  const modal = document.createElement('div')
+  modal.className = 'diff-viewer-modal'
+  modal.innerHTML = `
+    <div class="diff-viewer-content">
+      <div class="diff-viewer-header">
+        <h3>Changes in ${filePath}</h3>
+        <button class="close-diff-btn" onclick="this.closest('.diff-viewer-modal').remove()">×</button>
+      </div>
+      <div class="diff-viewer-body">
+        <div class="diff-content">
+          ${generateDiffHTML(diff)}
+        </div>
+      </div>
+    </div>
+  `
+  
+  // Add styles if not already present
+  if (!document.querySelector('#diff-viewer-styles')) {
+    const style = document.createElement('style')
+    style.id = 'diff-viewer-styles'
+    style.textContent = `
+      .diff-viewer-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .diff-viewer-content {
+        background: var(--vscode-editor-background, #1e1e1e);
+        color: var(--vscode-editor-foreground, #d4d4d4);
+        border-radius: 8px;
+        width: 90%;
+        max-width: 1200px;
+        height: 80%;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      }
+      
+      .diff-viewer-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--vscode-panel-border, #464647);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .diff-viewer-header h3 {
+        margin: 0;
+        font-size: 16px;
+        color: var(--vscode-foreground, #cccccc);
+      }
+      
+      .close-diff-btn {
+        background: none;
+        border: none;
+        color: var(--vscode-foreground, #cccccc);
+        font-size: 20px;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+      }
+      
+      .close-diff-btn:hover {
+        background: var(--vscode-button-hoverBackground, #464647);
+      }
+      
+      .diff-viewer-body {
+        flex: 1;
+        overflow: auto;
+        padding: 0;
+      }
+      
+      .diff-content {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+      
+      .diff-line {
+        display: flex;
+        padding: 2px 0;
+        margin: 0;
+        white-space: pre;
+      }
+      
+      .diff-line-number {
+        width: 60px;
+        text-align: right;
+        padding: 0 10px;
+        color: var(--vscode-editorLineNumber-foreground, #858585);
+        background: var(--vscode-editorGutter-background, #1e1e1e);
+        border-right: 1px solid var(--vscode-panel-border, #464647);
+        flex-shrink: 0;
+      }
+      
+      .diff-line-content {
+        flex: 1;
+        padding: 0 10px;
+        overflow-x: auto;
+      }
+      
+      .diff-line.added {
+        background: var(--vscode-diffEditor-insertedTextBackground, rgba(155, 185, 85, 0.2));
+      }
+      
+      .diff-line.deleted {
+        background: var(--vscode-diffEditor-removedTextBackground, rgba(255, 0, 0, 0.2));
+      }
+      
+      .diff-line.unchanged {
+        background: var(--vscode-editor-background, #1e1e1e);
+      }
+      
+      .diff-line.added .diff-line-content {
+        color: var(--vscode-diffEditor-insertedTextForeground, #9bb955);
+      }
+      
+      .diff-line.deleted .diff-line-content {
+        color: var(--vscode-diffEditor-removedTextForeground, #ff0000);
+      }
+    `
+    
+    document.head.appendChild(style)
+  }
+  
+  document.body.appendChild(modal)
+  
+  // Close modal when clicking outside
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove()
+    }
+  })
+  
+  // Close modal with Escape key
+  const handleEscape = (e) => {
+    if (e.key === 'Escape') {
+      modal.remove()
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }
+  document.addEventListener('keydown', handleEscape)
+}
+
+const generateDiffHTML = (diff) => {
+  return diff.map(line => {
+    const lineClass = line.type === 'added' ? 'added' : 
+                     line.type === 'deleted' ? 'deleted' : 'unchanged'
+    const lineSymbol = line.type === 'added' ? '+' : 
+                      line.type === 'deleted' ? '-' : ' '
+    
+    return `
+      <div class="diff-line ${lineClass}">
+        <div class="diff-line-number">${line.lineNumber}</div>
+        <div class="diff-line-content">${lineSymbol} ${escapeHtml(line.content || '')}</div>
+      </div>
+    `
+  }).join('')
+}
+
+const escapeHtml = (text) => {
+  const div = document.createElement('div')
+  div.textContent = text
+  return div.innerHTML
+}
+
 // Pull Request Methods
 const createPullRequest = async () => {
   const title = prompt('Enter pull request title:')
@@ -643,6 +882,29 @@ onMounted(async () => {
     loadPullRequests(),
     loadDeployments()
   ])
+  
+  // Start live git updates
+  startLiveGitUpdates()
+  
+  // Listen for file save events from Monaco editor to trigger git refresh
+  window.addEventListener('monaco-file-saved', () => {
+    console.log('File saved, refreshing git status...')
+    loadGitData()
+  })
+  
+  // Listen for file changes in general
+  window.addEventListener('monaco-file-changed', () => {
+    console.log('File changed, refreshing git status...')
+    loadGitData()
+  })
+})
+
+// Cleanup on unmount
+import { onUnmounted } from 'vue'
+onUnmounted(() => {
+  stopLiveGitUpdates()
+  window.removeEventListener('monaco-file-saved', loadGitData)
+  window.removeEventListener('monaco-file-changed', loadGitData)
 })
 </script>
 
@@ -689,6 +951,11 @@ onMounted(async () => {
   margin: 0;
   height: 20px;
   width: 20px;
+}
+
+.section-header ion-button.auto-refresh-active {
+  --color: var(--vscode-button-foreground, #ffffff);
+  --background: var(--vscode-button-background, #0e639c);
 }
 
 .section-content {

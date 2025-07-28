@@ -165,6 +165,14 @@ const saveFile = async (filename, content) => {
     
     if (response.data.success) {
       console.log('File saved successfully')
+      // Emit event to notify sidebar about file save
+      window.dispatchEvent(new CustomEvent('monaco-file-saved', { 
+        detail: { 
+          filename, 
+          content,
+          projectName 
+        } 
+      }))
     }
   } catch (error) {
     console.error('Failed to save file:', error)
@@ -173,6 +181,7 @@ const saveFile = async (filename, content) => {
 
 // Auto-save when code changes
 let saveTimeout = null
+let lastSavedContent = code.value
 watch(code, (newCode) => {
   if (saveTimeout) {
     clearTimeout(saveTimeout)
@@ -180,7 +189,19 @@ watch(code, (newCode) => {
   
   saveTimeout = setTimeout(() => {
     saveFile(currentFile.value, newCode)
+    lastSavedContent = newCode
   }, 1000) // Auto-save after 1 second of inactivity
+  
+  // Emit change event immediately for live git updates
+  if (newCode !== lastSavedContent) {
+    window.dispatchEvent(new CustomEvent('monaco-file-changed', { 
+      detail: { 
+        filename: currentFile.value, 
+        content: newCode,
+        projectName 
+      } 
+    }))
+  }
 })
 
 // Initialize project
