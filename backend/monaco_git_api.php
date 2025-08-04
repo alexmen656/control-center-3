@@ -616,10 +616,28 @@ function handlePostRequest($projectPath, $project, $userID) {
 function getLocalChanges($projectPath) {
     // Compare local files with staged state stored in metadata
     $stagedFile = $projectPath . '/.monaco_staged.json';
-    $staged = file_exists($stagedFile) ? json_decode(file_get_contents($stagedFile), true) : [];
+    $staged = [];
+    if (file_exists($stagedFile)) {
+        $fileContent = file_get_contents($stagedFile);
+        if ($fileContent !== false) {
+            $decodedStaged = json_decode($fileContent, true);
+            if (is_array($decodedStaged)) {
+                $staged = $decodedStaged;
+            }
+        }
+    }
     
     $lastCommitFile = $projectPath . '/.monaco_lastcommit.json';
-    $lastCommit = file_exists($lastCommitFile) ? json_decode(file_get_contents($lastCommitFile), true) : [];
+    $lastCommit = [];
+    if (file_exists($lastCommitFile)) {
+        $fileContent = file_get_contents($lastCommitFile);
+        if ($fileContent !== false) {
+            $decodedLastCommit = json_decode($fileContent, true);
+            if (is_array($decodedLastCommit)) {
+                $lastCommit = $decodedLastCommit;
+            }
+        }
+    }
     
     $changes = [];
     
@@ -841,6 +859,32 @@ function commitChanges($projectPath, $message, $files, $project, $userID) {
     
     error_log("Normalized file paths: " . json_encode($filePaths));
     
+    // **WICHTIG: Verhindere Commits mit 0 Änderungen**
+    if (empty($filePaths)) {
+        return [
+            'success' => false,
+            'error' => 'No changes to commit',
+            'message' => 'Es gibt keine Änderungen zum Committen'
+        ];
+    }
+    
+    // Prüfe ob die Dateien tatsächlich Änderungen haben
+    $actualChanges = getLocalChanges($projectPath);
+    $changedFiles = array_column($actualChanges['changes'], 'file');
+    
+    // Filtere nur Dateien mit tatsächlichen Änderungen
+    $validFilePaths = array_intersect($filePaths, $changedFiles);
+    
+    if (empty($validFilePaths)) {
+        return [
+            'success' => false,
+            'error' => 'No actual changes detected',
+            'message' => 'Die ausgewählten Dateien haben keine Änderungen zum Committen'
+        ];
+    }
+    
+    $filePaths = array_values($validFilePaths); // Re-index array
+    
     // Stage all files at once (instead of one by one)
     foreach ($filePaths as $filePath) {
         stageFile($projectPath, $filePath);
@@ -926,21 +970,23 @@ function pullFromGitHubToLocal($projectPath, $project, $userID) {
         $github = new GitHubAPI($credentials['token'], $credentials['owner'], $credentials['repo']);
         $result = $github->pullFromGitHub($projectPath);
         
-        // Update local metadata after successful pull
+        // **WICHTIG: Nach Pull die lastcommit.json mit aktuellen File-Hashes aktualisieren**
+        // Das verhindert, dass gepullte Dateien als "geändert" angezeigt werden
         $lastCommitFile = $projectPath . '/.monaco_lastcommit.json';
-        $stagedFile = $projectPath . '/.monaco_staged.json';
+        $lastCommit = [];
+        $projectFiles = getProjectFiles($projectPath);
+        
+        foreach ($projectFiles as $file) {
+            $relativePath = str_replace($projectPath . '/', '', $file);
+            if (strpos($relativePath, '.monaco_') === 0) continue; // Skip metadata files
+            $lastCommit[$relativePath] = md5(file_get_contents($file));
+        }
+        
+        file_put_contents($lastCommitFile, json_encode($lastCommit, JSON_PRETTY_PRINT));
         
         // Clear staged changes since we pulled fresh content
+        $stagedFile = $projectPath . '/.monaco_staged.json';
         file_put_contents($stagedFile, '{}');
-        
-        // Update last commit metadata
-        $commitData = [
-            'hash' => 'pulled-' . time(),
-            'message' => 'Pulled from GitHub',
-            'timestamp' => time(),
-            'files' => $result['pulled_files']
-        ];
-        file_put_contents($lastCommitFile, json_encode($commitData));
         
         return $result;
         
