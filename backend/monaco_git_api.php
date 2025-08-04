@@ -528,32 +528,34 @@ class GitHubAPI {
     }
 }
 
-try {
-    $userID = getUserIDFromToken();
-    $project = $_GET['project'] ?? 'default-project';
-    $action = $_GET['action'] ?? '';
-    
-    $projectPath = getProjectPath($project, $userID);
-    
-    if (!is_dir($projectPath)) {
-        // Create project directory if it doesn't exist
-        mkdir($projectPath, 0755, true);
+if (basename($_SERVER['PHP_SELF']) === 'monaco_git_api.php') {
+    try {
+        $userID = getUserIDFromToken();
+        $project = $_GET['project'] ?? 'default-project';
+        $action = $_GET['action'] ?? '';
+        
+        $projectPath = getProjectPath($project, $userID);
+        
+        if (!is_dir($projectPath)) {
+            // Create project directory if it doesn't exist
+            mkdir($projectPath, 0755, true);
+        }
+        
+        switch ($_SERVER['REQUEST_METHOD']) {
+            case 'GET':
+                handleGetRequest($action, $projectPath, $project, $userID);
+                break;
+            case 'POST':
+                handlePostRequest($projectPath, $project, $userID);
+                break;
+            default:
+                throw new Exception('Method not allowed');
+        }
+        
+    } catch (Exception $e) {
+        http_response_code(400);
+        echo json_encode(['error' => $e->getMessage()]);
     }
-    
-    switch ($_SERVER['REQUEST_METHOD']) {
-        case 'GET':
-            handleGetRequest($action, $projectPath, $project, $userID);
-            break;
-        case 'POST':
-            handlePostRequest($projectPath, $project, $userID);
-            break;
-        default:
-            throw new Exception('Method not allowed');
-    }
-    
-} catch (Exception $e) {
-    http_response_code(400);
-    echo json_encode(['error' => $e->getMessage()]);
 }
 
 function handleGetRequest($action, $projectPath, $project, $userID) {

@@ -224,6 +224,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
+import { ToastService } from '@/services/ToastService'
 
 const route = useRoute()
 
@@ -314,10 +315,10 @@ const createNewFile = async () => {
       })
       await refreshFiles()
       openFile({ name: fileName, path: fileName })
-      alert(`File "${fileName}" created successfully!`)
+      ToastService.success(`File "${fileName}" created successfully!`)
     } catch (error) {
       console.error('Failed to create file:', error)
-      alert('Failed to create file: ' + (error.response?.data?.message || error.message))
+      ToastService.error('Failed to create file: ' + (error.response?.data?.message || error.message))
     }
   }
 }
@@ -332,10 +333,10 @@ const createNewFolder = async () => {
         path: folderName
       })
       await refreshFiles()
-      alert(`Folder "${folderName}" created successfully!`)
+      ToastService.success(`Folder "${folderName}" created successfully!`)
     } catch (error) {
       console.error('Failed to create folder:', error)
-      alert('Failed to create folder: ' + error.response?.data?.message || error.message)
+      ToastService.error('Failed to create folder: ' + error.response?.data?.message || error.message)
     }
   }
 }
@@ -350,7 +351,7 @@ const deleteFile = async (file) => {
       await refreshGitStatus()
     } catch (error) {
       console.error('Failed to delete file:', error)
-      alert('Failed to delete file: ' + error.message)
+      ToastService.error('Failed to delete file: ' + error.message)
     }
   }
 }
@@ -484,13 +485,13 @@ const commitChanges = async () => {
       // Refresh git status
       await refreshGitStatus()
 
-      alert(`Commit successful! Created commit ${response.data.commit.short_sha || response.data.commit.sha.substring(0, 7)}`)
+      ToastService.success(`Commit successful! Created commit ${response.data.commit.short_sha || response.data.commit.sha.substring(0, 7)}`)
     } else {
       throw new Error(response.data.error || 'Commit failed')
     }
   } catch (error) {
     console.error('Commit failed:', error)
-    alert('Commit failed: ' + error.message)
+    ToastService.error('Commit failed: ' + error.message)
   } finally {
     isCommitting.value = false
   }
@@ -507,7 +508,7 @@ const pullFromGitHub = async () => {
 
     if (response.data.success) {
       console.log('Pull successful:', response.data)
-      alert(`Pull erfolgreich! ${response.data.files_count} ${response.data.files_count === 1 ? 'Datei wurde' : 'Dateien wurden'} aktualisiert.`)
+      ToastService.success(`Pull erfolgreich! ${response.data.files_count} ${response.data.files_count === 1 ? 'Datei wurde' : 'Dateien wurden'} aktualisiert.`)
 
       // Refresh file list and git status after pull
       await refreshFiles()
@@ -517,11 +518,11 @@ const pullFromGitHub = async () => {
       window.dispatchEvent(new CustomEvent('monaco-files-updated', { detail: response.data }))
     } else {
       console.error('Pull failed:', response.data.message)
-      alert('Pull failed: ' + response.data.message)
+      ToastService.error('Pull failed: ' + response.data.message)
     }
   } catch (error) {
     console.error('Pull failed:', error)
-    alert('Pull failed: ' + error.message)
+    ToastService.error('Pull failed: ' + error.message)
   } finally {
     isPulling.value = false
   }
@@ -538,7 +539,7 @@ const pushToGitHub = async () => {
 
     if (response.data.success) {
       console.log('Push successful:', response.data)
-      alert(`Push erfolgreich! ${response.data.commits_count} ${response.data.commits_count == 1 ? 'Commit wurde' : 'Commits wurden'} zu GitHub gepusht.`)
+      ToastService.success(`Push erfolgreich! ${response.data.commits_count} ${response.data.commits_count == 1 ? 'Commit wurde' : 'Commits wurden'} zu GitHub gepusht.`)
 
       // Refresh git status after push
       await refreshGitStatus()
@@ -549,12 +550,12 @@ const pushToGitHub = async () => {
       if (response.data.error && response.data.error.includes('conflict')) {
         openMergeEditor(response.data.conflicts || [])
       } else {
-        alert('Push failed: ' + response.data.message)
+        ToastService.error('Push failed: ' + response.data.message)
       }
     }
   } catch (error) {
     console.error('Push failed:', error)
-    alert('Push failed: ' + error.message)
+    ToastService.error('Push failed: ' + error.message)
   } finally {
     isPushing.value = false
   }
@@ -576,7 +577,7 @@ const resolveConflict = async (filename) => {
     window.dispatchEvent(new CustomEvent('monaco-open-file', { 
       detail: { path: filename, name: filename } 
     }))
-    alert(`Opening ${filename} for manual conflict resolution. Look for conflict markers: <<<<<<< HEAD, =======, >>>>>>> branch`)
+    ToastService.info(`Opening ${filename} for manual conflict resolution. Look for conflict markers: <<<<<<< HEAD, =======, >>>>>>> branch`)
     closeMergeEditor()
   } catch (error) {
     console.error('Failed to resolve conflict:', error)
@@ -591,15 +592,15 @@ const autoResolveConflicts = async () => {
     })
     
     if (response.data.success) {
-      alert('Conflicts auto-resolved successfully! You can now try pushing again.')
+      ToastService.success('Conflicts auto-resolved successfully! You can now try pushing again.')
       closeMergeEditor()
       await fetchGitStatus()
     } else {
-      alert('Auto-resolve failed: ' + response.data.message)
+      ToastService.error('Auto-resolve failed: ' + response.data.message)
     }
   } catch (error) {
     console.error('Auto-resolve failed:', error)
-    alert('Auto-resolve failed: ' + error.message)
+    ToastService.error('Auto-resolve failed: ' + error.message)
   }
 }
 
@@ -704,11 +705,11 @@ const viewFileDiff = async (filePath) => {
       showDiffViewer.value = true
     } else {
       console.error('Failed to load diff:', response.data.error)
-      alert('Failed to load diff: ' + (response.data.error || 'Unknown error'))
+      ToastService.error('Failed to load diff: ' + (response.data.error || 'Unknown error'))
     }
   } catch (error) {
     console.error('Error loading diff:', error)
-    alert('Error loading diff: ' + error.message)
+    ToastService.error('Error loading diff: ' + error.message)
   }
 }
 
@@ -734,13 +735,13 @@ const createPullRequest = async () => {
 
       if (response.data.success) {
         await loadPullRequests()
-        alert('Pull request created successfully!')
+        ToastService.success('Pull request created successfully!')
       } else {
-        alert('Failed to create pull request: ' + response.data.message)
+        ToastService.error('Failed to create pull request: ' + response.data.message)
       }
     } catch (error) {
       console.error('Failed to create pull request:', error)
-      alert('Failed to create pull request: ' + (error.response?.data?.message || error.message))
+      ToastService.error('Failed to create pull request: ' + (error.response?.data?.message || error.message))
     }
   }
 }

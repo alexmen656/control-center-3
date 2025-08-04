@@ -9,23 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once 'config.php';
 require_once 'jwt_helper.php';
+require_once 'head.php';
 require_once 'monaco_git_api.php';
-
-function getUserIDFromToken() {
-    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
-        $authorization = $_SERVER['HTTP_AUTHORIZATION'];
-        if (strpos($authorization, 'Bearer ') === 0) {
-            $token = substr($authorization, 7);
-            $decoded = verifyJWT($token);
-            if ($decoded) {
-                return $decoded['user_id'];
-            }
-        }
-    }
-    
-    // Fallback für Entwicklung
-    return 1;
-}
 
 function sendResponse($success, $data = null, $message = null) {
     header('Content-Type: application/json');
@@ -37,32 +22,19 @@ function sendResponse($success, $data = null, $message = null) {
     exit;
 }
 
-function getPDO() {
-    global $servername, $username, $password, $dbname;
+function getGitHubTokenForProject($user_id, $project_name) {
+    $escaped_user_id = escape_string($user_id);
+    $escaped_project = escape_string($project_name);
     
-    try {
-        $dsn = "mysql:host=$servername;dbname=$dbname;charset=utf8mb4";
-        $pdo = new PDO($dsn, $username, $password, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false
-        ]);
-        return $pdo;
-    } catch (PDOException $e) {
-        throw new Exception("Datenbankverbindung fehlgeschlagen: " . $e->getMessage());
-    }
-}
-
-function getGitHubTokenForProject($pdo, $user_id, $project_name) {
-    $stmt = $pdo->prepare("
-        SELECT gt.token, pr.github_repo
-        FROM github_tokens gt
-        JOIN project_repo pr ON gt.user_id = pr.user_id
-        WHERE gt.user_id = ? AND pr.project_name = ?
-        LIMIT 1
-    ");
-    $stmt->execute([$user_id, $project_name]);
-    return $stmt->fetch();
+    $sql = "SELECT gt.github_token as token, pr.repo_full_name as github_repo
+            FROM control_center_github_tokens gt
+            JOIN control_center_project_repos pr ON gt.userid = pr.user_id
+            WHERE gt.userid = '$escaped_user_id' 
+            AND pr.project = '$escaped_project'
+            LIMIT 1";
+    
+    $result = query($sql);
+    return $result ? mysqli_fetch_assoc($result) : null;
 }
 
 try {
@@ -77,14 +49,20 @@ try {
         sendResponse(false, null, 'Projektname erforderlich');
     }
     
-    $pdo = getPDO();
-    $github_data = getGitHubTokenForProject($pdo, $user_id, $project_name);
+    $pdo = null; // Remove PDO usage
+    $github_data = getGitHubTokenForProject($user_id, $project_name);
     
     if (!$github_data || !$github_data['token'] || !$github_data['github_repo']) {
         sendResponse(false, null, 'GitHub Token oder Repository nicht gefunden');
     }
     
-    $github_api = new GitHubAPI($github_data['token'], $github_data['github_repo']);
+    // Split repo_full_name into owner/repo
+    $repoParts = explode('/', $github_data['github_repo']);
+    if (count($repoParts) !== 2) {
+        sendResponse(false, null, 'Ungültiges Repository-Format');
+    }
+    
+    $github_api = new GitHubAPI($github_data['token'], $repoParts[0], $repoParts[1]);
     
     switch ($action) {
         case 'create':

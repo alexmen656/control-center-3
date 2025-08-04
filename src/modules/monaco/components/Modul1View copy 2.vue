@@ -21,104 +21,170 @@
           </div>
         </div>
 
-        <!-- Action Grid -->
-        <div class="action-grid">
-          <!-- Quick Start Card -->
-          <div class="action-card primary">
-            <div class="card-header">
-              <div class="card-icon">
-                <ion-icon name="rocket-outline"></ion-icon>
+        <!-- Desktop Grid Layout -->
+        <div class="desktop-grid">
+          
+          <!-- Left Column -->
+          <div class="grid-column">
+            <!-- Schnellstart Card -->
+            <div class="action-card primary">
+              <div class="card-header">
+                <div class="card-icon">🚀</div>
+                <h3>Schnellstart</h3>
               </div>
-              <h3>Schnellstart</h3>
+              <div class="card-actions">
+                <button @click="createNewFile" class="action-button primary">
+                  <span>📄</span>
+                  Neue Datei
+                </button>
+                <button @click="openFolder" class="action-button">
+                  <span>📁</span>
+                  Ordner öffnen
+                </button>
+                <button @click="cloneRepository" class="action-button">
+                  <span>📥</span>
+                  Repository klonen
+                </button>
+              </div>
             </div>
-            <div class="card-actions">
-              <button @click="createNewFile" class="action-button primary">
-                <ion-icon name="document-outline"></ion-icon>
-                <span>Neue Datei</span>
-              </button>
-              <button @click="openFolder" class="action-button">
-                <ion-icon name="folder-outline"></ion-icon>
-                <span>Ordner öffnen</span>
-              </button>
-              <button @click="cloneRepository" class="action-button">
-                <ion-icon name="git-branch-outline"></ion-icon>
-                <span>Repository klonen</span>
-              </button>
+
+            <!-- KI Assistent Card -->
+            <div class="action-card ai">
+              <div class="card-header">
+                <div class="card-icon ai-icon">🤖</div>
+                <h3>KI-Assistent</h3>
+              </div>
+              <div class="card-actions">
+                <button @click="showAIHelp" class="action-button ai">
+                  <span>💬</span>
+                  KI-Chat starten
+                </button>
+                <button @click="showAIFeatures" class="action-button">
+                  <span>⚡</span>
+                  Features erkunden
+                </button>
+                <button @click="showCodeGeneration" class="action-button">
+                  <span>🔧</span>
+                  Code-Generation
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- Recent Files Card -->
-          <div class="action-card">
-            <div class="card-header">
-              <div class="card-icon">
-                <ion-icon name="time-outline"></ion-icon>
+          <!-- Center Column -->
+          <div class="grid-column">
+            <!-- Kürzlich verwendet Card -->
+            <div class="action-card">
+              <div class="card-header">
+                <div class="card-icon">⏱️</div>
+                <h3>Kürzlich verwendet</h3>
               </div>
-              <h3>Kürzlich verwendet</h3>
-            </div>
-            <div class="recent-files" v-if="recentFiles.length > 0">
-              <div v-for="file in recentFiles" :key="file.name" 
-                   @click="loadFile(file.name)" 
-                   class="recent-item">
-                <div class="file-icon">
-                  <ion-icon :name="getFileIcon(file.name)" :style="{color: getFileColor(file.name)}"></ion-icon>
+              <div class="recent-files">
+                <div v-if="recentFiles.length > 0">
+                  <div 
+                    v-for="file in recentFiles" 
+                    :key="file.name" 
+                    @click="loadFile(file.name)"
+                    class="recent-item"
+                  >
+                    <div class="file-icon" :style="{ color: getFileIconColor(file.name) }">
+                      {{ getFileIconEmoji(file.name) }}
+                    </div>
+                    <div class="file-info">
+                      <div class="file-name">{{ file.name }}</div>
+                      <div class="file-path">~{{ projectName }}</div>
+                    </div>
+                    <div class="arrow-icon">→</div>
+                  </div>
                 </div>
-                <div class="file-info">
-                  <span class="file-name">{{ file.name }}</span>
-                  <span class="file-path">~{{ projectName }}</span>
+                <div v-else class="empty-state">
+                  <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;">📂</div>
+                  <p>Keine kürzlich verwendeten Dateien</p>
                 </div>
-                <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
               </div>
             </div>
-            <div v-else class="empty-state">
-              <ion-icon name="document-outline"></ion-icon>
-              <p>Keine kürzlich verwendeten Dateien</p>
+
+            <!-- Git Integration Card -->
+            <div class="action-card">
+              <div class="card-header">
+                <div class="card-icon">🔧</div>
+                <h3>Entwicklung</h3>
+              </div>
+              <div class="card-actions">
+                <button @click="showGitHelp" class="action-button">
+                  <span>📊</span>
+                  Git-Integration
+                </button>
+                <button @click="showEditorFeatures" class="action-button">
+                  <span>⚙️</span>
+                  Editor-Features
+                </button>
+                <button @click="showDebugging" class="action-button">
+                  <span>🐛</span>
+                  Debugging
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- AI Assistant Card -->
-          <div class="action-card ai">
-            <div class="card-header">
-              <div class="card-icon ai-icon">
-                <ion-icon name="sparkles-outline"></ion-icon>
+          <!-- Right Column -->
+          <div class="grid-column">
+            <!-- Projekt-Info Card -->
+            <div class="action-card">
+              <div class="card-header">
+                <div class="card-icon">📋</div>
+                <h3>Projekt: {{ projectName }}</h3>
               </div>
-              <h3>KI-Assistent</h3>
+              <div class="project-stats">
+                <div class="stat-item">
+                  <span class="stat-value">{{ recentFiles.length }}</span>
+                  <span class="stat-label">Dateien</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">JavaScript</span>
+                  <span class="stat-label">Hauptsprache</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">Aktiv</span>
+                  <span class="stat-label">Status</span>
+                </div>
+              </div>
+              <div class="card-actions">
+                <button @click="showProjectSettings" class="action-button">
+                  <span>⚙️</span>
+                  Projekt-Einstellungen
+                </button>
+                <button @click="showProjectStats" class="action-button">
+                  <span>📊</span>
+                  Statistiken
+                </button>
+              </div>
             </div>
-            <div class="card-actions">
-              <button @click="showAIHelp" class="action-button ai">
-                <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
-                <span>Chat starten</span>
-              </button>
-              <button @click="showGitHelp" class="action-button">
-                <ion-icon name="git-commit-outline"></ion-icon>
-                <span>Git-Hilfe</span>
-              </button>
-              <button @click="showEditorFeatures" class="action-button">
-                <ion-icon name="flash-outline"></ion-icon>
-                <span>Features</span>
-              </button>
-            </div>
-          </div>
-        </div>
 
-        <!-- Keyboard Shortcuts -->
-        <div class="shortcuts-section">
-          <h4>Tastenkürzel</h4>
-          <div class="shortcuts-grid">
-            <div class="shortcut-item">
-              <kbd>Ctrl</kbd> + <kbd>S</kbd>
-              <span>Speichern</span>
-            </div>
-            <div class="shortcut-item">
-              <kbd>Ctrl</kbd> + <kbd>N</kbd>
-              <span>Neue Datei</span>
-            </div>
-            <div class="shortcut-item">
-              <kbd>Ctrl</kbd> + <kbd>P</kbd>
-              <span>Datei suchen</span>
-            </div>
-            <div class="shortcut-item">
-              <kbd>F1</kbd>
-              <span>Befehlspalette</span>
+            <!-- Shortcuts Card -->
+            <div class="action-card">
+              <div class="card-header">
+                <div class="card-icon">⌨️</div>
+                <h3>Tastenkürzel</h3>
+              </div>
+              <div class="shortcuts-list">
+                <div class="shortcut-item">
+                  <span>Neue Datei</span>
+                  <kbd>Ctrl+N</kbd>
+                </div>
+                <div class="shortcut-item">
+                  <span>Speichern</span>
+                  <kbd>Ctrl+S</kbd>
+                </div>
+                <div class="shortcut-item">
+                  <span>KI-Assistent</span>
+                  <kbd>F1</kbd>
+                </div>
+                <div class="shortcut-item">
+                  <span>Git-Status</span>
+                  <kbd>Ctrl+G</kbd>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -224,9 +290,6 @@ import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { ToastService } from "@/services/ToastService";
 import { marked } from 'marked';
-import { 
-  IonIcon
-} from '@ionic/vue'
 
 const toast = ToastService
 
@@ -307,7 +370,7 @@ const loadFile = async (filename = 'index.html') => {
 }
 
 // Save file content
-const saveFile = async (filename, content, manual=false) => {
+const saveFile = async (filename, content) => {
   try {
     const response = await axios.put(`file_api.php?project=${projectName}`, {
       file: filename,
@@ -315,9 +378,6 @@ const saveFile = async (filename, content, manual=false) => {
     })
     
     if (response.data.success) {
-      if(manual){
-              toast.success(`Datei ${filename} erfolgreich gespeichert!`, 1000)
-      }
       console.log('File saved successfully')
       // Emit event to notify sidebar about file save
       window.dispatchEvent(new CustomEvent('monaco-file-saved', { 
@@ -328,11 +388,11 @@ const saveFile = async (filename, content, manual=false) => {
         } 
       }))
     } else {
-      toast.error(`Fehler beim Speichern von ${filename}: ${response.data.error || 'Unbekannter Fehler'}`, 1000)
+      toast.error(`Fehler beim Speichern von ${filename}: ${response.data.error || 'Unbekannter Fehler'}`, 30)
     }
   } catch (error) {
     console.error('Failed to save file:', error)
-    toast.error(`Fehler beim Speichern von ${filename}: ${error.message}`, 1000)
+    toast.error(`Fehler beim Speichern von ${filename}: ${error.message}`, 30)
   }
 }
 
@@ -356,7 +416,7 @@ watch(code, (newCode) => {
         console.log(`Auto-saved: ${currentFile.value}`)
       }
     } catch (error) {
-      toast.error(`Auto-Save fehlgeschlagen für ${currentFile.value}: ${error.message}`, 1000)
+      toast.error(`Auto-Save fehlgeschlagen für ${currentFile.value}: ${error.message}`, 30)
     }
   }, 1000) // Auto-save after 1 second of inactivity
   
@@ -445,48 +505,152 @@ const addToRecentFiles = (filename) => {
   recentFiles.value = recentFiles.value.slice(0, 5)
 }
 
-const getFileIcon = (filename) => {
+const getFileIconEmoji = (filename) => {
   const ext = filename.split('.').pop()?.toLowerCase()
   const iconMap = {
-    'js': 'logo-javascript',
-    'ts': 'logo-javascript',
-    'py': 'logo-python',
-    'html': 'logo-html5',
-    'css': 'logo-css3',
-    'php': 'code-outline',
-    'md': 'document-text-outline',
-    'json': 'settings-outline',
-    'vue': 'logo-vue',
-    'txt': 'document-outline',
-    'c': 'code-outline',
-    'cpp': 'code-outline',
-    'java': 'cafe-outline',
-    'go': 'code-outline',
-    'rb': 'diamond-outline',
-    'sh': 'terminal-outline',
-    'lua': 'moon-outline',
-    'swift': 'code-outline',
-    'kotlin': 'code-outline',
-    'rust': 'code-outline'
+    'js': '📄',
+    'ts': '📘',
+    'py': '🐍',
+    'html': '🌐',
+    'css': '🎨',
+    'php': '🐘',
+    'md': '📝',
+    'json': '📋',
+    'vue': '💚',
+    'txt': '📄',
+    'c': '⚙️',
+    'cpp': '⚙️',
+    'java': '☕',
+    'go': '🐹',
+    'rb': '💎',
+    'sh': '🖥️',
+    'lua': '🌙',
+    'swift': '🦉',
+    'kotlin': '🎯',
+    'rust': '🦀'
   }
-  return iconMap[ext] || 'document-outline'
+  return iconMap[ext] || '📄'
 }
 
-const getFileColor = (filename) => {
+const getFileIconColor = (filename) => {
   const ext = filename.split('.').pop()?.toLowerCase()
   const colorMap = {
-    'js': 'warning',
-    'ts': 'primary',
-    'py': 'success',
-    'html': 'danger',
-    'css': 'tertiary',
-    'php': 'secondary',
-    'md': 'medium',
-    'json': 'dark',
-    'vue': 'success',
-    'txt': 'medium'
+    'js': '#f7df1e',
+    'ts': '#007acc',
+    'py': '#3776ab',
+    'html': '#e34c26',
+    'css': '#1572b6',
+    'php': '#777bb4',
+    'md': '#083fa1',
+    'json': '#000000',
+    'vue': '#4fc08d',
+    'txt': '#666666'
   }
-  return colorMap[ext] || 'medium'
+  return colorMap[ext] || '#666666'
+}
+
+// Neue Funktionen für KI-Features
+const showAIFeatures = () => {
+  // Öffne eine detaillierte KI-Features Seite
+  const featuresModal = document.createElement('div')
+  featuresModal.innerHTML = `
+    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;" onclick="this.remove()">
+      <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d35 100%); border-radius: 20px; padding: 40px; max-width: 800px; width: 90%; max-height: 80%; overflow-y: auto; border: 1px solid rgba(234, 14, 43, 0.3);" onclick="event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+          <h2 style="color: #ffffff; margin: 0; font-size: 2rem; background: linear-gradient(135deg, #ea0e2b 0%, #8a2be2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">🤖 KI-Assistent Features</h2>
+          <button onclick="this.closest('div').parentElement.remove()" style="background: none; border: none; color: #666; font-size: 24px; cursor: pointer;">✕</button>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px;">
+          <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 24px;">
+            <h3 style="color: #ea0e2b; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">💬 Intelligenter Chat</h3>
+            <ul style="color: #cccccc; line-height: 1.6; margin: 0; padding-left: 20px;">
+              <li>Kontextbewusste Gespräche über deinen Code</li>
+              <li>Debugging-Hilfe mit konkreten Lösungen</li>
+              <li>Code-Reviews und Verbesserungsvorschläge</li>
+              <li>Erklärungen komplexer Algorithmen</li>
+            </ul>
+          </div>
+          
+          <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 24px;">
+            <h3 style="color: #8a2be2; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">🔧 Code-Generation</h3>
+            <ul style="color: #cccccc; line-height: 1.6; margin: 0; padding-left: 20px;">
+              <li>Automatische Funktionserstellung</li>
+              <li>Boilerplate-Code für verschiedene Frameworks</li>
+              <li>API-Integration und HTTP-Requests</li>
+              <li>Datenbank-Queries und Schemas</li>
+            </ul>
+          </div>
+          
+          <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 24px;">
+            <h3 style="color: #00aeff; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">⚡ Live-Refactoring</h3>
+            <ul style="color: #cccccc; line-height: 1.6; margin: 0; padding-left: 20px;">
+              <li>Automatische Code-Optimierung</li>
+              <li>Performance-Verbesserungen</li>
+              <li>Clean Code Principles anwenden</li>
+              <li>Umbenennung und Strukturierung</li>
+            </ul>
+          </div>
+          
+          <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 24px;">
+            <h3 style="color: #28a745; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">🧪 Testing & Quality</h3>
+            <ul style="color: #cccccc; line-height: 1.6; margin: 0; padding-left: 20px;">
+              <li>Unit-Tests automatisch generieren</li>
+              <li>Integration-Tests erstellen</li>
+              <li>Code-Coverage-Analyse</li>
+              <li>Sicherheitslücken identifizieren</li>
+            </ul>
+          </div>
+          
+          <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 24px;">
+            <h3 style="color: #ff6b35; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">📚 Dokumentation</h3>
+            <ul style="color: #cccccc; line-height: 1.6; margin: 0; padding-left: 20px;">
+              <li>Automatische JSDoc-Kommentare</li>
+              <li>README.md Generierung</li>
+              <li>API-Dokumentation erstellen</li>
+              <li>Code-Kommentare verbessern</li>
+            </ul>
+          </div>
+          
+          <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 24px;">
+            <h3 style="color: #ffc107; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">🎯 Projektmanagement</h3>
+            <ul style="color: #cccccc; line-height: 1.6; margin: 0; padding-left: 20px;">
+              <li>TODO-Listen aus Code extrahieren</li>
+              <li>Projektstruktur optimieren</li>
+              <li>Dependency-Management</li>
+              <li>Build-Prozess automatisieren</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div style="margin-top: 30px; text-align: center;">
+          <button onclick="document.querySelector('.ai-assistant-button').click(); this.closest('div').parentElement.remove();" style="background: linear-gradient(135deg, #ea0e2b 0%, #8a2be2 100%); color: white; border: none; padding: 15px 30px; border-radius: 25px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+            🚀 KI-Assistent jetzt starten
+          </button>
+        </div>
+      </div>
+    </div>
+  `
+  document.body.appendChild(featuresModal)
+  toast.success('KI-Features erkunden!', 30)
+}
+
+const showCodeGeneration = () => {
+  toast.info('Code-Generation starten - nutze den KI-Chat mit Prompts wie "Erstelle eine React-Komponente" oder "Generiere eine Express API"', 30)
+  showAssistant.value = true
+  addAIMessage('Willkommen zur Code-Generation! 🔧\n\nIch kann dir dabei helfen:\n- **Komponenten erstellen**: "Erstelle eine React-Komponente für eine Todo-Liste"\n- **APIs entwickeln**: "Generiere eine Express.js API für User-Management"\n- **Datenbank-Code**: "Erstelle ein Mongoose-Schema für Produkte"\n- **Utility-Funktionen**: "Schreibe eine Funktion zum Validieren von E-Mails"\n\nWas möchtest du generieren?')
+}
+
+const showProjectSettings = () => {
+  toast.info('Projekt-Einstellungen werden bald verfügbar sein!', 30)
+}
+
+const showProjectStats = () => {
+  toast.info('Projekt-Statistiken werden bald verfügbar sein!', 30)
+}
+
+const showDebugging = () => {
+  toast.info('Debugging-Tools werden bald verfügbar sein!', 30)
 }
 
 onMounted(() => {
@@ -513,8 +677,8 @@ onMounted(() => {
       event.preventDefault()
       if (currentFile.value && !showWelcome.value) {
         try {
-          await saveFile(currentFile.value, code.value, true)
-          //toast.success(`${currentFile.value} erfolgreich gespeichert!`, 30)
+          await saveFile(currentFile.value, code.value)
+          toast.success(`${currentFile.value} erfolgreich gespeichert!`, 30)
         } catch (error) {
           toast.error(`Fehler beim Speichern von ${currentFile.value}: ${error.message}`, 30)
         }
@@ -865,13 +1029,24 @@ const applyReplacement = (replacement) => {
 .code-symbols span:nth-child(2) { --i: 1; }
 .code-symbols span:nth-child(3) { --i: 2; }
 
-/* Action Grid */
-.action-grid {
+/* Desktop Grid Layout */
+.desktop-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 30px;
-  margin-bottom: 60px;
   flex: 1;
+  align-items: start;
+}
+
+.grid-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Action Grid - fallback für mobile */
+.action-grid {
+  display: none;
 }
 
 .action-card {
@@ -939,6 +1114,121 @@ const applyReplacement = (replacement) => {
 .card-icon.ai-icon {
   background: linear-gradient(135deg, rgba(138, 43, 226, 0.1) 0%, rgba(138, 43, 226, 0.05) 100%);
   color: #8a2be2;
+}
+
+/* Project Stats */
+.project-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ea0e2b;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Shortcuts List */
+.shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shortcut-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.shortcut-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(234, 14, 43, 0.2);
+}
+
+.shortcut-item span {
+  color: #cccccc;
+  font-size: 13px;
+}
+
+.shortcut-item kbd {
+  background: rgba(234, 14, 43, 0.1);
+  border: 1px solid rgba(234, 14, 43, 0.3);
+  color: #ea0e2b;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
+  font-size: 11px;
+  font-weight: bold;
+  margin: 0 2px;
+}
+
+/* Responsive für Desktop-Layout */
+@media (max-width: 1200px) {
+  .desktop-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .desktop-grid {
+    display: none;
+  }
+  
+  .action-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .project-stats {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* Action Button Updates */
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #cccccc;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: left;
+  border: none;
 }
 
 .card-header h3 {

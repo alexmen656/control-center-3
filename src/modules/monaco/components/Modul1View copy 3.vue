@@ -307,7 +307,7 @@ const loadFile = async (filename = 'index.html') => {
 }
 
 // Save file content
-const saveFile = async (filename, content, manual=false) => {
+const saveFile = async (filename, content) => {
   try {
     const response = await axios.put(`file_api.php?project=${projectName}`, {
       file: filename,
@@ -315,9 +315,6 @@ const saveFile = async (filename, content, manual=false) => {
     })
     
     if (response.data.success) {
-      if(manual){
-              toast.success(`Datei ${filename} erfolgreich gespeichert!`, 1000)
-      }
       console.log('File saved successfully')
       // Emit event to notify sidebar about file save
       window.dispatchEvent(new CustomEvent('monaco-file-saved', { 
@@ -328,11 +325,11 @@ const saveFile = async (filename, content, manual=false) => {
         } 
       }))
     } else {
-      toast.error(`Fehler beim Speichern von ${filename}: ${response.data.error || 'Unbekannter Fehler'}`, 1000)
+      toast.error(`Fehler beim Speichern von ${filename}: ${response.data.error || 'Unbekannter Fehler'}`, 30)
     }
   } catch (error) {
     console.error('Failed to save file:', error)
-    toast.error(`Fehler beim Speichern von ${filename}: ${error.message}`, 1000)
+    toast.error(`Fehler beim Speichern von ${filename}: ${error.message}`, 30)
   }
 }
 
@@ -356,7 +353,7 @@ watch(code, (newCode) => {
         console.log(`Auto-saved: ${currentFile.value}`)
       }
     } catch (error) {
-      toast.error(`Auto-Save fehlgeschlagen für ${currentFile.value}: ${error.message}`, 1000)
+      toast.error(`Auto-Save fehlgeschlagen für ${currentFile.value}: ${error.message}`, 30)
     }
   }, 1000) // Auto-save after 1 second of inactivity
   
@@ -513,8 +510,8 @@ onMounted(() => {
       event.preventDefault()
       if (currentFile.value && !showWelcome.value) {
         try {
-          await saveFile(currentFile.value, code.value, true)
-          //toast.success(`${currentFile.value} erfolgreich gespeichert!`, 30)
+          await saveFile(currentFile.value, code.value)
+          toast.success(`${currentFile.value} erfolgreich gespeichert!`, 30)
         } catch (error) {
           toast.error(`Fehler beim Speichern von ${currentFile.value}: ${error.message}`, 30)
         }
