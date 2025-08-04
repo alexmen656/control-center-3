@@ -64,8 +64,8 @@ class VercelAPI {
         $this->teamId = $teamId;
     }
     
-    private function makeRequest($endpoint, $method = 'GET', $data = null) {
-        $url = 'https://api.vercel.com/v2' . $endpoint;
+    private function makeRequest($endpoint, $method = 'GET', $data = null, $apiVersion = 'v2') {
+        $url = 'https://api.vercel.com/' . $apiVersion . $endpoint;
         
         if ($this->teamId) {
             $separator = strpos($url, '?') !== false ? '&' : '?';
@@ -152,6 +152,59 @@ class VercelAPI {
     public function getDeploymentStatus($deploymentId) {
         return $this->makeRequest("/deployments/{$deploymentId}");
     }
+    
+    public function getEnvironmentVariables($projectId) {
+        return $this->makeRequest("/projects/{$projectId}/env", 'GET', null, 'v9');
+    }
+    
+    public function getEnvironmentVariableValue($projectId, $envId) {
+        return $this->makeRequest("/projects/{$projectId}/env/{$envId}", 'GET', null, 'v9');
+    }
+    
+    public function getEnvironmentVariablesWithValues($projectId) {
+        $envVars = $this->getEnvironmentVariables($projectId);
+        
+        if (isset($envVars['envs']) && is_array($envVars['envs'])) {
+            foreach ($envVars['envs'] as &$envVar) {
+                try {
+                    $valueData = $this->getEnvironmentVariableValue($projectId, $envVar['id']);
+                    if (isset($valueData['value'])) {
+                        $envVar['decryptedValue'] = $valueData['value'];
+                    }
+                } catch (Exception $e) {
+                    error_log("Failed to get decrypted value for env var {$envVar['id']}: " . $e->getMessage());
+                }
+            }
+        }
+        
+        return $envVars;
+    }
+    
+    public function createEnvironmentVariable($projectId, $key, $value, $target = ['production', 'preview', 'development']) {
+        $data = [
+            'key' => $key,
+            'value' => $value,
+            'target' => $target,
+            'type' => 'encrypted'
+        ];
+        
+        return $this->makeRequest("/projects/{$projectId}/env", 'POST', $data);
+    }
+    
+    public function updateEnvironmentVariable($projectId, $envId, $key, $value, $target = ['production', 'preview', 'development']) {
+        $data = [
+            'key' => $key,
+            'value' => $value,
+            'target' => $target,
+            'type' => 'encrypted'
+        ];
+        
+        return $this->makeRequest("/projects/{$projectId}/env/{$envId}", 'PATCH', $data);
+    }
+    
+    public function deleteEnvironmentVariable($projectId, $envId) {
+        return $this->makeRequest("/projects/{$projectId}/env/{$envId}", 'DELETE');
+    }
 }
 
 try {
@@ -187,6 +240,11 @@ try {
                     echo json_encode(['success' => true, 'project' => $projectData]);
                     break;
                     
+                case 'env':
+                    $envVars = $vercel->getEnvironmentVariablesWithValues($project);
+                    echo json_encode(['success' => true, 'envVars' => $envVars]);
+                    break;
+                    
                 default:
                     throw new Exception('Unknown action');
             }
@@ -216,6 +274,44 @@ try {
                     
                     $status = $vercel->getDeploymentStatus($deploymentId);
                     echo json_encode(['success' => true, 'status' => $status]);
+                    break;
+                    
+                case 'create_env':
+                    $key = $input['key'] ?? '';
+                    $value = $input['value'] ?? '';
+                    $target = $input['target'] ?? ['production', 'preview', 'development'];
+                    
+                    if (empty($key) || empty($value)) {
+                        throw new Exception('Key and value are required');
+                    }
+                    
+                    $result = $vercel->createEnvironmentVariable($project, $key, $value, $target);
+                    echo json_encode(['success' => true, 'result' => $result]);
+                    break;
+                    
+                case 'update_env':
+                    $envId = $input['envId'] ?? '';
+                    $key = $input['key'] ?? '';
+                    $value = $input['value'] ?? '';
+                    $target = $input['target'] ?? ['production', 'preview', 'development'];
+                    
+                    if (empty($envId) || empty($key) || empty($value)) {
+                        throw new Exception('Environment ID, key and value are required');
+                    }
+                    
+                    $result = $vercel->updateEnvironmentVariable($project, $envId, $key, $value, $target);
+                    echo json_encode(['success' => true, 'result' => $result]);
+                    break;
+                    
+                case 'delete_env':
+                    $envId = $input['envId'] ?? '';
+                    
+                    if (empty($envId)) {
+                        throw new Exception('Environment ID is required');
+                    }
+                    
+                    $result = $vercel->deleteEnvironmentVariable($project, $envId);
+                    echo json_encode(['success' => true, 'result' => $result]);
                     break;
                     
                 default:
