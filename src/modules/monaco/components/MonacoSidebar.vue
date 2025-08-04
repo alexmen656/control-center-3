@@ -31,7 +31,10 @@
               </ion-button>
             </div>
           </div>
-          <div v-for="file in filteredProjectFiles" :key="file.path" class="file-item" @click="openFile(file)">
+          <div v-for="file in filteredProjectFiles" :key="file.path" 
+               class="file-item" 
+               :class="{ 'active-file': activeFile === file.path }"
+               @click="openFile(file)">
             <ion-icon :name="getFileIcon(file)" class="file-icon"></ion-icon>
             <span class="file-name">{{ file.name }}</span>
             <ion-button fill="clear" size="small" @click.stop="deleteFile(file)" class="delete-btn">
@@ -49,11 +52,6 @@
         <span>Source Control</span>
         <ion-button fill="clear" size="small" @click="refreshGitStatus">
           <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
-        </ion-button>
-        <ion-button fill="clear" size="small" @click="toggleAutoRefresh" 
-                    :class="{ 'auto-refresh-active': isAutoRefreshEnabled }"
-                    :title="isAutoRefreshEnabled ? 'Disable auto-refresh' : 'Enable auto-refresh'">
-          <ion-icon slot="icon-only" :name="isAutoRefreshEnabled ? 'sync' : 'sync-outline'"></ion-icon>
         </ion-button>
         <ion-button fill="clear" size="small" @click="pullFromGitHub" :disabled="isPulling">
           <ion-icon slot="icon-only" name="cloud-download-outline"></ion-icon>
@@ -175,6 +173,51 @@
       </div>
     </div>
   </div>
+
+  <!-- Diff Viewer Modal -->
+  <div v-if="showDiffViewer" class="diff-viewer-modal" @click="closeDiffViewer">
+    <div class="diff-viewer-content" @click.stop>
+      <div class="diff-viewer-header">
+        <h3>Changes in {{ diffData.filePath }}</h3>
+        <button class="close-diff-btn" @click="closeDiffViewer">×</button>
+      </div>
+      <div class="diff-viewer-body">
+        <div class="diff-content">
+          <div v-for="(line, index) in (diffData.diff || [])" :key="index" 
+               :class="['diff-line', line.type]">
+            <div class="diff-line-number">{{ line.lineNumber }}</div>
+            <div class="diff-line-content">
+              {{ (line.type === 'added' ? '+' : line.type === 'deleted' ? '-' : ' ') + ' ' + (line.content || '') }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Merge Editor Modal -->
+  <div v-if="showMergeEditor" class="merge-editor-modal" @click="closeMergeEditor">
+    <div class="merge-editor-content" @click.stop>
+      <div class="merge-editor-header">
+        <h3>Merge Conflicts Detected</h3>
+        <button class="close-merge-btn" @click="closeMergeEditor">×</button>
+      </div>
+      <div class="merge-editor-body">
+        <p>The following files have conflicts that need to be resolved:</p>
+        <div class="conflicts-list">
+          <div v-for="file in mergeConflicts" :key="file" class="conflict-file">
+            <ion-icon name="warning" class="conflict-icon"></ion-icon>
+            <span class="conflict-filename">{{ file }}</span>
+            <button class="resolve-btn" @click="resolveConflict(file)">Resolve</button>
+          </div>
+        </div>
+        <div class="merge-actions">
+          <button class="btn-secondary" @click="closeMergeEditor">Cancel</button>
+          <button class="btn-primary" @click="autoResolveConflicts">Auto-resolve All</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -202,7 +245,15 @@ const exclude = ref(true);
 
 // Live update state
 const gitRefreshInterval = ref(null)
-const isAutoRefreshEnabled = ref(true)
+
+// State für Modals
+const showDiffViewer = ref(false)
+const showMergeEditor = ref(false)
+const diffData = ref({})
+const mergeConflicts = ref([])
+
+// Active file state
+const activeFile = ref('')
 
 // Get project name from route
 const projectName = route.params.project || 'default-project'
@@ -246,6 +297,8 @@ const flattenFileTree = (files) => {
 }
 
 const openFile = (file) => {
+  // Set active file
+  activeFile.value = file.path
   // Emit event to parent component to open file
   window.dispatchEvent(new CustomEvent('monaco-open-file', { detail: file }))
 }
@@ -454,7 +507,7 @@ const pullFromGitHub = async () => {
 
     if (response.data.success) {
       console.log('Pull successful:', response.data)
-      alert(`Pull erfolgreich! ${response.data.files_count} Dateien wurden aktualisiert.`)
+      alert(`Pull erfolgreich! ${response.data.files_count} ${response.data.files_count === 1 ? 'Datei wurde' : 'Dateien wurden'} aktualisiert.`)
 
       // Refresh file list and git status after pull
       await refreshFiles()
@@ -485,19 +538,68 @@ const pushToGitHub = async () => {
 
     if (response.data.success) {
       console.log('Push successful:', response.data)
-      alert(`Push erfolgreich! ${response.data.commits_count} Commits wurden zu GitHub gepusht.`)
+      alert(`Push erfolgreich! ${response.data.commits_count} ${response.data.commits_count == 1 ? 'Commit wurde' : 'Commits wurden'} zu GitHub gepusht.`)
 
       // Refresh git status after push
       await refreshGitStatus()
     } else {
       console.error('Push failed:', response.data.message)
-      alert('Push failed: ' + response.data.message)
+      
+      // Check for conflicts
+      if (response.data.error && response.data.error.includes('conflict')) {
+        openMergeEditor(response.data.conflicts || [])
+      } else {
+        alert('Push failed: ' + response.data.message)
+      }
     }
   } catch (error) {
     console.error('Push failed:', error)
     alert('Push failed: ' + error.message)
   } finally {
     isPushing.value = false
+  }
+}
+
+const openMergeEditor = (conflicts) => {
+  mergeConflicts.value = conflicts
+  showMergeEditor.value = true
+}
+
+const closeMergeEditor = () => {
+  showMergeEditor.value = false
+  mergeConflicts.value = []
+}
+
+const resolveConflict = async (filename) => {
+  try {
+    // Open the file with conflicts for manual resolution
+    window.dispatchEvent(new CustomEvent('monaco-open-file', { 
+      detail: { path: filename, name: filename } 
+    }))
+    alert(`Opening ${filename} for manual conflict resolution. Look for conflict markers: <<<<<<< HEAD, =======, >>>>>>> branch`)
+    closeMergeEditor()
+  } catch (error) {
+    console.error('Failed to resolve conflict:', error)
+  }
+}
+
+const autoResolveConflicts = async () => {
+  try {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+      action: 'auto_resolve_conflicts',
+      conflicts: mergeConflicts.value
+    })
+    
+    if (response.data.success) {
+      alert('Conflicts auto-resolved successfully! You can now try pushing again.')
+      closeMergeEditor()
+      await fetchGitStatus()
+    } else {
+      alert('Auto-resolve failed: ' + response.data.message)
+    }
+  } catch (error) {
+    console.error('Auto-resolve failed:', error)
+    alert('Auto-resolve failed: ' + error.message)
   }
 }
 
@@ -572,27 +674,16 @@ const startLiveGitUpdates = () => {
     clearInterval(gitRefreshInterval.value)
   }
   
-  if (isAutoRefreshEnabled.value) {
-    // Refresh git status every 2 seconds when auto-refresh is enabled
-    gitRefreshInterval.value = setInterval(() => {
-      loadGitData()
-    }, 2000)
-  }
+  // Refresh git status every 3 seconds automatically
+  gitRefreshInterval.value = setInterval(() => {
+    loadGitData()
+  }, 3000)
 }
 
 const stopLiveGitUpdates = () => {
   if (gitRefreshInterval.value) {
     clearInterval(gitRefreshInterval.value)
     gitRefreshInterval.value = null
-  }
-}
-
-const toggleAutoRefresh = () => {
-  isAutoRefreshEnabled.value = !isAutoRefreshEnabled.value
-  if (isAutoRefreshEnabled.value) {
-    startLiveGitUpdates()
-  } else {
-    stopLiveGitUpdates()
   }
 }
 
@@ -603,8 +694,14 @@ const viewFileDiff = async (filePath) => {
     const response = await axios.get(`monaco_git_api.php?project=${projectName}&action=diff&file=${filePath}`)
     
     if (response.data.success) {
-      // Create diff viewer window
-      createDiffViewer(filePath, response.data.diff)
+      // Set diff data and show modal
+      diffData.value = {
+        filePath,
+        diff: response.data.diff,
+        originalContent: response.data.original_content,
+        currentContent: response.data.current_content
+      }
+      showDiffViewer.value = true
     } else {
       console.error('Failed to load diff:', response.data.error)
       alert('Failed to load diff: ' + (response.data.error || 'Unknown error'))
@@ -615,183 +712,9 @@ const viewFileDiff = async (filePath) => {
   }
 }
 
-const createDiffViewer = (filePath, diff) => {
-  // Create a modal window for diff viewing
-  const modal = document.createElement('div')
-  modal.className = 'diff-viewer-modal'
-  modal.innerHTML = `
-    <div class="diff-viewer-content">
-      <div class="diff-viewer-header">
-        <h3>Changes in ${filePath}</h3>
-        <button class="close-diff-btn" onclick="this.closest('.diff-viewer-modal').remove()">×</button>
-      </div>
-      <div class="diff-viewer-body">
-        <div class="diff-content">
-          ${generateDiffHTML(diff)}
-        </div>
-      </div>
-    </div>
-  `
-  
-  // Add styles
-  const style = document.createElement('style')
-  style.textContent = `
-    .diff-viewer-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      z-index: 10000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .diff-viewer-content {
-      background: var(--vscode-editor-background, #1e1e1e);
-      color: var(--vscode-editor-foreground, #d4d4d4);
-      border-radius: 8px;
-      width: 90%;
-      max-width: 1200px;
-      height: 80%;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    }
-    
-    .diff-viewer-header {
-      padding: 15px 20px;
-      border-bottom: 1px solid var(--vscode-panel-border, #464647);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .diff-viewer-header h3 {
-      margin: 0;
-      font-size: 16px;
-      color: var(--vscode-foreground, #cccccc);
-    }
-    
-    .close-diff-btn {
-      background: none;
-      border: none;
-      color: var(--vscode-foreground, #cccccc);
-      font-size: 20px;
-      cursor: pointer;
-      padding: 0;
-      width: 30px;
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 4px;
-    }
-    
-    .close-diff-btn:hover {
-      background: var(--vscode-button-hoverBackground, #464647);
-    }
-    
-    .diff-viewer-body {
-      flex: 1;
-      overflow: auto;
-      padding: 0;
-    }
-    
-    .diff-content {
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      font-size: 13px;
-      line-height: 1.4;
-    }
-    
-    .diff-line {
-      display: flex;
-      padding: 2px 0;
-      margin: 0;
-      white-space: pre;
-    }
-    
-    .diff-line-number {
-      width: 60px;
-      text-align: right;
-      padding: 0 10px;
-      color: var(--vscode-editorLineNumber-foreground, #858585);
-      background: var(--vscode-editorGutter-background, #1e1e1e);
-      border-right: 1px solid var(--vscode-panel-border, #464647);
-      flex-shrink: 0;
-    }
-    
-    .diff-line-content {
-      flex: 1;
-      padding: 0 10px;
-      overflow-x: auto;
-    }
-    
-    .diff-line.added {
-      background: var(--vscode-diffEditor-insertedTextBackground, rgba(155, 185, 85, 0.2));
-    }
-    
-    .diff-line.deleted {
-      background: var(--vscode-diffEditor-removedTextBackground, rgba(255, 0, 0, 0.2));
-    }
-    
-    .diff-line.unchanged {
-      background: var(--vscode-editor-background, #1e1e1e);
-    }
-    
-    .diff-line.added .diff-line-content {
-      color: var(--vscode-diffEditor-insertedTextForeground, #9bb955);
-    }
-    
-    .diff-line.deleted .diff-line-content {
-      color: var(--vscode-diffEditor-removedTextForeground, #ff0000);
-    }
-  `
-  
-  document.head.appendChild(style)
-  document.body.appendChild(modal)
-  
-  // Close modal when clicking outside
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.remove()
-      style.remove()
-    }
-  })
-  
-  // Close modal with Escape key
-  const handleEscape = (e) => {
-    if (e.key === 'Escape') {
-      modal.remove()
-      style.remove()
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }
-  document.addEventListener('keydown', handleEscape)
-}
-
-const generateDiffHTML = (diff) => {
-  return diff.map(line => {
-    const lineClass = line.type === 'added' ? 'added' : 
-                     line.type === 'deleted' ? 'deleted' : 'unchanged'
-    const lineSymbol = line.type === 'added' ? '+' : 
-                      line.type === 'deleted' ? '-' : ' '
-    
-    return `
-      <div class="diff-line ${lineClass}">
-        <div class="diff-line-number">${line.lineNumber}</div>
-        <div class="diff-line-content">${lineSymbol} ${escapeHtml(line.content || '')}</div>
-      </div>
-    `
-  }).join('')
-}
-
-const escapeHtml = (text) => {
-  const div = document.createElement('div')
-  div.textContent = text
-  return div.innerHTML
+const closeDiffViewer = () => {
+  showDiffViewer.value = false
+  diffData.value = {}
 }
 
 // Pull Request Methods
@@ -976,6 +899,11 @@ onMounted(async () => {
     console.log('File changed, refreshing git status...')
     loadGitData()
   })
+  
+  // Listen for active file changes
+  window.addEventListener('monaco-active-file-changed', (event) => {
+    activeFile.value = event.detail.filePath
+  })
 })
 
 // Cleanup on unmount
@@ -984,6 +912,7 @@ onUnmounted(() => {
   stopLiveGitUpdates()
   window.removeEventListener('monaco-file-saved', loadGitData)
   window.removeEventListener('monaco-file-changed', loadGitData)
+  window.removeEventListener('monaco-active-file-changed', () => {})
 })
 </script>
 
@@ -1032,11 +961,6 @@ onUnmounted(() => {
   width: 20px;
 }
 
-.section-header ion-button.auto-refresh-active {
-  --color: var(--vscode-button-foreground, #ffffff);
-  --background: var(--vscode-button-background, #0e639c);
-}
-
 .section-content {
   padding: 8px;
 }
@@ -1077,6 +1001,15 @@ onUnmounted(() => {
 
 .file-item:hover {
   background: var(--vscode-list-hoverBackground, #2a2d2e);
+}
+
+.file-item.active-file {
+  background: var(--vscode-list-activeSelectionBackground, #094771);
+  color: var(--vscode-list-activeSelectionForeground, #ffffff);
+}
+
+.file-item.active-file .file-name {
+  font-weight: 600;
 }
 
 .file-icon {
@@ -1394,5 +1327,197 @@ ion-button[fill="clear"] {
 
 .monaco-sidebar::-webkit-scrollbar-thumb:hover {
   background: var(--vscode-scrollbarSlider-hoverBackground, #5a5a5a);
+}
+
+/* Modal Styles */
+.diff-viewer-modal,
+.merge-editor-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.diff-viewer-content {
+  background: var(--vscode-editor-background, #1e1e1e);
+  color: var(--vscode-editor-foreground, #d4d4d4);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 1200px;
+  height: 80%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.merge-editor-content {
+  background: var(--vscode-editor-background, #1e1e1e);
+  color: var(--vscode-editor-foreground, #d4d4d4);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.diff-viewer-header,
+.merge-editor-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--vscode-panel-border, #464647);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.diff-viewer-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--vscode-foreground, #cccccc);
+}
+
+.merge-editor-header h3 {
+  margin: 0;
+  color: var(--vscode-errorForeground, #f85149);
+}
+
+.close-diff-btn,
+.close-merge-btn {
+  background: none;
+  border: none;
+  color: var(--vscode-foreground, #cccccc);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.close-diff-btn:hover,
+.close-merge-btn:hover {
+  background: var(--vscode-button-hoverBackground, #464647);
+}
+
+.diff-viewer-body {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+}
+
+.merge-editor-body {
+  padding: 20px;
+}
+
+.diff-content {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.diff-line {
+  display: flex;
+  padding: 2px 0;
+  margin: 0;
+  white-space: pre;
+}
+
+.diff-line-number {
+  width: 60px;
+  text-align: right;
+  padding: 0 10px;
+  color: var(--vscode-editorLineNumber-foreground, #858585);
+  background: var(--vscode-editorGutter-background, #1e1e1e);
+  border-right: 1px solid var(--vscode-panel-border, #464647);
+  flex-shrink: 0;
+}
+
+.diff-line-content {
+  flex: 1;
+  padding: 0 10px;
+  overflow-x: auto;
+}
+
+.diff-line.added {
+  background: var(--vscode-diffEditor-insertedTextBackground, rgba(155, 185, 85, 0.2));
+}
+
+.diff-line.deleted {
+  background: var(--vscode-diffEditor-removedTextBackground, rgba(255, 0, 0, 0.2));
+}
+
+.diff-line.unchanged {
+  background: var(--vscode-editor-background, #1e1e1e);
+}
+
+.diff-line.added .diff-line-content {
+  color: var(--vscode-diffEditor-insertedTextForeground, #9bb955);
+}
+
+.diff-line.deleted .diff-line-content {
+  color: var(--vscode-diffEditor-removedTextForeground, #ff0000);
+}
+
+.conflicts-list {
+  margin: 20px 0;
+}
+
+.conflict-file {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background: var(--vscode-inputValidation-errorBackground, rgba(255, 0, 0, 0.1));
+  border: 1px solid var(--vscode-inputValidation-errorBorder, #ff6b6b);
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.conflict-icon {
+  color: var(--vscode-errorForeground, #f85149);
+  margin-right: 10px;
+}
+
+.conflict-filename {
+  flex: 1;
+  font-family: monospace;
+}
+
+.resolve-btn, .btn-primary, .btn-secondary {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.resolve-btn {
+  background: var(--vscode-button-background, #0e639c);
+  color: var(--vscode-button-foreground, #ffffff);
+}
+
+.btn-primary {
+  background: var(--vscode-button-background, #0e639c);
+  color: var(--vscode-button-foreground, #ffffff);
+  margin-left: 10px;
+}
+
+.btn-secondary {
+  background: var(--vscode-button-secondaryBackground, #3c3c3c);
+  color: var(--vscode-button-secondaryForeground, #cccccc);
+}
+
+.merge-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--vscode-panel-border, #464647);
 }
 </style>

@@ -5,10 +5,14 @@
       <ion-content v-if="showContent">
         <SiteHeader v-if="showHeader" @toggleSidebar="toggleSidebar"></SiteHeader>
         <ion-split-pane content-id="main-content" :class="{ 'collapsed-sidebar': isMenuCollapsed }">
-          <ion-menu v-if="token && account_active" content-id="main-content" :class="['ion-menu', { 'collapsed-menu': isMenuCollapsed, 'hasToBeDarkmode': hasToBeDarkmode }]" type="overlay">
+          <ion-menu v-if="token && account_active" content-id="main-content"
+            :class="['ion-menu', { 'collapsed-menu': isMenuCollapsed, 'hasToBeDarkmode': hasToBeDarkmode }]"
+            type="overlay">
             <ion-content :class="hasToBeDarkmode ? 'hasToBeDarkmode' : ''">
-              <SideBar :projects="projects" :tools="tools" :bookmarks="bookmarks" :isCollapsed="isMenuCollapsed" v-if="showSideBar" @sidebarToggled="onSidebarToggled"></SideBar>
-              <ProjectSideBar :isCollapsed="isMenuCollapsed" :hasToBeDarkmode="hasToBeDarkmode" v-if="showProjectSideBar" @sidebarToggled="onSidebarToggled"></ProjectSideBar>
+              <SideBar :projects="projects" :tools="tools" :bookmarks="bookmarks" :isCollapsed="isMenuCollapsed"
+                v-if="showSideBar" @sidebarToggled="onSidebarToggled"></SideBar>
+              <ProjectSideBar :isCollapsed="isMenuCollapsed" :hasToBeDarkmode="hasToBeDarkmode"
+                v-if="showProjectSideBar" @sidebarToggled="onSidebarToggled"></ProjectSideBar>
             </ion-content>
           </ion-menu>
           <div id="main-content">
@@ -196,7 +200,7 @@ export default defineComponent({
         window.location.pathname.replace(/\/$/, "").replace(/^\//, "");
 
       if (isOnline.value) {
-        if (route.path !== "/login") {
+        if (route.path !== "/login" && route.path !== "/login/verification") {
 
 
           axios.post("pages.php").then((res) => {
@@ -224,15 +228,27 @@ export default defineComponent({
             });
         } else {
           loading.value = false;
-          page.value = {
-            "id": "9",
-            "url": "login",
-            "showTitle": "true",
-            "icon": "",
-            "title": "Login",
-            "html": "",
-            "pageID": "0"
-          };
+          if (route.path === "/login/verification" || route.path === "/login/verification/") {
+            page.value = {
+              "id": "8",
+              "url": "login/verification",
+              "showTitle": "true",
+              "icon": "",
+              "title": "Login Verification",
+              "html": "",
+              "pageID": "0"
+            };
+          } else {
+            page.value = {
+              "id": "9",
+              "url": "login",
+              "showTitle": "true",
+              "icon": "",
+              "title": "Login",
+              "html": "",
+              "pageID": "0"
+            };
+          }
           updateDocumentTitle(page.value.title);
         }
       } else {
@@ -252,7 +268,7 @@ export default defineComponent({
       ) {
         checkUserPermissions(route.params.project);
       }
-      
+
       page.value = {};
       loadUserData().then(() => {
         loadPageData("Route");
@@ -299,7 +315,7 @@ export default defineComponent({
     };
   },
   async created() {
-    if (this.token && this.$route.path !== "/login") {
+    if (this.token && this.$route.path !== "/login" && this.$route.path !== "/login/verification" && this.$route.path !== "/login/verification/") {
       try {
         const res = await axios.post("token_verify.php", {}, {
           headers: { Authorization: this.token }
@@ -426,7 +442,7 @@ export default defineComponent({
       if (this.$route.path.includes('/monaco')) {
         this.isMenuCollapsed = true;
         this.hasToBeDarkmode = true;
-      }else{
+      } else {
         this.isMenuCollapsed = false;
         this.hasToBeDarkmode = false;
       }
@@ -452,8 +468,10 @@ export default defineComponent({
 });
 </script>
 <style scoped>
-ion-menu.hasToBeDarkmode, ion-content.hasToBeDarkmode {
-  --background: #1e1e1e;/*#121212;*/
+ion-menu.hasToBeDarkmode,
+ion-content.hasToBeDarkmode {
+  --background: #1e1e1e;
+  /*#121212;*/
   border-color: #1e1e1e;
 }
 </style>

@@ -385,7 +385,14 @@ class GitHubAPI {
                 ];
             }
             
-            $localCommits = json_decode(file_get_contents($commitsFile), true) ?: [];
+            $localCommits = [];
+            $fileContent = file_get_contents($commitsFile);
+            if ($fileContent !== false) {
+                $decodedCommits = json_decode($fileContent, true);
+                if (is_array($decodedCommits)) {
+                    $localCommits = $decodedCommits;
+                }
+            }
             error_log("Found " . count($localCommits) . " local commits");
             
             // Hole aktuelle Remote Commits
@@ -489,7 +496,14 @@ class GitHubAPI {
             return;
         }
         
-        $allCommits = json_decode(file_get_contents($commitsFile), true) ?: [];
+        $allCommits = [];
+        $fileContent = file_get_contents($commitsFile);
+        if ($fileContent !== false) {
+            $decodedCommits = json_decode($fileContent, true);
+            if (is_array($decodedCommits)) {
+                $allCommits = $decodedCommits;
+            }
+        }
         $pushedHashes = array_column($pushedCommits, 'hash');
         
         // Entferne gepushte Commits aus der Liste
@@ -583,6 +597,10 @@ function handlePostRequest($projectPath, $project, $userID) {
         case 'push':
             error_log("Push request received - Project: $project");
             echo json_encode(pushToGitHub($projectPath, $project, $userID));
+            break;
+        case 'auto_resolve_conflicts':
+            $conflicts = $_POST['conflicts'] ?? [];
+            echo json_encode(autoResolveConflicts($projectPath, $conflicts, $project, $userID));
             break;
         case 'pull':
             echo json_encode(pullFromGitHubToLocal($projectPath, $project, $userID));
@@ -850,7 +868,16 @@ function commitChanges($projectPath, $message, $files, $project, $userID) {
     
     // Save to local commit history
     $commitsFile = $projectPath . '/.monaco_commits.json';
-    $commits = file_exists($commitsFile) ? json_decode(file_get_contents($commitsFile), true) : [];
+    $commits = [];
+    if (file_exists($commitsFile)) {
+        $fileContent = file_get_contents($commitsFile);
+        if ($fileContent !== false) {
+            $decodedCommits = json_decode($fileContent, true);
+            if (is_array($decodedCommits)) {
+                $commits = $decodedCommits;
+            }
+        }
+    }
     array_unshift($commits, $commitData);
     file_put_contents($commitsFile, json_encode($commits, JSON_PRETTY_PRINT));
     
@@ -941,7 +968,14 @@ function pushToGitHub($projectPath, $project, $userID) {
         if ($result['success'] && !empty($result['pushed_commits'])) {
             $commitsFile = $projectPath . '/.monaco_commits.json';
             if (file_exists($commitsFile)) {
-                $allCommits = json_decode(file_get_contents($commitsFile), true) ?: [];
+                $allCommits = [];
+                $fileContent = file_get_contents($commitsFile);
+                if ($fileContent !== false) {
+                    $decodedCommits = json_decode($fileContent, true);
+                    if (is_array($decodedCommits)) {
+                        $allCommits = $decodedCommits;
+                    }
+                }
                 $pushedHashes = array_column($result['pushed_commits'], 'hash');
                 
                 $remainingCommits = [];
@@ -1111,6 +1145,48 @@ function generateLineDiff($originalLines, $currentLines) {
     }
     
     return $diff;
+}
+
+function autoResolveConflicts($projectPath, $conflicts, $project, $userID) {
+    try {
+        foreach ($conflicts as $file) {
+            $filePath = $projectPath . '/' . $file;
+            if (file_exists($filePath)) {
+                $content = file_get_contents($filePath);
+                
+                // Simple auto-resolution: Keep current version (remove conflict markers)
+                $resolvedContent = preg_replace('/<<<<<<< HEAD
+(.*?)
+=======
+.*?
+>>>>>>> .*?
+/s', '$1', $content);
+                
+                // If no conflicts were found with HEAD, try other pattern
+                if ($resolvedContent === $content) {
+                    $resolvedContent = preg_replace('/<<<<<<< .*?
+(.*?)
+=======
+.*?
+>>>>>>> .*?
+/s', '$1', $content);
+                }
+                
+                file_put_contents($filePath, $resolvedContent);
+            }
+        }
+        
+        return [
+            'success' => true,
+            'message' => 'Conflicts auto-resolved successfully',
+            'resolved_files' => $conflicts
+        ];
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'error' => 'Failed to auto-resolve conflicts: ' . $e->getMessage()
+        ];
+    }
 }
 
 function getBranches($project, $userID) {

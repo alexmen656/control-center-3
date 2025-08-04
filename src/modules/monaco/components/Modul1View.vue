@@ -147,11 +147,27 @@ const loadFile = async (filename = 'main.js') => {
     if (response.data.content !== undefined) {
       code.value = response.data.content
       currentFile.value = filename
+      
+      // Emit active file changed event
+      window.dispatchEvent(new CustomEvent('monaco-active-file-changed', { 
+        detail: { 
+          filePath: filename,
+          projectName 
+        } 
+      }))
     }
   } catch (error) {
     console.log('File not found, creating new file')
     // File doesn't exist, create it
     await saveFile(filename, code.value)
+    
+    // Emit active file changed event for new file
+    window.dispatchEvent(new CustomEvent('monaco-active-file-changed', { 
+      detail: { 
+        filePath: filename,
+        projectName 
+      } 
+    }))
   }
 }
 
