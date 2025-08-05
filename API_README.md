@@ -1,158 +1,224 @@
-# API Management System
+# CMS API Management System
 
 ## Überblick
 
-Das API Management System ermöglicht es, APIs pro Projekt zu verwalten, zu konfigurieren und zu testen. Es bietet eine vollständige Lösung für API-Dokumentation, Authentifizierung und Endpoint-Management.
+Das CMS API Management System ermöglicht es Ihrem CMS, **eigene APIs bereitzustellen**, die von Projekten genutzt werden können. Projekte können sich für APIs anmelden und erhalten API-Schlüssel für den Zugriff.
 
-## Struktur
+## Konzept
 
-### Backend
-- **`apis.php`** - Haupt-API Handler für CRUD-Operationen
-- **`create_project_apis_table.sql`** - Datenbank-Schema für APIs
-- **`run_project_apis_migration.php`** - Migrations-Script
-- **`sidebar.php`** - Erweitert um API-Navigation
+**CMS stellt APIs bereit** → **Projekte abonnieren APIs** → **Nutzen APIs in Web Builder/Monaco Editor**
 
-### Frontend
-- **`src/apis/ManageApis.vue`** - Hauptverwaltungsansicht für APIs
-- **`src/apis/ApiView.vue`** - Einzelne API-Ansicht mit Endpoints
-- **`src/apis/ApiSettings.vue`** - Einstellungen und Authentifizierung
-- **`src/store.ts`** - Vuex Store für API-State Management
-- **`src/router/index.ts`** - Routing für API-Seiten
+### Beispiel-APIs die das CMS bereitstellt:
+- **User Management API** - Benutzer verwalten, Login/Registration
+- **File Storage API** - Dateien hochladen, verwalten, herunterladen
+- **Database API** - Datenbankoperationen, CRUD
+- **Notification API** - Push-Benachrichtigungen, E-Mails
+- **Analytics API** - Event-Tracking, Statistiken
 
-## Datenbank-Schema
+## Architektur
 
-### `project_apis`
-Haupttabelle für API-Konfigurationen:
-- **id** - Eindeutige API-ID
-- **projectID** - Referenz zum Projekt
-- **name** - API-Name
-- **slug** - URL-freundlicher Bezeichner
-- **description** - Beschreibung
-- **icon** - Ionicon-Name
-- **type** - API-Typ (REST, GraphQL, WebSocket, SOAP)
-- **base_url** - Basis-URL der API
-- **auth_type** - Authentifizierungstyp
-- **status** - Status (active, inactive, testing)
-- **rate_limit** - Anfragen pro Minute
+### Backend-Struktur
 
-### `project_api_keys`
-Authentifizierungsschlüssel:
-- **id** - Schlüssel-ID
-- **api_id** - Referenz zur API
-- **key_name** - Name des Schlüssels
-- **key_value** - Schlüsselwert (verschlüsselbar)
-- **is_encrypted** - Verschlüsselungsstatus
+#### Datenbank-Schema
+- **`cms_apis`** - Verfügbare APIs des CMS
+- **`cms_api_endpoints`** - Endpunkte jeder API
+- **`project_api_subscriptions`** - Projekt-API-Abonnements
+- **`api_usage_logs`** - Nutzungsstatistiken
 
-### `project_api_endpoints`
-API-Endpunkte:
-- **id** - Endpoint-ID
-- **api_id** - Referenz zur API
-- **name** - Endpoint-Name
-- **method** - HTTP-Methode
-- **endpoint** - Endpunkt-Pfad
-- **description** - Beschreibung
-- **parameters** - Parameter als JSON
-- **headers** - Header als JSON
-- **response_example** - Beispiel-Response als JSON
+#### API-Handler
+- **`backend/apis.php`** - Verwaltung der API-Abonnements
+- **`backend/api/v1/users.php`** - Beispiel User Management API
+- **`backend/api/v1/files.php`** - File Storage API (TODO)
+- **`backend/api/v1/database.php`** - Database API (TODO)
 
-## Features
+### Frontend-Struktur
 
-### API-Verwaltung
-- ✅ APIs erstellen, bearbeiten, löschen
-- ✅ Verschiedene API-Typen unterstützen
-- ✅ Status-Management (aktiv, inaktiv, testing)
-- ✅ Rate-Limiting-Konfiguration
+#### Komponenten
+- **`ManageApis.vue`** - Hauptverwaltung mit 3 Tabs:
+  - **Available APIs** - Alle verfügbaren CMS-APIs
+  - **My APIs** - Abonnierte APIs des Projekts  
+  - **Usage & Stats** - Nutzungsstatistiken
 
-### Authentifizierung
-- ✅ Verschiedene Auth-Typen (API Key, Bearer, OAuth2, Basic Auth)
-- ✅ Verschlüsselte Schlüsselspeicherung
-- ✅ Schlüssel-Management
+#### Features
+- ✅ API-Browser mit Kategorien und Suche
+- ✅ One-Click-Abonnement
+- ✅ API-Schlüssel-Verwaltung
+- ✅ Rate-Limiting pro Projekt
+- ✅ Nutzungsstatistiken
+- ✅ Detailansicht mit Endpoints
+
+## API-Beispiel: User Management
 
 ### Endpoints
-- ✅ Endpoint-Definition
-- ✅ HTTP-Methoden
-- ✅ Parameter-Dokumentation
-- ✅ Response-Beispiele
+- `GET /api/v1/users` - Alle Benutzer abrufen
+- `GET /api/v1/users/{id}` - Spezifischen Benutzer abrufen
+- `POST /api/v1/users` - Neuen Benutzer erstellen
+- `PUT /api/v1/users/{id}` - Benutzer aktualisieren
+- `DELETE /api/v1/users/{id}` - Benutzer löschen
 
-### UI/UX
-- ✅ Übersichtliche Verwaltungsansicht
-- ✅ Detailansicht pro API
-- ✅ Einstellungsseite
-- ✅ Test-Funktionalität (Mock)
-- ✅ Responsive Design
+### Authentifizierung
+```bash
+Authorization: Bearer cms_a1b2c3d4e5f6g7h8_123
+```
 
-## Installation
+### Beispiel-Request
+```javascript
+// GET /api/v1/users?page=1&limit=10
+fetch('/api/v1/users?page=1&limit=10', {
+  headers: {
+    'Authorization': 'Bearer cms_a1b2c3d4e5f6g7h8_123',
+    'Content-Type': 'application/json'
+  }
+})
+.then(response => response.json())
+.then(data => console.log(data));
+```
 
-1. **Datenbank-Migration ausführen:**
-   ```bash
-   php backend/run_project_apis_migration.php
-   ```
+### Beispiel-Response
+```json
+{
+  "users": [
+    {
+      "userID": "1",
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john@example.com",
+      "accountStatus": "active"
+    }
+  ],
+  "total": 25,
+  "page": 1,
+  "limit": 10,
+  "pages": 3
+}
+```
 
-2. **Frontend-Dependencies installieren:**
-   ```bash
-   npm install
-   ```
+## Workflow für Projekte
 
-3. **Development Server starten:**
-   ```bash
-   npm run dev
-   ```
+### 1. API entdecken
+- Projekt öffnet `/project/{project}/manage/apis`
+- Durchsucht verfügbare APIs nach Kategorie
+- Liest API-Dokumentation und Endpoints
 
-## Verwendung
+### 2. API abonnieren
+- Klick auf "Subscribe" bei gewünschter API
+- System generiert einzigartigen API-Schlüssel
+- API ist sofort verfügbar
 
-### API erstellen
-1. Gehe zu `/project/{project}/manage/apis`
-2. Klicke auf "Add New API"
-3. Fülle die erforderlichen Felder aus
-4. Speichere die API
+### 3. API verwenden
+```javascript
+// Im Web Builder oder Monaco Editor
+const apiKey = 'cms_a1b2c3d4e5f6g7h8_123';
 
-### Endpoints hinzufügen
-1. Öffne eine API-Detailansicht
-2. Klicke auf "Add Endpoint"
-3. Definiere Method, Pfad und Parameter
-4. Speichere den Endpoint
+// Benutzer abrufen
+const users = await fetch('/api/v1/users', {
+  headers: { 'Authorization': `Bearer ${apiKey}` }
+}).then(r => r.json());
 
-### Authentifizierung konfigurieren
-1. Gehe zu den API-Settings
-2. Wähle den Auth-Type
-3. Füge benötigte Schlüssel hinzu
-4. Speichere die Konfiguration
+// Datei hochladen
+const formData = new FormData();
+formData.append('file', fileInput.files[0]);
 
-## Navigation
+const uploadResult = await fetch('/api/v1/files/upload', {
+  method: 'POST',
+  headers: { 'Authorization': `Bearer ${apiKey}` },
+  body: formData
+}).then(r => r.json());
+```
 
-Die APIs erscheinen automatisch in der Projektsidebar unter dem "APIs" Abschnitt. Jede API zeigt:
-- Name und Icon
-- Status-Badge
-- Typ-Information
-- Direkte Links zu Detailansicht und Einstellungen
+### 4. Überwachung
+- Nutzungsstatistiken im "Usage & Stats" Tab
+- Rate-Limit-Überwachung
+- Fehlerprotokollierung
 
-## Sicherheit
+## Features für Entwickler
 
-- ✅ JWT-basierte Authentifizierung
-- ✅ SQL-Injection-Schutz
-- ✅ Verschlüsselte Schlüsselspeicherung
-- ✅ Rate-Limiting
-- ✅ HTTPS-Enforcement (konfigurierbar)
+### Rate Limiting
+- Automatisches Rate Limiting pro API-Schlüssel
+- Konfigurierbar pro Projekt
+- 429-Fehler bei Überschreitung
 
-## Nächste Schritte
+### Logging & Analytics
+- Alle API-Calls werden geloggt
+- Response-Zeiten gemessen
+- Erfolgsraten berechnet
+- IP-Tracking
 
-### Mögliche Erweiterungen:
-1. **API-Testing** - Echte API-Calls von der UI
-2. **Webhooks** - Webhook-Management
-3. **Monitoring** - API-Performance-Tracking
-4. **Import/Export** - OpenAPI/Swagger Import
-5. **Collaboration** - Team-Features für API-Dokumentation
-6. **Versioning** - API-Versionierung
+### Security
+- API-Schlüssel-Validation
+- CORS-Unterstützung
+- Input-Sanitization
+- Error-Handling
 
-### Code-Verbesserungen:
-1. **Error-Handling** - Verbesserte Fehlerbehandlung
-2. **Validation** - Frontend/Backend-Validierung
-3. **Caching** - API-Response-Caching
-4. **Logs** - Detaillierte API-Logs
+## Installation & Setup
 
-## Support
+### 1. Datenbank-Migration
+```bash
+cd /home/alex/control-center-3_2/backend
+php run_project_apis_migration.php
+```
 
-Bei Fragen oder Problemen:
-1. Prüfe die Browser-Konsole auf Fehler
-2. Kontrolliere die Backend-Logs
-3. Stelle sicher, dass die Datenbank-Migration erfolgreich war
+### 2. API-Endpunkte konfigurieren
+- APIs werden automatisch aus der Datenbank geladen
+- Neue APIs können über SQL-Inserts hinzugefügt werden
+- Endpoint-Dokumentation in `cms_api_endpoints`
+
+### 3. Webserver-Konfiguration
+```apache
+# .htaccess für API-Routing
+RewriteEngine On
+RewriteRule ^api/v1/users(/.*)?$ backend/api/v1/users.php [L,QSA]
+RewriteRule ^api/v1/files(/.*)?$ backend/api/v1/files.php [L,QSA]
+```
+
+## Zukünftige Erweiterungen
+
+### Neue APIs
+- **Database API** - Direkte DB-Queries für Web Builder
+- **File Storage API** - Datei-Management
+- **Analytics API** - Event-Tracking
+- **Email API** - E-Mail-Versand
+- **Webhook API** - Real-time Benachrichtigungen
+
+### Erweiterte Features
+- **API-Versionierung** - Multiple API-Versionen
+- **Webhook-Support** - Push-Benachrichtigungen
+- **GraphQL-Endpoints** - Flexible Datenabfragen
+- **WebSocket-APIs** - Real-time Kommunikation
+- **API-Playground** - Interaktive API-Tests
+
+### Integration mit Web Builder
+```javascript
+// Beispiel: Benutzer-Dropdown im Web Builder
+const UserDropdown = {
+  async loadUsers() {
+    const response = await CMS.api.users.getAll();
+    return response.users.map(u => ({
+      value: u.userID,
+      label: `${u.firstName} ${u.lastName}`
+    }));
+  }
+};
+```
+
+### Integration mit Monaco Editor
+```javascript
+// Auto-completion für CMS APIs
+monaco.languages.registerCompletionItemProvider('javascript', {
+  provideCompletionItems: () => {
+    return {
+      suggestions: [
+        {
+          label: 'CMS.api.users.getAll()',
+          kind: monaco.languages.CompletionItemKind.Function,
+          documentation: 'Get all users from CMS'
+        }
+      ]
+    };
+  }
+});
+```
+
+## Fazit
+
+Dieses System verwandelt Ihr CMS in eine **API-Plattform**, die Projekte nutzen können. Statt externe APIs zu integrieren, stellen Sie Ihre eigenen bereit und haben volle Kontrolle über Daten und Funktionalität.
