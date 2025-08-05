@@ -247,6 +247,23 @@ const routes: Array<RouteRecordRaw> = [
     path: '/project/:project/services/:service/config',
     component: () => import('../views/ServiceConfigView.vue'),
   },
+  // API Routes
+  {
+    path: '/project/:project/new/api',
+    component: () => import('../apis/ManageApis.vue'),
+  },
+  {
+    path: '/project/:project/manage/apis',
+    component: () => import('../apis/ManageApis.vue'),
+  },
+  {
+    path: '/project/:project/apis/:apiSlug',
+    component: () => import('../apis/ApiView.vue'),
+  },
+  {
+    path: '/project/:project/apis/:apiSlug/settings',
+    component: () => import('../apis/ApiSettings.vue'),
+  },
   {
     path: '/project/:project/qr-code-generator',///:qr-code-generator
     component: () => import('../views/QrCodeGenerator.vue'),

@@ -155,6 +155,24 @@ if (isset($headers['Authorization'])) {
                 $s++;
             }
         }
+        
+        // Get APIs for this project
+        $apis = query("SELECT * FROM project_apis WHERE projectID='$projectID' ORDER BY name ASC");
+        
+        if (mysqli_num_rows($apis) == 0) {
+            $json['apis'] = [];
+        } else {
+            $a = 0;
+            foreach ($apis as $api) {
+                $json['apis'][$a]["id"] = $api['id'];
+                $json['apis'][$a]["icon"] = $api['icon'];
+                $json['apis'][$a]["name"] = $api['name'];
+                $json['apis'][$a]["slug"] = $api['slug'];
+                $json['apis'][$a]["status"] = $api['status'];
+                $json['apis'][$a]["type"] = $api['type'];
+                $a++;
+            }
+        }
 
     } else {
         $tools = query("SELECT * FROM tools");
