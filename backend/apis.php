@@ -35,6 +35,116 @@ if (isset($headers['Authorization'])) {
             echo echoJSON($json);
         }
 
+        // Get API details with endpoints and documentation
+        elseif (isset($_POST['getApiDetails']) && isset($_POST['api_slug']) && isset($_POST['project'])) {
+            $apiSlug = escape_string($_POST['api_slug']);
+            $projectName = escape_string($_POST['project']);
+            $projectID = fetch_assoc(query("SELECT * FROM projects WHERE link='$projectName'"))['projectID'];
+            
+            // Get API and subscription details
+            $api_query = query("
+                SELECT ca.*, pas.id as subscription_id, pas.api_key, pas.rate_limit, pas.usage_count, pas.last_used, pas.is_enabled
+                FROM cms_apis ca
+                LEFT JOIN project_api_subscriptions pas ON ca.id = pas.api_id AND pas.projectID='$projectID'
+                WHERE ca.slug='$apiSlug'
+            ");
+            
+            if (mysqli_num_rows($api_query) == 0) {
+                header('HTTP/1.1 404 Not Found');
+                echo json_encode(['error' => 'API not found']);
+                exit;
+            }
+            
+            $api = fetch_assoc($api_query);
+            
+            // Get API endpoints
+            $endpoints = query("SELECT * FROM cms_api_endpoints WHERE api_id='" . $api['id'] . "' ORDER BY endpoint ASC");
+            $api['endpoints'] = [];
+            
+            foreach ($endpoints as $endpoint) {
+                $api['endpoints'][] = [
+                    'id' => $endpoint['id'],
+                    'name' => $endpoint['name'],
+                    'method' => $endpoint['method'],
+                    'endpoint' => $endpoint['endpoint'],
+                    'description' => $endpoint['description'],
+                    'parameters' => json_decode($endpoint['parameters'], true) ?: [],
+                    'response_schema' => json_decode($endpoint['response_schema'], true) ?: [],
+                    'example_request' => json_decode($endpoint['example_request'], true) ?: [],
+                    'example_response' => json_decode($endpoint['example_response'], true) ?: []
+                ];
+            }
+            
+            // Get usage statistics
+            $stats_query = query("
+                SELECT 
+                    COUNT(*) as total_requests,
+                    AVG(response_time) as avg_response_time,
+                    (COUNT(CASE WHEN status_code >= 200 AND status_code < 300 THEN 1 END) * 100.0 / COUNT(*)) as success_rate,
+                    COUNT(CASE WHEN DATE(timestamp) = CURDATE() THEN 1 END) as requests_today
+                FROM cms_api_usage_logs
+                WHERE subscription_id='" . $api['subscription_id'] . "'
+            ");
+            
+            if (mysqli_num_rows($stats_query) > 0) {
+                $stats = fetch_assoc($stats_query);
+                $api['usage_stats'] = [
+                    'totalRequests' => $stats['total_requests'] ?: 0,
+                    'avgResponseTime' => round($stats['avg_response_time'] ?: 0),
+                    'successRate' => round($stats['success_rate'] ?: 0, 1),
+                    'requestsToday' => $stats['requests_today'] ?: 0
+                ];
+            } else {
+                $api['usage_stats'] = [
+                    'totalRequests' => 0,
+                    'avgResponseTime' => 0,
+                    'successRate' => 0,
+                    'requestsToday' => 0
+                ];
+            }
+            
+            // Get recent activity
+            $activity_query = query("
+                SELECT method, path, status_code, response_time, timestamp
+                FROM cms_api_usage_logs
+                WHERE subscription_id='" . $api['subscription_id'] . "'
+                ORDER BY timestamp DESC
+                LIMIT 10
+            ");
+            
+            $api['recent_activity'] = [];
+            foreach ($activity_query as $activity) {
+                $api['recent_activity'][] = [
+                    'method' => $activity['method'],
+                    'path' => $activity['path'],
+                    'status' => $activity['status_code'],
+                    'response_time' => $activity['response_time'],
+                    'timestamp' => $activity['timestamp']
+                ];
+            }
+            
+            echo echoJSON($api);
+        }
+
+        // Update API subscription settings
+        elseif (isset($_POST['updateApiSettings']) && isset($_POST['subscription_id'])) {
+            $subscriptionId = intval($_POST['subscription_id']);
+            $rateLimit = intval($_POST['rate_limit']);
+            $isEnabled = $_POST['is_enabled'] === 'true' ? 1 : 0;
+            
+            query("UPDATE project_api_subscriptions SET rate_limit='$rateLimit', is_enabled='$isEnabled' WHERE id='$subscriptionId'");
+            echo json_encode(['success' => true]);
+        }
+
+        // Regenerate API key
+        elseif (isset($_POST['regenerateApiKey']) && isset($_POST['subscription_id'])) {
+            $subscriptionId = intval($_POST['subscription_id']);
+            $newApiKey = 'cms_' . bin2hex(random_bytes(16)) . '_' . time();
+            
+            query("UPDATE project_api_subscriptions SET api_key='$newApiKey' WHERE id='$subscriptionId'");
+            echo json_encode(['success' => true, 'api_key' => $newApiKey]);
+        }
+
         // Get project's subscribed APIs
         elseif (isset($_POST['getProjectApis']) && isset($_POST['project'])) {
             $projectName = escape_string($_POST['project']);

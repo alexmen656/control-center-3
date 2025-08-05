@@ -156,20 +156,28 @@ if (isset($headers['Authorization'])) {
             }
         }
         
-        // Get APIs for this project
-        $apis = query("SELECT * FROM project_apis WHERE projectID='$projectID' ORDER BY name ASC");
+        // Get subscribed APIs for this project
+        $subscribed_apis = query("
+            SELECT pas.*, ca.name, ca.slug, ca.icon, ca.category
+            FROM project_api_subscriptions pas
+            JOIN cms_apis ca ON pas.api_id = ca.id
+            WHERE pas.projectID='$projectID' AND pas.is_enabled=1
+            ORDER BY ca.category, ca.name ASC
+        ");
         
-        if (mysqli_num_rows($apis) == 0) {
+        if (mysqli_num_rows($subscribed_apis) == 0) {
             $json['apis'] = [];
         } else {
             $a = 0;
-            foreach ($apis as $api) {
-                $json['apis'][$a]["id"] = $api['id'];
+            foreach ($subscribed_apis as $api) {
+                $json['apis'][$a]["id"] = $api['api_id'];
+                $json['apis'][$a]["subscription_id"] = $api['id'];
                 $json['apis'][$a]["icon"] = $api['icon'];
                 $json['apis'][$a]["name"] = $api['name'];
                 $json['apis'][$a]["slug"] = $api['slug'];
-                $json['apis'][$a]["status"] = $api['status'];
-                $json['apis'][$a]["type"] = $api['type'];
+                $json['apis'][$a]["category"] = $api['category'];
+                $json['apis'][$a]["status"] = $api['is_enabled'] ? 'active' : 'inactive';
+                $json['apis'][$a]["usage_count"] = $api['usage_count'];
                 $a++;
             }
         }

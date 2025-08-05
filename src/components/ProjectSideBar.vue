@@ -207,30 +207,42 @@
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
     <h4>APIs</h4>
     <div>
-      <!---<router-link to="/manage/projects/"
-        ><ion-icon
+      <router-link :to="'/project/' + $route.params.project + '/manage/apis'"><ion-icon
           style="color: var(--ion-color-medium-shade)"
-          name="ellipsis-horizontal-circle-outline" /></router-link
-      >--><router-link to="/info/apis/"><ion-icon style="color: var(--ion-color-medium-shade)"
+          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/apis/"><ion-icon style="color: var(--ion-color-medium-shade)"
           name="information-circle-outline"></ion-icon></router-link><router-link
-        :to="'/project/' + $route.params.project + '/new/api'"><ion-icon style="color: var(--ion-color-medium-shade)"
+        :to="'/project/' + $route.params.project + '/manage/apis'"><ion-icon style="color: var(--ion-color-medium-shade)"
           name="add-circle-outline"></ion-icon></router-link>
     </div>
   </ion-note>
-  <ion-list id="inbox-list" v-if="!isCollapsed">
+  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
-      <ion-menu-toggle auto-hide="false">
+      <ion-menu-toggle auto-hide="false" v-for="(api, i) in apis" :key="`api-${i}`">
         <ion-item
-          @click="this.selectedIndex = Number(tools.length) + Number(components.length) + Number(services.length) + 1"
-          lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/apis/weather-api'"
+          @click="this.selectedIndex = Number(tools.length) + Number(components.length) + Number(services.length) + Number(i) + 1"
+          lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/apis/' + api.slug"
           class="hydrated menu-item" :class="{
-            selected: this.selectedIndex === Number(tools.length) + Number(components.length) + Number(services.length) + 1, hasToBeDarkmode: hasToBeDarkmode
-          }">
-          <ion-icon slot="start" name="cloud-outline" />
-          <ion-label>Weather API</ion-label>
-          <ion-reorder slot="end">
-            <ion-icon style="cursor: pointer; z-index: 1000" name="cog-outline" />
+            selected: this.selectedIndex === Number(tools.length) + Number(components.length) + Number(services.length) + Number(i) + 1,
+            collapsed: isCollapsed,
+            hasToBeDarkmode: hasToBeDarkmode
+          }"
+          :data-tooltip="isCollapsed ? api.name : ''">
+          <ion-icon slot="start" :name="api.icon || 'code-outline'" />
+          <ion-label v-if="!isCollapsed">{{ api.name }}</ion-label>
+          <ion-badge v-if="!isCollapsed && api.category" color="medium" class="api-category-badge">{{ api.category }}</ion-badge>
+          <span v-if="!isCollapsed" class="api-status-indicator"
+            :class="{ 'status-active': api.status === 'active', 'status-inactive': api.status === 'inactive' }"></span>
+          <ion-reorder v-if="!isCollapsed" slot="end">
+            <ion-icon style="cursor: pointer; z-index: 1000" name="settings-outline" />
           </ion-reorder>
+        </ion-item>
+      </ion-menu-toggle>
+      
+      <!-- No APIs message -->
+      <ion-menu-toggle auto-hide="false" v-if="apis.length === 0 && !isCollapsed">
+        <ion-item lines="none" detail="false" class="no-apis-item">
+          <ion-icon slot="start" name="code-slash-outline" color="medium" />
+          <ion-label color="medium">No APIs subscribed</ion-label>
         </ion-item>
       </ion-menu-toggle>
     </ion-reorder-group>
@@ -264,6 +276,7 @@ export default defineComponent({
     const tools = ref<{ id: number; order: number }[]>([]);
     const components = ref([]);
     const services = ref([]);
+    const apis = ref([]);
     const route = useRoute();
     const ionRouter = useIonRouter();
     const list = {} as any;
@@ -360,6 +373,7 @@ export default defineComponent({
         tools.value = response.data.tools;
         components.value = response.data.components;
         services.value = response.data.services || [];
+        apis.value = response.data.apis || [];
         componentSubItems.value = response.data.componentSubItems || {};
         tools.value.forEach((element) => {
           list[element.id] = element.order;
@@ -387,6 +401,7 @@ export default defineComponent({
       selectedIndex,
       components: components,
       services: services,
+      apis: apis,
       goToConfig,
       handleReorder,
       handleFrontReorder,
@@ -411,6 +426,7 @@ export default defineComponent({
           this.tools = response.data.tools;
           this.components = response.data.components;
           this.services = response.data.services || [];
+          this.apis = response.data.apis || [];
           this.componentSubItems = response.data.componentSubItems || {};
         });
     });
@@ -478,6 +494,38 @@ ion-item.new-tool ion-label {
 
 .service-status-indicator.status-down {
   background-color: red;
+}
+
+/* API Status Indicators */
+.api-status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-left: 8px;
+}
+
+.api-status-indicator.status-active {
+  background-color: var(--ion-color-success);
+}
+
+.api-status-indicator.status-inactive {
+  background-color: var(--ion-color-medium);
+}
+
+/* API Category Badge */
+.api-category-badge {
+  margin-left: 8px;
+  font-size: 0.7em;
+  padding: 2px 6px;
+}
+
+/* No APIs Item */
+.no-apis-item {
+  opacity: 0.6;
+}
+
+.no-apis-item ion-label {
+  font-style: italic;
 }
 
 .sub-components {

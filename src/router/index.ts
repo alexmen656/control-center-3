@@ -258,7 +258,7 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/project/:project/apis/:apiSlug',
-    component: () => import('../apis/ApiView.vue'),
+    component: () => import('../apis/ApiDocumentation.vue'),
   },
   {
     path: '/project/:project/apis/:apiSlug/settings',
