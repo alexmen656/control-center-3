@@ -184,8 +184,8 @@
       </div>
 
       <div class="section-content">
-        <!-- Available APIs -->
-        <div class="subsection-header">Available in Project</div>
+        <!-- Available APIs
+        <div class="subsection-header">Available in Project</div> -->
         <div v-if="installedAPIs.length === 0" class="no-apis">
           No APIs available for this project.<br>
           <small>Manage APIs in the main Control Center.</small>
@@ -198,21 +198,21 @@
           </div>
         </div>
 
-        <!-- Quick Copy -->
-        <div class="subsection-header">Quick Copy</div>
+        <!-- Quick Copy
+        <div class="subsection-header">Quick Copy</div> -->
         <div v-if="installedAPIs.length === 0" class="no-apis-message">
           Install APIs to see import examples
         </div>
         <div v-else>
           <div class="copy-section">
-            <div class="copy-label">All Imports</div>
+            <div class="subsection-header">All Imports</div>
             <div class="code-block" @click="copyToClipboard(getAllImportsExample())">
               <code>{{ getAllImportsExample() }}</code>
               <ion-icon name="copy-outline" class="copy-icon"></ion-icon>
             </div>
           </div>
           <div class="copy-section">
-            <div class="copy-label">Usage Example</div>
+            <div class="subsection-header">Usage Example</div>
             <div class="code-block" @click="copyToClipboard(getUsageExample())">
               <code>{{ getUsageExample() }}</code>
               <ion-icon name="copy-outline" class="copy-icon"></ion-icon>
