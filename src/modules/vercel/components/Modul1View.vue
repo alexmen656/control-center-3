@@ -4,106 +4,133 @@
             <div class="env-variables-manager">
                 <ion-card>
                     <ion-card-header>
-                        <ion-card-title>Environment Variables</ion-card-title>
-                        <ion-card-subtitle v-if="selectedProject">
-                            Project: {{ selectedProject.name }}
-                        </ion-card-subtitle>
+                        <div class="header-with-action">
+                            <div>
+                                <ion-card-title>Environment Variables</ion-card-title>
+                                <ion-card-subtitle v-if="selectedProject">
+                                    Project: {{ selectedProject.name }}
+                                </ion-card-subtitle>
+                            </div>
+                            <ion-button @click="openAddModal" color="primary">
+                                <ion-icon name="add-outline" slot="start"></ion-icon>
+                                Add Variable
+                            </ion-button>
+                        </div>
                     </ion-card-header>
 
                     <ion-card-content>
-                        <div v-if="selectedProject">
-                            <!-- Add New Environment Variable -->
-                            <ion-card>
-                                <ion-card-header>
-                                    <ion-card-title>Add New Variable</ion-card-title>
-                                </ion-card-header>
-                                <ion-card-content>
-                                    <ion-item>
-                                        <ion-label position="stacked">Key</ion-label>
-                                        <ion-input v-model="newEnvVar.key" placeholder="VARIABLE_NAME"></ion-input>
-                                    </ion-item>
-                                    <ion-item>
-                                        <ion-label position="stacked">Value</ion-label>
-                                        <ion-textarea v-model="newEnvVar.value"
-                                            placeholder="variable_value"></ion-textarea>
-                                    </ion-item>
-                                    <ion-item>
-                                        <ion-label>Target Environments</ion-label>
-                                        <ion-checkbox-group v-model="newEnvVar.target">
-                                            <ion-item>
-                                                <ion-checkbox value="production"></ion-checkbox>
-                                                <ion-label class="ion-margin-start">Production</ion-label>
-                                            </ion-item>
-                                            <ion-item>
-                                                <ion-checkbox value="preview"></ion-checkbox>
-                                                <ion-label class="ion-margin-start">Preview</ion-label>
-                                            </ion-item>
-                                            <ion-item>
-                                                <ion-checkbox value="development"></ion-checkbox>
-                                                <ion-label class="ion-margin-start">Development</ion-label>
-                                            </ion-item>
-                                        </ion-checkbox-group>
-                                    </ion-item>
-                                    <ion-button expand="block" @click="addEnvironmentVariable"
-                                        :disabled="!newEnvVar.key || !newEnvVar.value || loading">
-                                        <ion-spinner v-if="loading" name="crescent"></ion-spinner>
-                                        Add Variable
-                                    </ion-button>
-                                </ion-card-content>
-                            </ion-card>
-
-                            <!-- Environment Variables List -->
-                            <ion-card v-if="envVariables.length > 0">
-                                <ion-card-header>
-                                    <ion-card-title>Current Variables</ion-card-title>
-                                </ion-card-header>
-                                <ion-card-content>
-                                    <ion-list>
-                                        <ion-item v-for="envVar in envVariables" :key="envVar.id">
-                                            <div class="env-var-item">
-                                                <div class="env-var-header">
-                                                    <h3>{{ envVar.key }}</h3>
-                                                    <div class="env-var-actions">
-                                                        <ion-button fill="clear" size="small"
-                                                            @click="editEnvironmentVariable(envVar)">
-                                                            <ion-icon name="create-outline"></ion-icon>
-                                                        </ion-button>
-                                                        <ion-button fill="clear" size="small" color="danger"
-                                                            @click="deleteEnvironmentVariable(envVar)">
-                                                            <ion-icon name="trash-outline"></ion-icon>
-                                                        </ion-button>
-                                                    </div>
-                                                </div>
-                                                <div class="env-var-details">
-                                                    <p class="env-var-value">{{ envVar.decryptedValue }}</p>
-                                                    <div class="env-var-targets">
-                                                        <ion-chip v-for="target in envVar.target" :key="target"
-                                                            :color="getTargetColor(target)">
-                                                            {{ target }}
-                                                        </ion-chip>
-                                                    </div>
-                                                </div>
+                        <!-- Environment Variables Table -->
+                        <div v-if="selectedProject && envVariables.length > 0" class="table-container">
+                            <table class="env-table">
+                                <thead>
+                                    <tr>
+                                        <th>Key</th>
+                                        <th>Value</th>
+                                        <th>Environments</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="envVar in envVariables" :key="envVar.id">
+                                        <td class="key-column">
+                                            <span class="env-key">{{ envVar.key }}</span>
+                                        </td>
+                                        <td class="value-column">
+                                            <code class="env-value">{{ envVar.decryptedValue || '••••••••' }}</code>
+                                        </td>
+                                        <td class="targets-column">
+                                            <div class="env-targets">
+                                                <ion-chip v-for="target in envVar.target" :key="target"
+                                                    :color="getTargetColor(target)" size="small">
+                                                    {{ target }}
+                                                </ion-chip>
                                             </div>
-                                        </ion-item>
-                                    </ion-list>
-                                </ion-card-content>
-                            </ion-card>
+                                        </td>
+                                        <td class="actions-column">
+                                            <div class="action-buttons">
+                                                <ion-button fill="clear" size="small"
+                                                    @click="editEnvironmentVariable(envVar)">
+                                                    <ion-icon name="create-outline"></ion-icon>
+                                                </ion-button>
+                                                <ion-button fill="clear" size="small" color="danger"
+                                                    @click="deleteEnvironmentVariable(envVar)">
+                                                    <ion-icon name="trash-outline"></ion-icon>
+                                                </ion-button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
 
-                            <ion-card v-else-if="!loading">
-                                <ion-card-content>
-                                    <p>No environment variables found for this project.</p>
-                                </ion-card-content>
-                            </ion-card>
+                        <!-- Empty State -->
+                        <div v-else-if="selectedProject && !loading" class="empty-state">
+                            <ion-icon name="server-outline" size="large"></ion-icon>
+                            <h3>No Environment Variables</h3>
+                            <p>This project doesn't have any environment variables yet.</p>
+                            <ion-button @click="openAddModal" color="primary">
+                                <ion-icon name="add-outline" slot="start"></ion-icon>
+                                Add Your First Variable
+                            </ion-button>
                         </div>
 
                         <!-- Loading State -->
                         <div v-if="loading" class="loading-container">
                             <ion-spinner name="crescent"></ion-spinner>
-                            <p>Loading...</p>
+                            <p>Loading environment variables...</p>
                         </div>
                     </ion-card-content>
                 </ion-card>
             </div>
+
+            <!-- Add Variable Modal -->
+            <ion-modal :is-open="addModal.isOpen" @did-dismiss="closeAddModal">
+                <ion-header>
+                    <ion-toolbar>
+                        <ion-title>Add Environment Variable</ion-title>
+                        <ion-buttons slot="end">
+                            <ion-button @click="closeAddModal">
+                                <ion-icon name="close-outline"></ion-icon>
+                            </ion-button>
+                        </ion-buttons>
+                    </ion-toolbar>
+                </ion-header>
+                <ion-content class="ion-padding">
+                    <ion-item>
+                        <ion-label position="stacked">Key *</ion-label>
+                        <ion-input v-model="newEnvVar.key" placeholder="VARIABLE_NAME" clear-input></ion-input>
+                    </ion-item>
+                    <ion-item>
+                        <ion-label position="stacked">Value *</ion-label>
+                        <ion-textarea v-model="newEnvVar.value" placeholder="variable_value" auto-grow></ion-textarea>
+                    </ion-item>
+                    <ion-item>
+                        <ion-label>Target Environments</ion-label>
+                        <ion-checkbox-group v-model="newEnvVar.target">
+                            <ion-item>
+                                <ion-checkbox value="production"></ion-checkbox>
+                                <ion-label class="ion-margin-start">Production</ion-label>
+                            </ion-item>
+                            <ion-item>
+                                <ion-checkbox value="preview"></ion-checkbox>
+                                <ion-label class="ion-margin-start">Preview</ion-label>
+                            </ion-item>
+                            <ion-item>
+                                <ion-checkbox value="development"></ion-checkbox>
+                                <ion-label class="ion-margin-start">Development</ion-label>
+                            </ion-item>
+                        </ion-checkbox-group>
+                    </ion-item>
+                    
+                    <div class="modal-buttons">
+                        <ion-button expand="block" @click="addEnvironmentVariable"
+                            :disabled="!newEnvVar.key || !newEnvVar.value || loading" color="primary">
+                            <ion-spinner v-if="loading" name="crescent" slot="start"></ion-spinner>
+                            {{ loading ? 'Adding...' : 'Add Variable' }}
+                        </ion-button>
+                    </div>
+                </ion-content>
+            </ion-modal>
 
             <!-- Edit Modal -->
             <ion-modal :is-open="editModal.isOpen" @did-dismiss="closeEditModal">
@@ -111,18 +138,20 @@
                     <ion-toolbar>
                         <ion-title>Edit Environment Variable</ion-title>
                         <ion-buttons slot="end">
-                            <ion-button @click="closeEditModal">Close</ion-button>
+                            <ion-button @click="closeEditModal">
+                                <ion-icon name="close-outline"></ion-icon>
+                            </ion-button>
                         </ion-buttons>
                     </ion-toolbar>
                 </ion-header>
                 <ion-content class="ion-padding">
                     <ion-item>
-                        <ion-label position="stacked">Key</ion-label>
-                        <ion-input v-model="editModal.key" placeholder="VARIABLE_NAME"></ion-input>
+                        <ion-label position="stacked">Key *</ion-label>
+                        <ion-input v-model="editModal.key" placeholder="VARIABLE_NAME" clear-input></ion-input>
                     </ion-item>
                     <ion-item>
-                        <ion-label position="stacked">Value</ion-label>
-                        <ion-textarea v-model="editModal.value" placeholder="variable_value"></ion-textarea>
+                        <ion-label position="stacked">Value *</ion-label>
+                        <ion-textarea v-model="editModal.value" placeholder="variable_value" auto-grow></ion-textarea>
                     </ion-item>
                     <ion-item>
                         <ion-label>Target Environments</ion-label>
@@ -141,10 +170,14 @@
                             </ion-item>
                         </ion-checkbox-group>
                     </ion-item>
-                    <ion-button expand="block" @click="updateEnvironmentVariable"
-                        :disabled="!editModal.key || !editModal.value || loading">
-                        Update Variable
-                    </ion-button>
+                    
+                    <div class="modal-buttons">
+                        <ion-button expand="block" @click="updateEnvironmentVariable"
+                            :disabled="!editModal.key || !editModal.value || loading" color="primary">
+                            <ion-spinner v-if="loading" name="crescent" slot="start"></ion-spinner>
+                            {{ loading ? 'Updating...' : 'Update Variable' }}
+                        </ion-button>
+                    </div>
                 </ion-content>
             </ion-modal>
         </ion-content>
@@ -164,11 +197,7 @@ import {
     IonInput,
     IonTextarea,
     IonButton,
-    //IonSelect,
-    //IonSelectOption,
-    //IonCheckboxGroup,
     IonCheckbox,
-    IonList,
     IonChip,
     IonIcon,
     IonSpinner,
@@ -180,7 +209,7 @@ import {
     alertController,
     toastController
 } from '@ionic/vue';
-import { createOutline, trashOutline } from 'ionicons/icons';
+import { createOutline, trashOutline, addOutline, closeOutline, serverOutline } from 'ionicons/icons';
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import qs from 'qs';
@@ -201,11 +230,7 @@ export default {
         IonInput,
         IonTextarea,
         IonButton,
-        //IonSelect,
-        //IonSelectOption,
-        //IonCheckboxGroup,
         IonCheckbox,
-        IonList,
         IonChip,
         IonIcon,
         IonSpinner,
@@ -226,6 +251,10 @@ export default {
             key: '',
             value: '',
             target: ['production', 'preview', 'development']
+        });
+
+        const addModal = ref({
+            isOpen: false
         });
 
         const editModal = ref({
@@ -285,6 +314,20 @@ export default {
             }
         };
 
+        const openAddModal = () => {
+            addModal.value.isOpen = true;
+        };
+
+        const closeAddModal = () => {
+            addModal.value.isOpen = false;
+            // Reset form
+            newEnvVar.value = {
+                key: '',
+                value: '',
+                target: ['production', 'preview', 'development']
+            };
+        };
+
         const addEnvironmentVariable = async () => {
             if (!newEnvVar.value.key || !newEnvVar.value.value) return;
 
@@ -299,11 +342,7 @@ export default {
 
                 if (response.data.success) {
                     showToast('Environment variable added successfully', 'success');
-                    newEnvVar.value = {
-                        key: '',
-                        value: '',
-                        target: ['production', 'preview', 'development']
-                    };
+                    closeAddModal();
                     await loadEnvironmentVariables();
                 }
             } catch (error) {
@@ -424,7 +463,10 @@ export default {
             envVariables,
             loading,
             newEnvVar,
+            addModal,
             editModal,
+            openAddModal,
+            closeAddModal,
             addEnvironmentVariable,
             editEnvironmentVariable,
             updateEnvironmentVariable,
@@ -432,92 +474,241 @@ export default {
             closeEditModal,
             getTargetColor,
             createOutline,
-            trashOutline
+            trashOutline,
+            addOutline,
+            closeOutline,
+            serverOutline
         };
     }
 };
 </script>
 <style scoped>
 .env-variables-manager {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
-.env-var-item {
-    width: 100%;
-}
-
-.env-var-header {
+/* Header with action button */
+.header-with-action {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    gap: 16px;
 }
 
-.env-var-header h3 {
-    margin: 0;
+/* Table styles */
+.table-container {
+    overflow-x: auto;
+    margin-top: 16px;
+}
+
+.env-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--ion-color-light);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.env-table th {
+    background: var(--ion-color-primary);
+    color: white;
+    padding: 16px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.env-table td {
+    padding: 16px 12px;
+    border-bottom: 1px solid var(--ion-color-light-shade);
+    vertical-align: top;
+}
+
+.env-table tr:last-child td {
+    border-bottom: none;
+}
+
+.env-table tr:hover {
+    background-color: var(--ion-color-light-tint);
+}
+
+/* Column specific styles */
+.key-column {
+    min-width: 200px;
+}
+
+.env-key {
+    font-family: 'Courier New', monospace;
     font-weight: 600;
     color: var(--ion-color-primary);
-}
-
-.env-var-actions {
-    display: flex;
-    gap: 4px;
-}
-
-.env-var-details {
-    margin-left: 0;
-}
-
-.env-var-value {
-    font-family: 'Courier New', monospace;
-    background-color: var(--ion-color-light);
-    padding: 8px;
-    border-radius: 4px;
-    margin: 8px 0;
     font-size: 14px;
-    word-break: break-all;
 }
 
-.env-var-targets {
+.value-column {
+    min-width: 250px;
+    max-width: 300px;
+}
+
+.env-value {
+    font-family: 'Courier New', monospace;
+    background-color: var(--ion-color-light-shade);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    word-break: break-all;
+    display: block;
+    max-height: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.targets-column {
+    min-width: 180px;
+}
+
+.env-targets {
     display: flex;
     gap: 4px;
     flex-wrap: wrap;
 }
 
+.actions-column {
+    width: 120px;
+    text-align: center;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--ion-color-medium);
+}
+
+.empty-state ion-icon {
+    margin-bottom: 16px;
+    color: var(--ion-color-medium-shade);
+}
+
+.empty-state h3 {
+    margin: 16px 0 8px 0;
+    color: var(--ion-color-dark);
+    font-size: 18px;
+}
+
+.empty-state p {
+    margin-bottom: 24px;
+    font-size: 14px;
+}
+
+/* Loading state */
 .loading-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 40px;
+    padding: 60px 20px;
 }
 
 .loading-container p {
     margin-top: 16px;
     color: var(--ion-color-medium);
+    font-size: 14px;
+}
+
+/* Modal styles */
+.modal-buttons {
+    margin-top: 24px;
+    padding-top: 16px;
 }
 
 ion-checkbox-group {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    margin-top: 8px;
 }
 
-ion-item.checkbox-item {
-    --padding-start: 0;
-    --inner-padding-end: 0;
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  .env-table {
+    background: var(--ion-color-dark-tint);
+  }
+  .env-table th {
+    background: var(--ion-color-dark);
+    color: var(--ion-color-light);
+  }
+  .env-table td {
+    border-bottom-color: var(--ion-color-dark);
+    color: var(--ion-color-light);
+  }
+  .env-value {
+    background-color: var(--ion-color-dark-shade);
+    color: var(--ion-color-light);
+  }
+  .env-targets ion-chip {
+    --background: var(--ion-color-dark-shade);
+    color: var(--ion-color-light);
+  }
+  .empty-state,
+  .loading-container {
+    color: var(--ion-color-light);
+  }
+  .empty-state ion-icon {
+    color: var(--ion-color-light-tint);
+  }
 }
 
+/* Responsive design */
 @media (max-width: 768px) {
-    .env-var-header {
+    .header-with-action {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
+        align-items: stretch;
+        gap: 12px;
     }
+    
+    .env-table {
+        font-size: 12px;
+    }
+    
+    .env-table th,
+    .env-table td {
+        padding: 12px 8px;
+    }
+    
+    .value-column {
+        min-width: 150px;
+        max-width: 200px;
+    }
+    
+    .env-value {
+        font-size: 11px;
+        max-height: 40px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 4px;
+    }
+}
 
-    .env-var-actions {
-        align-self: flex-end;
+@media (max-width: 480px) {
+    /* Stack table for very small screens */
+    .table-container {
+        overflow-x: scroll;
+    }
+    
+    .env-table {
+        min-width: 600px;
     }
 }
 </style>
