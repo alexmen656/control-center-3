@@ -388,7 +388,149 @@ function createMonacoProjectDirectory($href, $name, $userID) {
             $lastCommit[$file] = md5(file_get_contents($dataDir . '/' . $file));
         }
         file_put_contents($dataDir . '/.monaco_lastcommit.json', json_encode($lastCommit, JSON_PRETTY_PRINT));
+        
+        // Create CMS APIs setup and copy subscribed APIs
+        createCMSAPISetup($dataDir, $projectID);
     }
+}
+
+/**
+ * Creates the CMS APIs setup for a Monaco project and copies subscribed API SDKs
+ */
+function createCMSAPISetup($projectDir, $projectID) {
+    // Create .monaco_apis directory
+    $apisDir = $projectDir . '/.monaco_apis';
+    if (!is_dir($apisDir)) {
+        mkdir($apisDir, 0777, true);
+    }
+    
+    // Get subscribed APIs for this project
+    $subscribedAPIs = query("
+        SELECT ca.slug 
+        FROM project_api_subscriptions pas
+        JOIN cms_apis ca ON pas.api_id = ca.id
+        WHERE pas.projectID='$projectID' AND pas.is_enabled=1
+    ");
+    
+    $installedAPIs = [];
+    $imports = '';
+    $exports = '';
+    
+    // Copy SDK files for each subscribed API
+    foreach ($subscribedAPIs as $api) {
+        $apiSlug = $api['slug'];
+        $sdkFile = __DIR__ . '/apis_sdk/' . $apiSlug . 'SDK.js';
+        $targetFile = $apisDir . '/' . $apiSlug . 'SDK.js';
+        
+        if (file_exists($sdkFile)) {
+            copy($sdkFile, $targetFile);
+            $installedAPIs[] = $apiSlug;
+            
+            $className = ucfirst($apiSlug) . 'API';
+            $imports .= "import {$className} from './{$apiSlug}SDK.js';\n";
+            $exports .= "  {$className},\n";
+        }
+    }
+    
+    // Create the main APIs index file
+    $indexContent = '// CMS APIs Integration - Auto-generated
+// This file contains all subscribed APIs for your project
+
+' . $imports . '
+// Export all APIs
+export {
+' . $exports . '};
+
+// Default export for convenience
+export default {
+' . $exports . '};
+
+// Usage example:
+// import { UsersAPI, FilesAPI } from \'apis\';
+// 
+// const users = await UsersAPI.getAll();
+// const uploadResult = await FilesAPI.upload(file);
+';
+    
+    if (count($installedAPIs) === 0) {
+        $indexContent = '// CMS APIs Integration
+// No APIs are currently subscribed for this project
+// Subscribe to APIs in the main Control Center to get access
+
+export default {};
+';
+    }
+    
+    file_put_contents($apisDir . '/index.js', $indexContent);
+    
+    // Create API configuration template
+    $configContent = '// CMS API Configuration
+// This file contains API keys and configuration for your project
+// Keys are automatically injected at runtime
+
+const API_CONFIG = {
+  baseUrl: \'/backend/api/v1\',
+  timeout: 30000,
+  retries: 3,
+  
+  // API keys will be injected here automatically
+  keys: {
+    // Auto-populated based on your subscriptions
+  }
+};
+
+export default API_CONFIG;
+';
+    
+    file_put_contents($apisDir . '/config.js', $configContent);
+    
+    // Create a README for developers
+    $readmeContent = '# CMS APIs Integration
+
+This directory contains the CMS APIs integration for your project.
+
+## Currently Available APIs
+
+' . (count($installedAPIs) > 0 ? 
+'- ' . implode("\n- ", array_map(function($api) { 
+    return ucfirst($api) . ' API'; 
+}, $installedAPIs)) : 'No APIs are currently subscribed.') . '
+
+## Usage
+
+Import the APIs you need:
+```javascript
+import { ' . implode(', ', array_map(function($api) { 
+    return ucfirst($api) . 'API'; 
+}, $installedAPIs)) . ' } from \'apis\';
+
+// Use the APIs
+' . (in_array('users', $installedAPIs) ? 'const users = await UsersAPI.getAll();' : '') . '
+' . (in_array('files', $installedAPIs) ? 'const uploadResult = await FilesAPI.upload(file);' : '') . '
+```
+
+## Managing APIs
+
+To add or remove APIs:
+1. Go to your project in Control Center
+2. Navigate to the API Management section
+3. Subscribe or unsubscribe from APIs
+4. Refresh your Monaco project to get the latest SDKs
+
+## Files in this directory
+
+- `index.js` - Main API exports (auto-generated)
+- `config.js` - API configuration  
+- `*SDK.js` - Individual API SDKs (copied from backend)
+
+## Security
+
+- API keys are never exposed in your code
+- All requests are authenticated automatically
+- Rate limiting is enforced per project
+';
+    
+    file_put_contents($apisDir . '/README.md', $readmeContent);
 }
 
 /**

@@ -172,6 +172,55 @@
         </div>
       </div>
     </div>
+
+    <!-- CMS APIs Section -->
+    <div class="sidebar-section">
+      <div class="section-header">
+        <ion-icon name="server-outline"></ion-icon>
+        <span>CMS APIs</span>
+        <ion-button fill="clear" size="small" @click="refreshInstalledAPIs">
+          <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
+        </ion-button>
+      </div>
+
+      <div class="section-content">
+        <!-- Available APIs -->
+        <div class="subsection-header">Available in Project</div>
+        <div v-if="installedAPIs.length === 0" class="no-apis">
+          No APIs available for this project.<br>
+          <small>Manage APIs in the main Control Center.</small>
+        </div>
+        <div v-for="api in installedAPIs" :key="api.slug" class="api-item">
+          <ion-icon :name="api.icon || 'server-outline'" class="api-icon"></ion-icon>
+          <span class="api-name">{{ api.name }}</span>
+          <div class="api-status">
+            <ion-icon name="checkmark-circle"></ion-icon>
+          </div>
+        </div>
+
+        <!-- Quick Copy -->
+        <div class="subsection-header">Quick Copy</div>
+        <div v-if="installedAPIs.length === 0" class="no-apis-message">
+          Install APIs to see import examples
+        </div>
+        <div v-else>
+          <div class="copy-section">
+            <div class="copy-label">All Imports</div>
+            <div class="code-block" @click="copyToClipboard(getAllImportsExample())">
+              <code>{{ getAllImportsExample() }}</code>
+              <ion-icon name="copy-outline" class="copy-icon"></ion-icon>
+            </div>
+          </div>
+          <div class="copy-section">
+            <div class="copy-label">Usage Example</div>
+            <div class="code-block" @click="copyToClipboard(getUsageExample())">
+              <code>{{ getUsageExample() }}</code>
+              <ion-icon name="copy-outline" class="copy-icon"></ion-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Diff Viewer Modal -->
@@ -240,6 +289,9 @@ const deployments = ref([])
 const projectFiles = ref([])
 const pullRequests = ref([])
 
+// API State
+const installedAPIs = ref([])
+
 // Excluded files state
 const excludedFiles = ref([".monaco_commits.json", ".monaco_git", ".monaco_initialized", ".monaco_lastcommit.json", ".monaco_staged.json"])
 const exclude = ref(true);
@@ -258,6 +310,64 @@ const activeFile = ref('')
 
 // Get project name from route
 const projectName = route.params.project || 'default-project'
+
+// API Methods - only for loading installed APIs
+const loadInstalledAPIs = async () => {
+  try {
+    // Get subscribed APIs from backend
+    const response = await axios.get(`sidebar.php?getSideBarByProjectName=${projectName}`)
+    
+    if (response.data && response.data.apis) {
+      installedAPIs.value = response.data.apis
+    } else {
+      installedAPIs.value = []
+    }
+  } catch (error) {
+    console.error('Failed to load installed APIs:', error)
+    installedAPIs.value = []
+  }
+}
+
+const refreshInstalledAPIs = async () => {
+  await loadInstalledAPIs()
+}
+
+const getAPIClassName = (slug) => {
+  return slug.charAt(0).toUpperCase() + slug.slice(1) + 'API'
+}
+
+const getAllImportsExample = () => {
+  if (installedAPIs.value.length === 0) return ''
+  
+  const imports = installedAPIs.value.map(api => getAPIClassName(api.slug)).join(', ')
+  return `import { ${imports} } from 'apis';`
+}
+
+const getUsageExample = () => {
+  if (installedAPIs.value.length === 0) return ''
+  
+  const firstAPI = installedAPIs.value[0]
+  const className = getAPIClassName(firstAPI.slug)
+  
+  switch (firstAPI.slug) {
+    case 'users':
+      return `// Get all users\nconst users = await ${className}.getAll();\n\n// Create new user\nconst user = await ${className}.create({ name: 'John', email: 'john@example.com' });`
+    case 'files':
+      return `// Upload file\nconst result = await ${className}.upload(file);\n\n// List files\nconst files = await ${className}.list();`
+    case 'database':
+      return `// Query database\nconst records = await ${className}.query('users', { active: true });\n\n// Insert record\nconst result = await ${className}.insert('users', { name: 'John' });`
+    default:
+      return `// Use ${firstAPI.name} API\nconst result = await ${className}.get();`
+  }
+}
+
+const copyToClipboard = (text) => {
+  navigator.clipboard.writeText(text).then(() => {
+    ToastService.success('Copied to clipboard!')
+  }).catch(() => {
+    ToastService.error('Failed to copy to clipboard')
+  })
+}
 
 // Computed function to filter projectFiles
 const filteredProjectFiles = computed(() => {
@@ -883,7 +993,8 @@ onMounted(async () => {
     refreshFiles(),
     loadGitData(),
     loadPullRequests(),
-    loadDeployments()
+    loadDeployments(),
+    loadInstalledAPIs()
   ])
   
   // Start live git updates
@@ -920,6 +1031,7 @@ onUnmounted(() => {
 <style scoped>
 .monaco-sidebar {
   width: 280px;
+  padding-bottom: 56px;
   background: var(--vscode-sideBar-background, #252526);
   color: var(--vscode-sideBar-foreground, #cccccc);
   border-right: 1px solid var(--vscode-sideBar-border, #2b2b2b);
@@ -1520,5 +1632,103 @@ ion-button[fill="clear"] {
   margin-top: 20px;
   padding-top: 20px;
   border-top: 1px solid var(--vscode-panel-border, #464647);
+}
+
+/* API Section Styles */
+.api-item {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  cursor: pointer;
+}
+
+.api-item:hover {
+  background: var(--vscode-list-hoverBackground, #2a2d2e);
+}
+
+.api-icon {
+  margin-right: 8px;
+  font-size: 16px;
+  color: var(--vscode-symbolIcon-functionForeground, #4fc1ff);
+  flex-shrink: 0;
+}
+
+.api-name {
+  flex: 1;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--vscode-foreground, #cccccc);
+}
+
+.api-status {
+  margin-left: 8px;
+  color: var(--vscode-testing-iconPassed, #73c991);
+}
+
+.copy-section {
+  margin-bottom: 12px;
+}
+
+.copy-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--vscode-descriptionForeground, #cccccc);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.code-block {
+  background: var(--vscode-textCodeBlock-background, #2d2d30);
+  padding: 8px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  position: relative;
+  border: 1px solid var(--vscode-panel-border, #464647);
+  transition: background-color 0.2s;
+}
+
+.code-block:hover {
+  background: var(--vscode-list-hoverBackground, #2a2d2e);
+}
+
+.code-block code {
+  color: var(--vscode-textPreformat-foreground, #d7ba7d);
+  white-space: pre-wrap;
+  word-break: break-word;
+  display: block;
+  padding-right: 20px;
+}
+
+.copy-icon {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  opacity: 0.6;
+  color: var(--vscode-foreground, #cccccc);
+  font-size: 12px;
+}
+
+.code-block:hover .copy-icon {
+  opacity: 1;
+}
+
+.no-apis, .no-apis-message {
+  padding: 16px 8px;
+  text-align: center;
+  color: var(--vscode-descriptionForeground, #cccccc);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.no-apis small {
+  color: var(--vscode-descriptionForeground, #999999);
+  font-size: 11px;
 }
 </style>

@@ -779,7 +779,7 @@ const applyReplacement = (replacement) => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  width: 100vw;
+  /*width: 100vw;*/
   background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0d1421 100%);
   position: relative;
   overflow: auto;
