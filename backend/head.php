@@ -24,11 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 include '/www/paxar/components/php_head.php';
 
-function getRequestHeaders()
-{
-    return function_exists('getallheaders') ? getallheaders() : [];
-}
-
 $headers = getRequestHeaders();
 $userID = null;
 
