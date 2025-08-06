@@ -149,7 +149,7 @@ function listFiles($projectPath, $subPath = '') {
     
     $items = scandir($fullPath);
     foreach ($items as $item) {
-        if ($item === '.' || $item === '..' || $item === '.git') {
+        if ($item === '.' || $item === '..' || $item === '.git') {// || $item === '.monaco_apis'
             continue;
         }
         

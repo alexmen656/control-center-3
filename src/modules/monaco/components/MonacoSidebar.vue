@@ -372,7 +372,8 @@ const copyToClipboard = (text) => {
 // Computed function to filter projectFiles
 const filteredProjectFiles = computed(() => {
   if (exclude.value) {
-    return projectFiles.value.filter(file => !excludedFiles.value.includes(file.path));
+    console.log(projectFiles.value);
+    return projectFiles.value.filter(file => !excludedFiles.value.includes(file.path) || file.path.startsWith(".monaco_apis/"));
   } else {
     return projectFiles.value;
   }

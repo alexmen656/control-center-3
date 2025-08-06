@@ -395,7 +395,7 @@ function createMonacoProjectDirectory($href, $name, $userID) {
 }
 
 /**
- * Creates the CMS APIs setup for a Monaco project and copies subscribed API SDKs
+ * Creates the CMS APIs setup for a Monaco project
  */
 function createCMSAPISetup($projectDir, $projectID) {
     // Create .monaco_apis directory
@@ -404,62 +404,17 @@ function createCMSAPISetup($projectDir, $projectID) {
         mkdir($apisDir, 0777, true);
     }
     
-    // Get subscribed APIs for this project
-    $subscribedAPIs = query("
-        SELECT ca.slug 
-        FROM project_api_subscriptions pas
-        JOIN cms_apis ca ON pas.api_id = ca.id
-        WHERE pas.projectID='$projectID' AND pas.is_enabled=1
-    ");
-    
-    $installedAPIs = [];
-    $imports = '';
-    $exports = '';
-    
-    // Copy SDK files for each subscribed API
-    foreach ($subscribedAPIs as $api) {
-        $apiSlug = $api['slug'];
-        $sdkFile = __DIR__ . '/apis_sdk/' . $apiSlug . 'SDK.js';
-        $targetFile = $apisDir . '/' . $apiSlug . 'SDK.js';
-        
-        if (file_exists($sdkFile)) {
-            copy($sdkFile, $targetFile);
-            $installedAPIs[] = $apiSlug;
-            
-            $className = ucfirst($apiSlug) . 'API';
-            $imports .= "import {$className} from './{$apiSlug}SDK.js';\n";
-            $exports .= "  {$className},\n";
-        }
-    }
-    
-    // Create the main APIs index file
-    $indexContent = '// CMS APIs Integration - Auto-generated
+    // Create the main APIs index file (empty initially)
+    $indexContent = '// CMS APIs Integration
 // This file contains all subscribed APIs for your project
-
-' . $imports . '
-// Export all APIs
-export {
-' . $exports . '};
-
-// Default export for convenience
-export default {
-' . $exports . '};
-
-// Usage example:
-// import { UsersAPI, FilesAPI } from \'apis\';
-// 
-// const users = await UsersAPI.getAll();
-// const uploadResult = await FilesAPI.upload(file);
-';
-    
-    if (count($installedAPIs) === 0) {
-        $indexContent = '// CMS APIs Integration
-// No APIs are currently subscribed for this project
 // Subscribe to APIs in the main Control Center to get access
+
+// No APIs are currently subscribed for this project
+// When you subscribe to APIs, they will be available here like:
+// import { UsersAPI, FilesAPI } from \'apis\';
 
 export default {};
 ';
-    }
     
     file_put_contents($apisDir . '/index.js', $indexContent);
     
@@ -491,37 +446,30 @@ This directory contains the CMS APIs integration for your project.
 
 ## Currently Available APIs
 
-' . (count($installedAPIs) > 0 ? 
-'- ' . implode("\n- ", array_map(function($api) { 
-    return ucfirst($api) . ' API'; 
-}, $installedAPIs)) : 'No APIs are currently subscribed.') . '
+No APIs are currently subscribed.
 
 ## Usage
 
-Import the APIs you need:
+To start using APIs:
+1. Go to your project in Control Center
+2. Navigate to the API Management section  
+3. Subscribe to the APIs you need
+4. Refresh your Monaco project to get the latest SDKs
+
+Once subscribed, import APIs like this:
 ```javascript
-import { ' . implode(', ', array_map(function($api) { 
-    return ucfirst($api) . 'API'; 
-}, $installedAPIs)) . ' } from \'apis\';
+import { UsersAPI, FilesAPI } from \'apis\';
 
 // Use the APIs
-' . (in_array('users', $installedAPIs) ? 'const users = await UsersAPI.getAll();' : '') . '
-' . (in_array('files', $installedAPIs) ? 'const uploadResult = await FilesAPI.upload(file);' : '') . '
+const users = await UsersAPI.getAll();
+const uploadResult = await FilesAPI.upload(file);
 ```
-
-## Managing APIs
-
-To add or remove APIs:
-1. Go to your project in Control Center
-2. Navigate to the API Management section
-3. Subscribe or unsubscribe from APIs
-4. Refresh your Monaco project to get the latest SDKs
 
 ## Files in this directory
 
-- `index.js` - Main API exports (auto-generated)
+- `index.js` - Main API exports (auto-generated when APIs are subscribed)
 - `config.js` - API configuration  
-- `*SDK.js` - Individual API SDKs (copied from backend)
+- `*SDK.js` - Individual API SDKs (copied when APIs are subscribed)
 
 ## Security
 

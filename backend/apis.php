@@ -149,7 +149,7 @@ if (isset($headers['Authorization'])) {
         elseif (isset($_POST['getProjectApis']) && isset($_POST['project'])) {
             $projectName = escape_string($_POST['project']);
             $projectID = fetch_assoc(query("SELECT * FROM projects WHERE link='$projectName'"))['projectID'];
-
+            echo $projectID;
             $subscriptions = query("
                 SELECT pas.*, ca.name, ca.slug, ca.description, ca.icon, ca.category, ca.endpoint_base, ca.documentation_url
                 FROM project_api_subscriptions pas
@@ -228,15 +228,23 @@ if (isset($headers['Authorization'])) {
             // Generate unique API key for this project
             $apiKey = 'cms_' . bin2hex(random_bytes(16)) . '_' . $projectID;
             
-            // Get default rate limit
-            $api = fetch_assoc(query("SELECT rate_limit_default FROM cms_apis WHERE id='$apiId'"));
+            // Get default rate limit and API slug
+            $api = fetch_assoc(query("SELECT rate_limit_default, slug FROM cms_apis WHERE id='$apiId'"));
             $rateLimit = $api['rate_limit_default'];
+            $apiSlug = $api['slug'];
             
             $insertSub = query("INSERT INTO project_api_subscriptions (projectID, api_id, api_key, rate_limit) 
                               VALUES ('$projectID', '$apiId', '$apiKey', '$rateLimit')");
 
             if ($insertSub) {
-                echo echoJSON(['success' => true, 'message' => 'Successfully subscribed to API', 'api_key' => $apiKey]);
+                // Copy SDK file to project and update bundle
+                $copyResult = copyAPISDKToProject($projectName, $apiSlug, $userID);
+                
+                if ($copyResult) {
+                    echo echoJSON(['success' => true, 'message' => 'Successfully subscribed to API and SDK installed', 'api_key' => $apiKey]);
+                } else {
+                    echo echoJSON(['success' => true, 'message' => 'Subscribed to API but SDK copy failed', 'api_key' => $apiKey]);
+                }
             } else {
                 echo echoJSON(['error' => 'Failed to subscribe to API']);
             }
@@ -246,10 +254,26 @@ if (isset($headers['Authorization'])) {
         elseif (isset($_POST['unsubscribeFromApi']) && isset($_POST['subscriptionId'])) {
             $subscriptionId = escape_string($_POST['subscriptionId']);
             
+            // Get project and API info before deleting
+            $subInfo = fetch_assoc(query("
+                SELECT pas.projectID, ca.slug, p.link as project_name
+                FROM project_api_subscriptions pas
+                JOIN cms_apis ca ON pas.api_id = ca.id
+                JOIN projects p ON pas.projectID = p.projectID
+                WHERE pas.id='$subscriptionId'
+            "));
+            
             $deleteSub = query("DELETE FROM project_api_subscriptions WHERE id='$subscriptionId'");
 
-            if ($deleteSub) {
-                echo echoJSON(['success' => true, 'message' => 'Successfully unsubscribed from API']);
+            if ($deleteSub && $subInfo) {
+                // Remove SDK file from project and update bundle
+                $removeResult = removeAPISDKFromProject($subInfo['project_name'], $subInfo['slug'], $userID);
+                
+                if ($removeResult) {
+                    echo echoJSON(['success' => true, 'message' => 'Successfully unsubscribed from API and SDK removed']);
+                } else {
+                    echo echoJSON(['success' => true, 'message' => 'Unsubscribed from API but SDK removal failed']);
+                }
             } else {
                 echo echoJSON(['error' => 'Failed to unsubscribe from API']);
             }
@@ -330,5 +354,117 @@ if (isset($headers['Authorization'])) {
         }
 } else {
     echo echoJSON(['error' => 'No authorization token provided']);
+}
+
+/**
+ * Copies an API SDK to a project and updates the bundle file
+ */
+function copyAPISDKToProject($projectName, $apiSlug, $userID) {
+    // Get project directory
+    $projectDir = __DIR__ . "/../data/projects/" . $userID . "/" . $projectName;
+    $apisDir = $projectDir . '/.monaco_apis';
+    
+    // Create .monaco_apis directory if it doesn't exist
+    if (!is_dir($apisDir)) {
+        mkdir($apisDir, 0777, true);
+    }
+    
+    // Copy SDK file
+    $sourceFile = __DIR__ . '/apis_sdk/' . $apiSlug . 'SDK.js';
+    $targetFile = $apisDir . '/' . $apiSlug . 'SDK.js';
+    
+    if (!file_exists($sourceFile)) {
+        return false;
+    }
+    
+    if (!copy($sourceFile, $targetFile)) {
+        return false;
+    }
+    
+    // Update bundle file
+    updateAPIBundle($projectName, $userID);
+    
+    return true;
+}
+
+/**
+ * Removes an API SDK from a project and updates the bundle file
+ */
+function removeAPISDKFromProject($projectName, $apiSlug, $userID) {
+    // Get project directory
+    $projectDir = __DIR__ . "/../data/projects/" . $userID . "/" . $projectName;
+    $apisDir = $projectDir . '/.monaco_apis';
+    $targetFile = $apisDir . '/' . $apiSlug . 'SDK.js';
+    
+    // Remove SDK file
+    if (file_exists($targetFile)) {
+        unlink($targetFile);
+    }
+    
+    // Update bundle file
+    updateAPIBundle($projectName, $userID);
+    
+    return true;
+}
+
+/**
+ * Updates the API bundle file (index.js) with all currently installed SDKs
+ */
+function updateAPIBundle($projectName, $userID) {
+    // Get project directory
+    $projectDir = __DIR__ . "/../data/projects/" . $userID . "/" . $projectName;
+    $apisDir = $projectDir . '/.monaco_apis';
+    
+    if (!is_dir($apisDir)) {
+        return false;
+    }
+    
+    // Get all SDK files
+    $sdkFiles = glob($apisDir . '/*SDK.js');
+    $installedAPIs = [];
+    
+    foreach ($sdkFiles as $file) {
+        $filename = basename($file, 'SDK.js');
+        $installedAPIs[] = $filename;
+    }
+    
+    // Generate new index.js content
+    $imports = '';
+    $exports = '';
+    
+    foreach ($installedAPIs as $apiSlug) {
+        $className = ucfirst($apiSlug) . 'API';
+        $imports .= "import {$className} from './{$apiSlug}SDK.js';\n";
+        $exports .= "  {$className},\n";
+    }
+    
+    if (count($installedAPIs) > 0) {
+        $indexContent = '// CMS APIs Integration - Auto-generated
+// This file contains all subscribed APIs for your project
+
+' . $imports . '
+// Export all APIs
+export {
+' . $exports . '};
+
+// Default export for convenience
+export default {
+' . $exports . '};
+
+// Usage example:
+// import { ' . implode(', ', array_map(function($api) { return ucfirst($api) . 'API'; }, $installedAPIs)) . ' } from \'apis\';
+';
+    } else {
+        $indexContent = '// CMS APIs Integration
+// No APIs are currently subscribed for this project
+// Subscribe to APIs in the main Control Center to get access
+
+export default {};
+';
+    }
+    
+    file_put_contents($apisDir . '/index.js', $indexContent);
+    
+    return true;
 }
 ?>

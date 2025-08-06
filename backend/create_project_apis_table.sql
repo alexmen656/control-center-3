@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS `cms_api_endpoints` (
 -- Create table for project API subscriptions (which APIs a project uses)
 CREATE TABLE IF NOT EXISTS `project_api_subscriptions` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
-    `projectID` int(11) NOT NULL,
+    `projectID` varchar(255) NOT NULL,
     `api_id` int(11) NOT NULL,
     `api_key` varchar(255) NOT NULL, -- unique API key for this project
     `rate_limit` int(11) DEFAULT 100,
