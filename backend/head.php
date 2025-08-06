@@ -53,7 +53,7 @@ function echoJson($json)
     return json_encode($json, JSON_PRETTY_PRINT);
 }
 
-function getProjectID(string $projectLink): int
+function getProjectID(string $projectLink): string
 {
     $project = fetch_assoc(query("SELECT * FROM projects WHERE link='$projectLink'"));
     if (!$project) {
