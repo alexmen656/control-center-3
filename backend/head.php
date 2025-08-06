@@ -24,27 +24,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 include '/www/paxar/components/php_head.php';
 
-// JWT prüfen
-$headers = function_exists('getallheaders') ? getallheaders() : [];
+function getRequestHeaders()
+{
+    return function_exists('getallheaders') ? getallheaders() : [];
+}
+
+$headers = getRequestHeaders();
+$userID = null;
+
 if (isset($headers['Authorization'])) {
     $token = $headers['Authorization'];
     $payload = SimpleJWT::verify($token, $jwt_secret);
-    if (!$payload) {
+    if (!$payload || empty($payload['sub'])) {
         header('HTTP/1.1 401 Unauthorized');
         echo json_encode(['error' => 'No valid token']);
         exit;
     }
+    $userID = intval($payload['sub']);
 } else {
     header('HTTP/1.1 401 Unauthorized');
     echo json_encode(['error' => 'No valid token']);
     exit;
 }
 
-function randomNumber(){
+function randomNumber()
+{
     $rand = rand(100000, 999999);
     return $rand;
 }
 
-function echoJson($json){
+function echoJson($json)
+{
     return json_encode($json, JSON_PRETTY_PRINT);
+}
+
+function getProjectID(string $projectLink): int
+{
+    $project = fetch_assoc(query("SELECT * FROM projects WHERE link='$projectLink'"));
+    if (!$project) {
+        throw new Exception("Project not found");
+    }
+    return $project['projectID'];
+}
+
+function showJSON($json){
+    echo json_encode($json, JSON_PRETTY_PRINT);
 }
