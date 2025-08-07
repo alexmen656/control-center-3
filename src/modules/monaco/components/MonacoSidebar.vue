@@ -18,7 +18,7 @@
 
       <div class="section-content">
         <div class="file-tree">
-          <div v-if="filteredProjectFiles.length === 0" class="no-files">
+          <div v-if="hierarchicalFileTree.length === 0" class="no-files">
             No files yet
             <div class="create-buttons">
               <ion-button size="small" @click="createNewFile">
@@ -31,15 +31,87 @@
               </ion-button>
             </div>
           </div>
-          <div v-for="file in filteredProjectFiles" :key="file.path" 
-               class="file-item" 
-               :class="{ 'active-file': activeFile === file.path }"
-               @click="openFile(file)">
-            <ion-icon :name="getFileIcon(file)" class="file-icon"></ion-icon>
-            <span class="file-name">{{ file.name }}</span>
-            <ion-button fill="clear" size="small" @click.stop="deleteFile(file)" class="delete-btn">
-              <ion-icon name="trash-outline"></ion-icon>
-            </ion-button>
+          
+          <!-- Recursive file tree rendering -->
+          <div v-for="item in hierarchicalFileTree" :key="item.path" class="tree-item">
+            <!-- Folder -->
+            <div v-if="item.type === 'directory'" 
+                 class="file-item folder-item" 
+                 @click="toggleFolder(item.path)">
+              <ion-icon 
+                :name="isFolderExpanded(item.path) ? 'chevron-down-outline' : 'chevron-forward-outline'" 
+                class="folder-chevron"
+              ></ion-icon>
+              <ion-icon :name="isFolderExpanded(item.path) ? 'folder-open-outline' : 'folder-outline'" class="file-icon"></ion-icon>
+              <span class="file-name">{{ item.name }}</span>
+              <ion-button fill="clear" size="small" @click.stop="deleteFile(item)" class="delete-btn">
+                <ion-icon name="trash-outline"></ion-icon>
+              </ion-button>
+            </div>
+            
+            <!-- Children (if folder is expanded) -->
+            <div v-if="item.type === 'directory' && isFolderExpanded(item.path)" class="folder-children">
+              <div v-for="child in item.children" :key="child.path" class="tree-item" style="margin-left: 16px;">
+                <!-- Nested Folder -->
+                <div v-if="child.type === 'directory'" 
+                     class="file-item folder-item" 
+                     @click="toggleFolder(child.path)">
+                  <ion-icon 
+                    :name="isFolderExpanded(child.path) ? 'chevron-down-outline' : 'chevron-forward-outline'" 
+                    class="folder-chevron"
+                  ></ion-icon>
+                  <ion-icon :name="isFolderExpanded(child.path) ? 'folder-open-outline' : 'folder-outline'" class="file-icon"></ion-icon>
+                  <span class="file-name">{{ child.name }}</span>
+                  <ion-button fill="clear" size="small" @click.stop="deleteFile(child)" class="delete-btn">
+                    <ion-icon name="trash-outline"></ion-icon>
+                  </ion-button>
+                </div>
+                
+                <!-- Nested Children -->
+                <div v-if="child.type === 'directory' && isFolderExpanded(child.path)" class="folder-children">
+                  <div v-for="grandchild in child.children" :key="grandchild.path" class="tree-item" style="margin-left: 32px;">
+                    <!-- File in nested folder -->
+                    <div v-if="grandchild.type === 'file'" 
+                         class="file-item" 
+                         :class="{ 'active-file': activeFile === grandchild.path }"
+                         @click="openFile(grandchild)">
+                      <span class="file-indent"></span>
+                      <ion-icon :name="getFileIcon(grandchild)" class="file-icon"></ion-icon>
+                      <span class="file-name">{{ grandchild.name }}</span>
+                      <ion-button fill="clear" size="small" @click.stop="deleteFile(grandchild)" class="delete-btn">
+                        <ion-icon name="trash-outline"></ion-icon>
+                      </ion-button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- File in first level folder -->
+                <div v-if="child.type === 'file'" 
+                     class="file-item" 
+                     :class="{ 'active-file': activeFile === child.path }"
+                     @click="openFile(child)">
+                  <span class="file-indent"></span>
+                  <ion-icon :name="getFileIcon(child)" class="file-icon"></ion-icon>
+                  <span class="file-name">{{ child.name }}</span>
+                  <ion-button fill="clear" size="small" @click.stop="deleteFile(child)" class="delete-btn">
+                    <ion-icon name="trash-outline"></ion-icon>
+                  </ion-button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- File at root level -->
+            <div v-if="item.type === 'file'" 
+                 class="file-item" 
+                 :class="{ 'active-file': activeFile === item.path }"
+                 @click="openFile(item)">
+              <span class="file-indent"></span>
+              <ion-icon :name="getFileIcon(item)" class="file-icon"></ion-icon>
+              <span class="file-name">{{ item.name }}</span>
+              <ion-button fill="clear" size="small" @click.stop="deleteFile(item)" class="delete-btn">
+                <ion-icon name="trash-outline"></ion-icon>
+              </ion-button>
+            </div>
           </div>
         </div>
       </div>
@@ -294,7 +366,11 @@ const installedAPIs = ref([])
 
 // Excluded files state
 const excludedFiles = ref([".monaco_commits.json", ".monaco_git", ".monaco_initialized", ".monaco_lastcommit.json", ".monaco_staged.json"])
-const exclude = ref(true);
+const exclude = ref(true)
+
+// Folder state for Explorer
+const expandedFolders = ref(new Set())
+const fileTree = ref([])
 
 // Live update state
 const gitRefreshInterval = ref(null)
@@ -373,20 +449,111 @@ const copyToClipboard = (text) => {
 const filteredProjectFiles = computed(() => {
   if (exclude.value) {
     console.log(projectFiles.value);
-    return projectFiles.value.filter(file => !excludedFiles.value.includes(file.path) || file.path.startsWith(".monaco_apis/"));
+    // Zeige alle Dateien an, aber excludiere nur bestimmte Monaco-interne Dateien aus der Anzeige
+    // .monaco_apis/ Dateien sollen weiterhin sichtbar und commitbar sein
+    return projectFiles.value.filter(file => 
+      !excludedFiles.value.includes(file.path) || 
+      file.path.startsWith(".monaco_apis/")
+    );
   } else {
     return projectFiles.value;
   }
 });
 
+// Build hierarchical file tree from flat file list
+const buildFileTree = (files) => {
+  const tree = []
+  const pathMap = new Map()
+
+  // Create root nodes and build path map
+  files.forEach(file => {
+    const pathParts = file.path.split('/').filter(part => part)
+    let currentPath = ''
+    
+    pathParts.forEach((part, index) => {
+      const parentPath = currentPath
+      currentPath = currentPath ? `${currentPath}/${part}` : part
+      
+      if (!pathMap.has(currentPath)) {
+        const isFile = index === pathParts.length - 1
+        const node = {
+          name: part,
+          path: currentPath,
+          type: isFile ? 'file' : 'directory',
+          children: [],
+          size: isFile ? file.size : 0,
+          modified: isFile ? file.modified : null,
+          parent: parentPath || null
+        }
+        pathMap.set(currentPath, node)
+        
+        if (parentPath) {
+          const parent = pathMap.get(parentPath)
+          if (parent) {
+            parent.children.push(node)
+          }
+        } else {
+          tree.push(node)
+        }
+      }
+    })
+  })
+
+  return tree
+}
+
+// Get hierarchical file tree
+const hierarchicalFileTree = computed(() => {
+  return buildFileTree(filteredProjectFiles.value)
+})
+
+// Toggle folder expansion
+const toggleFolder = (folderPath) => {
+  if (expandedFolders.value.has(folderPath)) {
+    expandedFolders.value.delete(folderPath)
+  } else {
+    expandedFolders.value.add(folderPath)
+  }
+}
+
+// Check if folder is expanded
+const isFolderExpanded = (folderPath) => {
+  return expandedFolders.value.has(folderPath)
+}
+
+// Get file icon based on file type/extension
+const getFileIcon = (file) => {
+  if (file.type === 'directory') return 'folder-outline'
+
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  switch (ext) {
+    case 'js': return 'logo-javascript'
+    case 'ts': return 'logo-javascript'
+    case 'vue': return 'logo-vue'
+    case 'html': return 'logo-html5'
+    case 'css': return 'logo-css3'
+    case 'json': return 'code-outline'
+    case 'md': return 'document-text-outline'
+    case 'txt': return 'document-outline'
+    default: return 'document-outline'
+  }
+}
+
 // File Explorer Methods
 const refreshFiles = async () => {
   try {
     const response = await axios.get(`file_api.php?project=${projectName}&action=list`)
-    projectFiles.value = flattenFileTree(response.data || [])
+    const allFiles = flattenFileTree(response.data || [])
+    
+    // Make sure .monaco_apis files are included and not excluded from commits
+    projectFiles.value = allFiles
+    
+    // Update file tree
+    fileTree.value = buildFileTree(filteredProjectFiles.value)
   } catch (error) {
     console.error('Failed to load files:', error)
     projectFiles.value = []
+    fileTree.value = []
   }
 }
 
@@ -464,23 +631,6 @@ const deleteFile = async (file) => {
       console.error('Failed to delete file:', error)
       ToastService.error('Failed to delete file: ' + error.message)
     }
-  }
-}
-
-const getFileIcon = (file) => {
-  if (file.type === 'directory') return 'folder-outline'
-
-  const ext = file.name.split('.').pop()?.toLowerCase()
-  switch (ext) {
-    case 'js': return 'logo-javascript'
-    case 'ts': return 'logo-javascript'
-    case 'vue': return 'logo-vue'
-    case 'html': return 'logo-html5'
-    case 'css': return 'logo-css3'
-    case 'json': return 'code-outline'
-    case 'md': return 'document-text-outline'
-    case 'txt': return 'document-outline'
-    default: return 'document-outline'
   }
 }
 
@@ -572,10 +722,18 @@ const commitChanges = async () => {
       files: changedFiles.value.map(f => f.path || f.file || f)
     })
 
+    // Stelle sicher, dass alle Dateien inklusive .monaco_apis/ committed werden
+    const filesToCommit = changedFiles.value.map(f => ({
+      path: f.path || f.file,
+      status: f.status,
+      staged: f.staged
+    }))
+
     const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
       action: 'commit',
       message: commitMessage.value,
-      files: changedFiles.value
+      files: filesToCommit,
+      include_monaco_apis: true // Flag to ensure .monaco_apis files are included
     })
 
     if (response.data.success) {
@@ -1103,6 +1261,10 @@ onUnmounted(() => {
   margin-bottom: 16px;
 }
 
+.tree-item {
+  position: relative;
+}
+
 .file-item {
   display: flex;
   align-items: center;
@@ -1126,6 +1288,24 @@ onUnmounted(() => {
   font-weight: 600;
 }
 
+.folder-item {
+  cursor: pointer;
+}
+
+.folder-chevron {
+  width: 12px;
+  height: 12px;
+  margin-right: 4px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.folder-children {
+  border-left: 1px solid var(--vscode-tree-indentGuidesStroke, #464647);
+  margin-left: 8px;
+  padding-left: 8px;
+}
+
 .file-icon {
   margin-right: 8px;
   font-size: 16px;
@@ -1138,6 +1318,12 @@ onUnmounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.file-indent {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 .delete-btn {
