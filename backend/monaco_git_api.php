@@ -428,7 +428,9 @@ class GitHubAPI {
                         $commit['files'] = [];
                         foreach ($allFiles as $file) {
                             $relativePath = str_replace($projectPath . '/', '', $file);
-                            if (strpos($relativePath, '.monaco_') !== 0) { // Skip metadata files
+                            // Skip only specific Monaco metadata files, but KEEP .monaco_apis/ files
+                            $excludedFiles = ['.monaco_commits.json', '.monaco_git', '.monaco_initialized', '.monaco_lastcommit.json', '.monaco_staged.json'];
+                            if (!in_array($relativePath, $excludedFiles)) {
                                 $commit['files'][] = ['path' => $relativePath];
                             }
                         }
@@ -648,7 +650,10 @@ function getLocalChanges($projectPath) {
     
     foreach ($files as $file) {
         $relativePath = str_replace($projectPath . '/', '', $file);
-        if (strpos($relativePath, '.monaco_') === 0) continue; // Skip metadata files
+        
+        // Skip only specific Monaco metadata files, but KEEP .monaco_apis/ files
+        $excludedFiles = ['.monaco_commits.json', '.monaco_git', '.monaco_initialized', '.monaco_lastcommit.json', '.monaco_staged.json'];
+        if (in_array($relativePath, $excludedFiles)) continue;
         
         $currentHash = md5(file_get_contents($file));
         $lastCommitHash = $lastCommit[$relativePath] ?? null;
@@ -934,7 +939,9 @@ function commitChanges($projectPath, $message, $files, $project, $userID) {
     
     foreach ($projectFiles as $file) {
         $relativePath = str_replace($projectPath . '/', '', $file);
-        if (strpos($relativePath, '.monaco_') === 0) continue;
+        // Skip only specific Monaco metadata files, but KEEP .monaco_apis/ files
+        $excludedFiles = ['.monaco_commits.json', '.monaco_git', '.monaco_initialized', '.monaco_lastcommit.json', '.monaco_staged.json'];
+        if (in_array($relativePath, $excludedFiles)) continue;
         $lastCommit[$relativePath] = md5(file_get_contents($file));
     }
     
@@ -980,7 +987,9 @@ function pullFromGitHubToLocal($projectPath, $project, $userID) {
         
         foreach ($projectFiles as $file) {
             $relativePath = str_replace($projectPath . '/', '', $file);
-            if (strpos($relativePath, '.monaco_') === 0) continue; // Skip metadata files
+            // Skip only specific Monaco metadata files, but KEEP .monaco_apis/ files
+            $excludedFiles = ['.monaco_commits.json', '.monaco_git', '.monaco_initialized', '.monaco_lastcommit.json', '.monaco_staged.json'];
+            if (in_array($relativePath, $excludedFiles)) continue;
             $lastCommit[$relativePath] = md5(file_get_contents($file));
         }
         
