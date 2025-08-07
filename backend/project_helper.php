@@ -1,4 +1,5 @@
 <?php
+
 /**
  * project_helper.php
  * 
@@ -11,12 +12,13 @@
  * @param string $projectID Die Projekt-ID
  * @return bool True bei Erfolg, False bei Fehler
  */
-function createFileSystemMainDir($projectID) {
+function createFileSystemMainDir($projectID)
+{
     $dir = "/data/project_filesystems/" . $projectID;
     if (!mkdir($dir, 0777, true)) {
         return false;
     }
-    
+
     return chmod($dir, 0777);
 }
 
@@ -26,11 +28,12 @@ function createFileSystemMainDir($projectID) {
  * @param string $projectID Die Projekt-ID
  * @return bool True bei Erfolg, False bei Fehler
  */
-function createFileSystem($projectID) {
+function createFileSystem($projectID)
+{
     if (!query("INSERT INTO project_filesystem VALUES (0, '', '', NULL, 0, '$projectID')")) {
         return false;
     }
-    
+
     return createFileSystemMainDir($projectID);
 }
 
@@ -40,10 +43,11 @@ function createFileSystem($projectID) {
  * @param string $link Der Link-Name des Projekts
  * @return array|null Die Projektdaten oder null, wenn nicht gefunden
  */
-function getProjectByLink($link) {
+function getProjectByLink($link)
+{
     $link = escape_string($link);
     $query = query("SELECT * FROM projects WHERE link='$link'");
-    
+
     return (mysqli_num_rows($query) == 1) ? fetch_assoc($query) : null;
 }
 
@@ -53,10 +57,11 @@ function getProjectByLink($link) {
  * @param string $projectID Die Projekt-ID
  * @return array|null Die Projektdaten oder null, wenn nicht gefunden
  */
-function getProjectByID($projectID) {
+function getProjectByID($projectID)
+{
     $projectID = escape_string($projectID);
     $query = query("SELECT * FROM projects WHERE projectID='$projectID'");
-    
+
     return (mysqli_num_rows($query) == 1) ? fetch_assoc($query) : null;
 }
 
@@ -66,10 +71,11 @@ function getProjectByID($projectID) {
  * @param string $token Das Login-Token
  * @return array|null Die Benutzerdaten oder null, wenn nicht gefunden
  */
-function getUserByToken($token) {
+function getUserByToken($token)
+{
     $token = escape_string($token);
     $data = query("SELECT * FROM control_center_users WHERE loginToken='$token'");
-    
+
     return (mysqli_num_rows($data) == 1) ? fetch_assoc($data) : null;
 }
 
@@ -79,15 +85,16 @@ function getUserByToken($token) {
  * @param string $projectID Die Projekt-ID
  * @return array Ein Array mit Benutzerdaten
  */
-function getUsersByProjectID($projectID) {
+function getUsersByProjectID($projectID)
+{
     $users = query("SELECT * FROM control_center_user_projects WHERE projectID='$projectID'");
     $result = [];
-    
+
     if (mysqli_num_rows($users) > 0) {
         foreach ($users as $user) {
             $userID = $user['userID'];
             $userData = fetch_assoc(query("SELECT * FROM control_center_users WHERE userID='$userID'"));
-            
+
             if ($userData) {
                 $result[] = [
                     'id' => $userData['userID'],
@@ -97,7 +104,7 @@ function getUsersByProjectID($projectID) {
             }
         }
     }
-    
+
     return $result;
 }
 
@@ -107,15 +114,16 @@ function getUsersByProjectID($projectID) {
  * @param string $projectID Die Projekt-ID
  * @return array Ein Array mit Ansichtsdaten
  */
-function getProjectViewsByProjectID($projectID) {
+function getProjectViewsByProjectID($projectID)
+{
     $views = query("SELECT * FROM control_center_project_views WHERE projectID='$projectID'");
     $result = [];
-    
+
     if (mysqli_num_rows($views) > 0) {
         foreach ($views as $view) {
             $viewID = $view['pageID'];
             $viewData = fetch_assoc(query("SELECT * FROM control_center_pages WHERE id='$viewID'"));
-            
+
             if ($viewData) {
                 $result[] = [
                     'id' => $viewData['id'],
@@ -126,7 +134,7 @@ function getProjectViewsByProjectID($projectID) {
             }
         }
     }
-    
+
     return $result;
 }
 
@@ -136,14 +144,15 @@ function getProjectViewsByProjectID($projectID) {
  * @param int $userID Die Benutzer-ID
  * @return array Ein Array mit Projektdaten
  */
-function getUserProjectsByUserID($userID) {
+function getUserProjectsByUserID($userID)
+{
     $projects = query("SELECT * FROM control_center_user_projects WHERE userID='$userID'");
     $result = [];
-    
+
     foreach ($projects as $p) {
         $projectID = $p['projectID'];
         $project = query("SELECT * FROM projects WHERE projectID='$projectID'");
-        
+
         if (mysqli_num_rows($project) == 1) {
             $projectData = fetch_assoc($project);
             $result[] = [
@@ -154,7 +163,7 @@ function getUserProjectsByUserID($userID) {
             ];
         }
     }
-    
+
     return $result;
 }
 
@@ -165,7 +174,8 @@ function getUserProjectsByUserID($userID) {
  * @param string $projectID Die Projekt-ID
  * @return bool True wenn Berechtigungen vorhanden, sonst False
  */
-function checkUserProjectPermission($userID, $projectID) {
+function checkUserProjectPermission($userID, $projectID)
+{
     $check = query("SELECT * FROM control_center_user_projects WHERE userID=$userID AND projectID='$projectID'");
     return mysqli_num_rows($check) == 1;
 }
@@ -177,7 +187,8 @@ function checkUserProjectPermission($userID, $projectID) {
  * @param bool $success True für Erfolg, False für Fehler
  * @return string Die JSON-Antwort
  */
-function jsonResponse($data, $success = true) {
+function jsonResponse($data, $success = true)
+{
     if ($success) {
         if (is_string($data)) {
             $response = ['success' => true, 'message' => $data];
@@ -187,7 +198,7 @@ function jsonResponse($data, $success = true) {
     } else {
         $response = ['success' => false, 'message' => $data];
     }
-    
+
     return echoJson($response);
 }
 
@@ -200,29 +211,30 @@ function jsonResponse($data, $success = true) {
  * @param int $userID Die Benutzer-ID des Erstellers (optional)
  * @return int|bool Die ID des Web Builder Projekts oder False bei Fehler
  */
-function setupWebBuilderProject($projectID, $href, $name, $userID = 1) {
+function setupWebBuilderProject($projectID, $href, $name, $userID = 1)
+{
     global $con;
-    
+
     // Zuerst prüfen, ob der Benutzer in der Web Builder Tabelle existiert
     //$userExists = query("SELECT id FROM control_center_web_builder_users WHERE id='$userID'");
-    $username = escape_string("user_$userID"). "_". $userID;
+    $username = escape_string("user_$userID") . "_" . $userID;
     $userExists = query("SELECT id, username FROM control_center_web_builder_users WHERE username='user_$userID' OR username='$username' OR id='$userID'");
     // Wenn der Benutzer nicht existiert, einen neuen Benutzer anlegen
     if (mysqli_num_rows($userExists) == 0) {
         // Benutzerinformationen aus der Haupttabelle holen
         $userData = fetch_assoc(query("SELECT * FROM control_center_users WHERE userID='$userID'"));
-        
+
         if ($userData) {
             // Benutzer in der Web Builder Tabelle anlegen
             $firstName = escape_string($userData['firstname']);
             $lastName = escape_string($userData['lastname']);
             $email = escape_string($userData['email']);
             $currentDate = date('Y-m-d H:i:s');
-            
+
             query("INSERT INTO control_center_web_builder_users 
                   (id, username, email, created_at, updated_at) 
                   VALUES ('$userID', 'user_$userID', '$email', '$currentDate', '$currentDate')");
-                  //$firstName $lastName
+            //$firstName $lastName
             // Wenn das nicht geklappt hat, Admin-Benutzer verwenden
             if (mysqli_affected_rows($con) == 0) {
                 $userID = 1; // Admin-Benutzer
@@ -230,7 +242,7 @@ function setupWebBuilderProject($projectID, $href, $name, $userID = 1) {
         } else {
             $userID = 1; // Admin-Benutzer, wenn keine Benutzerdaten gefunden wurden
         }
-    }else{
+    } else {
         // Benutzer existiert bereits, also verwenden wir die vorhandene ID
         $userID = mysqli_fetch_assoc($userExists)['id'];
     }
@@ -239,48 +251,52 @@ function setupWebBuilderProject($projectID, $href, $name, $userID = 1) {
     // mit eindeutiger Referenz zum Control Center Projekt
     $currentDate = date('Y-m-d H:i:s');
     $description = "Web Builder Project for $name (Control Center Project ID: $projectID)";
-    
+
     query("INSERT INTO control_center_web_builder_projects 
            (name, description, user_id, created_at, updated_at) 
            VALUES ('$name', '$description', '$userID', '$currentDate', '$currentDate')");
-           
+
     $webBuilderProjectId = mysqli_insert_id($con);
-    
+
     // Erstelle eine Standard-Homepage
     if ($webBuilderProjectId) {
         query("INSERT INTO control_center_web_builder_pages 
                (project_id, name, slug, title, meta_description, is_home, created_at, updated_at) 
                VALUES ('$webBuilderProjectId', 'Home', 'home', 'Homepage', 'Welcome to the $name website', 1, '$currentDate', '$currentDate')");
-               
+
         // Erstelle eine erste HTML-Komponente für die Homepage
         $homepageId = mysqli_insert_id($con);
         if ($homepageId) {
             // Generiere UUID für die Komponente
-            $uuid = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-              mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-              mt_rand(0, 0xffff),
-              mt_rand(0, 0x0fff) | 0x4000,
-              mt_rand(0, 0x3fff) | 0x8000,
-              mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+            $uuid = sprintf(
+                '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+                mt_rand(0, 0xffff),
+                mt_rand(0, 0xffff),
+                mt_rand(0, 0xffff),
+                mt_rand(0, 0x0fff) | 0x4000,
+                mt_rand(0, 0x3fff) | 0x8000,
+                mt_rand(0, 0xffff),
+                mt_rand(0, 0xffff),
+                mt_rand(0, 0xffff)
             );
-            
+
             $defaultHTML = "<div class=\"container mt-5\"><h1>Welcome to $name</h1><p>This is your new homepage. Start editing to customize it!</p></div>";
-            
+
             query("INSERT INTO control_center_web_builder_components 
                   (page_id, component_id, html_code, position, created_at, updated_at) 
                   VALUES ('$homepageId', '$uuid', '$defaultHTML', 0, '$currentDate', '$currentDate')");
         }
-        
+
         // Auch einen Benutzer-Projekt-Eintrag in der Web Builder Tabelle erstellen
         query("INSERT INTO control_center_user_projects 
                (userID, projectID, role) 
                VALUES ('$userID', '$webBuilderProjectId', 'owner')");
 
 
-// , created_at, updated_at
-// /, '$currentDate', '$currentDate'
+        // , created_at, updated_at
+        // /, '$currentDate', '$currentDate'
     }
-    
+
     return $webBuilderProjectId;
 }
 
@@ -290,11 +306,12 @@ function setupWebBuilderProject($projectID, $href, $name, $userID = 1) {
  * @param string $name Der Name des Projekts
  * @return bool True wenn das Projekt existiert, sonst False
  */
-function projectExists($name) {
+function projectExists($name)
+{
     $name = escape_string($name);
     $href = str_replace("\\", "", createLink($name));
     $check = query("SELECT * FROM projects WHERE link='$href' OR name='$name'");
-    
+
     return mysqli_num_rows($check) > 0;
 }
 
@@ -306,43 +323,45 @@ function projectExists($name) {
  * @param string $projectID Die Projekt-ID
  * @return bool True bei Erfolg, False bei Fehler
  */
-function createProjectDirectories($href, $name, $projectID) {
+function createProjectDirectories($href, $name, $projectID)
+{
     global $userID; // Make userID available
-    
+
     // Create web directory
     if (!mkdir("/www/" . $href, 0777, true) || !chmod("/www/" . $href, 0777)) {
         return false;
     }
-    
+
     // Template-Dateien erstellen
     $indexContent = str_replace(
-        array('[{[pLink]}]', '[{[pName]}]', '[{[pID]}]'), 
-        array($href, $name, $projectID), 
+        array('[{[pLink]}]', '[{[pName]}]', '[{[pID]}]'),
+        array($href, $name, $projectID),
         file_get_contents("templates/website/index.php")
     );
-    
+
     file_put_contents("/www/" . $href . "/index.php", $indexContent, 0777);
     chmod("/www/" . $href . "/index.php", 0777);
     file_put_contents("/www/" . $href . "/main.php", "//Put here main content of your site", 0777);
     chmod("/www/" . $href . "/main.php", 0777);
-    
+
     // Create Monaco IDE data directory
-    createMonacoProjectDirectory($href, $name, $userID);
-    
+    createMonacoProjectDirectory($href, $name, $userID, $projectID);
+
     return true;
 }
 
 /**
  * Creates a Monaco IDE project directory structure
  */
-function createMonacoProjectDirectory($href, $name, $userID) {
+function createMonacoProjectDirectory($href, $name, $userID, $projectID = 1)
+{
     // Create project data directory for Monaco IDE
     $dataDir = __DIR__ . "/../data/projects/" . $userID . "/" . $href;
-    
+
     if (!is_dir($dataDir)) {
         mkdir($dataDir, 0777, true);
     }
-    
+
     // Initialize Monaco IDE metadata instead of git
     if (!file_exists($dataDir . '/.monaco_initialized')) {
         // Create initial Monaco IDE metadata files
@@ -351,17 +370,69 @@ function createMonacoProjectDirectory($href, $name, $userID) {
             'created' => date('c'),
             'project_name' => $name
         ]));
-        
+
         file_put_contents($dataDir . '/.monaco_staged.json', '{}');
         file_put_contents($dataDir . '/.monaco_lastcommit.json', '{}');
         file_put_contents($dataDir . '/.monaco_commits.json', '[]');
-        
+
         // Create initial files
         //file_put_contents($dataDir . '/README.md', "# " . $name . "\n\nCreated with Control Center IDE\n");
         file_put_contents($dataDir . '/main.js', "// Welcome to " . $name . "\nconsole.log('Hello World!');\n");
         file_put_contents($dataDir . '/style.css', "/* Styles for " . $name . " */\nbody {\n    font-family: Arial, sans-serif;\n}\n");
         file_put_contents($dataDir . '/index.html', "<!DOCTYPE html>\n<html>\n<head>\n    <title>" . $name . "</title>\n    <link rel=\"stylesheet\" href=\"style.css\">\n</head>\n<body>\n    <h1>Welcome to " . $name . "</h1>\n    <script src=\"main.js\"></script>\n</body>\n</html>");
-        
+        $vercelConfig = [
+            "version" => 2,
+            "builds" => [
+                [
+                    "src" => "main.js",
+                    "use" => "@vercel/node"
+                ]
+            ],
+            "routes" => [
+                [
+                    "src" => "/(.*)",
+                    "dest" => "/main.js"
+                ]
+            ]
+        ];
+        file_put_contents($dataDir . '/vercel.json', json_encode($vercelConfig, JSON_PRETTY_PRINT));
+
+        $packageConfig = [
+            "name" => strtolower(str_replace([' ', '-'], ['_', '_'], $name)),
+            "version" => "1.0.0",
+            "main" => "main.js",
+            "scripts" => [
+                "start" => "node main.js",
+                "test" => "echo \"Error: no test specified\" && exit 1"
+            ],
+            "author" => "Control Center IDE",
+            "license" => "ISC",
+            "description" => "A project created with Control Center IDE",
+            "dependencies" => [
+                "vercel" => "^41.7.0"
+            ],
+            "devDependencies" => [
+                "vite" => "^4.0.0"
+            ]
+        ];
+        file_put_contents($dataDir . '/package.json', json_encode($packageConfig, JSON_PRETTY_PRINT));
+
+        $viteConfig = <<<JS
+                        import { defineConfig } from "vite";
+                        import path from "path";
+
+                        export default defineConfig({
+                            resolve: {
+                                alias: {
+                                    apis: path.resolve(__dirname, ".monaco_apis/index.js")
+                                }
+                            }
+                        });
+                        JS;
+
+        file_put_contents($dataDir . '/vite.config.js', $viteConfig);
+
+
         // Create initial commit metadata
         $initialCommit = [
             'hash' => 'initial-' . time(),
@@ -371,24 +442,27 @@ function createMonacoProjectDirectory($href, $name, $userID) {
             'date' => date('c'),
             'message' => 'Initial project setup',
             'files' => [
-               // ['path' => 'README.md'],
+                // ['path' => 'README.md'],
                 ['path' => 'main.js'],
                 ['path' => 'style.css'],
-                ['path' => 'index.html']
+                ['path' => 'index.html'],
+                ['path' => 'vercel.json'],
+                ['path' => 'package.json'],
+                ['path' => 'vite.config.js'],
             ],
             'parents' => []
         ];
-        
+
         file_put_contents($dataDir . '/.monaco_commits.json', json_encode([$initialCommit], JSON_PRETTY_PRINT));
-        
+
         // Set last commit state
         $lastCommit = [];
-        $files = ['main.js', 'style.css', 'index.html'];//'README.md', 
+        $files = ['main.js', 'style.css', 'index.html', 'vercel.json', 'package.json', 'vite.config.js']; //'README.md', 
         foreach ($files as $file) {
             $lastCommit[$file] = md5(file_get_contents($dataDir . '/' . $file));
         }
         file_put_contents($dataDir . '/.monaco_lastcommit.json', json_encode($lastCommit, JSON_PRETTY_PRINT));
-        
+
         // Create CMS APIs setup and copy subscribed APIs
         createCMSAPISetup($dataDir, $projectID);
     }
@@ -397,13 +471,14 @@ function createMonacoProjectDirectory($href, $name, $userID) {
 /**
  * Creates the CMS APIs setup for a Monaco project
  */
-function createCMSAPISetup($projectDir, $projectID) {
+function createCMSAPISetup($projectDir, $projectID)
+{
     // Create .monaco_apis directory
     $apisDir = $projectDir . '/.monaco_apis';
     if (!is_dir($apisDir)) {
         mkdir($apisDir, 0777, true);
     }
-    
+
     // Create the main APIs index file (empty initially)
     $indexContent = '// CMS APIs Integration
 // This file contains all subscribed APIs for your project
@@ -415,9 +490,9 @@ function createCMSAPISetup($projectDir, $projectID) {
 
 export default {};
 ';
-    
+
     file_put_contents($apisDir . '/index.js', $indexContent);
-    
+
     // Create API configuration template
     $configContent = '// CMS API Configuration
 // This file contains API keys and configuration for your project
@@ -436,9 +511,9 @@ const API_CONFIG = {
 
 export default API_CONFIG;
 ';
-    
+
     file_put_contents($apisDir . '/config.js', $configContent);
-    
+
     // Create a README for developers
     $readmeContent = '# CMS APIs Integration
 
@@ -477,7 +552,7 @@ const uploadResult = await FilesAPI.upload(file);
 - All requests are authenticated automatically
 - Rate limiting is enforced per project
 ';
-    
+
     file_put_contents($apisDir . '/README.md', $readmeContent);
 }
 
@@ -488,15 +563,16 @@ const uploadResult = await FilesAPI.upload(file);
  * @param string $projectID Die Projekt-ID
  * @return bool True bei Erfolg, False bei Fehler
  */
-function addUserToProject($userID, $projectID) {
+function addUserToProject($userID, $projectID)
+{
     $userID = (int)$userID;
     $projectID = escape_string($projectID);
     $check = query("SELECT * FROM control_center_user_projects WHERE userID=$userID AND projectID='$projectID'");
-    
+
     if (mysqli_num_rows($check) == 0) {
         return (bool)query("INSERT INTO control_center_user_projects VALUES (0, $userID, '$projectID', 1)");
     }
-    
+
     return true; // Benutzer ist bereits Teil des Projekts
 }
 
@@ -507,13 +583,13 @@ function addUserToProject($userID, $projectID) {
  * @param string $page Optional: Die Seite im Web Builder
  * @return string Die vollständige Web Builder URL
  */
-function getWebBuilderUrl($projectLink, $page = '') {
+function getWebBuilderUrl($projectLink, $page = '')
+{
     $baseUrl = "https://web-builder.control-center.eu/";
-    
+
     if (!empty($page)) {
         return $baseUrl . "editor/" . $projectLink . "/" . $page;
     }
-    
+
     return $baseUrl . "project/" . $projectLink;
 }
-?>
