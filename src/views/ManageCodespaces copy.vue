@@ -65,7 +65,7 @@
               <ion-button 
                 fill="clear" 
                 size="small"
-                :router-link="'/project/' + $route.params.project + '/monaco/' + codespace.slug"
+                :router-link="'/project/' + $route.params.project + '/codespace/' + codespace.slug"
               >
                 <ion-icon name="code-outline" slot="icon-only"></ion-icon>
               </ion-button>

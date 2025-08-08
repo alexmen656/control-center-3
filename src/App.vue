@@ -439,7 +439,7 @@ export default defineComponent({
     },
     checkMonacoRoute() {
       // Auto-collapse sidebar for Monaco editor
-      if (this.$route.path.includes('/monaco')) {
+      if (this.$route.path.includes('/codespace') && !this.$route.path.includes('new/codespace') && !this.$route.path.includes('manage/codespaces')) {
         this.isMenuCollapsed = true;
         this.hasToBeDarkmode = true;
       } else {

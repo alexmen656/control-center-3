@@ -91,7 +91,7 @@
       <ion-menu-toggle auto-hide="false" v-for="(codespace, i) in codespaces" :key="`codespace-${i}`">
         <ion-item
           @click="this.selectedIndex = Number(tools.length) + Number(components.length) + Number(services.length) + Number(i) + 1"
-          lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/monaco/' + codespace.slug"
+          lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/codespace/' + codespace.slug"
           class="hydrated menu-item" :class="{
             selected: this.selectedIndex === Number(tools.length) + Number(components.length) + Number(services.length) + Number(i) + 1,
             collapsed: isCollapsed,
