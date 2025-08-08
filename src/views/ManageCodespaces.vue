@@ -47,11 +47,24 @@
 
             <div class="card-body">
               <div class="metadata">
-                <ion-chip :color="getLanguageColor(codespace.language)">
+               <!-- <ion-chip :color="getLanguageColor(codespace.language)">
                   {{ codespace.language }}
                 </ion-chip>
                 <ion-chip color="medium">
                   {{ codespace.template }}
+                </ion-chip>-->
+                <!-- Connection status chips -->
+                <ion-chip v-if="codespace.connections?.github" color="dark" size="small">
+                  <ion-icon name="logo-github" size="small"></ion-icon>
+                  <ion-label>GitHub</ion-label>
+                </ion-chip>
+                <ion-chip v-if="codespace.connections?.vercel" color="primary">
+                  <ion-icon name="triangle" size="small"></ion-icon>
+                  <ion-label>Vercel</ion-label>
+                </ion-chip>
+                <ion-chip v-if="codespace.connections?.domain" color="success">
+                  <ion-icon name="globe" size="small"></ion-icon>
+                  <ion-label>Domain</ion-label><!--{{ codespace.connections.domain.is_main ? 'Main Domain' : 'Subdomain' }}-->
                 </ion-chip>
               </div>
               
@@ -515,6 +528,9 @@ const loadCodespaces = async () => {
   try {
     loading.value = true
     const project = route.params.project
+    const { getUserData } = await import('@/userData')
+    const user = getUserData()
+    
     const response = await axios.post('project_codespaces.php', qs.stringify({
       getCodespaces: true,
       project: project
@@ -522,6 +538,26 @@ const loadCodespaces = async () => {
 
     if (response.data.success) {
       codespaces.value = response.data.codespaces
+      
+      // Load connections for each codespace
+      for (const codespace of codespaces.value) {
+        try {
+          const connectionsResponse = await axios.post('codespace_connections.php', qs.stringify({
+            action: 'get_all_connections',
+            codespace_id: codespace.id,
+            user_id: user.userID
+          }))
+          
+          codespace.connections = {
+            github: connectionsResponse.data.github,
+            vercel: connectionsResponse.data.vercel,
+            domain: connectionsResponse.data.domain
+          }
+        } catch (error) {
+          console.error(`Error loading connections for codespace ${codespace.id}:`, error)
+          codespace.connections = { github: null, vercel: null, domain: null }
+        }
+      }
     } else {
       toast.error('Fehler beim Laden der Codespaces')
     }

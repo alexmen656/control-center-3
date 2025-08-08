@@ -149,6 +149,93 @@ foreach($webbuilderProjects as $project) {
     }
 }
 
+$projects = query("SELECT projectID, link, name FROM projects");
+foreach($projects as $project) {
+    $projectID = $project['projectID'];
+    $projectLink = $project['link'];
+    $projectName = $project['name'];
+    
+    $json[$i]['id'] = 'manage_codespaces_' . $projectID;
+    $json[$i]['url'] = 'project/' . $projectLink . '/manage/codespaces';
+    $json[$i]['showTitle'] = true;
+    $json[$i]['icon'] = 'code-outline';
+    $json[$i]['title'] = 'Manage Codespaces - ' . $projectName;
+    $json[$i]['html'] = '';
+    $json[$i]['pageID'] = 'manage_codespaces_' . $projectID;
+    $i++;
+    
+    $json[$i]['id'] = 'new_codespace_' . $projectID;
+    $json[$i]['url'] = 'project/' . $projectLink . '/new/codespace';
+    $json[$i]['showTitle'] = true;
+    $json[$i]['icon'] = 'add-circle-outline';
+    $json[$i]['title'] = 'New Codespace - ' . $projectName;
+    $json[$i]['html'] = '';
+    $json[$i]['pageID'] = 'new_codespace_' . $projectID;
+    $i++;
+    
+    $codespaces = query("SELECT id, name, slug, description, language, template, status FROM project_codespaces WHERE project_id='$projectID' ORDER BY order_index ASC");
+    
+    foreach($codespaces as $codespace) {
+        $codespaceId = $codespace['id'];
+        $codespaceName = $codespace['name'];
+        $codespaceSlug = $codespace['slug'];
+        $codespaceDescription = $codespace['description'];
+        $codespaceLanguage = $codespace['language'];
+        $codespaceTemplate = $codespace['template'];
+        $codespaceStatus = $codespace['status'];
+        
+        // Add monaco editor page for each codespace
+        $json[$i]['id'] = 'codespace_monaco_' . $codespaceId;
+        $json[$i]['url'] = 'project/' . $projectLink . '/monaco/' . $codespaceSlug;
+        $json[$i]['showTitle'] = false;
+        $json[$i]['icon'] = 'code-working-outline';
+        $json[$i]['title'] = $codespaceName . ' - Monaco Editor';
+        $json[$i]['html'] = '';
+        $json[$i]['pageID'] = 'codespace_monaco_' . $codespaceId;
+        $i++;
+        
+        // Add codespace dashboard/overview page
+        $json[$i]['id'] = 'codespace_dashboard_' . $codespaceId;
+        $json[$i]['url'] = 'project/' . $projectLink . '/codespace/' . $codespaceSlug;
+        $json[$i]['showTitle'] = false;
+        $json[$i]['icon'] = 'analytics-outline';
+        $json[$i]['title'] = $codespaceName . ' - Dashboard';
+        $json[$i]['html'] = '';
+        $json[$i]['pageID'] = 'codespace_dashboard_' . $codespaceId;
+        $i++;
+        
+        // Add codespace settings page
+        /*$json[$i]['id'] = 'codespace_settings_' . $codespaceId;
+        $json[$i]['url'] = 'project/' . $projectLink . '/codespace/' . $codespaceSlug . '/settings';
+        $json[$i]['showTitle'] = true;
+        $json[$i]['icon'] = 'settings-outline';
+        $json[$i]['title'] = $codespaceName . ' - Settings';
+        $json[$i]['html'] = '';
+        $json[$i]['pageID'] = 'codespace_settings_' . $codespaceId;
+        $i++;
+        
+        // Add codespace terminal page
+        $json[$i]['id'] = 'codespace_terminal_' . $codespaceId;
+        $json[$i]['url'] = 'project/' . $projectLink . '/codespace/' . $codespaceSlug . '/terminal';
+        $json[$i]['showTitle'] = true;
+        $json[$i]['icon'] = 'terminal-outline';
+        $json[$i]['title'] = $codespaceName . ' - Terminal';
+        $json[$i]['html'] = '';
+        $json[$i]['pageID'] = 'codespace_terminal_' . $codespaceId;
+        $i++;
+        
+        // Add codespace file browser page
+        $json[$i]['id'] = 'codespace_files_' . $codespaceId;
+        $json[$i]['url'] = 'project/' . $projectLink . '/codespace/' . $codespaceSlug . '/files';
+        $json[$i]['showTitle'] = true;
+        $json[$i]['icon'] = 'folder-outline';
+        $json[$i]['title'] = $codespaceName . ' - File Browser';
+        $json[$i]['html'] = '';
+        $json[$i]['pageID'] = 'codespace_files_' . $codespaceId;
+        $i++;*/
+    }
+}
+
 $tables = [];
 $result = query("SHOW TABLES");
 if ($result && mysqli_num_rows($result) > 0) {
