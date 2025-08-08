@@ -99,12 +99,12 @@
           }" :data-tooltip="isCollapsed ? codespace.name : ''">
           <ion-icon slot="start" :name="codespace.icon || 'code-outline'" />
           <ion-label v-if="!isCollapsed">{{ codespace.name }}</ion-label>
-          <ion-badge v-if="!isCollapsed && codespace.language" color="primary" class="codespace-language-badge">{{ codespace.language }}</ion-badge>
+          <!--<ion-badge v-if="!isCollapsed && codespace.language" color="primary" class="codespace-language-badge">{{ codespace.language }}</ion-badge>-->
           <span v-if="!isCollapsed" class="codespace-status-indicator"
             :class="{ 'status-active': codespace.status === 'active', 'status-inactive': codespace.status === 'inactive' }"></span>
-          <ion-reorder v-if="!isCollapsed" slot="end">
+       <!--  <ion-reorder v-if="!isCollapsed" slot="end">
             <ion-icon style="cursor: pointer; z-index: 1000" name="settings-outline" />
-          </ion-reorder>
+          </ion-reorder>--> 
         </ion-item>
       </ion-menu-toggle>
 

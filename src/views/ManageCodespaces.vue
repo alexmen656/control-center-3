@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header>
+  <!--  <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-back-button :default-href="'/project/' + $route.params.project + '/'"></ion-back-button>
@@ -12,7 +12,7 @@
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
-    </ion-header>
+    </ion-header>-->
 
     <ion-content>
       <div class="codespaces-container">
