@@ -377,9 +377,9 @@ function createMonacoProjectDirectory($href, $name, $userID, $projectID = 1)
 
         // Create initial files
         //file_put_contents($dataDir . '/README.md', "# " . $name . "\n\nCreated with Control Center IDE\n");
-        file_put_contents($dataDir . '/main.js', "// Welcome to " . $name . "\nconsole.log('Hello World!');\n");
-        file_put_contents($dataDir . '/style.css', "/* Styles for " . $name . " */\nbody {\n    font-family: Arial, sans-serif;\n}\n");
-        file_put_contents($dataDir . '/index.html', "<!DOCTYPE html>\n<html>\n<head>\n    <title>" . $name . "</title>\n    <link rel=\"stylesheet\" href=\"style.css\">\n</head>\n<body>\n    <h1>Welcome to " . $name . "</h1>\n    <script src=\"main.js\"></script>\n</body>\n</html>");
+        file_put_contents($dataDir . '/main.js', "// Welcome to " . $name . "\n// Node.js backend with API support\n\nconst http = require('http');\nconst path = require('path');\nconst fs = require('fs');\nconst port = process.env.PORT || 3000;\n\n// Example API usage (when APIs are subscribed)\n// const { UsersAPI } = require('./dist/apis');\n// const users = await UsersAPI.getAll();\n\nconst server = http.createServer((req, res) => {\n  // CORS headers\n  res.setHeader('Access-Control-Allow-Origin', '*');\n  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');\n  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');\n  \n  if (req.method === 'OPTIONS') {\n    res.writeHead(200);\n    res.end();\n    return;\n  }\n  \n  // Simple routing\n  if (req.url === '/api/health') {\n    res.writeHead(200, { 'Content-Type': 'application/json' });\n    res.end(JSON.stringify({ status: 'ok', project: '" . $name . "' }));\n    return;\n  }\n  \n  // Default response\n  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });\n  res.end(`\n    <!DOCTYPE html>\n    <html>\n      <head>\n        <title>" . $name . " - Backend</title>\n        <style>\n          body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }\n          .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }\n          h1 { color: #333; text-align: center; }\n          .api-info { background: #e8f4fd; padding: 15px; border-radius: 5px; margin: 15px 0; }\n        </style>\n      </head>\n      <body>\n        <div class=\"container\">\n          <h1>" . $name . " Backend</h1>\n          <p>Backend server created with Control Center IDE</p>\n          <div class=\"api-info\">\n            <h3>API Endpoints:</h3>\n            <ul>\n              <li><strong>GET /api/health</strong> - Health check</li>\n              <li><strong>Your APIs will appear here when subscribed</strong></li>\n            </ul>\n          </div>\n          <p>Server running on port: \${port}</p>\n          <p>Ready for Vercel deployment with Vite build pipeline</p>\n        </div>\n      </body>\n    </html>\n  \`);\n});\n\nserver.listen(port, () => {\n  console.log(\`🚀 " . $name . " backend running at http://localhost:\${port}\`);\n});\n\n// Export for Vercel\nmodule.exports = server;\n");
+        file_put_contents($dataDir . '/style.css', "/* Styles for " . $name . " */\nbody {\n    font-family: Arial, sans-serif;\n    margin: 0;\n    padding: 20px;\n    background: #f5f5f5;\n}\n\nh1 {\n    color: #333;\n    text-align: center;\n}\n\n.container {\n    max-width: 800px;\n    margin: 0 auto;\n    background: white;\n    padding: 20px;\n    border-radius: 8px;\n    box-shadow: 0 2px 10px rgba(0,0,0,0.1);\n}\n");
+        file_put_contents($dataDir . '/index.html', "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>" . $name . "</title>\n</head>\n<body>\n    <div class=\"container\">\n        <h1>Welcome to " . $name . "</h1>\n        <p>This project was created with Control Center IDE and is ready for Vercel deployment.</p>\n        <p>Start editing your files to build something amazing!</p>\n    </div>\n    <script type=\"module\" src=\"./main.js\"></script>\n</body>\n</html>");
         $vercelConfig = [
             "version" => 2,
             "builds" => [
@@ -402,35 +402,65 @@ function createMonacoProjectDirectory($href, $name, $userID, $projectID = 1)
             "version" => "1.0.0",
             "main" => "main.js",
             "scripts" => [
+                "dev" => "vite build --watch",
+                "build" => "vite build",
+                "preview" => "vite preview", 
                 "start" => "node main.js",
                 "test" => "echo \"Error: no test specified\" && exit 1"
             ],
             "author" => "Control Center IDE",
             "license" => "ISC",
-            "description" => "A project created with Control Center IDE",
+            "description" => "A Node.js backend project with Vite build pipeline created with Control Center IDE",
             "dependencies" => [
-                "vercel" => "^41.7.0"
+                "axios" => "^1.6.0"
             ],
             "devDependencies" => [
-                "vite" => "^4.0.0"
+                "vite" => "^5.0.0"
+            ],
+            "engines" => [
+                "node" => ">=18.x"
             ]
         ];
         file_put_contents($dataDir . '/package.json', json_encode($packageConfig, JSON_PRETTY_PRINT));
 
         $viteConfig = <<<JS
-                        import { defineConfig } from "vite";
-                        import path from "path";
+import { defineConfig } from "vite";
+import { resolve } from "path";
 
-                        export default defineConfig({
-                            resolve: {
-                                alias: {
-                                    apis: path.resolve(__dirname, ".monaco_apis/index.js")
-                                }
-                            }
-                        });
-                        JS;
+export default defineConfig({
+  resolve: {
+    alias: {
+      "apis": resolve(__dirname, ".monaco_apis/index.js"),
+      "@": resolve(__dirname, "src"),
+      "@apis": resolve(__dirname, ".monaco_apis")
+    }
+  },
+  build: {
+    outDir: "dist",
+    assetsDir: "assets",
+    sourcemap: true,
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, "index.html")
+      }
+    }
+  },
+  server: {
+    port: 3000,
+    host: true
+  },
+  preview: {
+    port: 8080,
+    host: true
+  }
+});
+JS;
 
         file_put_contents($dataDir . '/vite.config.js', $viteConfig);
+
+        // Create .vercelignore to exclude Monaco metadata files from deployment
+        $vercelIgnore = ".monaco_commits.json\n.monaco_git\n.monaco_initialized\n.monaco_lastcommit.json\n.monaco_staged.json\nnode_modules\n.env.local\n.env.*.local\n";
+        file_put_contents($dataDir . '/.vercelignore', $vercelIgnore);
 
 
         // Create initial commit metadata
@@ -440,7 +470,7 @@ function createMonacoProjectDirectory($href, $name, $userID, $projectID = 1)
             'author' => 'Control Center IDE',
             'email' => 'ide@controlcenter.dev',
             'date' => date('c'),
-            'message' => 'Initial project setup',
+            'message' => 'Initial project setup with Vercel deployment configuration',
             'files' => [
                 // ['path' => 'README.md'],
                 ['path' => 'main.js'],
@@ -449,6 +479,7 @@ function createMonacoProjectDirectory($href, $name, $userID, $projectID = 1)
                 ['path' => 'vercel.json'],
                 ['path' => 'package.json'],
                 ['path' => 'vite.config.js'],
+                ['path' => '.vercelignore'],
             ],
             'parents' => []
         ];
@@ -457,7 +488,7 @@ function createMonacoProjectDirectory($href, $name, $userID, $projectID = 1)
 
         // Set last commit state
         $lastCommit = [];
-        $files = ['main.js', 'style.css', 'index.html', 'vercel.json', 'package.json', 'vite.config.js']; //'README.md', 
+        $files = ['main.js', 'style.css', 'index.html', 'vercel.json', 'package.json', 'vite.config.js', '.vercelignore']; //'README.md', 
         foreach ($files as $file) {
             $lastCommit[$file] = md5(file_get_contents($dataDir . '/' . $file));
         }
@@ -480,21 +511,39 @@ function createCMSAPISetup($projectDir, $projectID)
     }
 
     // Create the main APIs index file (empty initially)
-    $indexContent = '// CMS APIs Integration
+    $indexContent = '// CMS APIs Integration for Node.js Backend
 // This file contains all subscribed APIs for your project
 // Subscribe to APIs in the main Control Center to get access
 
-// No APIs are currently subscribed for this project
-// When you subscribe to APIs, they will be available here like:
-// import { UsersAPI, FilesAPI } from \'apis\';
+// Import API configuration
+const API_CONFIG = require(\'./config.js\');
 
-export default {};
+// Example: When APIs are subscribed, they will be exported like this:
+// const UsersAPI = require(\'./UsersSDK.js\');
+// const FilesAPI = require(\'./FilesSDK.js\');
+// 
+// module.exports = {
+//   UsersAPI,
+//   FilesAPI,
+//   API_CONFIG
+// };
+
+// Currently no APIs are subscribed
+console.log(\'CMS APIs loaded - No APIs currently subscribed\');
+console.log(\'Visit your Control Center project to subscribe to APIs\');
+
+// Default export for when no APIs are available
+module.exports = {
+  config: API_CONFIG,
+  available: [],
+  message: \'No APIs currently subscribed. Visit Control Center to subscribe to APIs.\'
+};
 ';
 
     file_put_contents($apisDir . '/index.js', $indexContent);
 
     // Create API configuration template
-    $configContent = '// CMS API Configuration
+    $configContent = '// CMS API Configuration for Node.js Backend
 // This file contains API keys and configuration for your project
 // Keys are automatically injected at runtime
 
@@ -509,7 +558,7 @@ const API_CONFIG = {
   }
 };
 
-export default API_CONFIG;
+module.exports = API_CONFIG;
 ';
 
     file_put_contents($apisDir . '/config.js', $configContent);
@@ -533,7 +582,7 @@ To start using APIs:
 
 Once subscribed, import APIs like this:
 ```javascript
-import { UsersAPI, FilesAPI } from \'apis\';
+const { UsersAPI, FilesAPI } = require(\'./dist/apis\');
 
 // Use the APIs
 const users = await UsersAPI.getAll();
@@ -592,118 +641,4 @@ function getWebBuilderUrl($projectLink, $page = '')
     }
 
     return $baseUrl . "project/" . $projectLink;
-}
-
-/**
- * Creates a Monaco IDE codespace directory structure
- */
-function createMonacoCodespaceDirectory($projectLink, $codespaceSlug, $codespaceName, $userID, $projectID = 1)
-{
-    // Create codespace data directory for Monaco IDE
-    $dataDir = __DIR__ . "/../data/projects/" . $userID . "/" . $projectLink . "/" . $codespaceSlug;
-
-    if (!is_dir($dataDir)) {
-        mkdir($dataDir, 0777, true);
-    }
-
-    // Initialize Monaco IDE metadata for this codespace
-    if (!file_exists($dataDir . '/.monaco_initialized')) {
-        // Create initial Monaco IDE metadata files
-        file_put_contents($dataDir . '/.monaco_initialized', json_encode([
-            'codespace_name' => $codespaceName,
-            'project_link' => $projectLink,
-            'created_at' => date('c')
-        ]));
-
-        file_put_contents($dataDir . '/.monaco_staged.json', '{}');
-        file_put_contents($dataDir . '/.monaco_lastcommit.json', '{}');
-        file_put_contents($dataDir . '/.monaco_commits.json', '[]');
-
-        // Create initial files based on template
-        file_put_contents($dataDir . '/main.js', "// Welcome to " . $codespaceName . "\nconsole.log('Hello from " . $codespaceName . "!');\n");
-        file_put_contents($dataDir . '/style.css', "/* Styles for " . $codespaceName . " */\nbody {\n    font-family: Arial, sans-serif;\n    margin: 0;\n    padding: 20px;\n}\n");
-        file_put_contents($dataDir . '/index.html', "<!DOCTYPE html>\n<html>\n<head>\n    <title>" . $codespaceName . "</title>\n    <link rel=\"stylesheet\" href=\"style.css\">\n</head>\n<body>\n    <h1>Welcome to " . $codespaceName . "</h1>\n    <p>This is your new codespace!</p>\n    <script src=\"main.js\"></script>\n</body>\n</html>");
-        
-        $vercelConfig = [
-            "version" => 2,
-            "name" => strtolower(str_replace([' ', '-'], ['_', '_'], $codespaceName)),
-            "builds" => [
-                [
-                    "src" => "index.html",
-                    "use" => "@vercel/static"
-                ]
-            ]
-        ];
-        file_put_contents($dataDir . '/vercel.json', json_encode($vercelConfig, JSON_PRETTY_PRINT));
-
-        $packageConfig = [
-            "name" => strtolower(str_replace([' ', '-'], ['_', '_'], $codespaceName)),
-            "version" => "1.0.0",
-            "main" => "main.js",
-            "scripts" => [
-                "start" => "node main.js",
-                "test" => "echo \"Error: no test specified\" && exit 1"
-            ],
-            "author" => "Control Center IDE",
-            "license" => "ISC",
-            "description" => "A codespace created with Control Center IDE",
-            "dependencies" => [
-                "vercel" => "^41.7.0"
-            ],
-            "devDependencies" => [
-                "vite" => "^4.0.0"
-            ]
-        ];
-        file_put_contents($dataDir . '/package.json', json_encode($packageConfig, JSON_PRETTY_PRINT));
-
-        $viteConfig = <<<JS
-import { defineConfig } from "vite";
-import path from "path";
-
-export default defineConfig({
-    resolve: {
-        alias: {
-            apis: path.resolve(__dirname, ".monaco_apis/index.js")
-        }
-    }
-});
-JS;
-
-        file_put_contents($dataDir . '/vite.config.js', $viteConfig);
-
-        // Create initial commit metadata
-        $initialCommit = [
-            'hash' => 'initial-' . time(),
-            'short_hash' => 'initial',
-            'author' => 'Control Center IDE',
-            'email' => 'ide@controlcenter.dev',
-            'date' => date('c'),
-            'message' => 'Initial codespace setup: ' . $codespaceName,
-            'files' => [
-                ['path' => 'main.js'],
-                ['path' => 'style.css'],
-                ['path' => 'index.html'],
-                ['path' => 'vercel.json'],
-                ['path' => 'package.json'],
-                ['path' => 'vite.config.js']
-            ]
-        ];
-
-        file_put_contents($dataDir . '/.monaco_commits.json', json_encode([$initialCommit], JSON_PRETTY_PRINT));
-
-        // Set last commit state
-        $lastCommit = [];
-        $files = ['main.js', 'style.css', 'index.html', 'vercel.json', 'package.json', 'vite.config.js'];
-        foreach ($files as $file) {
-            if (file_exists($dataDir . '/' . $file)) {
-                $lastCommit[$file] = file_get_contents($dataDir . '/' . $file);
-            }
-        }
-        file_put_contents($dataDir . '/.monaco_lastcommit.json', json_encode($lastCommit, JSON_PRETTY_PRINT));
-
-        // Create CMS APIs setup and copy subscribed APIs
-        createCMSAPISetup($dataDir, $projectID);
-    }
-
-    return true;
 }

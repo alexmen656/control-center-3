@@ -3,8 +3,7 @@
     <ion-reorder-group :disabled="false" @ionItemReorder="handleReorder($event)">
       <ion-menu-toggle auto-hide="false">
         <ion-item @click="this.selectedIndex = 0" lines="none" detail="false"
-          :router-link="'/project/' + $route.params.project + '/'" 
-          class="hydrated menu-item"
+          :router-link="'/project/' + $route.params.project + '/'" class="hydrated menu-item"
           :class="{ selected: this.selectedIndex === 0, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
           :data-tooltip="isCollapsed ? 'Overview' : ''">
           <ion-icon slot="start" name="apps-outline" />
@@ -55,9 +54,9 @@
               .replaceAll('Ö', 'o')
               .replaceAll('Ü', 'u')
               .replaceAll('ü', 'u')
-            " class="hydrated menu-item" 
-            :class="{ selected: this.selectedIndex === i + 1, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
-            :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''">
+            " class="hydrated menu-item"
+          :class="{ selected: this.selectedIndex === i + 1, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
+          :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''">
           <ion-icon slot="start" :name="p.icon" />
           <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
           <ion-reorder v-if="!isCollapsed" slot="end">
@@ -71,6 +70,49 @@
           :router-link="'/project/' + $route.params.project + '/new-tool/'">
           <ion-icon slot="start" name="add" />
           <ion-label>New Tool</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+    </ion-reorder-group>
+  </ion-list>
+  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
+    <h4>Codespaces</h4>
+    <div>
+      <router-link :to="'/project/' + $route.params.project + '/manage/codespaces'"><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/codespaces/"><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="information-circle-outline"></ion-icon></router-link><router-link
+        :to="'/project/' + $route.params.project + '/new/codespace'"><ion-icon
+          style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>
+    </div>
+  </ion-note>
+  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
+    <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
+      <ion-menu-toggle auto-hide="false" v-for="(codespace, i) in codespaces" :key="`codespace-${i}`">
+        <ion-item
+          @click="this.selectedIndex = Number(tools.length) + Number(components.length) + Number(services.length) + Number(i) + 1"
+          lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/monaco/' + codespace.slug"
+          class="hydrated menu-item" :class="{
+            selected: this.selectedIndex === Number(tools.length) + Number(components.length) + Number(services.length) + Number(i) + 1,
+            collapsed: isCollapsed,
+            hasToBeDarkmode: hasToBeDarkmode
+          }" :data-tooltip="isCollapsed ? codespace.name : ''">
+          <ion-icon slot="start" :name="codespace.icon || 'code-outline'" />
+          <ion-label v-if="!isCollapsed">{{ codespace.name }}</ion-label>
+          <ion-badge v-if="!isCollapsed && codespace.language" color="primary" class="codespace-language-badge">{{ codespace.language }}</ion-badge>
+          <span v-if="!isCollapsed" class="codespace-status-indicator"
+            :class="{ 'status-active': codespace.status === 'active', 'status-inactive': codespace.status === 'inactive' }"></span>
+          <ion-reorder v-if="!isCollapsed" slot="end">
+            <ion-icon style="cursor: pointer; z-index: 1000" name="settings-outline" />
+          </ion-reorder>
+        </ion-item>
+      </ion-menu-toggle>
+
+      <!-- No Codespaces message -->
+      <ion-menu-toggle auto-hide="false" v-if="codespaces.length === 0 && !isCollapsed">
+        <ion-item lines="none" detail="false" class="no-codespaces-item">
+          <ion-icon slot="start" name="code-slash-outline" color="medium" />
+          <ion-label color="medium">No Codespaces yet</ion-label>
         </ion-item>
       </ion-menu-toggle>
     </ion-reorder-group>
@@ -109,27 +151,28 @@
               '/config'
             )
             " @click="toggleComponentExpanded(component.id)" lines="none" detail="false" :router-link="'/project/' +
-                $route.params.project +
-                '/page/' +
-                component.slug
-                /*component.name
-                  .toLowerCase()
-                  .replaceAll(' ', '-')
-                  .replaceAll('ä', 'a')
-                  .replaceAll('Ä', 'a')
-                  .replaceAll('ö', 'o')
-                  .replaceAll('Ö', 'o')
-                  .replaceAll('Ü', 'u')
-                  .replaceAll('ü', 'u')*/
-                " class="hydrated menu-item parent-component" :class="{
+              $route.params.project +
+              '/page/' +
+              component.slug
+              /*component.name
+                .toLowerCase()
+                .replaceAll(' ', '-')
+                .replaceAll('ä', 'a')
+                .replaceAll('Ä', 'a')
+                .replaceAll('ö', 'o')
+                .replaceAll('Ö', 'o')
+                .replaceAll('Ü', 'u')
+                .replaceAll('ü', 'u')*/
+              " class="hydrated menu-item parent-component" :class="{
                   selected: selectedIndex === Number(i) + Number(tools.length) + 1,
                   collapsed: isCollapsed,
                   hasToBeDarkmode: hasToBeDarkmode
-                }"
-                :data-tooltip="isCollapsed ? component.name : ''">
+                }" :data-tooltip="isCollapsed ? component.name : ''">
             <ion-icon slot="start" :name="getIcon(component.type)" />
-            <ion-label v-if="!isCollapsed">{{ component.name[0].toUpperCase() }}{{ component.name.substring(1) }}</ion-label>
-            <ion-icon v-if="!isCollapsed" :name="isComponentExpanded(component.id) ? 'chevron-down-outline' : 'chevron-forward-outline'"
+            <ion-label v-if="!isCollapsed">{{ component.name[0].toUpperCase() }}{{ component.name.substring(1)
+              }}</ion-label>
+            <ion-icon v-if="!isCollapsed"
+              :name="isComponentExpanded(component.id) ? 'chevron-down-outline' : 'chevron-forward-outline'"
               slot="end"></ion-icon>
             <ion-reorder v-if="!isCollapsed" slot="end">
               <ion-icon v-if="component.hasConfig == 1 || component.type == 'menu'"
@@ -162,9 +205,9 @@
                 subComp.name
                   .toLowerCase()
                   .replaceAll(' ', '-')" class="hydrated menu-item sub-component-item" :class="{
-                      selected: selectedIndex === Number(i) + Number(tools.length) + 1 + Number(j) + 0.1, hasToBeDarkmode: hasToBeDarkmode
-                    }">
-            <!--  <ion-icon :name="getIcon(subComp.type)" /><--slot="start"---->
+                    selected: selectedIndex === Number(i) + Number(tools.length) + 1 + Number(j) + 0.1, hasToBeDarkmode: hasToBeDarkmode
+                  }">
+              <!--  <ion-icon :name="getIcon(subComp.type)" /><--slot="start"---->
               <ion-label>{{ subComp.name }}</ion-label>
             </ion-item>
           </ion-menu-toggle>
@@ -189,13 +232,11 @@
       <ion-menu-toggle auto-hide="false" v-for="(p, i) in services" :key="i">
         <ion-item @click="this.selectedIndex = Number(i) + Number(tools.length) + Number(components.length) + 1"
           lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/services/' + p.link"
-          class="hydrated menu-item" 
-          :class="{
+          class="hydrated menu-item" :class="{
             selected: this.selectedIndex === Number(i) + Number(tools.length) + Number(components.length) + 1,
             collapsed: isCollapsed,
             hasToBeDarkmode: hasToBeDarkmode
-          }"
-          :data-tooltip="isCollapsed ? p.name : ''"><!-- target="_blank"-->
+          }" :data-tooltip="isCollapsed ? p.name : ''"><!-- target="_blank"-->
           <ion-icon slot="start" :name="p.icon || 'cog-outline'" />
           <ion-label v-if="!isCollapsed">{{ p.name }}</ion-label>
           <span class="service-status-indicator"
@@ -209,10 +250,11 @@
     <div>
       <router-link :to="'/project/' + $route.params.project + '/manage/apis'"><ion-icon
           style="color: var(--ion-color-medium-shade)"
-          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/apis/"><ion-icon style="color: var(--ion-color-medium-shade)"
+          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/apis/"><ion-icon
+          style="color: var(--ion-color-medium-shade)"
           name="information-circle-outline"></ion-icon></router-link><router-link
-        :to="'/project/' + $route.params.project + '/manage/apis'"><ion-icon style="color: var(--ion-color-medium-shade)"
-          name="add-circle-outline"></ion-icon></router-link>
+        :to="'/project/' + $route.params.project + '/manage/apis'"><ion-icon
+          style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>
     </div>
   </ion-note>
   <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
@@ -225,11 +267,11 @@
             selected: this.selectedIndex === Number(tools.length) + Number(components.length) + Number(services.length) + Number(i) + 1,
             collapsed: isCollapsed,
             hasToBeDarkmode: hasToBeDarkmode
-          }"
-          :data-tooltip="isCollapsed ? api.name : ''">
+          }" :data-tooltip="isCollapsed ? api.name : ''">
           <ion-icon slot="start" :name="api.icon || 'code-outline'" />
           <ion-label v-if="!isCollapsed">{{ api.name }}</ion-label>
-          <ion-badge v-if="!isCollapsed && api.category" color="medium" class="api-category-badge">{{ api.category }}</ion-badge>
+          <ion-badge v-if="!isCollapsed && api.category" color="medium" class="api-category-badge">{{ api.category
+            }}</ion-badge>
           <span v-if="!isCollapsed" class="api-status-indicator"
             :class="{ 'status-active': api.status === 'active', 'status-inactive': api.status === 'inactive' }"></span>
           <ion-reorder v-if="!isCollapsed" slot="end">
@@ -237,7 +279,7 @@
           </ion-reorder>
         </ion-item>
       </ion-menu-toggle>
-      
+
       <!-- No APIs message -->
       <ion-menu-toggle auto-hide="false" v-if="apis.length === 0 && !isCollapsed">
         <ion-item lines="none" detail="false" class="no-apis-item">
@@ -277,6 +319,7 @@ export default defineComponent({
     const components = ref([]);
     const services = ref([]);
     const apis = ref([]);
+    const codespaces = ref([]);
     const route = useRoute();
     const ionRouter = useIonRouter();
     const list = {} as any;
@@ -374,6 +417,7 @@ export default defineComponent({
         components.value = response.data.components;
         services.value = response.data.services || [];
         apis.value = response.data.apis || [];
+        codespaces.value = response.data.codespaces || [];
         componentSubItems.value = response.data.componentSubItems || {};
         tools.value.forEach((element) => {
           list[element.id] = element.order;
@@ -402,6 +446,7 @@ export default defineComponent({
       components: components,
       services: services,
       apis: apis,
+      codespaces: codespaces,
       goToConfig,
       handleReorder,
       handleFrontReorder,
@@ -427,6 +472,7 @@ export default defineComponent({
           this.components = response.data.components;
           this.services = response.data.services || [];
           this.apis = response.data.apis || [];
+          this.codespaces = response.data.codespaces || [];
           this.componentSubItems = response.data.componentSubItems || {};
         });
     });
@@ -785,12 +831,12 @@ ion-item.new-tool ion-label {
 }
 
 /* Hide version and other text elements when collapsed */
-.collapsed + div {
+.collapsed+div {
   display: none;
 }
 
 /* Hide version and other text elements when collapsed */
-.collapsed + div {
+.collapsed+div {
   display: none;
 }
 
@@ -829,6 +875,7 @@ ion-item.new-tool ion-label {
     opacity: 0;
     transform: translateY(-50%) translateX(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(-50%) translateX(0);
@@ -836,10 +883,45 @@ ion-item.new-tool ion-label {
 }
 
 ion-list.hasToBeDarkmode {
-  background: /*var(*/#1e1e1e/*, var(--ion-background-color, #fff));*/
+  background:
+    /*var(*/
+    #1e1e1e
+    /*, var(--ion-background-color, #fff));*/
 }
 
 .menu-item.hasToBeDarkmode {
   --background: #1e1e1e !important;
+}
+
+/* Codespace specific styling */
+.codespace-language-badge {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.codespace-status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-left: auto;
+  margin-right: 8px;
+}
+
+.codespace-status-indicator.status-active {
+  background-color: var(--ion-color-success);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.codespace-status-indicator.status-inactive {
+  background-color: var(--ion-color-medium);
+}
+
+.no-codespaces-item {
+  opacity: 0.6;
+}
+
+.no-codespaces-item ion-icon {
+  color: var(--ion-color-medium) !important;
 }
 </style>

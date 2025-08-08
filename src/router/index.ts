@@ -247,6 +247,15 @@ const routes: Array<RouteRecordRaw> = [
     path: '/project/:project/services/:service/config',
     component: () => import('../views/ServiceConfigView.vue'),
   },
+  // Codespace Routes
+  {
+    path: '/project/:project/manage/codespaces',
+    component: () => import('../views/ManageCodespaces.vue'),
+  },
+  {
+    path: '/project/:project/new/codespace',
+    component: () => import('../views/ManageCodespaces.vue'),
+  },
   // API Routes
   {
     path: '/project/:project/new/api',

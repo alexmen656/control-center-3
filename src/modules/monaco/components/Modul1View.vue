@@ -224,6 +224,7 @@ import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { ToastService } from "@/services/ToastService";
 import { marked } from 'marked';
+import { useCodespace } from '@/composables/useCodespace'
 import { 
   IonIcon
 } from '@ionic/vue'
@@ -232,6 +233,11 @@ const toast = ToastService
 
 const route = useRoute()
 const projectName = route.params.project || 'default-project'
+const codespaceName = route.params.codespace || 'main'  // Default to 'main' if no codespace specified
+
+// Initialize codespace composable
+const codespace = useCodespace(route.params)
+
 const currentFile = ref('')
 const showWelcome = ref(true)
 const recentFiles = ref([])
@@ -274,23 +280,23 @@ const loadFile = async (filename = 'index.html') => {
     }
 
     language.value = languageMap[filename.split('.').pop()] || 'javascript'
-    const response = await axios.get(`file_api.php?project=${projectName}&action=read&file=${filename}`)
-    if (response.data.content !== undefined) {
-      code.value = response.data.content
-      currentFile.value = filename
-      showWelcome.value = false // Hide welcome screen when file is loaded
-      
-      // Add to recent files
-      addToRecentFiles(filename)
-      
-      // Emit active file changed event
-      window.dispatchEvent(new CustomEvent('monaco-active-file-changed', { 
-        detail: { 
-          filePath: filename,
-          projectName 
-        } 
-      }))
-    }
+    
+    // Use new codespace API
+    const content = await codespace.loadFile(filename)
+    code.value = content
+    currentFile.value = filename
+    showWelcome.value = false // Hide welcome screen when file is loaded
+    
+    // Add to recent files
+    addToRecentFiles(filename)
+    
+    // Emit active file changed event
+    window.dispatchEvent(new CustomEvent('monaco-active-file-changed', { 
+      detail: { 
+        filePath: filename,
+        projectName 
+      } 
+    }))
   } catch (error) {
     console.log('File not found, creating new file')
     // File doesn't exist, create it
@@ -309,27 +315,21 @@ const loadFile = async (filename = 'index.html') => {
 // Save file content
 const saveFile = async (filename, content, manual=false) => {
   try {
-    const response = await axios.put(`file_api.php?project=${projectName}`, {
-      file: filename,
-      content: content
-    })
+    // Use new codespace API
+    await codespace.saveFile(filename, content)
     
-    if (response.data.success) {
-      if(manual){
-              toast.success(`Datei ${filename} erfolgreich gespeichert!`, 1000)
-      }
-      console.log('File saved successfully')
-      // Emit event to notify sidebar about file save
-      window.dispatchEvent(new CustomEvent('monaco-file-saved', { 
-        detail: { 
-          filename, 
-          content,
-          projectName 
-        } 
-      }))
-    } else {
-      toast.error(`Fehler beim Speichern von ${filename}: ${response.data.error || 'Unbekannter Fehler'}`, 1000)
+    if(manual){
+      toast.success(`Datei ${filename} erfolgreich gespeichert!`, 1000)
     }
+    console.log('File saved successfully')
+    // Emit event to notify sidebar about file save
+    window.dispatchEvent(new CustomEvent('monaco-file-saved', { 
+      detail: { 
+        filename, 
+        content,
+        projectName 
+      } 
+    }))
   } catch (error) {
     console.error('Failed to save file:', error)
     toast.error(`Fehler beim Speichern von ${filename}: ${error.message}`, 1000)

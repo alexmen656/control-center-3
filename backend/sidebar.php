@@ -182,6 +182,27 @@ if (isset($headers['Authorization'])) {
             }
         }
 
+        // Get codespaces for this project
+        $codespaces = query("SELECT * FROM project_codespaces WHERE project_id='$projectID' ORDER BY order_index ASC");
+        
+        if (mysqli_num_rows($codespaces) == 0) {
+            $json['codespaces'] = [];
+        } else {
+            $c = 0;
+            foreach ($codespaces as $codespace) {
+                $json['codespaces'][$c]["id"] = $codespace['id'];
+                $json['codespaces'][$c]["name"] = $codespace['name'];
+                $json['codespaces'][$c]["slug"] = $codespace['slug'];
+                $json['codespaces'][$c]["description"] = $codespace['description'];
+                $json['codespaces'][$c]["icon"] = $codespace['icon'];
+                $json['codespaces'][$c]["language"] = $codespace['language'];
+                $json['codespaces'][$c]["template"] = $codespace['template'];
+                $json['codespaces'][$c]["status"] = $codespace['status'];
+                $json['codespaces'][$c]["order_index"] = $codespace['order_index'];
+                $c++;
+            }
+        }
+
     } else {
         $tools = query("SELECT * FROM tools");
         $i = 0;
