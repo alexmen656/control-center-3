@@ -11,12 +11,12 @@
                 <ion-label position="floating">Project Name</ion-label>
                 <ion-input disabled :value="projectName"></ion-input>
               </ion-item>
-              <ion-item>
+              <!--<ion-item>
                 <ion-label>Vercel Project</ion-label>
                 <template v-if="loadingVercelProject">
                   <ion-spinner name="crescent" />
                 </template>
-                <template v-else>
+<template v-else>
                   <div v-if="connectedVercelProject">
                     <ion-badge color="success">{{ connectedVercelProject.name }}</ion-badge>
                   </div>
@@ -24,31 +24,31 @@
                     <ion-button size="small" @click="onOpenVercelModal">Vercel-Projekt verbinden</ion-button>
                   </div>
                 </template>
-              </ion-item>
-    <ion-modal :is-open="openVercelModal" @didDismiss="openVercelModal = false">
-      <ion-header>
-        <ion-toolbar color="primary">
-          <ion-title>Vercel-Projekt verbinden</ion-title>
-          <ion-buttons slot="end">
-            <ion-button @click="openVercelModal = false">Schließen</ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content>
-        <ion-list>
-          <ion-item v-for="project in vercelProjects" :key="project.id" @click="connectVercelProject(project)" button>
-            <ion-label>{{ project.name }}</ion-label>
-          </ion-item>
-        </ion-list>
-        <ion-text color="danger" v-if="vercelError">{{ vercelError }}</ion-text>
-      </ion-content>
-    </ion-modal>
-              <ion-item>
-                <ion-label>GitHub Repository</ion-label>
-                <template v-if="loadingRepo">
+</ion-item>
+<ion-modal :is-open="openVercelModal" @didDismiss="openVercelModal = false">
+  <ion-header>
+    <ion-toolbar color="primary">
+      <ion-title>Vercel-Projekt verbinden</ion-title>
+      <ion-buttons slot="end">
+        <ion-button @click="openVercelModal = false">Schließen</ion-button>
+      </ion-buttons>
+    </ion-toolbar>
+  </ion-header>
+  <ion-content>
+    <ion-list>
+      <ion-item v-for="project in vercelProjects" :key="project.id" @click="connectVercelProject(project)" button>
+        <ion-label>{{ project.name }}</ion-label>
+      </ion-item>
+    </ion-list>
+    <ion-text color="danger" v-if="vercelError">{{ vercelError }}</ion-text>
+  </ion-content>
+</ion-modal>
+<ion-item>
+  <ion-label>GitHub Repository</ion-label>
+  <template v-if="loadingRepo">
                   <ion-spinner name="crescent" />
                 </template>
-                <template v-else>
+  <template v-else>
                   <div v-if="connectedRepo">
                     <a :href="connectedRepo.repo_html_url || repoUrl(connectedRepo)" target="_blank">
                       {{ connectedRepo.repo_full_name }}
@@ -58,7 +58,7 @@
                     <ion-button @click="onOpenRepoModal" size="small">Repo verbinden</ion-button>
                   </div>
                 </template>
-              </ion-item>
+</ion-item>-->
               <ion-item>
                 <ion-label>Project Domain</ion-label>
                 <template v-if="loadingDomain">
@@ -69,13 +69,14 @@
                     <ion-badge color="primary">{{ connectedDomain }}</ion-badge>
                   </div>
                   <div v-else>
-                    <ion-input v-model="domainInput" placeholder="subdomain" style="max-width:180px;display:inline-block;"
-                      :disabled="!connectedVercelProject" />
+                    <ion-input v-model="domainInput" placeholder="subdomain"
+                      style="max-width:180px;display:inline-block;" /><!--:disabled="!connectedVercelProject"-->
                     <span>.sites.control-center.eu</span>
-                    <ion-button size="small" @click="connectDomain" :disabled="!domainInput || domainInput.length < 3 || !connectedVercelProject">Connect</ion-button>
-                    <ion-text color="medium" v-if="!connectedVercelProject" style="display:block;margin-top:4px;">
+                    <ion-button size="small" @click="connectDomain"
+                      :disabled="!domainInput || domainInput.length < 3">Connect</ion-button><!--|| !connectedVercelProject-->
+                    <!-- <ion-text color="medium" v-if="!connectedVercelProject" style="display:block;margin-top:4px;">
                       Bitte zuerst ein Vercel-Projekt verbinden.
-                    </ion-text>
+                    </ion-text>-->
                   </div>
                 </template>
               </ion-item>
@@ -86,7 +87,7 @@
                 <ion-label position="floating">Created On</ion-label>
                 <ion-input disabled :value="creationDate"></ion-input>
               </ion-item>
-                         <!--  <ion-item>
+              <!--  <ion-item>
           <ion-label>Internes Projekt?</ion-label>
           <ion-checkbox v-model="isInternal"></ion-checkbox>
         </ion-item>
@@ -99,25 +100,25 @@
           <ion-col></ion-col>
         </ion-row>
       </ion-grid>
-    <ion-modal :is-open="openRepoModal" @didDismiss="openRepoModal = false">
-      <ion-header>
-        <ion-toolbar color="primary">
-          <ion-title>GitHub Repo verbinden</ion-title>
-          <ion-buttons slot="end">
-            <ion-button @click="openRepoModal = false">Schließen</ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content>
-        <ion-list>
-          <ion-item v-for="repo in repos" :key="repo.id" @click="connectRepo(repo)" button>
-            <ion-label>{{ repo.full_name }}</ion-label>
-          </ion-item>
-        </ion-list>
-        <ion-text color="danger" v-if="repoError">{{ repoError }}</ion-text>
-      </ion-content>
-    </ion-modal>
-  </ion-content>
+      <ion-modal :is-open="openRepoModal" @didDismiss="openRepoModal = false">
+        <ion-header>
+          <ion-toolbar color="primary">
+            <ion-title>GitHub Repo verbinden</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="openRepoModal = false">Schließen</ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content>
+          <ion-list>
+            <ion-item v-for="repo in repos" :key="repo.id" @click="connectRepo(repo)" button>
+              <ion-label>{{ repo.full_name }}</ion-label>
+            </ion-item>
+          </ion-list>
+          <ion-text color="danger" v-if="repoError">{{ repoError }}</ion-text>
+        </ion-content>
+      </ion-modal>
+    </ion-content>
   </ion-page>
 </template>
 
@@ -153,117 +154,117 @@ export default {
     };
   },
   methods: {
-    onOpenVercelModal() {
-      this.openVercelModal = true;
-      this.fetchVercelProjects();
-    },
-    async fetchVercelProjects() {
-      this.vercelProjects = [];
-      this.vercelError = '';
-      try {
-        const user = getUserData();
-        if (!user || !user.userID) {
-          this.vercelError = 'Kein User.';
-          return;
-        }
-        const res = await this.$axios.get(`vercel_projects.php?user_id=${user.userID}`);
-        if (Array.isArray(res.data.projects)) {
-          this.vercelProjects = res.data.projects;
-        } else {
-          this.vercelError = 'Fehler beim Laden der Vercel-Projekte.';
-        }
-      } catch (e) {
-        this.vercelError = 'Fehler beim Laden der Vercel-Projekte.';
-      }
-    },
-    async fetchConnectedVercelProject() {
-      this.loadingVercelProject = true;
-      try {
-        const res = await this.$axios.post('project_vercel.php', this.$qs.stringify({
-          action: 'get',
-          project: this.$route.params.project,
-        }));
-        if (res.data && res.data.vercel_project_id) {
-          this.connectedVercelProject = { id: res.data.vercel_project_id, name: res.data.vercel_project_name };
-        } else {
-          this.connectedVercelProject = null;
-        }
-      } catch (e) {
-        this.connectedVercelProject = null;
-      } finally {
-        this.loadingVercelProject = false;
-      }
-    },
-    async connectVercelProject(project) {
-      this.vercelError = '';
-      try {
-        const user = getUserData();
-        if (!user || !user.userID) {
-          this.vercelError = 'Kein User.';
-          return;
-        }
-        const res = await this.$axios.post('project_vercel.php', this.$qs.stringify({
-          action: 'connect',
-          project: this.$route.params.project,
-          user_id: user.userID,
-          vercel_project_id: project.id,
-          vercel_project_name: project.name,
-        }));
-        if (res.data && res.data.success) {
-          this.openVercelModal = false;
-          this.fetchConnectedVercelProject();
-        } else {
-          this.vercelError = res.data && res.data.error ? res.data.error : 'Fehler beim Verbinden.';
-        }
-      } catch (e) {
-        this.vercelError = 'Fehler beim Verbinden.';
-      }
-    },
-    onOpenRepoModal() {
-      this.openRepoModal = true;
-      this.fetchRepos();
-    },
-    repoUrl(repo) {
-      if (repo && repo.repo_full_name) {
-        return `https://github.com/${repo.repo_full_name}`;
-      }
-      return '#';
-    },
-    async fetchRepos() {
-      this.repos = [];
-      this.repoError = '';
-      try {
-        const user = getUserData();
-        if (!user || !user.userID) {
-          this.repoError = 'Kein User.';
-          return;
-        }
-        const res = await this.$axios.get(`github_repos.php?userID=${user.userID}`);
-        if (Array.isArray(res.data)) {
-          this.repos = res.data;
-        } else if (res.data && res.data.error) {
-          this.repoError = res.data.error;
-        } else {
-          this.repoError = 'Fehler beim Laden der Repos.';
-        }
-      } catch (e) {
-        this.repoError = 'Fehler beim Laden der Repos.';
-      }
-    },
-    async fetchConnectedRepo() {
-      this.loadingRepo = true;
-      try {
-        const res = await this.$axios.post('project_repo.php', this.$qs.stringify({
-          action: 'get',
-          project: this.$route.params.project,
-        }));
-        this.connectedRepo = res.data.repo;
-      } catch (e) {
-        this.connectedRepo = null;
-      } finally {
-        this.loadingRepo = false;
-      }
-    },
+    /* onOpenVercelModal() {
+       this.openVercelModal = true;
+       this.fetchVercelProjects();
+     },
+     async fetchVercelProjects() {
+       this.vercelProjects = [];
+       this.vercelError = '';
+       try {
+         const user = getUserData();
+         if (!user || !user.userID) {
+           this.vercelError = 'Kein User.';
+           return;
+         }
+         const res = await this.$axios.get(`vercel_projects.php?user_id=${user.userID}`);
+         if (Array.isArray(res.data.projects)) {
+           this.vercelProjects = res.data.projects;
+         } else {
+           this.vercelError = 'Fehler beim Laden der Vercel-Projekte.';
+         }
+       } catch (e) {
+         this.vercelError = 'Fehler beim Laden der Vercel-Projekte.';
+       }
+     },
+     async fetchConnectedVercelProject() {
+       this.loadingVercelProject = true;
+       try {
+         const res = await this.$axios.post('project_vercel.php', this.$qs.stringify({
+           action: 'get',
+           project: this.$route.params.project,
+         }));
+         if (res.data && res.data.vercel_project_id) {
+           this.connectedVercelProject = { id: res.data.vercel_project_id, name: res.data.vercel_project_name };
+         } else {
+           this.connectedVercelProject = null;
+         }
+       } catch (e) {
+         this.connectedVercelProject = null;
+       } finally {
+         this.loadingVercelProject = false;
+       }
+     },
+     async connectVercelProject(project) {
+       this.vercelError = '';
+       try {
+         const user = getUserData();
+         if (!user || !user.userID) {
+           this.vercelError = 'Kein User.';
+           return;
+         }
+         const res = await this.$axios.post('project_vercel.php', this.$qs.stringify({
+           action: 'connect',
+           project: this.$route.params.project,
+           user_id: user.userID,
+           vercel_project_id: project.id,
+           vercel_project_name: project.name,
+         }));
+         if (res.data && res.data.success) {
+           this.openVercelModal = false;
+           this.fetchConnectedVercelProject();
+         } else {
+           this.vercelError = res.data && res.data.error ? res.data.error : 'Fehler beim Verbinden.';
+         }
+       } catch (e) {
+         this.vercelError = 'Fehler beim Verbinden.';
+       }
+     },
+     onOpenRepoModal() {
+       this.openRepoModal = true;
+       this.fetchRepos();
+     },
+     repoUrl(repo) {
+       if (repo && repo.repo_full_name) {
+         return `https://github.com/${repo.repo_full_name}`;
+       }
+       return '#';
+     },
+     async fetchRepos() {
+       this.repos = [];
+       this.repoError = '';
+       try {
+         const user = getUserData();
+         if (!user || !user.userID) {
+           this.repoError = 'Kein User.';
+           return;
+         }
+         const res = await this.$axios.get(`github_repos.php?userID=${user.userID}`);
+         if (Array.isArray(res.data)) {
+           this.repos = res.data;
+         } else if (res.data && res.data.error) {
+           this.repoError = res.data.error;
+         } else {
+           this.repoError = 'Fehler beim Laden der Repos.';
+         }
+       } catch (e) {
+         this.repoError = 'Fehler beim Laden der Repos.';
+       }
+     },
+     async fetchConnectedRepo() {
+       this.loadingRepo = true;
+       try {
+         const res = await this.$axios.post('project_repo.php', this.$qs.stringify({
+           action: 'get',
+           project: this.$route.params.project,
+         }));
+         this.connectedRepo = res.data.repo;
+       } catch (e) {
+         this.connectedRepo = null;
+       } finally {
+         this.loadingRepo = false;
+       }
+     },*/
     async fetchConnectedDomain() {
       this.loadingDomain = true;
       this.domainError = '';
@@ -308,7 +309,7 @@ export default {
         this.domainError = 'Fehler beim Verbinden.';
       }
     },
-    async connectRepo(repo) {
+    /*async connectRepo(repo) {
       this.repoError = '';
       try {
         const user = getUserData();
@@ -331,7 +332,7 @@ export default {
       } catch (e) {
         this.repoError = 'Fehler beim Verbinden.';
       }
-    },
+    },*/
   },
   async created() {
     this.$axios
@@ -349,9 +350,9 @@ export default {
           .replaceAll("/", ".");
         this.loading = false;
       });
-    this.fetchConnectedRepo();
+    //this.fetchConnectedRepo();
     this.fetchConnectedDomain();
-    this.fetchConnectedVercelProject();
+    //this.fetchConnectedVercelProject();
   },
 };
 </script>

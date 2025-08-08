@@ -9,6 +9,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $project = escape_string($_POST['project'] ?? '');
     $user_id = escape_string($_POST['user_id'] ?? '');
     $domain = strtolower(trim($_POST['domain'] ?? ''));
+
+
+
+
     if ($action === 'connect' && $project && $user_id && $domain) {
         // Domain-Format prüfen
         if (!preg_match('/^[a-z0-9-]+$/', $domain)) {
@@ -26,8 +30,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $setHomepageResult = null;
         $vercelResult = null;
         if ($insert) {
+            echo json_encode(['success' => true, 'domain' => $fullDomain]);
             // === Vercel Domain Connect ===
-            $vercelRes = query("SELECT * FROM control_center_project_vercel_projects WHERE project='$project' LIMIT 1");
+          /*  $vercelRes = query("SELECT * FROM control_center_project_vercel_projects WHERE project='$project' LIMIT 1");
             if ($vercelRow = fetch_assoc($vercelRes)) {
                 $vercel_project_id = $vercelRow['vercel_project_id'];
                 $vercelTokenRes = query("SELECT vercel_token FROM control_center_vercel_tokens WHERE userID='" . escape_string($user_id) . "' LIMIT 1");
@@ -65,9 +70,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo json_encode(['error' => 'Kein Vercel-Projekt verknüpft.']);
                 exit;
 
-            }
+            }*/
                 // Hole CNAME-Target von Vercel (zweiter API-Call)
-                $cnameTarget = null;
+              /*  $cnameTarget = null;
                 $vercelDomainConfigUrl = "https://api.vercel.com/v6/domains/$fullDomain/config";
                 $vercelDomainConfigOpts = [
                     'http' => [
@@ -95,10 +100,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     error_log('[cloudns] ERROR: Kein CNAME-Target von Vercel erhalten!');
                     echo json_encode(['error' => 'cloudns: Kein CNAME-Target von Vercel erhalten!']);
                     exit;
-                }
+                }*/
 
                 // === GitHub Homepage setzen (wie bisher) ===
-                $repoRes = query("SELECT * FROM control_center_project_repos WHERE project='$project' LIMIT 1");
+             /*   $repoRes = query("SELECT * FROM control_center_project_repos WHERE project='$project' LIMIT 1");
                 if ($repoRow = fetch_assoc($repoRes)) {
                     $tokenRes = query("SELECT github_token FROM control_center_github_tokens WHERE userID='" . escape_string($user_id) . "' LIMIT 1");
                     if ($tokenRow = fetch_assoc($tokenRes)) {
@@ -118,9 +123,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $setHomepageResult = $result ? json_decode($result, true) : null;
                     }
                 }
-
+*/
                 // === Cloudflare CNAME setzen ===
-                $cloudflareResult = null;
+               /* $cloudflareResult = null;
                 $cloudflare_zone_id = isset($cloudflare_zone_id) ? $cloudflare_zone_id : '';
                 $cloudflare_api_token = isset($cloudflare_api_token) ? $cloudflare_api_token : '';
                 $cloudflare_api_url = "https://api.cloudflare.com/client/v4/zones/$cloudflare_zone_id/dns_records";
@@ -152,12 +157,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit;
                 }
                 echo json_encode(['success' => true, 'domain' => $fullDomain, 'vercel' => $vercelResult, 'cloudflare' => $cloudflareResult, 'github_homepage_set' => $setHomepageResult]);
-           
+           */
         } else {
             echo json_encode(['error' => 'Insert failed']);
         }
         exit;
     }
+
+
     if ($action === 'get' && $project) {
         $res = query("SELECT * FROM control_center_project_domains WHERE project='$project' LIMIT 1");
         if ($row = fetch_assoc($res)) {
