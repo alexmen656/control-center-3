@@ -16,8 +16,8 @@ $request_host = parse_url($origin_url, PHP_URL_HOST);
 $host_domain = implode('.', array_slice(explode('.', $request_host), -2));
 //echo $host_domain;
 //if (! in_array($host_domain, $allowed_origins, false)) {
-  //  header('HTTP/1.0 403 Forbidden');
-    //die('You are not allowed to access this.');     
+//  header('HTTP/1.0 403 Forbidden');
+//die('You are not allowed to access this.');     
 //}
 
 include_once 'jwt_helper.php';
@@ -40,67 +40,71 @@ if (isset($headers['Authorization'])) {
     exit;
 }
 
-function randomNumber(){
+function randomNumber()
+{
     $rand = rand(100000, 999999);
     return $rand;
 }
 
-function echoJson($json){
+function echoJson($json)
+{
     return json_encode($json, JSON_PRETTY_PRINT);
 }
 
-function useTemplate2($temp,$data=[]){
-    $co=[];$zaco=[];
-    foreach ($data as $key=>$val):
-      $co[]='{{'.$key.'}}';
-      $zaco[]=$val;
+function useTemplate2($temp, $data = [])
+{
+    $co = [];
+    $zaco = [];
+    foreach ($data as $key => $val):
+        $co[] = '{{' . $key . '}}';
+        $zaco[] = $val;
     endforeach;
-    return str_replace($co,$zaco,$temp);
-  }
+    return str_replace($co, $zaco, $temp);
+}
 
-$i=0;
+$i = 0;
 // Get regular pages
 $pages = query("SELECT * FROM control_center_pages");
-foreach($pages as $p){
+foreach ($pages as $p) {
     $pageID = $p['pageID'];
     $data = query("SELECT * FROM control_center_page_data WHERE pageID='$pageID'");
-    foreach($data as $d){
+    foreach ($data as $d) {
         $replaces[$d['key']] = $d['value'];
     }
-    $json[$i]['id']=$p['id'];
-    $json[$i]['url']=$p['url'];
-    $json[$i]['showTitle']=$p['showTitle'];
-    $json[$i]['icon']=$p['icon'];
-    $json[$i]['title']=$p['title'];
-    $json[$i]['html']= useTemplate2($p['html'], $replaces);
-    $json[$i]['pageID']=$p['pageID'];
+    $json[$i]['id'] = $p['id'];
+    $json[$i]['url'] = $p['url'];
+    $json[$i]['showTitle'] = $p['showTitle'];
+    $json[$i]['icon'] = $p['icon'];
+    $json[$i]['title'] = $p['title'];
+    $json[$i]['html'] = useTemplate2($p['html'], $replaces);
+    $json[$i]['pageID'] = $p['pageID'];
     $i++;
 }
 
 // Get all webbuilder projects
 $webbuilderProjects = query("SELECT id, name, description FROM control_center_web_builder_projects");
-foreach($webbuilderProjects as $project) {
+foreach ($webbuilderProjects as $project) {
     $projectId = $project['id'];
     $projectName = $project['name'];
     $projectSlug = strtolower(str_replace(" ", "-", $projectName));
-    
+
     // Get all pages for this project
     $projectPages = query("SELECT id, name, slug, title, meta_description, is_home FROM control_center_web_builder_pages WHERE project_id='$projectId'");
-    
-    foreach($projectPages as $page) {
+
+    foreach ($projectPages as $page) {
         $pageId = $page['id'];
         $pageName = $page['name'];
         $pageSlug = $page['slug'];
-        
+
         // Get all components for this page
         $components = query("SELECT id, component_id, html_code, position, original_template_id FROM control_center_web_builder_components WHERE page_id='$pageId' ORDER BY position ASC");
-        
+
         // Combine all HTML code from components for the page view
-     /*   $htmlContent = "";
+        /*   $htmlContent = "";
         foreach($components as $component) {
             $htmlContent .= $component['html_code'] . "\n";
         }*/
-        
+
         // Add the page to the JSON response
         $json[$i]['id'] = "web_" . $projectId . "_" . $pageId;
         $json[$i]['url'] = "project/" . $projectSlug . "/page/" . $pageSlug;
@@ -109,18 +113,18 @@ foreach($webbuilderProjects as $project) {
         $json[$i]['title'] = $page['title'] ?: $pageName;
         $json[$i]['html'] = "";
         $json[$i]['pageID'] = "web_" . $projectId . "_" . $pageId;
-     /*   $json[$i]['meta_description'] = $page['meta_description'];
+        /*   $json[$i]['meta_description'] = $page['meta_description'];
         $json[$i]['is_webbuilder'] = true;
         $json[$i]['project_id'] = $projectId;
         $json[$i]['page_id'] = $pageId;*/
         $i++;
-        
+
         // Add individual component routes
-        foreach($components as $component) {
+        foreach ($components as $component) {
             $componentId = $component['component_id'];
             // Create a meaningful name for the component
             $componentName = "Component " . ($component['position'] + 1);
-            
+
             // Check if this is a template-based component and get the template name
             if (!empty($component['original_template_id'])) {
                 $templateQuery = query("SELECT title FROM control_center_web_builder_templates WHERE id=" . $component['original_template_id']);
@@ -129,10 +133,10 @@ foreach($webbuilderProjects as $project) {
                     $componentName = $template['title'];
                 }
             }
-            
+
             // Add component as a route
             $json[$i]['id'] = "component_" . $component['id'];
-            $json[$i]['url'] = "project/" . $projectSlug . "/page/" . $pageSlug . "/" .str_replace(["ö", "ü", "ä", " "], ["oe", "ue", "ae", "-"], strtolower($componentName));// $componentId;
+            $json[$i]['url'] = "project/" . $projectSlug . "/page/" . $pageSlug . "/" . str_replace(["ö", "ü", "ä", " "], ["oe", "ue", "ae", "-"], strtolower($componentName)); // $componentId;
             $json[$i]['showTitle'] = true;
             $json[$i]['icon'] = "cube-outline";
             $json[$i]['title'] = $componentName;
@@ -150,32 +154,110 @@ foreach($webbuilderProjects as $project) {
 }
 
 $projects = query("SELECT projectID, link, name FROM projects");
-foreach($projects as $project) {
+foreach ($projects as $project) {
     $projectID = $project['projectID'];
     $projectLink = $project['link'];
     $projectName = $project['name'];
-    
+
     $json[$i]['id'] = 'manage_codespaces_' . $projectID;
     $json[$i]['url'] = 'project/' . $projectLink . '/manage/codespaces';
-    $json[$i]['showTitle'] = false;//true
+    $json[$i]['showTitle'] = false; //true
     $json[$i]['icon'] = 'code-outline';
     $json[$i]['title'] = 'Manage Codespaces - ' . $projectName;
     $json[$i]['html'] = '';
     $json[$i]['pageID'] = 'manage_codespaces_' . $projectID;
     $i++;
-    
+
     $json[$i]['id'] = 'new_codespace_' . $projectID;
     $json[$i]['url'] = 'project/' . $projectLink . '/new/codespace';
-    $json[$i]['showTitle'] = false;//true
+    $json[$i]['showTitle'] = false; //true
     $json[$i]['icon'] = 'add-circle-outline';
     $json[$i]['title'] = 'New Codespace - ' . $projectName;
     $json[$i]['html'] = '';
     $json[$i]['pageID'] = 'new_codespace_' . $projectID;
     $i++;
-    
+
+    //APIS
+    $json[$i]['id'] = 'manage_apis_' . $projectID;
+    $json[$i]['url'] = 'project/' . $projectLink . '/manage/apis';
+    $json[$i]['showTitle'] = false; //true
+    $json[$i]['icon'] = 'albums-outline';
+    $json[$i]['title'] = 'Manage APIs - ' . $projectName;
+    $json[$i]['html'] = '';
+    $json[$i]['pageID'] = 'manage_apis_' . $projectID;
+    $i++;
+
+    // Get APIs subscribed to this project via project_api_subscriptions and cms_apis join
+    $apis = query("
+        SELECT ca.id, ca.name, ca.slug, ca.description, ca.icon, ca.category, pas.id as subscription_id
+        FROM project_api_subscriptions pas
+        JOIN cms_apis ca ON pas.api_id = ca.id
+        WHERE pas.projectID='$projectID' AND pas.is_enabled=1
+        ORDER BY ca.category, ca.name ASC
+    ");
+
+    foreach ($apis as $api) {
+        $apiId = $api['id'];
+        $apiName = $api['name'];
+        $apiSlug = $api['slug'];
+        $apiDescription = $api['description'];
+        $apiIcon = $api['icon'] ?: 'cloud-outline';
+        $apiCategory = $api['category'];
+        $subscriptionId = $api['subscription_id'];
+        
+        // Add API overview/dashboard page
+        $json[$i]['id'] = 'api_dashboard_' . $subscriptionId;
+        $json[$i]['url'] = 'project/' . $projectLink . '/apis/' . $apiSlug;
+        $json[$i]['showTitle'] = false;
+        $json[$i]['icon'] = $apiIcon;
+        $json[$i]['title'] = $apiName . ' - Dashboard';
+        $json[$i]['html'] = '';
+        $json[$i]['pageID'] = 'api_dashboard_' . $subscriptionId;
+        $i++;
+        
+        // Add API settings page
+       /* $json[$i]['id'] = 'api_settings_' . $subscriptionId;
+        $json[$i]['url'] = 'project/' . $projectLink . '/api/' . $apiSlug . '/settings';
+        $json[$i]['showTitle'] = false;
+        $json[$i]['icon'] = 'settings-outline';
+        $json[$i]['title'] = $apiName . ' - Settings';
+        $json[$i]['html'] = '';
+        $json[$i]['pageID'] = 'api_settings_' . $subscriptionId;
+        $i++;
+        
+        // Add API documentation page
+        $json[$i]['id'] = 'api_docs_' . $subscriptionId;
+        $json[$i]['url'] = 'project/' . $projectLink . '/api/' . $apiSlug . '/docs';
+        $json[$i]['showTitle'] = false;
+        $json[$i]['icon'] = 'book-outline';
+        $json[$i]['title'] = $apiName . ' - Documentation';
+        $json[$i]['html'] = '';
+        $json[$i]['pageID'] = 'api_docs_' . $subscriptionId;
+        $i++;
+        
+        // Add API usage/analytics page
+        $json[$i]['id'] = 'api_usage_' . $subscriptionId;
+        $json[$i]['url'] = 'project/' . $projectLink . '/api/' . $apiSlug . '/usage';
+        $json[$i]['showTitle'] = false;
+        $json[$i]['icon'] = 'analytics-outline';
+        $json[$i]['title'] = $apiName . ' - Usage & Analytics';
+        $json[$i]['html'] = '';
+        $json[$i]['pageID'] = 'api_usage_' . $subscriptionId;
+        $i++;*/
+    }
+
+    /*$json[$i]['id'] = 'new_api_' . $projectID;
+    $json[$i]['url'] = 'project/' . $projectLink . '/new/api';
+    $json[$i]['showTitle'] = false; //true
+    $json[$i]['icon'] = 'add-circle-outline';
+    $json[$i]['title'] = 'New Codespace - ' . $projectName;
+    $json[$i]['html'] = '';
+    $json[$i]['pageID'] = 'new_codespace_' . $projectID;
+    $i++;
+*/
     $codespaces = query("SELECT id, name, slug, description, language, template, status FROM project_codespaces WHERE project_id='$projectID' ORDER BY order_index ASC");
-    
-    foreach($codespaces as $codespace) {
+
+    foreach ($codespaces as $codespace) {
         $codespaceId = $codespace['id'];
         $codespaceName = $codespace['name'];
         $codespaceSlug = $codespace['slug'];
@@ -183,7 +265,7 @@ foreach($projects as $project) {
         $codespaceLanguage = $codespace['language'];
         $codespaceTemplate = $codespace['template'];
         $codespaceStatus = $codespace['status'];
-        
+
         // Add monaco editor page for each codespace
         $json[$i]['id'] = 'codespace_monaco_' . $codespaceId;
         $json[$i]['url'] = 'project/' . $projectLink . '/codespace/' . $codespaceSlug;
@@ -193,7 +275,7 @@ foreach($projects as $project) {
         $json[$i]['html'] = '';
         $json[$i]['pageID'] = 'codespace_monaco_' . $codespaceId;
         $i++;
-        
+
         // Add codespace settings page
         /*$json[$i]['id'] = 'codespace_settings_' . $codespaceId;
         $json[$i]['url'] = 'project/' . $projectLink . '/codespace/' . $codespaceSlug . '/settings';
@@ -246,4 +328,3 @@ foreach ($tables as $table) {
 }
 
 echo echoJson($json);
-?>

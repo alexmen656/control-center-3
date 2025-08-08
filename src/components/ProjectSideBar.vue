@@ -270,13 +270,13 @@
           }" :data-tooltip="isCollapsed ? api.name : ''">
           <ion-icon slot="start" :name="api.icon || 'code-outline'" />
           <ion-label v-if="!isCollapsed">{{ api.name }}</ion-label>
-          <ion-badge v-if="!isCollapsed && api.category" color="medium" class="api-category-badge">{{ api.category
+        <!--  <ion-badge v-if="!isCollapsed && api.category" color="medium" class="api-category-badge">{{ api.category
             }}</ion-badge>
           <span v-if="!isCollapsed" class="api-status-indicator"
             :class="{ 'status-active': api.status === 'active', 'status-inactive': api.status === 'inactive' }"></span>
           <ion-reorder v-if="!isCollapsed" slot="end">
             <ion-icon style="cursor: pointer; z-index: 1000" name="settings-outline" />
-          </ion-reorder>
+          </ion-reorder>-->
         </ion-item>
       </ion-menu-toggle>
 
