@@ -7,13 +7,13 @@ require_once 'head.php';
 
 header('Content-Type: application/json');
 
-$userID = isset($_GET['userID']) ? $_GET['userID'] : null;
-if (!$userID) {
-    echo json_encode(['error' => 'No userID provided']);
+$user_id = isset($_GET['user_id']) ? $_GET['user_id'] : null;
+if (!$user_id) {
+    echo json_encode(['error' => 'No user_id provided']);
     exit;
 }
 
-$res = query("SELECT github_token FROM control_center_github_tokens WHERE userID='" . escape_string($userID) . "' LIMIT 1");
+$res = query("SELECT github_token FROM control_center_github_tokens WHERE userID='" . escape_string($user_id) . "' LIMIT 1");
 if ($row = fetch_assoc($res)) {
     $token = $row['github_token'];
     $opts = [

@@ -45,6 +45,16 @@ if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST
             createMonacoCodespaceDirectory($project['link'], $slug, $name, $userID, $projectID);
         }
         
+        // Auto-create GitHub repo if requested
+        if (isset($_POST['createGithubRepo']) && $_POST['createGithubRepo'] === 'true') {
+            createCodespaceGithubRepo($codespaceId, $name, $userID);
+        }
+        
+        // Auto-create Vercel project if requested (requires GitHub repo)
+        if (isset($_POST['createVercelProject']) && $_POST['createVercelProject'] === 'true') {
+            createCodespaceVercelProject($codespaceId, $name, $userID);
+        }
+        
         echo jsonResponse([
             'message' => 'Codespace created successfully',
             'codespace' => [
@@ -195,5 +205,115 @@ function deleteDirectory($dir) {
     }
     
     return rmdir($dir);
+}
+
+/**
+ * Erstellt automatisch ein GitHub Repository für einen Codespace
+ */
+function createCodespaceGithubRepo($codespaceId, $name, $userID) {
+    // Token holen
+    $tokenResult = query("SELECT github_token FROM control_center_github_tokens WHERE userID='" . escape_string($userID) . "' LIMIT 1");
+    if (!($tokenRow = fetch_assoc($tokenResult))) {
+        return false;
+    }
+    
+    $token = $tokenRow['github_token'];
+    $repoName = preg_replace('/[^a-zA-Z0-9-_]/', '-', $name);
+    
+    $apiUrl = 'https://api.github.com/user/repos';
+    $data = [
+        'name' => $repoName,
+        'description' => 'Codespace repository for ' . $name,
+        'private' => true
+    ];
+    
+    $opts = [
+        'http' => [
+            'method' => 'POST',
+            'header' => "Authorization: token $token\r\nUser-Agent: ControlCenter\r\nAccept: application/vnd.github.v3+json\r\nContent-Type: application/json\r\n",
+            'content' => json_encode($data)
+        ]
+    ];
+    
+    $context = stream_context_create($opts);
+    $result = @file_get_contents($apiUrl, false, $context);
+    $http_response_header = $http_response_header ?? [];
+    $status = 0;
+    
+    foreach ($http_response_header as $header) {
+        if (preg_match('#HTTP/\d+\.\d+\s+(\d+)#', $header, $m)) {
+            $status = (int)$m[1];
+            break;
+        }
+    }
+    
+    if ($status === 201 && $result) {
+        $repo = json_decode($result, true);
+        
+        // In DB verbinden
+        $repo_id = escape_string($repo['id']);
+        $repo_name = escape_string($repo['name']);
+        $repo_full_name = escape_string($repo['full_name']);
+        
+        query("INSERT INTO codespace_github_repos (codespace_id, repo_id, repo_name, repo_full_name, user_id) VALUES ('$codespaceId', '$repo_id', '$repo_name', '$repo_full_name', '$userID')");
+        
+        return $repo;
+    }
+    
+    return false;
+}
+
+/**
+ * Erstellt automatisch ein Vercel Project für einen Codespace
+ */
+function createCodespaceVercelProject($codespaceId, $name, $userID) {
+    // GitHub Repo Info holen
+    $repoResult = query("SELECT * FROM codespace_github_repos WHERE codespace_id='$codespaceId' LIMIT 1");
+    if (!($repoRow = fetch_assoc($repoResult))) {
+        return false; // Kein GitHub Repo verbunden
+    }
+    
+    $repo_full_name = $repoRow['repo_full_name'];
+    $repo_id = $repoRow['repo_id'];
+    
+    // Vercel Token holen
+    $tokenResult = query("SELECT vercel_token FROM control_center_vercel_tokens WHERE userID='" . escape_string($userID) . "' LIMIT 1");
+    if (!($tokenRow = fetch_assoc($tokenResult))) {
+        return false;
+    }
+    
+    $vercel_token = $tokenRow['vercel_token'];
+    $vercelApiUrl = 'https://api.vercel.com/v9/projects';
+    
+    $vercelData = [
+        'name' => strtolower(preg_replace('/[^a-zA-Z0-9-_]/', '-', $name)),
+        'gitRepository' => [
+            'type' => 'github',
+            'repo' => $repo_full_name,
+            'repoId' => (string)$repo_id
+        ]
+    ];
+    
+    $opts = [
+        'http' => [
+            'method' => 'POST',
+            'header' => "Authorization: Bearer $vercel_token\r\nUser-Agent: ControlCenter\r\nAccept: application/json\r\nContent-Type: application/json\r\n",
+            'content' => json_encode($vercelData)
+        ]
+    ];
+
+    $context = stream_context_create($opts);
+    $response = @file_get_contents($vercelApiUrl, false, $context);
+    $data = $response ? json_decode($response, true) : null;
+    
+    print_r($vercelApiUrl);
+    print_r($opts);
+    if ($response && isset($data['id'])) {
+        query("INSERT INTO codespace_vercel_projects (codespace_id, vercel_project_id, vercel_project_name, user_id) VALUES ('$codespaceId', '" . escape_string($data['id']) . "', '" . escape_string($data['name']) . "', '$userID')");
+        
+        return $data;
+    }
+    
+    return false;
 }
 ?>

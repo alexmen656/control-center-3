@@ -69,6 +69,9 @@
               >
                 <ion-icon name="code-outline" slot="icon-only"></ion-icon>
               </ion-button>
+              <ion-button fill="clear" size="small" @click="openSettings(codespace)">
+                <ion-icon name="settings-outline" slot="icon-only"></ion-icon>
+              </ion-button>
               <ion-button fill="clear" size="small" @click="editCodespace(codespace)">
                 <ion-icon name="pencil-outline" slot="icon-only"></ion-icon>
               </ion-button>
@@ -164,11 +167,202 @@
               </ion-select>
             </ion-item>
 
+            <!-- Auto-create options only for new codespaces -->
+            <div v-if="!editingCodespace" class="auto-create-section">
+              <ion-item>
+                <ion-checkbox v-model="formData.createGithubRepo" slot="start"></ion-checkbox>
+                <ion-label>Automatisch GitHub Repository erstellen</ion-label>
+              </ion-item>
+              
+              <ion-item>
+                <ion-checkbox v-model="formData.createVercelProject" slot="start"></ion-checkbox>
+                <ion-label>Automatisch Vercel Projekt erstellen</ion-label>
+              </ion-item>
+              
+              <ion-note color="medium" class="ion-margin-start" style="font-size:0.9em;">
+                Vercel Projekt benötigt ein GitHub Repository
+              </ion-note>
+            </div>
+
             <div class="modal-actions">
               <ion-button expand="block" @click="saveCodespace" :disabled="!formData.name">
                 {{ editingCodespace ? 'Aktualisieren' : 'Erstellen' }}
               </ion-button>
             </div>
+          </div>
+        </ion-content>
+      </ion-modal>
+
+      <!-- Settings Modal -->
+      <ion-modal :is-open="showSettingsModal" @did-dismiss="closeSettingsModal">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>Codespace Einstellungen</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="closeSettingsModal">
+                <ion-icon name="close-outline"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        
+        <ion-content>
+          <div class="settings-content" v-if="selectedCodespace">
+            <div class="settings-header">
+              <h2>{{ selectedCodespace.name }}</h2>
+              <p>Verwalten Sie GitHub und Vercel Verbindungen</p>
+            </div>
+
+            <!-- GitHub Section -->
+            <div class="connection-section">
+              <div class="section-header">
+                <ion-icon name="logo-github"></ion-icon>
+                <h3>GitHub Repository</h3>
+              </div>
+              
+              <div v-if="connections.github" class="connected-item">
+                <div class="connection-info">
+                  <h4>{{ connections.github.repo_full_name }}</h4>
+                  <p>Repository ID: {{ connections.github.repo_id }}</p>
+                </div>
+                <ion-button fill="clear" color="danger" @click="disconnectGithub">
+                  <ion-icon name="unlink-outline" slot="start"></ion-icon>
+                  Trennen
+                </ion-button>
+              </div>
+              
+              <div v-else class="not-connected">
+                <p>Kein GitHub Repository verbunden</p>
+                <div class="connection-actions">
+                  <ion-button @click="createGithubRepo" color="primary">
+                    <ion-icon name="add-outline" slot="start"></ion-icon>
+                    Neues Repo erstellen
+                  </ion-button>
+                  <ion-button fill="outline" @click="showGithubRepos">
+                    <ion-icon name="link-outline" slot="start"></ion-icon>
+                    Vorhandenes verbinden
+                  </ion-button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Vercel Section -->
+            <div class="connection-section">
+              <div class="section-header">
+                <ion-icon name="triangle-outline"></ion-icon>
+                <h3>Vercel Projekt</h3>
+              </div>
+              
+              <div v-if="connections.vercel" class="connected-item">
+                <div class="connection-info">
+                  <h4>{{ connections.vercel.vercel_project_name }}</h4>
+                  <p>Projekt ID: {{ connections.vercel.vercel_project_id }}</p>
+                </div>
+                <ion-button fill="clear" color="danger" @click="disconnectVercel">
+                  <ion-icon name="unlink-outline" slot="start"></ion-icon>
+                  Trennen
+                </ion-button>
+              </div>
+              
+              <div v-else class="not-connected">
+                <p>Kein Vercel Projekt verbunden</p>
+                <div class="connection-actions">
+                  <ion-button 
+                    @click="createVercelProject" 
+                    color="primary"
+                    :disabled="!connections.github"
+                  >
+                    <ion-icon name="add-outline" slot="start"></ion-icon>
+                    Neues Projekt erstellen
+                  </ion-button>
+                  <ion-button fill="outline" @click="showVercelProjects">
+                    <ion-icon name="link-outline" slot="start"></ion-icon>
+                    Vorhandenes verbinden
+                  </ion-button>
+                </div>
+                <ion-note v-if="!connections.github" color="warning">
+                  GitHub Repository benötigt für Vercel Projekt
+                </ion-note>
+              </div>
+            </div>
+          </div>
+        </ion-content>
+      </ion-modal>
+
+      <!-- GitHub Repos Selection Modal -->
+      <ion-modal :is-open="showGithubModal" @did-dismiss="closeGithubModal">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>GitHub Repository auswählen</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="closeGithubModal">
+                <ion-icon name="close-outline"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        
+        <ion-content>
+          <div v-if="loadingGithubRepos" class="loading-container">
+            <ion-spinner name="circular"></ion-spinner>
+            <p>Repositories werden geladen...</p>
+          </div>
+          
+          <div v-else>
+            <ion-list>
+              <ion-item 
+                v-for="repo in githubRepos" 
+                :key="repo.id"
+                button
+                @click="connectGithubRepo(repo)"
+              >
+                <ion-label>
+                  <h3>{{ repo.full_name }}</h3>
+                  <p>{{ repo.description || 'Keine Beschreibung' }}</p>
+                </ion-label>
+                <ion-icon 
+                  :name="repo.private ? 'lock-closed-outline' : 'globe-outline'" 
+                  slot="end"
+                ></ion-icon>
+              </ion-item>
+            </ion-list>
+          </div>
+        </ion-content>
+      </ion-modal>
+
+      <!-- Vercel Projects Selection Modal -->
+      <ion-modal :is-open="showVercelModal" @did-dismiss="closeVercelModal">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>Vercel Projekt auswählen</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="closeVercelModal">
+                <ion-icon name="close-outline"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        
+        <ion-content>
+          <div v-if="loadingVercelProjects" class="loading-container">
+            <ion-spinner name="circular"></ion-spinner>
+            <p>Projekte werden geladen...</p>
+          </div>
+          
+          <div v-else>
+            <ion-list>
+              <ion-item 
+                v-for="project in vercelProjects" 
+                :key="project.id"
+                button
+                @click="connectVercelProject(project)"
+              >
+                <ion-label>
+                  <h3>{{ project.name }}</h3>
+                  <p>{{ project.framework || 'Framework unbekannt' }}</p>
+                </ion-label>
+              </ion-item>
+            </ion-list>
           </div>
         </ion-content>
       </ion-modal>
@@ -181,8 +375,9 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton,
-  IonBackButton, IonIcon, IonSpinner, IonChip, IonModal, IonItem, IonLabel,
-  IonInput, IonTextarea, IonSelect, IonSelectOption, alertController
+  IonIcon, IonSpinner, IonChip, IonModal, IonItem, IonLabel,
+  IonInput, IonTextarea, IonSelect, IonSelectOption, IonCheckbox, IonNote, IonList,
+  alertController
 } from '@ionic/vue'
 import axios from 'axios'
 import qs from 'qs'
@@ -196,12 +391,29 @@ const loading = ref(true)
 const showModal = ref(false)
 const editingCodespace = ref(null)
 
+// Settings Modal
+const showSettingsModal = ref(false)
+const selectedCodespace = ref(null)
+const connections = ref({ github: null, vercel: null })
+
+// GitHub Modal
+const showGithubModal = ref(false)
+const githubRepos = ref([])
+const loadingGithubRepos = ref(false)
+
+// Vercel Modal  
+const showVercelModal = ref(false)
+const vercelProjects = ref([])
+const loadingVercelProjects = ref(false)
+
 const formData = ref({
   name: '',
   description: '',
   language: 'javascript',
   template: 'default',
-  icon: 'code-outline'
+  icon: 'code-outline',
+  createGithubRepo: false,
+  createVercelProject: false
 })
 
 const loadCodespaces = async () => {
@@ -233,7 +445,9 @@ const createNewCodespace = () => {
     description: '',
     language: 'javascript',
     template: 'default',
-    icon: 'code-outline'
+    icon: 'code-outline',
+    createGithubRepo: false,
+    createVercelProject: false
   }
   showModal.value = true
 }
@@ -245,7 +459,9 @@ const editCodespace = (codespace) => {
     description: codespace.description,
     language: codespace.language,
     template: codespace.template,
-    icon: codespace.icon
+    icon: codespace.icon,
+    createGithubRepo: false,
+    createVercelProject: false
   }
   showModal.value = true
 }
@@ -253,23 +469,47 @@ const editCodespace = (codespace) => {
 const saveCodespace = async () => {
   try {
     const project = route.params.project
+    const { getUserData } = await import('@/userData')
+    const user = getUserData()
 
     if (editingCodespace.value) {
       // Update existing codespace
       await axios.post('project_codespaces.php', {
         updateCodespace: true,
         codespaceID: editingCodespace.value.id,
-        ...formData.value
+        name: formData.value.name,
+        description: formData.value.description,
+        language: formData.value.language,
+        template: formData.value.template,
+        icon: formData.value.icon
       })
       toast.success('Codespace aktualisiert!')
     } else {
       // Create new codespace
-      await axios.post('project_codespaces.php', qs.stringify({
+      const data = {
         createCodespace: true,
         project: project,
-        ...formData.value
-      }))
+        name: formData.value.name,
+        description: formData.value.description,
+        language: formData.value.language,
+        template: formData.value.template,
+        icon: formData.value.icon
+      }
+
+      // Add auto-create options if selected
+      if (formData.value.createGithubRepo) {
+        data.createGithubRepo = 'true'
+      }
+      if (formData.value.createVercelProject) {
+        data.createVercelProject = 'true'
+      }
+
+      await axios.post('project_codespaces.php', qs.stringify(data))
       toast.success('Codespace erstellt!')
+      
+      if (formData.value.createGithubRepo || formData.value.createVercelProject) {
+        toast.success('GitHub und/oder Vercel Projekte werden erstellt...')
+      }
     }
     
     closeModal()
@@ -291,13 +531,12 @@ const deleteCodespace = async (codespace) => {
       },
       {
         text: 'Löschen',
-        role: 'destructive',
         handler: async () => {
           try {
-            await axios.post('project_codespaces.php', {
+            await axios.post('project_codespaces.php', qs.stringify({
               deleteCodespace: true,
               codespaceID: codespace.id
-            })
+            }))
             toast.success('Codespace gelöscht!')
             loadCodespaces()
           } catch (error) {
@@ -310,6 +549,232 @@ const deleteCodespace = async (codespace) => {
   })
   
   await alert.present()
+}
+
+// Settings Modal Functions
+const openSettings = async (codespace) => {
+  selectedCodespace.value = codespace
+  await loadConnections(codespace.id)
+  showSettingsModal.value = true
+}
+
+const closeSettingsModal = () => {
+  showSettingsModal.value = false
+  selectedCodespace.value = null
+  connections.value = { github: null, vercel: null }
+}
+
+const loadConnections = async (codespaceId) => {
+  try {
+    const { getUserData } = await import('@/userData')
+    const user = getUserData()
+    
+    const response = await axios.post('codespace_connections.php', qs.stringify({
+      action: 'get_all_connections',
+      codespace_id: codespaceId,
+      user_id: user.userID
+    }))
+
+    if (response.data.github || response.data.vercel) {
+      connections.value = {
+        github: response.data.github,
+        vercel: response.data.vercel
+      }
+    }
+  } catch (error) {
+    console.error('Error loading connections:', error)
+  }
+}
+
+// GitHub Functions
+const createGithubRepo = async () => {
+  try {
+    const { getUserData } = await import('@/userData')
+    const user = getUserData()
+    
+    const response = await axios.post('codespace_connections.php', qs.stringify({
+      action: 'create_and_connect_github',
+      codespace_id: selectedCodespace.value.id,
+      user_id: user.userID
+    }))
+
+    if (response.data.success) {
+      toast.success('GitHub Repository erstellt und verbunden!')
+      await loadConnections(selectedCodespace.value.id)
+    } else {
+      toast.error(response.data.error || 'Fehler beim Erstellen des GitHub Repos')
+    }
+  } catch (error) {
+    console.error('Error creating GitHub repo:', error)
+    toast.error('Verbindungsfehler')
+  }
+}
+
+const showGithubRepos = async () => {
+  try {
+    loadingGithubRepos.value = true
+    showGithubModal.value = true
+    
+    const { getUserData } = await import('@/userData')
+    const user = getUserData()
+    
+    const response = await axios.get(`github_repos.php?user_id=${user.userID}`)
+    githubRepos.value = response.data
+  } catch (error) {
+    console.error('Error loading GitHub repos:', error)
+    toast.error('Fehler beim Laden der GitHub Repositories')
+  } finally {
+    loadingGithubRepos.value = false
+  }
+}
+
+const connectGithubRepo = async (repo) => {
+  try {
+    const { getUserData } = await import('@/userData')
+    const user = getUserData()
+    
+    const response = await axios.post('codespace_connections.php', qs.stringify({
+      action: 'connect_github',
+      codespace_id: selectedCodespace.value.id,
+      user_id: user.userID,
+      repo: JSON.stringify(repo)
+    }))
+
+    if (response.data.success) {
+      toast.success('GitHub Repository verbunden!')
+      await loadConnections(selectedCodespace.value.id)
+      closeGithubModal()
+    } else {
+      toast.error(response.data.error || 'Fehler beim Verbinden')
+    }
+  } catch (error) {
+    console.error('Error connecting GitHub repo:', error)
+    toast.error('Verbindungsfehler')
+  }
+}
+
+const disconnectGithub = async () => {
+  try {
+    const { getUserData } = await import('@/userData')
+    const user = getUserData()
+    
+    const response = await axios.post('codespace_connections.php', qs.stringify({
+      action: 'disconnect_github',
+      codespace_id: selectedCodespace.value.id,
+      user_id: user.userID
+    }))
+
+    if (response.data.success) {
+      toast.success('GitHub Repository getrennt!')
+      await loadConnections(selectedCodespace.value.id)
+    } else {
+      toast.error('Fehler beim Trennen')
+    }
+  } catch (error) {
+    console.error('Error disconnecting GitHub:', error)
+    toast.error('Verbindungsfehler')
+  }
+}
+
+const closeGithubModal = () => {
+  showGithubModal.value = false
+  githubRepos.value = []
+}
+
+// Vercel Functions
+const createVercelProject = async () => {
+  try {
+    const { getUserData } = await import('@/userData')
+    const user = getUserData()
+    
+    const response = await axios.post('codespace_connections.php', qs.stringify({
+      action: 'create_and_connect_vercel',
+      codespace_id: selectedCodespace.value.id,
+      user_id: user.userID
+    }))
+
+    if (response.data.success) {
+      toast.success('Vercel Projekt erstellt und verbunden!')
+      await loadConnections(selectedCodespace.value.id)
+    } else {
+      toast.error(response.data.error || 'Fehler beim Erstellen des Vercel Projekts')
+    }
+  } catch (error) {
+    console.error('Error creating Vercel project:', error)
+    toast.error('Verbindungsfehler')
+  }
+}
+
+const showVercelProjects = async () => {
+  try {
+    loadingVercelProjects.value = true
+    showVercelModal.value = true
+    
+    const { getUserData } = await import('@/userData')
+    const user = getUserData()
+    
+    const response = await axios.get(`vercel_projects.php?user_id=${user.userID}`)
+    vercelProjects.value = response.data.projects || []
+  } catch (error) {
+    console.error('Error loading Vercel projects:', error)
+    toast.error('Fehler beim Laden der Vercel Projekte')
+  } finally {
+    loadingVercelProjects.value = false
+  }
+}
+
+const connectVercelProject = async (project) => {
+  try {
+    const { getUserData } = await import('@/userData')
+    const user = getUserData()
+    
+    const response = await axios.post('codespace_connections.php', qs.stringify({
+      action: 'connect_vercel',
+      codespace_id: selectedCodespace.value.id,
+      user_id: user.userID,
+      vercel_project_id: project.id,
+      vercel_project_name: project.name
+    }))
+
+    if (response.data.success) {
+      toast.success('Vercel Projekt verbunden!')
+      await loadConnections(selectedCodespace.value.id)
+      closeVercelModal()
+    } else {
+      toast.error(response.data.error || 'Fehler beim Verbinden')
+    }
+  } catch (error) {
+    console.error('Error connecting Vercel project:', error)
+    toast.error('Verbindungsfehler')
+  }
+}
+
+const disconnectVercel = async () => {
+  try {
+    const { getUserData } = await import('@/userData')
+    const user = getUserData()
+    
+    const response = await axios.post('codespace_connections.php', qs.stringify({
+      action: 'disconnect_vercel',
+      codespace_id: selectedCodespace.value.id,
+      user_id: user.userID
+    }))
+
+    if (response.data.success) {
+      toast.success('Vercel Projekt getrennt!')
+      await loadConnections(selectedCodespace.value.id)
+    } else {
+      toast.error('Fehler beim Trennen')
+    }
+  } catch (error) {
+    console.error('Error disconnecting Vercel:', error)
+    toast.error('Verbindungsfehler')
+  }
+}
+
+const closeVercelModal = () => {
+  showVercelModal.value = false
+  vercelProjects.value = []
 }
 
 const closeModal = () => {
@@ -369,8 +834,112 @@ onMounted(() => {
 }
 
 .loading-container p {
-  margin-top: 16px;
   color: var(--ion-color-medium);
+  margin-top: 16px;
+}
+
+.auto-create-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--ion-color-light-shade);
+}
+
+.settings-content {
+  padding: 20px;
+}
+
+.settings-header {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.settings-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.settings-header p {
+  margin: 0;
+  color: var(--ion-color-medium);
+}
+
+.connection-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: var(--ion-color-light);
+  border-radius: 12px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.section-header ion-icon {
+  font-size: 1.5rem;
+  color: var(--ion-color-primary);
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.connected-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: var(--ion-color-success-tint);
+  border-radius: 8px;
+  border-left: 4px solid var(--ion-color-success);
+}
+
+.connection-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ion-color-success-shade);
+}
+
+.connection-info p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+}
+
+.not-connected {
+  text-align: center;
+  padding: 20px;
+  color: var(--ion-color-medium);
+}
+
+.connection-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+@media (max-width: 576px) {
+  .connection-actions {
+    flex-direction: column;
+  }
+  
+  .connected-item {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+}
+
+.loading-container p {
+  color: var(--ion-color-medium);
+  margin-top: 16px;
 }
 
 .codespaces-grid {
