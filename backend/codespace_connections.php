@@ -258,6 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'get_all_connections' && $codespace_id) {
         $github = null;
         $vercel = null;
+        $domain = null;
         
         // GitHub Verbindung
         $githubResult = query("SELECT * FROM codespace_github_repos WHERE codespace_id='$codespace_id' LIMIT 1");
@@ -271,10 +272,271 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $vercel = $vercelRow;
         }
         
+        // Domain Verbindung
+        $domainResult = query("SELECT * FROM codespace_domains WHERE codespace_id='$codespace_id' LIMIT 1");
+        if ($domainRow = fetch_assoc($domainResult)) {
+            $domain = $domainRow;
+        }
+        
         echo json_encode([
             'github' => $github,
-            'vercel' => $vercel
+            'vercel' => $vercel,
+            'domain' => $domain
         ]);
+        exit;
+    }
+
+    // Domain Aktionen
+    if ($action === 'connect_domain' && $codespace_id && $user_id) {
+        $subdomain = strtolower(trim($_POST['subdomain'] ?? ''));
+        $is_main = isset($_POST['is_main']) && $_POST['is_main'] === 'true';
+        
+        // Nur Subdomain validieren wenn nicht Haupt-Domain
+        if (!$is_main && (!$subdomain || !preg_match('/^[a-z0-9-]+$/', $subdomain))) {
+            echo json_encode(['error' => 'Ungültiges Subdomain-Format. Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.']);
+            exit;
+        }
+        
+        // Projekt-Domain ermitteln
+        $projectResult = query("SELECT project_id FROM project_codespaces WHERE id='$codespace_id'");
+        if (!$projectRow = fetch_assoc($projectResult)) {
+            echo json_encode(['error' => 'Codespace nicht gefunden']);
+            exit;
+        }
+        
+        $project_id = $projectRow['project_id'];
+        $projectInfoResult = query("SELECT link FROM projects WHERE projectID='$project_id'");
+        if (!$projectInfoRow = fetch_assoc($projectInfoResult)) {
+            echo json_encode(['error' => 'Projekt nicht gefunden']);
+            exit;
+        }
+        
+        $project_link = $projectInfoRow['link'];
+        
+        // Prüfen ob Projekt eine Haupt-Domain hat
+        $projectDomainResult = query("SELECT domain FROM control_center_project_domains WHERE project='$project_link' LIMIT 1");
+        if (!$projectDomainRow = fetch_assoc($projectDomainResult)) {
+            echo json_encode(['error' => 'Projekt hat keine Domain konfiguriert. Bitte zuerst in den Projekt-Einstellungen eine Domain einrichten.']);
+            exit;
+        }
+        
+        $base_domain = $projectDomainRow['domain']; // z.B. "myproject.sites.control-center.eu"
+        
+        // Domain basierend auf is_main erstellen
+        if ($is_main) {
+            $full_domain = $base_domain; // Haupt-Domain verwenden
+            
+            // Prüfen ob bereits eine Haupt-Domain für dieses Projekt existiert
+            $existingMainResult = query("
+                SELECT cd.id FROM codespace_domains cd 
+                JOIN project_codespaces pc ON cd.codespace_id = pc.id 
+                WHERE pc.project_id = '$project_id' AND cd.is_main = 1 AND cd.codespace_id != '$codespace_id'
+            ");
+            if (mysqli_num_rows($existingMainResult) > 0) {
+                echo json_encode(['error' => 'Ein anderer Codespace verwendet bereits die Haupt-Domain. Bitte zuerst die Haupt-Domain des anderen Codespaces entfernen.']);
+                exit;
+            }
+        } else {
+            $full_domain = $subdomain . '.' . $base_domain; // Subdomain verwenden
+        }
+        
+        // Prüfen ob Domain bereits vergeben
+        $exists = query("SELECT id FROM codespace_domains WHERE domain='$full_domain' LIMIT 1");
+        if (mysqli_num_rows($exists) > 0) {
+            echo json_encode(['error' => 'Domain bereits vergeben.']);
+            exit;
+        }
+        
+        // Vercel-Projekt muss vorhanden sein
+        $vercelResult = query("SELECT * FROM codespace_vercel_projects WHERE codespace_id='$codespace_id' LIMIT 1");
+        if (!$vercelRow = fetch_assoc($vercelResult)) {
+            echo json_encode(['error' => 'Kein Vercel-Projekt verbunden. Bitte zuerst ein Vercel-Projekt verbinden.']);
+            exit;
+        }
+        
+        $vercel_project_id = $vercelRow['vercel_project_id'];
+        
+        // Alte Domain für diesen Codespace löschen falls vorhanden
+        query("DELETE FROM codespace_domains WHERE codespace_id='$codespace_id'");
+        
+        // Domain in DB speichern
+        $insert = query("INSERT INTO codespace_domains (codespace_id, domain, is_main, user_id) VALUES ('$codespace_id', '$full_domain', " . ($is_main ? 1 : 0) . ", '$user_id')");
+        
+        if (!$insert) {
+            echo json_encode(['error' => 'Fehler beim Speichern der Domain']);
+            exit;
+        }
+        
+        // Vercel-Token holen
+        $vercelTokenResult = query("SELECT vercel_token FROM control_center_vercel_tokens WHERE userID='" . escape_string($user_id) . "' LIMIT 1");
+        if (!$vercelTokenRow = fetch_assoc($vercelTokenResult)) {
+            query("DELETE FROM codespace_domains WHERE codespace_id='$codespace_id'");
+            echo json_encode(['error' => 'Kein Vercel-Token gefunden']);
+            exit;
+        }
+        
+        $vercel_token = $vercelTokenRow['vercel_token'];
+        
+        // Domain zu Vercel-Projekt hinzufügen
+        $vercelApiUrl = "https://api.vercel.com/v10/projects/{$vercel_project_id}/domains";
+        $vercelData = ['name' => $full_domain];
+        print_r($vercelData);
+        $vercelOpts = [
+            'http' => [
+                'method' => 'POST',
+                'header' => "Authorization: Bearer $vercel_token\r\nUser-Agent: ControlCenter\r\nAccept: application/json\r\nContent-Type: application/json\r\n",
+                'content' => json_encode($vercelData)
+            ]
+        ];
+        
+        $vercelContext = stream_context_create($vercelOpts);
+        $vercelResponse = @file_get_contents($vercelApiUrl, false, $vercelContext);
+        $vercelResult = $vercelResponse ? json_decode($vercelResponse, true) : null;
+        
+        if (!$vercelResponse || (isset($vercelResult['error']) && $vercelResult['error'])) {
+            query("DELETE FROM codespace_domains WHERE codespace_id='$codespace_id'");
+            $errMsg = isset($vercelResult['error']['message']) ? $vercelResult['error']['message'] : 'Vercel API Fehler';
+            echo json_encode(['error' => 'Vercel: ' . $errMsg]);
+            exit;
+        }
+        
+        // CNAME-Target von Vercel holen
+        $cnameTarget = null;
+        $vercelDomainConfigUrl = "https://api.vercel.com/v6/domains/$full_domain/config";
+        $vercelDomainConfigOpts = [
+            'http' => [
+                'method' => 'GET',
+                'header' => "Authorization: Bearer $vercel_token\r\nUser-Agent: ControlCenter\r\nAccept: application/json\r\n"
+            ]
+        ];
+        
+        $vercelDomainConfigContext = stream_context_create($vercelDomainConfigOpts);
+        $vercelDomainConfigResponse = @file_get_contents($vercelDomainConfigUrl, false, $vercelDomainConfigContext);
+        
+        if ($vercelDomainConfigResponse) {
+            $vercelDomainConfig = json_decode($vercelDomainConfigResponse, true);
+            if (isset($vercelDomainConfig['recommendedCNAME'][0]['value'])) {
+                $cnameTarget = $vercelDomainConfig['recommendedCNAME'][0]['value'];
+            } elseif (isset($vercelDomainConfig['cnameTarget'])) {
+                $cnameTarget = $vercelDomainConfig['cnameTarget'];
+            } elseif (isset($vercelDomainConfig['domain']['cnameTarget'])) {
+                $cnameTarget = $vercelDomainConfig['domain']['cnameTarget'];
+            }
+        }
+        
+        if (!$cnameTarget) {
+            query("DELETE FROM codespace_domains WHERE codespace_id='$codespace_id'");
+            echo json_encode(['error' => 'Kein CNAME-Target von Vercel erhalten']);
+            exit;
+        }
+        
+        // DNS-Eintrag über Cloudflare erstellen
+        $cloudflare_zone_id = isset($cloudflare_zone_id) ? $cloudflare_zone_id : '';
+        $cloudflare_api_token = isset($cloudflare_api_token) ? $cloudflare_api_token : '';
+        $cloudflare_api_url = "https://api.cloudflare.com/client/v4/zones/$cloudflare_zone_id/dns_records";
+        $cloudflare_post = json_encode([
+            'type' => 'CNAME',
+            'name' => $full_domain,
+            'content' => $cnameTarget,
+            'ttl' => 300,
+            'proxied' => false
+        ]);
+        
+        $cloudflareOpts = [
+            'http' => [
+                'method' => 'POST',
+                'header' => "Authorization: Bearer $cloudflare_api_token\r\nContent-Type: application/json\r\n",
+                'content' => $cloudflare_post
+            ]
+        ];
+        
+        $cloudflareContext = stream_context_create($cloudflareOpts);
+        $cloudflareResponse = @file_get_contents($cloudflare_api_url, false, $cloudflareContext);
+        $cloudflareResult = $cloudflareResponse ? json_decode($cloudflareResponse, true) : null;
+        
+        if (!$cloudflareResponse || (isset($cloudflareResult['success']) && !$cloudflareResult['success'])) {
+            query("DELETE FROM codespace_domains WHERE codespace_id='$codespace_id'");
+            $errMsg = isset($cloudflareResult['errors'][0]['message']) ? $cloudflareResult['errors'][0]['message'] : 'Cloudflare API Fehler';
+            echo json_encode(['error' => 'Cloudflare: ' . $errMsg]);
+            exit;
+        }
+        
+        echo json_encode([
+            'success' => true, 
+            'domain' => $full_domain,
+            'is_main' => $is_main,
+            'vercel' => $vercelResult,
+            'cloudflare' => $cloudflareResult
+        ]);
+        exit;
+    }
+    
+    if ($action === 'disconnect_domain' && $codespace_id) {
+        $delete = query("DELETE FROM codespace_domains WHERE codespace_id='$codespace_id'");
+        
+        if ($delete) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['error' => 'Failed to disconnect domain']);
+        }
+        exit;
+    }
+    
+    if ($action === 'get_domain' && $codespace_id) {
+        $result = query("SELECT * FROM codespace_domains WHERE codespace_id='$codespace_id' LIMIT 1");
+        
+        if ($row = fetch_assoc($result)) {
+            echo json_encode(['domain' => $row]);
+        } else {
+            echo json_encode(['domain' => null]);
+        }
+        exit;
+    }
+    
+    if ($action === 'get_project_domain_info' && $codespace_id) {
+        // Projekt-Info für Domain-Konfiguration abrufen
+        $projectResult = query("SELECT project_id FROM project_codespaces WHERE id='$codespace_id'");
+        if (!$projectRow = fetch_assoc($projectResult)) {
+            echo json_encode(['error' => 'Codespace nicht gefunden']);
+            exit;
+        }
+        
+        $project_id = $projectRow['project_id'];
+        $projectInfoResult = query("SELECT link FROM projects WHERE projectID='$project_id'");
+        if (!$projectInfoRow = fetch_assoc($projectInfoResult)) {
+            echo json_encode(['error' => 'Projekt nicht gefunden']);
+            exit;
+        }
+        
+        $project_link = $projectInfoRow['link'];
+        
+        // Projekt-Domain abrufen
+        $projectDomainResult = query("SELECT domain FROM control_center_project_domains WHERE project='$project_link' LIMIT 1");
+        if ($projectDomainRow = fetch_assoc($projectDomainResult)) {
+            $base_domain = $projectDomainRow['domain'];
+            
+            // Prüfen ob bereits eine Haupt-Domain für dieses Projekt existiert
+            $existingMainResult = query("
+                SELECT cd.id, pc.name as codespace_name FROM codespace_domains cd 
+                JOIN project_codespaces pc ON cd.codespace_id = pc.id 
+                WHERE pc.project_id = '$project_id' AND cd.is_main = 1
+            ");
+            
+            $main_domain_taken = false;
+            $main_domain_codespace = null;
+            if ($mainRow = fetch_assoc($existingMainResult)) {
+                $main_domain_taken = true;
+                $main_domain_codespace = $mainRow['codespace_name'];
+            }
+            
+            echo json_encode([
+                'base_domain' => $base_domain,
+                'main_domain_taken' => $main_domain_taken,
+                'main_domain_codespace' => $main_domain_codespace
+            ]);
+        } else {
+            echo json_encode(['error' => 'Projekt hat keine Domain konfiguriert']);
+        }
         exit;
     }
 }

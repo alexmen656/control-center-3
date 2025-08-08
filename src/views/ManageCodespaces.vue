@@ -285,6 +285,95 @@
                 </ion-note>
               </div>
             </div>
+
+            <!-- Domain Section -->
+            <div class="connection-section">
+              <div class="section-header">
+                <ion-icon name="globe-outline"></ion-icon>
+                <h3>Domain</h3>
+              </div>
+              
+              <div v-if="connections.domain" class="connected-item">
+                <div class="connection-info">
+                  <h4>{{ connections.domain.domain }}</h4>
+                  <p v-if="connections.domain.is_main">Haupt-Domain</p>
+                  <p v-else>Subdomain</p>
+                </div>
+                <ion-button fill="clear" color="danger" @click="disconnectDomain">
+                  <ion-icon name="unlink-outline" slot="start"></ion-icon>
+                  Trennen
+                </ion-button>
+              </div>
+              
+              <div v-else class="not-connected">
+                <p>Keine Domain verbunden</p>
+                <div v-if="domainInfo" class="domain-config">
+                  <div class="domain-option">
+                    <ion-radio-group v-model="domainType">
+                      <ion-item>
+                        <ion-radio 
+                          slot="start" 
+                          value="subdomain"
+                          :disabled="!connections.vercel"
+                        ></ion-radio>
+                        <ion-label>
+                          <h3>Subdomain</h3>
+                          <p>{{ domainInput || 'subdomain' }}.{{ domainInfo.base_domain }}</p>
+                        </ion-label>
+                      </ion-item>
+                      
+                      <ion-item>
+                        <ion-radio 
+                          slot="start" 
+                          value="main"
+                          :disabled="!connections.vercel || domainInfo.main_domain_taken"
+                        ></ion-radio>
+                        <ion-label>
+                          <h3>Haupt-Domain {{ domainInfo.main_domain_taken ? '(vergeben)' : '' }}</h3>
+                          <p>{{ domainInfo.base_domain }}</p>
+                          <p v-if="domainInfo.main_domain_taken" style="color: var(--ion-color-warning)">
+                            Verwendet von: {{ domainInfo.main_domain_codespace }}
+                          </p>
+                        </ion-label>
+                      </ion-item>
+                    </ion-radio-group>
+                  </div>
+                  
+                  <div v-if="domainType === 'subdomain'" class="subdomain-input">
+                    <ion-item>
+                      <ion-label position="stacked">Subdomain</ion-label>
+                      <ion-input 
+                        v-model="domainInput" 
+                        placeholder="z.B. api, admin, staging"
+                        pattern="[a-z0-9-]+"
+                      ></ion-input>
+                    </ion-item>
+                  </div>
+                  
+                  <div class="connection-actions">
+                    <ion-button 
+                      @click="connectDomain" 
+                      color="primary"
+                      :disabled="!connections.vercel || (domainType === 'subdomain' && (!domainInput || domainInput.length < 2)) || (domainType === 'main' && domainInfo.main_domain_taken)"
+                    >
+                      <ion-icon name="link-outline" slot="start"></ion-icon>
+                      Domain verbinden
+                    </ion-button>
+                  </div>
+                </div>
+                
+                <div v-else-if="loadingDomainInfo" class="loading-container">
+                  <ion-spinner name="circular"></ion-spinner>
+                  <p>Domain-Informationen werden geladen...</p>
+                </div>
+                
+                <div v-else>
+                  <ion-note color="warning">
+                    Vercel Projekt benötigt für Domain-Konfiguration
+                  </ion-note>
+                </div>
+              </div>
+            </div>
           </div>
         </ion-content>
       </ion-modal>
@@ -377,7 +466,7 @@ import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton,
   IonIcon, IonSpinner, IonChip, IonModal, IonItem, IonLabel,
   IonInput, IonTextarea, IonSelect, IonSelectOption, IonCheckbox, IonNote, IonList,
-  alertController
+  IonRadioGroup, IonRadio, alertController
 } from '@ionic/vue'
 import axios from 'axios'
 import qs from 'qs'
@@ -394,7 +483,13 @@ const editingCodespace = ref(null)
 // Settings Modal
 const showSettingsModal = ref(false)
 const selectedCodespace = ref(null)
-const connections = ref({ github: null, vercel: null })
+const connections = ref({ github: null, vercel: null, domain: null })
+
+// Domain
+const domainType = ref('subdomain') // 'subdomain' or 'main'
+const domainInput = ref('')
+const domainInfo = ref(null)
+const loadingDomainInfo = ref(false)
 
 // GitHub Modal
 const showGithubModal = ref(false)
@@ -469,8 +564,6 @@ const editCodespace = (codespace) => {
 const saveCodespace = async () => {
   try {
     const project = route.params.project
-    const { getUserData } = await import('@/userData')
-    const user = getUserData()
 
     if (editingCodespace.value) {
       // Update existing codespace
@@ -554,14 +647,21 @@ const deleteCodespace = async (codespace) => {
 // Settings Modal Functions
 const openSettings = async (codespace) => {
   selectedCodespace.value = codespace
+  domainType.value = 'subdomain'
+  domainInput.value = ''
+  domainInfo.value = null
+  
   await loadConnections(codespace.id)
+  await loadDomainInfo(codespace.id)
   showSettingsModal.value = true
 }
 
 const closeSettingsModal = () => {
   showSettingsModal.value = false
   selectedCodespace.value = null
-  connections.value = { github: null, vercel: null }
+  connections.value = { github: null, vercel: null, domain: null }
+  domainInfo.value = null
+  domainInput.value = ''
 }
 
 const loadConnections = async (codespaceId) => {
@@ -575,10 +675,11 @@ const loadConnections = async (codespaceId) => {
       user_id: user.userID
     }))
 
-    if (response.data.github || response.data.vercel) {
+    if (response.data.github || response.data.vercel || response.data.domain) {
       connections.value = {
         github: response.data.github,
-        vercel: response.data.vercel
+        vercel: response.data.vercel,
+        domain: response.data.domain
       }
     }
   } catch (error) {
@@ -777,6 +878,89 @@ const closeVercelModal = () => {
   vercelProjects.value = []
 }
 
+// Domain Functions
+const loadDomainInfo = async (codespaceId) => {
+  try {
+    loadingDomainInfo.value = true
+    const { getUserData } = await import('@/userData')
+    const user = getUserData()
+    
+    const response = await axios.post('codespace_connections.php', qs.stringify({
+      action: 'get_project_domain_info',
+      codespace_id: codespaceId,
+      user_id: user.userID
+    }))
+
+    if (response.data.base_domain) {
+      domainInfo.value = response.data
+    } else {
+      domainInfo.value = null
+    }
+  } catch (error) {
+    console.error('Error loading domain info:', error)
+    domainInfo.value = null
+  } finally {
+    loadingDomainInfo.value = false
+  }
+}
+
+const connectDomain = async () => {
+  try {
+    const { getUserData } = await import('@/userData')
+    const user = getUserData()
+    
+    const data = {
+      action: 'connect_domain',
+      codespace_id: selectedCodespace.value.id,
+      user_id: user.userID,
+      is_main: domainType.value === 'main' ? 'true' : 'false'
+    }
+    
+    // Nur Subdomain hinzufügen wenn nicht Haupt-Domain
+    if (domainType.value === 'subdomain') {
+      data.subdomain = domainInput.value
+    }
+    
+    const response = await axios.post('codespace_connections.php', qs.stringify(data))
+
+    if (response.data.success) {
+      toast.success('Domain erfolgreich verbunden!')
+      await loadConnections(selectedCodespace.value.id)
+      await loadDomainInfo(selectedCodespace.value.id)
+      domainInput.value = ''
+    } else {
+      toast.error(response.data.error || 'Fehler beim Verbinden der Domain')
+    }
+  } catch (error) {
+    console.error('Error connecting domain:', error)
+    toast.error('Verbindungsfehler')
+  }
+}
+
+const disconnectDomain = async () => {
+  try {
+    const { getUserData } = await import('@/userData')
+    const user = getUserData()
+    
+    const response = await axios.post('codespace_connections.php', qs.stringify({
+      action: 'disconnect_domain',
+      codespace_id: selectedCodespace.value.id,
+      user_id: user.userID
+    }))
+
+    if (response.data.success) {
+      toast.success('Domain getrennt!')
+      await loadConnections(selectedCodespace.value.id)
+      await loadDomainInfo(selectedCodespace.value.id)
+    } else {
+      toast.error('Fehler beim Trennen der Domain')
+    }
+  } catch (error) {
+    console.error('Error disconnecting domain:', error)
+    toast.error('Verbindungsfehler')
+  }
+}
+
 const closeModal = () => {
   showModal.value = false
   editingCodespace.value = null
@@ -940,6 +1124,18 @@ onMounted(() => {
 .loading-container p {
   color: var(--ion-color-medium);
   margin-top: 16px;
+}
+
+.domain-config {
+  width: 100%;
+}
+
+.domain-option {
+  margin-bottom: 16px;
+}
+
+.subdomain-input {
+  margin-bottom: 16px;
 }
 
 .codespaces-grid {

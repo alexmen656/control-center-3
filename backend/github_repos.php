@@ -1,7 +1,4 @@
 <?php
-// github_repos.php
-// Gibt alle Repositories des verbundenen GitHub-Users zurück
-
 require_once 'config.php';
 require_once 'head.php';
 
