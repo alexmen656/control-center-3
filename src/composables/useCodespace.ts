@@ -36,7 +36,7 @@ export function useCodespace(routeParams: RouteParams) {
 
   const apiCall = async (action: string, data: any = {}) => {
     try {
-      const response = await axios.post('/backend/monaco_codespace_api.php', {
+      const response = await axios.post('monaco_codespace_api.php', {
         action,
         project: projectName.value,
         codespace: codespaceName.value,

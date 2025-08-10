@@ -281,7 +281,7 @@ const loadFile = async (filename = 'index.html') => {
 
     language.value = languageMap[filename.split('.').pop()] || 'javascript'
     
-    // Use new codespace API
+    // Use codespace API to load file from specific codespace
     const content = await codespace.loadFile(filename)
     code.value = content
     currentFile.value = filename
@@ -294,19 +294,23 @@ const loadFile = async (filename = 'index.html') => {
     window.dispatchEvent(new CustomEvent('monaco-active-file-changed', { 
       detail: { 
         filePath: filename,
-        projectName 
+        projectName,
+        codespaceName
       } 
     }))
   } catch (error) {
     console.log('File not found, creating new file')
-    // File doesn't exist, create it
-    await saveFile(filename, code.value)
+    // File doesn't exist, create it using codespace API
+    await codespace.createFile(filename, code.value)
+    currentFile.value = filename
+    showWelcome.value = false
     
     // Emit active file changed event for new file
     window.dispatchEvent(new CustomEvent('monaco-active-file-changed', { 
       detail: { 
         filePath: filename,
-        projectName 
+        projectName,
+        codespaceName
       } 
     }))
   }
@@ -315,19 +319,20 @@ const loadFile = async (filename = 'index.html') => {
 // Save file content
 const saveFile = async (filename, content, manual=false) => {
   try {
-    // Use new codespace API
+    // Use codespace API to save file in specific codespace
     await codespace.saveFile(filename, content)
     
     if(manual){
       toast.success(`Datei ${filename} erfolgreich gespeichert!`, 1000)
     }
-    console.log('File saved successfully')
+    console.log('File saved successfully to codespace:', codespaceName)
     // Emit event to notify sidebar about file save
     window.dispatchEvent(new CustomEvent('monaco-file-saved', { 
       detail: { 
         filename, 
         content,
-        projectName 
+        projectName,
+        codespaceName
       } 
     }))
   } catch (error) {
@@ -366,7 +371,8 @@ watch(code, (newCode) => {
       detail: { 
         filename: currentFile.value, 
         content: newCode,
-        projectName 
+        projectName,
+        codespaceName
       } 
     }))
   }
@@ -375,11 +381,12 @@ watch(code, (newCode) => {
 // Initialize project
 const initializeProject = async () => {
   try {
-    // Try to list files first
-    const response = await axios.get(`file_api.php?project=${projectName}&action=list`)
-    if (response.data.length > 0) {
+    // Use codespace API to load files from specific codespace
+    await codespace.loadFiles()
+    
+    if (codespace.files.value.length > 0) {
       // Filter out Monaco metadata files and get regular files
-      const regularFiles = response.data.filter(f => 
+      const regularFiles = codespace.files.value.filter(f => 
         f.type === 'file' && 
         !f.name.startsWith('.monaco_') &&
         !f.name.startsWith('.git')
@@ -391,11 +398,13 @@ const initializeProject = async () => {
       // Don't auto-load any file - show welcome screen instead
       showWelcome.value = true
     } else {
-      // New project, show welcome screen
+      // New codespace, show welcome screen
       showWelcome.value = true
     }
+    
+    console.log(`Initialized codespace: ${codespaceName} in project: ${projectName}`)
   } catch (error) {
-    console.error('Failed to initialize project:', error)
+    console.error('Failed to initialize codespace:', error)
     // Show welcome screen on error
     showWelcome.value = true
   }

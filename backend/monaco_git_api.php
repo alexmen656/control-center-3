@@ -47,8 +47,8 @@ function getUserIDFromToken() {
     return $userData['sub'];
 }
 
-function getProjectPath($project, $userID) {
-    return __DIR__ . '/../data/projects/' . $userID . '/' . $project;
+function getProjectPath($project, $userID, $codespace = 'main') {
+    return __DIR__ . '/../data/projects/' . $userID . '/' . $project . '/' . $codespace;
 }
 
 function getGitHubCredentials($project, $userID) {
@@ -534,9 +534,10 @@ if (basename($_SERVER['PHP_SELF']) === 'monaco_git_api.php') {
     try {
         $userID = getUserIDFromToken();
         $project = $_GET['project'] ?? 'default-project';
+        $codespace = $_GET['codespace'] ?? 'main';
         $action = $_GET['action'] ?? '';
         
-        $projectPath = getProjectPath($project, $userID);
+        $projectPath = getProjectPath($project, $userID, $codespace);
         
         if (!is_dir($projectPath)) {
             // Create project directory if it doesn't exist
@@ -545,10 +546,10 @@ if (basename($_SERVER['PHP_SELF']) === 'monaco_git_api.php') {
         
         switch ($_SERVER['REQUEST_METHOD']) {
             case 'GET':
-                handleGetRequest($action, $projectPath, $project, $userID);
+                handleGetRequest($action, $projectPath, $project, $userID, $codespace);
                 break;
             case 'POST':
-                handlePostRequest($projectPath, $project, $userID);
+                handlePostRequest($projectPath, $project, $userID, $codespace);
                 break;
             default:
                 throw new Exception('Method not allowed');
@@ -560,7 +561,7 @@ if (basename($_SERVER['PHP_SELF']) === 'monaco_git_api.php') {
     }
 }
 
-function handleGetRequest($action, $projectPath, $project, $userID) {
+function handleGetRequest($action, $projectPath, $project, $userID, $codespace = 'main') {
     switch ($action) {
         case 'status':
             echo json_encode(getLocalChanges($projectPath));
@@ -569,7 +570,7 @@ function handleGetRequest($action, $projectPath, $project, $userID) {
             echo json_encode(getDetailedChanges($projectPath, $project, $userID));
             break;
         case 'commits':
-            echo json_encode(getCommitHistory($project, $userID));
+            echo json_encode(getCommitHistory($project, $userID, $codespace));
             break;
         case 'diff':
             $file = $_GET['file'] ?? '';
@@ -583,7 +584,7 @@ function handleGetRequest($action, $projectPath, $project, $userID) {
     }
 }
 
-function handlePostRequest($projectPath, $project, $userID) {
+function handlePostRequest($projectPath, $project, $userID, $codespace = 'main') {
     $input = json_decode(file_get_contents('php://input'), true);
     $action = $input['action'] ?? '';
     
@@ -736,12 +737,12 @@ function getDetailedChanges($projectPath, $project, $userID) {
     ];
 }
 
-function getCommitHistory($project, $userID) {
+function getCommitHistory($project, $userID, $codespace = 'main') {
     $credentials = getGitHubCredentials($project, $userID);
     
     if (!$credentials) {
         // Return local commit history if no GitHub integration
-        return getLocalCommitHistory($project, $userID);
+        return getLocalCommitHistory($project, $userID, $codespace);
     }
     
     try {
@@ -766,12 +767,12 @@ function getCommitHistory($project, $userID) {
             'commits' => $formattedCommits
         ];
     } catch (Exception $e) {
-        return getLocalCommitHistory($project, $userID);
+        return getLocalCommitHistory($project, $userID, $codespace);
     }
 }
 
-function getLocalCommitHistory($project, $userID) {
-    $projectPath = getProjectPath($project, $userID);
+function getLocalCommitHistory($project, $userID, $codespace = 'main') {
+    $projectPath = getProjectPath($project, $userID, $codespace);
     $commitsFile = $projectPath . '/.monaco_commits.json';
     
     if (!file_exists($commitsFile)) {

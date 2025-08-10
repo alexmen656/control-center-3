@@ -21,16 +21,16 @@ function getUserIDFromToken() {
     return $userData['sub'];
 }
 
-function getProjectDataPath($project, $userID) {
-    $dataDir = __DIR__ . '/../data/projects/' . $userID . '/' . $project;
+function getProjectDataPath($project, $userID, $codespace = 'main') {
+    $dataDir = __DIR__ . '/../data/projects/' . $userID . '/' . $project . '/' . $codespace;
     if (!is_dir($dataDir)) {
         mkdir($dataDir, 0755, true);
     }
     return $dataDir;
 }
 
-function getProjectGitPath($project, $userID) {
-    $gitDir = getProjectDataPath($project, $userID) . '/.git';
+function getProjectGitPath($project, $userID, $codespace = 'main') {
+    $gitDir = getProjectDataPath($project, $userID, $codespace) . '/.git';
     return $gitDir;
 }
 
@@ -53,25 +53,26 @@ function initializeGitRepo($projectPath) {
 try {
     $userID = getUserIDFromToken();
     $project = $_GET['project'] ?? 'default-project';
+    $codespace = $_GET['codespace'] ?? 'main'; // Add codespace parameter
     $action = $_GET['action'] ?? '';
     
-    $projectPath = getProjectDataPath($project, $userID);
+    $projectPath = getProjectDataPath($project, $userID, $codespace);
     
     // Initialize git repo if it doesn't exist
     initializeGitRepo($projectPath);
     
     switch ($_SERVER['REQUEST_METHOD']) {
         case 'GET':
-            handleGetRequest($action, $projectPath, $project, $userID);
+            handleGetRequest($action, $projectPath, $project, $userID, $codespace);
             break;
         case 'POST':
-            handlePostRequest($projectPath, $project, $userID);
+            handlePostRequest($projectPath, $project, $userID, $codespace);
             break;
         case 'PUT':
-            handlePutRequest($projectPath, $project, $userID);
+            handlePutRequest($projectPath, $project, $userID, $codespace);
             break;
         case 'DELETE':
-            handleDeleteRequest($projectPath, $project, $userID);
+            handleDeleteRequest($projectPath, $project, $userID, $codespace);
             break;
         default:
             throw new Exception('Method not allowed');
@@ -82,7 +83,7 @@ try {
     echo json_encode(['error' => $e->getMessage()]);
 }
 
-function handleGetRequest($action, $projectPath, $project, $userID) {
+function handleGetRequest($action, $projectPath, $project, $userID, $codespace = 'main') {
     switch ($action) {
         case 'list':
             echo json_encode(listFiles($projectPath));
@@ -104,7 +105,7 @@ function handleGetRequest($action, $projectPath, $project, $userID) {
     }
 }
 
-function handlePostRequest($projectPath, $project, $userID) {
+function handlePostRequest($projectPath, $project, $userID, $codespace = 'main') {
     $input = json_decode(file_get_contents('php://input'), true);
     $action = $input['action'] ?? '';
     
@@ -124,7 +125,7 @@ function handlePostRequest($projectPath, $project, $userID) {
     }
 }
 
-function handlePutRequest($projectPath, $project, $userID) {
+function handlePutRequest($projectPath, $project, $userID, $codespace = 'main') {
     $input = json_decode(file_get_contents('php://input'), true);
     $file = $input['file'] ?? '';
     $content = $input['content'] ?? '';
@@ -132,7 +133,7 @@ function handlePutRequest($projectPath, $project, $userID) {
     echo json_encode(writeFile($projectPath, $file, $content));
 }
 
-function handleDeleteRequest($projectPath, $project, $userID) {
+function handleDeleteRequest($projectPath, $project, $userID, $codespace = 'main') {
     $input = json_decode(file_get_contents('php://input'), true);
     $file = $input['file'] ?? '';
     

@@ -346,6 +346,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { ToastService } from '@/services/ToastService'
+import { useCodespace } from '@/composables/useCodespace'
 
 const route = useRoute()
 
@@ -386,6 +387,10 @@ const activeFile = ref('')
 
 // Get project name from route
 const projectName = route.params.project || 'default-project'
+const codespaceName = route.params.codespace || 'main'
+
+// Initialize codespace
+const codespace = useCodespace(route.params)
 
 // API Methods - only for loading installed APIs
 const loadInstalledAPIs = async () => {
@@ -542,8 +547,9 @@ const getFileIcon = (file) => {
 // File Explorer Methods
 const refreshFiles = async () => {
   try {
-    const response = await axios.get(`file_api.php?project=${projectName}&action=list`)
-    const allFiles = flattenFileTree(response.data || [])
+    // Use codespace API to load files from specific codespace
+    await codespace.loadFiles()
+    const allFiles = flattenCodespaceFiles(codespace.files.value || [])
     
     // Make sure .monaco_apis files are included and not excluded from commits
     projectFiles.value = allFiles
@@ -551,13 +557,13 @@ const refreshFiles = async () => {
     // Update file tree
     fileTree.value = buildFileTree(filteredProjectFiles.value)
   } catch (error) {
-    console.error('Failed to load files:', error)
+    console.error('Failed to load files from codespace:', error)
     projectFiles.value = []
     fileTree.value = []
   }
 }
 
-const flattenFileTree = (files) => {
+const flattenCodespaceFiles = (files) => {
   let flattened = []
   files.forEach(file => {
     if (file.type === 'file') {
@@ -569,7 +575,7 @@ const flattenFileTree = (files) => {
         modified: file.modified
       })
     } else if (file.type === 'directory' && file.children) {
-      flattened = flattened.concat(flattenFileTree(file.children))
+      flattened = flattened.concat(flattenCodespaceFiles(file.children))
     }
   })
   return flattened
@@ -586,17 +592,14 @@ const createNewFile = async () => {
   const fileName = prompt('Enter file name (with extension):')
   if (fileName) {
     try {
-      await axios.post(`file_api.php?project=${projectName}`, {
-        action: 'create_file',
-        path: fileName,
-        content: ''
-      })
+      // Use codespace API to create file in specific codespace
+      await codespace.createFile(fileName, '')
       await refreshFiles()
       openFile({ name: fileName, path: fileName })
-      ToastService.success(`File "${fileName}" created successfully!`)
+      ToastService.success(`File "${fileName}" created successfully in codespace "${codespaceName}"!`)
     } catch (error) {
       console.error('Failed to create file:', error)
-      ToastService.error('Failed to create file: ' + (error.response?.data?.message || error.message))
+      ToastService.error('Failed to create file: ' + (error.message || 'Unknown error'))
     }
   }
 }
@@ -605,16 +608,16 @@ const createNewFolder = async () => {
   const folderName = prompt('Enter folder name:')
   if (folderName) {
     try {
-      // Create folder using the create_folder API
-      await axios.post(`file_api.php?project=${projectName}`, {
+      // Create folder using the codespace API with codespace parameter
+      await axios.post(`file_api.php?project=${projectName}&codespace=${codespaceName}`, {
         action: 'create_folder',
         path: folderName
       })
       await refreshFiles()
-      ToastService.success(`Folder "${folderName}" created successfully!`)
+      ToastService.success(`Folder "${folderName}" created successfully in codespace "${codespaceName}"!`)
     } catch (error) {
       console.error('Failed to create folder:', error)
-      ToastService.error('Failed to create folder: ' + error.response?.data?.message || error.message)
+      ToastService.error('Failed to create folder: ' + (error.response?.data?.message || error.message))
     }
   }
 }
@@ -622,14 +625,14 @@ const createNewFolder = async () => {
 const deleteFile = async (file) => {
   if (confirm(`Are you sure you want to delete ${file.name}?`)) {
     try {
-      await axios.delete(`file_api.php?project=${projectName}`, {
-        data: { file: file.path }
-      })
+      // Use codespace API to delete file from specific codespace
+      await codespace.deleteFile(file.path)
       await refreshFiles()
       await refreshGitStatus()
+      ToastService.success(`File "${file.name}" deleted from codespace "${codespaceName}"!`)
     } catch (error) {
       console.error('Failed to delete file:', error)
-      ToastService.error('Failed to delete file: ' + error.message)
+      ToastService.error('Failed to delete file: ' + (error.message || 'Unknown error'))
     }
   }
 }
@@ -637,16 +640,16 @@ const deleteFile = async (file) => {
 // Git Methods
 const loadGitData = async () => {
   try {
-    // Load real git changes
-    const changesResponse = await axios.get(`monaco_git_api.php?project=${projectName}&action=changes`)
+    // Load real git changes for specific codespace
+    const changesResponse = await axios.get(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}&action=changes`)
     if (changesResponse.data.success) {
       changedFiles.value = changesResponse.data.changes || []
     } else {
       changedFiles.value = []
     }
 
-    // Load commit history
-    const commitsResponse = await axios.get(`monaco_git_api.php?project=${projectName}&action=commits`)
+    // Load commit history for specific codespace
+    const commitsResponse = await axios.get(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}&action=commits`)
     if (commitsResponse.data.success) {
       recentCommits.value = commitsResponse.data.commits.map(commit => ({
         hash: commit.sha || commit.hash,
