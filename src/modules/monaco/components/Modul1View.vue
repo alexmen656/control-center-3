@@ -2,124 +2,64 @@
   <div class="monaco-container">
     <MonacoSidebar class="sidebar" />
     
-    <!-- Modern Welcome Screen -->
+    <!-- Professional Welcome Screen -->
     <div v-if="showWelcome" class="welcome-screen">
-      <div class="welcome-backdrop"></div>
+      <div class="welcome-header">
+        <h1 class="welcome-title">Codespaces</h1>
+        <p class="welcome-subtitle">Entwicklungsumgebung</p>
+      </div>
+      
       <div class="welcome-content">
-        <!-- Header mit Gradient -->
-        <div class="modern-header">
-          <div class="header-content">
-            <h1 class="main-title">Monaco Code Editor</h1>
-            <p class="subtitle">Professionelle Entwicklungsumgebung mit KI-Integration</p>
-          </div>
-          <div class="header-decoration">
-            <div class="code-symbols">
-              <span>&lt;/&gt;</span>
-              <span>{ }</span>
-              <span>[ ]</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Action Grid -->
-        <div class="action-grid">
-          <!-- Quick Start Card -->
-          <div class="action-card primary">
-            <div class="card-header">
-              <div class="card-icon">
-                <ion-icon name="rocket-outline"></ion-icon>
-              </div>
-              <h3>Schnellstart</h3>
-            </div>
-            <div class="card-actions">
-              <button @click="createNewFile" class="action-button primary">
-                <ion-icon name="document-outline"></ion-icon>
-                <span>Neue Datei</span>
-              </button>
-              <button @click="openFolder" class="action-button">
-                <ion-icon name="folder-outline"></ion-icon>
-                <span>Ordner öffnen</span>
-              </button>
-              <button @click="cloneRepository" class="action-button">
-                <ion-icon name="git-branch-outline"></ion-icon>
-                <span>Repository klonen</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Recent Files Card -->
-          <div class="action-card">
-            <div class="card-header">
-              <div class="card-icon">
-                <ion-icon name="time-outline"></ion-icon>
-              </div>
-              <h3>Kürzlich verwendet</h3>
-            </div>
-            <div class="recent-files" v-if="recentFiles.length > 0">
-              <div v-for="file in recentFiles" :key="file.name" 
-                   @click="loadFile(file.name)" 
-                   class="recent-item">
-                <div class="file-icon">
-                  <ion-icon :name="getFileIcon(file.name)" :style="{color: getFileColor(file.name)}"></ion-icon>
-                </div>
-                <div class="file-info">
-                  <span class="file-name">{{ file.name }}</span>
-                  <span class="file-path">~{{ projectName }}</span>
-                </div>
-                <ion-icon name="chevron-forward-outline" class="arrow-icon"></ion-icon>
-              </div>
-            </div>
-            <div v-else class="empty-state">
+        <div class="welcome-section">
+          <h3>Start</h3>
+          <div class="action-list">
+            <button @click="createNewFile" class="action-item">
               <ion-icon name="document-outline"></ion-icon>
-              <p>Keine kürzlich verwendeten Dateien</p>
-            </div>
-          </div>
-
-          <!-- AI Assistant Card -->
-          <div class="action-card ai">
-            <div class="card-header">
-              <div class="card-icon ai-icon">
-                <ion-icon name="sparkles-outline"></ion-icon>
-              </div>
-              <h3>KI-Assistent</h3>
-            </div>
-            <div class="card-actions">
-              <button @click="showAIHelp" class="action-button ai">
-                <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
-                <span>Chat starten</span>
-              </button>
-              <button @click="showGitHelp" class="action-button">
-                <ion-icon name="git-commit-outline"></ion-icon>
-                <span>Git-Hilfe</span>
-              </button>
-              <button @click="showEditorFeatures" class="action-button">
-                <ion-icon name="flash-outline"></ion-icon>
-                <span>Features</span>
-              </button>
-            </div>
+              <span>Neue Datei...</span>
+              <kbd>Ctrl+N</kbd>
+            </button>
+            <button @click="openFolder" class="action-item">
+              <ion-icon name="folder-outline"></ion-icon>
+              <span>Ordner öffnen...</span>
+            </button>
+            <button @click="cloneRepository" class="action-item">
+              <ion-icon name="git-branch-outline"></ion-icon>
+              <span>Repository klonen...</span>
+            </button>
           </div>
         </div>
 
-        <!-- Keyboard Shortcuts -->
-        <div class="shortcuts-section">
-          <h4>Tastenkürzel</h4>
-          <div class="shortcuts-grid">
-            <div class="shortcut-item">
-              <kbd>Ctrl</kbd> + <kbd>S</kbd>
-              <span>Speichern</span>
-            </div>
-            <div class="shortcut-item">
-              <kbd>Ctrl</kbd> + <kbd>N</kbd>
-              <span>Neue Datei</span>
-            </div>
-            <div class="shortcut-item">
-              <kbd>Ctrl</kbd> + <kbd>P</kbd>
-              <span>Datei suchen</span>
-            </div>
-            <div class="shortcut-item">
-              <kbd>F1</kbd>
-              <span>Befehlspalette</span>
-            </div>
+        <div class="welcome-section" v-if="recentFiles.length > 0">
+          <h3>Zuletzt verwendet</h3>
+          <div class="recent-files-list">
+            <button 
+              v-for="file in recentFiles" 
+              :key="file.name"
+              @click="loadFile(file.name)"
+              class="recent-file-item"
+            >
+              <ion-icon :name="getFileIcon(file.name)" :color="getFileColor(file.name)"></ion-icon>
+              <span class="file-name">{{ file.name }}</span>
+              <span class="file-path">{{ codespaceName }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="welcome-section">
+          <h3>Hilfe</h3>
+          <div class="action-list">
+            <button @click="showAIHelp" class="action-item">
+              <ion-icon name="chatbubble-outline"></ion-icon>
+              <span>KI-Assistent öffnen</span>
+            </button>
+            <a href="#" class="action-item">
+              <ion-icon name="book-outline"></ion-icon>
+              <span>Dokumentation</span>
+            </a>
+            <a href="#" class="action-item">
+              <ion-icon name="help-circle-outline"></ion-icon>
+              <span>Tastenkürzel anzeigen</span>
+            </a>
           </div>
         </div>
       </div>
@@ -783,427 +723,141 @@ const applyReplacement = (replacement) => {
   overflow: hidden;
 }
 
-/* Modern Welcome Screen Design */
+/* Professional Welcome Screen - VS Code Style */
 .welcome-screen {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  /*width: 100vw;*/
-  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0d1421 100%);
-  position: relative;
+  flex: 1;
+  background-color: #1e1e1e;
+  color: #cccccc;
   overflow: auto;
   padding: 0;
 }
 
-.welcome-backdrop {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 30%, rgba(234, 14, 43, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(0, 174, 255, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(138, 43, 226, 0.05) 0%, transparent 50%);
-  z-index: 1;
+.welcome-header {
+  padding: 32px 48px 24px;
+  border-bottom: 1px solid #323233;
+}
+
+.welcome-title {
+  font-size: 32px;
+  font-weight: 300;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+}
+
+.welcome-subtitle {
+  font-size: 14px;
+  color: #8c8c8c;
+  margin: 0;
 }
 
 .welcome-content {
-  position: relative;
-  z-index: 2;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 40px 20px;
-  min-height: 100vh;
   display: flex;
-  flex-direction: column;
-}
-
-/* Modern Header */
-.modern-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 60px;
-  padding: 40px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.header-content {
   flex: 1;
+  padding: 24px 48px;
+  gap: 48px;
 }
 
-.main-title {
-  font-size: 3.5rem;
-  font-weight: 100;
-  background: linear-gradient(135deg, #ffffff 0%, #ea0e2b 50%, #00aeff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-
-.subtitle {
-  font-size: 1.2rem;
-  color: #888;
-  margin: 16px 0 0 0;
-  font-weight: 300;
-}
-
-.header-decoration {
-  display: flex;
-  align-items: center;
-}
-
-.code-symbols {
-  display: flex;
-  gap: 20px;
-  font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
-  font-size: 2rem;
-  color: rgba(234, 14, 43, 0.3);
-}
-
-.code-symbols span {
-  animation: float 3s ease-in-out infinite;
-  animation-delay: calc(var(--i) * 0.5s);
-}
-
-.code-symbols span:nth-child(1) { --i: 0; }
-.code-symbols span:nth-child(2) { --i: 1; }
-.code-symbols span:nth-child(3) { --i: 2; }
-
-/* Action Grid */
-.action-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 30px;
-  margin-bottom: 60px;
+.welcome-section {
   flex: 1;
+  min-width: 300px;
 }
 
-.action-card {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.01) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 32px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(10px);
-  position: relative;
-  overflow: hidden;
-}
-
-.action-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent 0%, rgba(234, 14, 43, 0.5) 50%, transparent 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.action-card:hover::before {
-  opacity: 1;
-}
-
-.action-card:hover {
-  transform: translateY(-8px);
-  border-color: rgba(234, 14, 43, 0.3);
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(234, 14, 43, 0.1);
-}
-
-.action-card.primary {
-  background: linear-gradient(145deg, rgba(234, 14, 43, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
-}
-
-.action-card.ai {
-  background: linear-gradient(145deg, rgba(138, 43, 226, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.card-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(234, 14, 43, 0.1) 0%, rgba(234, 14, 43, 0.05) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ea0e2b;
-  font-size: 24px;
-}
-
-.card-icon.ai-icon {
-  background: linear-gradient(135deg, rgba(138, 43, 226, 0.1) 0%, rgba(138, 43, 226, 0.05) 100%);
-  color: #8a2be2;
-}
-
-.card-header h3 {
-  font-size: 1.5rem;
-  font-weight: 500;
-  color: #ffffff;
-  margin: 0;
-}
-
-.card-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.action-button {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+.welcome-section h3 {
+  font-size: 13px;
+  font-weight: 600;
   color: #cccccc;
-  font-size: 14px;
-  font-weight: 500;
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  color: #cccccc;
+  font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.1s ease;
+  text-decoration: none;
   width: 100%;
   text-align: left;
 }
 
-.action-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(234, 14, 43, 0.3);
-  transform: translateX(4px);
-  color: #ffffff;
+.action-item:hover {
+  background-color: #2a2d2e;
 }
 
-.action-button.primary {
-  background: linear-gradient(135deg, #ea0e2b 0%, #cf3c4f 100%);
-  border-color: #ea0e2b;
-  color: white;
+.action-item ion-icon {
+  font-size: 16px;
+  color: #8c8c8c;
 }
 
-.action-button.primary:hover {
-  background: linear-gradient(135deg, #cf3c4f 0%, #ea0e2b 100%);
-  transform: translateX(4px) translateY(-2px);
-  box-shadow: 0 8px 25px rgba(234, 14, 43, 0.3);
-}
-
-.action-button.ai {
-  background: linear-gradient(135deg, #8a2be2 0%, #9932cc 100%);
-  border-color: #8a2be2;
-  color: white;
-}
-
-.action-button.ai:hover {
-  background: linear-gradient(135deg, #9932cc 0%, #8a2be2 100%);
-  transform: translateX(4px) translateY(-2px);
-  box-shadow: 0 8px 25px rgba(138, 43, 226, 0.3);
-}
-
-/* Recent Files */
-.recent-files {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.recent-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.recent-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(234, 14, 43, 0.3);
-  transform: translateX(8px);
-}
-
-.file-icon {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-}
-
-.file-info {
+.action-item span {
   flex: 1;
+}
+
+.action-item kbd {
+  background-color: #444444;
+  border: 1px solid #5a5a5a;
+  border-radius: 2px;
+  padding: 2px 6px;
+  font-size: 11px;
+  color: #cccccc;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.recent-files-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+}
+
+.recent-file-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  color: #cccccc;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.recent-file-item:hover {
+  background-color: #2a2d2e;
+}
+
+.recent-file-item ion-icon {
+  font-size: 16px;
 }
 
 .file-name {
-  color: #ffffff;
-  font-weight: 500;
-  font-size: 14px;
+  flex: 1;
+  font-weight: 400;
 }
 
 .file-path {
-  color: #888;
-  font-size: 12px;
-}
-
-.arrow-icon {
-  color: #666;
-  font-size: 16px;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.recent-item:hover .arrow-icon {
-  opacity: 1;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: #666;
-}
-
-.empty-state ion-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  opacity: 0.3;
-}
-
-/* Keyboard Shortcuts */
-.shortcuts-section {
-  margin-top: auto;
-  padding-top: 40px;
-}
-
-.shortcuts-section h4 {
-  color: #ffffff;
-  font-size: 1.2rem;
-  font-weight: 500;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.shortcuts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.shortcut-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.shortcut-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(234, 14, 43, 0.2);
-}
-
-.shortcut-item kbd {
-  background: rgba(234, 14, 43, 0.1);
-  border: 1px solid rgba(234, 14, 43, 0.3);
-  color: #ea0e2b;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
   font-size: 11px;
-  font-weight: bold;
-  margin: 0 2px;
-}
-
-.shortcut-item span {
-  color: #cccccc;
-  font-size: 13px;
-}
-
-/* Animations */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .modern-header {
-    flex-direction: column;
-    text-align: center;
-    gap: 20px;
-  }
-  
-  .main-title {
-    font-size: 2.5rem;
-  }
-  
-  .action-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .shortcuts-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .code-symbols {
-    font-size: 1.5rem;
-    gap: 15px;
-  }
-}
-
-.recent-file-item ion-label p {
-  color: #666;
-  font-size: 12px;
-  margin: 4px 0 0 0;
-}
-
-.no-recent {
-  text-align: center;
-  padding: 20px;
-}
-
-.tips-card {
-  --background: rgba(255, 255, 255, 0.05);
-}
-
-.tips-card ion-card-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.tips-card ion-chip {
-  --background: rgba(255, 255, 255, 0.1);
-  --color: #ffffff;
-  --border-color: rgba(255, 255, 255, 0.2);
-  margin: 0 8px 0 0;
-}
-
-.tips-card ion-text {
-  font-size: 14px;
+  color: #8c8c8c;
 }
 
 .markdown-preview {
@@ -1213,6 +867,27 @@ const applyReplacement = (replacement) => {
   background-color: #f5f5f5;
   color: #333;
   border-left: 1px solid #ddd;
+}
+
+/* Responsive adjustments for Welcome Screen */
+@media (max-width: 768px) {
+  .welcome-content {
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px 24px;
+  }
+  
+  .welcome-header {
+    padding: 24px 24px 16px;
+  }
+  
+  .welcome-title {
+    font-size: 24px;
+  }
+  
+  .welcome-section {
+    min-width: auto;
+  }
 }
 
 /* AI Assistant Styles - CMS Red Theme */
