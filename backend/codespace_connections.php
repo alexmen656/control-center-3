@@ -604,20 +604,6 @@ function createInitialCommitAndPush($codespaceId, $repoFullName, $githubToken, $
             error_log("Failed to create Readme.md in GitHub repo $repoFullName");
         }
 
-
-        // Monaco Git-Metadaten aktualisierenS
-        $monacoCommitsFile = $codespaceDir . '/.monaco_commits.json';
-        $commits = [
-            [
-                'hash' => 'initial-' . uniqid(),
-                'message' => 'Initial commit',
-                'author' => 'Control Center',
-                'date' => date('c'),
-                'files' => array_keys($files)
-            ]
-        ];
-        file_put_contents($monacoCommitsFile, json_encode($commits, JSON_PRETTY_PRINT));
-
         return true;
     } catch (Exception $e) {
         error_log("Error creating initial commit: " . $e->getMessage());

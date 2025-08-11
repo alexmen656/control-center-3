@@ -434,7 +434,7 @@ function createMonacoProjectDirectory($href, $name, $userID, $projectID = 1)
 
 
         // Create initial commit metadata
-        $initialCommit = [
+       /* $initialCommit = [
             'hash' => 'initial-' . time(),
             'short_hash' => 'initial',
             'author' => 'Control Center IDE',
@@ -453,7 +453,7 @@ function createMonacoProjectDirectory($href, $name, $userID, $projectID = 1)
             'parents' => []
         ];
 
-        file_put_contents($dataDir . '/.monaco_commits.json', json_encode([$initialCommit], JSON_PRETTY_PRINT));
+        file_put_contents($dataDir . '/.monaco_commits.json', json_encode([$initialCommit], JSON_PRETTY_PRINT));*/
 
         // Set last commit state
         $lastCommit = [];
@@ -672,7 +672,7 @@ JS;
         file_put_contents($dataDir . '/vite.config.js', $viteConfig);
 
         // Create initial commit metadata
-        $initialCommit = [
+      /*  $initialCommit = [
             'hash' => 'initial-' . time(),
             'short_hash' => 'initial',
             'author' => 'Control Center IDE',
@@ -689,7 +689,7 @@ JS;
             ]
         ];
 
-        file_put_contents($dataDir . '/.monaco_commits.json', json_encode([$initialCommit], JSON_PRETTY_PRINT));
+        file_put_contents($dataDir . '/.monaco_commits.json', json_encode([$initialCommit], JSON_PRETTY_PRINT));*/
 
         // Set last commit state
         $lastCommit = [];

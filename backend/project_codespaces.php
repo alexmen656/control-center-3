@@ -304,8 +304,6 @@ function createCodespaceVercelProject($codespaceId, $name, $userID)
     $response = @file_get_contents($vercelApiUrl, false, $context);
     $data = $response ? json_decode($response, true) : null;
 
-    print_r($vercelApiUrl);
-    print_r($opts);
     if ($response && isset($data['id'])) {
         query("INSERT INTO codespace_vercel_projects (codespace_id, vercel_project_id, vercel_project_name, user_id) VALUES ('$codespaceId', '" . escape_string($data['id']) . "', '" . escape_string($data['name']) . "', '$userID')");
 
@@ -372,20 +370,6 @@ function createInitialCommitAndPush($codespaceId, $repoFullName, $githubToken, $
         if (!$result) {
             error_log("Failed to create Readme.md in GitHub repo $repoFullName");
         }
-
-
-        // Monaco Git-Metadaten aktualisierenS
-        $monacoCommitsFile = $codespaceDir . '/.monaco_commits.json';
-        $commits = [
-            [
-                'hash' => 'initial-' . uniqid(),
-                'message' => 'Initial commit',
-                'author' => 'Control Center',
-                'date' => date('c'),
-                'files' => array_keys($files)
-            ]
-        ];
-        file_put_contents($monacoCommitsFile, json_encode($commits, JSON_PRETTY_PRINT));
 
         return true;
     } catch (Exception $e) {
