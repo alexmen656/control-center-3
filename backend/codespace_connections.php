@@ -114,6 +114,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insert = query("INSERT INTO codespace_github_repos (codespace_id, repo_id, repo_name, repo_full_name, user_id) VALUES ('$codespace_id', '$repo_id', '$repo_name', '$repo_full_name', '$user_id')");
         
         if ($insert) {
+            // Initialen Commit erstellen und pushen
+            createInitialCommitAndPush($codespace_id, $repo['full_name'], $token, $user_id);
+            
             echo json_encode(['success' => true, 'repo' => $repo]);
         } else {
             echo json_encode(['error' => 'Failed to save repo connection after creation', 'repo' => $repo]);
@@ -542,4 +545,159 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 echo json_encode(['error' => 'Invalid request']);
+
+/**
+ * Erstellt einen initialen Commit und pusht ihn zu GitHub
+ */
+function createInitialCommitAndPush($codespace_id, $repoFullName, $githubToken, $user_id) {
+    try {
+        // Codespace-Info laden
+        $codespaceResult = query("SELECT pc.*, p.link as project_link FROM project_codespaces pc 
+                                 JOIN projects p ON pc.project_id = p.projectID 
+                                 WHERE pc.id='$codespace_id'");
+        $codespace = mysqli_fetch_assoc($codespaceResult);
+        
+        if (!$codespace) {
+            error_log("Codespace not found for initial commit: $codespace_id");
+            return false;
+        }
+        
+        // Codespace-Verzeichnis ermitteln
+        $codespaceDir = __DIR__ . "/../data/projects/" . $user_id . "/" . $codespace['project_link'] . "/" . $codespace['slug'];
+        
+        if (!is_dir($codespaceDir)) {
+            // Verzeichnis erstellen falls nicht vorhanden
+            mkdir($codespaceDir, 0755, true);
+        }
+        
+        // README.md erstellen falls nicht vorhanden
+        $readmeFile = $codespaceDir . '/README.md';
+        if (!file_exists($readmeFile)) {
+            $readmeContent = "# " . $codespace['name'] . "\n\n";
+            $readmeContent .= $codespace['description'] ?: "Codespace for " . $codespace['name'];
+            $readmeContent .= "\n\nCreated with Control Center\n";
+            file_put_contents($readmeFile, $readmeContent);
+        }
+        
+        // package.json erstellen falls JavaScript/TypeScript Projekt
+        $packageFile = $codespaceDir . '/package.json';
+        if (!file_exists($packageFile) && in_array($codespace['language'], ['javascript', 'typescript', 'vue', 'react', 'node'])) {
+            $packageContent = [
+                'name' => strtolower(preg_replace('/[^a-zA-Z0-9-_]/', '-', $codespace['name'])),
+                'version' => '1.0.0',
+                'description' => $codespace['description'] ?: 'Codespace project',
+                'main' => 'index.js',
+                'scripts' => [
+                    'start' => 'node index.js',
+                    'dev' => 'node index.js'
+                ],
+                'keywords' => [],
+                'author' => '',
+                'license' => 'MIT'
+            ];
+            file_put_contents($packageFile, json_encode($packageContent, JSON_PRETTY_PRINT));
+        }
+        
+        // index.js/index.html je nach Sprache erstellen
+        $indexFile = null;
+        switch ($codespace['language']) {
+            case 'javascript':
+            case 'node':
+                $indexFile = $codespaceDir . '/index.js';
+                if (!file_exists($indexFile)) {
+                    file_put_contents($indexFile, "console.log('Hello from " . $codespace['name'] . "!');\n");
+                }
+                break;
+            case 'typescript':
+                $indexFile = $codespaceDir . '/index.ts';
+                if (!file_exists($indexFile)) {
+                    file_put_contents($indexFile, "console.log('Hello from " . $codespace['name'] . "!');\n");
+                }
+                break;
+            case 'python':
+                $indexFile = $codespaceDir . '/main.py';
+                if (!file_exists($indexFile)) {
+                    file_put_contents($indexFile, "print('Hello from " . $codespace['name'] . "!')\n");
+                }
+                break;
+            case 'html':
+            case 'vue':
+            case 'react':
+            default:
+                $indexFile = $codespaceDir . '/index.html';
+                if (!file_exists($indexFile)) {
+                    $htmlContent = "<!DOCTYPE html>\n<html>\n<head>\n    <title>" . $codespace['name'] . "</title>\n</head>\n<body>\n    <h1>Welcome to " . $codespace['name'] . "</h1>\n</body>\n</html>\n";
+                    file_put_contents($indexFile, $htmlContent);
+                }
+                break;
+        }
+        
+        // Git-Repository initialisieren über GitHub API (leeres Repository befüllen)
+        $files = [];
+        
+        // Alle erstellten Dateien sammeln
+        if (file_exists($readmeFile)) {
+            $files['README.md'] = base64_encode(file_get_contents($readmeFile));
+        }
+        if (file_exists($packageFile)) {
+            $files['package.json'] = base64_encode(file_get_contents($packageFile));
+        }
+        if ($indexFile && file_exists($indexFile)) {
+            $files[basename($indexFile)] = base64_encode(file_get_contents($indexFile));
+        }
+        
+        // .gitignore erstellen
+        $gitignoreContent = "node_modules/\n.env\n*.log\n.DS_Store\n";
+        if ($codespace['language'] === 'python') {
+            $gitignoreContent .= "__pycache__/\n*.pyc\nvenv/\n";
+        }
+        $files['.gitignore'] = base64_encode($gitignoreContent);
+        
+        // Commit über GitHub API erstellen
+        $apiUrl = "https://api.github.com/repos/$repoFullName/contents/";
+        
+        foreach ($files as $filename => $content) {
+            $data = [
+                'message' => "Initial commit: Add $filename",
+                'content' => $content,
+                'branch' => 'main'
+            ];
+            
+            $opts = [
+                'http' => [
+                    'method' => 'PUT',
+                    'header' => "Authorization: token $githubToken\r\nUser-Agent: ControlCenter\r\nAccept: application/vnd.github.v3+json\r\nContent-Type: application/json\r\n",
+                    'content' => json_encode($data)
+                ]
+            ];
+            
+            $context = stream_context_create($opts);
+            $fileApiUrl = $apiUrl . $filename;
+            $result = @file_get_contents($fileApiUrl, false, $context);
+            
+            if (!$result) {
+                error_log("Failed to create file $filename in GitHub repo $repoFullName");
+            }
+        }
+        
+        // Monaco Git-Metadaten aktualisieren
+        $monacoCommitsFile = $codespaceDir . '/.monaco_commits.json';
+        $commits = [
+            [
+                'hash' => 'initial-' . uniqid(),
+                'message' => 'Initial commit',
+                'author' => 'Control Center',
+                'date' => date('c'),
+                'files' => array_keys($files)
+            ]
+        ];
+        file_put_contents($monacoCommitsFile, json_encode($commits, JSON_PRETTY_PRINT));
+        
+        return true;
+        
+    } catch (Exception $e) {
+        error_log("Error creating initial commit: " . $e->getMessage());
+        return false;
+    }
+}
 ?>
