@@ -434,7 +434,7 @@ function createMonacoProjectDirectory($href, $name, $userID, $projectID = 1)
 
 
         // Create initial commit metadata
-       /* $initialCommit = [
+        /* $initialCommit = [
             'hash' => 'initial-' . time(),
             'short_hash' => 'initial',
             'author' => 'Control Center IDE',
@@ -594,24 +594,19 @@ function getWebBuilderUrl($projectLink, $page = '')
     return $baseUrl . "project/" . $projectLink;
 }
 
-/**
- * Creates a Monaco IDE codespace directory structure
- */
-function createMonacoCodespaceDirectory($projectLink, $codespaceSlug, $codespaceName, $userID, $projectID = 1)
+function createMonacoCodespaceDirectory($projectLink, $codespaceSlug, $codespaceName, $userID, $template, $projectID = 1)
 {
-    // Create codespace data directory for Monaco IDE
     $dataDir = __DIR__ . "/../data/projects/" . $userID . "/" . $projectLink . "/" . $codespaceSlug;
 
     if (!is_dir($dataDir)) {
         mkdir($dataDir, 0777, true);
     }
 
-    // Initialize Monaco IDE metadata for this codespace
     if (!file_exists($dataDir . '/.monaco_initialized')) {
-        // Create initial Monaco IDE metadata files
         file_put_contents($dataDir . '/.monaco_initialized', json_encode([
             'codespace_name' => $codespaceName,
             'project_link' => $projectLink,
+            'template' => $template,
             'created_at' => date('c')
         ]));
 
@@ -619,44 +614,65 @@ function createMonacoCodespaceDirectory($projectLink, $codespaceSlug, $codespace
         file_put_contents($dataDir . '/.monaco_lastcommit.json', '{}');
         file_put_contents($dataDir . '/.monaco_commits.json', '[]');
 
-        // Create initial files based on template
-        file_put_contents($dataDir . '/main.js', "// Welcome to " . $codespaceName . "\nconsole.log('Hello from " . $codespaceName . "!');\n");
-        file_put_contents($dataDir . '/style.css', "/* Styles for " . $codespaceName . " */\nbody {\n    font-family: Arial, sans-serif;\n    margin: 0;\n    padding: 20px;\n}\n");
-        file_put_contents($dataDir . '/index.html', "<!DOCTYPE html>\n<html>\n<head>\n    <title>" . $codespaceName . "</title>\n    <link rel=\"stylesheet\" href=\"style.css\">\n</head>\n<body>\n    <h1>Welcome to " . $codespaceName . "</h1>\n    <p>This is your new codespace!</p>\n    <script src=\"main.js\"></script>\n</body>\n</html>");
+        // Copy template files if template exists
+        $templateDir = __DIR__ . "/templates/codespace/" . $template;
+        $packageName = strtolower(str_replace([' ', '-'], ['_', '_'], $codespaceName));
         
-        $vercelConfig = [
-            "version" => 2,
-            "name" => strtolower(str_replace([' ', '-'], ['_', '_'], $codespaceName)),
-            "builds" => [
-                [
-                    "src" => "index.html",
-                    "use" => "@vercel/static"
+        if (is_dir($templateDir)) {
+            // Copy all files from template directory
+            $templateFiles = glob($templateDir . '/*');
+            foreach ($templateFiles as $templateFile) {
+                if (is_file($templateFile)) {
+                    $fileName = basename($templateFile);
+                    $content = file_get_contents($templateFile);
+                    
+                    // Replace template placeholders
+                    $content = str_replace('[{[codespaceName]}]', $codespaceName, $content);
+                    $content = str_replace('[{[packageName]}]', $packageName, $content);
+                    $content = str_replace('[{[projectLink]}]', $projectLink, $content);
+                    
+                    file_put_contents($dataDir . '/' . $fileName, $content);
+                }
+            }
+        } else {
+            // Fallback to default vanilla-js template if template not found
+            file_put_contents($dataDir . '/main.js', "// Welcome to " . $codespaceName . "\nconsole.log('Hello from " . $codespaceName . "!');\n");
+            file_put_contents($dataDir . '/style.css', "/* Styles for " . $codespaceName . " */\nbody {\n    font-family: Arial, sans-serif;\n    margin: 0;\n    padding: 20px;\n}\n");
+            file_put_contents($dataDir . '/index.html', "<!DOCTYPE html>\n<html>\n<head>\n    <title>" . $codespaceName . "</title>\n    <link rel=\"stylesheet\" href=\"style.css\">\n</head>\n<body>\n    <h1>Welcome to " . $codespaceName . "</h1>\n    <p>This is your new codespace!</p>\n    <script src=\"main.js\"></script>\n</body>\n</html>");
+
+            $vercelConfig = [
+                "version" => 2,
+                "name" => $packageName,
+                "builds" => [
+                    [
+                        "src" => "index.html",
+                        "use" => "@vercel/static"
+                    ]
                 ]
-            ]
-        ];
-        file_put_contents($dataDir . '/vercel.json', json_encode($vercelConfig, JSON_PRETTY_PRINT));
+            ];
+            file_put_contents($dataDir . '/vercel.json', json_encode($vercelConfig, JSON_PRETTY_PRINT));
 
-        $packageConfig = [
-            "name" => strtolower(str_replace([' ', '-'], ['_', '_'], $codespaceName)),
-            "version" => "1.0.0",
-            "main" => "main.js",
-            "scripts" => [
-                "start" => "node main.js",
-                "test" => "echo \"Error: no test specified\" && exit 1"
-            ],
-            "author" => "Control Center IDE",
-            "license" => "ISC",
-            "description" => "A codespace created with Control Center IDE",
-            "dependencies" => [
-                "vercel" => "^41.7.0"
-            ],
-            "devDependencies" => [
-                "vite" => "^4.0.0"
-            ]
-        ];
-        file_put_contents($dataDir . '/package.json', json_encode($packageConfig, JSON_PRETTY_PRINT));
+            $packageConfig = [
+                "name" => $packageName,
+                "version" => "1.0.0",
+                "main" => "main.js",
+                "scripts" => [
+                    "start" => "node main.js",
+                    "test" => "echo \"Error: no test specified\" && exit 1"
+                ],
+                "author" => "Control Center IDE",
+                "license" => "ISC",
+                "description" => "A codespace created with Control Center IDE",
+                "dependencies" => [
+                    "vercel" => "^41.7.0"
+                ],
+                "devDependencies" => [
+                    "vite" => "^4.0.0"
+                ]
+            ];
+            file_put_contents($dataDir . '/package.json', json_encode($packageConfig, JSON_PRETTY_PRINT));
 
-        $viteConfig = <<<JS
+            $viteConfig = <<<JS
 import { defineConfig } from "vite";
 import path from "path";
 
@@ -668,40 +684,19 @@ export default defineConfig({
     }
 });
 JS;
+            file_put_contents($dataDir . '/vite.config.js', $viteConfig);
+        }
 
-        file_put_contents($dataDir . '/vite.config.js', $viteConfig);
-
-        // Create initial commit metadata
-      /*  $initialCommit = [
-            'hash' => 'initial-' . time(),
-            'short_hash' => 'initial',
-            'author' => 'Control Center IDE',
-            'email' => 'ide@controlcenter.dev',
-            'date' => date('c'),
-            'message' => 'Initial codespace setup: ' . $codespaceName,
-            'files' => [
-                ['path' => 'main.js'],
-                ['path' => 'style.css'],
-                ['path' => 'index.html'],
-                ['path' => 'vercel.json'],
-                ['path' => 'package.json'],
-                ['path' => 'vite.config.js']
-            ]
-        ];
-
-        file_put_contents($dataDir . '/.monaco_commits.json', json_encode([$initialCommit], JSON_PRETTY_PRINT));*/
-
-        // Set last commit state
         $lastCommit = [];
-        $files = ['main.js', 'style.css', 'index.html', 'vercel.json', 'package.json', 'vite.config.js'];
-        foreach ($files as $file) {
-            if (file_exists($dataDir . '/' . $file)) {
-                $lastCommit[$file] = file_get_contents($dataDir . '/' . $file);
+        $createdFiles = glob($dataDir . '/*');
+        foreach ($createdFiles as $file) {
+            if (is_file($file) && !strpos(basename($file), '.monaco_')) {
+                $fileName = basename($file);
+                $lastCommit[$fileName] = md5(file_get_contents($file));
             }
         }
         file_put_contents($dataDir . '/.monaco_lastcommit.json', json_encode($lastCommit, JSON_PRETTY_PRINT));
 
-        // Create CMS APIs setup and copy subscribed APIs
         createCMSAPISetup($dataDir, $projectID);
     }
 

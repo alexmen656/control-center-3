@@ -160,13 +160,29 @@
             <ion-item>
               <ion-label position="stacked">Template</ion-label>
               <ion-select v-model="formData.template" placeholder="Template auswählen">
-                <ion-select-option value="default">Standard</ion-select-option>
-                <ion-select-option value="web-app">Web App</ion-select-option>
-                <ion-select-option value="api">API</ion-select-option>
-                <ion-select-option value="library">Library</ion-select-option>
-                <ion-select-option value="static">Static Site</ion-select-option>
+                <ion-select-option 
+                  v-for="template in availableTemplates" 
+                  :key="template.id" 
+                  :value="template.id"
+                >
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <ion-icon :name="template.icon" style="font-size: 1.2em;"></ion-icon>
+                    {{ template.name }}
+                  </div>
+                </ion-select-option>
               </ion-select>
             </ion-item>
+
+            <!-- Template Description -->
+            <div v-if="formData.template && getSelectedTemplate()" class="template-preview">
+              <div class="template-info">
+                <ion-icon :name="getSelectedTemplate().icon" class="template-icon"></ion-icon>
+                <div>
+                  <h4>{{ getSelectedTemplate().name }}</h4>
+                  <p>{{ getSelectedTemplate().description }}</p>
+                </div>
+              </div>
+            </div>
 
             <ion-item>
               <ion-label position="stacked">Icon</ion-label>
@@ -473,7 +489,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton,
@@ -514,15 +530,52 @@ const showVercelModal = ref(false)
 const vercelProjects = ref([])
 const loadingVercelProjects = ref(false)
 
+// Available Templates
+const availableTemplates = ref([])
+const loadingTemplates = ref(false)
+
 const formData = ref({
   name: '',
   description: '',
   language: 'javascript',
-  template: 'default',
+  template: 'vanilla-js',
   icon: 'code-outline',
   createGithubRepo: false,
   createVercelProject: false
 })
+
+const loadAvailableTemplates = async () => {
+  try {
+    loadingTemplates.value = true
+    
+    const response = await axios.post('project_codespaces.php', qs.stringify({
+      getAvailableTemplates: true
+    }))
+
+    if (response.data.success) {
+      availableTemplates.value = response.data.templates
+    } else {
+      // Fallback templates if backend fails
+      availableTemplates.value = [
+        { id: 'vanilla-js', name: 'Vanilla JavaScript', description: 'Basic HTML, CSS and JavaScript setup', icon: 'logo-javascript' },
+        { id: 'react', name: 'React', description: 'React application with Vite build tool', icon: 'logo-react' },
+        { id: 'vue', name: 'Vue.js', description: 'Vue.js application with Vite build tool', icon: 'logo-vue' },
+        { id: 'node', name: 'Node.js', description: 'Node.js server with Express framework', icon: 'logo-nodejs' }
+      ]
+    }
+  } catch (error) {
+    console.error('Error loading templates:', error)
+    // Fallback templates
+    availableTemplates.value = [
+      { id: 'vanilla-js', name: 'Vanilla JavaScript', description: 'Basic HTML, CSS and JavaScript setup', icon: 'logo-javascript' },
+      { id: 'react', name: 'React', description: 'React application with Vite build tool', icon: 'logo-react' },
+      { id: 'vue', name: 'Vue.js', description: 'Vue.js application with Vite build tool', icon: 'logo-vue' },
+      { id: 'node', name: 'Node.js', description: 'Node.js server with Express framework', icon: 'logo-nodejs' }
+    ]
+  } finally {
+    loadingTemplates.value = false
+  }
+}
 
 const loadCodespaces = async () => {
   try {
@@ -569,13 +622,19 @@ const loadCodespaces = async () => {
   }
 }
 
-const createNewCodespace = () => {
+const createNewCodespace = async () => {
   editingCodespace.value = null
+  
+  // Load templates if not already loaded
+  if (availableTemplates.value.length === 0) {
+    await loadAvailableTemplates()
+  }
+  
   formData.value = {
     name: '',
     description: '',
     language: 'javascript',
-    template: 'default',
+    template: availableTemplates.value.length > 0 ? availableTemplates.value[0].id : 'vanilla-js',
     icon: 'code-outline',
     createGithubRepo: false,
     createVercelProject: false
@@ -1021,8 +1080,33 @@ const getLanguageColor = (language) => {
   return colors[language] || 'medium'
 }
 
+const getSelectedTemplate = () => {
+  return availableTemplates.value.find(template => template.id === formData.value.template)
+}
+
+const getDefaultLanguageForTemplate = (templateId) => {
+  const mapping = {
+    'vanilla-js': 'javascript',
+    'react': 'javascript',
+    'vue': 'javascript', 
+    'node': 'javascript',
+    'typescript': 'typescript',
+    'python': 'python',
+    'php': 'php'
+  }
+  return mapping[templateId] || 'javascript'
+}
+
 onMounted(() => {
   loadCodespaces()
+  loadAvailableTemplates()
+})
+
+// Watch template changes to update language automatically
+watch(() => formData.value.template, (newTemplate) => {
+  if (newTemplate && !editingCodespace.value) {
+    formData.value.language = getDefaultLanguageForTemplate(newTemplate)
+  }
 })
 </script>
 
@@ -1324,5 +1408,37 @@ onMounted(() => {
 
 .modal-actions {
   margin-top: 24px;
+}
+
+.template-preview {
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--ion-color-light);
+  border-radius: 8px;
+  border: 1px solid var(--ion-color-light-shade);
+}
+
+.template-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.template-icon {
+  font-size: 1.5rem;
+  color: var(--ion-color-primary);
+}
+
+.template-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+}
+
+.template-info p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
 }
 </style>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[{[codespaceName]}]</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to [{[codespaceName]}]</h1>
+        <div class="content">
+            <p>This is your new Node.js codespace!</p>
+            <p>The server is running on <code>http://localhost:3000</code></p>
+            
+            <div class="api-test">
+                <button onclick="testAPI()">Test API</button>
+                <div id="api-result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testAPI() {
+            try {
+                const response = await fetch('/api/hello');
+                const data = await response.json();
+                document.getElementById('api-result').innerHTML = 
+                    `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('api-result').innerHTML = 
+                    `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

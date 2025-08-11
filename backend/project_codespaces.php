@@ -2,6 +2,12 @@
 include "head.php";
 include "project_helper.php";
 
+function slugExists($projectID, $slug)
+{
+    $result = query("SELECT id FROM project_codespaces WHERE project_id='" . escape_string($projectID) . "' AND slug='" . escape_string($slug) . "'");
+    return mysqli_num_rows($result) > 0;
+}
+
 if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST['name'])) {
     $projectID = getProjectID(escape_string($_POST['project']));
     $name = escape_string($_POST['name']);
@@ -9,20 +15,14 @@ if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST
     $icon = escape_string($_POST['icon'] ?? 'code-outline');
     $language = escape_string($_POST['language'] ?? 'javascript');
     $template = escape_string($_POST['template'] ?? 'default');
+    $slug = trim(strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $name)), '-');
 
-    // Slug generieren
-    $slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $name));
-    $slug = trim($slug, '-');
-
-    // Prüfen ob Projekt existiert und Benutzer Berechtigung hat
     if (!checkUserProjectPermission($userID, $projectID)) {
         echo jsonResponse("No permission for this project", false);
         exit;
     }
 
-    // Prüfen ob Slug bereits existiert
-    $existingCheck = query("SELECT id FROM project_codespaces WHERE project_id='$projectID' AND slug='$slug'");
-    if (mysqli_num_rows($existingCheck) > 0) {
+    if (slugExists($projectID, $slug)) {
         echo jsonResponse("A codespace with this name already exists", false);
         exit;
     }
@@ -32,25 +32,21 @@ if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST
     $maxOrder = fetch_assoc($orderResult)['max_order'] ?? 0;
     $newOrder = $maxOrder + 1;
 
-    // Codespace erstellen
     $result = query("INSERT INTO project_codespaces (name, slug, description, icon, language, template, project_id, user_id, order_index) 
                     VALUES ('$name', '$slug', '$description', '$icon', '$language', '$template', '$projectID', '$userID', '$newOrder')");
 
     if ($result) {
         $codespaceId = mysqli_insert_id($GLOBALS['con']);
-
-        // Monaco-Verzeichnis erstellen
         $project = getProjectByID($projectID);
+
         if ($project) {
-            createMonacoCodespaceDirectory($project['link'], $slug, $name, $userID, $projectID);
+            createMonacoCodespaceDirectory($project['link'], $slug, $name, $userID, $template, $projectID);
         }
 
-        // Auto-create GitHub repo if requested
         if (isset($_POST['createGithubRepo']) && $_POST['createGithubRepo'] === 'true') {
             createCodespaceGithubRepo($codespaceId, $name, $userID);
         }
 
-        // Auto-create Vercel project if requested (requires GitHub repo)
         if (isset($_POST['createVercelProject']) && $_POST['createVercelProject'] === 'true') {
             createCodespaceVercelProject($codespaceId, $name, $userID);
         }
@@ -183,13 +179,43 @@ if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST
     }
 
     echo jsonResponse(['codespaces' => $result]);
+} elseif (isset($_POST['getAvailableTemplates'])) {
+    // Verfügbare Templates aus dem Dateisystem laden
+    $templatesDir = __DIR__ . "/templates/codespace/";
+    $templates = [];
+    
+    if (is_dir($templatesDir)) {
+        $templateDirs = array_filter(scandir($templatesDir), function($item) use ($templatesDir) {
+            return $item != '.' && $item != '..' && is_dir($templatesDir . $item);
+        });
+        
+        foreach ($templateDirs as $templateDir) {
+            $templatePath = $templatesDir . $templateDir;
+            $templateInfo = [
+                'id' => $templateDir,
+                'name' => ucfirst(str_replace(['-', '_'], ' ', $templateDir)),
+                'description' => getTemplateDescription($templateDir),
+                'icon' => getTemplateIcon($templateDir)
+            ];
+            $templates[] = $templateInfo;
+        }
+    }
+    
+    // Fallback Template hinzufügen falls keine Templates gefunden wurden
+    if (empty($templates)) {
+        $templates[] = [
+            'id' => 'vanilla-js',
+            'name' => 'Vanilla JavaScript',
+            'description' => 'Basic HTML, CSS and JavaScript setup',
+            'icon' => 'logo-javascript'
+        ];
+    }
+    
+    echo jsonResponse(['templates' => $templates]);
 } else {
     echo jsonResponse("Invalid request", false);
 }
 
-/**
- * Löscht ein Verzeichnis rekursiv
- */
 function deleteDirectory($dir)
 {
     if (!is_dir($dir)) return false;
@@ -203,9 +229,38 @@ function deleteDirectory($dir)
     return rmdir($dir);
 }
 
-/**
- * Erstellt automatisch ein GitHub Repository für einen Codespace
- */
+function getTemplateDescription($templateDir)
+{
+    $descriptions = [
+        'vanilla-js' => 'Basic HTML, CSS and JavaScript setup',
+        'react' => 'React application with Vite build tool',
+        'vue' => 'Vue.js application with Vite build tool', 
+        'node' => 'Node.js server with Express framework',
+        'angular' => 'Angular application with TypeScript',
+        'svelte' => 'Svelte application with modern tooling',
+        'next' => 'Next.js React framework',
+        'nuxt' => 'Nuxt.js Vue framework'
+    ];
+    
+    return $descriptions[$templateDir] ?? 'Custom development environment';
+}
+
+function getTemplateIcon($templateDir)
+{
+    $icons = [
+        'vanilla-js' => 'logo-javascript',
+        'react' => 'logo-react',
+        'vue' => 'logo-vue', 
+        'node' => 'logo-nodejs',
+        'angular' => 'logo-angular',
+        'svelte' => 'logo-web-component',
+        'next' => 'logo-react',
+        'nuxt' => 'logo-vue'
+    ];
+    
+    return $icons[$templateDir] ?? 'code-outline';
+}
+
 function createCodespaceGithubRepo($codespaceId, $name, $userID)
 {
     // Token holen

@@ -1,0 +1,19 @@
+{
+  "name": "[{[packageName]}]",
+  "version": "1.0.0",
+  "description": "A Node.js codespace created with Control Center IDE",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "dev": "nodemon main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Control Center IDE",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
