@@ -383,7 +383,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Domain zu Vercel-Projekt hinzufügen
         $vercelApiUrl = "https://api.vercel.com/v10/projects/{$vercel_project_id}/domains";
         $vercelData = ['name' => $full_domain];
-        print_r($vercelData);
         $vercelOpts = [
             'http' => [
                 'method' => 'POST',
