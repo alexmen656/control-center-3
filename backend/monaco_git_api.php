@@ -51,31 +51,48 @@ function getProjectPath($project, $userID, $codespace = 'main') {
     return __DIR__ . '/../data/projects/' . $userID . '/' . $project . '/' . $codespace;
 }
 
-function getGitHubCredentials($project, $userID) {
+function getGitHubCredentials($project, $userID, $codespace = 'main') {
     try {
+        // Zuerst müssen wir die codespace_id finden
+        $codespaceQuery = "SELECT pc.id as codespace_id FROM project_codespaces pc 
+                          JOIN projects p ON pc.project_id = p.projectID 
+                          WHERE p.link = '$project' AND pc.slug = '$codespace' LIMIT 1";
+        $codespaceResult = query($codespaceQuery);
+        
+        if (!$codespaceResult || mysqli_num_rows($codespaceResult) == 0) {
+            error_log("Codespace not found for project: $project, codespace: $codespace");
+            return null;
+        }
+        
+        $codespaceData = mysqli_fetch_assoc($codespaceResult);
+        $codespaceId = $codespaceData['codespace_id'];
+        
+        // Hole GitHub Repository für diesen Codespace
+        $repoQuery = "SELECT repo_full_name FROM codespace_github_repos WHERE codespace_id = '$codespaceId' LIMIT 1";
+        $repoResult = query($repoQuery);
+        
+        if (!$repoResult || mysqli_num_rows($repoResult) == 0) {
+            error_log("No GitHub repo found for codespace ID: $codespaceId");
+            return null;
+        }
+        
+        $repoData = mysqli_fetch_assoc($repoResult);
+        
         // Get GitHub token for user
         $tokenQuery = "SELECT github_token FROM control_center_github_tokens WHERE userID = '$userID' LIMIT 1";
         $tokenResult = query($tokenQuery);
         
         if (!$tokenResult || mysqli_num_rows($tokenResult) == 0) {
-            return null; // No GitHub integration
+            error_log("No GitHub token found for user: $userID");
+            return null;
         }
         
         $tokenData = mysqli_fetch_assoc($tokenResult);
         
-        // Get repository info for project
-        $repoQuery = "SELECT repo_full_name FROM control_center_project_repos WHERE project = '$project' LIMIT 1";
-        $repoResult = query($repoQuery);
-        
-        if (!$repoResult || mysqli_num_rows($repoResult) == 0) {
-            return null; // No repository linked
-        }
-        
-        $repoData = mysqli_fetch_assoc($repoResult);
-        
         // Split repo_full_name into owner/repo
         $repoParts = explode('/', $repoData['repo_full_name']);
         if (count($repoParts) !== 2) {
+            error_log("Invalid repo format: " . $repoData['repo_full_name']);
             return null;
         }
         
@@ -83,7 +100,8 @@ function getGitHubCredentials($project, $userID) {
             'token' => $tokenData['github_token'],
             'owner' => $repoParts[0],
             'repo' => $repoParts[1],
-            'repo_full_name' => $repoData['repo_full_name']
+            'repo_full_name' => $repoData['repo_full_name'],
+            'codespace_id' => $codespaceId
         ];
     } catch (Exception $e) {
         error_log("GitHub credentials error: " . $e->getMessage());
@@ -574,10 +592,10 @@ function handleGetRequest($action, $projectPath, $project, $userID, $codespace =
             break;
         case 'diff':
             $file = $_GET['file'] ?? '';
-            echo json_encode(getFileDiff($projectPath, $file, $project, $userID));
+            echo json_encode(getFileDiff($projectPath, $file, $project, $userID, $codespace));
             break;
         case 'branches':
-            echo json_encode(getBranches($project, $userID));
+            echo json_encode(getBranches($project, $userID, $codespace));
             break;
         default:
             throw new Exception('Invalid action');
@@ -596,22 +614,22 @@ function handlePostRequest($projectPath, $project, $userID, $codespace = 'main')
             echo json_encode(unstageFile($projectPath, $input['file']));
             break;
         case 'commit':
-            error_log("Commit request received - Project: $project, Message: " . ($input['message'] ?? 'empty') . ", Files count: " . count($input['files'] ?? []));
-            echo json_encode(commitChanges($projectPath, $input['message'], $input['files'] ?? [], $project, $userID));
+            error_log("Commit request received - Project: $project, Codespace: $codespace, Message: " . ($input['message'] ?? 'empty') . ", Files count: " . count($input['files'] ?? []));
+            echo json_encode(commitChanges($projectPath, $input['message'], $input['files'] ?? [], $project, $userID, $codespace));
             break;
         case 'push':
-            error_log("Push request received - Project: $project");
-            echo json_encode(pushToGitHub($projectPath, $project, $userID));
+            error_log("Push request received - Project: $project, Codespace: $codespace");
+            echo json_encode(pushToGitHub($projectPath, $project, $userID, $codespace));
             break;
         case 'auto_resolve_conflicts':
             $conflicts = $_POST['conflicts'] ?? [];
-            echo json_encode(autoResolveConflicts($projectPath, $conflicts, $project, $userID));
+            echo json_encode(autoResolveConflicts($projectPath, $conflicts, $project, $userID, $codespace));
             break;
         case 'pull':
-            echo json_encode(pullFromGitHubToLocal($projectPath, $project, $userID));
+            echo json_encode(pullFromGitHubToLocal($projectPath, $project, $userID, $codespace));
             break;
         case 'discard':
-            echo json_encode(discardChanges($projectPath, $input['file'], $project, $userID));
+            echo json_encode(discardChanges($projectPath, $input['file'], $project, $userID, $codespace));
             break;
         default:
             throw new Exception('Invalid action');
@@ -738,7 +756,7 @@ function getDetailedChanges($projectPath, $project, $userID) {
 }
 
 function getCommitHistory($project, $userID, $codespace = 'main') {
-    $credentials = getGitHubCredentials($project, $userID);
+    $credentials = getGitHubCredentials($project, $userID, $codespace);
     
     if (!$credentials) {
         // Return local commit history if no GitHub integration
@@ -841,8 +859,8 @@ function unstageFile($projectPath, $file) {
     ];
 }
 
-function commitChanges($projectPath, $message, $files, $project, $userID) {
-    error_log("CommitChanges called - Message: $message, Files: " . json_encode($files));
+function commitChanges($projectPath, $message, $files, $project, $userID, $codespace) {
+    error_log("CommitChanges called - Message: $message, Files: " . json_encode($files) . ", Codespace: $codespace");
     
     // Stage all files if none specified
     if (empty($files)) {
@@ -969,8 +987,10 @@ function commitChanges($projectPath, $message, $files, $project, $userID) {
     ];
 }
 
-function pullFromGitHubToLocal($projectPath, $project, $userID) {
-    $credentials = getGitHubCredentials($project, $userID);
+function pullFromGitHubToLocal($projectPath, $project, $userID, $codespace) {
+    error_log("pullFromGitHubToLocal called - Project: $project, User: $userID, Codespace: $codespace");
+    
+    $credentials = getGitHubCredentials($project, $userID, $codespace);
     
     if (!$credentials) {
         throw new Exception('GitHub credentials not found');
@@ -1007,10 +1027,10 @@ function pullFromGitHubToLocal($projectPath, $project, $userID) {
     }
 }
 
-function pushToGitHub($projectPath, $project, $userID) {
-    error_log("PushToGitHub called - Project: $project");
+function pushToGitHub($projectPath, $project, $userID, $codespace) {
+    error_log("PushToGitHub called - Project: $project, User: $userID, Codespace: $codespace");
     
-    $credentials = getGitHubCredentials($project, $userID);
+    $credentials = getGitHubCredentials($project, $userID, $codespace);
     
     if (!$credentials) {
         throw new Exception('GitHub credentials not found for project');
@@ -1055,8 +1075,10 @@ function pushToGitHub($projectPath, $project, $userID) {
     }
 }
 
-function discardChanges($projectPath, $file, $project, $userID) {
-    $credentials = getGitHubCredentials($project, $userID);
+function discardChanges($projectPath, $file, $project, $userID, $codespace) {
+    error_log("discardChanges called - File: $file, Project: $project, User: $userID, Codespace: $codespace");
+    
+    $credentials = getGitHubCredentials($project, $userID, $codespace);
     
     if ($credentials) {
         // Restore from GitHub
@@ -1103,7 +1125,9 @@ function discardChanges($projectPath, $file, $project, $userID) {
     ];
 }
 
-function getFileDiff($projectPath, $file, $project, $userID) {
+function getFileDiff($projectPath, $file, $project, $userID, $codespace) {
+    error_log("getFileDiff called - File: $file, Project: $project, User: $userID, Codespace: $codespace");
+    
     $filePath = $projectPath . '/' . $file;
     
     if (!file_exists($filePath)) {
@@ -1122,7 +1146,7 @@ function getFileDiff($projectPath, $file, $project, $userID) {
     $originalContent = '';
     
     // Try to get original content from GitHub first
-    $credentials = getGitHubCredentials($project, $userID);
+    $credentials = getGitHubCredentials($project, $userID, $codespace);
     if ($credentials) {
         try {
             $github = new GitHubAPI($credentials['token'], $credentials['owner'], $credentials['repo']);
@@ -1205,7 +1229,9 @@ function generateLineDiff($originalLines, $currentLines) {
     return $diff;
 }
 
-function autoResolveConflicts($projectPath, $conflicts, $project, $userID) {
+function autoResolveConflicts($projectPath, $conflicts, $project, $userID, $codespace) {
+    error_log("autoResolveConflicts called - Project: $project, User: $userID, Codespace: $codespace, Conflicts: " . json_encode($conflicts));
+    
     try {
         foreach ($conflicts as $file) {
             $filePath = $projectPath . '/' . $file;
@@ -1247,8 +1273,8 @@ function autoResolveConflicts($projectPath, $conflicts, $project, $userID) {
     }
 }
 
-function getBranches($project, $userID) {
-    $credentials = getGitHubCredentials($project, $userID);
+function getBranches($project, $userID, $codespace = 'main') {
+    $credentials = getGitHubCredentials($project, $userID, $codespace);
     
     if (!$credentials) {
         return [

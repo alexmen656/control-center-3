@@ -20,6 +20,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once 'head.php';
 
+function getVercelProjectForCodespace($userID, $project, $codespace = 'main') {
+    // Zuerst müssen wir die codespace_id finden
+    $codespaceQuery = "SELECT pc.id as codespace_id FROM project_codespaces pc 
+                      JOIN projects p ON pc.project_id = p.projectID 
+                      WHERE p.link = '$project' AND pc.slug = '$codespace' LIMIT 1";
+    $codespaceResult = query($codespaceQuery);
+    
+    if (!$codespaceResult || mysqli_num_rows($codespaceResult) == 0) {
+        return null;
+    }
+    
+    $codespaceData = mysqli_fetch_assoc($codespaceResult);
+    $codespaceId = $codespaceData['codespace_id'];
+    
+    // Hole Vercel-Projekt für diesen Codespace
+    $vercelQuery = "SELECT vercel_project_id, vercel_project_name FROM codespace_vercel_projects 
+                   WHERE codespace_id = '$codespaceId' AND user_id = '$userID' LIMIT 1";
+    $vercelResult = query($vercelQuery);
+    
+    if (!$vercelResult || mysqli_num_rows($vercelResult) == 0) {
+        return null;
+    }
+    
+    return mysqli_fetch_assoc($vercelResult);
+}
+
 function getUserIDFromToken() {
     global $jwt_secret;
     
@@ -48,7 +74,7 @@ function getVercelCredentials($userID) {
         throw new Exception("No Vercel token found for user");
     }
     
-    $tokenData = fetch_assoc($tokenResult);
+    $tokenData = mysqli_fetch_assoc($tokenResult);
     
     return [
         'token' => $tokenData['vercel_token']
@@ -208,8 +234,10 @@ class VercelAPI {
 }
 
 try {
-    // Get project information
+    // Get project and codespace information
     $project = $_GET['project'] ?? $_POST['project'] ?? null;
+    $codespace = $_GET['codespace'] ?? $_POST['codespace'] ?? 'main';
+    
     if (!$project) {
         throw new Exception('Project parameter is required');
     }
@@ -217,8 +245,16 @@ try {
     // Get user ID from JWT token
     $userID = getUserIDFromToken();
     
+    // Build codespace-specific project path
+    $projectPath = "/data/projects/$userID/$project/$codespace";
+    
     // Get Vercel credentials from database
     $credentials = getVercelCredentials($userID);
+    
+    // Get codespace-specific Vercel project
+    $codespaceVercelProject = getVercelProjectForCodespace($userID, $project, $codespace);
+    $vercelProjectId = $codespaceVercelProject ? $codespaceVercelProject['vercel_project_id'] : $project;
+    $vercelProjectName = $codespaceVercelProject ? $codespaceVercelProject['vercel_project_name'] : $project;
     
     $vercel = new VercelAPI($credentials['token']);
     
@@ -226,7 +262,7 @@ try {
         if (isset($_GET['action'])) {
             switch ($_GET['action']) {
                 case 'deployments':
-                    $deployments = $vercel->getDeployments($project);
+                    $deployments = $vercel->getDeployments($vercelProjectName);
                     echo json_encode(['success' => true, 'deployments' => $deployments]);
                     break;
                     
@@ -236,12 +272,12 @@ try {
                     break;
                     
                 case 'project':
-                    $projectData = $vercel->getProject($project);
+                    $projectData = $vercel->getProject($vercelProjectName);
                     echo json_encode(['success' => true, 'project' => $projectData]);
                     break;
                     
                 case 'env':
-                    $envVars = $vercel->getEnvironmentVariablesWithValues($project);
+                    $envVars = $vercel->getEnvironmentVariablesWithValues($vercelProjectName);
                     echo json_encode(['success' => true, 'envVars' => $envVars]);
                     break;
                     
@@ -250,7 +286,7 @@ try {
             }
         } else {
             // Default: return recent deployments
-            $deployments = $vercel->getDeployments($project);
+            $deployments = $vercel->getDeployments($vercelProjectName);
             echo json_encode(['success' => true, 'deployments' => $deployments]);
         }
     } else if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -262,7 +298,7 @@ try {
                     $files = $input['files'] ?? [];
                     $gitSource = $input['gitSource'] ?? null;
                     
-                    $deployment = $vercel->createDeployment($project, $files, $gitSource);
+                    $deployment = $vercel->createDeployment($vercelProjectName, $files, $gitSource);
                     echo json_encode(['success' => true, 'deployment' => $deployment]);
                     break;
                     

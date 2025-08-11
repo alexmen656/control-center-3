@@ -22,15 +22,30 @@ function sendResponse($success, $data = null, $message = null) {
     exit;
 }
 
-function getGitHubTokenForProject($user_id, $project_name) {
-    $escaped_user_id = escape_string($user_id);
-    $escaped_project = escape_string($project_name);
+function getGitHubTokenForProject($user_id, $project_name, $codespace = 'main') {
+    $escaped_user_id = mysqli_real_escape_string($GLOBALS['con'], $user_id);
+    $escaped_project = mysqli_real_escape_string($GLOBALS['con'], $project_name);
+    $escaped_codespace = mysqli_real_escape_string($GLOBALS['con'], $codespace);
     
-    $sql = "SELECT gt.github_token as token, pr.repo_full_name as github_repo
+    // Zuerst müssen wir die codespace_id finden
+    $codespaceQuery = "SELECT pc.id as codespace_id FROM project_codespaces pc 
+                      JOIN projects p ON pc.project_id = p.projectID 
+                      WHERE p.link = '$escaped_project' AND pc.slug = '$escaped_codespace' LIMIT 1";
+    $codespaceResult = query($codespaceQuery);
+    
+    if (!$codespaceResult || mysqli_num_rows($codespaceResult) == 0) {
+        return null;
+    }
+    
+    $codespaceData = mysqli_fetch_assoc($codespaceResult);
+    $codespaceId = $codespaceData['codespace_id'];
+    
+    // Hole GitHub Repository für diesen Codespace und Token für User
+    $sql = "SELECT gt.github_token as token, cgr.repo_full_name as github_repo
             FROM control_center_github_tokens gt
-            JOIN control_center_project_repos pr ON gt.userid = pr.user_id
+            JOIN codespace_github_repos cgr ON cgr.user_id = gt.userid
             WHERE gt.userid = '$escaped_user_id' 
-            AND pr.project = '$escaped_project'
+            AND cgr.codespace_id = '$codespaceId'
             LIMIT 1";
     
     $result = query($sql);
@@ -44,13 +59,17 @@ try {
     
     $action = $_GET['action'] ?? '';
     $project_name = $_GET['project'] ?? '';
+    $codespace = $_GET['codespace'] ?? 'main';
     
     if (!$project_name) {
         sendResponse(false, null, 'Projektname erforderlich');
     }
     
+    // Build codespace-specific project path
+    $projectPath = "/data/projects/$user_id/$project_name/$codespace";
+    
     $pdo = null; // Remove PDO usage
-    $github_data = getGitHubTokenForProject($user_id, $project_name);
+    $github_data = getGitHubTokenForProject($user_id, $project_name, $codespace);
     
     if (!$github_data || !$github_data['token'] || !$github_data['github_repo']) {
         sendResponse(false, null, 'GitHub Token oder Repository nicht gefunden');

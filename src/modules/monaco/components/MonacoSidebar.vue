@@ -670,7 +670,7 @@ const loadGitData = async () => {
 
 const loadPullRequests = async () => {
   try {
-    const response = await axios.get(`monaco_pr_api.php?project=${projectName}&action=list`)
+    const response = await axios.get(`monaco_pr_api.php?project=${projectName}&codespace=${codespaceName}&action=list`)
     if (response.data.success) {
       pullRequests.value = response.data.data || []
     } else {
@@ -684,7 +684,7 @@ const loadPullRequests = async () => {
 
 const loadDeployments = async () => {
   try {
-    const response = await axios.get(`vercel_api.php?project=${projectName}&action=deployments`)
+    const response = await axios.get(`vercel_api.php?project=${projectName}&codespace=${codespaceName}&action=deployments`)
     if (response.data.success) {
       deployments.value = response.data.deployments.deployments?.map(deployment => ({
         id: deployment.uid,
@@ -732,7 +732,7 @@ const commitChanges = async () => {
       staged: f.staged
     }))
 
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}`, {
       action: 'commit',
       message: commitMessage.value,
       files: filesToCommit,
@@ -774,7 +774,7 @@ const pullFromGitHub = async () => {
   isPulling.value = true
 
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}`, {
       action: 'pull'
     })
 
@@ -805,7 +805,7 @@ const pushToGitHub = async () => {
   isPushing.value = true
 
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}`, {
       action: 'push'
     })
 
@@ -858,7 +858,7 @@ const resolveConflict = async (filename) => {
 
 const autoResolveConflicts = async () => {
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}`, {
       action: 'auto_resolve_conflicts',
       conflicts: mergeConflicts.value
     })
@@ -879,7 +879,7 @@ const autoResolveConflicts = async () => {
 const stageFile = async (filePath) => {
   console.log('Staging file:', filePath)
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}`, {
       action: 'stage',
       file: filePath
     })
@@ -897,7 +897,7 @@ const stageFile = async (filePath) => {
 const unstageFile = async (filePath) => {
   console.log('Unstaging file:', filePath)
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}`, {
       action: 'unstage',
       file: filePath
     })
@@ -915,7 +915,7 @@ const unstageFile = async (filePath) => {
 const discardChanges = async (filePath) => {
   if (confirm(`Are you sure you want to discard changes to ${filePath}?`)) {
     try {
-      const response = await axios.post(`monaco_git_api.php?project=${projectName}`, {
+      const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}`, {
         action: 'discard',
         file: filePath
       })
@@ -964,7 +964,7 @@ const stopLiveGitUpdates = () => {
 const viewFileDiff = async (filePath) => {
   try {
     console.log('Loading diff for file:', filePath)
-    const response = await axios.get(`monaco_git_api.php?project=${projectName}&action=diff&file=${filePath}`)
+    const response = await axios.get(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}&action=diff&file=${filePath}`)
     
     if (response.data.success) {
       // Set diff data and show modal
@@ -998,7 +998,7 @@ const createPullRequest = async () => {
 
   if (title && headBranch) {
     try {
-      const response = await axios.post(`monaco_pr_api.php?project=${projectName}&action=create`, {
+      const response = await axios.post(`monaco_pr_api.php?project=${projectName}&codespace=${codespaceName}&action=create`, {
         title: title,
         base_branch: baseBranch,
         head_branch: headBranch,
@@ -1035,7 +1035,7 @@ const getPRIcon = (state) => {
 const deployToVercel = async () => {
   isDeploying.value = true
   try {
-    const response = await axios.post(`vercel_api.php?project=${projectName}`, {
+    const response = await axios.post(`vercel_api.php?project=${projectName}&codespace=${codespaceName}`, {
       action: 'deploy',
       gitSource: {
         type: 'github',
