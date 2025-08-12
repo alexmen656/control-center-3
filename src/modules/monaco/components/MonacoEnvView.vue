@@ -32,7 +32,7 @@
         <div v-else-if="envVariables.length === 0" class="empty-state">
           <ion-icon name="server-outline" class="empty-icon"></ion-icon>
           <h3>Keine Environment Variables</h3>
-          <p>Dieses Projekt hat noch keine Environment Variables.</p>
+          <p>Dieser Codespace hat noch keine Environment Variables.</p>
           <button @click="openAddModal" class="primary-button">
             <ion-icon name="add-outline"></ion-icon>
             Erste Variable hinzufügen
@@ -335,10 +335,11 @@ const refreshEnvVars = async () => {
 const loadEnvironmentVariables = async () => {
   isLoading.value = true
   try {
-    // First check if we have a connected Vercel project
-    const projectResponse = await axios.post('project_vercel.php', qs.stringify({
+    // First check if we have a connected Vercel project for this codespace
+    const projectResponse = await axios.post('codespace_vercel.php', qs.stringify({
       action: 'get',
-      project: props.projectName
+      project: props.projectName,
+      codespace: props.codespace
     }))
 
     if (projectResponse.data.vercel_project_id) {
@@ -347,8 +348,8 @@ const loadEnvironmentVariables = async () => {
         name: projectResponse.data.vercel_project_name
       }
 
-      // Load environment variables from Vercel
-      const envResponse = await axios.get(`vercel_api.php?project=${projectResponse.data.vercel_project_id}&action=env`)
+      // Load environment variables from Vercel with codespace context
+      const envResponse = await axios.get(`vercel_api.php?project=${props.projectName}&codespace=${props.codespace}&action=env`)
       
       if (envResponse.data.success) {
         envVariables.value = (envResponse.data.envVars.envs || []).map(env => ({
@@ -360,7 +361,7 @@ const loadEnvironmentVariables = async () => {
       }
     } else {
       envVariables.value = []
-      ToastService.warning('Kein Vercel-Projekt verbunden. Bitte verbinden Sie zuerst ein Projekt.')
+      ToastService.warning('Kein Vercel-Projekt für diesen Codespace verbunden. Bitte verbinden Sie zuerst ein Projekt.')
     }
   } catch (error) {
     console.error('Failed to load environment variables:', error)
@@ -373,7 +374,7 @@ const loadEnvironmentVariables = async () => {
 
 const openAddModal = () => {
   if (!selectedProject.value) {
-    ToastService.warning('Kein Vercel-Projekt verbunden')
+    ToastService.warning('Kein Vercel-Projekt für diesen Codespace verbunden')
     return
   }
   addModal.value.isOpen = true
@@ -395,13 +396,13 @@ const addEnvironmentVariable = async () => {
   }
 
   if (!selectedProject.value) {
-    ToastService.error('Kein Projekt ausgewählt')
+    ToastService.error('Kein Codespace-Projekt ausgewählt')
     return
   }
 
   isLoading.value = true
   try {
-    const response = await axios.post(`vercel_api.php?project=${selectedProject.value.id}`, {
+    const response = await axios.post(`vercel_api.php?project=${props.projectName}&codespace=${props.codespace}`, {
       action: 'create_env',
       key: newEnvVar.value.key,
       value: newEnvVar.value.value,
@@ -451,7 +452,7 @@ const updateEnvironmentVariable = async () => {
 
   isLoading.value = true
   try {
-    const response = await axios.post(`vercel_api.php?project=${selectedProject.value.id}`, qs.stringify({
+    const response = await axios.post(`vercel_api.php?project=${props.projectName}&codespace=${props.codespace}`, qs.stringify({
       action: 'update_env',
       envId: editModal.value.id,
       key: editModal.value.key,
@@ -481,7 +482,7 @@ const deleteEnvironmentVariable = async (envVar) => {
 
   isLoading.value = true
   try {
-    const response = await axios.post(`vercel_api.php?project=${selectedProject.value.id}`, qs.stringify({
+    const response = await axios.post(`vercel_api.php?project=${props.projectName}&codespace=${props.codespace}`, qs.stringify({
       action: 'delete_env',
       envId: envVar.id
     }))

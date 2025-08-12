@@ -277,7 +277,7 @@ try {
                     break;
                     
                 case 'env':
-                    $envVars = $vercel->getEnvironmentVariablesWithValues($vercelProjectName);
+                    $envVars = $vercel->getEnvironmentVariablesWithValues($vercelProjectId);
                     echo json_encode(['success' => true, 'envVars' => $envVars]);
                     break;
                     
@@ -321,7 +321,7 @@ try {
                         throw new Exception('Key and value are required');
                     }
                     
-                    $result = $vercel->createEnvironmentVariable($project, $key, $value, $target);
+                    $result = $vercel->createEnvironmentVariable($vercelProjectId, $key, $value, $target);
                     echo json_encode(['success' => true, 'result' => $result]);
                     break;
                     
@@ -335,7 +335,7 @@ try {
                         throw new Exception('Environment ID, key and value are required');
                     }
                     
-                    $result = $vercel->updateEnvironmentVariable($project, $envId, $key, $value, $target);
+                    $result = $vercel->updateEnvironmentVariable($vercelProjectId, $envId, $key, $value, $target);
                     echo json_encode(['success' => true, 'result' => $result]);
                     break;
                     
@@ -346,7 +346,7 @@ try {
                         throw new Exception('Environment ID is required');
                     }
                     
-                    $result = $vercel->deleteEnvironmentVariable($project, $envId);
+                    $result = $vercel->deleteEnvironmentVariable($vercelProjectId, $envId);
                     echo json_encode(['success' => true, 'result' => $result]);
                     break;
                     
