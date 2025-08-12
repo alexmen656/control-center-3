@@ -63,8 +63,11 @@
     <!-- APIs Management View -->
     <MonacoAPIsView v-if="showAPIsView" :project-name="projectName" :codespace="codespaceName"/>
 
+    <!-- Environment Variables Management View -->
+    <MonacoEnvView v-if="showEnvView" :project-name="projectName" :codespace="codespaceName"/>
+
     <!-- Editor Container -->
-    <div v-if="!showAPIsView && !showWelcome" class="monaco-editor-container">
+    <div v-if="!showAPIsView && !showEnvView && !showWelcome" class="monaco-editor-container">
       <vue-monaco-editor v-model:value="code" :language="language" theme="vs-dark" :options="editorOptions" width="100%"
         height="100%" />
     </div>
@@ -149,6 +152,7 @@ import {
   IonIcon
 } from '@ionic/vue'
 import MonacoAPIsView from './MonacoAPIsView.vue'
+import MonacoEnvView from './MonacoEnvView.vue'
 
 const toast = ToastService
 
@@ -162,6 +166,7 @@ const codespace = useCodespace(route.params)
 const currentFile = ref('')
 const showWelcome = ref(true)
 const showAPIsView = ref(false)
+const showEnvView = ref(false)
 const recentFiles = ref([])
 
 const code = ref('// Schreibe hier deinen Code...\nconsole.log("Hello Monaco!")')
@@ -209,8 +214,13 @@ const loadFile = async (filename = 'index.html') => {
 
     if (filename == "apis") {
       showAPIsView.value = true
+      showEnvView.value = false
+    } else if (filename == "env") {
+      showEnvView.value = true
+      showAPIsView.value = false
     } else {
       showAPIsView.value = false
+      showEnvView.value = false
       currentFile.value = filename
     }
 
@@ -443,6 +453,23 @@ onMounted(() => {
     if (event.detail.path === currentFile.value) {
       loadFile(currentFile.value)
     }
+  })
+
+  // Listen for ENV view events from sidebar
+  window.addEventListener('monaco-open-env-view', () => {
+    showWelcome.value = false
+    showAPIsView.value = false
+    showEnvView.value = true
+  })
+
+  window.addEventListener('monaco-add-env-var', () => {
+    showWelcome.value = false
+    showAPIsView.value = false
+    showEnvView.value = true
+    // Add a slight delay to ensure the view is mounted before triggering add modal
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('monaco-env-add-modal'))
+    }, 100)
   })
 
   // Prevent default action for Command + S and trigger save with toast notification

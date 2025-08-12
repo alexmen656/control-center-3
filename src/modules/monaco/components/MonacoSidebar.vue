@@ -31,18 +31,29 @@
               </ion-button>
             </div>
           </div>
-          
+
+          <div class="tree-item">
+            <div class="file-item" :class="{ 'active-file': activeFile === 'env' }"
+              @click="openFile({ name: 'env', path: 'env' })">
+              <span class="file-indent"></span>
+              <ion-icon name="shield-outline" class="file-icon"></ion-icon>
+              <span class="file-name">Environment</span>
+              <ion-button fill="clear" size="small" @click.stop="openEnvView" class="delete-btn"><!--manage-btn-->
+                <!--<ion-icon name="settings-outline"></ion-icon>-->
+                <ion-icon name="trash-outline"></ion-icon>
+              </ion-button>
+            </div>
+          </div>
+
           <!-- Recursive file tree rendering -->
           <div v-for="item in hierarchicalFileTree" :key="item.path" class="tree-item">
             <!-- Folder -->
-            <div v-if="item.type === 'directory' && item.path != 'apis'" 
-                 class="file-item folder-item" 
-                 @click="toggleFolder(item.path)">
-              <ion-icon 
-                :name="isFolderExpanded(item.path) ? 'chevron-down-outline' : 'chevron-forward-outline'" 
-                class="folder-chevron"
-              ></ion-icon>
-              <ion-icon :name="isFolderExpanded(item.path) ? 'folder-open-outline' : 'folder-outline'" class="file-icon"></ion-icon>
+            <div v-if="item.type === 'directory' && item.path != 'apis'" class="file-item folder-item"
+              @click="toggleFolder(item.path)">
+              <ion-icon :name="isFolderExpanded(item.path) ? 'chevron-down-outline' : 'chevron-forward-outline'"
+                class="folder-chevron"></ion-icon>
+              <ion-icon :name="isFolderExpanded(item.path) ? 'folder-open-outline' : 'folder-outline'"
+                class="file-icon"></ion-icon>
               <span class="file-name">{{ item.name }}</span>
               <ion-button fill="clear" size="small" @click.stop="deleteFile(item)" class="delete-btn">
                 <ion-icon name="trash-outline"></ion-icon>
@@ -50,47 +61,41 @@
             </div>
 
             <!-- Apis -->
-            <div v-if="item.type === 'directory' && item.path == 'apis'" 
-                  class="file-item" 
-                 :class="{ 'active-file': activeFile === item.path }"
-                 @click="openFile({name: 'apis', path: 'apis'})">
-                  <span class="file-indent"></span>
-                  <ion-icon name="server-outline" class="file-icon"></ion-icon>
-                  <span class="file-name">APIs</span>
+            <div v-if="item.type === 'directory' && item.path == 'apis'" class="file-item"
+              :class="{ 'active-file': activeFile === item.path }" @click="openFile({ name: 'apis', path: 'apis' })">
+              <span class="file-indent"></span>
+              <ion-icon name="server-outline" class="file-icon"></ion-icon>
+              <span class="file-name">APIs</span>
               <!--<ion-button fill="clear" size="small" @click.stop="openAPIsView" class="manage-btn">
                 <ion-icon name="settings-outline"></ion-icon>
               </ion-button>-->
-                  <ion-button fill="clear" size="small" @click.stop="deleteFile(child)" class="delete-btn">
-                    <ion-icon name="trash-outline"></ion-icon>
-                  </ion-button>
+              <ion-button fill="clear" size="small" @click.stop="deleteFile(child)" class="delete-btn">
+                <ion-icon name="trash-outline"></ion-icon>
+              </ion-button>
             </div>
-            
+
             <!-- Children (if folder is expanded) -->
             <div v-if="item.type === 'directory' && isFolderExpanded(item.path)" class="folder-children">
               <div v-for="child in item.children" :key="child.path" class="tree-item" style="margin-left: 16px;">
                 <!-- Nested Folder -->
-                <div v-if="child.type === 'directory'" 
-                     class="file-item folder-item" 
-                     @click="toggleFolder(child.path)">
-                  <ion-icon 
-                    :name="isFolderExpanded(child.path) ? 'chevron-down-outline' : 'chevron-forward-outline'" 
-                    class="folder-chevron"
-                  ></ion-icon>
-                  <ion-icon :name="isFolderExpanded(child.path) ? 'folder-open-outline' : 'folder-outline'" class="file-icon"></ion-icon>
+                <div v-if="child.type === 'directory'" class="file-item folder-item" @click="toggleFolder(child.path)">
+                  <ion-icon :name="isFolderExpanded(child.path) ? 'chevron-down-outline' : 'chevron-forward-outline'"
+                    class="folder-chevron"></ion-icon>
+                  <ion-icon :name="isFolderExpanded(child.path) ? 'folder-open-outline' : 'folder-outline'"
+                    class="file-icon"></ion-icon>
                   <span class="file-name">{{ child.name }}</span>
                   <ion-button fill="clear" size="small" @click.stop="deleteFile(child)" class="delete-btn">
                     <ion-icon name="trash-outline"></ion-icon>
                   </ion-button>
                 </div>
-                
+
                 <!-- Nested Children -->
                 <div v-if="child.type === 'directory' && isFolderExpanded(child.path)" class="folder-children">
-                  <div v-for="grandchild in child.children" :key="grandchild.path" class="tree-item" style="margin-left: 32px;">
+                  <div v-for="grandchild in child.children" :key="grandchild.path" class="tree-item"
+                    style="margin-left: 32px;">
                     <!-- File in nested folder -->
-                    <div v-if="grandchild.type === 'file'" 
-                         class="file-item" 
-                         :class="{ 'active-file': activeFile === grandchild.path }"
-                         @click="openFile(grandchild)">
+                    <div v-if="grandchild.type === 'file'" class="file-item"
+                      :class="{ 'active-file': activeFile === grandchild.path }" @click="openFile(grandchild)">
                       <span class="file-indent"></span>
                       <ion-icon :name="getFileIcon(grandchild)" class="file-icon"></ion-icon>
                       <span class="file-name">{{ grandchild.name }}</span>
@@ -100,12 +105,10 @@
                     </div>
                   </div>
                 </div>
-                
+
                 <!-- File in first level folder -->
-                <div v-if="child.type === 'file'" 
-                     class="file-item" 
-                     :class="{ 'active-file': activeFile === child.path }"
-                     @click="openFile(child)">
+                <div v-if="child.type === 'file'" class="file-item"
+                  :class="{ 'active-file': activeFile === child.path }" @click="openFile(child)">
                   <span class="file-indent"></span>
                   <ion-icon :name="getFileIcon(child)" class="file-icon"></ion-icon>
                   <span class="file-name">{{ child.name }}</span>
@@ -115,12 +118,10 @@
                 </div>
               </div>
             </div>
-            
+
             <!-- File at root level -->
-            <div v-if="item.type === 'file'" 
-                 class="file-item" 
-                 :class="{ 'active-file': activeFile === item.path }"
-                 @click="openFile(item)">
+            <div v-if="item.type === 'file'" class="file-item" :class="{ 'active-file': activeFile === item.path }"
+              @click="openFile(item)">
               <span class="file-indent"></span>
               <ion-icon :name="getFileIcon(item)" class="file-icon"></ion-icon>
               <span class="file-name">{{ item.name }}</span>
@@ -169,7 +170,8 @@
           <div v-if="changedFiles.length === 0" class="no-changes">
             No changes
           </div>
-          <div v-for="file in changedFiles" :key="file.path || file.file" class="file-item" @click="viewFileDiff(file.path || file.file)">
+          <div v-for="file in changedFiles" :key="file.path || file.file" class="file-item"
+            @click="viewFileDiff(file.path || file.file)">
             <div class="file-status" :class="file.status">{{ getStatusIcon(file.status) }}</div>
             <div class="file-path">{{ file.path || file.file }}</div>
             <ion-button fill="clear" size="small" @click.stop="stageFile(file.path || file.file)" v-if="!file.staged">
@@ -178,7 +180,8 @@
             <ion-button fill="clear" size="small" @click.stop="unstageFile(file.path || file.file)" v-if="file.staged">
               <ion-icon name="remove-outline"></ion-icon>
             </ion-button>
-            <ion-button fill="clear" size="small" @click.stop="discardChanges(file.path || file.file)" v-if="!file.staged">
+            <ion-button fill="clear" size="small" @click.stop="discardChanges(file.path || file.file)"
+              v-if="!file.staged">
               <ion-icon name="refresh-outline"></ion-icon>
             </ion-button>
           </div>
@@ -261,6 +264,31 @@
       </div>
     </div>
 
+    <!-- Environment Variables Section -->
+    <div class="sidebar-section">
+      <div class="section-header">
+        <ion-icon name="shield-outline"></ion-icon>
+        <span>Environment</span>
+        <ion-button fill="clear" size="small" @click="openEnvView">
+          <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+        </ion-button>
+      </div>
+
+      <div class="section-content">
+        <div class="subsection-header">Quick Actions</div>
+        <div class="env-quick-actions">
+          <button @click="openEnvView" class="env-action-btn">
+            <ion-icon name="list-outline"></ion-icon>
+            <span>Manage Variables</span>
+          </button>
+          <button @click="addNewEnvVar" class="env-action-btn">
+            <ion-icon name="add-outline"></ion-icon>
+            <span>Add Variable</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- CMS APIs Section -->
     <div class="sidebar-section">
       <div class="section-header">
@@ -277,7 +305,7 @@
           No APIs subscribed for this project.<br>
           <small>Subscribe to APIs in the main Control Center.</small>
         </div>
-        
+
         <div v-for="api in availableAPIs" :key="api.slug" class="api-item">
           <div class="api-info">
             <ion-icon :name="api.icon || 'server-outline'" class="api-icon"></ion-icon>
@@ -286,13 +314,9 @@
               <small class="api-category">{{ api.category }}</small>
             </div>
           </div>
-          
+
           <div class="api-controls">
-            <ion-toggle 
-              :checked="api.is_active" 
-              @ionChange="toggleAPI(api)"
-              :disabled="api.isToggling"
-            ></ion-toggle>
+            <ion-toggle :checked="api.is_active" @ionChange="toggleAPI(api)" :disabled="api.isToggling"></ion-toggle>
           </div>
         </div>
 
@@ -329,8 +353,7 @@
       </div>
       <div class="diff-viewer-body">
         <div class="diff-content">
-          <div v-for="(line, index) in (diffData.diff || [])" :key="index" 
-               :class="['diff-line', line.type]">
+          <div v-for="(line, index) in (diffData.diff || [])" :key="index" :class="['diff-line', line.type]">
             <div class="diff-line-number">{{ line.lineNumber }}</div>
             <div class="diff-line-content">
               {{ (line.type === 'added' ? '+' : line.type === 'deleted' ? '-' : ' ') + ' ' + (line.content || '') }}
@@ -421,9 +444,9 @@ const loadAvailableAPIs = async () => {
     formData.append('getCodespaceAPIs', '1')
     formData.append('project', projectName)
     formData.append('codespace', codespace)
-    
+
     const response = await axios.post('codespace_apis.php', formData)
-    
+
     if (response.data && Array.isArray(response.data)) {
       availableAPIs.value = response.data.map(api => ({
         ...api,
@@ -444,19 +467,19 @@ const refreshAvailableAPIs = async () => {
 
 const toggleAPI = async (api) => {
   if (api.isToggling) return
-  
+
   api.isToggling = true
-  
+
   try {
     const formData = new FormData()
     formData.append('project', projectName)
     formData.append('codespace', codespace)
     formData.append('subscription_id', api.subscription_id)
-    
+
     if (api.is_active) {
       formData.append('deactivateCodespaceAPI', '1')
       const response = await axios.post('codespace_apis.php', formData)
-      
+
       if (response.data && response.data.success) {
         api.is_active = false
         ToastService.success('API deactivated successfully')
@@ -466,7 +489,7 @@ const toggleAPI = async (api) => {
     } else {
       formData.append('activateCodespaceAPI', '1')
       const response = await axios.post('codespace_apis.php', formData)
-      
+
       if (response.data && response.data.success) {
         api.is_active = true
         ToastService.success('API activated successfully')
@@ -488,17 +511,17 @@ const getAPIClassName = (slug) => {
 
 const getAllImportsExample = () => {
   if (activeAPIs.value.length === 0) return ''
-  
+
   const imports = activeAPIs.value.map(api => getAPIClassName(api.slug)).join(', ')
   return `import { ${imports} } from 'apis';`
 }
 
 const getUsageExample = () => {
   if (activeAPIs.value.length === 0) return ''
-  
+
   const firstAPI = activeAPIs.value[0]
   const className = getAPIClassName(firstAPI.slug)
-  
+
   switch (firstAPI.slug) {
     case 'user-management':
       return `// Get all users\nconst users = await ${className}.getAll();\n\n// Create new user\nconst user = await ${className}.create({ name: 'John', email: 'john@example.com' });`
@@ -523,14 +546,27 @@ const copyToClipboard = (text) => {
   })
 }
 
+// Environment Variables Methods
+const openEnvView = () => {
+  console.log('Opening Environment Variables view')
+  // Emit event to parent component to open ENV view
+  window.dispatchEvent(new CustomEvent('monaco-open-env-view'))
+}
+
+const addNewEnvVar = () => {
+  console.log('Opening add new environment variable modal')
+  // Emit event to parent component to add new environment variable
+  window.dispatchEvent(new CustomEvent('monaco-add-env-var'))
+}
+
 // Computed function to filter projectFiles
 const filteredProjectFiles = computed(() => {
   if (exclude.value) {
     console.log(projectFiles.value);
     // Zeige alle Dateien an, aber excludiere nur bestimmte Monaco-interne Dateien aus der Anzeige
     // .monaco_apis/ Dateien sollen weiterhin sichtbar und commitbar sein
-    return projectFiles.value.filter(file => 
-      !excludedFiles.value.includes(file.path) && 
+    return projectFiles.value.filter(file =>
+      !excludedFiles.value.includes(file.path) &&
       !file.path.startsWith(".monaco_apis/")
     );
   } else {
@@ -547,11 +583,11 @@ const buildFileTree = (files) => {
   files.forEach(file => {
     const pathParts = file.path.split('/').filter(part => part)
     let currentPath = ''
-    
+
     pathParts.forEach((part, index) => {
       const parentPath = currentPath
       currentPath = currentPath ? `${currentPath}/${part}` : part
-      
+
       if (!pathMap.has(currentPath)) {
         const isFile = index === pathParts.length - 1
         const node = {
@@ -564,7 +600,7 @@ const buildFileTree = (files) => {
           parent: parentPath || null
         }
         pathMap.set(currentPath, node)
-        
+
         if (parentPath) {
           const parent = pathMap.get(parentPath)
           if (parent) {
@@ -623,10 +659,21 @@ const refreshFiles = async () => {
     // Use file API to load files from specific codespace
     const response = await axios.get(`file_api.php?project=${projectName}&codespace=${codespace}&action=list`)
     const allFiles = flattenFileTree(response.data || [])
-    
+
+    // Add virtual .env entry for Environment Variables management
+    /*if (!allFiles.find(file => file.path === '.env')) {
+       allFiles.unshift({
+         name: '.env',
+         path: '.env',
+         type: 'directory',
+         size: 0,
+         modified: new Date().toISOString()
+       })
+     }*/
+
     // Make sure .monaco_apis files are included and not excluded from commits
     projectFiles.value = allFiles
-    
+
     // Update file tree
     fileTree.value = buildFileTree(filteredProjectFiles.value)
   } catch (error) {
@@ -897,7 +944,7 @@ const pushToGitHub = async () => {
       await refreshGitStatus()
     } else {
       console.error('Push failed:', response.data.message)
-      
+
       // Check for conflicts
       if (response.data.error && response.data.error.includes('conflict')) {
         openMergeEditor(response.data.conflicts || [])
@@ -926,8 +973,8 @@ const closeMergeEditor = () => {
 const resolveConflict = async (filename) => {
   try {
     // Open the file with conflicts for manual resolution
-    window.dispatchEvent(new CustomEvent('monaco-open-file', { 
-      detail: { path: filename, name: filename } 
+    window.dispatchEvent(new CustomEvent('monaco-open-file', {
+      detail: { path: filename, name: filename }
     }))
     ToastService.info(`Opening ${filename} for manual conflict resolution. Look for conflict markers: <<<<<<< HEAD, =======, >>>>>>> branch`)
     closeMergeEditor()
@@ -942,7 +989,7 @@ const autoResolveConflicts = async () => {
       action: 'auto_resolve_conflicts',
       conflicts: mergeConflicts.value
     })
-    
+
     if (response.data.success) {
       ToastService.success('Conflicts auto-resolved successfully! You can now try pushing again.')
       closeMergeEditor()
@@ -1026,7 +1073,7 @@ const startLiveGitUpdates = () => {
   if (gitRefreshInterval.value) {
     clearInterval(gitRefreshInterval.value)
   }
-  
+
   // Refresh git status every 3 seconds automatically
   gitRefreshInterval.value = setInterval(() => {
     loadGitData()
@@ -1045,7 +1092,7 @@ const viewFileDiff = async (filePath) => {
   try {
     console.log('Loading diff for file:', filePath)
     const response = await axios.get(`monaco_git_api.php?project=${projectName}&codespace=${codespace}&action=diff&file=${filePath}`)
-    
+
     if (response.data.success) {
       // Set diff data and show modal
       diffData.value = {
@@ -1238,22 +1285,22 @@ onMounted(async () => {
     loadDeployments(),
     loadAvailableAPIs()
   ])
-  
+
   // Start live git updates
   startLiveGitUpdates()
-  
+
   // Listen for file save events from Monaco editor to trigger git refresh
   window.addEventListener('monaco-file-saved', () => {
     console.log('File saved, refreshing git status...')
     loadGitData()
   })
-  
+
   // Listen for file changes in general
   window.addEventListener('monaco-file-changed', () => {
     console.log('File changed, refreshing git status...')
     loadGitData()
   })
-  
+
   // Listen for active file changes
   window.addEventListener('monaco-active-file-changed', (event) => {
     activeFile.value = event.detail.filePath
@@ -1266,7 +1313,7 @@ onUnmounted(() => {
   stopLiveGitUpdates()
   window.removeEventListener('monaco-file-saved', loadGitData)
   window.removeEventListener('monaco-file-changed', loadGitData)
-  window.removeEventListener('monaco-active-file-changed', () => {})
+  window.removeEventListener('monaco-active-file-changed', () => { })
 })
 </script>
 
@@ -1872,7 +1919,9 @@ ion-button[fill="clear"] {
   font-family: monospace;
 }
 
-.resolve-btn, .btn-primary, .btn-secondary {
+.resolve-btn,
+.btn-primary,
+.btn-secondary {
   padding: 8px 16px;
   border: none;
   border-radius: 4px;
@@ -2013,7 +2062,8 @@ ion-button[fill="clear"] {
   opacity: 1;
 }
 
-.no-apis, .no-apis-message {
+.no-apis,
+.no-apis-message {
   padding: 16px 8px;
   text-align: center;
   color: var(--vscode-descriptionForeground, #cccccc);
@@ -2034,5 +2084,42 @@ ion-button[fill="clear"] {
   --color: white;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
+}
+
+/* Environment Variables Section Styles */
+.env-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.env-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid var(--vscode-button-border, #464647);
+  color: var(--vscode-button-secondaryForeground, #cccccc);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.env-action-btn:hover {
+  background: var(--vscode-list-hoverBackground, #2a2d2e);
+  border-color: var(--vscode-focusBorder, #007fd4);
+}
+
+.env-action-btn ion-icon {
+  font-size: 14px;
+  color: var(--vscode-icon-foreground, #cccccc);
+}
+
+.env-action-btn span {
+  flex: 1;
 }
 </style>
