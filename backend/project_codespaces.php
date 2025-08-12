@@ -261,6 +261,66 @@ function getTemplateIcon($templateDir)
     return $icons[$templateDir] ?? 'code-outline';
 }
 
+function getVercelFrameworkPreset($template)
+{
+    $frameworks = [
+        'vanilla-js' => null, // Static HTML/CSS/JS
+        'react' => 'vite',
+        'vue' => 'vite', 
+        'node' => 'nodejs',
+        'next' => 'nextjs',
+        'nuxt' => 'nuxtjs',
+        'angular' => 'angular',
+        'svelte' => 'svelte'
+    ];
+    
+    return $frameworks[$template] ?? null;
+}
+
+function getVercelBuildSettings($template)
+{
+    $settings = [
+        'vanilla-js' => [
+            'buildCommand' => null,
+            'devCommand' => null,
+            'installCommand' => null,
+            'outputDirectory' => null
+        ],
+        'react' => [
+            'buildCommand' => 'npm run build',
+            'devCommand' => 'npm run dev',
+            'installCommand' => 'npm install',
+            'outputDirectory' => 'dist'
+        ],
+        'vue' => [
+            'buildCommand' => 'npm run build',
+            'devCommand' => 'npm run dev', 
+            'installCommand' => 'npm install',
+            'outputDirectory' => 'dist'
+        ],
+        'node' => [
+            'buildCommand' => null,
+            'devCommand' => 'npm run dev',
+            'installCommand' => 'npm install',
+            'outputDirectory' => null
+        ],
+        'next' => [
+            'buildCommand' => null, // Next.js auto-detects
+            'devCommand' => null,
+            'installCommand' => null,
+            'outputDirectory' => null
+        ],
+        'nuxt' => [
+            'buildCommand' => null, // Nuxt auto-detects
+            'devCommand' => null,
+            'installCommand' => null,
+            'outputDirectory' => null
+        ]
+    ];
+    
+    return $settings[$template] ?? $settings['vanilla-js'];
+}
+
 function createCodespaceGithubRepo($codespaceId, $name, $userID)
 {
     // Token holen
@@ -335,8 +395,19 @@ function createCodespaceVercelProject($codespaceId, $name, $userID)
         return false;
     }
 
+    // Template Info aus Codespace holen
+    $codespaceResult = query("SELECT template FROM project_codespaces WHERE id='$codespaceId' LIMIT 1");
+    $template = 'vanilla-js'; // Default
+    if ($codespaceRow = fetch_assoc($codespaceResult)) {
+        $template = $codespaceRow['template'] ?? 'vanilla-js';
+    }
+
     $vercel_token = $tokenRow['vercel_token'];
     $vercelApiUrl = 'https://api.vercel.com/v9/projects';
+
+    // Framework-spezifische Einstellungen holen
+    $framework = getVercelFrameworkPreset($template);
+    $buildSettings = getVercelBuildSettings($template);
 
     $vercelData = [
         'name' => strtolower(preg_replace('/[^a-zA-Z0-9-_]/', '-', $name)),
@@ -346,6 +417,25 @@ function createCodespaceVercelProject($codespaceId, $name, $userID)
             'repoId' => (string)$repo_id
         ]
     ];
+
+    // Framework und Build-Settings hinzufügen falls verfügbar
+    if ($framework) {
+        $vercelData['framework'] = $framework;
+    }
+
+    // Build-Settings hinzufügen
+    if ($buildSettings['buildCommand']) {
+        $vercelData['buildCommand'] = $buildSettings['buildCommand'];
+    }
+    if ($buildSettings['devCommand']) {
+        $vercelData['devCommand'] = $buildSettings['devCommand'];
+    }
+    if ($buildSettings['installCommand']) {
+        $vercelData['installCommand'] = $buildSettings['installCommand'];
+    }
+    if ($buildSettings['outputDirectory']) {
+        $vercelData['outputDirectory'] = $buildSettings['outputDirectory'];
+    }
 
     $opts = [
         'http' => [

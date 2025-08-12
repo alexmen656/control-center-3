@@ -8,6 +8,126 @@ function checkUserProjectPermission($userID, $projectID)
     return mysqli_num_rows($check) == 1;
 }
 
+function getVercelFrameworkPreset($template)
+{
+    $frameworks = [
+        'vanilla-js' => null, // Static HTML/CSS/JS
+        'react' => 'vite',
+        'vue' => 'vite', 
+        'node' => 'nodejs',
+        'next' => 'nextjs',
+        'nuxt' => 'nuxtjs',
+        'angular' => 'angular',
+        'svelte' => 'svelte'
+    ];
+    
+    return $frameworks[$template] ?? null;
+}
+
+function getVercelBuildSettings($template)
+{
+    $settings = [
+        'vanilla-js' => [
+            'buildCommand' => null,
+            'devCommand' => null,
+            'installCommand' => null,
+            'outputDirectory' => null
+        ],
+        'react' => [
+            'buildCommand' => 'npm run build',
+            'devCommand' => 'npm run dev',
+            'installCommand' => 'npm install',
+            'outputDirectory' => 'dist'
+        ],
+        'vue' => [
+            'buildCommand' => 'npm run build',
+            'devCommand' => 'npm run dev', 
+            'installCommand' => 'npm install',
+            'outputDirectory' => 'dist'
+        ],
+        'node' => [
+            'buildCommand' => null,
+            'devCommand' => 'npm run dev',
+            'installCommand' => 'npm install',
+            'outputDirectory' => null
+        ],
+        'next' => [
+            'buildCommand' => null, // Next.js auto-detects
+            'devCommand' => null,
+            'installCommand' => null,
+            'outputDirectory' => null
+        ],
+        'nuxt' => [
+            'buildCommand' => null, // Nuxt auto-detects
+            'devCommand' => null,
+            'installCommand' => null,
+            'outputDirectory' => null
+        ]
+    ];
+    
+    return $settings[$template] ?? $settings['vanilla-js'];
+}
+
+function updateVercelProjectFramework($vercel_project_id, $template, $user_id)
+{
+    // Vercel Token holen
+    $tokenResult = query("SELECT vercel_token FROM control_center_vercel_tokens WHERE userID='" . escape_string($user_id) . "' LIMIT 1");
+    if (!($tokenRow = fetch_assoc($tokenResult))) {
+        return false;
+    }
+
+    $vercel_token = $tokenRow['vercel_token'];
+    
+    // Framework-spezifische Einstellungen holen
+    $framework = getVercelFrameworkPreset($template);
+    $buildSettings = getVercelBuildSettings($template);
+
+    // Nur aktualisieren wenn Framework oder Build-Settings vorhanden sind
+    if (!$framework && !$buildSettings['buildCommand'] && !$buildSettings['devCommand'] && !$buildSettings['installCommand'] && !$buildSettings['outputDirectory']) {
+        return true; // Nichts zu aktualisieren
+    }
+
+    $vercelApiUrl = "https://api.vercel.com/v9/projects/$vercel_project_id";
+    
+    $updateData = [];
+    
+    // Framework setzen falls verfügbar
+    if ($framework) {
+        $updateData['framework'] = $framework;
+    }
+
+    // Build-Settings hinzufügen
+    if ($buildSettings['buildCommand']) {
+        $updateData['buildCommand'] = $buildSettings['buildCommand'];
+    }
+    if ($buildSettings['devCommand']) {
+        $updateData['devCommand'] = $buildSettings['devCommand'];
+    }
+    if ($buildSettings['installCommand']) {
+        $updateData['installCommand'] = $buildSettings['installCommand'];
+    }
+    if ($buildSettings['outputDirectory']) {
+        $updateData['outputDirectory'] = $buildSettings['outputDirectory'];
+    }
+
+    if (empty($updateData)) {
+        return true; // Nichts zu aktualisieren
+    }
+
+    $opts = [
+        'http' => [
+            'method' => 'PATCH',
+            'header' => "Authorization: Bearer $vercel_token\r\nUser-Agent: ControlCenter\r\nAccept: application/json\r\nContent-Type: application/json\r\n",
+            'content' => json_encode($updateData)
+        ]
+    ];
+
+    $context = stream_context_create($opts);
+    $response = @file_get_contents($vercelApiUrl, false, $context);
+    
+    return $response !== false;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $codespace_id = (int)($_POST['codespace_id'] ?? 0);
@@ -156,6 +276,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
+        // Template Info aus Monaco-Initialisierung lesen
+        $template = 'vanilla-js'; // Default
+        $projectResult = query("SELECT pc.slug, p.link as project_link FROM project_codespaces pc 
+                               JOIN projects p ON pc.project_id = p.projectID 
+                               WHERE pc.id='$codespace_id'");
+        if ($projectRow = fetch_assoc($projectResult)) {
+            $codespaceDir = __DIR__ . "/../data/projects/" . $user_id . "/" . $projectRow['project_link'] . "/" . $projectRow['slug'];
+            $monacoInitFile = $codespaceDir . '/.monaco_initialized';
+            
+            if (file_exists($monacoInitFile)) {
+                $monacoData = json_decode(file_get_contents($monacoInitFile), true);
+                if (isset($monacoData['template'])) {
+                    $template = $monacoData['template'];
+                }
+            }
+        }
+
+        // Vercel-Projekt mit Framework-Settings aktualisieren
+        updateVercelProjectFramework($vercel_project_id, $template, $user_id);
+
         // Alte Verbindung löschen falls vorhanden
         query("DELETE FROM codespace_vercel_projects WHERE codespace_id='$codespace_id'");
 
@@ -180,6 +320,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $repo_full_name = $repoRow['repo_full_name'];
         $repo_id = $repoRow['repo_id'];
 
+        // Template Info aus Monaco-Initialisierung lesen
+        $template = 'vanilla-js'; // Default
+        $projectResult = query("SELECT pc.slug, p.link as project_link FROM project_codespaces pc 
+                               JOIN projects p ON pc.project_id = p.projectID 
+                               WHERE pc.id='$codespace_id'");
+        if ($projectRow = fetch_assoc($projectResult)) {
+            $codespaceDir = __DIR__ . "/../data/projects/" . $user_id . "/" . $projectRow['project_link'] . "/" . $projectRow['slug'];
+            $monacoInitFile = $codespaceDir . '/.monaco_initialized';
+            
+            if (file_exists($monacoInitFile)) {
+                $monacoData = json_decode(file_get_contents($monacoInitFile), true);
+                if (isset($monacoData['template'])) {
+                    $template = $monacoData['template'];
+                }
+            }
+        }
+
         // Vercel Token holen
         $tokenResult = query("SELECT vercel_token FROM control_center_vercel_tokens WHERE userID='" . escape_string($user_id) . "' LIMIT 1");
         if (!($tokenRow = fetch_assoc($tokenResult))) {
@@ -190,6 +347,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $vercel_token = $tokenRow['vercel_token'];
         $vercelApiUrl = 'https://api.vercel.com/v9/projects';
 
+        // Framework-spezifische Einstellungen holen
+        $framework = getVercelFrameworkPreset($template);
+        $buildSettings = getVercelBuildSettings($template);
+
         $vercelData = [
             'name' => strtolower(preg_replace('/[^a-zA-Z0-9-_]/', '-', $codespace['name'])),
             'gitRepository' => [
@@ -198,6 +359,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'repoId' => (string)$repo_id
             ]
         ];
+
+        // Framework und Build-Settings hinzufügen falls verfügbar
+        if ($framework) {
+            $vercelData['framework'] = $framework;
+        }
+
+        // Build-Settings hinzufügen
+        if ($buildSettings['buildCommand']) {
+            $vercelData['buildCommand'] = $buildSettings['buildCommand'];
+        }
+        if ($buildSettings['devCommand']) {
+            $vercelData['devCommand'] = $buildSettings['devCommand'];
+        }
+        if ($buildSettings['installCommand']) {
+            $vercelData['installCommand'] = $buildSettings['installCommand'];
+        }
+        if ($buildSettings['outputDirectory']) {
+            $vercelData['outputDirectory'] = $buildSettings['outputDirectory'];
+        }
 
         $opts = [
             'http' => [
