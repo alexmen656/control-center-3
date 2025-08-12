@@ -1,8 +1,8 @@
 // CMS Files API SDK
 class FilesAPI {
   constructor() {
-    this.baseUrl = '/backend/api/v1/files';
-    this.apiKey = null;
+    this.baseUrl = 'https://alex.polan.sk/control-center/backend/api/v1/files';
+    this.apiKey = 'demo-api-key-123'; // Wird später durch echte API-Keys ersetzt
   }
 
   async upload(file, folder = '') {

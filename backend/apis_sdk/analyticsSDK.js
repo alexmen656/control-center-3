@@ -1,45 +1,54 @@
-// CMS Files API SDK
-class FilesAPI {
+// CMS Analytics API SDK
+class AnalyticsAPI {
   constructor() {
-    this.baseUrl = '/backend/api/v1/files';
-    this.apiKey = null;
+    this.baseUrl = 'https://alex.polan.sk/control-center/backend/api/v1/analytics';
+    this.apiKey = 'demo-api-key-123';
   }
 
-  async upload(file, folder = '') {
-    const formData = new FormData();
-    formData.append('file', file);
-    if (folder) formData.append('folder', folder);
-
-    const response = await fetch(`${this.baseUrl}/upload`, {
+  async track(eventName, eventData = {}) {
+    const response = await fetch(`${this.baseUrl}/track`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${this.apiKey}` },
-      body: formData
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        event_name: eventName,
+        data: eventData,
+        session_id: this.getSessionId()
+      })
     });
     return this.handleResponse(response);
   }
 
-  async list(folder = '') {
-    const queryString = folder ? `?folder=${encodeURIComponent(folder)}` : '';
-    const response = await fetch(`${this.baseUrl}${queryString}`, {
+  async getEvents(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const response = await fetch(`${this.baseUrl}/events?${queryString}`, {
       headers: this.getHeaders()
     });
     return this.handleResponse(response);
   }
 
-  async delete(fileId) {
-    const response = await fetch(`${this.baseUrl}/${fileId}`, {
-      method: 'DELETE',
+  async getReport(reportType = 'daily', params = {}) {
+    const queryString = new URLSearchParams({ type: reportType, ...params }).toString();
+    const response = await fetch(`${this.baseUrl}/report?${queryString}`, {
       headers: this.getHeaders()
     });
     return this.handleResponse(response);
   }
 
-  async getDownloadUrl(fileId) {
-    const response = await fetch(`${this.baseUrl}/${fileId}/download-url`, {
+  async getStats() {
+    const response = await fetch(`${this.baseUrl}/stats`, {
       headers: this.getHeaders()
     });
-    const data = await this.handleResponse(response);
-    return data.downloadUrl;
+    return this.handleResponse(response);
+  }
+
+  getSessionId() {
+    // Erstelle oder hole Session-ID aus localStorage
+    let sessionId = localStorage.getItem('analytics_session_id');
+    if (!sessionId) {
+      sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('analytics_session_id', sessionId);
+    }
+    return sessionId;
   }
 
   getHeaders() {
@@ -50,10 +59,10 @@ class FilesAPI {
 
   async handleResponse(response) {
     if (!response.ok) {
-      throw new Error(`Files API Error: ${response.status} ${response.statusText}`);
+      throw new Error(`Analytics API Error: ${response.status} ${response.statusText}`);
     }
     return response.json();
   }
 }
 
-export default new FilesAPI();
+export default new AnalyticsAPI();

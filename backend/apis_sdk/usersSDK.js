@@ -1,8 +1,8 @@
 // CMS Users API SDK
 class UsersAPI {
   constructor() {
-    this.baseUrl = '/backend/api/v1/users';
-    this.apiKey = null; // Will be set from project settings
+    this.baseUrl = 'https://alex.polan.sk/control-center/backend/api/v1/users';
+    this.apiKey = 'demo-api-key-123'; // Will be set from project settings
   }
 
   async getAll(params = {}) {

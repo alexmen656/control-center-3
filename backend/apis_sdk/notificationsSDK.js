@@ -1,45 +1,41 @@
-// CMS Files API SDK
-class FilesAPI {
+// CMS Notifications API SDK
+class NotificationsAPI {
   constructor() {
-    this.baseUrl = '/backend/api/v1/files';
-    this.apiKey = null;
+    this.baseUrl = 'https://alex.polan.sk/control-center/backend/api/v1/notifications';
+    this.apiKey = 'demo-api-key-123';
   }
 
-  async upload(file, folder = '') {
-    const formData = new FormData();
-    formData.append('file', file);
-    if (folder) formData.append('folder', folder);
-
-    const response = await fetch(`${this.baseUrl}/upload`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${this.apiKey}` },
-      body: formData
-    });
-    return this.handleResponse(response);
-  }
-
-  async list(folder = '') {
-    const queryString = folder ? `?folder=${encodeURIComponent(folder)}` : '';
-    const response = await fetch(`${this.baseUrl}${queryString}`, {
+  async getAll(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const response = await fetch(`${this.baseUrl}?${queryString}`, {
       headers: this.getHeaders()
     });
     return this.handleResponse(response);
   }
 
-  async delete(fileId) {
-    const response = await fetch(`${this.baseUrl}/${fileId}`, {
+  async send(notificationData) {
+    const response = await fetch(`${this.baseUrl}/send`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(notificationData)
+    });
+    return this.handleResponse(response);
+  }
+
+  async markAsRead(notificationId) {
+    const response = await fetch(`${this.baseUrl}/${notificationId}`, {
+      method: 'PUT',
+      headers: this.getHeaders()
+    });
+    return this.handleResponse(response);
+  }
+
+  async delete(notificationId) {
+    const response = await fetch(`${this.baseUrl}/${notificationId}`, {
       method: 'DELETE',
       headers: this.getHeaders()
     });
     return this.handleResponse(response);
-  }
-
-  async getDownloadUrl(fileId) {
-    const response = await fetch(`${this.baseUrl}/${fileId}/download-url`, {
-      headers: this.getHeaders()
-    });
-    const data = await this.handleResponse(response);
-    return data.downloadUrl;
   }
 
   getHeaders() {
@@ -50,10 +46,10 @@ class FilesAPI {
 
   async handleResponse(response) {
     if (!response.ok) {
-      throw new Error(`Files API Error: ${response.status} ${response.statusText}`);
+      throw new Error(`Notifications API Error: ${response.status} ${response.statusText}`);
     }
     return response.json();
   }
 }
 
-export default new FilesAPI();
+export default new NotificationsAPI();

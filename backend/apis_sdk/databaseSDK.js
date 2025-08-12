@@ -1,8 +1,8 @@
 // CMS Database API SDK
 class DatabaseAPI {
   constructor() {
-    this.baseUrl = '/backend/api/v1/database';
-    this.apiKey = null;
+    this.baseUrl = 'https://alex.polan.sk/control-center/backend/api/v1/database';
+    this.apiKey = 'demo-api-key-123';
   }
 
   async query(table, conditions = {}, options = {}) {
