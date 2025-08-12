@@ -5,7 +5,7 @@
  * Zugriff auf echte control_center_users Tabelle
  */
 
-require_once 'BaseAPI.php';
+require_once 'helper/BaseAPI.php';
 
 class UsersAPI extends BaseAPI {
 

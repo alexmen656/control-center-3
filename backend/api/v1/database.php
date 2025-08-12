@@ -5,7 +5,7 @@
  * Zugriff auf CMS Forms/Tabellen
  */
 
-require_once 'BaseAPI.php';
+require_once 'helper/BaseAPI.php';
 
 class DatabaseAPI extends BaseAPI {
 

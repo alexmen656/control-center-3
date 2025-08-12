@@ -5,7 +5,7 @@
  * Handles analytics data collection and reporting
  */
 
-require_once 'BaseAPI.php';
+require_once 'helper/BaseAPI.php';
 
 class AnalyticsAPI extends BaseAPI {
 
