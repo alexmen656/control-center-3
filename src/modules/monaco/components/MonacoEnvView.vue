@@ -287,6 +287,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import qs from 'qs'
 import { ToastService } from '@/services/ToastService'
 
 // Props
@@ -335,10 +336,10 @@ const loadEnvironmentVariables = async () => {
   isLoading.value = true
   try {
     // First check if we have a connected Vercel project
-    const projectResponse = await axios.post('project_vercel.php', {
+    const projectResponse = await axios.post('project_vercel.php', qs.stringify({
       action: 'get',
       project: props.projectName
-    })
+    }))
 
     if (projectResponse.data.vercel_project_id) {
       selectedProject.value = {
@@ -405,7 +406,7 @@ const addEnvironmentVariable = async () => {
       key: newEnvVar.value.key,
       value: newEnvVar.value.value,
       target: newEnvVar.value.target
-    })
+    })p
 
     if (response.data.success) {
       ToastService.success('Environment Variable erfolgreich hinzugefügt')
@@ -450,13 +451,13 @@ const updateEnvironmentVariable = async () => {
 
   isLoading.value = true
   try {
-    const response = await axios.post(`vercel_api.php?project=${selectedProject.value.id}`, {
+    const response = await axios.post(`vercel_api.php?project=${selectedProject.value.id}`, qs.stringify({
       action: 'update_env',
       envId: editModal.value.id,
       key: editModal.value.key,
       value: editModal.value.value,
       target: editModal.value.target
-    })
+    }))
 
     if (response.data.success) {
       ToastService.success('Environment Variable erfolgreich aktualisiert')
@@ -480,10 +481,10 @@ const deleteEnvironmentVariable = async (envVar) => {
 
   isLoading.value = true
   try {
-    const response = await axios.post(`vercel_api.php?project=${selectedProject.value.id}`, {
+    const response = await axios.post(`vercel_api.php?project=${selectedProject.value.id}`, qs.stringify({
       action: 'delete_env',
       envId: envVar.id
-    })
+    }))
 
     if (response.data.success) {
       ToastService.success('Environment Variable erfolgreich gelöscht')

@@ -38,7 +38,7 @@
               <span class="file-indent"></span>
               <ion-icon name="shield-outline" class="file-icon"></ion-icon>
               <span class="file-name">Environment</span>
-              <ion-button fill="clear" size="small" @click.stop="openEnvView" class="delete-btn"><!--manage-btn-->
+              <ion-button fill="clear" size="small" class="delete-btn"><!-- @click.stop="openEnvView" manage-btn-->
                 <!--<ion-icon name="settings-outline"></ion-icon>-->
                 <ion-icon name="trash-outline"></ion-icon>
               </ion-button>
