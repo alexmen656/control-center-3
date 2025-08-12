@@ -14,7 +14,7 @@ function getVercelFrameworkPreset($template)
         'vanilla-js' => null, // Static HTML/CSS/JS
         'react' => 'vite',
         'vue' => 'vite', 
-        'node' => 'nodejs',
+        'node' => null,
         'next' => 'nextjs',
         'nuxt' => 'nuxtjs',
         'angular' => 'angular',
