@@ -33,8 +33,8 @@
           </div>
 
           <div class="tree-item">
-            <div class="file-item" :class="{ 'active-file': activeFile === 'env' }"
-              @click="openFile({ name: 'env', path: 'env' })">
+            <div class="file-item" :class="{ 'active-file': activeFile === 'environment' }"
+              @click="openFile({ name: 'environment', path: 'environment' })">
               <span class="file-indent"></span>
               <ion-icon name="shield-outline" class="file-icon"></ion-icon>
               <span class="file-name">Environment</span>

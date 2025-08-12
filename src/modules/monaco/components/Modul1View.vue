@@ -182,7 +182,7 @@ const editorOptions = {
 // Load file content
 const loadFile = async (filename = 'index.html') => {
   try {
-    const languageMap = {
+        const languageMap = {
       'js': 'javascript',
       'ts': 'typescript',
       'py': 'python',
@@ -207,22 +207,28 @@ const loadFile = async (filename = 'index.html') => {
     }
 
     language.value = languageMap[filename.split('.').pop()] || 'javascript'
+    // Handle special views first (before trying to load from API)
+    if (filename == "apis") {
+      showAPIsView.value = true
+      showEnvView.value = false
+      showWelcome.value = false
+      return
+    } else if (filename == "environment") {
+      showEnvView.value = true
+      showAPIsView.value = false
+      showWelcome.value = false
+      return
+    }
+
 
     // Use codespace API to load file from specific codespace
     const content = await codespace.loadFile(filename)
     code.value = content
 
-    if (filename == "apis") {
-      showAPIsView.value = true
-      showEnvView.value = false
-    } else if (filename == "env") {
-      showEnvView.value = true
-      showAPIsView.value = false
-    } else {
-      showAPIsView.value = false
-      showEnvView.value = false
-      currentFile.value = filename
-    }
+    // Normal file loaded - hide special views
+    showAPIsView.value = false
+    showEnvView.value = false
+    currentFile.value = filename
 
     showWelcome.value = false // Hide welcome screen when file is loaded
 
