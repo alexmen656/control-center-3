@@ -5,7 +5,7 @@
  * Handles notifications sending and management
  */
 
-require_once '../BaseAPI.php';
+require_once 'BaseAPI.php';
 
 class NotificationsAPI extends BaseAPI {
 

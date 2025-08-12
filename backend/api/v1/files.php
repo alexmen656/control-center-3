@@ -5,7 +5,7 @@
  * Handles file upload, listing, deletion and download URLs
  */
 
-require_once '../BaseAPI.php';
+require_once 'BaseAPI.php';
 
 class FilesAPI extends BaseAPI {
     private $uploadDir;
