@@ -335,16 +335,20 @@ onMounted(() => {
 .apis-container {
   height: 100%;
   flex: 1;
+  min-width: 0;
   background: var(--vscode-editor-background, #1e1e1e);
   color: var(--vscode-editor-foreground, #d4d4d4);
   overflow: hidden;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
 }
 
 .apis-screen {
   height: 100%;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .apis-header {
@@ -354,6 +358,11 @@ onMounted(() => {
   padding: 16px 24px;
   border-bottom: 1px solid var(--vscode-panel-border, #2d2d30);
   background: var(--vscode-editor-background, #1e1e1e);
+  flex-shrink: 0;
+  min-width: 0;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .header-left {
@@ -411,8 +420,11 @@ onMounted(() => {
 .apis-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 24px;
   background: var(--vscode-editor-background, #1e1e1e);
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .loading-section {
@@ -516,8 +528,11 @@ onMounted(() => {
 
 .apis-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .api-card {
@@ -693,10 +708,23 @@ onMounted(() => {
 @media (max-width: 768px) {
   .apis-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
   
   .apis-header {
     padding: 12px 16px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+  
+  .refresh-button {
+    flex: 1;
+    justify-content: center;
   }
   
   .apis-content {
@@ -705,6 +733,25 @@ onMounted(() => {
   
   .apis-section {
     padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .apis-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .apis-header {
+    padding: 8px 12px;
+  }
+  
+  .apis-content {
+    padding: 12px;
+  }
+  
+  .api-card {
+    padding: 12px;
   }
 }
 </style>

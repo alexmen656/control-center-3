@@ -722,11 +722,12 @@ const applyReplacement = (replacement) => {
 <style scoped>
 .monaco-container {
   display: flex;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -737,6 +738,8 @@ const applyReplacement = (replacement) => {
   flex: 1;
   display: flex;
   overflow: hidden;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* Professional Welcome Screen - VS Code Style */

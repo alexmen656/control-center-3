@@ -406,7 +406,7 @@ const addEnvironmentVariable = async () => {
       key: newEnvVar.value.key,
       value: newEnvVar.value.value,
       target: newEnvVar.value.target
-    })p
+    })
 
     if (response.data.success) {
       ToastService.success('Environment Variable erfolgreich hinzugefügt')
@@ -551,16 +551,20 @@ onMounted(() => {
 .env-container {
   height: 100%;
   flex: 1;
+  min-width: 0;
   background: var(--vscode-editor-background, #1e1e1e);
   color: var(--vscode-editor-foreground, #d4d4d4);
   overflow: hidden;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
 }
 
 .env-screen {
   height: 100%;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .env-header {
@@ -570,6 +574,11 @@ onMounted(() => {
   padding: 16px 24px;
   border-bottom: 1px solid var(--vscode-panel-border, #2d2d30);
   background: var(--vscode-editor-background, #1e1e1e);
+  flex-shrink: 0;
+  min-width: 0;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .header-left {
@@ -629,8 +638,11 @@ onMounted(() => {
 .env-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 24px;
   background: var(--vscode-editor-background, #1e1e1e);
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .loading-section {
@@ -760,11 +772,16 @@ onMounted(() => {
 
 .table-container {
   overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .env-table {
   width: 100%;
+  min-width: 600px;
   border-collapse: collapse;
+  table-layout: auto;
 }
 
 .env-table th {
@@ -1098,9 +1115,11 @@ onMounted(() => {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
+    padding: 12px 16px;
   }
 
   .header-actions {
+    width: 100%;
     justify-content: stretch;
   }
 
@@ -1108,6 +1127,10 @@ onMounted(() => {
   .add-button {
     flex: 1;
     justify-content: center;
+  }
+
+  .env-content {
+    padding: 16px;
   }
 
   .env-table {
@@ -1130,20 +1153,40 @@ onMounted(() => {
 
   .modal-footer {
     flex-direction: column;
+    gap: 8px;
   }
 }
 
 @media (max-width: 480px) {
+  .env-header {
+    padding: 8px 12px;
+  }
+
+  .env-content {
+    padding: 12px;
+  }
+
   .table-container {
     overflow-x: scroll;
   }
 
   .env-table {
-    min-width: 600px;
+    min-width: 500px;
+    font-size: 11px;
+  }
+
+  .env-table th,
+  .env-table td {
+    padding: 6px 8px;
   }
 
   .code-examples {
-    padding: 16px;
+    padding: 12px;
+  }
+
+  .env-value {
+    max-width: 100px;
+    font-size: 10px;
   }
 }
 </style>
