@@ -1,14 +1,14 @@
 <template>
   <div class="monaco-container">
     <MonacoSidebar class="sidebar" />
-    
+
     <!-- Professional Welcome Screen -->
     <div v-if="showWelcome" class="welcome-screen">
       <div class="welcome-header">
         <h1 class="welcome-title">Codespaces</h1>
         <p class="welcome-subtitle">Entwicklungsumgebung</p>
       </div>
-      
+
       <div class="welcome-content">
         <div class="welcome-section">
           <h3>Start</h3>
@@ -32,12 +32,7 @@
         <div class="welcome-section" v-if="recentFiles.length > 0">
           <h3>Zuletzt verwendet</h3>
           <div class="recent-files-list">
-            <button 
-              v-for="file in recentFiles" 
-              :key="file.name"
-              @click="loadFile(file.name)"
-              class="recent-file-item"
-            >
+            <button v-for="file in recentFiles" :key="file.name" @click="loadFile(file.name)" class="recent-file-item">
               <ion-icon :name="getFileIcon(file.name)" :color="getFileColor(file.name)"></ion-icon>
               <span class="file-name">{{ file.name }}</span>
               <span class="file-path">{{ codespaceName }}</span>
@@ -64,19 +59,16 @@
         </div>
       </div>
     </div>
-    
+
+    <!-- APIs Management View -->
+    <MonacoAPIsView v-if="showAPIsView" :project-name="projectName" :codespace="codespaceName"/>
+
     <!-- Editor Container -->
-    <div v-else class="monaco-editor-container">
-      <vue-monaco-editor
-        v-model:value="code"
-        :language="language"
-        theme="vs-dark"
-        :options="editorOptions"
-        width="100%"
-        height="100%"
-      />
+    <div v-if="!showAPIsView && !showWelcome" class="monaco-editor-container">
+      <vue-monaco-editor v-model:value="code" :language="language" theme="vs-dark" :options="editorOptions" width="100%"
+        height="100%" />
     </div>
-    
+
     <div class="markdown-preview" v-html="renderedMarkdown" v-if="language === 'markdown'"></div>
 
     <!-- Floating AI Assistant Button -->
@@ -90,25 +82,17 @@
       <div class="chat-header">
         <h3>AI Assistant</h3>
         <div class="chat-controls">
-          <button 
-            class="new-chat-btn" 
-            @click="startNewChat"
-            title="Neuer Chat"
-          >
+          <button class="new-chat-btn" @click="startNewChat" title="Neuer Chat">
             🔄
           </button>
-          <button 
-            class="mode-toggle" 
-            @click="toggleAgentMode"
-            :class="{ active: agentMode }"
-            :title="agentMode ? 'Agent Mode - AI kann Code bearbeiten' : 'Chat Mode - Nur Antworten'"
-          >
+          <button class="mode-toggle" @click="toggleAgentMode" :class="{ active: agentMode }"
+            :title="agentMode ? 'Agent Mode - AI kann Code bearbeiten' : 'Chat Mode - Nur Antworten'">
             {{ agentMode ? '🔧' : '💬' }}
           </button>
           <button class="close-btn" @click="toggleAssistant">×</button>
         </div>
       </div>
-      
+
       <div class="chat-messages" ref="chatMessages">
         <div v-for="(message, index) in chatHistory" :key="index" class="message" :class="message.type">
           <div class="message-content" v-html="message.content"></div>
@@ -139,14 +123,10 @@
           </div>
         </div>
       </div>
-      
+
       <div class="chat-input">
-        <textarea 
-          v-model="userQuestion" 
-          @keydown.enter.prevent="handleEnterKey"
-          placeholder="Stelle eine Frage oder bitte um Code-Änderungen..."
-          ref="chatInput"
-        ></textarea>
+        <textarea v-model="userQuestion" @keydown.enter.prevent="handleEnterKey"
+          placeholder="Stelle eine Frage oder bitte um Code-Änderungen..." ref="chatInput"></textarea>
         <button @click="askAI" :disabled="!userQuestion.trim() || isTyping" class="send-btn">
           {{ isTyping ? '⏳' : '➤' }}
         </button>
@@ -165,9 +145,10 @@ import axios from 'axios'
 import { ToastService } from "@/services/ToastService";
 import { marked } from 'marked';
 import { useCodespace } from '@/composables/useCodespace'
-import { 
+import {
   IonIcon
 } from '@ionic/vue'
+import MonacoAPIsView from './MonacoAPIsView.vue'
 
 const toast = ToastService
 
@@ -180,6 +161,7 @@ const codespace = useCodespace(route.params)
 
 const currentFile = ref('')
 const showWelcome = ref(true)
+const showAPIsView = ref(false)
 const recentFiles = ref([])
 
 const code = ref('// Schreibe hier deinen Code...\nconsole.log("Hello Monaco!")')
@@ -220,23 +202,30 @@ const loadFile = async (filename = 'index.html') => {
     }
 
     language.value = languageMap[filename.split('.').pop()] || 'javascript'
-    
+
     // Use codespace API to load file from specific codespace
     const content = await codespace.loadFile(filename)
     code.value = content
-    currentFile.value = filename
+
+    if (filename == "apis") {
+      showAPIsView.value = true
+    } else {
+      showAPIsView.value = false
+      currentFile.value = filename
+    }
+
     showWelcome.value = false // Hide welcome screen when file is loaded
-    
+
     // Add to recent files
     addToRecentFiles(filename)
-    
+
     // Emit active file changed event
-    window.dispatchEvent(new CustomEvent('monaco-active-file-changed', { 
-      detail: { 
+    window.dispatchEvent(new CustomEvent('monaco-active-file-changed', {
+      detail: {
         filePath: filename,
         projectName,
         codespaceName
-      } 
+      }
     }))
   } catch (error) {
     console.log('File not found, creating new file')
@@ -244,36 +233,36 @@ const loadFile = async (filename = 'index.html') => {
     await codespace.createFile(filename, code.value)
     currentFile.value = filename
     showWelcome.value = false
-    
+
     // Emit active file changed event for new file
-    window.dispatchEvent(new CustomEvent('monaco-active-file-changed', { 
-      detail: { 
+    window.dispatchEvent(new CustomEvent('monaco-active-file-changed', {
+      detail: {
         filePath: filename,
         projectName,
         codespaceName
-      } 
+      }
     }))
   }
 }
 
 // Save file content
-const saveFile = async (filename, content, manual=false) => {
+const saveFile = async (filename, content, manual = false) => {
   try {
     // Use codespace API to save file in specific codespace
     await codespace.saveFile(filename, content)
-    
-    if(manual){
+
+    if (manual) {
       toast.success(`Datei ${filename} erfolgreich gespeichert!`, 1000)
     }
     console.log('File saved successfully to codespace:', codespaceName)
     // Emit event to notify sidebar about file save
-    window.dispatchEvent(new CustomEvent('monaco-file-saved', { 
-      detail: { 
-        filename, 
+    window.dispatchEvent(new CustomEvent('monaco-file-saved', {
+      detail: {
+        filename,
         content,
         projectName,
         codespaceName
-      } 
+      }
     }))
   } catch (error) {
     console.error('Failed to save file:', error)
@@ -287,11 +276,11 @@ let lastSavedContent = code.value
 watch(code, (newCode) => {
   // Only auto-save if a file is currently loaded
   if (!currentFile.value || showWelcome.value) return
-  
+
   if (saveTimeout) {
     clearTimeout(saveTimeout)
   }
-  
+
   saveTimeout = setTimeout(async () => {
     try {
       await saveFile(currentFile.value, newCode)
@@ -304,16 +293,16 @@ watch(code, (newCode) => {
       toast.error(`Auto-Save fehlgeschlagen für ${currentFile.value}: ${error.message}`, 1000)
     }
   }, 1000) // Auto-save after 1 second of inactivity
-  
+
   // Emit change event immediately for live git updates
   if (newCode !== lastSavedContent) {
-    window.dispatchEvent(new CustomEvent('monaco-file-changed', { 
-      detail: { 
-        filename: currentFile.value, 
+    window.dispatchEvent(new CustomEvent('monaco-file-changed', {
+      detail: {
+        filename: currentFile.value,
         content: newCode,
         projectName,
         codespaceName
-      } 
+      }
     }))
   }
 })
@@ -323,25 +312,25 @@ const initializeProject = async () => {
   try {
     // Use codespace API to load files from specific codespace
     await codespace.loadFiles()
-    
+
     if (codespace.files.value.length > 0) {
       // Filter out Monaco metadata files and get regular files
-      const regularFiles = codespace.files.value.filter(f => 
-        f.type === 'file' && 
+      const regularFiles = codespace.files.value.filter(f =>
+        f.type === 'file' &&
         !f.name.startsWith('.monaco_') &&
         !f.name.startsWith('.git')
       )
-      
+
       // Update recent files for welcome screen
       recentFiles.value = regularFiles.slice(0, 5) // Show last 5 files
-      
+
       // Don't auto-load any file - show welcome screen instead
       showWelcome.value = true
     } else {
       // New codespace, show welcome screen
       showWelcome.value = true
     }
-    
+
     console.log(`Initialized codespace: ${codespaceName} in project: ${projectName}`)
   } catch (error) {
     console.error('Failed to initialize codespace:', error)
@@ -472,7 +461,7 @@ onMounted(() => {
       }
       console.log('Command + S was pressed, file saved.')
     }
-    
+
     // Ctrl+N für neue Datei
     if ((event.metaKey || event.ctrlKey) && event.key === 'n' && !event.shiftKey) {
       event.preventDefault()
@@ -527,8 +516,8 @@ const startNewChat = () => {
 
 const toggleAgentMode = () => {
   agentMode.value = !agentMode.value;
-  addSystemMessage(agentMode.value ? 
-    'Agent-Modus aktiviert: AI kann automatisch Code-Änderungen vorschlagen und anwenden.' : 
+  addSystemMessage(agentMode.value ?
+    'Agent-Modus aktiviert: AI kann automatisch Code-Änderungen vorschlagen und anwenden.' :
     'Chat-Modus aktiviert: AI antwortet nur mit Textnachrichten.'
   );
 };
@@ -557,17 +546,17 @@ const addAIMessage = (content, replacements = null) => {
     content: marked(content),
     time: new Date().toLocaleTimeString()
   };
-  
+
   if (replacements && replacements.length > 0) {
     message.replacements = replacements;
   }
-  
+
   chatHistory.value.push(message);
-  
+
   if (!showAssistant.value) {
     unreadMessages.value++;
   }
-  
+
   scrollToBottom();
 };
 
@@ -627,18 +616,18 @@ const askAI = async () => {
 const applyReplacement = (replacement) => {
   const oldCode = replacement.oldCode;
   let newCode = replacement.newCode;
-  
+
   // Clean up any trailing END_REPLACE that might have been included
   newCode = newCode.replace(/\s*END_REPLACE\s*$/, '').trim();
-  
+
   // Check if current code is minimal (empty, single line, or just comments)
   const currentCodeTrimmed = code.value.trim();
-  const isMinimalCode = !currentCodeTrimmed || 
-                        currentCodeTrimmed.split('\n').length <= 2 ||
-                        currentCodeTrimmed.match(/^\/\/.*$/) ||
-                        currentCodeTrimmed.match(/^\/\*.*\*\/$/) ||
-                        currentCodeTrimmed === 'console.log("Hello Monaco!")';
-  
+  const isMinimalCode = !currentCodeTrimmed ||
+    currentCodeTrimmed.split('\n').length <= 2 ||
+    currentCodeTrimmed.match(/^\/\/.*$/) ||
+    currentCodeTrimmed.match(/^\/\*.*\*\/$/) ||
+    currentCodeTrimmed === 'console.log("Hello Monaco!")';
+
   // If oldCode is empty or current code is minimal, replace everything or append
   if (!oldCode.trim() || isMinimalCode) {
     if (isMinimalCode && newCode.includes('<!DOCTYPE html>')) {
@@ -654,7 +643,7 @@ const applyReplacement = (replacement) => {
     }
     return;
   }
-  
+
   // Try exact match first
   if (code.value.includes(oldCode)) {
     code.value = code.value.replace(oldCode, newCode);
@@ -662,16 +651,16 @@ const applyReplacement = (replacement) => {
     addSystemMessage('Code-Änderung wurde erfolgreich angewendet.');
     return;
   }
-  
+
   // Try with normalized whitespace
   const normalizedOldCode = oldCode.replace(/\s+/g, ' ').trim();
   const normalizedCurrentCode = code.value.replace(/\s+/g, ' ').trim();
-  
+
   if (normalizedCurrentCode.includes(normalizedOldCode)) {
     // Find the original text with original formatting
     const lines = code.value.split('\n');
     let found = false;
-    
+
     for (let i = 0; i < lines.length; i++) {
       const lineSection = lines.slice(i, i + oldCode.split('\n').length).join('\n');
       if (lineSection.replace(/\s+/g, ' ').trim() === normalizedOldCode) {
@@ -683,7 +672,7 @@ const applyReplacement = (replacement) => {
         break;
       }
     }
-    
+
     if (found) {
       toast.success('Code-Änderung wurde angewendet!', 30);
       addSystemMessage('Code-Änderung wurde erfolgreich angewendet.');
@@ -876,15 +865,15 @@ const applyReplacement = (replacement) => {
     gap: 24px;
     padding: 24px 24px;
   }
-  
+
   .welcome-header {
     padding: 24px 24px 16px;
   }
-  
+
   .welcome-title {
     font-size: 24px;
   }
-  
+
   .welcome-section {
     min-width: auto;
   }
@@ -1112,7 +1101,8 @@ const applyReplacement = (replacement) => {
   font-size: 12px;
 }
 
-.old-code, .new-code {
+.old-code,
+.new-code {
   background: #f1f3f4;
   padding: 8px;
   border-radius: 4px;
@@ -1218,19 +1208,45 @@ const applyReplacement = (replacement) => {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes typing {
-  0%, 60%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-10px); }
+
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+
+  30% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.1); opacity: 0.8; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Responsive adjustments */
@@ -1241,13 +1257,14 @@ const applyReplacement = (replacement) => {
     bottom: 90px;
     right: 20px;
   }
-  
+
   .replacement-preview {
     grid-template-columns: 1fr;
   }
-  
+
   .chat-input textarea {
-    font-size: 16px; /* Prevent zoom on iOS */
+    font-size: 16px;
+    /* Prevent zoom on iOS */
   }
 }
 

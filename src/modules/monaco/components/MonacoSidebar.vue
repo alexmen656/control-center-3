@@ -35,7 +35,7 @@
           <!-- Recursive file tree rendering -->
           <div v-for="item in hierarchicalFileTree" :key="item.path" class="tree-item">
             <!-- Folder -->
-            <div v-if="item.type === 'directory'" 
+            <div v-if="item.type === 'directory' && item.path != 'apis'" 
                  class="file-item folder-item" 
                  @click="toggleFolder(item.path)">
               <ion-icon 
@@ -47,6 +47,22 @@
               <ion-button fill="clear" size="small" @click.stop="deleteFile(item)" class="delete-btn">
                 <ion-icon name="trash-outline"></ion-icon>
               </ion-button>
+            </div>
+
+            <!-- Apis -->
+            <div v-if="item.type === 'directory' && item.path == 'apis'" 
+                  class="file-item" 
+                 :class="{ 'active-file': activeFile === item.path }"
+                 @click="openFile({name: 'apis', path: 'apis'})">
+                  <span class="file-indent"></span>
+                  <ion-icon name="server-outline" class="file-icon"></ion-icon>
+                  <span class="file-name">APIs</span>
+              <!--<ion-button fill="clear" size="small" @click.stop="openAPIsView" class="manage-btn">
+                <ion-icon name="settings-outline"></ion-icon>
+              </ion-button>-->
+                  <ion-button fill="clear" size="small" @click.stop="deleteFile(child)" class="delete-btn">
+                    <ion-icon name="trash-outline"></ion-icon>
+                  </ion-button>
             </div>
             
             <!-- Children (if folder is expanded) -->
@@ -514,8 +530,8 @@ const filteredProjectFiles = computed(() => {
     // Zeige alle Dateien an, aber excludiere nur bestimmte Monaco-interne Dateien aus der Anzeige
     // .monaco_apis/ Dateien sollen weiterhin sichtbar und commitbar sein
     return projectFiles.value.filter(file => 
-      !excludedFiles.value.includes(file.path) || 
-      file.path.startsWith(".monaco_apis/")
+      !excludedFiles.value.includes(file.path) && 
+      !file.path.startsWith(".monaco_apis/")
     );
   } else {
     return projectFiles.value;
@@ -641,6 +657,7 @@ const flattenFileTree = (files) => {
 const openFile = (file) => {
   // Set active file
   activeFile.value = file.path
+  console.log('Opening file:', file)
   // Emit event to parent component to open file
   window.dispatchEvent(new CustomEvent('monaco-open-file', { detail: file }))
 }
@@ -2007,5 +2024,15 @@ ion-button[fill="clear"] {
 .no-apis small {
   color: var(--vscode-descriptionForeground, #999999);
   font-size: 11px;
+}
+
+.apis-folder .manage-btn {
+  --color: rgba(255, 255, 255, 0.8);
+}
+
+.apis-folder .manage-btn:hover {
+  --color: white;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
 }
 </style>
