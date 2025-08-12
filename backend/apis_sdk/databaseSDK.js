@@ -1,12 +1,20 @@
 // CMS Database API SDK
 class DatabaseAPI {
   constructor() {
-    this.baseUrl = 'https://alex.polan.sk/control-center/backend/api/v1/database';
+    this.baseUrl = 'https://alex.polan.sk/control-center/api/v1/database.php';
     this.apiKey = 'demo-api-key-123';
   }
 
+  async listTables() {
+    const response = await fetch(`${this.baseUrl}?action=tables`, {
+      method: 'GET',
+      headers: this.getHeaders()
+    });
+    return this.handleResponse(response);
+  }
+
   async query(table, conditions = {}, options = {}) {
-    const response = await fetch(`${this.baseUrl}/query`, {
+    const response = await fetch(`${this.baseUrl}?action=query`, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify({ table, conditions, options })
@@ -15,7 +23,7 @@ class DatabaseAPI {
   }
 
   async insert(table, data) {
-    const response = await fetch(`${this.baseUrl}/insert`, {
+    const response = await fetch(`${this.baseUrl}?action=insert`, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify({ table, data })
@@ -24,7 +32,7 @@ class DatabaseAPI {
   }
 
   async update(table, id, data) {
-    const response = await fetch(`${this.baseUrl}/update`, {
+    const response = await fetch(`${this.baseUrl}?action=update`, {
       method: 'PUT',
       headers: this.getHeaders(),
       body: JSON.stringify({ table, id, data })
@@ -33,7 +41,7 @@ class DatabaseAPI {
   }
 
   async delete(table, id) {
-    const response = await fetch(`${this.baseUrl}/delete`, {
+    const response = await fetch(`${this.baseUrl}?action=delete`, {
       method: 'DELETE',
       headers: this.getHeaders(),
       body: JSON.stringify({ table, id })
@@ -49,10 +57,13 @@ class DatabaseAPI {
   }
 
   async handleResponse(response) {
-    if (!response.ok) {
-      throw new Error(`Database API Error: ${response.status} ${response.statusText}`);
+    const data = await response.json();
+    
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || `Database API Error: ${response.status} ${response.statusText}`);
     }
-    return response.json();
+    
+    return data;
   }
 }
 

@@ -13,21 +13,12 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Headers: *');
 
 header('Content-Type: application/json');
-include '/www/paxar/components/php_head.php';
+include "use_template_function.php";
+include "db_connection.php";
+include "functions.php";
 
 // Fix: $json immer initialisieren
 $json = [];
-
-function randomNumber()
-{
-    $rand = rand(100000, 999999);
-    return $rand;
-}
-
-function echoJson($json)
-{
-    return json_encode($json, JSON_PRETTY_PRINT);
-}
 
 if (isset($_POST['getTables']) && $_POST['getTables']) {
     //echo 12345678;
