@@ -606,19 +606,25 @@ function createMonacoCodespaceDirectory($projectLink, $codespaceSlug, $codespace
         $packageName = strtolower(str_replace([' ', '-'], ['_', '_'], $codespaceName));
         
         if (is_dir($templateDir)) {
-            // Copy all files from template directory
-            $templateFiles = glob($templateDir . '/*');
-            foreach ($templateFiles as $templateFile) {
-                if (is_file($templateFile)) {
-                    $fileName = basename($templateFile);
-                    $content = file_get_contents($templateFile);
-                    
-                    // Replace template placeholders
+            // Recursively copy template directory contents
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($templateDir, RecursiveDirectoryIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::SELF_FIRST
+            );
+            foreach ($iterator as $item) {
+                $path = $item->getPathname();
+                $subPath = substr($path, strlen($templateDir) + 1);
+                $destPath = $dataDir . '/' . $subPath;
+                if ($item->isDir()) {
+                    if (!is_dir($destPath)) {
+                        mkdir($destPath, 0777, true);
+                    }
+                } else {
+                    $content = file_get_contents($path);
                     $content = str_replace('[{[codespaceName]}]', $codespaceName, $content);
                     $content = str_replace('[{[packageName]}]', $packageName, $content);
                     $content = str_replace('[{[projectLink]}]', $projectLink, $content);
-                    
-                    file_put_contents($dataDir . '/' . $fileName, $content);
+                    file_put_contents($destPath, $content);
                 }
             }
         } else {
