@@ -250,30 +250,39 @@
       <div class="section-header">
         <ion-icon name="server-outline"></ion-icon>
         <span>CMS APIs</span>
-        <ion-button fill="clear" size="small" @click="refreshInstalledAPIs">
+        <ion-button fill="clear" size="small" @click="refreshAvailableAPIs">
           <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
         </ion-button>
       </div>
 
       <div class="section-content">
-        <!-- Available APIs
-        <div class="subsection-header">Available in Project</div> -->
-        <div v-if="installedAPIs.length === 0" class="no-apis">
-          No APIs available for this project.<br>
-          <small>Manage APIs in the main Control Center.</small>
+        <!-- Available APIs with toggle switches -->
+        <div v-if="availableAPIs.length === 0" class="no-apis">
+          No APIs subscribed for this project.<br>
+          <small>Subscribe to APIs in the main Control Center.</small>
         </div>
-        <div v-for="api in installedAPIs" :key="api.slug" class="api-item">
-          <ion-icon :name="api.icon || 'server-outline'" class="api-icon"></ion-icon>
-          <span class="api-name">{{ api.name }}</span>
-          <div class="api-status">
-            <ion-icon name="checkmark-circle"></ion-icon>
+        
+        <div v-for="api in availableAPIs" :key="api.slug" class="api-item">
+          <div class="api-info">
+            <ion-icon :name="api.icon || 'server-outline'" class="api-icon"></ion-icon>
+            <div class="api-details">
+              <span class="api-name">{{ api.name }}</span>
+              <small class="api-category">{{ api.category }}</small>
+            </div>
+          </div>
+          
+          <div class="api-controls">
+            <ion-toggle 
+              :checked="api.is_active" 
+              @ionChange="toggleAPI(api)"
+              :disabled="api.isToggling"
+            ></ion-toggle>
           </div>
         </div>
 
-        <!-- Quick Copy
-        <div class="subsection-header">Quick Copy</div> -->
-        <div v-if="installedAPIs.length === 0" class="no-apis-message">
-          Install APIs to see import examples
+        <!-- Active APIs Quick Copy -->
+        <div v-if="activeAPIs.length === 0" class="no-apis-message">
+          Activate APIs above to see import examples
         </div>
         <div v-else>
           <div class="copy-section">
@@ -346,7 +355,6 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { ToastService } from '@/services/ToastService'
-import { useCodespace } from '@/composables/useCodespace'
 
 const route = useRoute()
 
@@ -363,7 +371,8 @@ const projectFiles = ref([])
 const pullRequests = ref([])
 
 // API State
-const installedAPIs = ref([])
+const availableAPIs = ref([])
+const activeAPIs = computed(() => availableAPIs.value.filter(api => api.is_active))
 
 // Excluded files state
 const excludedFiles = ref([".monaco_commits.json", ".monaco_git", ".monaco_initialized", ".monaco_lastcommit.json", ".monaco_staged.json"])
@@ -385,32 +394,76 @@ const mergeConflicts = ref([])
 // Active file state
 const activeFile = ref('')
 
-// Get project name from route
+// Get project and codespace name from route
 const projectName = route.params.project || 'default-project'
-const codespaceName = route.params.codespace || 'main'
+const codespace = route.params.codespace || 'main'
 
-// Initialize codespace
-const codespace = useCodespace(route.params)
-
-// API Methods - only for loading installed APIs
-const loadInstalledAPIs = async () => {
+// API Methods - for loading codespace-specific APIs
+const loadAvailableAPIs = async () => {
   try {
-    // Get subscribed APIs from backend
-    const response = await axios.get(`sidebar.php?getSideBarByProjectName=${projectName}`)
+    const formData = new FormData()
+    formData.append('getCodespaceAPIs', '1')
+    formData.append('project', projectName)
+    formData.append('codespace', codespace)
     
-    if (response.data && response.data.apis) {
-      installedAPIs.value = response.data.apis
+    const response = await axios.post('codespace_apis.php', formData)
+    
+    if (response.data && Array.isArray(response.data)) {
+      availableAPIs.value = response.data.map(api => ({
+        ...api,
+        isToggling: false
+      }))
     } else {
-      installedAPIs.value = []
+      availableAPIs.value = []
     }
   } catch (error) {
-    console.error('Failed to load installed APIs:', error)
-    installedAPIs.value = []
+    console.error('Failed to load available APIs:', error)
+    availableAPIs.value = []
   }
 }
 
-const refreshInstalledAPIs = async () => {
-  await loadInstalledAPIs()
+const refreshAvailableAPIs = async () => {
+  await loadAvailableAPIs()
+}
+
+const toggleAPI = async (api) => {
+  if (api.isToggling) return
+  
+  api.isToggling = true
+  
+  try {
+    const formData = new FormData()
+    formData.append('project', projectName)
+    formData.append('codespace', codespace)
+    formData.append('subscription_id', api.subscription_id)
+    
+    if (api.is_active) {
+      formData.append('deactivateCodespaceAPI', '1')
+      const response = await axios.post('codespace_apis.php', formData)
+      
+      if (response.data && response.data.success) {
+        api.is_active = false
+        ToastService.success('API deactivated successfully')
+      } else {
+        ToastService.error(response.data?.message || 'Failed to deactivate API')
+      }
+    } else {
+      formData.append('activateCodespaceAPI', '1')
+      const response = await axios.post('codespace_apis.php', formData)
+      
+      if (response.data && response.data.success) {
+        api.is_active = true
+        ToastService.success('API activated successfully')
+      } else {
+        ToastService.error(response.data?.message || 'Failed to activate API')
+      }
+    }
+  } catch (error) {
+    console.error('Failed to toggle API:', error)
+    ToastService.error('Failed to toggle API')
+  } finally {
+    api.isToggling = false
+  }
 }
 
 const getAPIClassName = (slug) => {
@@ -418,25 +471,29 @@ const getAPIClassName = (slug) => {
 }
 
 const getAllImportsExample = () => {
-  if (installedAPIs.value.length === 0) return ''
+  if (activeAPIs.value.length === 0) return ''
   
-  const imports = installedAPIs.value.map(api => getAPIClassName(api.slug)).join(', ')
+  const imports = activeAPIs.value.map(api => getAPIClassName(api.slug)).join(', ')
   return `import { ${imports} } from 'apis';`
 }
 
 const getUsageExample = () => {
-  if (installedAPIs.value.length === 0) return ''
+  if (activeAPIs.value.length === 0) return ''
   
-  const firstAPI = installedAPIs.value[0]
+  const firstAPI = activeAPIs.value[0]
   const className = getAPIClassName(firstAPI.slug)
   
   switch (firstAPI.slug) {
-    case 'users':
+    case 'user-management':
       return `// Get all users\nconst users = await ${className}.getAll();\n\n// Create new user\nconst user = await ${className}.create({ name: 'John', email: 'john@example.com' });`
-    case 'files':
+    case 'file-storage':
       return `// Upload file\nconst result = await ${className}.upload(file);\n\n// List files\nconst files = await ${className}.list();`
     case 'database':
       return `// Query database\nconst records = await ${className}.query('users', { active: true });\n\n// Insert record\nconst result = await ${className}.insert('users', { name: 'John' });`
+    case 'notifications':
+      return `// Send notification\nconst result = await ${className}.send({ message: 'Hello!', userId: 123 });\n\n// Get notifications\nconst notifications = await ${className}.list();`
+    case 'analytics':
+      return `// Track event\nconst result = await ${className}.track('user_login', { userId: 123 });\n\n// Get analytics\nconst data = await ${className}.getReport('daily');`
     default:
       return `// Use ${firstAPI.name} API\nconst result = await ${className}.get();`
   }
@@ -547,9 +604,9 @@ const getFileIcon = (file) => {
 // File Explorer Methods
 const refreshFiles = async () => {
   try {
-    // Use codespace API to load files from specific codespace
-    await codespace.loadFiles()
-    const allFiles = flattenCodespaceFiles(codespace.files.value || [])
+    // Use file API to load files from specific codespace
+    const response = await axios.get(`file_api.php?project=${projectName}&codespace=${codespace}&action=list`)
+    const allFiles = flattenFileTree(response.data || [])
     
     // Make sure .monaco_apis files are included and not excluded from commits
     projectFiles.value = allFiles
@@ -563,7 +620,7 @@ const refreshFiles = async () => {
   }
 }
 
-const flattenCodespaceFiles = (files) => {
+const flattenFileTree = (files) => {
   let flattened = []
   files.forEach(file => {
     if (file.type === 'file') {
@@ -575,7 +632,7 @@ const flattenCodespaceFiles = (files) => {
         modified: file.modified
       })
     } else if (file.type === 'directory' && file.children) {
-      flattened = flattened.concat(flattenCodespaceFiles(file.children))
+      flattened = flattened.concat(flattenFileTree(file.children))
     }
   })
   return flattened
@@ -592,14 +649,18 @@ const createNewFile = async () => {
   const fileName = prompt('Enter file name (with extension):')
   if (fileName) {
     try {
-      // Use codespace API to create file in specific codespace
-      await codespace.createFile(fileName, '')
+      // Use file API to create file in specific codespace
+      await axios.post(`file_api.php?project=${projectName}&codespace=${codespace}`, {
+        action: 'create_file',
+        path: fileName,
+        content: ''
+      })
       await refreshFiles()
       openFile({ name: fileName, path: fileName })
-      ToastService.success(`File "${fileName}" created successfully in codespace "${codespaceName}"!`)
+      ToastService.success(`File "${fileName}" created successfully in codespace "${codespace}"!`)
     } catch (error) {
       console.error('Failed to create file:', error)
-      ToastService.error('Failed to create file: ' + (error.message || 'Unknown error'))
+      ToastService.error('Failed to create file: ' + (error.response?.data?.message || error.message))
     }
   }
 }
@@ -609,12 +670,12 @@ const createNewFolder = async () => {
   if (folderName) {
     try {
       // Create folder using the codespace API with codespace parameter
-      await axios.post(`file_api.php?project=${projectName}&codespace=${codespaceName}`, {
+      await axios.post(`file_api.php?project=${projectName}&codespace=${codespace}`, {
         action: 'create_folder',
         path: folderName
       })
       await refreshFiles()
-      ToastService.success(`Folder "${folderName}" created successfully in codespace "${codespaceName}"!`)
+      ToastService.success(`Folder "${folderName}" created successfully in codespace "${codespace}"!`)
     } catch (error) {
       console.error('Failed to create folder:', error)
       ToastService.error('Failed to create folder: ' + (error.response?.data?.message || error.message))
@@ -625,14 +686,16 @@ const createNewFolder = async () => {
 const deleteFile = async (file) => {
   if (confirm(`Are you sure you want to delete ${file.name}?`)) {
     try {
-      // Use codespace API to delete file from specific codespace
-      await codespace.deleteFile(file.path)
+      // Use file API to delete file from specific codespace
+      await axios.delete(`file_api.php?project=${projectName}&codespace=${codespace}`, {
+        data: { file: file.path }
+      })
       await refreshFiles()
       await refreshGitStatus()
-      ToastService.success(`File "${file.name}" deleted from codespace "${codespaceName}"!`)
+      ToastService.success(`File "${file.name}" deleted from codespace "${codespace}"!`)
     } catch (error) {
       console.error('Failed to delete file:', error)
-      ToastService.error('Failed to delete file: ' + (error.message || 'Unknown error'))
+      ToastService.error('Failed to delete file: ' + (error.response?.data?.message || error.message))
     }
   }
 }
@@ -641,7 +704,7 @@ const deleteFile = async (file) => {
 const loadGitData = async () => {
   try {
     // Load real git changes for specific codespace
-    const changesResponse = await axios.get(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}&action=changes`)
+    const changesResponse = await axios.get(`monaco_git_api.php?project=${projectName}&codespace=${codespace}&action=changes`)
     if (changesResponse.data.success) {
       changedFiles.value = changesResponse.data.changes || []
     } else {
@@ -649,7 +712,7 @@ const loadGitData = async () => {
     }
 
     // Load commit history for specific codespace
-    const commitsResponse = await axios.get(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}&action=commits`)
+    const commitsResponse = await axios.get(`monaco_git_api.php?project=${projectName}&codespace=${codespace}&action=commits`)
     if (commitsResponse.data.success) {
       recentCommits.value = commitsResponse.data.commits.map(commit => ({
         hash: commit.sha || commit.hash,
@@ -670,7 +733,7 @@ const loadGitData = async () => {
 
 const loadPullRequests = async () => {
   try {
-    const response = await axios.get(`monaco_pr_api.php?project=${projectName}&codespace=${codespaceName}&action=list`)
+    const response = await axios.get(`monaco_pr_api.php?project=${projectName}&codespace=${codespace}&action=list`)
     if (response.data.success) {
       pullRequests.value = response.data.data || []
     } else {
@@ -684,7 +747,7 @@ const loadPullRequests = async () => {
 
 const loadDeployments = async () => {
   try {
-    const response = await axios.get(`vercel_api.php?project=${projectName}&codespace=${codespaceName}&action=deployments`)
+    const response = await axios.get(`vercel_api.php?project=${projectName}&codespace=${codespace}&action=deployments`)
     if (response.data.success) {
       deployments.value = response.data.deployments.deployments?.map(deployment => ({
         id: deployment.uid,
@@ -732,7 +795,7 @@ const commitChanges = async () => {
       staged: f.staged
     }))
 
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}`, {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespace}`, {
       action: 'commit',
       message: commitMessage.value,
       files: filesToCommit,
@@ -774,7 +837,7 @@ const pullFromGitHub = async () => {
   isPulling.value = true
 
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}`, {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespace}`, {
       action: 'pull'
     })
 
@@ -805,7 +868,7 @@ const pushToGitHub = async () => {
   isPushing.value = true
 
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}`, {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespace}`, {
       action: 'push'
     })
 
@@ -858,7 +921,7 @@ const resolveConflict = async (filename) => {
 
 const autoResolveConflicts = async () => {
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}`, {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespace}`, {
       action: 'auto_resolve_conflicts',
       conflicts: mergeConflicts.value
     })
@@ -879,7 +942,7 @@ const autoResolveConflicts = async () => {
 const stageFile = async (filePath) => {
   console.log('Staging file:', filePath)
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}`, {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespace}`, {
       action: 'stage',
       file: filePath
     })
@@ -897,7 +960,7 @@ const stageFile = async (filePath) => {
 const unstageFile = async (filePath) => {
   console.log('Unstaging file:', filePath)
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}`, {
+    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespace}`, {
       action: 'unstage',
       file: filePath
     })
@@ -915,7 +978,7 @@ const unstageFile = async (filePath) => {
 const discardChanges = async (filePath) => {
   if (confirm(`Are you sure you want to discard changes to ${filePath}?`)) {
     try {
-      const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}`, {
+      const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespace}`, {
         action: 'discard',
         file: filePath
       })
@@ -964,7 +1027,7 @@ const stopLiveGitUpdates = () => {
 const viewFileDiff = async (filePath) => {
   try {
     console.log('Loading diff for file:', filePath)
-    const response = await axios.get(`monaco_git_api.php?project=${projectName}&codespace=${codespaceName}&action=diff&file=${filePath}`)
+    const response = await axios.get(`monaco_git_api.php?project=${projectName}&codespace=${codespace}&action=diff&file=${filePath}`)
     
     if (response.data.success) {
       // Set diff data and show modal
@@ -998,7 +1061,7 @@ const createPullRequest = async () => {
 
   if (title && headBranch) {
     try {
-      const response = await axios.post(`monaco_pr_api.php?project=${projectName}&codespace=${codespaceName}&action=create`, {
+      const response = await axios.post(`monaco_pr_api.php?project=${projectName}&codespace=${codespace}&action=create`, {
         title: title,
         base_branch: baseBranch,
         head_branch: headBranch,
@@ -1035,7 +1098,7 @@ const getPRIcon = (state) => {
 const deployToVercel = async () => {
   isDeploying.value = true
   try {
-    const response = await axios.post(`vercel_api.php?project=${projectName}&codespace=${codespaceName}`, {
+    const response = await axios.post(`vercel_api.php?project=${projectName}&codespace=${codespace}`, {
       action: 'deploy',
       gitSource: {
         type: 'github',
@@ -1156,7 +1219,7 @@ onMounted(async () => {
     loadGitData(),
     loadPullRequests(),
     loadDeployments(),
-    loadInstalledAPIs()
+    loadAvailableAPIs()
   ])
   
   // Start live git updates
@@ -1828,14 +1891,21 @@ ion-button[fill="clear"] {
 .api-item {
   display: flex;
   align-items: center;
-  padding: 4px 8px;
+  padding: 8px;
   border-radius: 4px;
-  margin-bottom: 2px;
-  cursor: pointer;
+  margin-bottom: 4px;
+  background: var(--vscode-sideBar-background, #252526);
+  border: 1px solid var(--vscode-panel-border, #464647);
 }
 
 .api-item:hover {
   background: var(--vscode-list-hoverBackground, #2a2d2e);
+}
+
+.api-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
 }
 
 .api-icon {
@@ -1845,13 +1915,30 @@ ion-button[fill="clear"] {
   flex-shrink: 0;
 }
 
-.api-name {
+.api-details {
+  display: flex;
+  flex-direction: column;
   flex: 1;
+}
+
+.api-name {
   font-size: 13px;
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--vscode-foreground, #cccccc);
+  line-height: 1.2;
+}
+
+.api-category {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground, #8c8c8c);
+  margin-top: 2px;
+}
+
+.api-controls {
+  margin-left: 8px;
 }
 
 .api-status {

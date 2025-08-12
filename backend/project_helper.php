@@ -168,19 +168,6 @@ function getUserProjectsByUserID($userID)
 }
 
 /**
- * Prüft, ob ein Benutzer Berechtigungen für ein Projekt hat
- *
- * @param int $userID Die Benutzer-ID
- * @param string $projectID Die Projekt-ID
- * @return bool True wenn Berechtigungen vorhanden, sonst False
- */
-function checkUserProjectPermission($userID, $projectID)
-{
-    $check = query("SELECT * FROM control_center_user_projects WHERE userID=$userID AND projectID='$projectID'");
-    return mysqli_num_rows($check) == 1;
-}
-
-/**
  * Erzeugt eine standardisierte JSON-Antwort
  *
  * @param mixed $data Die Daten oder Nachricht
@@ -687,7 +674,7 @@ JS;
             file_put_contents($dataDir . '/vite.config.js', $viteConfig);
         }
 
-        $lastCommit = [];
+       /* $lastCommit = [];
         $createdFiles = glob($dataDir . '/*');
         foreach ($createdFiles as $file) {
             if (is_file($file) && !strpos(basename($file), '.monaco_')) {
@@ -696,7 +683,7 @@ JS;
             }
         }
         file_put_contents($dataDir . '/.monaco_lastcommit.json', json_encode($lastCommit, JSON_PRETTY_PRINT));
-
+*/
         createCMSAPISetup($dataDir, $projectID);
     }
 

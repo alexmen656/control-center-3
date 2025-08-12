@@ -16,8 +16,12 @@
                   <ion-label>Available APIs</ion-label>
                 </ion-segment-button>
                 <ion-segment-button value="subscribed">
-                  <ion-label>My APIs</ion-label>
+                  <ion-label>Project APIs</ion-label>
                   <ion-badge v-if="subscribedApis.length > 0" color="primary">{{ subscribedApis.length }}</ion-badge>
+                </ion-segment-button>
+                <ion-segment-button value="codespaces">
+                  <ion-label>Codespace APIs</ion-label>
+                  <ion-badge v-if="projectCodespaces.length > 0" color="secondary">{{ projectCodespaces.length }}</ion-badge>
                 </ion-segment-button>
                 <ion-segment-button value="usage">
                   <ion-label>Usage & Stats</ion-label>
@@ -132,6 +136,63 @@
                   <p>Subscribe to APIs from the "Available APIs" tab</p>
                 </ion-label>
               </ion-item>
+            </div>
+
+            <!-- Codespace APIs Tab -->
+            <div v-if="activeTab === 'codespaces'" class="tab-content">
+              <div class="codespace-selector" v-if="projectCodespaces.length > 0">
+                <ion-select v-model="selectedCodespace" placeholder="Select Codespace" @ionChange="loadCodespaceAPIs">
+                  <ion-select-option v-for="codespace in projectCodespaces" :key="codespace.slug" :value="codespace.slug">
+                    {{ codespace.name }}
+                  </ion-select-option>
+                </ion-select>
+              </div>
+
+              <div v-if="selectedCodespace && codespaceAPIs.length > 0">
+                <h3>API Activation for {{ getCodespaceName(selectedCodespace) }}</h3>
+                <p class="codespace-info">
+                  Toggle APIs on/off for this specific codespace. Only activated APIs will have their SDKs available in the .monaco_apis folder.
+                </p>
+
+                <ion-list>
+                  <ion-item v-for="api in codespaceAPIs" :key="api.subscription_id">
+                    <ion-icon :name="api.icon" slot="start" class="api-list-icon"></ion-icon>
+                    <ion-label>
+                      <h2>{{ api.name }}</h2>
+                      <p>{{ api.description }}</p>
+                      <div class="subscription-details">
+                        <span class="api-status-badge">
+                          <ion-badge :color="api.is_active ? 'success' : 'medium'">
+                            {{ api.is_active ? 'Active' : 'Inactive' }}
+                          </ion-badge>
+                        </span>
+                      </div>
+                    </ion-label>
+                    <ion-toggle 
+                      slot="end" 
+                      :checked="api.is_active" 
+                      @ionChange="toggleCodespaceAPI(api)"
+                      :disabled="api.isToggling">
+                    </ion-toggle>
+                  </ion-item>
+                </ion-list>
+              </div>
+
+              <div v-else-if="selectedCodespace && codespaceAPIs.length === 0" class="no-apis">
+                <ion-icon name="server-outline" size="large" color="medium"></ion-icon>
+                <p>No APIs available for this codespace</p>
+                <p>Subscribe to APIs in the "Project APIs" tab first</p>
+              </div>
+
+              <div v-else-if="projectCodespaces.length === 0" class="no-codespaces">
+                <ion-icon name="cube-outline" size="large" color="medium"></ion-icon>
+                <p>No codespaces found for this project</p>
+              </div>
+
+              <div v-else class="select-codespace">
+                <ion-icon name="cube-outline" size="large" color="medium"></ion-icon>
+                <p>Select a codespace above to manage API activations</p>
+              </div>
             </div>
 
             <!-- Usage & Stats Tab -->
@@ -266,7 +327,7 @@ import {
   IonPage, IonContent, IonGrid, IonRow, IonCol, IonSegment, IonSegmentButton,
   IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton,
   IonIcon, IonBadge, IonSearchbar, IonSelect, IonSelectOption, IonList, IonItem,
-  IonItemSliding, IonItemOptions, IonItemOption, IonCheckbox, IonInput,
+  IonItemSliding, IonItemOptions, IonItemOption, IonCheckbox, IonInput, IonToggle,
   IonModal, IonHeader, IonToolbar, IonButtons, IonTitle,
   alertController, toastController
 } from '@ionic/vue';
@@ -305,13 +366,33 @@ interface SubscribedApi {
   documentation_url: string;
 }
 
+interface CodespaceApi {
+  subscription_id: number;
+  api_id: number;
+  name: string;
+  slug: string;
+  description: string;
+  icon: string;
+  category: string;
+  endpoint_base: string;
+  is_active: boolean;
+  isToggling?: boolean;
+}
+
+interface Codespace {
+  id: number;
+  slug: string;
+  name: string;
+  description: string;
+}
+
 export default defineComponent({
   name: 'ManageApis',
   components: {
     IonPage, IonContent, IonGrid, IonRow, IonCol, IonSegment, IonSegmentButton,
     IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton,
     IonIcon, IonBadge, IonSearchbar, IonSelect, IonSelectOption, IonList, IonItem,
-    IonItemSliding, IonItemOptions, IonItemOption, IonCheckbox, IonInput,
+    IonItemSliding, IonItemOptions, IonItemOption, IonCheckbox, IonInput, IonToggle,
     IonModal, IonHeader, IonToolbar, IonButtons, IonTitle
   },
   setup() {
@@ -323,6 +404,11 @@ export default defineComponent({
     const searchTerm = ref('');
     const selectedCategory = ref('');
     const usageStats = ref([]);
+
+    // New codespace-related reactive variables
+    const projectCodespaces = ref<Codespace[]>([]);
+    const selectedCodespace = ref('');
+    const codespaceAPIs = ref<CodespaceApi[]>([]);
 
     const isDetailsModalOpen = ref(false);
     const isSettingsModalOpen = ref(false);
@@ -534,6 +620,8 @@ export default defineComponent({
       activeTab.value = event.detail.value;
       if (activeTab.value === 'subscribed') {
         loadSubscribedApis();
+      } else if (activeTab.value === 'codespaces') {
+        loadProjectCodespaces();
       }
     };
 
@@ -592,6 +680,97 @@ export default defineComponent({
       return new Date(dateString).toLocaleDateString();
     };
 
+    // New codespace-related methods
+    const loadProjectCodespaces = async () => {
+      try {
+        const response = await axios.post('project_codespaces.php', qs.stringify({
+          getCodespaces: true,
+          project: route.params.project
+        }));
+        
+        if (response.data && response.data.success && response.data.codespaces) {
+          projectCodespaces.value = response.data.codespaces;
+        } else {
+          projectCodespaces.value = [];
+        }
+      } catch (error) {
+        console.error('Error loading codespaces:', error);
+        showToast('Error loading codespaces', 'danger');
+        projectCodespaces.value = [];
+      }
+    };
+
+    const loadCodespaceAPIs = async () => {
+      if (!selectedCodespace.value) return;
+      
+      try {
+        const formData = new FormData();
+        formData.append('getCodespaceAPIs', '1');
+        formData.append('project', route.params.project as string);
+        formData.append('codespace', selectedCodespace.value);
+        
+        const response = await axios.post('codespace_apis.php', formData);
+        
+        if (response.data && Array.isArray(response.data)) {
+          codespaceAPIs.value = response.data.map((api: any) => ({
+            ...api,
+            isToggling: false
+          }));
+        } else {
+          codespaceAPIs.value = [];
+        }
+      } catch (error) {
+        console.error('Error loading codespace APIs:', error);
+        showToast('Error loading codespace APIs', 'danger');
+        codespaceAPIs.value = [];
+      }
+    };
+
+    const toggleCodespaceAPI = async (api: CodespaceApi) => {
+      if (api.isToggling) return;
+      
+      api.isToggling = true;
+      
+      try {
+        const formData = new FormData();
+        formData.append('project', route.params.project as string);
+        formData.append('codespace', selectedCodespace.value);
+        formData.append('subscription_id', api.subscription_id.toString());
+        
+        if (api.is_active) {
+          formData.append('deactivateCodespaceAPI', '1');
+          const response = await axios.post('codespace_apis.php', formData);
+          
+          if (response.data && response.data.success) {
+            api.is_active = false;
+            showToast('API deactivated successfully', 'success');
+          } else {
+            showToast(response.data?.message || 'Failed to deactivate API', 'danger');
+          }
+        } else {
+          formData.append('activateCodespaceAPI', '1');
+          const response = await axios.post('codespace_apis.php', formData);
+          
+          if (response.data && response.data.success) {
+            api.is_active = true;
+            showToast('API activated successfully', 'success');
+          } else {
+            showToast(response.data?.message || 'Failed to activate API', 'danger');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to toggle API:', error);
+        showToast('Failed to toggle API', 'danger');
+      } finally {
+        api.isToggling = false;
+      }
+    };
+
+    const getCodespaceName = (slug: string) => {
+      const codespace = projectCodespaces.value.find(cs => cs.slug === slug);
+      return codespace ? codespace.name : slug;
+    };
+
     const showToast = async (message: string, color: string) => {
       const toast = await toastController.create({
         message,
@@ -622,6 +801,11 @@ export default defineComponent({
       selectedApi,
       selectedSubscription,
       settingsForm,
+      // New codespace-related variables
+      projectCodespaces,
+      selectedCodespace,
+      codespaceAPIs,
+      // Methods
       isSubscribed,
       subscribeToApi,
       unsubscribeFromApi,
@@ -638,7 +822,12 @@ export default defineComponent({
       openDocumentation,
       getCategoryColor,
       getMethodColor,
-      formatDate
+      formatDate,
+      // New codespace methods
+      loadProjectCodespaces,
+      loadCodespaceAPIs,
+      toggleCodespaceAPI,
+      getCodespaceName
     };
   }
 });
@@ -892,6 +1081,42 @@ export default defineComponent({
 
 .documentation-link {
   margin-top: 24px;
+}
+
+/* Codespace-related styles */
+.codespace-selector {
+  margin-bottom: 24px;
+}
+
+.codespace-selector ion-select {
+  width: 100%;
+  border: 1px solid var(--ion-color-step-200);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.codespace-info {
+  background: var(--ion-color-step-50);
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  color: var(--ion-color-medium);
+}
+
+.no-codespaces,
+.select-codespace {
+  text-align: center;
+  padding: 64px 32px;
+  color: var(--ion-color-medium);
+}
+
+.no-codespaces ion-icon,
+.select-codespace ion-icon {
+  margin-bottom: 16px;
+}
+
+.api-status-badge {
+  margin-right: 8px;
 }
 
 @media (max-width: 768px) {

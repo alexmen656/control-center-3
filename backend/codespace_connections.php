@@ -2,12 +2,6 @@
 require_once 'config.php';
 require_once 'head.php';
 
-function checkUserProjectPermission($userID, $projectID)
-{
-    $check = query("SELECT * FROM control_center_user_projects WHERE userID=$userID AND projectID='$projectID'");
-    return mysqli_num_rows($check) == 1;
-}
-
 function getVercelFrameworkPreset($template)
 {
     $frameworks = [

@@ -65,3 +65,9 @@ function getProjectID(string $projectLink): string
 function showJSON($json){
     echo json_encode($json, JSON_PRETTY_PRINT);
 }
+
+function checkUserProjectPermission($userID, $projectID)
+{
+    $check = query("SELECT * FROM control_center_user_projects WHERE userID=$userID AND projectID='$projectID'");
+    return mysqli_num_rows($check) == 1;
+}
