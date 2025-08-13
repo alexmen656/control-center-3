@@ -20,7 +20,7 @@
           </button>
         </div>
       </div>
-      
+
       <div class="env-content">
         <!-- Loading State -->
         <div v-if="isLoading" class="loading-section">
@@ -47,7 +47,7 @@
               <h3>Environment Variables</h3>
               <span class="count-badge">{{ envVariables.length }}</span>
             </div>
-            
+
             <div class="table-container">
               <table class="env-table">
                 <thead>
@@ -64,18 +64,15 @@
                       <span class="env-key">{{ envVar.key }}</span>
                     </td>
                     <td class="value-column">
-                      <code class="env-value">{{ envVar.decryptedValue || '••••••••' }}</code>
+                      <code class="env-value">{{ envVar.showValue ? envVar.decryptedValue : '••••••••' }}</code>
                       <button @click="toggleValueVisibility(envVar)" class="toggle-value-btn">
                         <ion-icon :name="envVar.showValue ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
                       </button>
                     </td>
                     <td class="targets-column">
                       <div class="env-targets">
-                        <span 
-                          v-for="target in envVar.target" 
-                          :key="target"
-                          :class="['env-chip', getTargetClass(target)]"
-                        >
+                        <span v-for="target in envVar.target" :key="target"
+                          :class="['env-chip', getTargetClass(target)]">
                           {{ target }}
                         </span>
                       </div>
@@ -101,7 +98,7 @@
             <div class="section-header">
               <h3>Code-Beispiele</h3>
             </div>
-            
+
             <div class="code-examples">
               <div class="example-block">
                 <h5>.env Datei:</h5>
@@ -110,7 +107,7 @@
                   <ion-icon name="copy-outline" class="copy-icon"></ion-icon>
                 </div>
               </div>
-              
+
               <div class="example-block">
                 <h5>JavaScript Verwendung:</h5>
                 <div class="code-block" @click="copyToClipboard(getJavaScriptExample())">
@@ -133,69 +130,45 @@
             <ion-icon name="close-outline"></ion-icon>
           </button>
         </div>
-        
+
         <div class="modal-body">
           <div class="form-group">
             <label>Key *</label>
-            <input 
-              v-model="newEnvVar.key" 
-              placeholder="VARIABLE_NAME" 
-              class="form-input"
-              @keydown.enter="addEnvironmentVariable"
-            />
+            <input v-model="newEnvVar.key" placeholder="VARIABLE_NAME" class="form-input"
+              @keydown.enter="addEnvironmentVariable" />
           </div>
-          
+
           <div class="form-group">
             <label>Value *</label>
-            <textarea 
-              v-model="newEnvVar.value" 
-              placeholder="variable_value" 
-              class="form-textarea"
-              rows="3"
-            ></textarea>
+            <textarea v-model="newEnvVar.value" placeholder="variable_value" class="form-textarea" rows="3"></textarea>
           </div>
-          
+
           <div class="form-group">
             <label>Target Environments</label>
             <div class="checkbox-group">
               <label class="checkbox-item">
-                <input 
-                  type="checkbox" 
-                  value="production" 
-                  v-model="newEnvVar.target"
-                />
+                <input type="checkbox" value="production" v-model="newEnvVar.target" />
                 <span class="checkmark"></span>
                 Production
               </label>
               <label class="checkbox-item">
-                <input 
-                  type="checkbox" 
-                  value="preview" 
-                  v-model="newEnvVar.target"
-                />
+                <input type="checkbox" value="preview" v-model="newEnvVar.target" />
                 <span class="checkmark"></span>
                 Preview
               </label>
               <label class="checkbox-item">
-                <input 
-                  type="checkbox" 
-                  value="development" 
-                  v-model="newEnvVar.target"
-                />
+                <input type="checkbox" value="development" v-model="newEnvVar.target" />
                 <span class="checkmark"></span>
                 Development
               </label>
             </div>
           </div>
         </div>
-        
+
         <div class="modal-footer">
           <button @click="closeAddModal" class="secondary-button">Abbrechen</button>
-          <button 
-            @click="addEnvironmentVariable" 
-            :disabled="!newEnvVar.key || !newEnvVar.value || isLoading" 
-            class="primary-button"
-          >
+          <button @click="addEnvironmentVariable" :disabled="!newEnvVar.key || !newEnvVar.value || isLoading"
+            class="primary-button">
             <ion-spinner v-if="isLoading" name="crescent"></ion-spinner>
             {{ isLoading ? 'Wird hinzugefügt...' : 'Variable hinzufügen' }}
           </button>
@@ -212,69 +185,45 @@
             <ion-icon name="close-outline"></ion-icon>
           </button>
         </div>
-        
+
         <div class="modal-body">
           <div class="form-group">
             <label>Key *</label>
-            <input 
-              v-model="editModal.key" 
-              placeholder="VARIABLE_NAME" 
-              class="form-input"
-              @keydown.enter="updateEnvironmentVariable"
-            />
+            <input v-model="editModal.key" placeholder="VARIABLE_NAME" class="form-input"
+              @keydown.enter="updateEnvironmentVariable" />
           </div>
-          
+
           <div class="form-group">
             <label>Value *</label>
-            <textarea 
-              v-model="editModal.value" 
-              placeholder="variable_value" 
-              class="form-textarea"
-              rows="3"
-            ></textarea>
+            <textarea v-model="editModal.value" placeholder="variable_value" class="form-textarea" rows="3"></textarea>
           </div>
-          
+
           <div class="form-group">
             <label>Target Environments</label>
             <div class="checkbox-group">
               <label class="checkbox-item">
-                <input 
-                  type="checkbox" 
-                  value="production" 
-                  v-model="editModal.target"
-                />
+                <input type="checkbox" value="production" v-model="editModal.target" />
                 <span class="checkmark"></span>
                 Production
               </label>
               <label class="checkbox-item">
-                <input 
-                  type="checkbox" 
-                  value="preview" 
-                  v-model="editModal.target"
-                />
+                <input type="checkbox" value="preview" v-model="editModal.target" />
                 <span class="checkmark"></span>
                 Preview
               </label>
               <label class="checkbox-item">
-                <input 
-                  type="checkbox" 
-                  value="development" 
-                  v-model="editModal.target"
-                />
+                <input type="checkbox" value="development" v-model="editModal.target" />
                 <span class="checkmark"></span>
                 Development
               </label>
             </div>
           </div>
         </div>
-        
+
         <div class="modal-footer">
           <button @click="closeEditModal" class="secondary-button">Abbrechen</button>
-          <button 
-            @click="updateEnvironmentVariable" 
-            :disabled="!editModal.key || !editModal.value || isLoading" 
-            class="primary-button"
-          >
+          <button @click="updateEnvironmentVariable" :disabled="!editModal.key || !editModal.value || isLoading"
+            class="primary-button">
             <ion-spinner v-if="isLoading" name="crescent"></ion-spinner>
             {{ isLoading ? 'Wird aktualisiert...' : 'Variable aktualisieren' }}
           </button>
@@ -350,7 +299,7 @@ const loadEnvironmentVariables = async () => {
 
       // Load environment variables from Vercel with codespace context
       const envResponse = await axios.get(`vercel_api.php?project=${props.projectName}&codespace=${props.codespace}&action=env`)
-      
+
       if (envResponse.data.success) {
         envVariables.value = (envResponse.data.envVars.envs || []).map(env => ({
           ...env,
@@ -429,7 +378,7 @@ const editEnvironmentVariable = (envVar) => {
     isOpen: true,
     id: envVar.id,
     key: envVar.key,
-    value: envVar.value,
+    value: envVar.decryptedValue,
     target: envVar.target || ['production', 'preview', 'development']
   }
 }
@@ -452,13 +401,13 @@ const updateEnvironmentVariable = async () => {
 
   isLoading.value = true
   try {
-    const response = await axios.post(`vercel_api.php?project=${props.projectName}&codespace=${props.codespace}`, qs.stringify({
+    const response = await axios.post(`vercel_api.php?project=${props.projectName}&codespace=${props.codespace}`, {
       action: 'update_env',
       envId: editModal.value.id,
       key: editModal.value.key,
       value: editModal.value.value,
       target: editModal.value.target
-    }))
+    })
 
     if (response.data.success) {
       ToastService.success('Environment Variable erfolgreich aktualisiert')
@@ -482,10 +431,10 @@ const deleteEnvironmentVariable = async (envVar) => {
 
   isLoading.value = true
   try {
-    const response = await axios.post(`vercel_api.php?project=${props.projectName}&codespace=${props.codespace}`, qs.stringify({
+    const response = await axios.post(`vercel_api.php?project=${props.projectName}&codespace=${props.codespace}`, {
       action: 'delete_env',
       envId: envVar.id
-    }))
+    })
 
     if (response.data.success) {
       ToastService.success('Environment Variable erfolgreich gelöscht')
@@ -524,7 +473,7 @@ const getEnvFileExample = () => {
 
 const getJavaScriptExample = () => {
   if (envVariables.value.length === 0) return ''
-  
+
   const firstVar = envVariables.value[0]
   return `// Environment Variable abrufen\nconst ${firstVar.key.toLowerCase()} = process.env.${firstVar.key};\n\n// Verwendung\nconsole.log('${firstVar.key}:', ${firstVar.key.toLowerCase()});`
 }
@@ -540,7 +489,7 @@ const copyToClipboard = (text) => {
 // Lifecycle
 onMounted(() => {
   loadEnvironmentVariables()
-  
+
   // Listen for add modal trigger from sidebar
   window.addEventListener('monaco-env-add-modal', () => {
     openAddModal()
@@ -819,6 +768,7 @@ onMounted(() => {
 }
 
 .value-column {
+  display: flex;
   min-width: 250px;
   position: relative;
 }
@@ -830,7 +780,7 @@ onMounted(() => {
   border-radius: 4px;
   font-size: 12px;
   display: inline-block;
-  max-width: 200px;
+  max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

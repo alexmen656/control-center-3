@@ -1,8 +1,8 @@
 <?php
 include 'head.php';
 include 'apis_helper.php';
+include 'vercel_helper.php';
 
-// Get available APIs for a project (subscribed APIs that can be activated in codespaces)
 if (isset($_POST['getProjectAPIs']) && isset($_POST['project'])) {
     $projectName = escape_string($_POST['project']);
     $projectID = getProjectID($projectName);
@@ -117,9 +117,9 @@ elseif (isset($_POST['activateCodespaceAPI']) && isset($_POST['project']) && iss
     }
 
     if ($updateResult) {
-        // Get API slug for SDK installation
+        // Get API slug and api_key for SDK installation and Vercel env var
         $apiResult = query("
-            SELECT ca.slug 
+            SELECT ca.slug, pas.api_key
             FROM project_api_subscriptions pas 
             JOIN cms_apis ca ON pas.api_id = ca.id 
             WHERE pas.id='$subscriptionId'
@@ -129,10 +129,30 @@ elseif (isset($_POST['activateCodespaceAPI']) && isset($_POST['project']) && iss
         // Install SDK files
         $copyResult = copyAPISDKToCodespace($projectName, $codespaceSlug, $api['slug'], $userID);
         
-        showJSON($copyResult ? 
-            ['success' => true, 'message' => 'API activated and SDK installed'] : 
-            ['success' => true, 'message' => 'API activated but SDK installation failed']
-        );
+        // Set API key as environment variable in Vercel
+        $vercelResult = ['success' => true, 'message' => 'No Vercel integration'];
+        try {
+            $vercelHelper = new VercelHelper($userID);
+            $vercelResult = $vercelHelper->setAPIKeyEnvironmentVariable($projectName, $codespaceSlug, $api['slug'], $api['api_key']);
+        } catch (Exception $e) {
+            error_log("Vercel API key setup failed: " . $e->getMessage());
+            $vercelResult = ['success' => false, 'error' => $e->getMessage()];
+        }
+        
+        $message = 'API activated';
+        if ($copyResult) {
+            $message .= ' and SDK installed';
+        } else {
+            $message .= ' but SDK installation failed';
+        }
+        
+        if ($vercelResult['success']) {
+            $message .= ', API key set in Vercel as ' . ($vercelResult['env_var_name'] ?? 'environment variable');
+        } else {
+            $message .= ', but Vercel API key setup failed: ' . ($vercelResult['error'] ?? 'Unknown error');
+        }
+        
+        showJSON(['success' => true, 'message' => $message, 'vercel_result' => $vercelResult]);
     } else {
         showJSON(['error' => 'Failed to activate API']);
     }
@@ -163,7 +183,7 @@ elseif (isset($_POST['deactivateCodespaceAPI']) && isset($_POST['project']) && i
     $updateResult = query("UPDATE codespace_api_activations SET is_active=0 WHERE codespace_id='$codespaceId' AND subscription_id='$subscriptionId'");
 
     if ($updateResult) {
-        // Get API slug for SDK removal
+        // Get API slug for SDK removal and Vercel env var removal
         $apiResult = query("
             SELECT ca.slug 
             FROM project_api_subscriptions pas 
@@ -175,10 +195,34 @@ elseif (isset($_POST['deactivateCodespaceAPI']) && isset($_POST['project']) && i
         // Remove SDK files
         $removeResult = removeAPISDKFromCodespace($projectName, $codespaceSlug, $api['slug'], $userID);
         
-        showJSON($removeResult ? 
-            ['success' => true, 'message' => 'API deactivated and SDK removed'] : 
-            ['success' => true, 'message' => 'API deactivated but SDK removal failed']
-        );
+        // Remove API key environment variable from Vercel
+        $vercelResult = ['success' => true, 'message' => 'No Vercel integration'];
+        try {
+            $vercelHelper = new VercelHelper($userID);
+            $vercelResult = $vercelHelper->removeAPIKeyEnvironmentVariable($projectName, $codespaceSlug, $api['slug']);
+        } catch (Exception $e) {
+            error_log("Vercel API key removal failed: " . $e->getMessage());
+            $vercelResult = ['success' => false, 'error' => $e->getMessage()];
+        }
+        
+        $message = 'API deactivated';
+        if ($removeResult) {
+            $message .= ' and SDK removed';
+        } else {
+            $message .= ' but SDK removal failed';
+        }
+        
+        if ($vercelResult['success']) {
+            if ($vercelResult['action'] === 'deleted') {
+                $message .= ', API key removed from Vercel';
+            } else if ($vercelResult['action'] === 'not_found') {
+                $message .= ', API key was not found in Vercel';
+            }
+        } else {
+            $message .= ', but Vercel API key removal failed: ' . ($vercelResult['error'] ?? 'Unknown error');
+        }
+        
+        showJSON(['success' => true, 'message' => $message, 'vercel_result' => $vercelResult]);
     } else {
         showJSON(['error' => 'Failed to deactivate API']);
     }
@@ -272,6 +316,26 @@ elseif (isset($_POST['getCodespaceAPIDetails']) && isset($_POST['project']) && i
     }
 
     showJSON($api);
+}
+
+// Sync all API keys for a codespace to Vercel
+elseif (isset($_POST['syncCodespaceAPIKeysToVercel']) && isset($_POST['project']) && isset($_POST['codespace'])) {
+    $projectName = escape_string($_POST['project']);
+    $codespaceSlug = escape_string($_POST['codespace']);
+    $projectID = getProjectID($projectName);
+
+    if (!checkUserProjectPermission($userID, $projectID)) {
+        showJSON(['error' => 'No permission for this project']);
+        exit;
+    }
+
+    try {
+        $vercelHelper = new VercelHelper($userID);
+        $result = $vercelHelper->syncCodespaceAPIKeys($projectName, $codespaceSlug);
+        showJSON($result);
+    } catch (Exception $e) {
+        showJSON(['success' => false, 'error' => $e->getMessage()]);
+    }
 }
 
 else {
