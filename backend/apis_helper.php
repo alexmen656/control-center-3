@@ -1,10 +1,12 @@
 <?php
-function generateApiKey($projectID = null) {
+function generateApiKey($projectID = null)
+{
     $suffix = $projectID ? '_' . $projectID : '_' . time();
     return 'cms_' . bin2hex(random_bytes(16)) . $suffix;
 }
 
-function formatEndpointData($endpoint) {
+function formatEndpointData($endpoint)
+{
     return [
         'id' => $endpoint['id'],
         'name' => $endpoint['name'],
@@ -19,7 +21,8 @@ function formatEndpointData($endpoint) {
     ];
 }
 
-function formatAvailableApiData($api) {
+function formatAvailableApiData($api)
+{
     return [
         'id' => $api['id'],
         'name' => $api['name'],
@@ -35,7 +38,8 @@ function formatAvailableApiData($api) {
     ];
 }
 
-function formatProjectSubscriptionData($sub) {
+function formatProjectSubscriptionData($sub)
+{
     return [
         'subscription_id' => $sub['id'],
         'api_id' => $sub['api_id'],
@@ -53,7 +57,8 @@ function formatProjectSubscriptionData($sub) {
     ];
 }
 
-function formatUsageData($day) {
+function formatUsageData($day)
+{
     return [
         'date' => $day['date'],
         'requests' => intval($day['requests']),
@@ -63,7 +68,8 @@ function formatUsageData($day) {
     ];
 }
 
-function calculateUsageStats($subscriptionId) {
+function calculateUsageStats($subscriptionId)
+{
     if (!$subscriptionId) {
         return [
             'totalRequests' => 0,
@@ -197,7 +203,8 @@ function updateAPIBundle($projectName, $userID)
     return true;
 }
 
-function formatCodespaceApiData($api) {
+function formatCodespaceApiData($api)
+{
     return [
         'subscription_id' => $api['subscription_id'],
         'activation_id' => $api['activation_id'] ?? null,
@@ -215,7 +222,8 @@ function formatCodespaceApiData($api) {
     ];
 }
 
-function calculateCodespaceUsageStats($activationId) {
+function calculateCodespaceUsageStats($activationId)
+{
     if (!$activationId) {
         return [
             'totalRequests' => 0,
@@ -272,6 +280,11 @@ function copyAPISDKToCodespace($projectName, $codespaceSlug, $apiSlug, $userID)
     if (!copy($sourceFile, $targetFile)) {
         return false;
     }
+
+    $content = file_get_contents($targetFile);
+    $content = str_replace('[{[apiKey]}]', strtoupper($apiSlug).'_'.strtoupper($codespaceSlug).'_API_KEY', $content);
+
+    file_put_contents($targetFile, $content);
 
     updateCodespaceAPIBundle($projectName, $codespaceSlug, $userID);
     return true;
