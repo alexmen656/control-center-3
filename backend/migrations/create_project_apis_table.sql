@@ -77,7 +77,20 @@ INSERT INTO `cms_apis` (`name`, `slug`, `description`, `icon`, `category`, `endp
 ('File Storage API', 'file-storage', 'Upload, download, and manage files', 'folder-outline', 'storage', '/api/v1/files', '/docs/apis/file-storage'),
 ('Database API', 'database', 'Perform database operations and queries', 'server-outline', 'data', '/api/v1/database', '/docs/apis/database'),
 ('Notification API', 'notifications', 'Send push notifications and emails', 'notifications-outline', 'communication', '/api/v1/notifications', '/docs/apis/notifications'),
-('Analytics API', 'analytics', 'Track events and generate reports', 'analytics-outline', 'analytics', '/api/v1/analytics', '/docs/apis/analytics');
+('Analytics API', 'analytics', 'Track events and generate reports', 'analytics-outline', 'analytics', '/api/v1/analytics', '/docs/apis/analytics'),
+-- External API SDKs (no PHP backend required)
+('OpenAI API', 'openai', 'AI text generation, chat completions, and embeddings', 'brain-outline', 'ai', '/sdk/openai', '/docs/apis/openai'),
+('Gemini API', 'gemini', 'Google AI text and vision generation', 'sparkles-outline', 'ai', '/sdk/gemini', '/docs/apis/gemini'),
+('GitHub API', 'github', 'Repository management, commits, and code operations', 'logo-github', 'development', '/sdk/github', '/docs/apis/github'),
+('Telegram Bot API', 'telegram', 'Send messages, manage bots, and webhooks', 'paper-plane-outline', 'communication', '/sdk/telegram', '/docs/apis/telegram'),
+('Discord API', 'discord', 'Discord bot and webhook messaging', 'logo-discord', 'communication', '/sdk/discord', '/docs/apis/discord'),
+('SendGrid API', 'sendgrid', 'Email delivery, templates, and marketing', 'mail-outline', 'communication', '/sdk/sendgrid', '/docs/apis/sendgrid'),
+('Stripe API', 'stripe', 'Payment processing, subscriptions, and billing', 'card-outline', 'payment', '/sdk/stripe', '/docs/apis/stripe'),
+('Weather API', 'weather', 'Current weather, forecasts, and climate data', 'partly-sunny-outline', 'data', '/sdk/weather', '/docs/apis/weather'),
+('News API', 'news', 'Latest news, headlines, and article search', 'newspaper-outline', 'data', '/sdk/news', '/docs/apis/news'),
+('Currency API', 'currency', 'Exchange rates, currency conversion, and crypto prices', 'cash-outline', 'data', '/sdk/currency', '/docs/apis/currency'),
+('QR Code API', 'qrcode', 'Generate QR codes for various data types', 'qr-code-outline', 'utility', '/sdk/qrcode', '/docs/apis/qrcode'),
+('Geolocation API', 'geolocation', 'Location services, geocoding, and maps', 'location-outline', 'data', '/sdk/geolocation', '/docs/apis/geolocation');
 
 -- Insert sample endpoints for User Management API
 INSERT INTO `cms_api_endpoints` (`api_id`, `name`, `method`, `endpoint`, `description`, `parameters`, `response_schema`) VALUES
