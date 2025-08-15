@@ -349,6 +349,10 @@ async function getPageViews(startDate, endDate) {
 
 ## 🔗 Related APIs
 
-- **[User Management API](./user-management)** - For user-specific operations
-- **[File Storage API](./file-storage)** - For file attachments
-- **[Analytics API](./analytics)** - For event tracking
+For complete API integration, consider combining database operations with:
+
+- **User Management** - For user-specific operations and authentication
+- **File Storage** - For handling file attachments and media
+- **Analytics** - For event tracking and user behavior analysis
+
+These APIs work together to provide a complete backend solution for your applications.
