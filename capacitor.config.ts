@@ -1,7 +1,7 @@
 import { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: process.env.VUE_APP_APP_ID || "sk.polan.alex.control-center",
+  appId: process.env.VUE_APP_APP_ID || "eu.control_center.app",
   appName: process.env.VUE_APP_APP_NAME || "Control Center",
   webDir: process.env.VUE_APP_WEB_DIR || "dist",
   bundledWebRuntime: false,
