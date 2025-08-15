@@ -97,7 +97,7 @@ const config = {
       // Replace with your project's social card
       image: 'img/cms-api-social-card.jpg',
       navbar: {
-        title: 'API Docs',
+        title: 'Docs',
         logo: {
           alt: 'CMS Logo',
           src: 'img/logo.png',
