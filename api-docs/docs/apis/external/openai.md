@@ -6,7 +6,7 @@ sidebar_position: 1
 
 The OpenAI SDK provides access to OpenAI's powerful AI models including ChatGPT, DALL-E, and Whisper.
 
-## 🔑 API Key Setup
+## API Key Setup
 
 ### Getting Your API Key
 1. Visit [OpenAI Platform](https://platform.openai.com)
@@ -22,13 +22,13 @@ Add your API key to your environment variables:
 OPENAI_API_KEY=sk-your-actual-api-key-here
 ```
 
-## 📖 SDK Usage
+## SDK Usage
 
 ```javascript
-import openaiSDK from './backend/apis_sdk/openaiSDK.js';
+import openaiSDK from 'apis';
 ```
 
-## 🚀 Available Methods
+## Available Methods
 
 ### Chat Completions (ChatGPT)
 
@@ -122,7 +122,7 @@ const models = await openaiSDK.listModels();
 console.log(models.data);
 ```
 
-## 🎛️ Configuration Options
+## Configuration Options
 
 ### Chat Completion Options
 - `model`: Model to use (`gpt-4`, `gpt-3.5-turbo`, etc.)
@@ -138,7 +138,7 @@ console.log(models.data);
 - `size`: Image size (`256x256`, `512x512`, `1024x1024`)
 - `response_format`: `url` or `b64_json`
 
-## 💰 Pricing Information
+## Pricing Information
 
 OpenAI uses token-based pricing:
 - **GPT-4**: ~$0.03 per 1K prompt tokens, ~$0.06 per 1K completion tokens
@@ -148,13 +148,13 @@ OpenAI uses token-based pricing:
 
 Check [OpenAI Pricing](https://openai.com/pricing) for current rates.
 
-## 📊 Rate Limits
+## Rate Limits
 
 - **Free Tier**: 20 requests per minute
 - **Pay-as-you-go**: 60 requests per minute
 - **Higher tiers**: Up to 5,000 requests per minute
 
-## ⚠️ Error Handling
+## Error Handling
 
 ```javascript
 try {
@@ -171,7 +171,7 @@ try {
 }
 ```
 
-## 🔗 Useful Links
+## Useful Links
 
 - [OpenAI Platform](https://platform.openai.com)
 - [OpenAI Documentation](https://platform.openai.com/docs)

@@ -1,33 +1,22 @@
 // @ts-check
 
-// This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
-
 /**
- * Creating a sidebar enables you to:
- - create an ordered group of docs
- - render a sidebar for each doc of that group
- - provide next/previous navigation
-
- The sidebars can be generated from the filesystem, or explicitly defined here.
-
- Create as many sidebars as you want.
-
- @type {import('@docusaurus/plugin-content-docs').SidebarsConfig}
+ * APIs Sidebar Configuration  
+ * @type {import('@docusaurus/plugin-content-docs').SidebarsConfig}
  */
 const sidebars = {
-  // API Documentation Sidebar
-  apiSidebar: [
+  apisSidebar: [
     'index',
     {
       type: 'category',
-      label: '🏠 Internal CMS APIs',
+      label: 'Internal APIs',
       items: [
         'internal/database',
       ],
     },
     {
       type: 'category',
-      label: '🤖 AI & Machine Learning',
+      label: 'AI & Machine Learning',
       items: [
         'external/openai',
         'external/gemini',
@@ -35,14 +24,14 @@ const sidebars = {
     },
     {
       type: 'category',
-      label: '👨‍💻 Development Tools',
+      label: 'Development Tools',
       items: [
         'external/github',
       ],
     },
     {
       type: 'category',
-      label: '💬 Communication',
+      label: 'Communication',
       items: [
         'external/telegram',
         'external/discord',
@@ -51,14 +40,14 @@ const sidebars = {
     },
     {
       type: 'category',
-      label: '💳 Payment Processing',
+      label: 'Payment Processing',
       items: [
         'external/stripe',
       ],
     },
     {
       type: 'category',
-      label: '📊 Data Services',
+      label: 'Data Services',
       items: [
         'external/weather',
         'external/news',
@@ -68,10 +57,12 @@ const sidebars = {
     },
     {
       type: 'category',
-      label: '🛠️ Utility Services',
+      label: 'Utility Services',
       items: [
         'external/qrcode',
       ],
     },
   ],
-};export default sidebars;
+};
+
+export default sidebars;

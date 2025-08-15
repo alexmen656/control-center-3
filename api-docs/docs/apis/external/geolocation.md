@@ -4,9 +4,15 @@ sidebar_position: 13
 
 # Geolocation API Integration
 
+## SDK Usage
+
+```javascript
+import geolocationSDK from 'apis';
+```on
+
 The Geolocation SDK provides location services including IP geolocation, reverse geocoding, and location-based services.
 
-## 🔑 API Key Setup
+## API Key Setup
 
 ### Getting Your API Key
 We support multiple geolocation providers. Choose the one that best fits your needs:
@@ -50,13 +56,13 @@ IPINFO_API_KEY=your-ipinfo-key-here
 GEOLOCATION_PROVIDER=ipgeolocation
 ```
 
-## 📖 SDK Usage
+## SDK Usage
 
 ```javascript
 import geolocationSDK from './backend/apis_sdk/geolocationSDK.js';
 ```
 
-## 🚀 Available Methods
+## Available Methods
 
 ### IP Geolocation
 
@@ -157,7 +163,7 @@ const comparison = await geolocationSDK.compareProviders('8.8.8.8');
 console.log('Provider comparison:', comparison);
 ```
 
-## 🎯 Advanced Features
+## Advanced Features
 
 ### Location Analytics
 
@@ -377,7 +383,7 @@ async function detectSuspiciousLocation(ip, userProfile) {
 }
 ```
 
-## 🎨 Use Cases
+## Use Cases
 
 ### User Registration Enhancement
 
@@ -504,7 +510,7 @@ function getTopCountries(locations) {
 }
 ```
 
-## 📊 Response Data Structure
+## Response Data Structure
 
 ### Basic Location Response
 
@@ -549,7 +555,7 @@ function getTopCountries(locations) {
 }
 ```
 
-## 📊 Rate Limits
+## Rate Limits
 
 ### Provider Comparison
 
@@ -565,7 +571,7 @@ function getTopCountries(locations) {
 - Implement fallback providers
 - Monitor usage to avoid limits
 
-## ⚠️ Error Handling
+## Error Handling
 
 ```javascript
 try {
@@ -585,7 +591,7 @@ try {
 }
 ```
 
-## 🔐 Privacy & Compliance
+## Privacy & Compliance
 
 ### GDPR Compliance
 - Always inform users about location tracking
@@ -599,7 +605,7 @@ try {
 - Implement proper access controls
 - Regular security audits
 
-## 🔗 Useful Links
+## Useful Links
 
 - [IPGeolocation.io](https://ipgeolocation.io/)
 - [IPStack](https://ipstack.com/)

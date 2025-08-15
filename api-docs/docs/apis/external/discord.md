@@ -6,7 +6,7 @@ sidebar_position: 9
 
 The Discord SDK provides access to Discord's API for bot functionality and webhook messaging.
 
-## 🔑 API Key Setup
+## API Key Setup
 
 ### Getting Your Bot Token
 1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
@@ -26,13 +26,13 @@ DISCORD_BOT_TOKEN=your-actual-bot-token-here
 ### For Webhooks (No Token Required)
 Discord webhooks don't require authentication - you just need a webhook URL.
 
-## 📖 SDK Usage
+## SDK Usage
 
 ```javascript
-import discordSDK from './backend/apis_sdk/discordSDK.js';
+import discordSDK from 'apis';
 ```
 
-## 🚀 Available Methods
+## Available Methods
 
 ### Webhook Messages (No Authentication)
 
@@ -175,7 +175,7 @@ const role = await discordSDK.createRole('GUILD_ID', 'New Role', {
 console.log('Created role:', role);
 ```
 
-## 🎨 Embed Customization
+## Embed Customization
 
 ### Rich Embeds
 
@@ -263,7 +263,7 @@ const embed = discordSDK.createEmbed({
 });
 ```
 
-## 🎯 Use Cases
+## Use Cases
 
 ### Status Updates
 
@@ -334,14 +334,14 @@ async function sendNotification(channelId, title, message, urgent = false) {
 }
 ```
 
-## 📊 Rate Limits
+## Rate Limits
 
 Discord API rate limits:
 - **Global**: 50 requests per second
 - **Per route**: Varies by endpoint
 - **Webhooks**: 30 requests per minute per webhook
 
-## ⚠️ Error Handling
+## Error Handling
 
 ```javascript
 try {
@@ -359,7 +359,7 @@ try {
 }
 ```
 
-## 🔐 Permissions
+## Permissions
 
 Common bot permissions:
 - **Send Messages** (2048)
@@ -371,7 +371,7 @@ Common bot permissions:
 
 Calculate permissions: [Discord Permissions Calculator](https://discordapi.com/permissions.html)
 
-## 🔗 Useful Links
+## Useful Links
 
 - [Discord Developer Portal](https://discord.com/developers/applications)
 - [Discord API Documentation](https://discord.com/developers/docs)

@@ -10,9 +10,9 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'CMS API Documentation',
-  tagline: 'Comprehensive API documentation for developers',
-  favicon: 'img/favicon.ico',
+  title: 'Control Center Documentation',
+  tagline: 'Comprehensive documentation for CMS and API integration',
+  favicon: 'img/logo.png',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -41,13 +41,29 @@ const config = {
     locales: ['en'],
   },
 
+  plugins: [
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'apis',
+        path: 'docs/apis',
+        routeBasePath: 'apis',
+        sidebarPath: './sidebars-apis.js',
+        editUrl: 'https://github.com/alexmen656/control-center-3/tree/main/api-docs/',
+      },
+    ],
+  ],
+
   presets: [
     [
       'classic',
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
-          sidebarPath: './sidebars.js',
+          id: 'default',
+          path: 'docs/cms',
+          routeBasePath: 'cms',
+          sidebarPath: './sidebars-cms.js',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
@@ -81,17 +97,25 @@ const config = {
       // Replace with your project's social card
       image: 'img/cms-api-social-card.jpg',
       navbar: {
-        title: 'CMS API Docs',
+        title: 'API Docs',
         logo: {
           alt: 'CMS Logo',
-          src: 'img/logo.svg',
+          src: 'img/logo.png',
         },
         items: [
           {
             type: 'docSidebar',
-            sidebarId: 'apiSidebar',
+            sidebarId: 'cmsSidebar',
             position: 'left',
-            label: 'API Documentation',
+            label: 'CMS',
+            docsPluginId: 'default',
+          },
+          {
+            type: 'docSidebar',
+            sidebarId: 'apisSidebar',
+            position: 'left',
+            label: 'APIs',
+            docsPluginId: 'apis',
           },
           {to: '/blog', label: 'Changelog', position: 'left'},
           {
@@ -105,19 +129,40 @@ const config = {
         style: 'dark',
         links: [
           {
-            title: 'API Documentation',
+            title: 'CMS Documentation',
             items: [
               {
                 label: 'Getting Started',
-                to: '/docs',
+                to: '/cms',
+              },
+              {
+                label: 'Projects',
+                to: '/cms/projects',
+              },
+              {
+                label: 'Services',
+                to: '/cms/services',
+              },
+              {
+                label: 'Codespaces',
+                to: '/cms/codespaces',
+              },
+            ],
+          },
+          {
+            title: 'API Documentation',
+            items: [
+              {
+                label: 'APIs Overview',
+                to: '/apis',
               },
               {
                 label: 'External APIs',
-                to: '/docs/external/openai',
+                to: '/apis/external/openai',
               },
               {
                 label: 'Internal APIs',
-                to: '/docs/internal/database',
+                to: '/apis/internal/database',
               },
             ],
           },

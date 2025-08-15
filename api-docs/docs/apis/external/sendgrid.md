@@ -6,7 +6,7 @@ sidebar_position: 10
 
 The SendGrid SDK provides email delivery services with advanced features like templates, tracking, and analytics.
 
-## 🔑 API Key Setup
+## API Key Setup
 
 ### Getting Your API Key
 1. Go to [SendGrid Console](https://app.sendgrid.com/)
@@ -32,13 +32,13 @@ Set up domain authentication for better deliverability:
 2. Click **"Authenticate Your Domain"**
 3. Follow the DNS setup instructions
 
-## 📖 SDK Usage
+## SDK Usage
 
 ```javascript
-import sendgridSDK from './backend/apis_sdk/sendgridSDK.js';
+import sendgridSDK from 'apis';
 ```
 
-## 🚀 Available Methods
+## Available Methods
 
 ### Basic Email Sending
 
@@ -269,7 +269,7 @@ await sendgridSDK.updateTemplate('template-id', {
 await sendgridSDK.deleteTemplate('template-id');
 ```
 
-## 📊 Analytics and Tracking
+## Analytics and Tracking
 
 ### Email Statistics
 
@@ -318,7 +318,7 @@ await sendgridSDK.removeSuppression('user@example.com');
 const isSupressed = await sendgridSDK.checkSuppression('user@example.com');
 ```
 
-## 🎨 Advanced Features
+## Advanced Features
 
 ### Batch Processing
 
@@ -406,7 +406,7 @@ await sendgridSDK.createContact({
 });
 ```
 
-## 🎯 Use Cases
+## Use Cases
 
 ### Welcome Email Series
 
@@ -495,7 +495,7 @@ async function sendNewsletter(templateId, segmentId) {
 }
 ```
 
-## 📊 Rate Limits
+## Rate Limits
 
 SendGrid API rate limits:
 - **Free Plan**: 100 emails/day
@@ -503,7 +503,7 @@ SendGrid API rate limits:
 - **Pro**: 1.5M+ emails/month
 - **API Requests**: 10,000 requests per hour
 
-## ⚠️ Error Handling
+## Error Handling
 
 ```javascript
 try {
@@ -526,7 +526,7 @@ try {
 }
 ```
 
-## 🔐 Best Practices
+## Best Practices
 
 ### Security
 - Store API keys in environment variables
@@ -547,7 +547,7 @@ try {
 - Implement retry logic with exponential backoff
 - Cache template IDs and contact lists
 
-## 🔗 Useful Links
+## Useful Links
 
 - [SendGrid Console](https://app.sendgrid.com/)
 - [SendGrid API Documentation](https://docs.sendgrid.com/api-reference)

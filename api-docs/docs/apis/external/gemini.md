@@ -6,7 +6,7 @@ sidebar_position: 2
 
 The Gemini SDK provides access to Google's advanced AI models for text generation, vision analysis, and embeddings.
 
-## 🔑 API Key Setup
+## API Key Setup
 
 ### Getting Your API Key
 1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
@@ -22,13 +22,13 @@ Add your API key to your environment variables:
 GEMINI_API_KEY=your-actual-api-key-here
 ```
 
-## 📖 SDK Usage
+## SDK Usage
 
 ```javascript
-import geminiSDK from './backend/apis_sdk/geminiSDK.js';
+import geminiSDK from 'apis';
 ```
 
-## 🚀 Available Methods
+## Available Methods
 
 ### Text Generation
 
@@ -142,7 +142,7 @@ const models = await geminiSDK.listModels();
 console.log('Available models:', models.models);
 ```
 
-## 🎛️ Configuration Options
+## Configuration Options
 
 ### Generation Config
 - `temperature`: Creativity level (0.0-1.0)
@@ -169,7 +169,7 @@ const response = await geminiSDK.generateContent('Your prompt', {
 });
 ```
 
-## 🎯 Model Capabilities
+## Model Capabilities
 
 ### Gemini Pro
 - **Best for**: Text generation, reasoning, code
@@ -186,7 +186,7 @@ const response = await geminiSDK.generateContent('Your prompt', {
 - **embedding-001**: 768-dimensional embeddings
 - **Best for**: Semantic search, clustering, classification
 
-## 💰 Pricing Information
+## Pricing Information
 
 Google AI Studio offers generous free usage:
 - **Free tier**: 60 requests per minute
@@ -195,12 +195,12 @@ Google AI Studio offers generous free usage:
 
 For production use, check [Google AI Pricing](https://ai.google.dev/pricing).
 
-## 📊 Rate Limits
+## Rate Limits
 
 - **Free tier**: 60 requests per minute
 - **Paid tier**: Higher limits available
 
-## ⚠️ Error Handling
+## Error Handling
 
 ```javascript
 try {
@@ -217,7 +217,7 @@ try {
 }
 ```
 
-## 🛡️ Safety Features
+## Safety Features
 
 Gemini includes built-in safety filters for:
 - Harassment
@@ -231,7 +231,7 @@ You can adjust safety thresholds:
 - `BLOCK_MEDIUM_AND_ABOVE`
 - `BLOCK_LOW_AND_ABOVE`
 
-## 🔗 Useful Links
+## Useful Links
 
 - [Google AI Studio](https://makersuite.google.com)
 - [Gemini API Documentation](https://ai.google.dev/docs)

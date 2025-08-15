@@ -6,7 +6,7 @@ sidebar_position: 12
 
 The News SDK provides access to breaking news, historical articles, and news sources from around the world.
 
-## 🔑 API Key Setup
+## API Key Setup
 
 ### Getting Your API Key
 1. Go to [NewsAPI.org](https://newsapi.org/)
@@ -30,13 +30,13 @@ NEWS_API_KEY=your-actual-api-key-here
 - **Business**: 250,000 requests/day
 - **Enterprise**: Unlimited
 
-## 📖 SDK Usage
+## SDK Usage
 
 ```javascript
-import newsSDK from './backend/apis_sdk/newsSDK.js';
+import newsSDK from 'apis';
 ```
 
-## 🚀 Available Methods
+## Available Methods
 
 ### Top Headlines
 
@@ -133,7 +133,7 @@ const businessSources = await newsSDK.getSources({
 });
 ```
 
-## 🎯 Advanced Search Features
+## Advanced Search Features
 
 ### Date Range Searches
 
@@ -212,7 +212,7 @@ const excludeSearch = await newsSDK.searchEverything({
 });
 ```
 
-## 📊 Data Processing & Analytics
+## Data Processing & Analytics
 
 ### Article Analysis
 
@@ -326,7 +326,7 @@ function categorizeNewsByTone(articles) {
 }
 ```
 
-## 🎨 Use Cases
+## Use Cases
 
 ### News Dashboard
 
@@ -529,7 +529,7 @@ const digest = await generateNewsDigest(
 );
 ```
 
-## 📊 Response Format
+## Response Format
 
 ### Article Object Structure
 
@@ -561,7 +561,7 @@ const digest = await generateNewsDigest(
 }
 ```
 
-## 📊 Rate Limits & Best Practices
+## Rate Limits & Best Practices
 
 ### Rate Limiting
 - **Developer**: 1,000 requests/day
@@ -596,7 +596,7 @@ const headlines = await getCachedNews(
 );
 ```
 
-## ⚠️ Error Handling
+## Error Handling
 
 ```javascript
 try {
@@ -616,7 +616,7 @@ try {
 }
 ```
 
-## 🌍 Supported Countries & Languages
+## Supported Countries & Languages
 
 ### Countries (ISO 3166-1 alpha-2)
 - `us` - United States
@@ -652,7 +652,7 @@ try {
 - `sports`
 - `technology`
 
-## 🔗 Useful Links
+## Useful Links
 
 - [NewsAPI.org](https://newsapi.org/)
 - [API Documentation](https://newsapi.org/docs)

@@ -22,10 +22,10 @@ Add your API key to your environment variables:
 OPENWEATHER_API_KEY=your-actual-api-key-here
 ```
 
-## 📖 SDK Usage
+## SDK Usage
 
 ```javascript
-import weatherSDK from './backend/apis_sdk/weatherSDK.js';
+import weatherSDK from 'apis';
 ```
 
 ## 🚀 Available Methods

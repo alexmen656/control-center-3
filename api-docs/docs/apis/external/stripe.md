@@ -6,7 +6,7 @@ sidebar_position: 11
 
 The Stripe SDK provides comprehensive payment processing, subscription management, and financial operations.
 
-## 🔑 API Key Setup
+## API Key Setup
 
 ### Getting Your API Keys
 1. Go to [Stripe Dashboard](https://dashboard.stripe.com/)
@@ -36,13 +36,13 @@ For real-time event handling:
 4. Select events you want to receive
 5. Copy the **Signing secret** for webhook verification
 
-## 📖 SDK Usage
+## SDK Usage
 
 ```javascript
-import stripeSDK from './backend/apis_sdk/stripeSDK.js';
+import stripeSDK from 'apis';
 ```
 
-## 🚀 Available Methods
+## Available Methods
 
 ### Customer Management
 
@@ -323,7 +323,7 @@ const transfer = await stripeSDK.createTransfer({
 });
 ```
 
-## 📊 Analytics and Reporting
+## Analytics and Reporting
 
 ### Revenue Reports
 
@@ -380,7 +380,7 @@ async function getCustomerMetrics(customerId) {
 }
 ```
 
-## 🎨 Advanced Features
+## Advanced Features
 
 ### Webhooks Processing
 
@@ -490,7 +490,7 @@ const paymentWithFee = await stripeSDK.createPaymentIntent({
 });
 ```
 
-## 🎯 Use Cases
+## Use Cases
 
 ### E-commerce Checkout
 
@@ -565,7 +565,7 @@ async function processMarketplacePayment(amount, platformFee, sellerId) {
 }
 ```
 
-## 📊 Rate Limits
+## Rate Limits
 
 Stripe API rate limits:
 - **Standard**: 100 requests per second per account
@@ -573,7 +573,7 @@ Stripe API rate limits:
 - **Write operations**: Standard limits
 - **Test mode**: Same limits as live mode
 
-## ⚠️ Error Handling
+## Error Handling
 
 ```javascript
 try {
@@ -598,7 +598,7 @@ try {
 }
 ```
 
-## 🔐 Security Best Practices
+## Security Best Practices
 
 ### API Key Security
 - Never expose secret keys in client-side code
@@ -618,7 +618,7 @@ try {
 - Implement proper error handling
 - Log security events
 
-## 🔗 Useful Links
+## Useful Links
 
 - [Stripe Dashboard](https://dashboard.stripe.com/)
 - [Stripe API Documentation](https://stripe.com/docs/api)
