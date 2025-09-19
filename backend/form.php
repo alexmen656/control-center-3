@@ -1,5 +1,5 @@
 <?php
-include "head.php";
+include "triggers.php";
 
 function mapFieldType($type)
 {
@@ -139,6 +139,15 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
         $sql = "INSERT INTO $tableName ($columnsStr) VALUES ($valuesStr)";
         //echo $sql;
         if (query($sql)) {
+            $newId = mysqli_insert_id($GLOBALS['con']);
+            
+            // Trigger execution für INSERT
+            $triggerSystem = new FormTriggers();
+            $triggerData = $form;
+            $triggerData['id'] = $newId;
+            $triggerData['table'] = $tableName;
+            $triggerSystem->executeTriggers($project, $form_name, 'insert', $triggerData);
+            
             echo "Form data submitted successfully!";
         } else {
             echo "Error submitting form data.";
@@ -154,6 +163,11 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
 
     $sql = "DELETE FROM $tableName WHERE id='$id'";
     if (query($sql)) {
+        // Trigger execution für DELETE
+        $triggerSystem = new FormTriggers();
+        $triggerData = ['id' => $id, 'table' => $tableName];
+        $triggerSystem->executeTriggers($project, $form_name, 'delete', $triggerData);
+        
         echo "Entry deleted successfully!";
     } else {
         echo "Error deleting entry.";
@@ -185,6 +199,13 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
         $sql = "UPDATE $tableName SET $updatesStr WHERE id='$id'";
 
         if (query($sql)) {
+            // Trigger execution für UPDATE
+            $triggerSystem = new FormTriggers();
+            $triggerData = $form;
+            $triggerData['id'] = $id;
+            $triggerData['table'] = $tableName;
+            $triggerSystem->executeTriggers($project, $form_name, 'update', $triggerData);
+            
             echo "Entry updated successfully!";
         } else {
             echo "Error updating entry!";

@@ -1,8 +1,23 @@
 <template>
   <ion-page>
     <ion-content>
-      <ion-grid>
-        <ion-row
+      <ion            <ion-row
+              v-if="load_more_btn"
+              style="display: flex; justify-content: center"
+            >
+              <ion-button @click="loadMore()">Load More</ion-button>
+            </ion-row>
+            <ion-row style="display: flex; justify-content: center; margin-top: 20px;">
+              <ion-button @click="exportCSV()" color="success" fill="outline">
+                <ion-icon name="download-outline" slot="start"></ion-icon>
+                Export CSV
+              </ion-button>
+              <ion-button @click="openTriggerModal()" color="warning" fill="outline" style="margin-left: 10px;">
+                <ion-icon name="notifications-outline" slot="start"></ion-icon>
+                Manage Triggers
+              </ion-button>
+            </ion-row>
+            <DisplayForm @submit="handleSubmit" /> </ion-col>        <ion-row
           ><ion-col size="0" size-md="1" />
           <ion-col size="12" size-md="10">
             <ion-card>
@@ -56,16 +71,6 @@
             >
               <ion-button @click="loadMore()">Load More</ion-button>
             </ion-row>
-            <ion-row style="display: flex; justify-content: center; margin-top: 20px;">
-              <ion-button @click="exportCSV()" color="success" fill="outline">
-                <ion-icon name="download-outline" slot="start"></ion-icon>
-                Export CSV
-              </ion-button>
-              <ion-button @click="openTriggerModal()" color="warning" fill="outline" style="margin-left: 10px;">
-                <ion-icon name="notifications-outline" slot="start"></ion-icon>
-                Manage Triggers
-              </ion-button>
-            </ion-row>
             <DisplayForm @submit="handleSubmit" /> </ion-col
           ><ion-col size="0" size-md="1" />
         </ion-row>
@@ -84,17 +89,6 @@
           }"
         />
       </ion-modal>
-      <ion-modal
-        :is-open="triggerModalOpen"
-        css-class="trigger-modal"
-        @didDismiss="triggerModalOpen = false"
-      >
-        <TriggerManager 
-          :project="$route.params.project"
-          :form="$route.params.form"
-          @close="triggerModalOpen = false"
-        />
-      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -103,7 +97,6 @@
 //lang="ts"
 import DisplayForm from "@/components/DisplayForm.vue";
 import EditEntry from "@/components/EditEntry.vue";
-import TriggerManager from "@/components/TriggerManager.vue";
 import { defineComponent, ref } from "vue";
 
 export default defineComponent({
@@ -111,7 +104,6 @@ export default defineComponent({
   components: {
     DisplayForm,
     EditEntry,
-    TriggerManager,
   },
   data() {
     return {
@@ -122,7 +114,6 @@ export default defineComponent({
       current_limit: 0,
       sortColumn: null,
       sortDirection: 'asc',
-      triggerModalOpen: false,
     };
   },
   computed: {
@@ -231,38 +222,15 @@ export default defineComponent({
           this.loadData();
         });
     },
-    exportCSV() {
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = '/control-center/triggers.php';
-      form.target = '_blank';
+    /*{edit(id){
+      alert(id);
       
-      const exportField = document.createElement('input');
-      exportField.type = 'hidden';
-      exportField.name = 'export_csv';
-      exportField.value = 'true';
-      
-      const projectField = document.createElement('input');
-      projectField.type = 'hidden';
-      projectField.name = 'project';
-      projectField.value = this.$route.params.project;
-      
-      const formField = document.createElement('input');
-      formField.type = 'hidden';
-      formField.name = 'form_name';
-      formField.value = this.$route.params.form;
-      
-      form.appendChild(exportField);
-      form.appendChild(projectField);
-      form.appendChild(formField);
-      
-      document.body.appendChild(form);
-      form.submit();
-      document.body.removeChild(form);
-    },
-    openTriggerModal() {
-      this.triggerModalOpen = true;
-    },
+      const isOpenRef = ref(false);
+      const setOpen = () => (isOpenRef.value = true);
+      //const data = { content: 'New Content' };
+      return { isOpenRef, setOpen};//, data 
+
+    },*/
     loadData() {
       const table_name = `${this.$route.params.project.replaceAll("-", "_")}_${this.$route.params.form.replaceAll("-", "_")}`;
       this.$axios
