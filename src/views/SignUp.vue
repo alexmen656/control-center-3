@@ -1,215 +1,227 @@
 <template>
   <ion-page>
-    <ion-content class="ion-padding">
-      <div class="logo">
-        <picture>
-          <source
-            media="(min-width:465px)"
-            srcset="/assets/logo_inline_large.png"
-          />
-          <source
-            media="(max-width:465px)"
-            srcset="/assets/logo_block_large.png"
-          />
-          <img
-            src="/assets/logo_inline_large.png"
-            alt="Control Center Logo"
-            style="width: auto"
-          />
-        </picture>
-      </div>
-      <ion-grid>
-        <ion-row>
-          <ion-col size-md="2" size="0"></ion-col>
-          <ion-col size-md="8" size="12" v-if="createPasswordView">
-            <alert-message
-              v-if="errorMessage"
-              color="danger"
-              :message="{ title: 'Error!', content: errorMessage }"
-            ></alert-message>
-            <ion-item>
-              <ion-label position="floating">
-                Password<span style="color: red">*</span>
-              </ion-label>
-              <ion-input
-                type="password"
-                v-model="g_password"
-                :value="g_password"
-                @ionInput="g_password = $event.target.value"
-                placeholder="Enter your password"
-                fill="outline"
-              ></ion-input>
-            </ion-item>
+    <ion-content :fullscreen="true" class="signup-content">
+      <!-- Background Pattern -->
+      <div class="background-pattern"></div>
+      
+      <!-- Main Container -->
+      <div class="signup-container">
+        <div class="signup-card">
+          
+          <!-- Logo Section -->
+          <div class="logo-section">
+            <picture>
+              <source
+                media="(min-width:465px)"
+                srcset="/assets/logo_inline_large.png"
+              />
+              <source
+                media="(max-width:465px)"
+                srcset="/assets/logo_block_large.png"
+              />
+              <img
+                src="/assets/logo_inline_large.png"
+                alt="Control Center Logo"
+                class="logo-image"
+              />
+            </picture>
+            <h1 class="welcome-title" v-if="!createPasswordView">Create Account</h1>
+            <h1 class="welcome-title" v-else>Complete Setup</h1>
+            <p class="welcome-subtitle" v-if="!createPasswordView">Join Control Center today</p>
+            <p class="welcome-subtitle" v-else>Create a password for your account</p>
+          </div>
 
-            <ion-item>
-              <ion-label position="floating"
-                >Confirm Password<span style="color: red">*</span></ion-label
-              >
-              <ion-input
-                type="password"
-                v-model="g_confirmPassword"
-                :value="g_confirmPassword"
-                @ionInput="g_confirmPassword = $event.target.value"
-                placeholder="Confirm your password"
-                fill="outline"
-              ></ion-input>
-            </ion-item>
-            <ion-button @click="onSignUp()" type="submit" expand="block">
-              Continue</ion-button
+          <!-- Error Message -->
+          <div v-if="errorMessage" class="error-container">
+            <div class="error-card">
+              <div class="error-content">
+                <ion-icon name="alert-circle" class="error-icon"></ion-icon>
+                <div>
+                  <h3>Error</h3>
+                  <p>{{ errorMessage }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Password Creation Form (for social login) -->
+          <div v-if="createPasswordView" class="form-section">
+            <div class="input-group">
+              <div class="custom-input-wrapper">
+                <label class="input-label">Password *</label>
+                <div class="input-container">
+                  <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
+                  <input
+                    type="password"
+                    v-model="g_password"
+                    placeholder="Enter your password"
+                    class="custom-input"
+                  />
+                </div>
+              </div>
+
+              <div class="custom-input-wrapper">
+                <label class="input-label">Confirm Password *</label>
+                <div class="input-container">
+                  <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
+                  <input
+                    type="password"
+                    v-model="g_confirmPassword"
+                    placeholder="Confirm your password"
+                    class="custom-input"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button 
+              @click="onSignUp()" 
+              type="submit" 
+              class="primary-button"
             >
-          </ion-col>
+              <ion-icon name="checkmark-circle" class="button-icon"></ion-icon>
+              Complete Setup
+            </button>
+          </div>
 
-          <ion-col size-md="8" size="12" v-else>
-            <alert-message
-              v-if="errorMessage"
-              color="danger"
-              :message="{ title: 'Error!', content: errorMessage }"
-            ></alert-message>
-            <ion-grid>
-              <ion-row>
-                <ion-col size-md="6" size="12">
-                  <ion-item>
-                    <ion-label position="floating">
-                      First Name<span style="color: red">*</span>
-                    </ion-label>
-                    <ion-input
+          <!-- Regular Signup Form -->
+          <div v-else class="form-section">
+            <div class="input-group">
+              <!-- Name Fields -->
+              <div class="name-row">
+                <div class="custom-input-wrapper">
+                  <label class="input-label">First Name *</label>
+                  <div class="input-container">
+                    <ion-icon name="person-outline" class="input-icon"></ion-icon>
+                    <input
                       type="text"
                       v-model="firstName"
-                      :value="firstName"
-                      @ionInput="firstName = $event.target.value"
-                      placeholder="Enter your first name"
-                      fill="outline"
-                    ></ion-input>
-                  </ion-item>
-                </ion-col>
-                <ion-col size-md="6" size="12">
-                  <ion-item>
-                    <ion-label position="floating">Last Name</ion-label>
-                    <ion-input
+                      placeholder="First name"
+                      class="custom-input"
+                    />
+                  </div>
+                </div>
+
+                <div class="custom-input-wrapper">
+                  <label class="input-label">Last Name</label>
+                  <div class="input-container">
+                    <ion-icon name="person-outline" class="input-icon"></ion-icon>
+                    <input
                       type="text"
                       v-model="lastName"
-                      :value="lastName"
-                      @ionInput="lastName = $event.target.value"
-                      placeholder="Enter your last name"
-                      fill="outline"
-                    ></ion-input>
-                  </ion-item>
-                </ion-col>
+                      placeholder="Last name"
+                      class="custom-input"
+                    />
+                  </div>
+                </div>
+              </div>
 
-                <ion-col size="12">
-                  <ion-item>
-                    <ion-label position="floating">
-                      Email<span style="color: red">*</span>
-                    </ion-label>
-                    <ion-input
-                      type="email"
-                      v-model="email"
-                      :value="email"
-                      @ionInput="email = $event.target.value"
-                      placeholder="Enter your email"
-                      fill="outline"
-                    ></ion-input>
-                  </ion-item>
-                </ion-col>
-                <ion-col size="12">
-                  <ion-item>
-                    <ion-label position="floating">
-                      Password<span style="color: red">*</span>
-                    </ion-label>
-                    <ion-input
-                      type="password"
-                      v-model="password"
-                      :value="password"
-                      @ionInput="password = $event.target.value"
-                      placeholder="Enter your password"
-                      fill="outline"
-                    ></ion-input>
-                  </ion-item>
-                </ion-col>
-                <ion-col size="12">
-                  <ion-item>
-                    <ion-label position="floating"
-                      >Confirm Password<span style="color: red"
-                        >*</span
-                      ></ion-label
-                    >
-                    <ion-input
-                      type="password"
-                      v-model="confirmPassword"
-                      :value="confirmPassword"
-                      @ionInput="confirmPassword = $event.target.value"
-                      placeholder="Confirm your password"
-                      fill="outline"
-                    ></ion-input>
-                  </ion-item>
-                </ion-col>
-                <ion-col size-md="3" size="0"></ion-col>
-                <ion-col size-md="6" size="12">
-                  <ion-button
-                    size="medium"
-                    expand="full"
-                    color="primary"
-                    type="submit"
-                    @click="validateAndSignUp"
-                    >Sign Up</ion-button
-                  >
+              <!-- Email Field -->
+              <div class="custom-input-wrapper">
+                <label class="input-label">Email *</label>
+                <div class="input-container">
+                  <ion-icon name="mail-outline" class="input-icon"></ion-icon>
+                  <input
+                    type="email"
+                    v-model="email"
+                    placeholder="Enter your email"
+                    class="custom-input"
+                  />
+                </div>
+              </div>
 
-                  <router-link to="/login"
-                    ><ion-button expand="full">Log In</ion-button></router-link
-                  >
-                  <ion-button
-                    color="light"
-                    type="button"
-                    expand="block"
-                    @click="continueWithGoogle()"
-                    ><img
-                      height="24"
-                      src="/assets/g-logo3.png"
-                      alt=""
-                    />Continue with Google</ion-button
-                  >
-                  <ion-button
-                    class="lomi"
-                    type="button"
-                    expand="block"
-                    @click="loginWM"
-                    ><svg
-                      height="20"
-                      aria-hidden="true"
-                      viewBox="0 0 25 25"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      itemprop="logo"
-                      itemscope="itemscope"
-                    >
-                      <path
-                        d="M11.5216 0.5H0V11.9067H11.5216V0.5Z"
-                        fill="#f25022"
-                      ></path>
-                      <path
-                        d="M24.2418 0.5H12.7202V11.9067H24.2418V0.5Z"
-                        fill="#7fba00"
-                      ></path>
-                      <path
-                        d="M11.5216 13.0933H0V24.5H11.5216V13.0933Z"
-                        fill="#00a4ef"
-                      ></path>
-                      <path
-                        d="M24.2418 13.0933H12.7202V24.5H24.2418V13.0933Z"
-                        fill="#ffb900"
-                      ></path>
-                    </svg>
-                    <pre></pre>
-                    Continue with Microsoft</ion-button
-                  >
-                </ion-col>
-                <ion-col size-md="3" size="0"></ion-col>
-              </ion-row>
-            </ion-grid>
-          </ion-col>
-          <ion-col size-md="2" size="0"></ion-col>
-        </ion-row>
-      </ion-grid>
+              <!-- Password Fields -->
+              <div class="custom-input-wrapper">
+                <label class="input-label">Password *</label>
+                <div class="input-container">
+                  <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
+                  <input
+                    type="password"
+                    v-model="password"
+                    placeholder="Enter your password"
+                    class="custom-input"
+                  />
+                </div>
+              </div>
+
+              <div class="custom-input-wrapper">
+                <label class="input-label">Confirm Password *</label>
+                <div class="input-container">
+                  <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
+                  <input
+                    type="password"
+                    v-model="confirmPassword"
+                    placeholder="Confirm your password"
+                    class="custom-input"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Main Actions -->
+            <div class="button-group">
+              <button 
+                @click="validateAndSignUp" 
+                type="submit" 
+                class="primary-button"
+              >
+                <ion-icon name="person-add" class="button-icon"></ion-icon>
+                Create Account
+              </button>
+
+              <router-link to="/login" class="login-link">
+                <button class="secondary-button">
+                  <ion-icon name="log-in" class="button-icon"></ion-icon>
+                  Already have an account?
+                </button>
+              </router-link>
+            </div>
+
+            <!-- Divider -->
+            <div class="divider">
+              <span class="divider-text">or sign up with</span>
+            </div>
+
+            <!-- Social Login -->
+            <div class="social-buttons">
+              <button
+                @click="continueWithGoogle()"
+                class="social-button google-button"
+              >
+                <img height="20" src="/assets/g-logo3.png" alt="Google" class="social-icon" />
+                Google
+              </button>
+
+              <button
+                @click="loginWM"
+                class="social-button microsoft-button"
+              >
+                <svg
+                  height="18"
+                  aria-hidden="true"
+                  viewBox="0 0 25 25"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="social-icon"
+                >
+                  <path d="M11.5216 0.5H0V11.9067H11.5216V0.5Z" fill="#f25022"></path>
+                  <path d="M24.2418 0.5H12.7202V11.9067H24.2418V0.5Z" fill="#7fba00"></path>
+                  <path d="M11.5216 13.0933H0V24.5H11.5216V13.0933Z" fill="#00a4ef"></path>
+                  <path d="M24.2418 13.0933H12.7202V24.5H24.2418V13.0933Z" fill="#ffb900"></path>
+                </svg>
+                Microsoft
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-section">
+          <p class="footer-text">
+            By creating an account, you agree to our Terms of Service and Privacy Policy
+          </p>
+        </div>
+      </div>
     </ion-content>
   </ion-page>
 </template>
@@ -217,7 +229,6 @@
 <script>
 import { defineComponent } from "vue";
 import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth";
-import AlertMessage from "@/components/AlertMessage.vue";
 import { msalInstance } from "@/msalConfig";
 import axios from "axios";
 import qs from "qs";
@@ -235,9 +246,7 @@ try {
 }
 
 export default defineComponent({
-  components: {
-    AlertMessage,
-  },
+  components: {},
   data() {
     return {
       firstName: "",
@@ -532,40 +541,423 @@ export default defineComponent({
 });
 </script>
 <style scoped>
-ion-content {
+/* Brand Colors */
+:root {
+  --brand-red: #e53e3e;
+  --brand-red-light: #fc8181;
+  --brand-red-dark: #c53030;
+  --brand-gray: #f7fafc;
+  --brand-gray-dark: #2d3748;
+  --brand-text: #2d3748;
+  --brand-text-light: #718096;
+}
+
+/* Main Container Styles */
+.signup-content {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+}
+
+.background-pattern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(229, 62, 62, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(229, 62, 62, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(229, 62, 62, 0.03) 0%, transparent 50%);
+  z-index: 0;
+}
+
+.signup-container {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+  max-width: 600px; /* Increased width */
+  margin: 0 auto;
+}
+
+.signup-card {
+  width: 100%;
+  max-width: 500px; /* Increased width */
+  background: white;
+  border-radius: 24px;
+  padding: 3rem 2.5rem; /* Increased padding */
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.1),
+    0 10px 20px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Logo Section */
+.logo-section {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.logo-image {
+  max-width: 200px; /* Increased logo size */
+  height: auto;
+  margin-bottom: 1.5rem;
+}
+
+.welcome-title {
+  font-size: 2rem; /* Increased font size */
+  font-weight: 700;
+  color: var(--brand-text);
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.025em;
+}
+
+.welcome-subtitle {
+  font-size: 1.1rem; /* Increased font size */
+  color: var(--brand-text-light);
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Error Styles */
+.error-container {
+  margin-bottom: 1.5rem;
+}
+
+.error-card {
+  margin: 0;
+  background: rgba(229, 62, 62, 0.1);
+  border: 1px solid rgba(229, 62, 62, 0.2);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.error-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.error-icon {
+  color: var(--brand-red);
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.error-content h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--brand-red);
+}
+
+.error-content p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--brand-red);
+  opacity: 0.9;
+}
+
+/* Form Styles */
+.form-section {
+  width: 100%;
+}
+
+.input-group {
+  margin-bottom: 2rem; /* Increased spacing */
+}
+
+.name-row {
+  display: flex;
+  gap: 1rem; /* Increased gap */
+  margin-bottom: 1.5rem;
+}
+
+.custom-input-wrapper {
+  width: 100%;
+  margin-bottom: 1.5rem; /* Increased spacing */
+}
+
+.input-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--brand-text);
+}
+
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 1rem;
+  color: var(--brand-text-light);
+  font-size: 1.1rem;
+  z-index: 2;
+}
+
+.custom-input {
+  width: 100%;
+  height: 52px; /* Increased height */
+  padding: 0 1rem 0 3rem; /* More padding */
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: white;
+  color: var(--brand-text);
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.custom-input::placeholder {
+  color: var(--brand-text-light);
+  opacity: 0.7;
+}
+
+.custom-input:focus {
+  border-color: var(--brand-red);
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+}
+
+.custom-input:hover {
+  border-color: #cbd5e0;
+}
+
+/* Button Styles */
+.button-group {
+  margin-bottom: 2rem; /* Increased spacing */
+}
+
+.primary-button {
+  width: 100%;
+  height: 52px; /* Increased height */
+  background: linear-gradient(135deg, var(--brand-red), var(--brand-red-dark));
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  width: 100%;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
 }
 
-.logo {
-  padding: 60px 0;
-  text-align: center;
+.primary-button:hover {
+  background: linear-gradient(135deg, var(--brand-red-dark), #b91c1c);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(229, 62, 62, 0.4);
+}
+
+.primary-button:active {
+  transform: translateY(0);
+}
+
+.secondary-button {
   width: 100%;
+  height: 52px; /* Increased height */
+  background: white;
+  border: 2px solid var(--brand-red);
+  border-radius: 12px;
+  color: var(--brand-red);
+  font-size: 1rem;
+  font-weight: 600;
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.logo > picture {
-  width: 40%;
-  height: 40%;
-}
-
-@media only screen and (max-width: 600px) {
-  .logo {
-    padding-bottom: 0;
-  }
-
-  .logo > picture {
-    width: 60%;
-    height: 60%;
-  }
-}
-
-ion-button.lomi {
-  --background: black;
+.secondary-button:hover {
+  background: var(--brand-red);
   color: white;
+  transform: translateY(-1px);
+}
+
+.login-link {
+  text-decoration: none;
+}
+
+.button-icon {
+  font-size: 1.1rem;
+}
+
+/* Divider */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 2rem 0; /* Increased spacing */
+  color: var(--brand-text-light);
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.divider-text {
+  padding: 0 1.5rem; /* Increased padding */
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Social Buttons */
+.social-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Increased gap */
+}
+
+.social-button {
+  width: 100%;
+  height: 52px; /* Increased height */
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  color: var(--brand-text);
+  font-size: 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem; /* Increased gap */
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.social-button:hover {
+  border-color: #cbd5e0;
+  background: #f7fafc;
+  transform: translateY(-1px);
+}
+
+.social-icon {
+  flex-shrink: 0;
+}
+
+.google-button:hover {
+  border-color: #4285f4;
+  background: rgba(66, 133, 244, 0.05);
+}
+
+.microsoft-button:hover {
+  border-color: #00a4ef;
+  background: rgba(0, 164, 239, 0.05);
+}
+
+/* Footer */
+.footer-section {
+  margin-top: 2.5rem; /* Increased spacing */
+  text-align: center;
+}
+
+.footer-text {
+  font-size: 0.85rem; /* Slightly larger */
+  color: var(--brand-text-light);
+  margin: 0;
+  line-height: 1.5; /* Better line height */
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .signup-container {
+    padding: 1.5rem 1rem;
+    max-width: 100%;
+  }
+  
+  .signup-card {
+    padding: 2.5rem 2rem;
+    border-radius: 20px;
+    max-width: 100%;
+  }
+  
+  .logo-image {
+    max-width: 160px;
+  }
+  
+  .welcome-title {
+    font-size: 1.7rem;
+  }
+  
+  .name-row {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+@media (max-height: 800px) {
+  .signup-container {
+    justify-content: flex-start;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+  
+  .logo-section {
+    margin-bottom: 2rem;
+  }
+  
+  .logo-image {
+    max-width: 140px;
+    margin-bottom: 1rem;
+  }
+  
+  .welcome-title {
+    font-size: 1.6rem;
+  }
+}
+
+/* Animation */
+.signup-card {
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Focus and Accessibility */
+.custom-input:focus + .input-icon,
+.input-container:focus-within .input-icon {
+  color: var(--brand-red);
+}
+
+/* Remove iOS input styling */
+.custom-input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Prevent zoom on iOS */
+@media screen and (max-width: 767px) {
+  .custom-input {
+    font-size: 16px;
+  }
 }
 </style>

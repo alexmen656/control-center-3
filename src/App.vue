@@ -200,7 +200,7 @@ export default defineComponent({
         window.location.pathname.replace(/\/$/, "").replace(/^\//, "");
 
       if (isOnline.value) {
-        if (route.path !== "/login" && route.path !== "/login/verification") {
+        if (route.path !== "/login" && route.path !== "/login/verification" && route.path !== "/signup" && route.path !== "/signup/") {
 
 
           axios.post("pages.php").then((res) => {
@@ -238,9 +238,19 @@ export default defineComponent({
               "html": "",
               "pageID": "0"
             };
-          } else {
+          } else if (route.path === "/signup" || route.path === "/signup/") {
             page.value = {
               "id": "9",
+              "url": "signup",
+              "showTitle": "true",
+              "icon": "",
+              "title": "Sign Up",
+              "html": "",
+              "pageID": "0"
+            };
+          } else {
+            page.value = {
+              "id": "10",
               "url": "login",
               "showTitle": "true",
               "icon": "",
