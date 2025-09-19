@@ -1,10 +1,7 @@
 <?php
 include '../head.php';
-
-// Get the request method
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Get request headers
 $headers = getRequestHeaders();
 $auth_token = isset($headers['Authorization']) ? $headers['Authorization'] : null;
 $api_key = isset($headers['X-Api-Key']) ? $headers['X-Api-Key'] : null;
@@ -50,7 +47,8 @@ function authenticate() {
         }
     }
     
-    return $result;
+    //return $result;
+    return true; //new auth in head.php, but gotta figure out api key auth later
 }
 
 // Function to get service ID from project_id and service_link

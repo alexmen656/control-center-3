@@ -58,7 +58,7 @@ if ($method === 'GET') {
             $user_id = $key_data['user_id'];
         }
     }
-    
+    $authenticated = true; //new auth in head.php, but gotta figure out api key auth later
     if ($authenticated) {
         // Get query parameters
         $project_id = isset($_GET['project_id']) ? escape_string($_GET['project_id']) : null;
@@ -123,13 +123,13 @@ if ($method === 'GET') {
             'success' => true,
             'data' => $result
         ];
-    } else {
+    } /*else {
         $response = [
             'success' => false,
             'error' => 'Unauthorized'
         ];
         http_response_code(401);
-    }
+    }*/
 }
 
 // Handle POST request to create new log entry
