@@ -37,12 +37,9 @@ elseif (isset($_POST['addService']) && isset($_POST['name']) && isset($_POST['pr
     $name = escape_string($_POST['name']);
     $icon = escape_string($_POST['icon'] ?? 'cog-outline');
     $description = escape_string($_POST['description'] ?? '');
-
-    $link = str_replace(" ", "-", strtolower($name));
-    $link = str_replace(["ä", "Ä", "ü", "Ü", "ö", "Ö"], ["a", "a", "u", "u", "o", "o"], $link);
-
+    $link = createLink($name);
+    
     $projectID = fetch_assoc(query("SELECT * FROM projects WHERE link='$projectName'"))['projectID'];
-
     $query = query("INSERT INTO project_services VALUES (0, '$icon', '$name', '$link', '$description', 'active', '$projectID')");
 
     if ($query) {
