@@ -83,6 +83,21 @@ if (isset($_POST['new_user']) && isset($_POST['first_name']) && isset($_POST['em
         // Add new assignment if project is specified
         if (!empty($project)) {
             query("INSERT INTO user_project_assignments (user_id, project_link, assigned_at) VALUES ('$userID', '$project', NOW())");
+            
+            // Get the project ID from the project link
+            $projectQuery = query("SELECT projectID FROM projects WHERE link='$project'");
+            if ($projectQuery && mysqli_num_rows($projectQuery) > 0) {
+                $projectData = fetch_assoc($projectQuery);
+                $projectID = $projectData['projectID'];
+                
+                // Check if user already has project permissions
+                $permissionCheck = query("SELECT * FROM control_center_user_projects WHERE userID='$userID' AND projectID='$projectID'");
+                
+                // If no permissions exist, grant the lowest role (1 = basic user)
+                if (mysqli_num_rows($permissionCheck) == 0) {
+                    query("INSERT INTO control_center_user_projects (userID, projectID, role) VALUES ('$userID', '$projectID', 1)");
+                }
+            }
         }
 
         mysqli_commit($GLOBALS['con']);
