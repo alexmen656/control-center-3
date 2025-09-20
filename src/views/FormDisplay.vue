@@ -391,7 +391,7 @@ export default defineComponent({
     openEditModal() {
       // Navigate to edit form using the existing NewTool interface
       this.$router.push({
-        path: `/project/${this.$route.params.project}/edit-form/${this.$route.params.form}`
+        path: `/project/${this.$route.params.project}/forms/${this.$route.params.form}/edit`
       });
     },
     handleRenameSuccess(newFormName) {

@@ -92,6 +92,15 @@ foreach ($forms as $form) {
     $json[$i]['html'] = '';
     $json[$i]['pageID'] = 'form_' . $form['form_id'];
     $i++;
+
+    $json[$i]['id'] = 'form_' . $form['form_id'] . '_edit';
+    $json[$i]['url'] = 'project/' . $form['project'] . '/forms/' . $form['form_name'] . '/edit';
+    $json[$i]['showTitle'] = true;
+    $json[$i]['icon'] = 'list-outline';
+    $json[$i]['title'] = $form['form_name'];
+    $json[$i]['html'] = '';
+    $json[$i]['pageID'] = 'form_' . $form['form_id'] . '_edit';
+    $i++;
 }
 
 // Get all webbuilder projects
@@ -217,7 +226,7 @@ foreach ($projects as $project) {
         $apiIcon = $api['icon'] ?: 'cloud-outline';
         $apiCategory = $api['category'];
         $subscriptionId = $api['subscription_id'];
-        
+
         // Add API overview/dashboard page
         $json[$i]['id'] = 'api_dashboard_' . $subscriptionId;
         $json[$i]['url'] = 'project/' . $projectLink . '/apis/' . $apiSlug;
@@ -227,9 +236,9 @@ foreach ($projects as $project) {
         $json[$i]['html'] = '';
         $json[$i]['pageID'] = 'api_dashboard_' . $subscriptionId;
         $i++;
-        
+
         // Add API settings page
-       /* $json[$i]['id'] = 'api_settings_' . $subscriptionId;
+        /* $json[$i]['id'] = 'api_settings_' . $subscriptionId;
         $json[$i]['url'] = 'project/' . $projectLink . '/api/' . $apiSlug . '/settings';
         $json[$i]['showTitle'] = false;
         $json[$i]['icon'] = 'settings-outline';

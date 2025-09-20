@@ -125,10 +125,6 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/NewTool.vue'),
   },
   {
-    path: '/project/:project/edit-form/:form',
-    component: () => import('../views/EditTool.vue'),
-  },
-  {
     path: '/project/:project/filesystem',
     component: () => import('../views/ProjectFileSystem.vue'),
   },
@@ -376,6 +372,10 @@ for (const path in services) {
 
 // Add the specified routes
 routes.push(
+  {
+    path: '/project/:project/forms/:form/edit',
+    component: () => import('../views/EditTool.vue'),
+  },
   {
     path: "/project/:project/forms/:form/config",
     component: () => import("../views/FormConfig.vue"),
