@@ -173,14 +173,87 @@
             </button>
           </div>
           <div class="custom-modal-body">
-            <EditEntry
-              @submit="handleEdit"
-              :data="{
-                id: edit_id,
-                form: $route.params.form,
-                project: $route.params.project,
-              }"
-            />
+            <div v-if="editFormData.length > 0" class="modern-edit-form">
+              <div v-for="field in editFormData" :key="field.name" class="form-group">
+                <label class="form-label">{{ field.label }}</label>
+                
+                <!-- Text Input -->
+                <input 
+                  v-if="field.type === 'text' || field.type === 'email' || field.type === 'number'"
+                  v-model="editFormValues[field.name]"
+                  :type="field.type"
+                  :placeholder="field.placeholder || field.label"
+                  class="modern-input"
+                />
+                
+                <!-- Textarea -->
+                <textarea 
+                  v-else-if="field.type === 'textarea'"
+                  v-model="editFormValues[field.name]"
+                  :placeholder="field.placeholder || field.label"
+                  class="modern-textarea"
+                  rows="4"
+                ></textarea>
+                
+                <!-- Select -->
+                <select 
+                  v-else-if="field.type === 'select'"
+                  v-model="editFormValues[field.name]"
+                  class="modern-select"
+                >
+                  <option value="">Select {{ field.label }}</option>
+                  <option 
+                    v-for="option in field.options" 
+                    :key="option.value" 
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </option>
+                </select>
+                
+                <!-- Checkbox -->
+                <label v-else-if="field.type === 'checkbox'" class="checkbox-container">
+                  <input 
+                    type="checkbox" 
+                    v-model="editFormValues[field.name]"
+                    class="modern-checkbox"
+                  />
+                  <span class="checkmark"></span>
+                  {{ field.label }}
+                </label>
+                
+                <!-- Date -->
+                <input 
+                  v-else-if="field.type === 'date'"
+                  v-model="editFormValues[field.name]"
+                  type="date"
+                  class="modern-input"
+                />
+                
+                <!-- Default text input for other types -->
+                <input 
+                  v-else
+                  v-model="editFormValues[field.name]"
+                  type="text"
+                  :placeholder="field.placeholder || field.label"
+                  class="modern-input"
+                />
+              </div>
+              
+              <div class="form-actions">
+                <button class="action-btn secondary" @click="closeModal(false)">
+                  Cancel
+                </button>
+                <button class="action-btn primary" @click="saveEdit()">
+                  Save Changes
+                </button>
+              </div>
+            </div>
+            
+            <div v-else class="loading-state">
+              <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
+              <p>Loading entry data...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -209,7 +282,6 @@
 <script>
 //lang="ts"
 import DisplayForm from "@/components/DisplayForm.vue";
-import EditEntry from "@/components/EditEntry.vue";
 import TriggerManager from "@/components/TriggerManager.vue";
 import RenameForm from "@/components/RenameForm_new.vue";
 import { defineComponent, ref } from "vue";
@@ -219,7 +291,6 @@ export default defineComponent({
   name: "FormDisplay",
   components: {
     DisplayForm,
-    EditEntry,
     TriggerManager,
     RenameForm,
     SiteTitle,
@@ -238,6 +309,8 @@ export default defineComponent({
       showForm: false,
       dropdownOpen: false,
       searchTerm: '',
+      editFormData: [],
+      editFormValues: {},
     };
   },
   computed: {
@@ -267,6 +340,18 @@ export default defineComponent({
       const sorted = [...dataToSort].sort((a, b) => {
         const aVal = a[this.sortColumn];
         const bVal = b[this.sortColumn];
+        
+        // Check if values are dates (datetime format like "2025-08-12 21:55:09")
+        const dateRegex = /^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}$/;
+        const aIsDate = dateRegex.test(aVal);
+        const bIsDate = dateRegex.test(bVal);
+        
+        if (aIsDate && bIsDate) {
+          // Date sort
+          const aDate = new Date(aVal);
+          const bDate = new Date(bVal);
+          return this.sortDirection === 'asc' ? aDate - bDate : bDate - aDate;
+        }
         
         // Check if values are numbers
         const aNum = parseFloat(aVal);
@@ -302,6 +387,14 @@ export default defineComponent({
       isOpenRef.value = state;
     }; //: number
     return { isOpenRef, edit, closeModal, edit_id };
+  },
+  watch: {
+    // Watch for when edit modal opens to load form data
+    isOpenRef(newVal) {
+      if (newVal && this.edit_id) {
+        this.loadEditFormData();
+      }
+    }
   },
   created() {
     this.loadData();
@@ -343,14 +436,65 @@ export default defineComponent({
           this.showForm = false; // Hide form after successful submission
         });
     },
-    handleEdit(data) {
+    async loadEditFormData() {
+      try {
+        // Load form schema
+        const formResponse = await this.$axios.post(
+          "form.php",
+          this.$qs.stringify({
+            get_form_schema: "get_form_schema",
+            form_name: this.$route.params.form,
+            project: this.$route.params.project,
+          })
+        );
+        
+        // Load current entry data
+        const entryResponse = await this.$axios.post(
+          "form.php",
+          this.$qs.stringify({
+            get_entry: "get_entry",
+            entry_id: this.edit_id,
+            form_name: this.$route.params.form,
+            project: this.$route.params.project,
+          })
+        );
+        
+        this.editFormData = formResponse.data.schema || [];
+        const entryData = entryResponse.data.entry || {};
+        
+        // Initialize form values with current data
+        this.editFormValues = {};
+        this.editFormData.forEach(field => {
+          this.editFormValues[field.name] = entryData[field.name] || '';
+        });
+        
+      } catch (error) {
+        console.error('Error loading edit form data:', error);
+        // Fallback: use labels as field names
+        this.editFormData = this.labels.map((label) => ({
+          name: label.toLowerCase().replace(/\s+/g, '_'),
+          label: label,
+          type: 'text'
+        }));
+        
+        // Find current row data
+        const currentRow = this.data.find(row => row[0] == this.edit_id);
+        this.editFormValues = {};
+        if (currentRow) {
+          this.editFormData.forEach((field, index) => {
+            this.editFormValues[field.name] = currentRow[index] || '';
+          });
+        }
+      }
+    },
+    saveEdit() {
       this.$axios
         .post(
           "form.php",
           this.$qs.stringify({
             update_entry: "update_entry",
             entry_id: this.edit_id,
-            form: JSON.stringify(data),
+            form: JSON.stringify(this.editFormValues),
             form_name: this.$route.params.form,
             project: this.$route.params.project,
           })
@@ -358,7 +502,16 @@ export default defineComponent({
         .then(() => {
           this.closeModal(false);
           this.loadData();
+          this.editFormData = [];
+          this.editFormValues = {};
+        })
+        .catch(error => {
+          console.error('Error saving edit:', error);
         });
+    },
+    handleEdit() {
+      // This method is kept for backward compatibility but not used anymore
+      this.saveEdit();
     },
     deletee(id) {
       this.$axios
@@ -1133,5 +1286,105 @@ export default defineComponent({
   .custom-modal-body {
     padding: 20px;
   }
+}
+
+/* Modern Edit Form Styles */
+.modern-edit-form {
+  width: 100%;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.modern-input,
+.modern-textarea,
+.modern-select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.modern-input:focus,
+.modern-textarea:focus,
+.modern-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+}
+
+.modern-textarea {
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+}
+
+.modern-select {
+  cursor: pointer;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.modern-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.loading-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+
+.loading-icon {
+  font-size: 32px;
+  color: var(--primary-color);
+  margin-bottom: 12px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-state p {
+  margin: 0;
+  font-size: 14px;
 }
 </style>
