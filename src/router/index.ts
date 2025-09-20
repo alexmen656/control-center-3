@@ -125,6 +125,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/NewTool.vue'),
   },
   {
+    path: '/project/:project/new/form',
+    component: () => import('../views/NewForm.vue'),
+  },
+  {
     path: '/project/:project/filesystem',
     component: () => import('../views/ProjectFileSystem.vue'),
   },

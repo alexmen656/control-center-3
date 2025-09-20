@@ -309,6 +309,30 @@ if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
     } catch (Exception $e) {
         echo jsonResponse(['success' => false, 'message' => 'Error loading projects: ' . $e->getMessage()]);
     }
+} elseif (isset($_POST['get_projects_for_import']) && isset($_POST['current_project'])) {
+    // Get all projects except the current one for importing tables
+    $currentProject = escape_string($_POST['current_project']);
+    
+    if (!$userID) {
+        echo json_encode(['error' => 'User not authenticated']);
+        exit;
+    }
+    
+    $projects = [];
+    $projectList = getUserProjectsByUserID($userID);
+    
+    foreach ($projectList as $project) {
+        // Exclude current project from list
+        if ($project['name'] !== $currentProject) {
+            $projects[] = [
+                'name' => $project['name'],
+                'display_name' => $project['name'],
+                'icon' => $project['icon']
+            ];
+        }
+    }
+    
+    echo json_encode($projects);
 } else {
     // Alle Projekte des Benutzers abrufen
     $projects = getUserProjectsByUserID($userID);

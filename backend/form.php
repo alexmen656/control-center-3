@@ -478,4 +478,116 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
     mysqli_autocommit($GLOBALS['con'], true);
 }
 
+// Get tables from a specific project for import
+if (isset($_POST['get_tables_from_project']) && isset($_POST['source_project'])) {
+    $sourceProject = escape_string($_POST['source_project']);
+    $excludeProject = escape_string($_POST['exclude_project']);
+    
+    $tables = [];
+    $result = query("SELECT form_name, form_json FROM form_settings WHERE project = '$sourceProject'");
+    
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $formData = json_decode($row['form_json'], true);
+            $tables[] = [
+                'name' => $row['form_name'],
+                'display_name' => $formData['title'] ?? $row['form_name'],
+                'description' => $formData['description'] ?? ''
+            ];
+        }
+    }
+    
+    echo json_encode($tables);
+    exit;
+}
+
+// Import table from another project
+if (isset($_POST['import_table']) && isset($_POST['source_project']) && isset($_POST['source_table']) && isset($_POST['target_project']) && isset($_POST['new_table_name'])) {
+    $sourceProject = escape_string($_POST['source_project']);
+    $sourceTable = escape_string($_POST['source_table']);
+    $targetProject = escape_string($_POST['target_project']);
+    $newTableName = escape_string($_POST['new_table_name']);
+    
+    try {
+        // Start transaction
+        mysqli_autocommit($GLOBALS['con'], false);
+        
+        // Get the form configuration from source project
+        $result = query("SELECT form_json FROM form_settings WHERE project = '$sourceProject' AND form_name = '$sourceTable'");
+        
+        if (!$result || mysqli_num_rows($result) == 0) {
+            throw new Exception("Source table configuration not found");
+        }
+        
+        $row = mysqli_fetch_assoc($result);
+        $formJSON = $row['form_json'];
+        $formData = json_decode($formJSON, true);
+        
+        if (!$formData) {
+            throw new Exception("Invalid form configuration");
+        }
+        
+        // Update the title in the form data
+        $formData['title'] = str_replace('project_', '', $newTableName);
+        $updatedFormJSON = json_encode($formData);
+        
+        // Insert new form configuration
+        if (!query("INSERT INTO form_settings (form_name, form_json, project) VALUES ('$newTableName', '$updatedFormJSON', '$targetProject')")) {
+            throw new Exception("Failed to create form configuration");
+        }
+        
+        // Create the new table structure
+        $title = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($formData['title']));
+        $tableName = str_replace(["-", " ", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "_", "a", "a", "u", "u", "o", "o"], strtolower($targetProject . "_" . $title));
+        
+        $sql = "CREATE TABLE $tableName (
+            id INT AUTO_INCREMENT PRIMARY KEY";
+        
+        foreach ($formData['inputs'] as $field) {
+            $name = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], strtolower($field['name']));
+            $type = mapFieldType($field['type']);
+            $sql .= ", $name $type";
+        }
+        $sql .= ", created_at DATETIME DEFAULT CURRENT_TIMESTAMP";
+        $sql .= ");";
+        
+        if (!query($sql)) {
+            throw new Exception("Failed to create table structure");
+        }
+        
+        // Copy data from source table if it exists
+        $sourceTableName = str_replace(["-", " ", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "_", "a", "a", "u", "u", "o", "o"], strtolower($sourceProject . "_" . $sourceTable));
+        
+        // Check if source table exists
+        $checkTable = query("SHOW TABLES LIKE '$sourceTableName'");
+        if ($checkTable && mysqli_num_rows($checkTable) > 0) {
+            // Get column names from source table
+            $columns = [];
+            $columnsResult = query("SHOW COLUMNS FROM $sourceTableName");
+            while ($col = mysqli_fetch_assoc($columnsResult)) {
+                if ($col['Field'] != 'id' && $col['Field'] != 'created_at') {
+                    $columns[] = $col['Field'];
+                }
+            }
+            
+            if (!empty($columns)) {
+                $columnsList = implode(', ', $columns);
+                if (!query("INSERT INTO $tableName ($columnsList) SELECT $columnsList FROM $sourceTableName")) {
+                    throw new Exception("Failed to copy table data");
+                }
+            }
+        }
+        
+        mysqli_commit($GLOBALS['con']);
+        echo json_encode(['success' => true, 'message' => 'Table imported successfully']);
+        
+    } catch (Exception $e) {
+        mysqli_rollback($GLOBALS['con']);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+    
+    mysqli_autocommit($GLOBALS['con'], true);
+    exit;
+}
+
 ?>

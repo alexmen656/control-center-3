@@ -209,6 +209,16 @@ foreach ($projects as $project) {
     $json[$i]['pageID'] = 'manage_forms_' . $projectID;
     $i++;
 
+    // Forms
+    $json[$i]['id'] = 'new_form_' . $projectID;
+    $json[$i]['url'] = 'project/' . $projectLink . '/new/form';
+    $json[$i]['showTitle'] = false; //true
+    $json[$i]['icon'] = 'document-outline';
+    $json[$i]['title'] = 'New Form - ' . $projectName;
+    $json[$i]['html'] = '';
+    $json[$i]['pageID'] = 'new_form_' . $projectID;
+    $i++;
+
     //APIS
     $json[$i]['id'] = 'manage_apis_' . $projectID;
     $json[$i]['url'] = 'project/' . $projectLink . '/manage/apis';
