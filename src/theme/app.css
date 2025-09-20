@@ -191,7 +191,8 @@
   /* Force collapsed lists to proper width */
   
   ion-menu ion-content {
-    --background: var(--ion-item-background, var(--ion-background-color, #fff));
+   /* --background: var(--ion-item-background, var(--ion-background-color, #fff));*/
+   --background: #eff3f6;
   }
   
   ion-menu.md ion-content {

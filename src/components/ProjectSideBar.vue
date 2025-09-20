@@ -535,6 +535,11 @@ export default defineComponent({
 </script>
 
 <style scoped>
+ion-item, ion-list, ion-reorder-group {
+  --background: #eff3f6;/*#f7fcff;*/
+  background: #eff3f6;
+}
+
 ion-item.new-tool {
   --background: #333;
   border-radius: 20px !important;
