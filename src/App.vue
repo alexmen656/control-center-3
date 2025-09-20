@@ -45,7 +45,7 @@ import { useIonRouter } from "@ionic/vue";
 import { defineComponent, ref, onMounted } from "vue";
 import SiteHeader from "@/components/Header.vue";
 import SideBar from "@/components/SideBar.vue";
-import SiteTitle from "@/components/SiteTitle.vue";
+//import SiteTitle from "@/components/SiteTitle.vue";
 import ProjectSideBar from "@/components/ProjectSideBar.vue";
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
 import { initializeApp } from "firebase/app";
@@ -66,6 +66,7 @@ import { saveLocal, loadFromLocalStorage } from "@/utils/localStorageHelpers";
 import {
   checkPendingVerification,
   checkLoginStatus,
+  checkProjectAccess,
 } from "@/utils/authHelpers";
 
 //const { FaceId } = Plugins;
@@ -78,7 +79,7 @@ export default defineComponent({
     SiteHeader,
     SideBar,
     ProjectSideBar,
-    SiteTitle,
+    //SiteTitle,
     LoadingSpinner,
   },
   data() {
@@ -187,6 +188,7 @@ export default defineComponent({
 
     const loadPageData = async function (launcher) {
       checkLoginStatus();
+      await checkProjectAccess(); // Check project access restrictions
       const userData = getUserData();
       console.log(launcher);
       checkPendingVerification(userData);

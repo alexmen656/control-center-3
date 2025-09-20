@@ -278,7 +278,12 @@ export default defineComponent({
                   console.log(res.data);
                   if (res.data.token) {
                     localStorage.setItem("token", res.data.token);
-                    location.href = "/";
+                    // Check for assigned project and redirect accordingly
+                    if (res.data.assigned_project) {
+                      location.href = `/project/${res.data.assigned_project}`;
+                    } else {
+                      location.href = "/";
+                    }
                   } else if (res.data.errorMessage) {
                     this.errorMessage = res.data.errorMessage;
                   } else if (res.data.command) {
@@ -361,7 +366,12 @@ export default defineComponent({
               if (res.data.token) {
                 localStorage.setItem("token", res.data.token);
                 console.log(localStorage.getItem("token"));
-                location.href = "/";
+                // Check for assigned project and redirect accordingly
+                if (res.data.assigned_project) {
+                  location.href = `/project/${res.data.assigned_project}`;
+                } else {
+                  location.href = "/";
+                }
               } else if (res.data.errorMessage) {
                 this.errorMessage = res.data.errorMessage;
               } else if (res.data.command) {
@@ -441,7 +451,12 @@ export default defineComponent({
                     console.log(res.data);
                     if (res.data.token) {
                       localStorage.setItem("token", res.data.token);
-                      location.href = "/";
+                      // Check for assigned project and redirect accordingly
+                      if (res.data.assigned_project) {
+                        location.href = `/project/${res.data.assigned_project}`;
+                      } else {
+                        location.href = "/";
+                      }
                     } else if (res.data.errorMessage) {
                       this.errorMessage = res.data.errorMessage;
                     } else if (res.data.command) {

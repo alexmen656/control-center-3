@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="people-outline" title="User Management"/>
+      <SiteTitle icon="people-outline" title="User Management" />
 
       <div class="page-container">
         <!-- Page Header -->
@@ -67,15 +67,12 @@
           <div class="card-header">
             <div class="header-left">
               <h3>All Users</h3>
-              <span class="entry-count">{{ filteredUsers.length }} user{{ filteredUsers.length !== 1 ? 's' : '' }}</span>
+              <span class="entry-count">{{ filteredUsers.length }} user{{ filteredUsers.length !== 1 ? 's' : ''
+                }}</span>
             </div>
             <div class="search-box">
               <ion-icon name="search-outline"></ion-icon>
-              <input 
-                type="text" 
-                placeholder="Search users..." 
-                v-model="searchTerm"
-              >
+              <input type="text" placeholder="Search users..." v-model="searchTerm">
             </div>
           </div>
 
@@ -96,29 +93,14 @@
             <div v-else class="modern-table">
               <!-- Table Header -->
               <div class="table-header">
-                <div 
-                  v-for="(label, index) in tableLabels" 
-                  :key="label"
-                  class="header-cell"
-                  @click="sortBy(index)"
-                >
+                <div v-for="(label, index) in tableLabels" :key="label" class="header-cell" @click="sortBy(index)">
                   <span class="header-text">{{ label }}</span>
                   <div class="sort-indicator">
-                    <ion-icon 
-                      v-if="sortColumn === index && sortDirection === 'asc'" 
-                      name="chevron-up-outline"
-                      class="sort-active"
-                    ></ion-icon>
-                    <ion-icon 
-                      v-else-if="sortColumn === index && sortDirection === 'desc'" 
-                      name="chevron-down-outline"
-                      class="sort-active"
-                    ></ion-icon>
-                    <ion-icon 
-                      v-else 
-                      name="swap-vertical-outline" 
-                      class="sort-default"
-                    ></ion-icon>
+                    <ion-icon v-if="sortColumn === index && sortDirection === 'asc'" name="chevron-up-outline"
+                      class="sort-active"></ion-icon>
+                    <ion-icon v-else-if="sortColumn === index && sortDirection === 'desc'" name="chevron-down-outline"
+                      class="sort-active"></ion-icon>
+                    <ion-icon v-else name="swap-vertical-outline" class="sort-default"></ion-icon>
                   </div>
                 </div>
                 <div class="header-cell actions-header">Actions</div>
@@ -126,16 +108,12 @@
 
               <!-- Table Body -->
               <div class="table-body">
-                <div 
-                  v-for="user in sortedUsers" 
-                  :key="user[0]"
-                  class="table-row"
-                >
+                <div v-for="user in sortedUsers" :key="user[0]" class="table-row">
                   <!-- User ID (hidden on mobile) -->
                   <div class="table-cell cell-id">
                     <span class="cell-content">{{ user[0] }}</span>
                   </div>
-                  
+
                   <!-- Profile Image -->
                   <div class="table-cell cell-avatar">
                     <div class="user-avatar">
@@ -154,14 +132,11 @@
 
                   <!-- Status -->
                   <div class="table-cell cell-status">
-                    <span 
-                      class="status-badge" 
-                      :class="{
-                        'status-active': user[7] === 'active',
-                        'status-pending': user[7] === 'pending_verification',
-                        'status-inactive': user[7] !== 'active' && user[7] !== 'pending_verification'
-                      }"
-                    >
+                    <span class="status-badge" :class="{
+                      'status-active': user[7] === 'active',
+                      'status-pending': user[7] === 'pending_verification',
+                      'status-inactive': user[7] !== 'active' && user[7] !== 'pending_verification'
+                    }">
                       {{ user[7] }}
                     </span>
                   </div>
@@ -177,33 +152,17 @@
                   <!-- Actions -->
                   <div class="table-cell actions-cell">
                     <div class="action-buttons">
-                      <button 
-                        v-if="user[7] === 'pending_verification'"
-                        class="icon-btn approve-btn" 
-                        @click="approve(user[0])"
-                        title="Approve User"
-                      >
+                      <button v-if="user[7] === 'pending_verification'" class="icon-btn approve-btn"
+                        @click="approve(user[0])" title="Approve User">
                         <ion-icon name="checkmark-outline"></ion-icon>
                       </button>
-                      <button 
-                        class="icon-btn assign-btn" 
-                        @click="openAssignModal(user)"
-                        title="Assign Project"
-                      >
+                      <button class="icon-btn assign-btn" @click="openAssignModal(user)" title="Assign Project">
                         <ion-icon name="business-outline"></ion-icon>
                       </button>
-                      <button 
-                        class="icon-btn edit-btn" 
-                        @click="editUser(user)"
-                        title="Edit User"
-                      >
+                      <button class="icon-btn edit-btn" @click="editUser(user)" title="Edit User">
                         <ion-icon name="create-outline"></ion-icon>
                       </button>
-                      <button 
-                        class="icon-btn delete-btn" 
-                        @click="deleteUser(user[0])"
-                        title="Delete User"
-                      >
+                      <button class="icon-btn delete-btn" @click="deleteUser(user[0])" title="Delete User">
                         <ion-icon name="trash-outline"></ion-icon>
                       </button>
                     </div>
@@ -219,16 +178,13 @@
           <div class="card-header">
             <div class="header-left">
               <h3>Pending Verification</h3>
-              <span class="entry-count">{{ pendingVerificationEntries.length }} user{{ pendingVerificationEntries.length !== 1 ? 's' : '' }} waiting</span>
+              <span class="entry-count">{{ pendingVerificationEntries.length }} user{{ pendingVerificationEntries.length
+                !== 1 ? 's' : '' }} waiting</span>
             </div>
           </div>
-          
+
           <div class="pending-users">
-            <div 
-              v-for="user in pendingVerificationEntries" 
-              :key="user[0]"
-              class="pending-user-card"
-            >
+            <div v-for="user in pendingVerificationEntries" :key="user[0]" class="pending-user-card">
               <div class="pending-user-info">
                 <div class="user-avatar">
                   <img v-if="user[1] && user[1] !== 'null'" :src="user[1]" alt="Profile" />
@@ -261,40 +217,21 @@
             <div class="form-grid">
               <div class="form-group">
                 <label class="form-label">First Name *</label>
-                <input 
-                  type="text" 
-                  v-model="newUser.first_name" 
-                  class="modern-input"
-                  placeholder="Enter first name"
-                />
+                <input type="text" v-model="newUser.first_name" class="modern-input" placeholder="Enter first name" />
               </div>
               <div class="form-group">
                 <label class="form-label">Last Name</label>
-                <input 
-                  type="text" 
-                  v-model="newUser.last_name" 
-                  class="modern-input"
-                  placeholder="Enter last name"
-                />
+                <input type="text" v-model="newUser.last_name" class="modern-input" placeholder="Enter last name" />
               </div>
             </div>
             <div class="form-group">
               <label class="form-label">Email Address *</label>
-              <input 
-                type="email" 
-                v-model="newUser.email_adress" 
-                class="modern-input"
-                placeholder="Enter email address"
-              />
+              <input type="email" v-model="newUser.email_adress" class="modern-input"
+                placeholder="Enter email address" />
             </div>
             <div class="form-group">
               <label class="form-label">Password *</label>
-              <input 
-                type="password" 
-                v-model="newUser.password" 
-                class="modern-input"
-                placeholder="Enter password"
-              />
+              <input type="password" v-model="newUser.password" class="modern-input" placeholder="Enter password" />
             </div>
             <div class="form-group">
               <label class="form-label">Assign to Project</label>
@@ -329,7 +266,8 @@
           <div class="custom-modal-body">
             <div class="assign-user-info">
               <div class="user-avatar">
-                <img v-if="selectedUser?.image && selectedUser?.image !== 'null'" :src="selectedUser.image" alt="Profile" />
+                <img v-if="selectedUser?.image && selectedUser?.image !== 'null'" :src="selectedUser.image"
+                  alt="Profile" />
                 <ion-icon v-else name="person-outline"></ion-icon>
               </div>
               <div class="user-details">
@@ -337,7 +275,7 @@
                 <p>{{ selectedUser?.email }}</p>
               </div>
             </div>
-            
+
             <div class="form-group">
               <label class="form-label">Select Project</label>
               <select v-model="assignmentData.project" class="modern-select">
@@ -346,9 +284,10 @@
                   {{ project.name }}
                 </option>
               </select>
-              <p class="form-help">Users assigned to a project will be automatically redirected to that project upon login</p>
+              <p class="form-help">Users assigned to a project will be automatically redirected to that project upon
+                login</p>
             </div>
-            
+
             <div class="form-actions">
               <button class="action-btn secondary" @click="showAssignModal = false">
                 Cancel
@@ -373,7 +312,8 @@
           <div class="custom-modal-body">
             <div class="assign-user-info">
               <div class="user-avatar">
-                <img v-if="editUserData.image && editUserData.image !== 'null'" :src="editUserData.image" alt="Profile" />
+                <img v-if="editUserData.image && editUserData.image !== 'null'" :src="editUserData.image"
+                  alt="Profile" />
                 <ion-icon v-else name="person-outline"></ion-icon>
               </div>
               <div class="user-details">
@@ -384,31 +324,18 @@
             <div class="form-grid">
               <div class="form-group">
                 <label class="form-label">First Name *</label>
-                <input 
-                  type="text" 
-                  v-model="editUserData.first_name" 
-                  class="modern-input"
-                  placeholder="Enter first name"
-                />
+                <input type="text" v-model="editUserData.first_name" class="modern-input"
+                  placeholder="Enter first name" />
               </div>
               <div class="form-group">
                 <label class="form-label">Last Name</label>
-                <input 
-                  type="text" 
-                  v-model="editUserData.last_name" 
-                  class="modern-input"
-                  placeholder="Enter last name"
-                />
+                <input type="text" v-model="editUserData.last_name" class="modern-input"
+                  placeholder="Enter last name" />
               </div>
             </div>
             <div class="form-group">
               <label class="form-label">Email Address *</label>
-              <input 
-                type="email" 
-                v-model="editUserData.email" 
-                class="modern-input"
-                placeholder="Enter email address"
-              />
+              <input type="email" v-model="editUserData.email" class="modern-input" placeholder="Enter email address" />
             </div>
             <div class="form-group">
               <label class="form-label">Status</label>
@@ -420,12 +347,8 @@
             </div>
             <div class="form-group">
               <label class="form-label">New Password</label>
-              <input 
-                type="password" 
-                v-model="editUserData.password" 
-                class="modern-input"
-                placeholder="Leave empty to keep current password"
-              />
+              <input type="password" v-model="editUserData.password" class="modern-input"
+                placeholder="Leave empty to keep current password" />
               <div class="form-help">
                 Only enter a new password if you want to change it. Leave empty to keep the current password.
               </div>
@@ -473,13 +396,19 @@ export default defineComponent({
     const pendingVerificationEntries = ref([]);
     const availableProjects = ref([]);
 
-    const loadUsers = async function() {
+    const loadUsers = async function () {
       try {
         const response = await axios.post(
           "users.php",
-          qs.stringify({ getAllUsers: true })
+          qs.stringify({ getAllUsers: true }),
+          {
+            headers: {
+              "Authorization": localStorage.getItem("token")
+            }
+          }
         );
-        
+
+
         labels.value = response.data.labels;
         data.value = response.data.data;
         data2.value = response.data;
@@ -496,18 +425,29 @@ export default defineComponent({
       }
     };
 
-    const loadUserAssignments = async function() {
+    const loadUserAssignments = async function () {
       try {
         const response = await axios.post(
           "users.php",
-          qs.stringify({ getUserAssignments: true })
+          qs.stringify({ getUserAssignments: true }),
+          {
+            headers: {
+              "Authorization": localStorage.getItem("token")
+            }
+          }
         );
-        
+
         if (response.data.success) {
           // Add assignment data to users
           data.value.forEach(user => {
             const assignment = response.data.assignments.find(a => a.user_id == user[0]);
-            user.assignedProject = assignment ? assignment.project_name : null;
+            if (assignment) {
+              user.assignedProject = assignment.project_name;
+              user.assignedProjectLink = assignment.project_link;
+            } else {
+              user.assignedProject = null;
+              user.assignedProjectLink = null;
+            }
           });
         }
       } catch (error) {
@@ -515,13 +455,18 @@ export default defineComponent({
       }
     };
 
-    const loadProjects = async function() {
+    const loadProjects = async function () {
       try {
         const response = await axios.post(
           "projects.php",
-          qs.stringify({ getAllProjects: true })
+          qs.stringify({ getAllProjects: true }),
+          {
+            headers: {
+              "Authorization": localStorage.getItem("token")
+            }
+          }
         );
-        
+
         if (response.data.success) {
           availableProjects.value = response.data.projects;
         }
@@ -584,7 +529,7 @@ export default defineComponent({
       if (!this.searchTerm.trim()) {
         return this.data;
       }
-      
+
       const searchLower = this.searchTerm.toLowerCase();
       return this.data.filter(user =>
         user[2]?.toLowerCase().includes(searchLower) || // first name
@@ -597,27 +542,27 @@ export default defineComponent({
       if (this.sortColumn === null) {
         return this.filteredUsers;
       }
-      
+
       const sorted = [...this.filteredUsers].sort((a, b) => {
         let aVal = a[this.sortColumn];
         let bVal = b[this.sortColumn];
-        
+
         // Special handling for name column (combine first + last)
         if (this.sortColumn === 2) {
           aVal = `${a[2]} ${a[3]}`;
           bVal = `${b[2]} ${b[3]}`;
         }
-        
+
         // Check if values are numbers
         const aNum = parseFloat(aVal);
         const bNum = parseFloat(bVal);
-        
+
         if (!isNaN(aNum) && !isNaN(bNum)) {
           return this.sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
         } else {
           const aStr = String(aVal).toLowerCase();
           const bStr = String(bVal).toLowerCase();
-          
+
           if (this.sortDirection === 'asc') {
             return aStr.localeCompare(bStr);
           } else {
@@ -625,7 +570,7 @@ export default defineComponent({
           }
         }
       });
-      
+
       return sorted;
     },
     activeUsers() {
@@ -666,7 +611,12 @@ export default defineComponent({
             email_adress: this.newUser.email_adress,
             password: this.newUser.password,
             assigned_project: this.newUser.assigned_project
-          })
+          }),
+          {
+            headers: {
+              "Authorization": localStorage.getItem("token")
+            }
+          }
         );
 
         if (response.data.success) {
@@ -690,9 +640,14 @@ export default defineComponent({
             updateAccountStatus: "updateAccountStatus",
             userID: userID,
             newStatus: "active",
-          })
+          }),
+          {
+            headers: {
+              "Authorization": localStorage.getItem("token")
+            }
+          }
         );
-        
+
         this.showSuccessMessage(`User ${userID} approved successfully`);
         this.loadUsers();
       } catch (error) {
@@ -707,7 +662,7 @@ export default defineComponent({
         email: user[4],
         image: user[1]
       };
-      this.assignmentData.project = user.assignedProject || '';
+      this.assignmentData.project = user.assignedProjectLink || '';
       this.showAssignModal = true;
     },
     async assignProject() {
@@ -718,7 +673,12 @@ export default defineComponent({
             assignUserProject: "assignUserProject",
             userID: this.selectedUser.id,
             project: this.assignmentData.project
-          })
+          }),
+          {
+            headers: {
+              "Authorization": localStorage.getItem("token")
+            }
+          }
         );
 
         if (response.data.success) {
@@ -770,7 +730,12 @@ export default defineComponent({
 
         const response = await this.$axios.post(
           "users.php",
-          this.$qs.stringify(updateData)
+          this.$qs.stringify(updateData),
+          {
+            headers: {
+              "Authorization": localStorage.getItem("token")
+            }
+          }
         );
 
         if (response.data.success) {
@@ -791,14 +756,19 @@ export default defineComponent({
       if (!confirm('Are you sure you want to delete this user?')) {
         return;
       }
-      
+
       try {
         const response = await this.$axios.post(
           "users.php",
           this.$qs.stringify({
             deleteUser: "deleteUser",
             userID: userID
-          })
+          }),
+          {
+            headers: {
+              "Authorization": localStorage.getItem("token")
+            }
+          }
         );
 
         if (response.data.success) {
@@ -1162,6 +1132,7 @@ export default defineComponent({
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -1682,8 +1653,13 @@ export default defineComponent({
 
 /* Animations */
 @keyframes modalFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modalSlideIn {
@@ -1691,6 +1667,7 @@ export default defineComponent({
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1702,6 +1679,7 @@ export default defineComponent({
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -1713,49 +1691,49 @@ export default defineComponent({
   .page-container {
     padding: 16px;
   }
-  
+
   .action-bar {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .action-group-left,
   .action-group-right {
     flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   .card-header {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
   }
-  
+
   .search-box input {
     min-width: 100%;
   }
-  
+
   .header-cell,
   .table-cell {
     min-width: 100px;
     padding: 12px 8px;
     font-size: 12px;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .form-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .custom-modal-content {
     width: 95vw;
     max-width: none;
     margin: 20px;
   }
-  
+
   .pending-user-card {
     flex-direction: column;
     gap: 16px;
@@ -1767,16 +1745,16 @@ export default defineComponent({
   .modern-table {
     min-width: 600px;
   }
-  
+
   .cell-content {
     max-width: 80px;
   }
-  
+
   .custom-modal-header,
   .custom-modal-body {
     padding: 20px;
   }
-  
+
   .success-toast {
     bottom: 16px;
     right: 16px;

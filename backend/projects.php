@@ -289,6 +289,26 @@ if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
         "projectID" => $projectID,
         "projectName" => $project['name']
     ]);
+} elseif (isset($_POST['getAllProjects'])) {
+    // Alle verfügbaren Projekte abrufen (für Admin-Bereich)
+    try {
+        $projects = query("SELECT projectID, icon, name, link, date FROM projects ORDER BY name ASC");
+        $projectList = [];
+        
+        foreach ($projects as $project) {
+            $projectList[] = [
+                'id' => $project['projectID'],
+                'icon' => $project['icon'],
+                'name' => $project['name'],
+                'link' => $project['link'],
+                'date' => $project['date']
+            ];
+        }
+        
+        echo jsonResponse(['success' => true, 'projects' => $projectList]);
+    } catch (Exception $e) {
+        echo jsonResponse(['success' => false, 'message' => 'Error loading projects: ' . $e->getMessage()]);
+    }
 } else {
     // Alle Projekte des Benutzers abrufen
     $projects = getUserProjectsByUserID($userID);

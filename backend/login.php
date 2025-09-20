@@ -55,6 +55,13 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 $jwt = SimpleJWT::encode($payload, $jwt_secret);
                 $json['token'] = $jwt;
                 $json['firstname'] = $data['firstname'];
+                
+                // Check for project assignment
+                $assignmentQuery = query("SELECT project_link FROM user_project_assignments WHERE user_id='{$data['userID']}'");
+                if ($assignmentQuery && mysqli_num_rows($assignmentQuery) > 0) {
+                    $assignment = fetch_assoc($assignmentQuery);
+                    $json['assigned_project'] = $assignment['project_link'];
+                }
 
             } else {
                 $verificationToken = bin2hex(random_bytes(48));
@@ -115,6 +122,13 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 $jwt = SimpleJWT::encode($payload, $jwt_secret);
                 $json['token'] = $jwt;
                 $json['firstname'] = $data['firstname'];
+                
+                // Check for project assignment
+                $assignmentQuery = query("SELECT project_link FROM user_project_assignments WHERE user_id='{$data['userID']}'");
+                if ($assignmentQuery && mysqli_num_rows($assignmentQuery) > 0) {
+                    $assignment = fetch_assoc($assignmentQuery);
+                    $json['assigned_project'] = $assignment['project_link'];
+                }
 
             } else {
                 $verificationToken = bin2hex(random_bytes(48));
@@ -175,6 +189,13 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 $jwt = SimpleJWT::encode($payload, $jwt_secret);
                 $json['token'] = $jwt;
                 $json['firstname'] = $data['firstname'];
+                
+                // Check for project assignment
+                $assignmentQuery = query("SELECT project_link FROM user_project_assignments WHERE user_id='{$data['userID']}'");
+                if ($assignmentQuery && mysqli_num_rows($assignmentQuery) > 0) {
+                    $assignment = fetch_assoc($assignmentQuery);
+                    $json['assigned_project'] = $assignment['project_link'];
+                }
 
             } else {
                 $verificationToken = bin2hex(random_bytes(48));
