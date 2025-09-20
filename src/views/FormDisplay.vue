@@ -1,7 +1,10 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
+                  <SiteTitle v-if="true" icon="person-outline" title="Yyyyy"/>
+
       <div class="page-container">
+
         <!-- Action Bar -->
         <div class="action-bar">
           <div class="action-group-left">
@@ -193,6 +196,7 @@ import EditEntry from "@/components/EditEntry.vue";
 import TriggerManager from "@/components/TriggerManager.vue";
 import RenameForm from "@/components/RenameForm_new.vue";
 import { defineComponent, ref } from "vue";
+import SiteTitle from "@/components/SiteTitle.vue";
 
 export default defineComponent({
   name: "FormDisplay",
@@ -201,6 +205,7 @@ export default defineComponent({
     EditEntry,
     TriggerManager,
     RenameForm,
+    SiteTitle,
   },
   data() {
     return {
@@ -457,7 +462,7 @@ export default defineComponent({
 .page-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 20px;
   min-height: 100vh;
   background: var(--background);
 }

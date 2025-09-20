@@ -16,13 +16,15 @@
             </ion-content>
           </ion-menu>
           <div id="main-content">
-            <SiteTitle v-if="showSiteTitle" :icon="page.icon" :title="page.title" @updateSidebar="updateSidebar()" />
+         <!--  <SiteTitle v-if="showSiteTitle" :icon="page.icon" :title="page.title" @updateSidebar="updateSidebar()" />--> 
             <ion-router-outlet v-if="page.title" @updateSidebar="updateSidebar()" :class="{
               showTitle: showTitle,
             }"></ion-router-outlet>
             <div v-else class="error404">
               <h1>Error 404, Site not found.</h1>
             </div>
+
+            
           </div>
         </ion-split-pane>
       </ion-content>

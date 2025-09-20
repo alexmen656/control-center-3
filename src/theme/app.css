@@ -421,9 +421,9 @@
     z-index: 6666;
   }
   
-  ion-router-outlet.showTitle {
+  /*ion-router-outlet.showTitle {
     margin-top: 48px;
-  }
+  }*/
   
   ion-router-outlet {
     width: 100%;
