@@ -75,6 +75,43 @@
     </ion-reorder-group>
   </ion-list>
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
+    <h4>Tables</h4>
+    <div>
+      <router-link :to="'/project/' + $route.params.project + '/manage/forms'"><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/forms/"><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="information-circle-outline"></ion-icon></router-link><router-link
+        :to="'/project/' + $route.params.project + '/new/form'"><ion-icon
+          style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>
+    </div>
+  </ion-note>
+  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
+    <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
+      <ion-menu-toggle auto-hide="false" v-for="(form, i) in forms" :key="`form-${i}`">
+        <ion-item
+          @click="this.selectedIndex = Number(tools.length) + Number(i) + 1"
+          lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/forms/' + form.name"
+          class="hydrated menu-item" :class="{
+            selected: this.selectedIndex === Number(tools.length) + Number(i) + 1,
+            collapsed: isCollapsed,
+            hasToBeDarkmode: hasToBeDarkmode
+          }" :data-tooltip="isCollapsed ? form.name : ''">
+          <ion-icon slot="start" :name="form.icon || 'list-outline'" />
+          <ion-label v-if="!isCollapsed">{{ form.name }}</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+
+      <!-- No Forms message -->
+      <ion-menu-toggle auto-hide="false" v-if="forms.length === 0 && !isCollapsed">
+        <ion-item lines="none" detail="false" class="no-forms-item">
+          <ion-icon slot="start" name="document-outline" color="medium" />
+          <ion-label color="medium">No Forms yet</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+    </ion-reorder-group>
+  </ion-list>
+  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
     <h4>Codespaces</h4>
     <div>
       <router-link :to="'/project/' + $route.params.project + '/manage/codespaces'"><ion-icon
@@ -90,10 +127,10 @@
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
       <ion-menu-toggle auto-hide="false" v-for="(codespace, i) in codespaces" :key="`codespace-${i}`">
         <ion-item
-          @click="this.selectedIndex = Number(tools.length) + Number(components.length) + Number(services.length) + Number(i) + 1"
+          @click="this.selectedIndex = Number(tools.length) + Number(forms.length) + Number(components.length) + Number(services.length) + Number(i) + 1"
           lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/codespace/' + codespace.slug"
           class="hydrated menu-item" :class="{
-            selected: this.selectedIndex === Number(tools.length) + Number(components.length) + Number(services.length) + Number(i) + 1,
+            selected: this.selectedIndex === Number(tools.length) + Number(forms.length) + Number(components.length) + Number(services.length) + Number(i) + 1,
             collapsed: isCollapsed,
             hasToBeDarkmode: hasToBeDarkmode
           }" :data-tooltip="isCollapsed ? codespace.name : ''">
@@ -164,7 +201,7 @@
                 .replaceAll('Ü', 'u')
                 .replaceAll('ü', 'u')*/
               " class="hydrated menu-item parent-component" :class="{
-                  selected: selectedIndex === Number(i) + Number(tools.length) + 1,
+                  selected: selectedIndex === Number(i) + Number(tools.length) + Number(forms.length) + 1,
                   collapsed: isCollapsed,
                   hasToBeDarkmode: hasToBeDarkmode
                 }" :data-tooltip="isCollapsed ? component.name : ''">
@@ -187,7 +224,7 @@
           <ion-menu-toggle auto-hide="false" v-for="(subComp, j) in getSubComponents(component.id)" :key="`${i}-${j}`"
             class="sub-item-container">
             <div class="horizontal-tree-line"></div>
-            <ion-item @click="selectedIndex = Number(i) + Number(tools.length) + 1 + Number(j) + 0.1" lines="none"
+            <ion-item @click="selectedIndex = Number(i) + Number(tools.length) + Number(forms.length) + 1 + Number(j) + 0.1" lines="none"
               detail="false" :router-link="'/project/' +
                 $route.params.project +
                 '/page/' +
@@ -320,6 +357,7 @@ export default defineComponent({
     const services = ref([]);
     const apis = ref([]);
     const codespaces = ref([]);
+    const forms = ref([]);
     const route = useRoute();
     const ionRouter = useIonRouter();
     const list = {} as any;
@@ -418,6 +456,7 @@ export default defineComponent({
         services.value = response.data.services || [];
         apis.value = response.data.apis || [];
         codespaces.value = response.data.codespaces || [];
+        forms.value = response.data.forms || [];
         componentSubItems.value = response.data.componentSubItems || {};
         tools.value.forEach((element) => {
           list[element.id] = element.order;
@@ -447,6 +486,7 @@ export default defineComponent({
       services: services,
       apis: apis,
       codespaces: codespaces,
+      forms: forms,
       goToConfig,
       handleReorder,
       handleFrontReorder,
@@ -473,6 +513,7 @@ export default defineComponent({
           this.services = response.data.services || [];
           this.apis = response.data.apis || [];
           this.codespaces = response.data.codespaces || [];
+          this.forms = response.data.forms || [];
           this.componentSubItems = response.data.componentSubItems || {};
         });
     });
@@ -923,5 +964,18 @@ ion-list.hasToBeDarkmode {
 
 .no-codespaces-item ion-icon {
   color: var(--ion-color-medium) !important;
+}
+
+/* Forms/Tables specific styling */
+.no-forms-item {
+  opacity: 0.6;
+}
+
+.no-forms-item ion-icon {
+  color: var(--ion-color-medium) !important;
+}
+
+.no-forms-item ion-label {
+  font-style: italic;
 }
 </style>

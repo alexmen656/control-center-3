@@ -59,6 +59,22 @@ if (isset($headers['Authorization'])) {
             }
         }
 
+        // Get forms for this project from form_settings table
+        $forms = query("SELECT * FROM form_settings WHERE project='$projectName' ORDER BY created_at DESC");
+        
+        if (mysqli_num_rows($forms) == 0) {
+            $json['forms'] = [];
+        } else {
+            $f = 0;
+            foreach ($forms as $form) {
+                $json['forms'][$f]["id"] = $form['form_id'];
+                $json['forms'][$f]["name"] = $form['form_name'];
+                $json['forms'][$f]["icon"] = "list-outline"; // Default icon for forms
+                $json['forms'][$f]["created_at"] = $form['created_at'];
+                $f++;
+            }
+        }
+
         // First find the web builder project that corresponds to this Control Center project
         $projectQuery = query("SELECT id FROM control_center_web_builder_projects WHERE name='$projectName'");
         
