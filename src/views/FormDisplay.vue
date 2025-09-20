@@ -93,7 +93,7 @@
               <!-- Table Body -->
               <div class="table-body">
                 <div 
-                  v-for="(tr, rowIndex) in filteredData" 
+                  v-for="(tr, rowIndex) in sortedData" 
                   :key="rowIndex"
                   class="table-row"
                   :class="{ 'row-hover': true }"
@@ -160,7 +160,7 @@
       </ion-modal>
       <ion-modal
         :is-open="triggerModalOpen"
-        css-class="trigger-modal"
+        css-class="modern-trigger-modal"
         @didDismiss="triggerModalOpen = false"
       >
         <TriggerManager 
@@ -171,7 +171,7 @@
       </ion-modal>
       <ion-modal
         :is-open="renameModalOpen"
-        css-class="rename-modal"
+        css-class="modern-rename-modal"
         @didDismiss="renameModalOpen = false"
       >
         <RenameForm 
@@ -191,7 +191,7 @@
 import DisplayForm from "@/components/DisplayForm.vue";
 import EditEntry from "@/components/EditEntry.vue";
 import TriggerManager from "@/components/TriggerManager.vue";
-import RenameForm from "@/components/RenameForm.vue";
+import RenameForm from "@/components/RenameForm_new.vue";
 import { defineComponent, ref } from "vue";
 
 export default defineComponent({
@@ -216,13 +216,23 @@ export default defineComponent({
       showForm: false,
       dropdownOpen: false,
       searchTerm: '',
-      filteredData: [],
     };
   },
   computed: {
     sortedData() {
-      const dataToSort = this.searchTerm ? this.filteredData : this.data;
+      // First apply search filter
+      let dataToSort = this.data;
       
+      if (this.searchTerm.trim()) {
+        const searchLower = this.searchTerm.toLowerCase();
+        dataToSort = this.data.filter(row => 
+          row.some(cell => 
+            String(cell).toLowerCase().includes(searchLower)
+          )
+        );
+      }
+      
+      // Then apply sorting
       if (this.sortColumn === null) {
         return dataToSort;
       }
@@ -277,17 +287,8 @@ export default defineComponent({
       this.dropdownOpen = !this.dropdownOpen;
     },
     handleSearch() {
-      if (!this.searchTerm.trim()) {
-        this.filteredData = this.data;
-        return;
-      }
-      
-      const searchLower = this.searchTerm.toLowerCase();
-      this.filteredData = this.data.filter(row => 
-        row.some(cell => 
-          String(cell).toLowerCase().includes(searchLower)
-        )
-      );
+      // Search is now handled in computed property, so we don't need this method
+      // But we keep it in case we need custom search logic later
     },
     sortBy(columnIndex) {
       if (this.sortColumn === columnIndex) {
@@ -350,7 +351,7 @@ export default defineComponent({
     exportCSV() {
       const form = document.createElement('form');
       form.method = 'POST';
-      form.action = '/control-center/triggers.php';
+      form.action = '/control-center-3_2/backend/triggers.php'; // Fixed path
       form.target = '_blank';
       
       const exportField = document.createElement('input');
@@ -413,7 +414,6 @@ export default defineComponent({
         .then((res) => {
           this.labels = res.data.labels;
           this.data = res.data.data;
-          this.filteredData = res.data.data; // Initialize filtered data
           this.load_more_btn = res.data.load_more_btn;
           this.current_limit = 1;
         });
@@ -898,6 +898,19 @@ export default defineComponent({
     background: var(--background);
     color: var(--text-primary);
   }
+}
+
+/* Modal Integration */
+:global(.modern-trigger-modal .modal-content),
+:global(.modern-rename-modal .modal-content) {
+  --ion-backdrop-opacity: 0;
+  --ion-backdrop-color: transparent;
+}
+
+:global(.modern-trigger-modal ion-modal),
+:global(.modern-rename-modal ion-modal) {
+  --background: transparent !important;
+  --backdrop-opacity: 0 !important;
 }
 
 /* Responsive Design */

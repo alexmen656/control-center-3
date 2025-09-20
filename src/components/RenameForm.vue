@@ -1,53 +1,121 @@
 <template>
-  <ion-header>
-    <ion-toolbar>
-      <ion-title>Form umbenennen</ion-title>
-      <ion-buttons slot="end">
-        <ion-button @click="$emit('close')">
-          <ion-icon name="close"></ion-icon>
-        </ion-button>
-      </ion-buttons>
-    </ion-toolbar>
-  </ion-header>
-  
-  <ion-content class="ion-padding">
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>Form "{{ form }}" umbenennen</ion-card-title>
-        <ion-card-subtitle>Geben Sie den neuen Namen für die Form ein</ion-card-subtitle>
-      </ion-card-header>
-      
-      <ion-card-content>
-        <ion-item>
-          <ion-label position="stacked">Aktueller Name</ion-label>
-          <ion-input :value="form" readonly></ion-input>
-        </ion-item>
-        
-        <ion-item>
-          <ion-label position="stacked">Neuer Name *</ion-label>
-          <ion-input
-            v-model="newFormName"
-            placeholder="Neuen Formnamen eingeben"
-            :class="{ 'ion-invalid': showError && !isValidName }"
-          ></ion-input>
-          <ion-note slot="helper" v-if="!showError">
-            Nur Buchstaben, Zahlen und Bindestriche erlaubt
-          </ion-note>
-          <ion-note slot="error" v-if="showError && !newFormName">
-            Name ist erforderlich
-          </ion-note>
-          <ion-note slot="error" v-if="showError && newFormName && !isValidName">
-            Ungültiger Name. Verwenden Sie nur Buchstaben, Zahlen und Bindestriche
-          </ion-note>
-          <ion-note slot="error" v-if="showError && formExists">
-            Eine Form mit diesem Namen existiert bereits
-          </ion-note>
-        </ion-item>
-        
-        <div class="ion-margin-top">
-          <ion-button 
-            expand="block" 
-            @click="renameForm"
+  <div class="modern-modal">
+    <div class="modal-overlay" @click="$emit('close')">
+      <div class="modal-container" @click.stop>
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <div class="header-content">
+            <h2>Rename Form</h2>
+            <p>Change the name of your form "{{ form }}"</p>
+          </div>
+          <button class="close-btn" @click="$emit('close')">
+            <ion-icon name="close-outline"></ion-icon>
+          </button>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="modal-content">
+          <div class="form-section">
+            <div class="form-group">
+              <label class="form-label">Current Name</label>
+              <div class="current-name-display">
+                <ion-icon name="document-text-outline" class="form-icon"></ion-icon>
+                <span class="current-name">{{ form }}</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">New Name *</label>
+              <div class="input-container">
+                <input 
+                  v-model="newFormName"
+                  type="text"
+                  class="modern-input"
+                  :class="{ 'error': showError && !isValidName }"
+                  placeholder="Enter new form name"
+                  @input="validateName"
+                  @keyup.enter="renameForm"
+                  ref="nameInput"
+                >
+                <div class="input-status">
+                  <ion-icon 
+                    v-if="newFormName && isValidName && !formExists" 
+                    name="checkmark-circle-outline" 
+                    class="status-icon success"
+                  ></ion-icon>
+                  <ion-icon 
+                    v-else-if="showError && (!isValidName || formExists)" 
+                    name="close-circle-outline" 
+                    class="status-icon error"
+                  ></ion-icon>
+                </div>
+              </div>
+              
+              <div class="input-feedback">
+                <div v-if="!showError" class="hint">
+                  <ion-icon name="information-circle-outline"></ion-icon>
+                  Only letters, numbers, and hyphens allowed
+                </div>
+                <div v-else-if="!newFormName" class="error-message">
+                  <ion-icon name="alert-circle-outline"></ion-icon>
+                  Form name is required
+                </div>
+                <div v-else-if="!isValidName" class="error-message">
+                  <ion-icon name="alert-circle-outline"></ion-icon>
+                  Invalid name. Use only letters, numbers, and hyphens
+                </div>
+                <div v-else-if="formExists" class="error-message">
+                  <ion-icon name="alert-circle-outline"></ion-icon>
+                  A form with this name already exists
+                </div>
+                <div v-else-if="isValidName" class="success-message">
+                  <ion-icon name="checkmark-circle-outline"></ion-icon>
+                  Name is available
+                </div>
+              </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div v-if="newFormName && isValidName" class="preview-section">
+              <h4>Preview</h4>
+              <div class="preview-card">
+                <div class="preview-item">
+                  <span class="preview-label">Old URL:</span>
+                  <code class="preview-url old">/project/{{ project }}/form/{{ form }}</code>
+                </div>
+                <div class="arrow-down">
+                  <ion-icon name="arrow-down-outline"></ion-icon>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">New URL:</span>
+                  <code class="preview-url new">/project/{{ project }}/form/{{ newFormName }}</code>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="button-group">
+              <button class="secondary-btn" @click="$emit('close')">
+                <ion-icon name="close-outline"></ion-icon>
+                Cancel
+              </button>
+              <button 
+                class="primary-btn"
+                @click="renameForm"
+                :disabled="!canRename"
+                :class="{ 'loading': isLoading }"
+              >
+                <ion-icon v-if="!isLoading" name="create-outline"></ion-icon>
+                <div v-else class="spinner"></div>
+                {{ isLoading ? 'Renaming...' : 'Rename Form' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
             :disabled="!isValidName || loading"
           >
             <ion-spinner v-if="loading" name="crescent"></ion-spinner>
