@@ -46,7 +46,7 @@
           <div class="card-header">
             <div class="header-left">
               <h3>Data Overview</h3>
-              <span class="entry-count">{{ data.length }} entries</span>
+              <span class="entry-count">{{ data?.length || 0 }} entries</span>
             </div>
             <div class="header-right">
               <div class="search-box">
@@ -95,6 +95,20 @@
 
               <!-- Table Body -->
               <div class="table-body">
+                <!-- No Data State -->
+                <div v-if="!sortedData || sortedData.length === 0" class="no-data-state">
+                  <div class="no-data-content">
+                    <ion-icon name="folder-open-outline" class="no-data-icon"></ion-icon>
+                    <h4>No Data Available</h4>
+                    <p>{{ searchTerm ? 'No entries match your search criteria.' : 'No entries have been created yet.' }}</p>
+                    <button v-if="!searchTerm" class="action-btn primary" @click="toggleFormView">
+                      <ion-icon name="add-outline"></ion-icon>
+                      Add First Entry
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Data Rows -->
                 <div 
                   v-for="(tr, rowIndex) in sortedData" 
                   :key="rowIndex"
@@ -147,44 +161,47 @@
           </div>
         </div>
       </div>
-      <ion-modal
-        :is-open="isOpenRef"
-        css-class="my-custom-class"
-        @didDismiss="closeModal(false)"
-      >
-        <EditEntry
-          @submit="handleEdit"
-          :data="{
-            id: edit_id,
-            form: $route.params.form,
-            project: $route.params.project,
-          }"
-        />
-      </ion-modal>
-      <ion-modal
-        :is-open="triggerModalOpen"
-        css-class="modern-trigger-modal"
-        @didDismiss="triggerModalOpen = false"
-      >
-        <TriggerManager 
-          :project="$route.params.project"
-          :form="$route.params.form"
-          @close="triggerModalOpen = false"
-        />
-      </ion-modal>
-      <ion-modal
-        :is-open="renameModalOpen"
-        css-class="modern-rename-modal"
-        @didDismiss="renameModalOpen = false"
-      >
-        <RenameForm 
-          :project="$route.params.project"
-          :form="$route.params.form"
-          @close="renameModalOpen = false"
-          @success="handleRenameSuccess"
-          @sidebarRefresh="refreshSidebar"
-        />
-      </ion-modal>
+      
+      <!-- Custom Modals -->
+      <!-- Edit Entry Modal -->
+      <div v-if="isOpenRef" class="custom-modal-overlay" @click="closeModal(false)">
+        <div class="custom-modal-content" @click.stop>
+          <div class="custom-modal-header">
+            <h3>Edit Entry</h3>
+            <button class="modal-close-btn" @click="closeModal(false)">
+              <ion-icon name="close-outline"></ion-icon>
+            </button>
+          </div>
+          <div class="custom-modal-body">
+            <EditEntry
+              @submit="handleEdit"
+              :data="{
+                id: edit_id,
+                form: $route.params.form,
+                project: $route.params.project,
+              }"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Trigger Manager Modal (Component has its own modal) -->
+      <TriggerManager 
+        v-if="triggerModalOpen"
+        :project="$route.params.project"
+        :form="$route.params.form"
+        @close="triggerModalOpen = false"
+      />
+
+      <!-- Rename Form Modal (Component has its own modal) -->
+      <RenameForm 
+        v-if="renameModalOpen"
+        :project="$route.params.project"
+        :form="$route.params.form"
+        @close="renameModalOpen = false"
+        @success="handleRenameSuccess"
+        @sidebarRefresh="refreshSidebar"
+      />
     </ion-content>
   </ion-page>
 </template>
@@ -225,6 +242,11 @@ export default defineComponent({
   },
   computed: {
     sortedData() {
+      // Handle undefined or null data
+      if (!this.data || !Array.isArray(this.data)) {
+        return [];
+      }
+      
       // First apply search filter
       let dataToSort = this.data;
       
@@ -356,7 +378,7 @@ export default defineComponent({
     exportCSV() {
       const form = document.createElement('form');
       form.method = 'POST';
-      form.action = '/control-center-3_2/backend/triggers.php'; // Fixed path
+      form.action = 'https://alex.polan.sk/control-center/triggers.php'; // Fixed path
       form.target = '_blank';
       
       const exportField = document.createElement('input');
@@ -970,6 +992,146 @@ export default defineComponent({
   
   .cell-content {
     max-width: 80px;
+  }
+}
+
+/* No Data State */
+.no-data-state {
+  padding: 60px 20px;
+  text-align: center;
+  background: var(--surface);
+}
+
+.no-data-content {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.no-data-icon {
+  font-size: 64px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.no-data-content h4 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.no-data-content p {
+  margin: 0 0 24px 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Custom Modal Styles */
+.custom-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: modalFadeIn 0.2s ease;
+}
+
+.custom-modal-content {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 600px;
+  display: flex;
+  flex-direction: column;
+  animation: modalSlideIn 0.3s ease;
+}
+
+.custom-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.custom-modal-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.modal-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+.custom-modal-body {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Modal Animations */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Modal Responsive */
+@media (max-width: 768px) {
+  .custom-modal-content {
+    width: 95vw;
+    max-width: none;
+    margin: 20px;
+  }
+  
+  .custom-modal-header,
+  .custom-modal-body {
+    padding: 20px;
   }
 }
 </style>
