@@ -75,12 +75,9 @@ if (isset($headers['Authorization'])) {
             }
         }
 
-        // First find the web builder project that corresponds to this Control Center project
         $projectQuery = query("SELECT id FROM control_center_web_builder_projects WHERE name='$projectName'");
         
-        // If no direct match is found, try to match based on project ID
         if (mysqli_num_rows($projectQuery) == 0) {
-            // Try to find a description that contains the projectID
             $projectQuery = query("SELECT id FROM control_center_web_builder_projects WHERE description LIKE '%$projectID%'");
         }
         

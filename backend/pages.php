@@ -81,6 +81,19 @@ foreach ($pages as $p) {
     $i++;
 }
 
+// Get all forms from form_settings and add them as pages
+$forms = query("SELECT * FROM form_settings ORDER BY project, form_name");
+foreach ($forms as $form) {
+    $json[$i]['id'] = 'form_' . $form['form_id'];
+    $json[$i]['url'] = 'project/' . $form['project'] . '/forms/' . $form['form_name'];
+    $json[$i]['showTitle'] = true;
+    $json[$i]['icon'] = 'list-outline';
+    $json[$i]['title'] = $form['form_name'];
+    $json[$i]['html'] = '';
+    $json[$i]['pageID'] = 'form_' . $form['form_id'];
+    $i++;
+}
+
 // Get all webbuilder projects
 $webbuilderProjects = query("SELECT id, name, description FROM control_center_web_builder_projects");
 foreach ($webbuilderProjects as $project) {

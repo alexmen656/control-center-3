@@ -377,13 +377,13 @@ for (const path in services) {
 // Add the specified routes
 routes.push(
   {
-    path: '/project/:project/:form/config',
-    component: () => import('../views/FormConfig.vue'),
+    path: "/project/:project/forms/:form/config",
+    component: () => import("../views/FormConfig.vue"),
   },
   {
-    path: '/project/:project/:form',
-    name: 'FormDisplay',
-    component: () => import('../views/FormDisplay.vue'),
+    path: "/project/:project/forms/:form",
+    name: "FormDisplay",
+    component: () => import("../views/FormDisplay.vue"),
   },
   {
     path: '/my-account/preferences',
