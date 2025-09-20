@@ -63,9 +63,12 @@
         </div>
 
         <!-- Users Table -->
-        <div class="users-card">
+        <div class="data-card">
           <div class="card-header">
-            <h2>All Users</h2>
+            <div class="header-left">
+              <h3>All Users</h3>
+              <span class="entry-count">{{ filteredUsers.length }} user{{ filteredUsers.length !== 1 ? 's' : '' }}</span>
+            </div>
             <div class="search-box">
               <ion-icon name="search-outline"></ion-icon>
               <input 
@@ -76,16 +79,18 @@
             </div>
           </div>
 
-          <div class="table-container">
+          <div class="table-wrapper">
             <div v-if="loading" class="loading-state">
               <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
               <p>Loading users...</p>
             </div>
 
             <div v-else-if="filteredUsers.length === 0" class="no-data-state">
-              <ion-icon name="people-outline" class="no-data-icon"></ion-icon>
-              <h3>No Users Found</h3>
-              <p>{{ searchTerm ? 'No users match your search criteria.' : 'No users have been created yet.' }}</p>
+              <div class="no-data-content">
+                <ion-icon name="people-outline" class="no-data-icon"></ion-icon>
+                <h4>No Users Found</h4>
+                <p>{{ searchTerm ? 'No users match your search criteria.' : 'No users have been created yet.' }}</p>
+              </div>
             </div>
 
             <div v-else class="modern-table">
@@ -127,7 +132,9 @@
                   class="table-row"
                 >
                   <!-- User ID (hidden on mobile) -->
-                  <div class="table-cell cell-id">{{ user[0] }}</div>
+                  <div class="table-cell cell-id">
+                    <span class="cell-content">{{ user[0] }}</span>
+                  </div>
                   
                   <!-- Profile Image -->
                   <div class="table-cell cell-avatar">
@@ -208,10 +215,12 @@
         </div>
 
         <!-- Pending Verification Section (if any) -->
-        <div v-if="pendingVerificationEntries.length > 0" class="pending-card">
+        <div v-if="pendingVerificationEntries.length > 0" class="data-card">
           <div class="card-header">
-            <h2>Pending Verification</h2>
-            <span class="pending-count">{{ pendingVerificationEntries.length }} users waiting</span>
+            <div class="header-left">
+              <h3>Pending Verification</h3>
+              <span class="entry-count">{{ pendingVerificationEntries.length }} user{{ pendingVerificationEntries.length !== 1 ? 's' : '' }} waiting</span>
+            </div>
           </div>
           
           <div class="pending-users">
@@ -352,6 +361,89 @@
         </div>
       </div>
 
+      <!-- Edit User Modal -->
+      <div v-if="showEditModal" class="custom-modal-overlay" @click="showEditModal = false">
+        <div class="custom-modal-content" @click.stop>
+          <div class="custom-modal-header">
+            <h3>Edit User</h3>
+            <button class="modal-close-btn" @click="showEditModal = false">
+              <ion-icon name="close-outline"></ion-icon>
+            </button>
+          </div>
+          <div class="custom-modal-body">
+            <div class="assign-user-info">
+              <div class="user-avatar">
+                <img v-if="editUserData.image && editUserData.image !== 'null'" :src="editUserData.image" alt="Profile" />
+                <ion-icon v-else name="person-outline"></ion-icon>
+              </div>
+              <div class="user-details">
+                <h4>Editing User ID: {{ editUserData.id }}</h4>
+                <p>{{ editUserData.original_email }}</p>
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">First Name *</label>
+                <input 
+                  type="text" 
+                  v-model="editUserData.first_name" 
+                  class="modern-input"
+                  placeholder="Enter first name"
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Last Name</label>
+                <input 
+                  type="text" 
+                  v-model="editUserData.last_name" 
+                  class="modern-input"
+                  placeholder="Enter last name"
+                />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address *</label>
+              <input 
+                type="email" 
+                v-model="editUserData.email" 
+                class="modern-input"
+                placeholder="Enter email address"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select v-model="editUserData.status" class="modern-select">
+                <option value="active">Active</option>
+                <option value="pending_verification">Pending Verification</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">New Password</label>
+              <input 
+                type="password" 
+                v-model="editUserData.password" 
+                class="modern-input"
+                placeholder="Leave empty to keep current password"
+              />
+              <div class="form-help">
+                Only enter a new password if you want to change it. Leave empty to keep the current password.
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="action-btn secondary" @click="showEditModal = false">
+                Cancel
+              </button>
+              <button class="action-btn primary" @click="saveUserEdit" :disabled="loading">
+                <ion-spinner v-if="loading" name="crescent"></ion-spinner>
+                <ion-icon v-else name="save-outline"></ion-icon>
+                <span v-if="!loading">Save Changes</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Success Message -->
       <div v-if="successMessage" class="success-toast">
         <ion-icon name="checkmark-circle-outline"></ion-icon>
@@ -460,7 +552,18 @@ export default defineComponent({
       successMessage: '',
       showCreateModal: false,
       showAssignModal: false,
+      showEditModal: false,
       selectedUser: null,
+      editUserData: {
+        id: null,
+        first_name: '',
+        last_name: '',
+        email: '',
+        original_email: '',
+        status: '',
+        password: '',
+        image: null
+      },
       newUser: {
         first_name: '',
         last_name: '',
@@ -631,8 +734,58 @@ export default defineComponent({
       }
     },
     editUser(user) {
-      // TODO: Implement edit user functionality
-      console.log('Edit user:', user);
+      this.editUserData = {
+        id: user[0],
+        first_name: user[2] || '',
+        last_name: user[3] || '',
+        email: user[4] || '',
+        original_email: user[4] || '',
+        status: user[7] || 'active',
+        password: '',
+        image: user[1]
+      };
+      this.showEditModal = true;
+    },
+    async saveUserEdit() {
+      if (!this.editUserData.first_name || !this.editUserData.email) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      this.loading = true;
+      try {
+        const updateData = {
+          updateUser: "updateUser",
+          userID: this.editUserData.id,
+          first_name: this.editUserData.first_name,
+          last_name: this.editUserData.last_name,
+          email_adress: this.editUserData.email,
+          account_status: this.editUserData.status
+        };
+
+        // Only include password if it's provided
+        if (this.editUserData.password.trim()) {
+          updateData.password = this.editUserData.password;
+        }
+
+        const response = await this.$axios.post(
+          "users.php",
+          this.$qs.stringify(updateData)
+        );
+
+        if (response.data.success) {
+          this.showSuccessMessage('User updated successfully');
+          this.showEditModal = false;
+          this.loadUsers();
+        } else {
+          alert('Error updating user: ' + response.data.message);
+        }
+      } catch (error) {
+        console.error('Error updating user:', error);
+        alert('Error updating user');
+      } finally {
+        this.loading = false;
+      }
     },
     async deleteUser(userID) {
       if (!confirm('Are you sure you want to delete this user?')) {
@@ -705,6 +858,91 @@ export default defineComponent({
   padding: 20px;
   min-height: 100vh;
   background: var(--background);
+}
+
+/* Page Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.header-content h1 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.header-content p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: white;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  flex-shrink: 0;
+}
+
+.stat-content h3 {
+  margin: 0 0 4px 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.stat-content p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
 }
 
 /* Action Bar */
@@ -904,6 +1142,67 @@ export default defineComponent({
 /* Modern Table */
 .table-wrapper {
   overflow-x: auto;
+}
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+
+.loading-icon {
+  font-size: 32px;
+  color: var(--primary-color);
+  margin-bottom: 12px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-state p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* No Data State */
+.no-data-state {
+  padding: 60px 20px;
+  text-align: center;
+  background: var(--surface);
+}
+
+.no-data-content {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.no-data-icon {
+  font-size: 64px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.no-data-content h4 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.no-data-content p {
+  margin: 0 0 24px 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .modern-table {

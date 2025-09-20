@@ -98,6 +98,44 @@ if (isset($_POST['new_user']) && isset($_POST['first_name']) && isset($_POST['em
     
     mysqli_autocommit($GLOBALS['con'], true);
     
+} elseif (isset($_REQUEST['updateUser']) && isset($_REQUEST['userID'])) {
+    $userID = escape_string($_REQUEST['userID']);
+    $first_name = escape_string($_REQUEST['first_name']);
+    $last_name = escape_string($_REQUEST['last_name']);
+    $email_adress = escape_string($_REQUEST['email_adress']);
+    $account_status = escape_string($_REQUEST['account_status']);
+    
+    mysqli_autocommit($GLOBALS['con'], false);
+    
+    try {
+        $updateFields = [
+            "firstname='$first_name'",
+            "lastname='$last_name'",
+            "email='$email_adress'",
+            "account_status='$account_status'"
+        ];
+        
+        // Only update password if provided
+        if (isset($_REQUEST['password']) && !empty(trim($_REQUEST['password']))) {
+            $password = password_hash(escape_string($_REQUEST['password']), PASSWORD_DEFAULT);
+            $updateFields[] = "password='$password'";
+        }
+        
+        $updateQuery = "UPDATE control_center_users SET " . implode(', ', $updateFields) . " WHERE userID='$userID'";
+        
+        if (query($updateQuery)) {
+            mysqli_commit($GLOBALS['con']);
+            echo echoJson(['success' => true, 'message' => 'User updated successfully']);
+        } else {
+            throw new Exception('Failed to update user');
+        }
+    } catch (Exception $e) {
+        mysqli_rollback($GLOBALS['con']);
+        echo echoJson(['success' => false, 'message' => $e->getMessage()]);
+    }
+    
+    mysqli_autocommit($GLOBALS['con'], true);
+    
 } elseif (isset($_REQUEST['getUserAssignments'])) {
     $assignments = query("
         SELECT 
