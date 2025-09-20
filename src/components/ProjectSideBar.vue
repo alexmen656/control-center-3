@@ -98,7 +98,7 @@
             hasToBeDarkmode: hasToBeDarkmode
           }" :data-tooltip="isCollapsed ? form.name : ''">
           <ion-icon slot="start" :name="form.icon || 'list-outline'" />
-          <ion-label v-if="!isCollapsed">{{ form.name }}</ion-label>
+          <ion-label v-if="!isCollapsed">{{ form.name[0].toUpperCase() + form.name.substring(1) }}</ion-label>
         </ion-item>
       </ion-menu-toggle>
 
