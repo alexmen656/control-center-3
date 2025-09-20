@@ -1,103 +1,321 @@
 <template>
   <ion-page>
-    <ion-content>
-      <div class="file-system-grid" @dragover.prevent @drop="handleRootDrop">
-        <ion-grid>
-          <ion-row>
-            <ion-col size="2" v-for="item in fileSystem" :key="item.name">
-              <ion-card
-                @click="item.type === 'folder' && toggleFolder(item)"
-                @dragover.prevent
-                @drop="item.type === 'folder' && handleDrop($event, item)"
-              >
-                <ion-card-header>
-                  <img
-                    v-if="item.type === 'file' && imageStatus[item.location]"
-                    :src="
-                      'https://alex.polan.sk/control-center/file_provider.php?path=' +
-                      item.location
-                    "
-                  />
+    <ion-content class="modern-content">
+      <SiteTitle v-if="true" icon="folder-outline" title="File System"/>
 
+      <div class="page-container">
+        <!-- Action Bar -->
+        <div class="action-bar">
+          <div class="action-group-left">
+            <h3 class="section-title">
+              <ion-icon name="folder-outline"></ion-icon>
+              Project Files
+            </h3>
+            <span class="file-count">{{ fileCount }} items</span>
+          </div>
+          
+          <div class="action-group-right">
+            <div class="search-box">
+              <ion-icon name="search-outline"></ion-icon>
+              <input 
+                type="text" 
+                v-model="searchTerm" 
+                placeholder="Search files and folders..."
+                @input="handleSearch"
+              />
+            </div>
+            
+            <div class="dropdown">
+              <button class="action-btn dropdown-toggle" @click="toggleDropdown">
+                <ion-icon name="ellipsis-vertical"></ion-icon>
+                Actions
+              </button>
+              <div class="dropdown-menu" :class="{ active: dropdownOpen }">
+                <a href="#" class="dropdown-item" @click="refreshFiles">
+                  <ion-icon name="refresh-outline"></ion-icon>
+                  Refresh
+                </a>
+                <a href="#" class="dropdown-item" @click="showUploadArea">
+                  <ion-icon name="cloud-upload-outline"></ion-icon>
+                  Upload Files
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- File Upload Area -->
+        <div v-if="showUpload" class="upload-card">
+          <div class="upload-header">
+            <h4>Upload Files</h4>
+            <button class="close-upload-btn" @click="showUpload = false">
+              <ion-icon name="close"></ion-icon>
+            </button>
+          </div>
+          
+          <div 
+            class="drop-zone" 
+            :class="{ 'drag-over': isRootDragOver }"
+            @dragover.prevent="handleRootDragOver"
+            @drop="handleRootDrop"
+            @dragenter.prevent="handleRootDragEnter"
+            @dragleave="handleRootDragLeave"
+          >
+            <form ref="fileform" style="display: none;"></form>
+            <ion-icon name="cloud-upload-outline" class="upload-icon"></ion-icon>
+            <p class="upload-text">Drop files here or click to select</p>
+            <input type="file" multiple @change="handleFileSelect" style="display: none;" ref="fileInput">
+            <button class="select-files-btn" @click="$refs.fileInput.click()">
+              Select Files
+            </button>
+          </div>
+          
+          <!-- Upload Progress -->
+          <div v-if="uploadPercentage > 0" class="upload-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" :style="{ width: uploadPercentage + '%' }"></div>
+            </div>
+            <span class="progress-text">{{ uploadPercentage }}%</span>
+          </div>
+          
+          <!-- File Preview List -->
+          <div v-if="files.length > 0" class="file-preview-list">
+            <h5>Selected Files:</h5>
+            <div v-for="(file, index) in files" :key="index" class="file-preview-item">
+              <ion-icon name="document-outline"></ion-icon>
+              <span class="file-name">{{ file.name }}</span>
+              <button class="remove-file-btn" @click="removeFile(index)">
+                <ion-icon name="close"></ion-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Files Grid -->
+        <div class="files-card">
+          <div class="files-grid" 
+               @dragover.prevent="handleRootDragOver"
+               @drop="handleRootDrop"
+               @dragenter.prevent="handleRootDragEnter"
+               @dragleave="handleRootDragLeave">
+            
+            <!-- No files state -->
+            <div v-if="filteredFileSystem.length === 0" class="no-files-state">
+              <ion-icon name="folder-open-outline" class="no-files-icon"></ion-icon>
+              <h4>No files found</h4>
+              <p v-if="searchTerm">No files match your search criteria</p>
+              <p v-else>This project doesn't have any files yet</p>
+              <button class="action-btn primary" @click="showUploadArea">
+                <ion-icon name="add"></ion-icon>
+                Upload First File
+              </button>
+            </div>
+
+            <!-- File and folder cards -->
+            <div v-for="item in filteredFileSystem" :key="item.name" class="file-card-container">
+              <div 
+                class="file-card" 
+                :class="{ 
+                  'is-folder': item.type === 'folder',
+                  'is-image': item.type === 'file' && isImageFile(item.name),
+                  'drag-over': item.isDragOver 
+                }"
+                @click="handleItemClick(item)"
+                @dragover.prevent="handleDragOver"
+                @dragenter.prevent="e => handleDragEnter(e, item)"
+                @dragleave.prevent="handleDragLeave"
+                @drop="e => handleFolderDrop(e, item)"
+                :draggable="item.type === 'file'"
+                @dragstart="e => handleDragStart(e, item)"
+              >
+                <div class="file-card-content">
+                  <!-- Image preview for image files -->
+                  <img
+                    v-if="item.type === 'file' && isImageFile(item.name)"
+                    :src="'https://alex.polan.sk/control-center/file_provider.php?path=' + item.location"
+                    class="file-preview-image"
+                    @error="onImageError"
+                    @load="onImageLoad"
+                  />
+                  
+                  <!-- Icons for folders and non-image files -->
                   <ion-icon
                     v-else
-                    :name="
-                      item.type === 'folder'
-                        ? item.open
-                          ? 'folder-open'
-                          : 'folder'
-                        : 'document'
-                    "
+                    :name="getFileIcon(item)"
+                    class="file-icon"
                   ></ion-icon>
-                  {{ shortenName(item.name) }}
-                </ion-card-header>
-                <ion-card-content v-if="item.open && item.type === 'folder'">
-                  <ion-grid>
-                    <ion-row>
-                      <ion-col
-                        size="12"
-                        v-for="subItem in item.children"
-                        :key="subItem.name"
-                      >
-                        <ion-icon
-                          :name="
-                            subItem.type === 'folder' ? 'folder' : 'document'
-                          "
-                        ></ion-icon>
-                        {{ subItem.name }}
-                      </ion-col>
-                    </ion-row>
-                  </ion-grid>
-                </ion-card-content>
-              </ion-card>
-            </ion-col>
-          </ion-row>
-        </ion-grid>
+                  
+                  <div class="file-info">
+                    <span class="file-name">{{ shortenName(item.name) }}</span>
+                    <span v-if="item.type === 'folder' && item.children" class="file-meta">
+                      {{ item.children.length }} items
+                    </span>
+                    <span v-else-if="item.type === 'file'" class="file-meta">
+                      {{ getFileExtension(item.name) }}
+                    </span>
+                  </div>
+                </div>
 
-        <div id="file-drag-drop">
-          <form ref="fileform">
-            <span class="drop-files">Drop the files here!</span>
-          </form>
-          <!--    <progress max="100" :value.prop="uploadPercentage"></progress>
-          <div v-for="(file, key) in files" :key="key" class="file-listing">
-            <img class="preview" v-bind:ref="'preview' + parseInt(key)" />
-            {{ file.name }}
-            <div class="remove-container">
-              <a class="remove" v-on:click="removeFile(key)">Remove</a>
+                <!-- Folder indicator -->
+                <div v-if="item.type === 'folder'" class="folder-indicator">
+                  <ion-icon name="chevron-forward"></ion-icon>
+                </div>
+              </div>
             </div>
-          </div>-->
+          </div>
         </div>
 
-        <div>
-          <hr width="80%" />
-          <ion-grid>
-            <ion-row>
-              <ion-col>
-                <ion-input
-                  v-model="newFolderName"
-                  placeholder="Neuer Ordnername"
-                />
-                <ion-button @click="createFolder">Ordner erstellen</ion-button>
-              </ion-col>
-            </ion-row>
-          </ion-grid>
+        <!-- Folder Creation -->
+        <div class="folder-creation-card">
+          <div class="folder-creation">
+            <input 
+              type="text"
+              v-model="newFolderName"
+              placeholder="Enter folder name..."
+              class="folder-input"
+              @keyup.enter="createFolder"
+            />
+            <button class="folder-button" @click="createFolder" :disabled="!newFolderName.trim()">
+              <ion-icon name="folder-outline"></ion-icon>
+              Create Folder
+            </button>
+          </div>
         </div>
       </div>
+      
+      <!-- Image Preview Modal -->
+      <ion-modal :is-open="imagePreviewOpen" @did-dismiss="closeImagePreview" class="image-preview-modal">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>{{ previewImageName }}</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="closeImagePreview">
+                <ion-icon name="close"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="image-preview-content">
+          <div class="image-container">
+            <div v-if="!imageLoaded && !imageError" class="loading-spinner">
+              <ion-spinner></ion-spinner>
+              <p>Loading image...</p>
+            </div>
+            
+            <div v-if="imageError" class="error-message">
+              <ion-icon name="image-outline"></ion-icon>
+              <p>Failed to load image</p>
+            </div>
+            
+            <img
+              v-if="previewImageUrl"
+              :src="previewImageUrl"
+              @load="onImageLoad"
+              @error="onImageError"
+              class="preview-image"
+              :style="{ display: imageLoaded ? 'block' : 'none' }"
+            />
+          </div>
+          <h3 class="preview-title">{{ previewImageName }}</h3>
+        </ion-content>
+      </ion-modal>
+
+      <!-- Folder Content Modal -->
+      <ion-modal :is-open="folderModalOpen" @did-dismiss="closeFolderModal" class="folder-modal">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>{{ selectedFolder?.name }}</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="closeFolderModal">
+                <ion-icon name="close"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content 
+          class="folder-modal-content"
+          @dragover.prevent="handleModalDragOver"
+          @dragenter.prevent="handleModalDragEnter"
+          @dragleave="handleModalDragLeave"
+          @drop="handleModalDrop"
+        >
+          <div v-if="selectedFolder && selectedFolder.children" class="modal-files-grid">
+            <div v-if="selectedFolder.children.length === 0" class="no-files-state">
+              <ion-icon name="folder-open-outline" class="no-files-icon"></ion-icon>
+              <h4>Empty folder</h4>
+              <p>Drag files here to add them to this folder</p>
+            </div>
+            
+            <div v-for="item in selectedFolder.children" :key="item.name" class="modal-item-card">
+              <div 
+                class="file-card"
+                :class="{ 'is-image': item.type === 'file' && isImageFile(item.name) }"
+                @click="handleModalItemClick(item)"
+                :draggable="item.type === 'file'"
+                @dragstart="e => handleDragStart(e, item)"
+              >
+                <div class="file-card-content">
+                  <!-- Image preview -->
+                  <img
+                    v-if="item.type === 'file' && isImageFile(item.name)"
+                    :src="'https://alex.polan.sk/control-center/file_provider.php?path=' + item.location"
+                    class="file-preview-image"
+                  />
+                  
+                  <!-- Icons -->
+                  <ion-icon
+                    v-else
+                    :name="getFileIcon(item)"
+                    class="file-icon"
+                  ></ion-icon>
+                  
+                  <div class="file-info">
+                    <span class="file-name">{{ shortenName(item.name) }}</span>
+                    <span v-if="item.type === 'file'" class="file-meta">
+                      {{ getFileExtension(item.name) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
 
 <script>
 import { defineComponent } from "vue";
-import { IonPage, IonContent, IonIcon } from "@ionic/vue";
+import { 
+  IonPage, 
+  IonContent, 
+  IonIcon, 
+  IonModal, 
+  IonHeader, 
+  IonToolbar, 
+  IonTitle, 
+  IonButtons, 
+  IonButton, 
+  IonSpinner 
+} from "@ionic/vue";
+import SiteTitle from "@/components/SiteTitle.vue";
 import axios from "axios";
 
 export default defineComponent({
-  name: "FileSystem",
+  name: "ProjectFileSystem",
   components: {
     IonPage,
     IonContent,
     IonIcon,
+    IonModal,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonButtons,
+    IonButton,
+    IonSpinner,
+    SiteTitle,
   },
   data() {
     return {
@@ -107,9 +325,40 @@ export default defineComponent({
       files: [],
       uploadPercentage: 0,
       fileSystem: [],
-      newFolderName: "", // Neuer Ordnername
-      imageStatus: {}, // Status der Bilder
+      newFolderName: "",
+      imageStatus: {},
+      // UI state
+      dropdownOpen: false,
+      showUpload: false,
+      searchTerm: '',
+      // Image preview data
+      imagePreviewOpen: false,
+      previewImageUrl: "",
+      previewImageName: "",
+      imageLoaded: false,
+      imageError: false,
+      // Folder modal data
+      folderModalOpen: false,
+      selectedFolder: null,
+      // Drag state
+      isRootDragOver: false,
+      isModalDragOver: false,
     };
+  },
+  computed: {
+    fileCount() {
+      return this.fileSystem.length;
+    },
+    filteredFileSystem() {
+      if (!this.searchTerm.trim()) {
+        return this.fileSystem;
+      }
+      
+      const searchLower = this.searchTerm.toLowerCase();
+      return this.fileSystem.filter(item => 
+        item.name.toLowerCase().includes(searchLower)
+      );
+    }
   },
   mounted() {
     this.dragAndDropCapable = this.determineDragAndDropCapable();
@@ -125,31 +374,46 @@ export default defineComponent({
         "drop",
       ].forEach(
         function (evt) {
-          this.$refs.fileform.addEventListener(
-            evt,
-            function (e) {
-              e.preventDefault();
-              e.stopPropagation();
-            }.bind(this),
-            false
-          );
-        }.bind(this)
-      );
-
-      this.$refs.fileform.addEventListener(
-        "drop",
-        function (e) {
-          for (let i = 0; i < e.dataTransfer.files.length; i++) {
-            this.files.push(e.dataTransfer.files[i]);
-            this.getImagePreviews();
+          if (this.$refs.fileform) {
+            this.$refs.fileform.addEventListener(
+              evt,
+              function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+              }.bind(this),
+              false
+            );
           }
         }.bind(this)
       );
+
+      if (this.$refs.fileform) {
+        this.$refs.fileform.addEventListener(
+          "drop",
+          function (e) {
+            for (let i = 0; i < e.dataTransfer.files.length; i++) {
+              this.files.push(e.dataTransfer.files[i]);
+              this.getImagePreviews();
+            }
+          }.bind(this)
+        );
+      }
+
+      // Add global drop listener for modal to root drag & drop
+      document.addEventListener('dragover', this.globalDragOver);
+      document.addEventListener('drop', this.globalDrop);
     }
 
-    // Daten vom Server abrufen
+    // Fetch file system data
     this.fetchFileSystemData();
   },
+
+  beforeUnmount() {
+    // Clean up global listeners
+    document.removeEventListener('dragover', this.globalDragOver);
+    document.removeEventListener('drop', this.globalDrop);
+  },
+
   methods: {
     shortenName(name) {
       if (name.length > 18) {
@@ -157,18 +421,54 @@ export default defineComponent({
       }
       return name;
     },
+
+    getFileIcon(item) {
+      if (item.type === 'folder') {
+        return item.open ? 'folder-open' : 'folder';
+      }
+      
+      const ext = this.getFileExtension(item.name).toLowerCase();
+      const iconMap = {
+        'js': 'logo-javascript',
+        'ts': 'logo-javascript',
+        'vue': 'logo-vue',
+        'php': 'code-outline',
+        'html': 'logo-html5',
+        'css': 'logo-css3',
+        'json': 'code-outline',
+        'md': 'document-text-outline',
+        'txt': 'document-text-outline',
+        'pdf': 'document-outline',
+        'zip': 'archive-outline',
+        'rar': 'archive-outline',
+        'mp4': 'videocam-outline',
+        'mp3': 'musical-notes-outline',
+        'wav': 'musical-notes-outline',
+      };
+      
+      return iconMap[ext] || 'document-outline';
+    },
+
+    getFileExtension(filename) {
+      return filename.split('.').pop() || '';
+    },
+
+    isImageFile(filename) {
+      const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i;
+      return imageExtensions.test(filename);
+    },
+
     async getImage(location) {
-      console.log(1);
       try {
         const res = await axios.get(
-          "https://alex.polan.sk/control-center/file_provider.php?path=" +
-            location
+          "https://alex.polan.sk/control-center/file_provider.php?path=" + location
         );
         this.imageStatus[location] = res.status === 200;
       } catch (error) {
-        this.imageStatus.push(location, false);
+        this.imageStatus[location] = false;
       }
     },
+
     determineDragAndDropCapable() {
       const div = document.createElement("div");
       return (
@@ -182,40 +482,227 @@ export default defineComponent({
       for (let i = 0; i < this.files.length; i++) {
         if (/\.(jpe?g|png|gif)$/i.test(this.files[i].name)) {
           const reader = new FileReader();
-
           reader.addEventListener(
             "load",
             function () {
-              this.$refs["preview" + parseInt(i)][0].src = reader.result;
+              // Handle image preview if needed
             }.bind(this),
             false
           );
-
           reader.readAsDataURL(this.files[i]);
-        } else {
-          this.$nextTick(function () {
-            this.$refs["preview" + parseInt(i)][0].src = "/images/file.png";
-          });
         }
       }
     },
 
-    handleDrop(event, folder) {
-      event.preventDefault();
-      for (let i = 0; i < event.dataTransfer.files.length; i++) {
-        this.files.push(event.dataTransfer.files[i]);
+    // UI Methods
+    toggleDropdown() {
+      this.dropdownOpen = !this.dropdownOpen;
+    },
+
+    showUploadArea() {
+      this.showUpload = true;
+      this.dropdownOpen = false;
+    },
+
+    handleSearch() {
+      // Search is handled in computed property
+    },
+
+    refreshFiles() {
+      this.fetchFileSystemData();
+      this.dropdownOpen = false;
+    },
+
+    // File handling methods
+    handleFileSelect(event) {
+      for (let i = 0; i < event.target.files.length; i++) {
+        this.files.push(event.target.files[i]);
       }
-      this.submit(folder.name);
+      this.getImagePreviews();
+    },
+
+    removeFile(index) {
+      this.files.splice(index, 1);
+      this.getImagePreviews();
+    },
+
+    handleItemClick(item) {
+      if (item.type === 'folder') {
+        this.openFolderModal(item);
+      } else if (item.type === 'file' && this.isImageFile(item.name)) {
+        this.previewImage(item);
+      }
+    },
+
+    handleModalItemClick(item) {
+      if (item.type === 'file' && this.isImageFile(item.name)) {
+        this.previewImage(item);
+      }
+    },
+
+    // Drag and drop methods
+    handleDrop(event, folder) {
+      this.handleFolderDrop(event, folder);
     },
 
     handleRootDrop(event) {
       event.preventDefault();
+      this.isRootDragOver = false;
+      
+      console.log('Root drop event triggered');
+      
+      // Check if it's a file being dragged from within a folder (modal)
+      const dragData = event.dataTransfer.getData('application/json');
+      console.log('Drag data:', dragData);
+      
+      if (dragData) {
+        // Moving existing file from folder to root
+        const data = JSON.parse(dragData);
+        console.log('Parsed drag data:', data);
+        if (data.type === 'existing-file') {
+          this.moveFileToRoot(data.file);
+          return;
+        }
+      }
+      
+      // Otherwise it's new files from computer
+      console.log('Processing new files from computer, count:', event.dataTransfer.files.length);
       for (let i = 0; i < event.dataTransfer.files.length; i++) {
         this.files.push(event.dataTransfer.files[i]);
       }
       this.submit("");
     },
 
+    handleRootDragOver(event) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      this.isRootDragOver = true;
+    },
+
+    handleRootDragEnter(event) {
+      event.preventDefault();
+      this.isRootDragOver = true;
+    },
+
+    handleRootDragLeave(event) {
+      event.preventDefault();
+      this.isRootDragOver = false;
+    },
+
+    handleDragStart(event, file) {
+      console.log('Starting drag for file:', file.name, 'from location:', file.location);
+      event.dataTransfer.setData('application/json', JSON.stringify({
+        type: 'existing-file',
+        file: file
+      }));
+      event.dataTransfer.effectAllowed = 'move';
+    },
+
+    handleDragOver(event) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+    },
+
+    handleDragEnter(event, folder) {
+      event.preventDefault();
+      if (folder.type === 'folder') {
+        folder.isDragOver = true;
+      }
+    },
+
+    handleDragLeave(event) {
+      event.preventDefault();
+      // Find the folder and remove drag state
+      this.fileSystem.forEach(item => {
+        if (item.type === 'folder') {
+          item.isDragOver = false;
+        }
+      });
+    },
+
+    handleFolderDrop(event, folder) {
+      event.preventDefault();
+      if (folder.type === 'folder') {
+        folder.isDragOver = false;
+      }
+      
+      // Check if it's a file from computer or existing file
+      const dragData = event.dataTransfer.getData('application/json');
+      
+      if (dragData) {
+        // Moving existing file between folders
+        const data = JSON.parse(dragData);
+        if (data.type === 'existing-file') {
+          this.moveFileToFolder(data.file, folder);
+          return;
+        }
+      } else if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+        // Uploading new files from computer
+        for (let i = 0; i < event.dataTransfer.files.length; i++) {
+          this.files.push(event.dataTransfer.files[i]);
+        }
+        this.submit(folder.name);
+      }
+    },
+
+    // Modal drag handlers
+    handleModalDragOver(event) {
+      event.preventDefault();
+      console.log('Modal drag over');
+    },
+
+    handleModalDragEnter(event) {
+      event.preventDefault();
+      console.log('Modal drag enter');
+      if (!this.isModalDragOver) {
+        this.isModalDragOver = true;
+      }
+    },
+
+    handleModalDragLeave(event) {
+      event.preventDefault();
+      console.log('Modal drag leave');
+      if (!event.currentTarget.contains(event.relatedTarget)) {
+        this.isModalDragOver = false;
+      }
+    },
+
+    handleModalDrop(event) {
+      event.preventDefault();
+      console.log('Modal drop - preventing default behavior');
+      this.isModalDragOver = false;
+    },
+
+    // Global drag handlers for modal to root functionality
+    globalDragOver(event) {
+      const dragData = event.dataTransfer?.types?.includes('application/json');
+      if (dragData && this.folderModalOpen) {
+        event.preventDefault();
+        console.log('Global drag over detected');
+      }
+    },
+
+    globalDrop(event) {
+      if (!this.folderModalOpen) return;
+      
+      try {
+        const dragData = event.dataTransfer.getData('application/json');
+        console.log('Global drop event, drag data:', dragData);
+        
+        if (dragData) {
+          const data = JSON.parse(dragData);
+          if (data.type === 'existing-file') {
+            this.moveFileToRoot(data.file);
+          }
+        }
+      } catch (error) {
+        console.log('Global drop error (normal if dragging from outside):', error);
+      }
+      
+      this.isModalDragOver = false;
+    },
+
+    // File operations
     submit(dir) {
       if (this.files.length > 0) {
         const formData = new FormData();
@@ -223,7 +710,7 @@ export default defineComponent({
         for (let i = 0; i < this.files.length; i++) {
           const file = this.files[i];
           formData.append("files[" + i + "]", file);
-          formData.append("name", file.name); // Dateiname als name-Parameter
+          formData.append("name", file.name);
         }
 
         formData.append("directory", dir);
@@ -243,7 +730,9 @@ export default defineComponent({
           .then(() => {
             console.log("SUCCESS!!");
             this.files = [];
-            this.fetchFileSystemData(); // Dateisystemdaten nach dem Hochladen erneut abrufen
+            this.uploadPercentage = 0;
+            this.showUpload = false;
+            this.fetchFileSystemData();
           })
           .catch((err) => {
             console.log("FAILURE!!", err);
@@ -253,163 +742,987 @@ export default defineComponent({
       }
     },
 
-    fetchFileSystemData() {
-      /// alert("fetchFileSystemData");
-      axios
-        .get(`filesystem.php?project=${this.$route.params.project}`)
-        .then((response) => {
-          ///////  alert(response.data);
-          this.fileSystem = response.data;
-          // Bildstatus für jedes Element abrufen
-          this.fileSystem.forEach((item) => {
-            if (item.type === "file") {
-              this.getImage(item.location);
-            }
-          });
-        })
-        .catch((error) => {
-          console.error(
-            "Es gab ein Problem beim Abrufen der Dateisystemdaten:",
-            error
-          );
-        });
+    async fetchFileSystemData() {
+      try {
+        const response = await axios.get(`filesystem.php?project=${this.$route.params.project}`);
+        console.log('Raw file system data:', response.data);
+        this.fileSystem = this.processFileSystemData(response.data);
+        console.log('Processed file system data:', this.fileSystem);
+      } catch (error) {
+        console.error("Error fetching file system data:", error);
+      }
+    },
+
+    processFileSystemData(items) {
+      return items.map(item => {
+        const processedItem = { ...item };
+        
+        if (item.type === 'folder') {
+          processedItem.open = false;
+          processedItem.isDragOver = false;
+          if (item.children) {
+            processedItem.children = this.processFileSystemData(item.children);
+          }
+        }
+        
+        return processedItem;
+      });
     },
 
     createFolder() {
       if (this.newFolderName.trim() !== "") {
         const formData = new FormData();
         formData.append("name", this.newFolderName);
-        formData.append("directory", ""); // "/" Wurzelverzeichnis oder aktuelles Verzeichnis
+        formData.append("directory", "");
         formData.append("project", this.$route.params.project);
 
         axios
           .post("filesystem.php", formData)
           .then(() => {
-            console.log("Ordner erfolgreich erstellt!");
-            this.fetchFileSystemData(); // Dateisystemdaten nach dem Erstellen des Ordners erneut abrufen
-            this.newFolderName = ""; // Eingabefeld zurücksetzen
+            console.log("Folder created successfully!");
+            this.fetchFileSystemData();
+            this.newFolderName = "";
           })
           .catch((err) => {
-            console.log("Fehler beim Erstellen des Ordners:", err);
+            console.log("Error creating folder:", err);
           });
       } else {
-        console.log("Ordnername darf nicht leer sein");
+        console.log("Folder name cannot be empty");
       }
     },
 
     toggleFolder(folder) {
       folder.open = !folder.open;
     },
+
+    // Modal methods
+    openFolderModal(folder) {
+      console.log('Opening folder modal for:', folder.name, 'children:', folder.children);
+      this.selectedFolder = folder;
+      this.folderModalOpen = true;
+    },
+
+    closeFolderModal() {
+      this.folderModalOpen = false;
+      this.selectedFolder = null;
+    },
+
+    updateSelectedFolder() {
+      if (this.selectedFolder && this.folderModalOpen) {
+        const updatedFolder = this.fileSystem.find(item => 
+          item.name === this.selectedFolder.name && item.type === 'folder'
+        );
+        if (updatedFolder) {
+          this.selectedFolder = updatedFolder;
+        }
+      }
+    },
+
+    // Image preview methods
+    previewImage(file) {
+      if (this.isImageFile(file.name)) {
+        this.previewImageUrl = `https://alex.polan.sk/control-center/file_provider.php?path=${file.location}`;
+        this.previewImageName = file.name;
+        this.imagePreviewOpen = true;
+        this.imageLoaded = false;
+        this.imageError = false;
+      }
+    },
+
+    closeImagePreview() {
+      this.imagePreviewOpen = false;
+      this.previewImageUrl = '';
+      this.previewImageName = '';
+      this.imageLoaded = false;
+      this.imageError = false;
+    },
+
+    onImageLoad() {
+      this.imageLoaded = true;
+      this.imageError = false;
+    },
+
+    onImageError() {
+      this.imageError = true;
+      this.imageLoaded = false;
+    },
+
+    // File moving methods
+    async moveFileToFolder(file, targetFolder) {
+      try {
+        const formData = new FormData();
+        formData.append('action', 'move');
+        formData.append('sourceFile', file.location);
+        formData.append('targetFolder', targetFolder.name);
+        formData.append('project', this.$route.params.project);
+        
+        const response = await axios.post('filesystem.php', formData);
+        
+        if (response.data.success) {
+          this.fetchFileSystemData();
+        } else {
+          console.error('Error moving file:', response.data.error);
+        }
+      } catch (error) {
+        console.error('Error moving file:', error);
+      }
+    },
+
+    async moveFileToRoot(file) {
+      try {
+        console.log('moveFileToRoot called with:', file);
+        const formData = new FormData();
+        formData.append('action', 'move');
+        formData.append('sourceFile', file.location);
+        formData.append('targetFolder', '');
+        formData.append('project', this.$route.params.project);
+        
+        console.log('Sending move request to backend...');
+        const response = await axios.post('filesystem.php', formData);
+        console.log('Backend response:', response.data);
+        
+        if (response.data.success) {
+          this.fetchFileSystemData();
+        } else {
+          console.error('Error moving file to root:', response.data.error);
+        }
+      } catch (error) {
+        console.error('Error moving file to root:', error);
+      }
+    },
   },
 });
 </script>
 
 <style scoped>
-ion-icon {
-  margin-right: 8px;
+/* Modern Design System */
+.modern-content {
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --secondary-color: #64748b;
+  --success-color: #059669;
+  --danger-color: #dc2626;
+  --warning-color: #d97706;
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --radius: 8px;
+  --radius-lg: 12px;
 }
 
-form {
-  display: none; /* Verstecke das alte Drop-Formular */
+.page-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+  background: var(--background);
 }
 
-div.file-listing {
-  width: 400px;
-  margin: auto;
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-div.file-listing img {
-  height: 100px;
-}
-
-div.remove-container {
-  text-align: center;
-}
-
-div.remove-container a {
-  color: red;
-  cursor: pointer;
-}
-
-a.submit-button {
-  display: block;
-  margin: auto;
-  text-align: center;
-  width: 200px;
-  padding: 10px;
-  text-transform: uppercase;
-  background-color: #ccc;
-  color: white;
-  font-weight: bold;
-  margin-top: 20px;
-}
-
-progress {
-  width: 400px;
-  margin: auto;
-  display: block;
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-ion-card {
-  cursor: pointer;
-  transition: transform 0.2s;
-  aspect-ratio: 1 / 1;
-  padding: 0;
-  text-align: center;
-}
-
-ion-row {
+/* Action Bar */
+.action-bar {
   display: flex;
-  display: -webkit-flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
   flex-wrap: wrap;
+  gap: 16px;
 }
 
-ion-card:hover {
-  transform: scale(1.05);
+.action-group-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.drop-files {
-  font-size: 18px;
-  color: #333;
+.action-group-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.file-listing {
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.section-title ion-icon {
+  color: var(--primary-color);
+}
+
+.file-count {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.action-btn.primary {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.action-btn.primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.action-btn ion-icon {
+  font-size: 16px;
+}
+
+/* Dropdown */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-toggle {
+  padding: 10px 12px;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  min-width: 180px;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: all 0.2s ease;
+}
+
+.dropdown-menu.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: var(--background);
+}
+
+.dropdown-item ion-icon {
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+/* Search Box */
+.search-box {
+  position: relative;
   display: flex;
   align-items: center;
 }
 
-.file-listing img.preview {
-  margin-right: 10px;
+.search-box ion-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  font-size: 16px;
+  z-index: 1;
 }
 
-.file-listing .remove-container {
-  margin-left: auto;
+.search-box input {
+  padding: 10px 16px 10px 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--text-primary);
+  min-width: 250px;
+  transition: all 0.2s ease;
 }
 
-ion-card-header {
+.search-box input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+}
+
+/* Upload Card */
+.upload-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.upload-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+
+.upload-header h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.close-upload-btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.close-upload-btn:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+/* Drop Zone */
+.drop-zone {
+  display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  margin: 24px;
+  background: var(--background);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.drop-zone:hover,
+.drop-zone.drag-over {
+  border-color: var(--primary-color);
+  background: #eff6ff;
+}
+
+.upload-icon {
+  font-size: 48px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.upload-text {
+  margin: 0 0 16px 0;
+  color: var(--text-secondary);
+  font-size: 16px;
+  text-align: center;
+}
+
+.select-files-btn {
+  padding: 10px 20px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.select-files-btn:hover {
+  background: var(--primary-hover);
+}
+
+/* Upload Progress */
+.upload-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 24px 24px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
   height: 100%;
+  background: var(--primary-color);
+  transition: width 0.3s ease;
 }
 
-ion-card-header > img,
-ion-icon {
-  height: 75%;
-  width: 75%;
+.progress-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
-hr {
-  width: 90%;
-  background: #fff;
+/* File Preview List */
+.file-preview-list {
+  padding: 0 24px 24px;
 }
 
-#file-drag-drop {
-  height: 3rem;
+.file-preview-list h5 {
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.file-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--background);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+}
+
+.file-preview-item ion-icon {
+  color: var(--text-secondary);
+}
+
+.file-name {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.remove-file-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: var(--danger-color);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.remove-file-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Files Card */
+.files-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+/* Files Grid */
+.files-grid {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  min-height: 200px;
+}
+
+/* File Cards */
+.file-card-container {
+  position: relative;
+}
+
+.file-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  height: 160px;
+  position: relative;
+  overflow: hidden;
+}
+
+.file-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-color);
+}
+
+.file-card.is-image:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.file-card.drag-over {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.file-card.drag-over .file-info {
+  color: white;
+}
+
+.file-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+}
+
+.file-preview-image {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+
+.file-icon {
+  font-size: 48px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.file-card.is-folder .file-icon {
+  color: var(--warning-color);
+}
+
+.file-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.file-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 14px;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.file-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.folder-indicator {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  background: var(--primary-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+}
+
+/* No Files State */
+.no-files-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.no-files-icon {
+  font-size: 64px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.no-files-state h4 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.no-files-state p {
+  margin: 0 0 24px 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Folder Creation */
+.folder-creation-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.folder-creation {
+  display: flex;
+  gap: 12px;
+  padding: 24px;
+  align-items: center;
+}
+
+.folder-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.folder-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+}
+
+.folder-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.folder-button:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.folder-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Modal Styles */
+.image-preview-modal,
+.folder-modal {
+  --width: 90%;
+  --max-width: 800px;
+  --height: auto;
+  --max-height: 90%;
+}
+
+.image-preview-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.image-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 200px;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+}
+
+.loading-spinner, .error-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+}
+
+.loading-spinner ion-spinner {
+  margin-bottom: 10px;
+}
+
+.error-message {
+  color: var(--danger-color);
+}
+
+.error-message ion-icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.preview-title {
+  margin-top: 16px;
+  text-align: center;
+  font-weight: 500;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.folder-modal-content {
+  padding: 24px;
+}
+
+.modal-files-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.modal-item-card .file-card {
+  height: 120px;
+  background: var(--background);
+  border: 1px solid var(--border);
+}
+
+.modal-item-card .file-card:hover {
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.modal-item-card .file-preview-image {
+  width: 60px;
+  height: 60px;
+}
+
+.modal-item-card .file-icon {
+  font-size: 36px;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .modern-content {
+    --background: #0f172a;
+    --surface: #1e293b;
+    --border: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+  }
+  
+  .search-box input,
+  .folder-input {
+    background: var(--surface);
+    color: var(--text-primary);
+  }
+  
+  .drop-zone:hover,
+  .drop-zone.drag-over {
+    background: rgba(37, 99, 235, 0.1);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .page-container {
+    padding: 16px;
+  }
+  
+  .action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .action-group-left,
+  .action-group-right {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .action-group-left {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .search-box input {
+    min-width: 100%;
+  }
+  
+  .files-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 16px;
+  }
+  
+  .file-card {
+    height: 140px;
+    padding: 12px;
+  }
+  
+  .file-preview-image {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .file-icon {
+    font-size: 36px;
+  }
+  
+  .folder-creation {
+    flex-direction: column;
+    margin: 12px;
+  }
+  
+  .folder-input {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
+  .folder-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .dropdown-menu {
+    right: auto;
+    left: 0;
+  }
+  
+  .modal-files-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .files-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+  
+  .file-card {
+    height: 120px;
+    padding: 8px;
+  }
+  
+  .section-title {
+    font-size: 20px;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.file-card {
+  animation: fadeIn 0.3s ease;
+}
+
+/* Drag and Drop Visual States */
+.file-card[draggable="true"] {
+  cursor: grab;
+}
+
+.file-card[draggable="true"]:active {
+  cursor: grabbing;
+  opacity: 0.7;
+}
+
+/* Enhanced hover states */
+.file-card.is-folder:hover {
+  border-color: var(--warning-color);
+}
+
+.file-card.is-folder:hover .file-icon {
+  color: var(--warning-color);
+  transform: scale(1.1);
+}
+
+.file-card.is-image:hover .file-preview-image {
+  transform: scale(1.05);
 }
 </style>
