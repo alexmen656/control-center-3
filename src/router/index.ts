@@ -201,7 +201,7 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/project/:project',
-    component: () => import('../views/ProjectView.vue'),
+    component: () => import('../views/ProjectView_new.vue'),
   },
   {
     path: '/project/:project/package-manager',
