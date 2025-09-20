@@ -273,14 +273,6 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
             $triggerSystem->renameFormTriggers($project, $old_form_name, $new_form_name);
         }
         
-        // Update project_tools table for sidebar display
-        $project_data = fetch_assoc(query("SELECT projectID FROM projects WHERE link='$project'"));
-        if ($project_data) {
-            $project_id = $project_data['projectID'];
-            $update_tools_query = "UPDATE project_tools SET name='$new_form_name', link='" . strtolower(str_replace([' ', 'ä', 'ö', 'ü', 'ß'], ['_', 'a', 'o', 'u', 'ss'], $new_form_name)) . "' WHERE name='$old_form_name' AND projectID='$project_id'";
-            query($update_tools_query);
-        }
-        
         // Commit transaction
         mysqli_commit($GLOBALS['con']);
         echo json_encode(['success' => true, 'message' => 'Form erfolgreich umbenannt']);
@@ -440,41 +432,26 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
     
     $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($form_name));
     
-    // Start transaction
     mysqli_autocommit($GLOBALS['con'], false);
     
     try {
-        // Drop the data table
         $drop_query = "DROP TABLE IF EXISTS `$tableName`";
         if (!query($drop_query)) {
             throw new Exception('Fehler beim Löschen der Tabelle');
         }
         
-        // Delete from form_settings
         $delete_form_query = "DELETE FROM form_settings WHERE form_name='$form_name' AND project='$project'";
         if (!query($delete_form_query)) {
             throw new Exception('Fehler beim Löschen der Form-Einstellungen');
         }
         
-        // Remove from project_tools (sidebar)
-        $project_data = fetch_assoc(query("SELECT projectID FROM projects WHERE link='$project'"));
-        if ($project_data) {
-            $project_id = $project_data['projectID'];
-            $delete_tools_query = "DELETE FROM project_tools WHERE name='$form_name' AND projectID='$project_id'";
-            query($delete_tools_query);
-        }
-        
-        // Commit transaction
         mysqli_commit($GLOBALS['con']);
         echo json_encode(['success' => true, 'message' => 'Form und Tabelle erfolgreich gelöscht']);
-        
     } catch (Exception $e) {
-        // Rollback transaction
         mysqli_rollback($GLOBALS['con']);
         echo json_encode(['success' => false, 'error' => $e->getMessage()]);
     }
     
-    // Re-enable autocommit
     mysqli_autocommit($GLOBALS['con'], true);
 }
 
@@ -509,10 +486,7 @@ if (isset($_POST['import_table']) && isset($_POST['source_project']) && isset($_
     $newTableName = escape_string($_POST['new_table_name']);
     
     try {
-        // Start transaction
         mysqli_autocommit($GLOBALS['con'], false);
-        
-        // Get the form configuration from source project
         $result = query("SELECT form_json FROM form_settings WHERE project = '$sourceProject' AND form_name = '$sourceTable'");
         
         if (!$result || mysqli_num_rows($result) == 0) {
@@ -527,16 +501,13 @@ if (isset($_POST['import_table']) && isset($_POST['source_project']) && isset($_
             throw new Exception("Invalid form configuration");
         }
         
-        // Update the title in the form data
         $formData['title'] = str_replace('project_', '', $newTableName);
         $updatedFormJSON = json_encode($formData);
         
-        // Insert new form configuration
         if (!query("INSERT INTO form_settings (form_name, form_json, project) VALUES ('$newTableName', '$updatedFormJSON', '$targetProject')")) {
             throw new Exception("Failed to create form configuration");
         }
         
-        // Create the new table structure
         $title = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($formData['title']));
         $tableName = str_replace(["-", " ", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "_", "a", "a", "u", "u", "o", "o"], strtolower($targetProject . "_" . $title));
         
@@ -555,11 +526,9 @@ if (isset($_POST['import_table']) && isset($_POST['source_project']) && isset($_
             throw new Exception("Failed to create table structure");
         }
         
-        // Copy data from source table if it exists
         $sourceTableName = str_replace(["-", " ", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "_", "a", "a", "u", "u", "o", "o"], strtolower($sourceProject . "_" . $sourceTable));
-        
-        // Check if source table exists
         $checkTable = query("SHOW TABLES LIKE '$sourceTableName'");
+
         if ($checkTable && mysqli_num_rows($checkTable) > 0) {
             // Get column names from source table
             $columns = [];
@@ -580,7 +549,6 @@ if (isset($_POST['import_table']) && isset($_POST['source_project']) && isset($_
         
         mysqli_commit($GLOBALS['con']);
         echo json_encode(['success' => true, 'message' => 'Table imported successfully']);
-        
     } catch (Exception $e) {
         mysqli_rollback($GLOBALS['con']);
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
@@ -589,5 +557,4 @@ if (isset($_POST['import_table']) && isset($_POST['source_project']) && isset($_
     mysqli_autocommit($GLOBALS['con'], true);
     exit;
 }
-
 ?>

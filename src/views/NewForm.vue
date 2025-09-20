@@ -563,19 +563,7 @@ export default defineComponent({
           })
         )
         .then(() => {
-          this.$axios
-            .post(
-              "tools.php",
-              this.$qs.stringify({
-                newTool: "newTool",
-                toolIcon: "document-text-outline",
-                projectName: this.$route.params.project,
-                toolName: this.title,
-              })
-            )
-            .then(() => {
-              this.emitter.emit("updateSidebar");
-            });
+          this.emitter.emit("updateSidebar");
         });
     },
     toName(name) {
