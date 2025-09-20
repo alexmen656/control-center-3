@@ -65,30 +65,35 @@ export async function checkProjectAccess() {
         const userAssignment = data.assignments.find(a => a.user_id == userID);
         
         if (userAssignment && userAssignment.project_link) {
-          // User has project assignment - restrict access to admin areas
-          const restrictedPaths = [
-            '/users', '/users/',
-            '/databases', '/databases/',
-            '/projects', '/projects/',
-            '/manage', '/manage/',
-            '/settings', '/settings/',
-            '/admin', '/admin/'
+          // User has project assignment - restrict access to everything except their project and profile
+          const currentPath = location.pathname;
+          const assignedProjectPath = `/project/${userAssignment.project_link}`;
+          
+          // Allow access to profile-related pages
+          const allowedPaths = [
+            '/my-account', '/my-account/',
+            '/profile', '/profile/',
+            '/my-profile', '/my-profile/',
+            '/account', '/account/',
+            '/logout', '/logout/',
+            assignedProjectPath, `${assignedProjectPath}/`
           ];
           
-          const currentPath = location.pathname;
-          const isRestrictedPath = restrictedPaths.some(path => 
+          // Check if current path starts with assigned project path or is an allowed path
+          const isProjectPath = currentPath.startsWith(assignedProjectPath);
+          const isAllowedPath = allowedPaths.some(path => 
             currentPath.startsWith(path) || currentPath === path
           );
           
-          if (isRestrictedPath) {
-            // Redirect to assigned project
-            location.href = `/project/${userAssignment.project_link}`;
+          if (!isProjectPath && !isAllowedPath) {
+            // Redirect to assigned project for any other path
+            location.href = assignedProjectPath;
             return;
           }
           
           // If user is on home page, redirect to their assigned project
           if (currentPath === '/' || currentPath === '/home' || currentPath === '/home/') {
-            location.href = `/project/${userAssignment.project_link}`;
+            location.href = assignedProjectPath;
             return;
           }
         }

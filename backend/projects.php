@@ -292,7 +292,7 @@ if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
 } elseif (isset($_POST['getAllProjects'])) {
     // Alle verfügbaren Projekte abrufen (für Admin-Bereich)
     try {
-        $projects = query("SELECT projectID, icon, name, link, date FROM projects ORDER BY name ASC");
+        $projects = query("SELECT projectID, icon, name, link FROM projects ORDER BY name ASC");//date
         $projectList = [];
         
         foreach ($projects as $project) {
@@ -301,7 +301,7 @@ if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
                 'icon' => $project['icon'],
                 'name' => $project['name'],
                 'link' => $project['link'],
-                'date' => $project['date']
+                //'date' => $project['date']
             ];
         }
         
