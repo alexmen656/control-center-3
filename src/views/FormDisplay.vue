@@ -600,7 +600,7 @@ export default defineComponent({
     },
     loadMore(){
       const table_name = `${this.$route.params.project.replaceAll("-", "_")}_${this.$route.params.form}`;
-      this.$axios.post("mysql.php", this.$this.$qs.stringify({load_more: "load_more", current_limit: this.current_limit,table: table_name})).then((res) => {
+      this.$axios.post("mysql.php", this.$qs.stringify({load_more: "load_more", current_limit: this.current_limit,table: table_name})).then((res) => {
         this.current_limit = this.current_limit+1;
 
         res.data.data.forEach(element =>{

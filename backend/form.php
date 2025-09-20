@@ -355,6 +355,127 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
     
     // Re-enable autocommit
     mysqli_autocommit($GLOBALS['con'], true);
+} elseif (isset($_POST['get_form_schema']) && isset($_POST['form_name']) && isset($_POST['project'])) {
+    $form_name = escape_string($_POST['form_name']);
+    $project = escape_string($_POST['project']);
+    
+    // Get form schema from form_settings
+    $query = query("SELECT form_json FROM form_settings WHERE form_name='$form_name' AND project='$project'");
+    if (mysqli_num_rows($query) > 0) {
+        $form = fetch_assoc($query);
+        $formData = json_decode($form['form_json'], true);
+        
+        if ($formData && isset($formData['inputs'])) {
+            $schema = [];
+            foreach ($formData['inputs'] as $input) {
+                $schema[] = [
+                    'name' => str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], strtolower($input['name'])),
+                    'label' => $input['label'] ?? $input['name'],
+                    'type' => $input['type'] ?? 'text',
+                    'placeholder' => $input['placeholder'] ?? '',
+                    'options' => $input['options'] ?? []
+                ];
+            }
+            echo json_encode(['success' => true, 'schema' => $schema]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'Invalid form schema']);
+        }
+    } else {
+        echo json_encode(['success' => false, 'error' => 'Form not found']);
+    }
+} elseif (isset($_POST['get_entry']) && isset($_POST['entry_id']) && isset($_POST['form_name']) && isset($_POST['project'])) {
+    $entry_id = escape_string($_POST['entry_id']);
+    $form_name = escape_string($_POST['form_name']);
+    $project = escape_string($_POST['project']);
+    
+    $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($form_name));
+    
+    $query = query("SELECT * FROM `$tableName` WHERE id='$entry_id'");
+    if (mysqli_num_rows($query) > 0) {
+        $entry = fetch_assoc($query);
+        echo json_encode(['success' => true, 'entry' => $entry]);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'Entry not found']);
+    }
+} elseif (isset($_POST['get_all_tables']) && isset($_POST['project'])) {
+    $project = escape_string($_POST['project']);
+    
+    // Get all forms for this project
+    $forms_query = query("SELECT form_name, form_json, created_at FROM form_settings WHERE project='$project' ORDER BY created_at DESC");
+    $tables = [];
+    
+    while ($form = fetch_assoc($forms_query)) {
+        $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($form['form_name']));
+        
+        // Check if table exists and get row count
+        $table_exists_query = query("SHOW TABLES LIKE '$tableName'");
+        $exists = mysqli_num_rows($table_exists_query) > 0;
+        $row_count = 0;
+        
+        if ($exists) {
+            $count_query = query("SELECT COUNT(*) as count FROM `$tableName`");
+            if ($count_query) {
+                $count_result = fetch_assoc($count_query);
+                $row_count = $count_result['count'];
+            }
+        }
+        
+        $formData = json_decode($form['form_json'], true);
+        $field_count = isset($formData['inputs']) ? count($formData['inputs']) : 0;
+        
+        $tables[] = [
+            'name' => $form['form_name'],
+            'table_name' => $tableName,
+            'exists' => $exists,
+            'row_count' => $row_count,
+            'field_count' => $field_count,
+            'created_at' => $form['created_at']
+        ];
+    }
+    
+    echo json_encode(['success' => true, 'tables' => $tables]);
+} elseif (isset($_POST['drop_table']) && isset($_POST['form_name']) && isset($_POST['project'])) {
+    $form_name = escape_string($_POST['form_name']);
+    $project = escape_string($_POST['project']);
+    
+    $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($form_name));
+    
+    // Start transaction
+    mysqli_autocommit($GLOBALS['con'], false);
+    
+    try {
+        // Drop the data table
+        $drop_query = "DROP TABLE IF EXISTS `$tableName`";
+        if (!query($drop_query)) {
+            throw new Exception('Fehler beim Löschen der Tabelle');
+        }
+        
+        // Delete from form_settings
+        $delete_form_query = "DELETE FROM form_settings WHERE form_name='$form_name' AND project='$project'";
+        if (!query($delete_form_query)) {
+            throw new Exception('Fehler beim Löschen der Form-Einstellungen');
+        }
+        
+        // Remove from project_tools (sidebar)
+        $project_data = fetch_assoc(query("SELECT projectID FROM projects WHERE link='$project'"));
+        if ($project_data) {
+            $project_id = $project_data['projectID'];
+            $delete_tools_query = "DELETE FROM project_tools WHERE name='$form_name' AND projectID='$project_id'";
+            query($delete_tools_query);
+        }
+        
+        // Commit transaction
+        mysqli_commit($GLOBALS['con']);
+        echo json_encode(['success' => true, 'message' => 'Form und Tabelle erfolgreich gelöscht']);
+        
+    } catch (Exception $e) {
+        // Rollback transaction
+        mysqli_rollback($GLOBALS['con']);
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    
+    // Re-enable autocommit
+    mysqli_autocommit($GLOBALS['con'], true);
 }
 
 ?>

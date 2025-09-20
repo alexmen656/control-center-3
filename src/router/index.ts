@@ -386,6 +386,11 @@ routes.push(
     component: () => import("../views/FormDisplay.vue"),
   },
   {
+    path: "/project/:project/manage/forms",
+    name: "ManageTables",
+    component: () => import("../views/ManageTables.vue"),
+  },
+  {
     path: '/my-account/preferences',
     component: () => import('../views/settingsModal.vue'),
   },

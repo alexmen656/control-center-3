@@ -199,6 +199,16 @@ foreach ($projects as $project) {
     $json[$i]['pageID'] = 'new_codespace_' . $projectID;
     $i++;
 
+    // Forms
+    $json[$i]['id'] = 'manage_forms_' . $projectID;
+    $json[$i]['url'] = 'project/' . $projectLink . '/manage/forms';
+    $json[$i]['showTitle'] = false; //true
+    $json[$i]['icon'] = 'document-outline';
+    $json[$i]['title'] = 'Manage Forms - ' . $projectName;
+    $json[$i]['html'] = '';
+    $json[$i]['pageID'] = 'manage_forms_' . $projectID;
+    $i++;
+
     //APIS
     $json[$i]['id'] = 'manage_apis_' . $projectID;
     $json[$i]['url'] = 'project/' . $projectLink . '/manage/apis';
