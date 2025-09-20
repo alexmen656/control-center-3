@@ -3,7 +3,7 @@
     <ion-title size="large">
       <div class="title-container">
       <ion-icon class="before-title" v-if="icon" :name="icon" />
-      <span class="h2">{{ title }}</span>
+      <span class="h2">{{ title[0].toUpperCase() + title.slice(1) }}</span>
       </div>
     </ion-title>
     <span class="actions" slot="end">
@@ -135,12 +135,12 @@ h1 {
 }
 
 ion-icon {
-font-size: 1rem;
+font-size: 1.125rem;
 }
 
 ion-icon.before-title {
   font-size: 1.25rem;
-  margin-right: 0.275rem;
+  margin-right: 0.35rem;
 }
 
 .title-container {
@@ -156,7 +156,7 @@ ion-icon.before-title {
 }
 
 ion-toolbar {
-  --background: transparent !important;
+  --background: #f8fafc !important;
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
 }
