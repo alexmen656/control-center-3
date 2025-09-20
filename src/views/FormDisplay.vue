@@ -65,6 +65,14 @@
                 <ion-icon name="notifications-outline" slot="start"></ion-icon>
                 Manage Triggers
               </ion-button>
+              <ion-button @click="openRenameModal()" color="primary" fill="outline" style="margin-left: 10px;">
+                <ion-icon name="create-outline" slot="start"></ion-icon>
+                Rename Form
+              </ion-button>
+              <ion-button @click="openEditModal()" color="tertiary" fill="outline" style="margin-left: 10px;">
+                <ion-icon name="settings-outline" slot="start"></ion-icon>
+                Edit Form
+              </ion-button>
             </ion-row>
             <DisplayForm @submit="handleSubmit" /> </ion-col
           ><ion-col size="0" size-md="1" />
@@ -95,6 +103,19 @@
           @close="triggerModalOpen = false"
         />
       </ion-modal>
+      <ion-modal
+        :is-open="renameModalOpen"
+        css-class="rename-modal"
+        @didDismiss="renameModalOpen = false"
+      >
+        <RenameForm 
+          :project="$route.params.project"
+          :form="$route.params.form"
+          @close="renameModalOpen = false"
+          @success="handleRenameSuccess"
+          @sidebarRefresh="refreshSidebar"
+        />
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -104,6 +125,7 @@
 import DisplayForm from "@/components/DisplayForm.vue";
 import EditEntry from "@/components/EditEntry.vue";
 import TriggerManager from "@/components/TriggerManager.vue";
+import RenameForm from "@/components/RenameForm.vue";
 import { defineComponent, ref } from "vue";
 
 export default defineComponent({
@@ -112,6 +134,7 @@ export default defineComponent({
     DisplayForm,
     EditEntry,
     TriggerManager,
+    RenameForm,
   },
   data() {
     return {
@@ -123,6 +146,7 @@ export default defineComponent({
       sortColumn: null,
       sortDirection: 'asc',
       triggerModalOpen: false,
+      renameModalOpen: false,
     };
   },
   computed: {
@@ -262,6 +286,30 @@ export default defineComponent({
     },
     openTriggerModal() {
       this.triggerModalOpen = true;
+    },
+    openRenameModal() {
+      this.renameModalOpen = true;
+    },
+    openEditModal() {
+      // Navigate to edit form using the existing NewTool interface
+      this.$router.push({
+        path: `/project/${this.$route.params.project}/edit-form/${this.$route.params.form}`
+      });
+    },
+    handleRenameSuccess(newFormName) {
+      this.renameModalOpen = false;
+      // Navigate to the new form URL
+      this.$router.push({
+        name: 'FormDisplay',
+        params: {
+          project: this.$route.params.project,
+          form: newFormName
+        }
+      });
+    },
+    refreshSidebar() {
+      // Emit event to refresh the sidebar
+      this.emitter.emit("updateSidebar");
     },
     loadData() {
       const table_name = `${this.$route.params.project.replaceAll("-", "_")}_${this.$route.params.form.replaceAll("-", "_")}`;

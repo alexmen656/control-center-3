@@ -211,6 +211,150 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
             echo "Error updating entry!";
         }
     }
+} elseif (isset($_POST['check_form_exists']) && isset($_POST['form_name']) && isset($_POST['project'])) {
+    $form_name = escape_string($_POST['form_name']);
+    $project = escape_string($_POST['project']);
+    
+    $query = query("SELECT * FROM form_settings WHERE form_name='$form_name' AND project='$project'");
+    $exists = mysqli_num_rows($query) > 0;
+    
+    echo json_encode(['exists' => $exists]);
+} elseif (isset($_POST['rename_form']) && isset($_POST['old_form_name']) && isset($_POST['new_form_name']) && isset($_POST['project'])) {
+    $old_form_name = escape_string($_POST['old_form_name']);
+    $new_form_name = escape_string($_POST['new_form_name']);
+    $project = escape_string($_POST['project']);
+    
+    // Validate new form name
+    if (!preg_match('/^[a-zA-Z0-9-_]+$/', $new_form_name)) {
+        echo json_encode(['success' => false, 'error' => 'Ungültiger Formname. Verwenden Sie nur Buchstaben, Zahlen, Bindestriche und Unterstriche.']);
+        exit;
+    }
+    
+    // Check if new form name already exists
+    $check_query = query("SELECT * FROM form_settings WHERE form_name='$new_form_name' AND project='$project'");
+    if (mysqli_num_rows($check_query) > 0) {
+        echo json_encode(['success' => false, 'error' => 'Eine Form mit diesem Namen existiert bereits.']);
+        exit;
+    }
+    
+    // Check if old form exists
+    $old_form_query = query("SELECT * FROM form_settings WHERE form_name='$old_form_name' AND project='$project'");
+    if (mysqli_num_rows($old_form_query) == 0) {
+        echo json_encode(['success' => false, 'error' => 'Ursprüngliche Form nicht gefunden.']);
+        exit;
+    }
+    
+    // Generate old and new table names
+    $old_table_name = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($old_form_name));
+    $new_table_name = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($new_form_name));
+    
+    // Start transaction
+    mysqli_autocommit($GLOBALS['con'], false);
+    
+    try {
+        // Update form_settings table
+        $update_form_query = "UPDATE form_settings SET form_name='$new_form_name' WHERE form_name='$old_form_name' AND project='$project'";
+        if (!query($update_form_query)) {
+            throw new Exception('Fehler beim Aktualisieren der Form-Einstellungen');
+        }
+        
+        // Check if data table exists and rename it
+        $table_exists_query = query("SHOW TABLES LIKE '$old_table_name'");
+        if (mysqli_num_rows($table_exists_query) > 0) {
+            $rename_table_query = "RENAME TABLE `$old_table_name` TO `$new_table_name`";
+            if (!query($rename_table_query)) {
+                throw new Exception('Fehler beim Umbenennen der Datentabelle');
+            }
+        }
+        
+        // Update triggers if they exist
+        if (class_exists('FormTriggers')) {
+            $triggerSystem = new FormTriggers();
+            $triggerSystem->renameFormTriggers($project, $old_form_name, $new_form_name);
+        }
+        
+        // Update project_tools table for sidebar display
+        $project_data = fetch_assoc(query("SELECT projectID FROM projects WHERE link='$project'"));
+        if ($project_data) {
+            $project_id = $project_data['projectID'];
+            $update_tools_query = "UPDATE project_tools SET name='$new_form_name', link='" . strtolower(str_replace([' ', 'ä', 'ö', 'ü', 'ß'], ['_', 'a', 'o', 'u', 'ss'], $new_form_name)) . "' WHERE name='$old_form_name' AND projectID='$project_id'";
+            query($update_tools_query);
+        }
+        
+        // Commit transaction
+        mysqli_commit($GLOBALS['con']);
+        echo json_encode(['success' => true, 'message' => 'Form erfolgreich umbenannt']);
+        
+    } catch (Exception $e) {
+        // Rollback transaction
+        mysqli_rollback($GLOBALS['con']);
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    
+    // Re-enable autocommit
+    mysqli_autocommit($GLOBALS['con'], true);
+} elseif (isset($_POST['update_form_structure']) && isset($_POST['form']) && isset($_POST['form_name']) && isset($_POST['project'])) {
+    $formJSON = $_POST['form'];
+    $formName = escape_string($_POST['form_name']);
+    $project = escape_string($_POST['project']);
+    
+    // Validate JSON
+    $formData = json_decode($formJSON, true);
+    if (!$formData || !isset($formData['title'], $formData['inputs'])) {
+        echo json_encode(['success' => false, 'error' => 'Ungültiges JSON-Format']);
+        exit;
+    }
+    
+    // Start transaction
+    mysqli_autocommit($GLOBALS['con'], false);
+    
+    try {
+        // Update form_settings table
+        $update_form_query = "UPDATE form_settings SET form_json='$formJSON' WHERE form_name='$formName' AND project='$project'";
+        if (!query($update_form_query)) {
+            throw new Exception('Fehler beim Aktualisieren der Form-Einstellungen');
+        }
+        
+        // Get current table structure
+        $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($formName));
+        
+        // Check if table exists
+        $table_exists_query = query("SHOW TABLES LIKE '$tableName'");
+        if (mysqli_num_rows($table_exists_query) > 0) {
+            // Get existing columns
+            $existing_columns_result = query("SHOW COLUMNS FROM `$tableName`");
+            $existing_columns = [];
+            while ($column = fetch_assoc($existing_columns_result)) {
+                $existing_columns[] = $column['Field'];
+            }
+            
+            // Add new columns for new fields
+            foreach ($formData['inputs'] as $field) {
+                $fieldName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], strtolower($field['name']));
+                
+                // Check if column already exists
+                if (!in_array($fieldName, $existing_columns)) {
+                    $fieldType = mapFieldType($field['type']);
+                    $alter_sql = "ALTER TABLE `$tableName` ADD COLUMN `$fieldName` $fieldType";
+                    if (!query($alter_sql)) {
+                        throw new Exception("Fehler beim Hinzufügen der Spalte: $fieldName");
+                    }
+                }
+            }
+        }
+        
+        // Commit transaction
+        mysqli_commit($GLOBALS['con']);
+        echo json_encode(['success' => true, 'message' => 'Form-Struktur erfolgreich aktualisiert']);
+        
+    } catch (Exception $e) {
+        // Rollback transaction
+        mysqli_rollback($GLOBALS['con']);
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    
+    // Re-enable autocommit
+    mysqli_autocommit($GLOBALS['con'], true);
 }
 
 ?>

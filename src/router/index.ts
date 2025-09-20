@@ -125,6 +125,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/NewTool.vue'),
   },
   {
+    path: '/project/:project/edit-form/:form',
+    component: () => import('../views/EditTool.vue'),
+  },
+  {
     path: '/project/:project/filesystem',
     component: () => import('../views/ProjectFileSystem.vue'),
   },
@@ -378,6 +382,7 @@ routes.push(
   },
   {
     path: '/project/:project/:form',
+    name: 'FormDisplay',
     component: () => import('../views/FormDisplay.vue'),
   },
   {

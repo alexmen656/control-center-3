@@ -123,6 +123,18 @@ class FormTriggers {
         // Implementierung je nach gewähltem SMS-Provider
         return true;
     }
+    
+    // Rename form triggers when a form is renamed
+    public function renameFormTriggers($project, $oldFormName, $newFormName) {
+        $project = escape_string($project);
+        $oldFormName = escape_string($oldFormName);
+        $newFormName = escape_string($newFormName);
+        
+        $sql = "UPDATE form_triggers SET form_name='$newFormName' 
+                WHERE project='$project' AND form_name='$oldFormName'";
+        
+        return query($sql);
+    }
 }
 
 // API Endpoints
