@@ -1,7 +1,7 @@
 <template>
   <div class="modern-component">
     <!-- Component Header -->
-    <div class="component-header">
+    <div v-if="!hideTitle" class="component-header">
       <h3>
         <ion-icon name="list-outline"></ion-icon>
         Service Logs
@@ -239,6 +239,10 @@ export default {
     service: {
       type: String,
       required: true
+    },
+    hideTitle: {
+      type: Boolean,
+      default: false
     }
   },
   data() {

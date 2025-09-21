@@ -98,20 +98,20 @@ elseif (isset($_POST['deleteServiceComplete']) && isset($_POST['serviceId'])) {
         $project = fetch_assoc($projectResult);
         $projectLink = $project['link'];
         
-        // Delete API keys associated with this service
-        $deleteApiKeys = query("DELETE FROM api_keys WHERE project_id='$projectID' AND service='$serviceLink'");
+        // Delete API keys associated with this project (api_keys table doesn't have service field)
+        $deleteApiKeys = query("DELETE FROM api_keys WHERE project_id='$projectID'");
         if (!$deleteApiKeys) {
             throw new Exception('Failed to delete API keys: ' . mysqli_error($con));
         }
         
         // Delete service logs
-        $deleteLogs = query("DELETE FROM control_center_service_logs WHERE project_id='$projectID' AND service='$serviceLink'");
+        $deleteLogs = query("DELETE FROM control_center_services_logs WHERE project_id='$projectID' AND service='$serviceLink'");
         if (!$deleteLogs) {
             throw new Exception('Failed to delete service logs: ' . mysqli_error($con));
         }
         
-        // Delete service status history
-        $deleteStatus = query("DELETE FROM service_status_history WHERE project_id='$projectID' AND service='$serviceLink'");
+        // Delete service status history (service_status_history uses service_id, not service)
+        $deleteStatus = query("DELETE FROM service_status_history WHERE service_id='$serviceId'");
         if (!$deleteStatus) {
             throw new Exception('Failed to delete service status history: ' . mysqli_error($con));
         }

@@ -1,6 +1,6 @@
 <template>
   <div class="service-status">
-    <div class="status-header">
+    <div v-if="!hideTitle" class="status-header">
       <div>
         <ion-icon name="pulse" style="vertical-align: middle; margin-right: 10px;"></ion-icon>
         {{ title }}
@@ -122,6 +122,10 @@ export default {
     service: {
       type: String,
       required: true
+    },
+    hideTitle: {
+      type: Boolean,
+      default: false
     }
   },
   data() {

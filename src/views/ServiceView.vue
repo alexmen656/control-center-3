@@ -57,9 +57,11 @@
               </div>
               <div class="card-content">
                 <ApiKeyManager 
+                  ref="apiKeyManager"
                   :projectId="projectId" 
                   :service="service.link"
                   :hideTitle="true"
+                  @create-key="showApiKeyModal = true"
                 />
               </div>
             </div>
@@ -71,9 +73,22 @@
                   <ion-icon name="pulse-outline"></ion-icon>
                   Status Monitoring
                 </h2>
+                <div class="card-actions">
+                  <ion-select v-model="statusSelectedDays" placeholder="Zeitraum" interface="popover" @ionChange="refreshStatusHistory" style="width: 120px; margin-right: 8px;">
+                    <ion-select-option value="1">24 Stunden</ion-select-option>
+                    <ion-select-option value="3">3 Tage</ion-select-option>
+                    <ion-select-option value="7">7 Tage</ion-select-option>
+                    <ion-select-option value="14">14 Tage</ion-select-option>
+                    <ion-select-option value="30">30 Tage</ion-select-option>
+                  </ion-select>
+                  <button class="icon-btn" @click="refreshStatusHistory" title="Refresh Status">
+                    <ion-icon name="refresh-outline"></ion-icon>
+                  </button>
+                </div>
               </div>
               <div class="card-content">
                 <ServiceStatusHistory
+                  ref="statusHistory"
                   :projectId="projectId"
                   :service="service.link"
                   :hideTitle="true"
@@ -89,13 +104,29 @@
                   Service Logs
                 </h2>
                 <div class="card-actions">
-                  <button class="icon-btn" @click="fetchLogs" title="Refresh Logs">
+                  <ion-select v-model="logTypeFilter" placeholder="Log Type" interface="popover" @ionChange="refreshLogs" style="width: 120px; margin-right: 8px;">
+                    <ion-select-option value="">All Types</ion-select-option>
+                    <ion-select-option value="info">Info</ion-select-option>
+                    <ion-select-option value="warn">Warning</ion-select-option>
+                    <ion-select-option value="error">Error</ion-select-option>
+                    <ion-select-option value="success">Success</ion-select-option>
+                    <ion-select-option value="debug">Debug</ion-select-option>
+                  </ion-select>
+                  <input
+                    type="text"
+                    v-model="logSearchQuery"
+                    placeholder="Search logs..."
+                    style="width: 150px; margin-right: 8px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px;"
+                    @input="onLogSearch"
+                  />
+                  <button class="icon-btn" @click="refreshLogs" title="Refresh Logs">
                     <ion-icon name="refresh-outline"></ion-icon>
                   </button>
                 </div>
               </div>
               <div class="card-content">
                 <ServiceLogs
+                  ref="serviceLogs"
                   :projectId="projectId"
                   :service="service.link"
                   :limit="logLimit"
@@ -209,6 +240,131 @@
           </ion-list>
         </ion-content>
       </ion-modal>
+
+      <!-- API Key Creation Modal -->
+      <div v-if="showApiKeyModal" class="modal-overlay" @click.self="closeApiKeyModal">
+        <div class="modal-container">
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h2>Create New API Key</h2>
+            <button @click="closeApiKeyModal" class="modal-close-btn">
+              <ion-icon name="close"></ion-icon>
+            </button>
+          </div>
+
+          <!-- Modal Content -->
+          <div class="modal-body">
+            <div class="modal-description">
+              <p>API keys allow external services to send logs to this service. Use these keys in your API requests with the <code>X-Api-Key</code> header.</p>
+            </div>
+
+            <!-- Form Fields -->
+            <div class="form-fields">
+              <div class="form-group">
+                <label class="form-label">Key Name</label>
+                <input
+                  v-model="newKey.name"
+                  type="text"
+                  class="form-input"
+                  placeholder="Enter a descriptive name"
+                  required
+                />
+                <div class="form-help">
+                  A descriptive name to identify this API key.
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Description (Optional)</label>
+                <textarea
+                  v-model="newKey.description"
+                  class="form-textarea"
+                  placeholder="Enter description"
+                  rows="3"
+                ></textarea>
+                <div class="form-help">
+                  Optional description explaining what this key is used for.
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Expiration Date (Optional)</label>
+                <input
+                  v-model="newKey.expires_at"
+                  type="datetime-local"
+                  class="form-input"
+                  placeholder="mm/dd/yyyy, --:-- --"
+                />
+                <div class="form-help">
+                  Leave empty for no expiration. Key will be automatically deactivated after this date.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="modal-footer">
+            <button @click="closeApiKeyModal" class="btn btn-secondary">
+              Cancel
+            </button>
+            <button @click="createKey" class="btn btn-primary" :disabled="isCreating || !newKey.name.trim()">
+              <ion-icon :name="isCreating ? 'hourglass-outline' : 'add-outline'"></ion-icon>
+              {{ isCreating ? 'Creating...' : 'Create API Key' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Success Modal for New Key -->
+      <div v-if="showSuccessModal" class="modal-overlay" @click.self="closeSuccessModal">
+        <div class="modal-container success-modal">
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h2>API Key Created Successfully</h2>
+            <button @click="closeSuccessModal" class="modal-close-btn">
+              <ion-icon name="close"></ion-icon>
+            </button>
+          </div>
+
+          <!-- Modal Content -->
+          <div class="modal-body">
+            <div class="success-content">
+              <div class="success-icon">
+                <ion-icon name="checkmark-circle"></ion-icon>
+              </div>
+              <h3>Your API Key is Ready!</h3>
+              <p>Copy this key now - it won't be shown again in full.</p>
+              
+              <div class="new-key-display">
+                <div class="key-container">
+                  <code class="api-key-code">{{ createdKey }}</code>
+                  <button @click="copyToClipboard(createdKey)" class="copy-btn-inline" title="Copy API Key">
+                    <ion-icon name="copy-outline"></ion-icon>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="usage-example">
+                <h4>Usage Example:</h4>
+                <div class="code-block">
+                  <pre><code>curl -X POST https://your-api.com/logs \
+  -H "X-Api-Key: {{ createdKey }}" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello World"}'</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="modal-footer">
+            <button @click="closeSuccessModal" class="btn btn-primary">
+              <ion-icon name="checkmark-outline"></ion-icon>
+              Got it!
+            </button>
+          </div>
+        </div>
+      </div>
     </ion-content>
   </ion-page>
 </template>
@@ -236,10 +392,23 @@ export default {
       logOffset: 0,
       logLimit: 20,
       logTypeFilter: '',
+      logSearchQuery: '',
+      logSearchTimeout: null,
+      statusSelectedDays: '7',
       showLogModal: false,
       selectedLog: null,
       hasMoreLogs: true,
       projectId: null,
+      // API Key Modal
+      showApiKeyModal: false,
+      showSuccessModal: false,
+      isCreating: false,
+      newKey: {
+        name: '',
+        description: '',
+        expires_at: ''
+      },
+      createdKey: ''
     };
   },
   created() {
@@ -395,6 +564,91 @@ export default {
         case 'inactive': return 'close-circle-outline';
         default: return 'help-circle-outline';
       }
+    },
+    refreshStatusHistory() {
+      if (this.$refs.statusHistory) {
+        this.$refs.statusHistory.selectedDays = this.statusSelectedDays;
+        this.$refs.statusHistory.fetchStatusHistory();
+      }
+    },
+    refreshLogs() {
+      if (this.$refs.serviceLogs) {
+        this.$refs.serviceLogs.typeFilter = this.logTypeFilter;
+        this.$refs.serviceLogs.searchQuery = this.logSearchQuery;
+        this.$refs.serviceLogs.refreshLogs();
+      }
+    },
+    onLogSearch() {
+      // Debounce search
+      if (this.logSearchTimeout) {
+        clearTimeout(this.logSearchTimeout);
+      }
+      this.logSearchTimeout = setTimeout(() => {
+        this.refreshLogs();
+      }, 300);
+    },
+    closeApiKeyModal() {
+      this.showApiKeyModal = false;
+      this.resetNewKey();
+    },
+    closeSuccessModal() {
+      this.showSuccessModal = false;
+      this.createdKey = '';
+    },
+    resetNewKey() {
+      this.newKey = {
+        name: '',
+        description: '',
+        expires_at: ''
+      };
+    },
+    async createKey() {
+      if (!this.newKey.name.trim()) {
+        this.$toast.error('Please enter a key name');
+        return;
+      }
+
+      this.isCreating = true;
+      try {
+        const response = await this.$axios.post('api/api_keys.php', {
+          project_id: this.projectId,
+          service: this.service.link,
+          name: this.newKey.name.trim(),
+          description: this.newKey.description.trim(),
+          expires_at: this.newKey.expires_at || null
+        }, {
+          headers: {
+            'Authorization': localStorage.getItem('token'),
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.data.success) {
+          this.createdKey = response.data.data.api_key;
+          this.showApiKeyModal = false;
+          this.showSuccessModal = true;
+          this.resetNewKey();
+          // Refresh API keys in the component
+          if (this.$refs.apiKeyManager) {
+            this.$refs.apiKeyManager.fetchApiKeys();
+          }
+          this.$toast.success('API key created successfully');
+        } else {
+          this.$toast.error('Failed to create API key: ' + response.data.error);
+        }
+      } catch (error) {
+        console.error('Error creating API key:', error);
+        this.$toast.error('Failed to create API key');
+      } finally {
+        this.isCreating = false;
+      }
+    },
+    copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.$toast.success('Copied to clipboard');
+      }).catch(() => {
+        this.$toast.error('Failed to copy to clipboard');
+      });
     },
     getLogIcon(type) {
       switch(type) {
@@ -840,5 +1094,272 @@ pre {
   .card-content {
     padding: 16px;
   }
+}
+
+/* Modal Styles - Modern Design */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.modal-container {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.modal-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 20px;
+}
+
+.modal-close-btn:hover {
+  background: var(--background);
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-description {
+  margin-bottom: 32px;
+}
+
+.modal-description p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.modal-description code {
+  background: var(--background);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 20px 24px 24px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--background);
+}
+
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 16px;
+  font-family: inherit;
+  background: var(--surface);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+.form-help {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Success Modal Specific Styles */
+.success-modal {
+  max-width: 700px;
+}
+
+.success-content {
+  text-align: center;
+}
+
+.success-icon {
+  font-size: 64px;
+  color: var(--success-color);
+  margin-bottom: 20px;
+}
+
+.success-content h3 {
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.success-content p {
+  margin: 0 0 32px 0;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.new-key-display {
+  margin-bottom: 32px;
+}
+
+.key-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--background);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.api-key-code {
+  flex: 1;
+  font-family: monospace;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  word-break: break-all;
+  padding: 0;
+}
+
+.copy-btn-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: var(--primary-color);
+  color: white;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.copy-btn-inline:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.usage-example {
+  text-align: left;
+}
+
+.usage-example h4 {
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.code-block {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  overflow-x: auto;
+}
+
+.code-block pre {
+  margin: 0;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 </style>
