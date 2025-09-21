@@ -170,6 +170,13 @@ export default defineComponent({
 </script>
 
 <style scoped>
+@media (prefers-color-scheme: light) {
+  ion-item, ion-list, ion-reorder-group {
+    --background: #eff3f6;/*#f7fcff;*/
+    background: #eff3f6;
+  }
+}
+
 ion-menu.md ion-list[data-v-7ba5bd90] {
   padding-top: 56px;
 }

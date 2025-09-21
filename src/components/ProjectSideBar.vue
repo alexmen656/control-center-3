@@ -535,9 +535,11 @@ export default defineComponent({
 </script>
 
 <style scoped>
-ion-item, ion-list, ion-reorder-group {
-  --background: #eff3f6;/*#f7fcff;*/
-  background: #eff3f6;
+@media (prefers-color-scheme: light) {
+  ion-item, ion-list, ion-reorder-group {
+    --background: #eff3f6;/*#f7fcff;*/
+    background: #eff3f6;
+  }
 }
 
 ion-item.new-tool {
