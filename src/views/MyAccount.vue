@@ -1,85 +1,81 @@
 <template>
   <ion-page>
-    <ion-content class="profile-container" v-if="token"
-      ><!--ion-padding-->
-      <ion-avatar>
-        <AvatarLarge
-          :profileImg="userData.profileImg"
-          :firstName="userData.firstName"
-          :lastName="userData.lastName"
-          avatarColor="green"
-        />
-      </ion-avatar>
-      <div class="user-info">
-        <h2>{{ userData.firstName }} {{ userData.lastName }}</h2>
-        <p>{{ userData.email }}</p>
+    <ion-content class="modern-content" v-if="token">
+      <div class="page-container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+          <div class="profile-card">
+            <div class="avatar-section">
+              <ion-avatar class="profile-avatar">
+                <AvatarLarge
+                  :profileImg="userData.profileImg"
+                  :firstName="userData.firstName"
+                  :lastName="userData.lastName"
+                  avatarColor="green"
+                />
+              </ion-avatar>
+            </div>
+            <div class="user-info">
+              <h2 class="user-name">{{ userData.firstName }} {{ userData.lastName }}</h2>
+              <p class="user-email">{{ userData.email }}</p>
+              <div class="user-status">
+                <span class="status-badge" :class="getStatusClass(userData.accountStatus)">
+                  {{ userData.accountStatus || 'Active' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Management Grid -->
+        <div class="account-grid">
+          <div class="grid-header">
+            <h3>Account Management</h3>
+            <p>Manage your account settings and preferences</p>
+          </div>
+          
+          <div class="cards-grid">
+            <div
+              v-for="card in cards"
+              :key="card.title"
+              class="account-card"
+              @click="navigateToCard(card)"
+            >
+              <div class="card-icon">
+                <ion-icon :name="card.icon"></ion-icon>
+              </div>
+              <div class="card-content">
+                <h4>{{ card.title }}</h4>
+                <p>{{ card.description }}</p>
+              </div>
+              <div class="card-arrow">
+                <ion-icon name="chevron-forward-outline"></ion-icon>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="quick-actions">
+            <div class="action-header">
+              <h4>Quick Actions</h4>
+            </div>
+            <div class="actions-grid">
+              <button class="action-btn secondary" @click="editProfile">
+                <ion-icon name="create-outline"></ion-icon>
+                <span>Edit Profile</span>
+              </button>
+              <button class="action-btn secondary" @click="changePassword">
+                <ion-icon name="lock-closed-outline"></ion-icon>
+                <span>Change Password</span>
+              </button>
+              <button class="action-btn danger" @click="logout">
+                <ion-icon name="log-out-outline"></ion-icon>
+                <span>Log Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-      <!--<ion-list>
-      <ion-item>
-        <ion-icon name="phone-portrait" slot="start"></ion-icon>
-        <ion-label>Phone</ion-label>
-        <ion-text>{{ user.phone }}</ion-text>
-      </ion-item>
-      <ion-item>
-        <ion-icon name="pin" slot="start"></ion-icon>
-        <ion-label>Address</ion-label>
-        <ion-text>{{ user.address }}</ion-text>
-      </ion-item>
-      <ion-item>
-        <ion-icon name="calendar" slot="start"></ion-icon>
-        <ion-label>Birthday</ion-label>
-        <ion-text>{{ user.birthday }}</ion-text>
-      </ion-item>
-    </ion-list>-->
-
-      <ion-grid>
-        <ion-row>
-          <ion-col size="1"></ion-col>
-          <ion-col size="10">
-            <ion-grid>
-              <ion-row>
-                <ion-col
-                  v-for="card in cards"
-                  :key="card"
-                  size="12"
-                  size-md="6"
-                  size-lg="6"
-                  size-xl="4"
-                >
-                  <ion-card class="tall-card">
-                    <ion-card-header>
-                      <ion-icon
-                        color="primary"
-                        size="large"
-                        :name="card.icon"
-                      ></ion-icon>
-
-                      <ion-card-title>
-                        <!-- <ion-icon
-                          name="log-out-outline"
-                          slot="start"
-                        ></ion-icon>-->
-
-                        <router-link
-                          :to="
-                            '/my-account/' +
-                            card.title.replaceAll(` `, `-`).toLowerCase()
-                          "
-                          >{{ card.title }}</router-link
-                        >
-                      </ion-card-title>
-                    </ion-card-header>
-                  </ion-card>
-                </ion-col>
-                <router-link to="/my-account/logout">Log Out</router-link>
-                <!--  <ion-button>Edit Profile</ion-button
-          >@click="goToEditPage"-->
-              </ion-row>
-            </ion-grid>
-          </ion-col>
-          <ion-col size="1"></ion-col>
-        </ion-row>
-      </ion-grid>
     </ion-content>
   </ion-page>
 </template>
@@ -101,37 +97,62 @@ export default defineComponent({
         {
           title: "Personal Information",
           icon: "information-outline",
+          description: "Update your personal details and profile information"
         },
         {
           title: "Settings",
           icon: "cog-outline",
+          description: "Configure app settings and preferences"
         },
         {
           title: "Preferences",
           icon: "sunny-outline",
+          description: "Customize your app theme and display options"
         },
         {
           title: "Account Security",
           icon: "key-outline",
+          description: "Manage your password and security settings"
         },
         {
           title: "My Team",
           icon: "people-outline",
+          description: "View and manage your team members"
         },
         {
           title: "My Projects",
           icon: "folder-outline",
+          description: "Access and organize your projects"
         },
-        //  "Logout",
-
-        //"App Theme",
-
-        // "photo",
       ],
     };
   },
   components: {
     AvatarLarge,
+  },
+  methods: {
+    getStatusClass(status) {
+      const statusLower = (status || 'active').toLowerCase();
+      switch (statusLower) {
+        case 'active': return 'status-active';
+        case 'pending': return 'status-pending';
+        case 'suspended': return 'status-suspended';
+        default: return 'status-active';
+      }
+    },
+    navigateToCard(card) {
+      const route = '/my-account/' + card.title.replaceAll(' ', '-').toLowerCase();
+      this.$router.push(route);
+    },
+    editProfile() {
+      this.$router.push('/my-account/personal-information');
+    },
+    changePassword() {
+      this.$router.push('/my-account/account-security');
+    },
+    logout() {
+      this.$router.push('/my-account/logout');
+    }
   },
   async mounted() {
     this.userData = await getUserData();
@@ -140,81 +161,382 @@ export default defineComponent({
 </script>
 
 <style scoped>
-ion-card-header {
-  justify-content: center;
-  align-items: center;
+/* Modern Design System */
+.modern-content {
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --secondary-color: #64748b;
+  --success-color: #059669;
+  --danger-color: #dc2626;
+  --warning-color: #d97706;
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --radius: 8px;
+  --radius-lg: 12px;
 }
-ion-avatar {
-  display: block;
+
+.page-container {
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+  background: var(--background);
 }
 
-.profile-container {
+/* Profile Header */
+.profile-header {
+  margin-bottom: 32px;
+}
+
+.profile-card {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  width: 100%;
+  gap: 24px;
+  background: var(--surface);
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
 }
 
-ion-card-title {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 22px;
+.avatar-section {
+  flex-shrink: 0;
 }
 
-ion-card {
-  border-radius: 22px;
-  /* padding-top: 30px;
-  padding-bottom: 30px;*/
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: .25rem;
-  margin-bottom: .5rem;
-  margin-inline: .5rem;
-}
-
-ion-avatar {
-  width: 164px !important;
-  height: 164px !important;
+.profile-avatar {
+  width: 120px !important;
+  height: 120px !important;
+  border: 4px solid var(--border);
+  box-shadow: var(--shadow-md);
 }
 
 .user-info {
+  flex: 1;
+}
+
+.user-name {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.user-email {
+  margin: 0 0 12px 0;
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+.user-status {
   display: flex;
   align-items: center;
-  flex-direction: column;
 }
 
-h2 {
-  margin-bottom: 0 !important;
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-p {
-  margin-top: 5px;
+.status-active {
+  background: #dcfce7;
+  color: var(--success-color);
 }
 
-ion-avatar {
-  margin-top: 20px;
+.status-pending {
+  background: #fef3c7;
+  color: var(--warning-color);
 }
 
-ion-col {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  margin-bottom: .5rem;
+.status-suspended {
+  background: #fee2e2;
+  color: var(--danger-color);
 }
 
-ion-row {
+/* Account Grid */
+.account-grid {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.grid-header {
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+
+.grid-header h3 {
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.grid-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.cards-grid {
+  padding: 24px 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.account-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.account-card:hover {
+  background: var(--surface);
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.card-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
   justify-content: center;
+  background: var(--primary-color);
+  color: white;
+  border-radius: var(--radius);
 }
 
-ion-button {
-  margin-top: 1rem;
+.card-icon ion-icon {
+  font-size: 24px;
 }
 
-a {
-  margin-top: .5rem;
+.card-content {
+  flex: 1;
+}
+
+.card-content h4 {
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.card-content p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.card-arrow {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.account-card:hover .card-arrow {
+  color: var(--primary-color);
+  transform: translateX(4px);
+}
+
+.card-arrow ion-icon {
+  font-size: 20px;
+}
+
+/* Quick Actions */
+.quick-actions {
+  border-top: 1px solid var(--border);
+  padding: 24px 32px;
+  background: var(--background);
+}
+
+.action-header {
+  margin-bottom: 16px;
+}
+
+.action-header h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.actions-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.action-btn.secondary {
+  background: var(--surface);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+.action-btn.secondary:hover {
+  background: var(--background);
+  border-color: var(--secondary-color);
+}
+
+.action-btn.danger {
+  background: #fef2f2;
+  color: var(--danger-color);
+  border-color: #fecaca;
+}
+
+.action-btn.danger:hover {
+  background: #fee2e2;
+  border-color: var(--danger-color);
+}
+
+.action-btn ion-icon {
+  font-size: 16px;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .modern-content {
+    --background: #0f172a;
+    --surface: #1e293b;
+    --border: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+  }
+  
+  .status-active {
+    background: #065f46;
+    color: #10b981;
+  }
+  
+  .status-pending {
+    background: #92400e;
+    color: #f59e0b;
+  }
+  
+  .status-suspended {
+    background: #991b1b;
+    color: #ef4444;
+  }
+  
+  .action-btn.danger {
+    background: #7f1d1d;
+    color: #f87171;
+    border-color: #991b1b;
+  }
+  
+  .action-btn.danger:hover {
+    background: #991b1b;
+    border-color: #dc2626;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .page-container {
+    padding: 16px;
+  }
+  
+  .profile-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 24px;
+    gap: 16px;
+  }
+  
+  .profile-avatar {
+    width: 100px !important;
+    height: 100px !important;
+  }
+  
+  .user-name {
+    font-size: 24px;
+  }
+  
+  .grid-header,
+  .cards-grid,
+  .quick-actions {
+    padding: 20px;
+  }
+  
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .account-card {
+    padding: 16px;
+  }
+  
+  .actions-grid {
+    flex-direction: column;
+  }
+  
+  .action-btn {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .account-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+  
+  .card-arrow {
+    transform: rotate(90deg);
+  }
+  
+  .account-card:hover .card-arrow {
+    transform: rotate(90deg) translateX(4px);
+  }
 }
 </style>
