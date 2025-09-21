@@ -88,4 +88,10 @@ ion-toolbar,
   --background: #eff3f6;
   box-shadow: none;
 }
+
+ion-toolbar {
+height: 48px;
+display: flex;
+align-items: center;
+}
 </style>

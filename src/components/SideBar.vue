@@ -178,7 +178,7 @@ export default defineComponent({
 }
 
 ion-menu.md ion-list[data-v-7ba5bd90] {
-  padding-top: 56px;
+  padding-top: 48px;
 }
 .btn-red {
   --background: var(--ion-color-primary) !important;

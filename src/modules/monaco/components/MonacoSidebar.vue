@@ -1320,7 +1320,7 @@ onUnmounted(() => {
 <style scoped>
 .monaco-sidebar {
   width: 280px;
-  padding-bottom: 56px;
+  padding-bottom: 48px;
   background: var(--vscode-sideBar-background, #252526);
   color: var(--vscode-sideBar-foreground, #cccccc);
   border-right: 1px solid var(--vscode-sideBar-border, #2b2b2b);

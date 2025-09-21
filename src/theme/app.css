@@ -17,7 +17,7 @@
   }
   /* Menu styling */
   .ion-menu {
-    width: 300px !important;
+    width: 280px !important;
     transition: width 0.3s ease !important;
     border: none;
   }
@@ -442,10 +442,10 @@
   
   #main-content {
     /*padding-top: 100px !important;*/
-    margin-top: 56px !important;
+    margin-top: 48px !important;
     width: 100%;
     background: #eff3f6; /* Same as header background */
-    min-height: calc(100vh - 56px);
+    min-height: calc(100vh - 48px);
   /*  padding: 16px 16px 0 16px; /* Add padding to create space around content */
   }
   
@@ -454,7 +454,7 @@
     background: var(--ion-background-color, #ffffff);
     border-radius: 12px 0 0 0; /* Rounded top corners */
     border: var(--border);
-    min-height: calc(100vh - 72px); /* Adjust for padding */
+    min-height: calc(100vh - 48px); /* Adjust for padding */
     overflow: hidden;
     transition: all 0.3s ease; /* Smooth transitions */
     position: relative;
