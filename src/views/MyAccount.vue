@@ -6,18 +6,18 @@
         <div class="profile-header">
           <div class="profile-card">
             <div class="avatar-section">
-              <ion-avatar class="profile-avatar">
+              <div class="profile-avatar-wrapper">
                 <AvatarLarge
                   :profileImg="userData.profileImg"
                   :firstName="userData.firstName"
                   :lastName="userData.lastName"
                   avatarColor="green"
                 />
-              </ion-avatar>
+              </div>
             </div>
             <div class="user-info">
-              <h2 class="user-name">{{ userData.firstName }} {{ userData.lastName }}</h2>
-              <p class="user-email">{{ userData.email }}</p>
+              <h2 class="user-name">{{ userData.firstName || 'Loading...' }} {{ userData.lastName || '' }}</h2>
+              <p class="user-email">{{ userData.email || 'Loading email...' }}</p>
               <div class="user-status">
                 <span class="status-badge" :class="getStatusClass(userData.accountStatus)">
                   {{ userData.accountStatus || 'Active' }}
@@ -155,7 +155,19 @@ export default defineComponent({
     }
   },
   async mounted() {
-    this.userData = await getUserData();
+    try {
+      this.userData = await getUserData();
+      console.log('UserData loaded:', this.userData);
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      this.userData = {
+        firstName: '',
+        lastName: '',
+        email: '',
+        profileImg: '',
+        accountStatus: 'Active'
+      };
+    }
   },
 });
 </script>
@@ -204,10 +216,32 @@ export default defineComponent({
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
+  min-height: 120px; /* Ensure minimum height */
+  width: 100%;
 }
 
 .avatar-section {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-avatar-wrapper {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid var(--border);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-avatar-wrapper :deep(ion-avatar) {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .profile-avatar {
@@ -219,6 +253,10 @@ export default defineComponent({
 
 .user-info {
   flex: 1;
+  min-width: 0; /* Prevents flex items from overflowing */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .user-name {
@@ -490,6 +528,12 @@ export default defineComponent({
     text-align: center;
     padding: 24px;
     gap: 16px;
+    align-items: center;
+  }
+  
+  .profile-avatar-wrapper {
+    width: 100px;
+    height: 100px;
   }
   
   .profile-avatar {

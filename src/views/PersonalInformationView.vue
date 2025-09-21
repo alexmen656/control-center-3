@@ -21,7 +21,7 @@
             <div class="profile-image-section">
               <div class="avatar-container" @click="takePhoto()">
                 <ion-avatar class="profile-avatar">
-                  <img v-if="user.profileImg != 'avater'" :src="user.profileImg" />
+                  <img v-if="user.profileImg && user.profileImg !== 'avater'" :src="user.profileImg" />
                   <ion-icon v-else name="person-outline" class="placeholder-icon"></ion-icon>
                 </ion-avatar>
                 <div class="avatar-overlay">
@@ -191,11 +191,13 @@ export default defineComponent({
   data() {
     return {
       user: {
-        firstName: { value: "", editable: true },
-        lastName: { value: "", editable: true },
+        firstName: { value: "", editable: false },
+        lastName: { value: "", editable: false },
         email: { value: "", editable: false },
         phone: { value: "", editable: false },
-        address: { value: "", editable: true },
+        birthday: { value: "", editable: false },
+        address: { value: "", editable: false },
+        profileImg: ""
       },
     };
   },
@@ -207,7 +209,9 @@ export default defineComponent({
       // Reset all fields to non-editable
       for (const field in this.user) {
         if (Object.prototype.propertyIsEnumerable.call(this.user, field)) {
-          this.user[field].editable = false;
+          if (this.user[field] && typeof this.user[field] === 'object' && 'editable' in this.user[field]) {
+            this.user[field].editable = false;
+          }
         }
       }
       // Optionally reload data to reset any unsaved changes
@@ -215,21 +219,30 @@ export default defineComponent({
     },
     async loadUserData() {
       const data = await getUserData();
-      this.user.email.value = data.email;
-      this.user.firstName.value = data.firstName;
-      this.user.lastName.value = data.lastName;
-      this.user.profileImg = data.profileImg;
+      if (data) {
+        this.user.email.value = data.email || "";
+        this.user.firstName.value = data.firstName || "";
+        this.user.lastName.value = data.lastName || "";
+        this.user.profileImg = data.profileImg || "";
+        // Initialize other fields if they exist in userData
+        this.user.phone.value = data.phone || "";
+        this.user.birthday.value = data.birthday || "";
+        this.user.address.value = data.address || "";
+      }
     },
     save() {
       const filteredUser = {};
       for (const field in this.user) {
         if (Object.prototype.propertyIsEnumerable.call(this.user, field)) {
-          if (field !== "id" && field !== "editable") {
-            filteredUser[field] = this.user[field]["value"];
+          if (field !== "id" && field !== "editable" && field !== "profileImg") {
+            if (this.user[field] && typeof this.user[field] === 'object' && 'value' in this.user[field]) {
+              filteredUser[field] = this.user[field]["value"];
+            }
           }
         }
       }
       filteredUser["editData"] = "editData";
+      
       this.$axios
         .post("user.php?" + this.$qs.stringify(filteredUser), {
           headers: {
@@ -239,20 +252,31 @@ export default defineComponent({
         .then((response) => {
           console.log(response);
           console.log("API response:", response.data);
+          // Reset editable states on successful save
+          for (const field in this.user) {
+            if (Object.prototype.propertyIsEnumerable.call(this.user, field)) {
+              if (this.user[field] && typeof this.user[field] === 'object' && 'editable' in this.user[field]) {
+                this.user[field].editable = false;
+              }
+            }
+          }
         })
         .catch((error) => {
           console.error("API error:", error);
         });
-
-      for (const field in this.user) {
-        if (Object.prototype.propertyIsEnumerable.call(this.user, field)) {
-          this.user[field].editable = false;
-        }
-      }
     },
   },
   async mounted() {
-    this.loadUserData();
+    try {
+      await this.loadUserData();
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      // Set default values if loading fails
+      this.user.firstName.value = '';
+      this.user.lastName.value = '';
+      this.user.email.value = '';
+      this.user.profileImg = '';
+    }
   },
   setup() {
     const { takePhoto, photos } = usePhotoGallery();
