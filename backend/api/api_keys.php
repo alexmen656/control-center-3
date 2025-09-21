@@ -16,9 +16,17 @@ function generateApiKey()
 
 if ($method === 'GET') {
     $projectId = isset($_GET['project_id']) ? escape_string($_GET['project_id']) : null;
+    $service = isset($_GET['service']) ? escape_string($_GET['service']) : null;
 
     if ($projectId) {
-        $sql = "SELECT * FROM api_keys WHERE user_id = '$userID' AND project_id = '$projectId' ORDER BY created_at DESC";
+        $sql = "SELECT * FROM api_keys WHERE user_id = '$userID' AND project_id = '$projectId'";
+        
+        // Filter by service if provided
+        if ($service) {
+            $sql .= " AND service = '$service'";
+        }
+        
+        $sql .= " ORDER BY created_at DESC";
         $result = query($sql);
         $apiKeys = [];
 
@@ -52,6 +60,7 @@ if ($method === 'POST') {
 
     if ($input) {
         $projectId = isset($input['project_id']) ? escape_string($input['project_id']) : null;
+        $service = isset($input['service']) ? escape_string($input['service']) : null;
         $name = isset($input['name']) ? escape_string($input['name']) : null;
         $description = isset($input['description']) ? escape_string($input['description']) : null;
         $expiresAt = isset($input['expires_at']) ? escape_string($input['expires_at']) : null;
@@ -73,11 +82,12 @@ if ($method === 'POST') {
                 $apiKey = generateApiKey();
 
                 // Create SQL for insert
-                $sql = "INSERT INTO api_keys (api_key, name, description, user_id, project_id, expires_at, permissions) 
+                $sql = "INSERT INTO api_keys (api_key, name, description, user_id, project_id, service, expires_at, permissions) 
                                 VALUES ('$apiKey', '$name', " .
                     ($description ? "'$description'" : "NULL") .
                     ", '$userID', '$projectId', " .
-                    ($expiresAt ? "'$expiresAt'" : "NULL") .
+                    ($service ? "'$service'" : "NULL") .
+                    ", " . ($expiresAt ? "'$expiresAt'" : "NULL") .
                     ", " . ($permissions ? "'$permissions'" : "NULL") . ")";
 
                 $result = query($sql);
@@ -89,6 +99,7 @@ if ($method === 'POST') {
                             'id' => mysqli_insert_id($con),
                             'api_key' => $apiKey,
                             'name' => $name,
+                            'service' => $service,
                             'created_at' => date('Y-m-d H:i:s')
                         ],
                         'message' => 'API key created successfully'

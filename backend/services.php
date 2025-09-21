@@ -44,7 +44,7 @@ elseif (isset($_POST['addService']) && isset($_POST['name']) && isset($_POST['pr
 
     if ($query) {
         // Get the new service ID
-        //$serviceId = mysqli_insert_id($conn);
+        //$serviceId = mysqli_insert_id($con);
 
         // Add the service page to the control center pages
         $url = "project/" . $projectName . "/services/" . $link;
@@ -71,12 +71,89 @@ elseif (isset($_POST['addService']) && isset($_POST['name']) && isset($_POST['pr
     } else {
         $response = [
             'status' => 'error',
-            'message' => 'Database error: ' . mysqli_error($conn)
+            'message' => 'Database error: ' . mysqli_error($con)
         ];
         echo echoJSON($response);
     }
 }
-// Delete a service
+// Delete a service completely (including all associated data)
+elseif (isset($_POST['deleteServiceComplete']) && isset($_POST['serviceId'])) {
+    $serviceId = escape_string($_POST['serviceId']);
+    
+    // Start transaction
+    mysqli_autocommit($con, false);
+    
+    try {
+        // Get service details for cleanup
+        $serviceResult = query("SELECT * FROM project_services WHERE id='$serviceId'");
+        if (mysqli_num_rows($serviceResult) == 0) {
+            throw new Exception('Service not found');
+        }
+        $service = fetch_assoc($serviceResult);
+        $serviceLink = $service['link'];
+        $projectID = $service['projectID'];
+        
+        // Get project link for URL cleanup
+        $projectResult = query("SELECT link FROM projects WHERE projectID='$projectID'");
+        $project = fetch_assoc($projectResult);
+        $projectLink = $project['link'];
+        
+        // Delete API keys associated with this service
+        $deleteApiKeys = query("DELETE FROM api_keys WHERE project_id='$projectID' AND service='$serviceLink'");
+        if (!$deleteApiKeys) {
+            throw new Exception('Failed to delete API keys: ' . mysqli_error($con));
+        }
+        
+        // Delete service logs
+        $deleteLogs = query("DELETE FROM control_center_service_logs WHERE project_id='$projectID' AND service='$serviceLink'");
+        if (!$deleteLogs) {
+            throw new Exception('Failed to delete service logs: ' . mysqli_error($con));
+        }
+        
+        // Delete service status history
+        $deleteStatus = query("DELETE FROM service_status_history WHERE project_id='$projectID' AND service='$serviceLink'");
+        if (!$deleteStatus) {
+            throw new Exception('Failed to delete service status history: ' . mysqli_error($con));
+        }
+        
+        // Delete control center pages for this service
+        $serviceUrl = "project/" . $projectLink . "/services/" . $serviceLink;
+        $configUrl = $serviceUrl . "/config";
+        $deletePages = query("DELETE FROM control_center_pages WHERE url='$serviceUrl' OR url='$configUrl'");
+        if (!$deletePages) {
+            throw new Exception('Failed to delete control center pages: ' . mysqli_error($con));
+        }
+        
+        // Finally, delete the service itself
+        $deleteService = query("DELETE FROM project_services WHERE id='$serviceId'");
+        if (!$deleteService) {
+            throw new Exception('Failed to delete service: ' . mysqli_error($con));
+        }
+        
+        // Commit transaction
+        mysqli_commit($con);
+        
+        $response = [
+            'status' => 'success',
+            'message' => 'Service and all associated data deleted successfully'
+        ];
+        echo echoJSON($response);
+        
+    } catch (Exception $e) {
+        // Rollback transaction on error
+        mysqli_rollback($con);
+        
+        $response = [
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ];
+        echo echoJSON($response);
+    } finally {
+        // Re-enable autocommit
+        mysqli_autocommit($con, true);
+    }
+}
+// Delete a service (simple version - backward compatibility)
 elseif (isset($_POST['deleteService']) && isset($_POST['serviceId'])) {
     $serviceId = escape_string($_POST['serviceId']);
 
@@ -85,7 +162,7 @@ elseif (isset($_POST['deleteService']) && isset($_POST['serviceId'])) {
     if ($query) {
         echo "success";
     } else {
-        echo "error: " . mysqli_error($conn);
+        echo "error: " . mysqli_error($con);
     }
 }
 // Update a service
@@ -101,7 +178,7 @@ elseif (isset($_POST['updateService']) && isset($_POST['serviceId']) && isset($_
     if ($query) {
         echo "success";
     } else {
-        echo "error: " . mysqli_error($conn);
+        echo "error: " . mysqli_error($con);
     }
 }
 // Get a specific service

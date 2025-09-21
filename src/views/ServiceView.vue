@@ -58,7 +58,8 @@
               <div class="card-content">
                 <ApiKeyManager 
                   :projectId="projectId" 
-                  :service="service.link" 
+                  :service="service.link"
+                  :hideTitle="true"
                 />
               </div>
             </div>
@@ -73,9 +74,9 @@
               </div>
               <div class="card-content">
                 <ServiceStatusHistory
-                  title="Service Status Überwachung"
                   :projectId="projectId"
                   :service="service.link"
+                  :hideTitle="true"
                 />
               </div>
             </div>
@@ -95,10 +96,10 @@
               </div>
               <div class="card-content">
                 <ServiceLogs
-                  title="Service Logs"
                   :projectId="projectId"
                   :service="service.link"
                   :limit="logLimit"
+                  :hideTitle="true"
                 />
               </div>
             </div>
