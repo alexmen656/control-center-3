@@ -4,43 +4,74 @@
       <SiteTitle v-if="true" icon="folder-outline" title="File System"/>
 
       <div class="page-container">
-        <!-- Action Bar -->
-        <div class="action-bar">
-          <div class="action-group-left">
-            <h3 class="section-title">
-              <ion-icon name="folder-outline"></ion-icon>
-              Project Files
-            </h3>
-            <span class="file-count">{{ fileCount }} items</span>
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="header-content">
+            <h1>Project File System</h1>
+            <p>Browse and manage your project files and folders</p>
           </div>
-          
-          <div class="action-group-right">
-            <div class="search-box">
+          <div class="header-actions">
+            <button class="action-btn secondary" @click="refreshFiles">
+              <ion-icon name="refresh-outline"></ion-icon>
+              Refresh
+            </button>
+            <button class="action-btn secondary" @click="toggleSearch">
               <ion-icon name="search-outline"></ion-icon>
-              <input 
-                type="text" 
-                v-model="searchTerm" 
-                placeholder="Search files and folders..."
-                @input="handleSearch"
-              />
+              {{ showSearchBox ? 'Hide Search' : 'Search' }}
+            </button>
+            <button class="action-btn primary" @click="showUploadArea">
+              <ion-icon name="cloud-upload-outline"></ion-icon>
+              Upload Files
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <ion-icon name="folder-outline"></ion-icon>
             </div>
-            
-            <div class="dropdown">
-              <button class="action-btn dropdown-toggle" @click="toggleDropdown">
-                <ion-icon name="ellipsis-vertical"></ion-icon>
-                Actions
-              </button>
-              <div class="dropdown-menu" :class="{ active: dropdownOpen }">
-                <a href="#" class="dropdown-item" @click="refreshFiles">
-                  <ion-icon name="refresh-outline"></ion-icon>
-                  Refresh
-                </a>
-                <a href="#" class="dropdown-item" @click="showUploadArea">
-                  <ion-icon name="cloud-upload-outline"></ion-icon>
-                  Upload Files
-                </a>
-              </div>
+            <div class="stat-content">
+              <h3>{{ folderCount }}</h3>
+              <p>Folders</p>
             </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <ion-icon name="document-outline"></ion-icon>
+            </div>
+            <div class="stat-content">
+              <h3>{{ fileCount - folderCount }}</h3>
+              <p>Files</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <ion-icon name="grid-outline"></ion-icon>
+            </div>
+            <div class="stat-content">
+              <h3>{{ fileCount }}</h3>
+              <p>Total Items</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div v-if="showSearchBox" class="search-container">
+          <div class="search-box">
+            <ion-icon name="search-outline"></ion-icon>
+            <input 
+              type="text" 
+              placeholder="Search files and folders..." 
+              v-model="searchTerm"
+              class="search-input"
+              autofocus
+              @input="handleSearch"
+            >
+            <button v-if="searchTerm" @click="searchTerm = ''" class="clear-search">
+              <ion-icon name="close-outline"></ion-icon>
+            </button>
           </div>
         </div>
 
@@ -92,27 +123,40 @@
         </div>
 
         <!-- Files Grid -->
-        <div class="files-card">
-          <div class="files-grid" 
-               @dragover.prevent="handleRootDragOver"
-               @drop="handleRootDrop"
-               @dragenter.prevent="handleRootDragEnter"
-               @dragleave="handleRootDragLeave">
-            
-            <!-- No files state -->
-            <div v-if="filteredFileSystem.length === 0" class="no-files-state">
-              <ion-icon name="folder-open-outline" class="no-files-icon"></ion-icon>
-              <h4>No files found</h4>
-              <p v-if="searchTerm">No files match your search criteria</p>
-              <p v-else>This project doesn't have any files yet</p>
-              <button class="action-btn primary" @click="showUploadArea">
-                <ion-icon name="add"></ion-icon>
-                Upload First File
-              </button>
+        <div class="data-card">
+          <div class="card-header">
+            <div class="header-left">
+              <h3>Project Files</h3>
+              <span class="entry-count">{{ filteredFileSystem.length }} item{{ filteredFileSystem.length !== 1 ? 's' : '' }}</span>
             </div>
+          </div>
 
-            <!-- File and folder cards -->
-            <div v-for="item in filteredFileSystem" :key="item.name" class="file-card-container">
+          <div class="files-wrapper">
+            <div class="files-grid" 
+                 @dragover.prevent="handleRootDragOver"
+                 @drop="handleRootDrop"
+                 @dragenter.prevent="handleRootDragEnter"
+                 @dragleave="handleRootDragLeave">
+              
+              <!-- No files state -->
+              <div v-if="filteredFileSystem.length === 0" class="no-data-state">
+                <div class="no-data-content">
+                  <ion-icon name="folder-open-outline" class="no-data-icon"></ion-icon>
+                  <h4>No files found</h4>
+                  <p v-if="searchTerm">No files match your search criteria</p>
+                  <p v-else>This project doesn't have any files yet</p>
+                  <button v-if="searchTerm" @click="searchTerm = ''" class="action-btn primary">
+                    Clear Search
+                  </button>
+                  <button v-else class="action-btn primary" @click="showUploadArea">
+                    <ion-icon name="add"></ion-icon>
+                    Upload First File
+                  </button>
+                </div>
+              </div>
+
+              <!-- File and folder cards -->
+              <div v-for="item in filteredFileSystem" :key="item.name" class="file-card-container">
               <div 
                 class="file-card" 
                 :class="{ 
@@ -165,8 +209,15 @@
           </div>
         </div>
 
-        <!-- Folder Creation -->
-        <div class="folder-creation-card">
+        <!-- Folder Creation Card -->
+        <div class="data-card">
+          <div class="card-header">
+            <div class="header-left">
+              <h3>Create New Folder</h3>
+              <span class="entry-count">Quick folder creation</span>
+            </div>
+          </div>
+          
           <div class="folder-creation">
             <input 
               type="text"
@@ -281,6 +332,7 @@
           </div>
         </ion-content>
       </ion-modal>
+    </div>
     </ion-content>
   </ion-page>
 </template>
@@ -331,6 +383,7 @@ export default defineComponent({
       dropdownOpen: false,
       showUpload: false,
       searchTerm: '',
+      showSearchBox: false,
       // Image preview data
       imagePreviewOpen: false,
       previewImageUrl: "",
@@ -348,6 +401,9 @@ export default defineComponent({
   computed: {
     fileCount() {
       return this.fileSystem.length;
+    },
+    folderCount() {
+      return this.fileSystem.filter(item => item.type === 'folder').length;
     },
     filteredFileSystem() {
       if (!this.searchTerm.trim()) {
@@ -497,6 +553,13 @@ export default defineComponent({
     // UI Methods
     toggleDropdown() {
       this.dropdownOpen = !this.dropdownOpen;
+    },
+
+    toggleSearch() {
+      this.showSearchBox = !this.showSearchBox;
+      if (!this.showSearchBox) {
+        this.searchTerm = "";
+      }
     },
 
     showUploadArea() {
@@ -924,45 +987,144 @@ export default defineComponent({
   background: var(--background);
 }
 
-/* Action Bar */
-.action-bar {
+/* Page Header */
+.page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+  align-items: flex-start;
+  margin-bottom: 32px;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 20px;
 }
 
-.action-group-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.header-content h1 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
-.action-group-right {
+.header-content p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.header-actions {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
-.section-title {
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0;
+  gap: 20px;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: white;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  flex-shrink: 0;
+}
+
+.stat-content h3 {
+  margin: 0 0 4px 0;
+  font-size: 28px;
+  font-weight: 700;
   color: var(--text-primary);
-  font-size: 24px;
-  font-weight: 600;
+  line-height: 1;
 }
 
-.section-title ion-icon {
-  color: var(--primary-color);
-}
-
-.file-count {
+.stat-content p {
+  margin: 0;
   color: var(--text-secondary);
   font-size: 14px;
+  font-weight: 500;
+}
+
+/* Search Container */
+.search-container {
+  margin-bottom: 24px;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 500px;
+}
+
+.search-box ion-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  font-size: 16px;
+  z-index: 1;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 16px 12px 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+}
+
+.clear-search {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+}
+
+.clear-search:hover {
+  background: var(--background);
+  color: var(--text-primary);
 }
 
 .action-btn {
@@ -999,103 +1161,18 @@ export default defineComponent({
   border-color: var(--primary-hover);
 }
 
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
+.action-btn.secondary {
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
 }
 
 .action-btn ion-icon {
   font-size: 16px;
 }
 
-/* Dropdown */
-.dropdown {
-  position: relative;
-}
 
-.dropdown-toggle {
-  padding: 10px 12px;
-}
 
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
-  min-width: 180px;
-  z-index: 1000;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-8px);
-  transition: all 0.2s ease;
-}
-
-.dropdown-menu.active {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  color: var(--text-primary);
-  text-decoration: none;
-  font-size: 14px;
-  cursor: pointer;
-  border-bottom: 1px solid var(--border);
-}
-
-.dropdown-item:last-child {
-  border-bottom: none;
-}
-
-.dropdown-item:hover {
-  background: var(--background);
-}
-
-.dropdown-item ion-icon {
-  font-size: 16px;
-  color: var(--text-secondary);
-}
-
-/* Search Box */
-.search-box {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-box ion-icon {
-  position: absolute;
-  left: 12px;
-  color: var(--text-muted);
-  font-size: 16px;
-  z-index: 1;
-}
-
-.search-box input {
-  padding: 10px 16px 10px 40px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 14px;
-  background: var(--surface);
-  color: var(--text-primary);
-  min-width: 250px;
-  transition: all 0.2s ease;
-}
-
-.search-box input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
-}
 
 /* Upload Card */
 .upload-card {
@@ -1269,14 +1346,41 @@ export default defineComponent({
   transform: scale(1.1);
 }
 
-/* Files Card */
-.files-card {
+/* Data Card */
+.data-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
-  margin-bottom: 24px;
   overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-left h3 {
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.entry-count {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Files Wrapper */
+.files-wrapper {
+  overflow-x: auto;
 }
 
 /* Files Grid */
@@ -1392,32 +1496,34 @@ export default defineComponent({
   font-size: 12px;
 }
 
-/* No Files State */
-.no-files-state {
+/* No Data State */
+.no-data-state {
   grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   padding: 60px 20px;
   text-align: center;
+  background: var(--surface);
 }
 
-.no-files-icon {
+.no-data-content {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.no-data-icon {
   font-size: 64px;
   color: var(--text-muted);
   margin-bottom: 16px;
   opacity: 0.5;
 }
 
-.no-files-state h4 {
+.no-data-content h4 {
   margin: 0 0 8px 0;
   color: var(--text-primary);
   font-size: 18px;
   font-weight: 600;
 }
 
-.no-files-state p {
+.no-data-content p {
   margin: 0 0 24px 0;
   color: var(--text-secondary);
   font-size: 14px;
@@ -1425,14 +1531,6 @@ export default defineComponent({
 }
 
 /* Folder Creation */
-.folder-creation-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  overflow: hidden;
-}
-
 .folder-creation {
   display: flex;
   gap: 12px;
@@ -1648,7 +1746,6 @@ export default defineComponent({
   
   .folder-creation {
     flex-direction: column;
-    margin: 12px;
   }
   
   .folder-input {
@@ -1659,11 +1756,6 @@ export default defineComponent({
   .folder-button {
     width: 100%;
     justify-content: center;
-  }
-  
-  .dropdown-menu {
-    right: auto;
-    left: 0;
   }
   
   .modal-files-grid {
@@ -1681,8 +1773,8 @@ export default defineComponent({
     padding: 8px;
   }
   
-  .section-title {
-    font-size: 20px;
+  .header-content h1 {
+    font-size: 24px;
   }
 }
 
