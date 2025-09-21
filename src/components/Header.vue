@@ -99,13 +99,13 @@ export default defineComponent({
 }
 
 /* Hover effects */
-.logo-title:hover .logo-image {
+/*.logo-title:hover .logo-image {
   transform: scale(1.05);
 }
 
 .logo-title:hover .logo-text {
   color: var(--ion-color-primary-shade);
-}
+}*/
 
 .logo-title:active .logo-image {
   transform: scale(0.98);
