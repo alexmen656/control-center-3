@@ -192,6 +192,81 @@ if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
     } else {
         echo jsonResponse('Failed to delete project', false);
     }
+} elseif (isset($_POST['updateProject']) && isset($_POST['projectID'])) {
+    // Projekt aktualisieren
+    $id = escape_string($_POST['projectID']);
+    $name = isset($_POST['projectName']) ? escape_string($_POST['projectName']) : '';
+    $icon = isset($_POST['projectIcon']) ? escape_string($_POST['projectIcon']) : '';
+    
+    // Check if project exists and user has permission
+    $project = query("SELECT * FROM projects WHERE id='$id'");
+    if (mysqli_num_rows($project) == 0) {
+        echo jsonResponse('Project not found', false);
+        exit;
+    }
+    
+    $projectData = fetch_assoc($project);
+    $projectID = $projectData['projectID'];
+    
+    if (!checkUserProjectPermission($userID, $projectID)) {
+        echo jsonResponse('Permission denied', false);
+        exit;
+    }
+    
+    $updateFields = [];
+    if ($name !== '') {
+        $updateFields[] = "name='$name'";
+    }
+    if ($icon !== '') {
+        $updateFields[] = "icon='$icon'";
+    }
+    
+    if (!empty($updateFields)) {
+        $updateQuery = "UPDATE projects SET " . implode(", ", $updateFields) . " WHERE id='$id'";
+        $mysqli = query($updateQuery);
+        
+        if ($mysqli) {
+            echo jsonResponse('Project updated successfully');
+        } else {
+            echo jsonResponse('Failed to update project', false);
+        }
+    } else {
+        echo jsonResponse('No fields to update', false);
+    }
+} elseif (isset($_POST['toggleProjectVisibility']) && isset($_POST['projectID'])) {
+    // Projekt Sichtbarkeit umschalten
+    $id = escape_string($_POST['projectID']);
+    $hidden = isset($_POST['hidden']) ? ($_POST['hidden'] === 'true' || $_POST['hidden'] === true) : false;
+    
+    // Check if project exists and user has permission
+    $project = query("SELECT * FROM projects WHERE id='$id'");
+    if (mysqli_num_rows($project) == 0) {
+        echo jsonResponse('Project not found', false);
+        exit;
+    }
+    
+    $projectData = fetch_assoc($project);
+    $projectID = $projectData['projectID'];
+    
+    if (!checkUserProjectPermission($userID, $projectID)) {
+        echo jsonResponse('Permission denied', false);
+        exit;
+    }
+    
+    // Check if hidden column exists, if not add it
+    $checkColumn = query("SHOW COLUMNS FROM projects LIKE 'hidden'");
+    if (mysqli_num_rows($checkColumn) == 0) {
+        query("ALTER TABLE projects ADD COLUMN hidden BOOLEAN DEFAULT FALSE");
+    }
+    
+    $hiddenValue = $hidden ? 1 : 0;
+    $mysqli = query("UPDATE projects SET hidden='$hiddenValue' WHERE id='$id'");
+    
+    if ($mysqli) {
+        echo jsonResponse('Project visibility updated successfully');
+    } else {
+        echo jsonResponse('Failed to update project visibility', false);
+    }
 } elseif (isset($_POST['getProjectInfo']) && isset($_POST['project'])) {
     // Projekt-Informationen abrufen
     $link = escape_string($_POST['project']);

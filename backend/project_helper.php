@@ -159,7 +159,9 @@ function getUserProjectsByUserID($userID)
                 "id" => $projectData['id'],
                 "icon" => $projectData['icon'],
                 "name" => $projectData['name'],
-                "link" => $projectData['link']
+                "link" => $projectData['link'],
+                "hidden" => isset($projectData['hidden']) ? (bool)$projectData['hidden'] : false,
+                "createdOn" => isset($projectData['createdOn']) ? $projectData['createdOn'] : null
             ];
         }
     }
@@ -604,7 +606,7 @@ function createMonacoCodespaceDirectory($projectLink, $codespaceSlug, $codespace
         // Copy template files if template exists
         $templateDir = __DIR__ . "/templates/codespace/" . $template;
         $packageName = strtolower(str_replace([' ', '-'], ['_', '_'], $codespaceName));
-        
+
         if (is_dir($templateDir)) {
             // Recursively copy template directory contents
             $iterator = new RecursiveIteratorIterator(
@@ -680,7 +682,7 @@ JS;
             file_put_contents($dataDir . '/vite.config.js', $viteConfig);
         }
 
-       /* $lastCommit = [];
+        /* $lastCommit = [];
         $createdFiles = glob($dataDir . '/*');
         foreach ($createdFiles as $file) {
             if (is_file($file) && !strpos(basename($file), '.monaco_')) {

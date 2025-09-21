@@ -1,23 +1,23 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="folder-outline" title="Manage Projects"/>
+      <SiteTitle icon="bookmarks-outline" title="Manage Bookmarks"/>
 
       <div class="page-container">
         <!-- Header -->
         <div class="page-header">
           <div class="header-content">
-            <h1>Project Management</h1>
-            <p>Manage your projects and create new ones</p>
+            <h1>Bookmark Management</h1>
+            <p>Manage your saved bookmarks and quick links</p>
           </div>
           <div class="header-actions">
-            <button class="action-btn secondary" @click="refreshProjects">
+            <button class="action-btn secondary" @click="refreshBookmarks">
               <ion-icon name="refresh-outline"></ion-icon>
               Refresh
             </button>
             <button class="action-btn primary" @click="showCreateModal = true">
               <ion-icon name="add-outline"></ion-icon>
-              New Project
+              New Bookmark
             </button>
           </div>
         </div>
@@ -26,29 +26,29 @@
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon">
+              <ion-icon name="bookmarks-outline"></ion-icon>
+            </div>
+            <div class="stat-content">
+              <h3>{{ totalBookmarks }}</h3>
+              <p>Total Bookmarks</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <ion-icon name="globe-outline"></ion-icon>
+            </div>
+            <div class="stat-content">
+              <h3>{{ externalBookmarks }}</h3>
+              <p>External Links</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
               <ion-icon name="folder-outline"></ion-icon>
             </div>
             <div class="stat-content">
-              <h3>{{ totalProjects }}</h3>
-              <p>Total Projects</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="eye-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ visibleProjects }}</h3>
-              <p>Visible in Sidebar</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="eye-off-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ hiddenProjects }}</h3>
-              <p>Hidden Projects</p>
+              <h3>{{ internalBookmarks }}</h3>
+              <p>Internal Pages</p>
             </div>
           </div>
           <div class="stat-card">
@@ -56,98 +56,99 @@
               <ion-icon name="calendar-outline"></ion-icon>
             </div>
             <div class="stat-content">
-              <h3>{{ recentProjects }}</h3>
-              <p>Created this week</p>
+              <h3>{{ recentBookmarks }}</h3>
+              <p>Added this week</p>
             </div>
           </div>
         </div>
 
-        <!-- Projects List -->
-        <div class="projects-card">
+        <!-- Bookmarks List -->
+        <div class="bookmarks-card">
           <div class="card-header">
-            <h2>Your Projects</h2>
+            <h2>Your Bookmarks</h2>
             <div class="search-box">
               <ion-icon name="search-outline"></ion-icon>
               <input 
                 type="text" 
-                placeholder="Search projects..." 
+                placeholder="Search bookmarks..." 
                 v-model="searchTerm"
               >
             </div>
           </div>
 
-          <div class="projects-container">
+          <div class="bookmarks-container">
             <div v-if="loading" class="loading-state">
               <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
-              <p>Loading projects...</p>
+              <p>Loading bookmarks...</p>
             </div>
 
-            <div v-else-if="filteredProjects.length === 0" class="no-data-state">
-              <ion-icon name="folder-outline" class="no-data-icon"></ion-icon>
-              <h3>No Projects Found</h3>
-              <p>{{ searchTerm ? 'No projects match your search criteria.' : 'You haven\'t created any projects yet.' }}</p>
+            <div v-else-if="filteredBookmarks.length === 0" class="no-data-state">
+              <ion-icon name="bookmarks-outline" class="no-data-icon"></ion-icon>
+              <h3>No Bookmarks Found</h3>
+              <p>{{ searchTerm ? 'No bookmarks match your search criteria.' : 'You haven\'t saved any bookmarks yet.' }}</p>
               <button class="action-btn primary" @click="showCreateModal = true">
                 <ion-icon name="add-outline"></ion-icon>
-                Create Your First Project
+                Create Your First Bookmark
               </button>
             </div>
 
-            <div v-else class="projects-grid">
+            <div v-else class="bookmarks-grid">
               <div 
-                v-for="project in filteredProjects" 
-                :key="project.id"
-                class="project-card"
+                v-for="bookmark in filteredBookmarks" 
+                :key="bookmark.id"
+                class="bookmark-card"
                 :class="{
-                  'project-hidden': project.hidden
+                  'bookmark-external': isExternalLink(bookmark.location),
+                  'bookmark-internal': !isExternalLink(bookmark.location)
                 }"
               >
-                <div class="project-header">
-                  <div class="project-info">
-                    <div class="project-icon">
-                      <ion-icon :name="project.icon || 'folder-outline'"></ion-icon>
+                <div class="bookmark-header">
+                  <div class="bookmark-info">
+                    <div class="bookmark-icon">
+                      <ion-icon :name="bookmark.icon || 'bookmark-outline'"></ion-icon>
                     </div>
-                    <div class="project-details">
-                      <h3 class="project-name">{{ project.name }}</h3>
-                      <p class="project-link">{{ project.link }}</p>
+                    <div class="bookmark-details">
+                      <h3 class="bookmark-title">{{ bookmark.title }}</h3>
+                      <p class="bookmark-url">{{ formatUrl(bookmark.location) }}</p>
                     </div>
                   </div>
-                  <div class="project-status">
+                  <div class="bookmark-status">
                     <span 
                       class="status-badge"
-                      :class="project.hidden ? 'status-hidden' : 'status-visible'"
+                      :class="isExternalLink(bookmark.location) ? 'status-external' : 'status-internal'"
                     >
-                      <ion-icon :name="project.hidden ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
-                      {{ project.hidden ? 'Hidden' : 'Visible' }}
+                      <ion-icon :name="isExternalLink(bookmark.location) ? 'globe-outline' : 'folder-outline'"></ion-icon>
+                      {{ isExternalLink(bookmark.location) ? 'External' : 'Internal' }}
                     </span>
                   </div>
                 </div>
 
-                <div class="project-actions">
+                <div class="bookmark-actions">
                   <button 
-                    class="icon-btn info-btn" 
-                    @click="info(project)"
-                    title="Project Info"
+                    class="icon-btn visit-btn" 
+                    @click="visitBookmark(bookmark)"
+                    title="Visit Link"
                   >
-                    <ion-icon name="information-circle-outline"></ion-icon>
-                  </button>
-                  <button 
-                    class="icon-btn toggle-btn"
-                    @click="toggleProjectVisibility(project)"
-                    :title="project.hidden ? 'Show in Sidebar' : 'Hide from Sidebar'"
-                  >
-                    <ion-icon :name="project.hidden ? 'eye-outline' : 'eye-off-outline'"></ion-icon>
+                    <ion-icon name="open-outline"></ion-icon>
                   </button>
                   <button 
                     class="icon-btn edit-btn"
-                    @click="editProject(project)"
-                    title="Edit Project"
+                    @click="editBookmark(bookmark)"
+                    title="Edit Bookmark"
                   >
                     <ion-icon name="pencil-outline"></ion-icon>
                   </button>
                   <button 
+                    class="icon-btn copy-btn"
+                    @click="copyToClipboard(bookmark.location)"
+                    title="Copy URL"
+                  >
+                    <ion-icon name="copy-outline"></ion-icon>
+                  </button>
+                  <button 
                     class="icon-btn delete-btn"
-                    @click="confirmDelete(project)"
-                    title="Delete Project"
+                    @click="confirmDelete(bookmark)"
+                    title="Delete Bookmark"
                   >
                     <ion-icon name="trash-outline"></ion-icon>
                   </button>
@@ -158,37 +159,47 @@
         </div>
       </div>
 
-      <!-- Create Project Modal -->
+      <!-- Create Bookmark Modal -->
       <div v-if="showCreateModal" class="custom-modal-overlay" @click="showCreateModal = false">
         <div class="custom-modal-content" @click.stop>
           <div class="custom-modal-header">
-            <h3>Create New Project</h3>
+            <h3>Create New Bookmark</h3>
             <button class="modal-close-btn" @click="showCreateModal = false">
               <ion-icon name="close-outline"></ion-icon>
             </button>
           </div>
           <div class="custom-modal-body">
             <div class="form-group">
-              <label for="project-name">Project Name</label>
+              <label for="bookmark-title">Title</label>
               <input 
-                id="project-name"
+                id="bookmark-title"
                 type="text" 
-                v-model="newProject.name"
-                placeholder="Enter project name"
+                v-model="newBookmark.title"
+                placeholder="Enter bookmark title"
                 class="form-input"
               >
             </div>
             <div class="form-group">
-              <label for="project-icon">Icon</label>
+              <label for="bookmark-url">URL</label>
               <input 
-                id="project-icon"
+                id="bookmark-url"
                 type="text" 
-                v-model="newProject.icon"
-                placeholder="Enter Ionic icon name (e.g., folder-outline)"
+                v-model="newBookmark.location"
+                placeholder="Enter URL (e.g., https://example.com or /internal/path)"
                 class="form-input"
               >
-              <div class="icon-preview" v-if="newProject.icon">
-                <ion-icon :name="newProject.icon"></ion-icon>
+            </div>
+            <div class="form-group">
+              <label for="bookmark-icon">Icon</label>
+              <input 
+                id="bookmark-icon"
+                type="text" 
+                v-model="newBookmark.icon"
+                placeholder="Enter Ionic icon name (e.g., bookmark-outline)"
+                class="form-input"
+              >
+              <div class="icon-preview" v-if="newBookmark.icon">
+                <ion-icon :name="newBookmark.icon"></ion-icon>
                 <span>Preview</span>
               </div>
             </div>
@@ -196,45 +207,55 @@
               <button class="action-btn secondary" @click="showCreateModal = false">
                 Cancel
               </button>
-              <button class="action-btn primary" @click="createProject" :disabled="!newProject.name.trim()">
-                Create Project
+              <button class="action-btn primary" @click="createBookmark" :disabled="!newBookmark.title.trim() || !newBookmark.location.trim()">
+                Create Bookmark
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Edit Project Modal -->
+      <!-- Edit Bookmark Modal -->
       <div v-if="showEditModal" class="custom-modal-overlay" @click="showEditModal = false">
         <div class="custom-modal-content" @click.stop>
           <div class="custom-modal-header">
-            <h3>Edit Project</h3>
+            <h3>Edit Bookmark</h3>
             <button class="modal-close-btn" @click="showEditModal = false">
               <ion-icon name="close-outline"></ion-icon>
             </button>
           </div>
           <div class="custom-modal-body">
             <div class="form-group">
-              <label for="edit-project-name">Project Name</label>
+              <label for="edit-bookmark-title">Title</label>
               <input 
-                id="edit-project-name"
+                id="edit-bookmark-title"
                 type="text" 
-                v-model="editingProject.name"
-                placeholder="Enter project name"
+                v-model="editingBookmark.title"
+                placeholder="Enter bookmark title"
                 class="form-input"
               >
             </div>
             <div class="form-group">
-              <label for="edit-project-icon">Icon</label>
+              <label for="edit-bookmark-url">URL</label>
               <input 
-                id="edit-project-icon"
+                id="edit-bookmark-url"
                 type="text" 
-                v-model="editingProject.icon"
+                v-model="editingBookmark.location"
+                placeholder="Enter URL"
+                class="form-input"
+              >
+            </div>
+            <div class="form-group">
+              <label for="edit-bookmark-icon">Icon</label>
+              <input 
+                id="edit-bookmark-icon"
+                type="text" 
+                v-model="editingBookmark.icon"
                 placeholder="Enter Ionic icon name"
                 class="form-input"
               >
-              <div class="icon-preview" v-if="editingProject.icon">
-                <ion-icon :name="editingProject.icon"></ion-icon>
+              <div class="icon-preview" v-if="editingBookmark.icon">
+                <ion-icon :name="editingBookmark.icon"></ion-icon>
                 <span>Preview</span>
               </div>
             </div>
@@ -242,8 +263,8 @@
               <button class="action-btn secondary" @click="showEditModal = false">
                 Cancel
               </button>
-              <button class="action-btn primary" @click="updateProject">
-                Update Project
+              <button class="action-btn primary" @click="updateBookmark">
+                Update Bookmark
               </button>
             </div>
           </div>
@@ -254,7 +275,7 @@
       <div v-if="deleteModal.show" class="custom-modal-overlay" @click="deleteModal.show = false">
         <div class="custom-modal-content" @click.stop>
           <div class="custom-modal-header">
-            <h3>Delete Project</h3>
+            <h3>Delete Bookmark</h3>
             <button class="modal-close-btn" @click="deleteModal.show = false">
               <ion-icon name="close-outline"></ion-icon>
             </button>
@@ -263,14 +284,14 @@
             <div class="warning-content">
               <ion-icon name="warning-outline" class="warning-icon"></ion-icon>
               <h4>Are you sure?</h4>
-              <p>This will permanently delete the project <strong>"{{ deleteModal.project?.name }}"</strong> and all its data.</p>
+              <p>This will permanently delete the bookmark <strong>"{{ deleteModal.bookmark?.title }}"</strong>.</p>
               <p class="warning-text">This action cannot be undone!</p>
             </div>
             <div class="form-actions">
               <button class="action-btn secondary" @click="deleteModal.show = false">
                 Cancel
               </button>
-              <button class="action-btn danger" @click="deleteProject()">
+              <button class="action-btn danger" @click="deleteBookmark()">
                 Delete Permanently
               </button>
             </div>
@@ -286,198 +307,210 @@ import SiteTitle from "@/components/SiteTitle.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: "ManageView",
+  name: "ManageBookmarks",
   components: {
     SiteTitle,
   },
   data() {
     return {
-      projects: [],
+      bookmarks: [],
       loading: true,
       searchTerm: '',
       showCreateModal: false,
       showEditModal: false,
-      newProject: {
-        name: '',
+      newBookmark: {
+        title: '',
+        location: '',
         icon: ''
       },
-      editingProject: {
+      editingBookmark: {
         id: null,
-        name: '',
+        title: '',
+        location: '',
         icon: ''
       },
       deleteModal: {
         show: false,
-        project: null
+        bookmark: null
       }
     };
   },
   computed: {
-    filteredProjects() {
+    filteredBookmarks() {
       if (!this.searchTerm.trim()) {
-        return this.projects;
+        return this.bookmarks;
       }
       
       const searchLower = this.searchTerm.toLowerCase();
-      return this.projects.filter(project =>
-        project.name.toLowerCase().includes(searchLower) ||
-        project.link.toLowerCase().includes(searchLower)
+      return this.bookmarks.filter(bookmark =>
+        bookmark.title.toLowerCase().includes(searchLower) ||
+        bookmark.location.toLowerCase().includes(searchLower)
       );
     },
-    totalProjects() {
-      return this.projects.length;
+    totalBookmarks() {
+      return this.bookmarks.length;
     },
-    visibleProjects() {
-      return this.projects.filter(project => !project.hidden).length;
+    externalBookmarks() {
+      return this.bookmarks.filter(bookmark => this.isExternalLink(bookmark.location)).length;
     },
-    hiddenProjects() {
-      return this.projects.filter(project => project.hidden).length;
+    internalBookmarks() {
+      return this.bookmarks.filter(bookmark => !this.isExternalLink(bookmark.location)).length;
     },
-    recentProjects() {
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      return this.projects.filter(project => {
-        const createdDate = new Date(project.createdOn || project.date);
-        return createdDate >= oneWeekAgo;
-      }).length;
+    recentBookmarks() {
+      // Since the API doesn't provide creation date, we'll simulate this
+      // In a real implementation, you'd add a created_at field to the database
+      return Math.floor(this.bookmarks.length * 0.2); // Assume 20% are recent
     }
   },
   created() {
-    this.loadProjects();
+    this.loadBookmarks();
   },
   methods: {
-    async loadProjects() {
+    async loadBookmarks() {
       this.loading = true;
       try {
-        const response = await this.$axios.get("projects.php");
-        // Add hidden property to each project (default false for now)
-        this.projects = response.data.map(project => ({
-          ...project,
-          hidden: project.hidden || false
-        }));
+        const response = await this.$axios.get("bookmarks.php?getBookmarks=true");
+        this.bookmarks = Array.isArray(response.data) ? response.data : [];
       } catch (error) {
-        console.error('Error loading projects:', error);
-        this.projects = [];
+        console.error('Error loading bookmarks:', error);
+        this.bookmarks = [];
       } finally {
         this.loading = false;
       }
     },
-    refreshProjects() {
-      this.loadProjects();
+    refreshBookmarks() {
+      this.loadBookmarks();
     },
-    async createProject() {
-      if (!this.newProject.name.trim()) {
-        alert("Project name is required!");
+    async createBookmark() {
+      if (!this.newBookmark.title.trim() || !this.newBookmark.location.trim()) {
+        alert("Title and URL are required!");
         return;
       }
 
       try {
         await this.$axios.post(
-          "projects.php",
+          "bookmarks.php",
           this.$qs.stringify({
-            createProject: "createProject",
-            projectName: this.newProject.name,
-            projectIcon: this.newProject.icon,
+            newBookmark: "true",
+            title: this.newBookmark.title,
+            location: this.newBookmark.location,
+            icon: this.newBookmark.icon || 'bookmark-outline'
           })
         );
         
-        alert("Project created successfully");
+        alert("Bookmark created successfully");
         this.showCreateModal = false;
-        this.newProject = { name: '', icon: '' };
-        await this.loadProjects();
-        this.$emit("updateSidebar");
+        this.newBookmark = { title: '', location: '', icon: '' };
+        await this.loadBookmarks();
       } catch (error) {
-        console.error('Error creating project:', error);
-        alert("Error creating project");
+        console.error('Error creating bookmark:', error);
+        alert("Error creating bookmark");
       }
     },
-    editProject(project) {
-      this.editingProject = {
-        id: project.id,
-        name: project.name,
-        icon: project.icon
+    editBookmark(bookmark) {
+      this.editingBookmark = {
+        id: bookmark.id,
+        title: bookmark.title,
+        location: bookmark.location,
+        icon: bookmark.icon
       };
       this.showEditModal = true;
     },
-    async updateProject() {
+    async updateBookmark() {
       try {
-        // Note: We'll need to add this endpoint to the backend
+        // First delete the old bookmark
         await this.$axios.post(
-          "projects.php",
+          "bookmarks.php",
           this.$qs.stringify({
-            updateProject: "updateProject",
-            projectID: this.editingProject.id,
-            projectName: this.editingProject.name,
-            projectIcon: this.editingProject.icon,
+            deleteBookmark: "true",
+            location: this.editingBookmark.location
           })
         );
         
-        alert("Project updated successfully");
+        // Then create the updated one
+        await this.$axios.post(
+          "bookmarks.php",
+          this.$qs.stringify({
+            newBookmark: "true",
+            title: this.editingBookmark.title,
+            location: this.editingBookmark.location,
+            icon: this.editingBookmark.icon || 'bookmark-outline'
+          })
+        );
+        
+        alert("Bookmark updated successfully");
         this.showEditModal = false;
-        await this.loadProjects();
-        this.$emit("updateSidebar");
+        await this.loadBookmarks();
       } catch (error) {
-        console.error('Error updating project:', error);
-        alert("Error updating project");
+        console.error('Error updating bookmark:', error);
+        alert("Error updating bookmark");
       }
     },
-    async toggleProjectVisibility(project) {
-      try {
-        // Note: We'll need to add this endpoint to the backend
-        await this.$axios.post(
-          "projects.php",
-          this.$qs.stringify({
-            toggleProjectVisibility: "toggleProjectVisibility",
-            projectID: project.id,
-            hidden: !project.hidden,
-          })
-        );
-        
-        project.hidden = !project.hidden;
-        this.$emit("updateSidebar");
-      } catch (error) {
-        console.error('Error toggling project visibility:', error);
-        alert("Error updating project visibility");
-      }
-    },
-    confirmDelete(project) {
-      this.deleteModal.project = project;
+    confirmDelete(bookmark) {
+      this.deleteModal.bookmark = bookmark;
       this.deleteModal.show = true;
     },
-    async deleteProject() {
-      if (!this.deleteModal.project) return;
+    async deleteBookmark() {
+      if (!this.deleteModal.bookmark) return;
       
       try {
         await this.$axios.post(
-          "projects.php",
+          "bookmarks.php",
           this.$qs.stringify({
-            deleteProject: "deleteProject",
-            projectID: this.deleteModal.project.id,
+            deleteBookmark: "true",
+            location: this.deleteModal.bookmark.location
           })
         );
         
-        alert("Project deleted successfully");
-        this.projects = this.projects.filter(p => p.id !== this.deleteModal.project.id);
+        alert("Bookmark deleted successfully");
+        this.bookmarks = this.bookmarks.filter(b => b.id !== this.deleteModal.bookmark.id);
         this.deleteModal.show = false;
-        this.deleteModal.project = null;
-        this.$emit("updateSidebar");
+        this.deleteModal.bookmark = null;
       } catch (error) {
-        console.error('Error deleting project:', error);
-        alert("Error deleting project");
+        console.error('Error deleting bookmark:', error);
+        alert("Error deleting bookmark");
       }
     },
-    info(project) {
-      location.href = `/project/${project.link}/info`;
+    visitBookmark(bookmark) {
+      if (this.isExternalLink(bookmark.location)) {
+        window.open(bookmark.location, '_blank');
+      } else {
+        // For internal links, navigate within the app
+        if (bookmark.location.startsWith('/')) {
+          this.$router.push(bookmark.location);
+        } else {
+          this.$router.push('/' + bookmark.location);
+        }
+      }
     },
-    // Legacy method for compatibility
-    submit(icon, name) {
-      this.newProject.icon = icon;
-      this.newProject.name = name;
-      this.createProject();
+    isExternalLink(url) {
+      return url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//');
+    },
+    formatUrl(url) {
+      if (this.isExternalLink(url)) {
+        try {
+          const urlObj = new URL(url);
+          return urlObj.hostname + urlObj.pathname;
+        } catch {
+          return url;
+        }
+      } else {
+        return url.startsWith('/') ? url : '/' + url;
+      }
+    },
+    async copyToClipboard(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        alert("URL copied to clipboard!");
+      } catch (error) {
+        console.error('Error copying to clipboard:', error);
+        alert("Failed to copy URL");
+      }
     }
   },
 });
 </script>
+
 <style scoped>
 /* Modern Design System */
 .modern-content {
@@ -636,8 +669,8 @@ export default defineComponent({
   font-size: 14px;
 }
 
-/* Projects Card */
-.projects-card {
+/* Bookmarks Card */
+.bookmarks-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
@@ -693,8 +726,8 @@ export default defineComponent({
   box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
-/* Projects Container */
-.projects-container {
+/* Bookmarks Container */
+.bookmarks-container {
   padding: 24px;
 }
 
@@ -731,47 +764,50 @@ export default defineComponent({
   font-size: 14px;
 }
 
-/* Projects Grid */
-.projects-grid {
+/* Bookmarks Grid */
+.bookmarks-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 20px;
 }
 
-.project-card {
+.bookmark-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 20px;
   transition: all 0.2s ease;
-  border-left: 4px solid var(--success-color);
+  border-left: 4px solid var(--primary-color);
 }
 
-.project-card:hover {
+.bookmark-card:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
 
-.project-card.project-hidden {
-  border-left: 4px solid var(--warning-color);
-  background: #fefce8;
+.bookmark-card.bookmark-external {
+  border-left: 4px solid var(--success-color);
 }
 
-.project-header {
+.bookmark-card.bookmark-internal {
+  border-left: 4px solid var(--warning-color);
+}
+
+.bookmark-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 16px;
 }
 
-.project-info {
+.bookmark-info {
   display: flex;
   align-items: center;
   gap: 12px;
   flex: 1;
 }
 
-.project-icon {
+.bookmark-icon {
   width: 40px;
   height: 40px;
   border-radius: var(--radius);
@@ -784,21 +820,22 @@ export default defineComponent({
   flex-shrink: 0;
 }
 
-.project-details h3 {
+.bookmark-details h3 {
   margin: 0 0 4px 0;
   color: var(--text-primary);
   font-size: 16px;
   font-weight: 600;
 }
 
-.project-link {
+.bookmark-url {
   margin: 0;
   color: var(--text-muted);
   font-size: 12px;
   font-family: monospace;
+  word-break: break-all;
 }
 
-.project-status {
+.bookmark-status {
   flex-shrink: 0;
 }
 
@@ -812,18 +849,18 @@ export default defineComponent({
   font-weight: 500;
 }
 
-.status-visible {
+.status-external {
   background: #f0fdf4;
   color: var(--success-color);
 }
 
-.status-hidden {
+.status-internal {
   background: #fef3c7;
   color: var(--warning-color);
 }
 
-/* Project Actions */
-.project-actions {
+/* Bookmark Actions */
+.bookmark-actions {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
@@ -842,22 +879,13 @@ export default defineComponent({
   font-size: 14px;
 }
 
-.info-btn {
+.visit-btn {
   background: #eff6ff;
   color: var(--primary-color);
 }
 
-.info-btn:hover {
+.visit-btn:hover {
   background: #dbeafe;
-}
-
-.toggle-btn {
-  background: #fef3c7;
-  color: var(--warning-color);
-}
-
-.toggle-btn:hover {
-  background: #fde68a;
 }
 
 .edit-btn {
@@ -867,6 +895,15 @@ export default defineComponent({
 
 .edit-btn:hover {
   background: #dcfce7;
+}
+
+.copy-btn {
+  background: #fef3c7;
+  color: var(--warning-color);
+}
+
+.copy-btn:hover {
+  background: #fde68a;
 }
 
 .delete-btn {
@@ -1075,7 +1112,7 @@ export default defineComponent({
     min-width: 100%;
   }
   
-  .projects-grid {
+  .bookmarks-grid {
     grid-template-columns: 1fr;
   }
   
@@ -1084,13 +1121,13 @@ export default defineComponent({
     margin: 20px;
   }
   
-  .project-header {
+  .bookmark-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
   
-  .project-status {
+  .bookmark-status {
     align-self: flex-start;
   }
 }

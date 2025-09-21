@@ -58,7 +58,7 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/manage/bookmarks',
-    component: () => import('../views/ManageView.vue'),
+    component: () => import('../views/ManageBookmarks.vue'),
   },
   {
     path: '/manage/projects',
