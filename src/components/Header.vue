@@ -85,6 +85,7 @@ ion-title {
 ion-header,
 ion-toolbar,
 .header {
-  --background: #000;
+  --background: #eff3f6;
+  box-shadow: none;
 }
 </style>

@@ -19,6 +19,7 @@
   .ion-menu {
     width: 300px !important;
     transition: width 0.3s ease !important;
+    border: none;
   }
   
   .ion-menu.collapsed-menu {
@@ -194,11 +195,21 @@
    /* --background: var(--ion-item-background, var(--ion-background-color, #fff));*/
    --background: #eff3f6;
   }
+  
+  /* Also apply to the entire sidebar area */
+  ion-menu {
+    --background: #eff3f6;
+  }
 }
  
   @media (prefers-color-scheme: dark) {
   ion-menu ion-content {
     --background: var(--ion-item-background, var(--ion-background-color, #fff));
+  }
+  
+  /* Dark mode sidebar */
+  ion-menu {
+    --background: #1e1e1e;
   }
 }
   ion-menu.md ion-content {
@@ -379,6 +390,16 @@
     .desktop-only {
       display: none;
     }
+    
+    /* Adjust padding for mobile */
+    #main-content {
+      padding: 8px 8px 0 8px;
+    }
+    
+    #main-content ion-router-outlet {
+      border-radius: 12px 12px 0 0;
+      min-height: calc(100vh - 64px);
+    }
   }
   
   router-link,
@@ -423,6 +444,32 @@
     /*padding-top: 100px !important;*/
     margin-top: 56px !important;
     width: 100%;
+    background: #eff3f6; /* Same as header background */
+    min-height: calc(100vh - 56px);
+  /*  padding: 16px 16px 0 16px; /* Add padding to create space around content */
+  }
+  
+  /* Content wrapper with rounded corners */
+  #main-content ion-router-outlet {
+    background: var(--ion-background-color, #ffffff);
+    border-radius: 12px 0 0 0; /* Rounded top corners */
+    border: var(--border);
+    min-height: calc(100vh - 72px); /* Adjust for padding */
+    overflow: hidden;
+    transition: all 0.3s ease; /* Smooth transitions */
+    position: relative;
+    z-index: 1;
+  }
+  
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    #main-content {
+      background: #1e1e1e; /* Dark header color */
+    }
+    
+    #main-content ion-router-outlet {
+      background: var(--ion-background-color, #121212);
+    }
   }
   h1 {
     z-index: 6666;
@@ -434,6 +481,7 @@
   
   ion-router-outlet {
     width: 100%;
+    display: block;
   }
   
   @media (prefers-color-scheme: dark) {
@@ -467,4 +515,26 @@
   
   ion-list {
     border: none !important;
+  }
+
+  /* Ensure split-pane background matches header */
+  ion-split-pane {
+    --background: #eff3f6;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    ion-split-pane {
+      --background: #1e1e1e;
+    }
+  }
+  
+  /* Ensure no extra margins/padding interfere with the rounded design */
+  ion-app {
+    background: #eff3f6;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    ion-app {
+      background: #1e1e1e;
+    }
   }
