@@ -88,6 +88,9 @@
               <ion-button fill="clear" size="small" @click="editCodespace(codespace)">
                 <ion-icon name="pencil-outline" slot="icon-only"></ion-icon>
               </ion-button>
+              <ion-button fill="clear" size="small" @click="openTransferModal(codespace)">
+                <ion-icon name="swap-horizontal-outline" slot="icon-only"></ion-icon>
+              </ion-button>
               <ion-button fill="clear" size="small" color="danger" @click="deleteCodespace(codespace)">
                 <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
               </ion-button>
@@ -484,6 +487,99 @@
           </div>
         </ion-content>
       </ion-modal>
+
+      <!-- Transfer Modal -->
+      <ion-modal :is-open="showTransferModal" @did-dismiss="closeTransferModal">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>Codespace übertragen</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="closeTransferModal">
+                <ion-icon name="close-outline"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        
+        <ion-content>
+          <div class="transfer-content" v-if="transferCodespace">
+            <div class="transfer-header">
+              <h2>{{ transferCodespace.name }}</h2>
+              <p>Wählen Sie das Ziel-Projekt für die Übertragung</p>
+            </div>
+
+            <div class="transfer-info">
+              <ion-card>
+                <ion-card-header>
+                  <ion-card-subtitle>Was wird übertragen?</ion-card-subtitle>
+                </ion-card-header>
+                <ion-card-content>
+                  <ion-list>
+                    <ion-item>
+                      <ion-icon name="folder-outline" slot="start"></ion-icon>
+                      <ion-label>Alle Dateien und Ordner</ion-label>
+                    </ion-item>
+                    <ion-item v-if="transferCodespace.connections?.github">
+                      <ion-icon name="logo-github" slot="start"></ion-icon>
+                      <ion-label>GitHub Repository Verbindung</ion-label>
+                    </ion-item>
+                    <ion-item v-if="transferCodespace.connections?.vercel">
+                      <ion-icon name="triangle-outline" slot="start"></ion-icon>
+                      <ion-label>Vercel Projekt Verbindung</ion-label>
+                    </ion-item>
+                    <ion-item v-if="transferCodespace.connections?.domain">
+                      <ion-icon name="globe-outline" slot="start"></ion-icon>
+                      <ion-label>Domain Verbindung</ion-label>
+                    </ion-item>
+                  </ion-list>
+                </ion-card-content>
+              </ion-card>
+            </div>
+
+            <div class="project-selection">
+              <ion-item>
+                <ion-label position="stacked">Ziel-Projekt auswählen</ion-label>
+                <ion-select 
+                  v-model="selectedTargetProject" 
+                  placeholder="Projekt auswählen"
+                  interface="popover"
+                >
+                  <ion-select-option 
+                    v-for="project in availableProjects" 
+                    :key="project.id" 
+                    :value="project.link"
+                  >
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <ion-icon :name="project.icon" style="font-size: 1.2em;"></ion-icon>
+                      {{ project.name }}
+                    </div>
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+
+              <ion-item>
+                <ion-checkbox v-model="moveInsteadOfCopy" slot="start"></ion-checkbox>
+                <ion-label>
+                  <h3>Verschieben statt Kopieren</h3>
+                  <p>Löscht den ursprünglichen Codespace nach dem Transfer</p>
+                </ion-label>
+              </ion-item>
+            </div>
+
+            <div class="transfer-actions">
+              <ion-button 
+                expand="block" 
+                @click="executeTransfer" 
+                :disabled="!selectedTargetProject || transferInProgress"
+              >
+                <ion-spinner v-if="transferInProgress" name="circular" slot="start"></ion-spinner>
+                <ion-icon v-else :name="moveInsteadOfCopy ? 'arrow-forward-outline' : 'copy-outline'" slot="start"></ion-icon>
+                {{ moveInsteadOfCopy ? 'Verschieben' : 'Kopieren' }}
+              </ion-button>
+            </div>
+          </div>
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -495,7 +591,7 @@ import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton,
   IonIcon, IonSpinner, IonChip, IonModal, IonItem, IonLabel,
   IonInput, IonTextarea, IonSelect, IonSelectOption, IonCheckbox, IonNote, IonList,
-  IonRadioGroup, IonRadio, alertController
+  IonRadioGroup, IonRadio, IonCard, IonCardHeader, IonCardSubtitle, IonCardContent, alertController
 } from '@ionic/vue'
 import axios from 'axios'
 import qs from 'qs'
@@ -529,6 +625,14 @@ const loadingGithubRepos = ref(false)
 const showVercelModal = ref(false)
 const vercelProjects = ref([])
 const loadingVercelProjects = ref(false)
+
+// Transfer Modal
+const showTransferModal = ref(false)
+const transferCodespace = ref(null)
+const availableProjects = ref([])
+const selectedTargetProject = ref('')
+const moveInsteadOfCopy = ref(false)
+const transferInProgress = ref(false)
 
 // Available Templates
 const availableTemplates = ref([])
@@ -973,6 +1077,85 @@ const closeVercelModal = () => {
   vercelProjects.value = []
 }
 
+// Transfer Functions
+const openTransferModal = async (codespace) => {
+  transferCodespace.value = codespace
+  selectedTargetProject.value = ''
+  moveInsteadOfCopy.value = false
+  
+  await loadAvailableProjects()
+  showTransferModal.value = true
+}
+
+const closeTransferModal = () => {
+  showTransferModal.value = false
+  transferCodespace.value = null
+  availableProjects.value = []
+  selectedTargetProject.value = ''
+  moveInsteadOfCopy.value = false
+  transferInProgress.value = false
+}
+
+const loadAvailableProjects = async () => {
+  try {
+    const response = await axios.post('project_codespaces.php', qs.stringify({
+      getUserProjects: true
+    }))
+
+    if (response.data.success) {
+      // Aktuelles Projekt ausschließen
+      const currentProject = route.params.project
+      availableProjects.value = response.data.projects.filter(project => project.link !== currentProject)
+    } else {
+      toast.error('Fehler beim Laden der Projekte')
+    }
+  } catch (error) {
+    console.error('Error loading projects:', error)
+    toast.error('Verbindungsfehler')
+  }
+}
+
+const executeTransfer = async () => {
+  if (!selectedTargetProject.value || !transferCodespace.value) {
+    return
+  }
+  
+  try {
+    transferInProgress.value = true
+    
+    const data = {
+      transferCodespace: true,
+      codespaceID: transferCodespace.value.id,
+      targetProject: selectedTargetProject.value
+    }
+    
+    if (moveInsteadOfCopy.value) {
+      data.moveCodespace = 'true'
+    }
+    
+    const response = await axios.post('project_codespaces.php', qs.stringify(data))
+
+    if (response.data.success) {
+      const action = moveInsteadOfCopy.value ? 'verschoben' : 'kopiert'
+      toast.success(`Codespace erfolgreich ${action}!`)
+      
+      closeTransferModal()
+      
+      // Wenn verschoben, Liste neu laden um den entfernten Codespace zu reflektieren
+      if (moveInsteadOfCopy.value) {
+        await loadCodespaces()
+      }
+    } else {
+      toast.error(response.data.message || 'Fehler beim Übertragen')
+    }
+  } catch (error) {
+    console.error('Error transferring codespace:', error)
+    toast.error('Verbindungsfehler')
+  } finally {
+    transferInProgress.value = false
+  }
+}
+
 // Domain Functions
 const loadDomainInfo = async (codespaceId) => {
   try {
@@ -1063,21 +1246,6 @@ const closeModal = () => {
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('de-DE')
-}
-
-const getLanguageColor = (language) => {
-  const colors = {
-    javascript: 'warning',
-    typescript: 'primary',
-    python: 'success',
-    php: 'secondary',
-    html: 'danger',
-    css: 'tertiary',
-    vue: 'success',
-    react: 'primary',
-    angular: 'danger'
-  }
-  return colors[language] || 'medium'
 }
 
 const getSelectedTemplate = () => {
@@ -1440,5 +1608,55 @@ watch(() => formData.value.template, (newTemplate) => {
   margin: 0;
   font-size: 0.9rem;
   color: var(--ion-color-medium);
+}
+
+.transfer-content {
+  padding: 20px;
+}
+
+.transfer-header {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.transfer-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.transfer-header p {
+  margin: 0;
+  color: var(--ion-color-medium);
+}
+
+.transfer-info {
+  margin-bottom: 24px;
+}
+
+.transfer-info ion-card {
+  margin: 0;
+}
+
+.transfer-info ion-list {
+  padding: 0;
+}
+
+.transfer-info ion-item {
+  --padding-start: 0;
+}
+
+.project-selection {
+  margin-bottom: 24px;
+}
+
+.transfer-actions {
+  margin-top: 24px;
+}
+
+.transfer-actions ion-button {
+  --border-radius: 8px;
+  height: 48px;
+  font-weight: 600;
 }
 </style>
