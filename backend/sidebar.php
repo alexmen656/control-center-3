@@ -61,7 +61,7 @@ if (isset($headers['Authorization'])) {
 
         // Get forms for this project from form_settings table
         $forms = query("SELECT * FROM form_settings WHERE project='$projectName' ORDER BY created_at DESC");
-        
+
         if (mysqli_num_rows($forms) == 0) {
             $json['forms'] = [];
         } else {
@@ -76,11 +76,11 @@ if (isset($headers['Authorization'])) {
         }
 
         $projectQuery = query("SELECT id FROM control_center_web_builder_projects WHERE name='$projectName'");
-        
+
         if (mysqli_num_rows($projectQuery) == 0) {
             $projectQuery = query("SELECT id FROM control_center_web_builder_projects WHERE description LIKE '%$projectID%'");
         }
-        
+
         if (mysqli_num_rows($projectQuery) > 0) {
             $projectData = fetch_assoc($projectQuery);
             $webBuilderProjectId = $projectData['id'];
@@ -98,12 +98,12 @@ if (isset($headers['Authorization'])) {
                 $comps = query("SELECT * FROM control_center_web_builder_components WHERE page_id='" . $c['id'] . "' ORDER BY `control_center_web_builder_components`.`position` ASC");
                 $counter = 0;
                 foreach ($comps as $comp) {
-                    if($comp['original_template_id'] !== NULL){
+                    if ($comp['original_template_id'] !== NULL) {
                         $comp2 = $comp;
                         $comp = fetch_assoc(query("SELECT * FROM control_center_web_builder_templates WHERE id='" . $comp['original_template_id'] . "'"));
                         $comp['id'] = $comp2['id'];
                         $comp['position'] = $comp2['position'];
-                    }else{
+                    } else {
                         $comp['title'] = "Header";
                     }
 
@@ -125,10 +125,10 @@ if (isset($headers['Authorization'])) {
             $json['components'] = [];
             $json['componentSubItems'] = [];
         }
-        
+
         // Get services for this project
         $services = query("SELECT * FROM project_services WHERE projectID='$projectID'");
-        
+
         if (mysqli_num_rows($services) == 0) {
             $json['services'] = [];
         } else {
@@ -136,30 +136,30 @@ if (isset($headers['Authorization'])) {
             foreach ($services as $service) {
                 $service_id = $service['id'];
                 $service_link = $service['link'];
-                
+
                 // Status ermitteln - 'down' als Standardwert
                 $status = 'down';
-                
+
                 // Überprüfen des letzten Logs (Ping) für diesen Service
                 $sql = "SELECT * FROM control_center_services_logs 
                         WHERE project_id = '$projectID' 
                         AND service = '$service_link'
                         ORDER BY timestamp DESC 
                         LIMIT 1";
-                
+
                 $last_log = query($sql);
-                
+
                 if (mysqli_num_rows($last_log) > 0) {
                     $log = fetch_assoc($last_log);
                     $last_ping_time = strtotime($log['timestamp']);
                     $current_time = time();
-                    
+
                     // Wenn der letzte Ping weniger als 30 Minuten zurückliegt, betrachten wir den Service als 'up'
                     if (($current_time - $last_ping_time) < (30 * 60)) {
                         $status = 'up';
                     }
                 }
-                
+
                 $json['services'][$s]["id"] = $service['id'];
                 $json['services'][$s]["icon"] = $service['icon'];
                 $json['services'][$s]["name"] = $service['name'];
@@ -168,7 +168,7 @@ if (isset($headers['Authorization'])) {
                 $s++;
             }
         }
-        
+
         // Get subscribed APIs for this project
         $subscribed_apis = query("
             SELECT pas.*, ca.name, ca.slug, ca.icon, ca.category
@@ -177,7 +177,7 @@ if (isset($headers['Authorization'])) {
             WHERE pas.projectID='$projectID' AND pas.is_enabled=1
             ORDER BY ca.category, ca.name ASC
         ");
-        
+
         if (mysqli_num_rows($subscribed_apis) == 0) {
             $json['apis'] = [];
         } else {
@@ -197,7 +197,7 @@ if (isset($headers['Authorization'])) {
 
         // Get codespaces for this project
         $codespaces = query("SELECT * FROM project_codespaces WHERE project_id='$projectID' ORDER BY order_index ASC");
-        
+
         if (mysqli_num_rows($codespaces) == 0) {
             $json['codespaces'] = [];
         } else {
@@ -215,7 +215,6 @@ if (isset($headers['Authorization'])) {
                 $c++;
             }
         }
-
     } else {
         $tools = query("SELECT * FROM tools");
         $i = 0;
@@ -234,15 +233,16 @@ if (isset($headers['Authorization'])) {
             $project = query("SELECT * FROM projects WHERE projectID='$projectID'");
             if (mysqli_num_rows($project) == 1) {
                 $project = fetch_assoc($project);
-                $json['projects'][$i]["id"] = $project['id'];
-                $json['projects'][$i]["icon"] = $project['icon'];
-                $json['projects'][$i]["name"] = $project['name'];
-                $json['projects'][$i]["link"] = $project['link'];
+                if ($project['hidden'] != true) {
+                    $json['projects'][$i]["id"] = $project['id'];
+                    $json['projects'][$i]["icon"] = $project['icon'];
+                    $json['projects'][$i]["name"] = $project['name'];
+                    $json['projects'][$i]["link"] = $project['link'];
+                    $i++;
+                }
             }
-            $i++;
         }
     }
 
     echo echoJson($json);
 }
-?>

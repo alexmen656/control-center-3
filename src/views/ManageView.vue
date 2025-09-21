@@ -385,7 +385,8 @@ export default defineComponent({
         this.showCreateModal = false;
         this.newProject = { name: '', icon: '' };
         await this.loadProjects();
-        this.$emit("updateSidebar");
+        //this.$emit("updateSidebar");
+        this.emitter.emit("updateSidebar");
       } catch (error) {
         console.error('Error creating project:', error);
         alert("Error creating project");
@@ -415,7 +416,8 @@ export default defineComponent({
         alert("Project updated successfully");
         this.showEditModal = false;
         await this.loadProjects();
-        this.$emit("updateSidebar");
+        //this.$emit("updateSidebar");
+        this.emitter.emit("updateSidebar");
       } catch (error) {
         console.error('Error updating project:', error);
         alert("Error updating project");
@@ -434,7 +436,8 @@ export default defineComponent({
         );
         
         project.hidden = !project.hidden;
-        this.$emit("updateSidebar");
+        //this.$emit("updateSidebar");
+        this.emitter.emit("updateSidebar");
       } catch (error) {
         console.error('Error toggling project visibility:', error);
         alert("Error updating project visibility");
@@ -460,7 +463,8 @@ export default defineComponent({
         this.projects = this.projects.filter(p => p.id !== this.deleteModal.project.id);
         this.deleteModal.show = false;
         this.deleteModal.project = null;
-        this.$emit("updateSidebar");
+        //this.$emit("updateSidebar");
+        this.emitter.emit("updateSidebar");
       } catch (error) {
         console.error('Error deleting project:', error);
         alert("Error deleting project");
