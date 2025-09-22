@@ -336,7 +336,7 @@ export default {
         "install.php",
         this.$qs.stringify({
           install: "install",
-          moduleID: module.ref || module.id,
+          moduleID: module.id || module.red,
           project: this.$route.params.project,
         })
       );
