@@ -227,9 +227,7 @@ class VideoUploadsConfigAPI {
         $this->savePlatformConfig($platform, $project, 'oauth_state', $state);
         $this->savePlatformConfig($platform, $project, 'oauth_status', 'pending');
         
-        // Get redirect URI
-        $redirectUri = $_SERVER['HTTP_ORIGIN'] ?? '';
-        $redirectUri .= "/backend/{$platform}_callback.php";
+        $redirectUri = "https://alex.polan.sk/control-center/{$platform}_callback.php";
         
         // Platform specific OAuth initialization
         switch ($platform) {
@@ -255,8 +253,7 @@ class VideoUploadsConfigAPI {
                 $authUrl .= '&access_type=offline';
                 $authUrl .= '&response_type=code';
                 $authUrl .= '&state=' . urlencode($state);
-                $authUrl .= '&prompt=consent'; // Force to get refresh token
-                
+                $authUrl .= '&prompt=consent';
                 $this->sendResponse(['auth_url' => $authUrl]);
                 break;
                 

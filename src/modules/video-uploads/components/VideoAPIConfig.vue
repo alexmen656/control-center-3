@@ -461,7 +461,7 @@ export default {
       youtube: {
         clientId: '',
         clientSecret: '',
-        redirectUri: window.location.origin + '/youtube_callback.php'
+        redirectUri: 'https://alex.polan.sk/control-center/youtube_callback.php'
       },
       instagram: {
         appId: '',
