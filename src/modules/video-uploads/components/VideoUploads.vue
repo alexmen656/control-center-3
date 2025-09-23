@@ -39,6 +39,10 @@
                   <ion-icon name="cloud-upload-outline"></ion-icon>
                   Bulk Upload
                 </a>
+                <a @click="openApiConfig()" class="dropdown-item">
+                  <ion-icon name="key-outline"></ion-icon>
+                  API Konfiguration
+                </a>
               </div>
             </div>
           </div>
@@ -337,15 +341,32 @@
 
                 <div class="form-row">
                   <div class="form-group">
-                    <label class="form-label">Plattform</label>
-                    <select v-model="videoForm.platform" class="modern-select" required>
-                      <option value="youtube">YouTube</option>
-                      <option value="instagram">Instagram</option>
-                      <option value="tiktok">TikTok</option>
-                      <option value="facebook">Facebook</option>
-                      <option value="linkedin">LinkedIn</option>
-                    </select>
+                    <label class="form-label">Plattformen</label>
+                    <div class="platforms-selection">
+                      <div 
+                        v-for="platform in availablePlatforms" 
+                        :key="platform.value"
+                        class="platform-checkbox" 
+                        :class="{ 'selected': videoForm.platforms.includes(platform.value) }"
+                        @click="togglePlatform(platform.value)"
+                      >
+                        <div class="platform-icon">
+                          <ion-icon :name="platform.icon"></ion-icon>
+                        </div>
+                        <div class="platform-name">{{ platform.name }}</div>
+                        <div class="platform-check">
+                          <ion-icon v-if="videoForm.platforms.includes(platform.value)" name="checkmark-circle"></ion-icon>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="platform-warning" v-if="!videoForm.platforms.length">
+                      <ion-icon name="alert-circle-outline"></ion-icon>
+                      <span>Mindestens eine Plattform auswählen</span>
+                    </div>
                   </div>
+                </div>
+                
+                <div class="form-row">
                   <div class="form-group">
                     <label class="form-label">Kategorie</label>
                     <input 
@@ -390,6 +411,17 @@
                       <div class="file-info" v-else>
                         <span class="file-name">{{ videoFile.name }}</span>
                         <span class="file-size">{{ formatFileSize(videoFile.size) }}</span>
+                      </div>
+                    </div>
+                    
+                    <!-- Upload Progress Bar -->
+                    <div v-if="uploadProgress > 0 && uploadProgress < 100" class="upload-progress-container">
+                      <div class="upload-progress-text">
+                        <span>Hochladen: {{ uploadProgress }}%</span>
+                        <span>{{ formatFileSize(uploadedBytes) }} von {{ formatFileSize(totalBytes) }}</span>
+                      </div>
+                      <div class="upload-progress-bar-container">
+                        <div class="upload-progress-bar" :style="{ width: uploadProgress + '%' }"></div>
                       </div>
                     </div>
                   </div>
@@ -458,7 +490,7 @@ export default {
   components: {
     SiteTitle,
   },
-  data() {
+      data() {
     return {
       videos: [],
       filteredVideos: [],
@@ -478,12 +510,36 @@ export default {
       videoFile: null,
       thumbnailFile: null,
       
+      // Upload Progress
+      uploadProgress: 0,
+      uploadedBytes: 0,
+      totalBytes: 0,
+      uploading: false,
+
+      // Available Platforms
+      availablePlatforms: [
+        { value: 'youtube', name: 'YouTube', icon: 'logo-youtube' },
+        { value: 'instagram', name: 'Instagram', icon: 'logo-instagram' },
+        { value: 'tiktok', name: 'TikTok', icon: 'logo-tiktok' },
+        { value: 'facebook', name: 'Facebook', icon: 'logo-facebook' },
+        { value: 'linkedin', name: 'LinkedIn', icon: 'logo-linkedin' }
+      ],
+      
+      // Connected Platforms Status
+      connectedPlatforms: {
+        youtube: false,
+        instagram: false,
+        tiktok: false,
+        facebook: false,
+        linkedin: false
+      },
+      
       // Form data
       videoForm: {
         title: '',
         description: '',
         status: 'draft',
-        platform: 'youtube',
+        platforms: [], // Array für mehrere Plattformen
         category: '',
         publish_date: '',
         publish_time: '',
@@ -491,9 +547,7 @@ export default {
         thumbnail_url: '',
         tags: '',
         goals: ''
-      },
-      
-      // Stats
+      },      // Stats
       totalVideos: 0,
       publishedVideos: 0,
       scheduledVideos: 0,
@@ -647,11 +701,15 @@ export default {
       this.editingVideo = null;
       this.videoFile = null;
       this.thumbnailFile = null;
+      this.uploadProgress = 0;
+      this.uploadedBytes = 0;
+      this.totalBytes = 0;
+      this.uploading = false;
       this.videoForm = {
         title: '',
         description: '',
         status: 'draft',
-        platform: 'youtube',
+        platforms: [], // Leeres Array für Plattformen
         category: '',
         publish_date: '',
         publish_time: '',
@@ -660,6 +718,19 @@ export default {
         tags: '',
         goals: ''
       };
+    },
+    
+    togglePlatform(platform) {
+      const index = this.videoForm.platforms.indexOf(platform);
+      if (index === -1) {
+        this.videoForm.platforms.push(platform);
+      } else {
+        this.videoForm.platforms.splice(index, 1);
+      }
+    },
+    
+    openApiConfig() {
+      this.$router.push(`/${this.$route.params.project}/video-uploads/config`);
     },
     
     editVideo(video) {
@@ -672,11 +743,22 @@ export default {
       this.saving = true;
       
       try {
+        // Validate platforms selection
+        if (this.videoForm.platforms.length === 0) {
+          this.error = 'Bitte wählen Sie mindestens eine Plattform aus';
+          this.saving = false;
+          return;
+        }
+        
         const formData = new FormData();
         
-        // Add all form fields
+        // Add all form fields except platforms (handle separately)
         Object.keys(this.videoForm).forEach(key => {
-          formData.append(key, this.videoForm[key]);
+          if (key === 'platforms') {
+            formData.append('platforms', JSON.stringify(this.videoForm.platforms));
+          } else {
+            formData.append(key, this.videoForm[key]);
+          }
         });
         
         // Add project parameter
@@ -690,6 +772,39 @@ export default {
         // Add video and thumbnail files if present
         if (this.videoFile) {
           formData.append('video_file', this.videoFile);
+          
+          // Simuliere Upload mit Fortschrittsbalken
+          this.simulateFileUpload();
+          
+          // XMLHttpRequest statt axios für Upload-Progress
+          return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            
+            xhr.upload.addEventListener('progress', (e) => {
+              if (e.lengthComputable) {
+                this.uploadProgress = Math.round((e.loaded / e.total) * 100);
+                this.uploadedBytes = e.loaded;
+                this.totalBytes = e.total;
+              }
+            });
+            
+            xhr.onreadystatechange = () => {
+              if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                  this.closeVideoForm();
+                  this.loadVideos();
+                  resolve();
+                } else {
+                  this.error = 'Fehler beim Speichern des Videos';
+                  reject(new Error('Upload failed'));
+                }
+                this.saving = false;
+              }
+            };
+            
+            xhr.open('POST', 'backend/video_uploads.php', true);
+            xhr.send(formData);
+          });
         }
         
         if (this.thumbnailFile) {
@@ -833,6 +948,7 @@ export default {
       const file = e.target.files[0];
       if (file) {
         this.videoFile = file;
+        this.totalBytes = file.size;
       }
     },
     
@@ -841,6 +957,31 @@ export default {
       if (file) {
         this.thumbnailFile = file;
       }
+    },
+    
+    // Simuliere Datei-Upload mit Fortschrittsanzeige
+    simulateFileUpload() {
+      this.uploading = true;
+      this.uploadProgress = 0;
+      this.uploadedBytes = 0;
+      
+      // Simuliere Hochladen in 10% Schritten
+      const totalSize = this.totalBytes;
+      const intervalTime = 500; // 500ms pro Schritt
+      const steps = 10;
+      const bytesPerStep = totalSize / steps;
+      
+      const uploadInterval = setInterval(() => {
+        this.uploadProgress += 10;
+        this.uploadedBytes += bytesPerStep;
+        
+        if (this.uploadProgress >= 100) {
+          clearInterval(uploadInterval);
+          this.uploading = false;
+          this.uploadProgress = 100;
+          this.uploadedBytes = totalSize;
+        }
+      }, intervalTime);
     },
     
     handleFileDrop(e) {
