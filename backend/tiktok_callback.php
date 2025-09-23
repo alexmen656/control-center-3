@@ -1,8 +1,32 @@
 <?php
 header('Content-Type: text/html; charset=utf-8');
+include_once 'jwt_helper.php';
 include_once 'config.php';
-include_once 'head.php';
 
+$origin_url = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'];
+$allowed_origins = ['alexsblog.de', 'localhost:8100', 'polan.sk', 'http://localhost:8100/login', 'http://localhost:8100', 'localhost'];
+$request_host = parse_url($origin_url, PHP_URL_HOST);
+$host_domain = implode('.', array_slice(explode('.', $request_host), -2));
+//echo $host_domain;
+//if (! in_array($host_domain, $allowed_origins, false)) {
+//  header('HTTP/1.0 403 Forbidden');
+//  die('You are not allowed to access this.');     
+//}
+ini_set('display_errors', true);
+session_start();
+
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Headers: *');
+header('Access-Control-Allow-Methods: *');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+include "use_template_function.php";
+include "db_connection.php";
+include "functions.php";
 /**
  * TikTok OAuth Callback Handler
  * Processes the OAuth response from TikTok and completes the authentication
@@ -126,7 +150,7 @@ if (empty($clientKey) || empty($clientSecret)) {
 }
 
 // Exchange authorization code for access token
-$tokenUrl = 'https://open-api.tiktok.com/oauth/access_token/';
+$tokenUrl = 'https://open.tiktokapis.com/v2/oauth/token/';
 $redirectUri = "https://alex.polan.sk/control-center/tiktok_callback.php";
 
 $postData = [
@@ -157,18 +181,18 @@ if ($response === false) {
 
 $tokenData = json_decode($response, true);
 
-if (!isset($tokenData['data']['access_token'])) {
+if (!isset($tokenData['access_token'])) {
     savePlatformConfig('tiktok', $project, 'oauth_status', 'error');
     savePlatformConfig('tiktok', $project, 'oauth_error', 'No access token in response');
     redirectToFrontend('error', 'tiktok', '', 'Invalid token response from TikTok');
 }
 
-$accessToken = $tokenData['data']['access_token'];
-$refreshToken = $tokenData['data']['refresh_token'] ?? '';
-$expiresIn = $tokenData['data']['expires_in'] ?? 86400;
+$accessToken = $tokenData['access_token'];
+$refreshToken = $tokenData['refresh_token'] ?? '';
+$expiresIn = $tokenData['expires_in'] ?? 86400;
 
 // Get user information
-$userInfoUrl = 'https://open-api.tiktok.com/v2/user/info/';
+$userInfoUrl = 'https://open.tiktokapis.com/v2/user/info/';
 $fields = 'open_id,union_id,avatar_url,display_name';
 
 $options = [
@@ -186,8 +210,8 @@ $username = 'Unknown';
 
 if ($userResponse !== false) {
     $userData = json_decode($userResponse, true);
-    if (isset($userData['data']['user']['display_name'])) {
-        $username = $userData['data']['user']['display_name'];
+    if (isset($userData['display_name'])) {
+        $username = $userData['display_name'];
     }
 }
 

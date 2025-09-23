@@ -151,7 +151,7 @@ if (empty($appId) || empty($appSecret)) {
 }
 
 // Exchange authorization code for access token
-$tokenUrl = 'https://api.instagram.com/oauth/access_token';
+$tokenUrl = 'https://graph.facebook.com/v18.0/oauth/access_token';
 $redirectUri = "https://alex.polan.sk/control-center/instagram_callback.php";
 
 $postData = [
@@ -161,6 +161,8 @@ $postData = [
     'redirect_uri' => $redirectUri,
     'code' => $code
 ];
+error_log($code);
+error_log('Exchanging code for token with data: ' . print_r($postData, true));
 
 $options = [
     'http' => [
@@ -173,11 +175,11 @@ $options = [
 
 $context = stream_context_create($options);
 $response = file_get_contents($tokenUrl, false, $context);
-
+//$response = false;
 if ($response === false) {
     savePlatformConfig('instagram', $project, 'oauth_status', 'error');
     savePlatformConfig('instagram', $project, 'oauth_error', 'Failed to connect to Instagram API');
-    redirectToFrontend('error', 'instagram', '', 'Failed to exchange authorization code for access token');
+    redirectToFrontend('error', 'instagram', '', 'Failed to exchange authorization code for access token' . $code);
 }
 
 $tokenData = json_decode($response, true);
@@ -189,11 +191,12 @@ if (!isset($tokenData['access_token'])) {
 }
 
 // Get long-lived access token
-$longLivedTokenUrl = 'https://graph.instagram.com/access_token';
+$longLivedTokenUrl = 'https://graph.facebook.com/v18.0/oauth/access_token';
 $longLivedData = [
-    'grant_type' => 'ig_exchange_token',
+    'grant_type' => 'fb_exchange_token',  // <- fb_ statt ig_
+    'client_id' => $appId,               // <- client_id statt client_secret
     'client_secret' => $appSecret,
-    'access_token' => $tokenData['access_token']
+    'fb_exchange_token' => $tokenData['access_token']  // <- fb_exchange_token
 ];
 
 $longLivedResponse = file_get_contents($longLivedTokenUrl . '?' . http_build_query($longLivedData));

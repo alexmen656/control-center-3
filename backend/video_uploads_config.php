@@ -345,7 +345,7 @@ class VideoUploadsConfigAPI {
                 
                 // Generate TikTok OAuth URL
                 $scope = 'user.info.basic,video.list,video.upload';
-                $authUrl = 'https://open-api.tiktok.com/platform/oauth/connect/';
+                $authUrl = 'https://www.tiktok.com/v2/auth/authorize/';
                 $authUrl .= '?client_key=' . urlencode($clientKey);
                 $authUrl .= '&scope=' . urlencode($scope);
                 $authUrl .= '&redirect_uri=' . urlencode($redirectUri);
