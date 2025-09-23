@@ -19,6 +19,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
  */
 class VideoUploadsConfigAPI {
     
+    /**
+     * HTTP request helper function to replace cURL
+     */
+    private function makeHttpRequest($url, $options = []) {
+        $method = $options['method'] ?? 'GET';
+        $headers = $options['headers'] ?? [];
+        $data = $options['data'] ?? null;
+        
+        $context_options = [
+            'http' => [
+                'method' => $method,
+                'ignore_errors' => true
+            ]
+        ];
+        
+        if (!empty($headers)) {
+            $context_options['http']['header'] = implode("\r\n", $headers);
+        }
+        
+        if ($data && $method === 'POST') {
+            $context_options['http']['content'] = is_array($data) ? http_build_query($data) : $data;
+            if (!isset($context_options['http']['header'])) {
+                $context_options['http']['header'] = '';
+            }
+            if (strpos($context_options['http']['header'], 'Content-Type') === false) {
+                $context_options['http']['header'] .= "\r\nContent-Type: application/x-www-form-urlencoded";
+            }
+        }
+        
+        $context = stream_context_create($context_options);
+        $response = file_get_contents($url, false, $context);
+        
+        $http_code = 200;
+        if (isset($http_response_header)) {
+            foreach ($http_response_header as $header) {
+                if (preg_match('/^HTTP\/\d\.\d\s+(\d+)/', $header, $matches)) {
+                    $http_code = intval($matches[1]);
+                    break;
+                }
+            }
+        }
+        
+        return [
+            'response' => $response,
+            'http_code' => $http_code,
+            'success' => $response !== false && $http_code >= 200 && $http_code < 300
+        ];
+    }
+    
     private function getTableName($project) {
         return 'video_uploads_config_' . str_replace('-', '_', $project);
     }

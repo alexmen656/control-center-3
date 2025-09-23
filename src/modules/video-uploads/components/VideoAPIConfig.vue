@@ -496,9 +496,33 @@ export default {
   mounted() {
     this.loadConnections();
     this.loadSettings();
+    this.handleCallbackParams();
   },
   
   methods: {
+    handleCallbackParams() {
+      // Check if we're returning from an OAuth callback
+      const urlParams = new URLSearchParams(window.location.search);
+      const isCallback = urlParams.get('callback');
+      const platform = urlParams.get('platform');
+      const status = urlParams.get('status');
+      const message = urlParams.get('message');
+      const error = urlParams.get('error');
+      
+      if (isCallback && platform) {
+        if (status === 'success') {
+          this.success = message || `${this.getPlatformName(platform)} erfolgreich verbunden!`;
+          this.loadConnections(); // Reload connections to show updated status
+        } else if (status === 'error') {
+          this.error = error || `Fehler beim Verbinden mit ${this.getPlatformName(platform)}`;
+        }
+        
+        // Clean up URL parameters
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    },
+    
     async loadConnections() {
       this.loading = true;
       
@@ -631,7 +655,12 @@ export default {
     },
     
     async pollAuthStatus(platform) {
+      let pollCount = 0;
+      const maxPolls = 60; // Poll for 2 minutes max
+      
       const pollInterval = setInterval(async () => {
+        pollCount++;
+        
         try {
           const response = await this.$axios.get('video_uploads_config.php', {
             params: {
@@ -645,19 +674,18 @@ export default {
             clearInterval(pollInterval);
             this.success = `Erfolgreich mit ${this.getPlatformName(platform)} verbunden!`;
             this.loadConnections();
-          } else if (response.data.status === 'failed') {
+          } else if (response.data.status === 'error') {
             clearInterval(pollInterval);
             this.error = `Authentifizierung mit ${this.getPlatformName(platform)} fehlgeschlagen: ${response.data.error || 'Unbekannter Fehler'}`;
           }
         } catch (error) {
           console.error('Error checking auth status:', error);
+          if (pollCount >= maxPolls) {
+            clearInterval(pollInterval);
+            this.error = `Fehler beim Überprüfen des Authentifizierungsstatus für ${this.getPlatformName(platform)}`;
+          }
         }
       }, 2000);
-      
-      // Stop polling after 2 minutes
-      setTimeout(() => {
-        clearInterval(pollInterval);
-      }, 120000);
     },
     
     async disconnectPlatform(platform) {
