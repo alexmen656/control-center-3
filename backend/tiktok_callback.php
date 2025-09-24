@@ -210,8 +210,8 @@ $username = 'Unknown';
 
 if ($userResponse !== false) {
     $userData = json_decode($userResponse, true);
-    if (isset($userData['display_name'])) {
-        $username = $userData['display_name'];
+    if (isset($userData['data']['user']['display_name'])) {
+        $username = $userData['data']['user']['display_name'];
     }
 }
 
