@@ -118,7 +118,6 @@ class VideoUploadsConfigAPI
             ]
         ];
 
-        // Query for YouTube connection
         $youtube = $this->getPlatformConfig('youtube', $project);
         if (!empty($youtube['access_token'])) {
             $conections['youtube']['connected'] = true;
@@ -128,7 +127,6 @@ class VideoUploadsConfigAPI
             $conections['youtube']['expiresAt'] = $youtube['expires_at'] ?? null;
         }
 
-        // Query for Instagram connection
         $instagram = $this->getPlatformConfig('instagram', $project);
         if (!empty($instagram['access_token'])) {
             $conections['instagram']['connected'] = true;
@@ -138,7 +136,6 @@ class VideoUploadsConfigAPI
             $conections['instagram']['expiresAt'] = $instagram['expires_at'] ?? null;
         }
 
-        // Query for TikTok connection
         $tiktok = $this->getPlatformConfig('tiktok', $project);
         if (!empty($tiktok['access_token'])) {
             $conections['tiktok']['connected'] = true;
@@ -174,7 +171,6 @@ class VideoUploadsConfigAPI
         $tableName = $this->getTableName($project);
         global $con;
 
-        // Default settings
         $settings = [
             'apiTimeout' => 60,
             'maxUploadSize' => 500,
@@ -187,7 +183,6 @@ class VideoUploadsConfigAPI
             'proxyPassword' => ''
         ];
 
-        // Get settings from database
         $sql = "SELECT name, value FROM `$tableName` WHERE platform = 'settings'";
         $result = $con->query($sql);
 
@@ -196,11 +191,9 @@ class VideoUploadsConfigAPI
                 $name = $row['name'];
                 $value = $row['value'];
 
-                // Convert boolean values
                 if ($value === 'true') $value = true;
                 if ($value === 'false') $value = false;
 
-                // Convert numeric values
                 if (is_numeric($value)) {
                     if (strpos($value, '.') !== false) {
                         $value = floatval($value);
@@ -225,14 +218,12 @@ class VideoUploadsConfigAPI
             return;
         }
 
-        // Store OAuth state
         $state = bin2hex(random_bytes(16));
         $this->savePlatformConfig($platform, $project, 'oauth_state', $state);
         $this->savePlatformConfig($platform, $project, 'oauth_status', 'pending');
 
         $redirectUri = "https://alex.polan.sk/control-center/{$platform}_callback.php";
 
-        // Platform specific OAuth initialization
         switch ($platform) {
             case 'youtube':
                 $clientId = isset($_REQUEST['clientId']) ? $_REQUEST['clientId'] : '';
@@ -243,11 +234,9 @@ class VideoUploadsConfigAPI
                     return;
                 }
 
-                // Save client credentials
                 $this->savePlatformConfig($platform, $project, 'client_id', $clientId);
                 $this->savePlatformConfig($platform, $project, 'client_secret', $clientSecret);
 
-                // Generate YouTube OAuth URL
                 $scope = 'https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube';
                 $authUrl = 'https://accounts.google.com/o/oauth2/auth';
                 $authUrl .= '?client_id=' . urlencode($clientId);
@@ -269,11 +258,9 @@ class VideoUploadsConfigAPI
                     return;
                 }
 
-                // Save app credentials
                 $this->savePlatformConfig($platform, $project, 'app_id', $appId);
                 $this->savePlatformConfig($platform, $project, 'app_secret', $appSecret);
 
-                // Generate Instagram OAuth URL
                 $scope = 'instagram_basic,instagram_content_publish,pages_read_engagement';
                 $authUrl = 'https://www.facebook.com/v14.0/dialog/oauth';
                 $authUrl .= '?client_id=' . urlencode($appId);
@@ -418,7 +405,7 @@ class VideoUploadsConfigAPI
                 'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
                 'method'  => 'POST',
                 'content' => http_build_query($data),
-                'ignore_errors' => true // wichtig, damit auch Fehlerantworten gelesen werden
+                'ignore_errors' => true
             ]
         ];
 
@@ -479,7 +466,6 @@ class VideoUploadsConfigAPI
             $tokenData = json_decode($response, true);
 
             if (isset($tokenData['access_token'])) {
-                // Update access token and expiry
                 $this->savePlatformConfig('instagram', $project, 'access_token', $tokenData['access_token']);
 
                 $expiresAt = time() + ($tokenData['expires_in'] ?? 5184000); // Default to 60 days
@@ -613,7 +599,6 @@ class VideoUploadsConfigAPI
             return ['success' => false, 'error' => 'No access token available'];
         }
 
-        // Test Instagram Graph API connection
         $url = 'https://graph.instagram.com/me?fields=id,username&access_token=' . $accessToken;
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -637,7 +622,6 @@ class VideoUploadsConfigAPI
             return ['success' => false, 'error' => 'No access token available'];
         }
 
-        // Test TikTok API connection
         $url = 'https://open-api.tiktok.com/v2/user/info/';
         $fields = 'open_id,union_id,avatar_url,display_name';
 
@@ -672,12 +656,10 @@ class VideoUploadsConfigAPI
         }
 
         foreach ($settings as $name => $value) {
-            // Convert boolean values to strings for database storage
             if (is_bool($value)) {
                 $value = $value ? 'true' : 'false';
             }
 
-            // Save each setting
             $this->savePlatformConfig('settings', $project, $name, $value);
         }
 
