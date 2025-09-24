@@ -97,6 +97,7 @@ class VideoUploadsAPI {
             `description` text,
             `status` enum('draft','scheduled','published','processing','failed') DEFAULT 'draft',
             `platform` enum('youtube','instagram','tiktok','facebook','linkedin') DEFAULT 'youtube',
+            `platforms` text COMMENT 'JSON array of target platforms',
             `category` varchar(100),
             `publish_date` date,
             `publish_time` time,
@@ -230,17 +231,32 @@ class VideoUploadsAPI {
             $tags = isset($_POST['tags']) ? $_POST['tags'] : '';
             $goals = isset($_POST['goals']) ? $_POST['goals'] : '';
             
+            // Handle platforms array (new format) or single platform (backward compatibility)
+            $platforms = [];
+            if (isset($_POST['platforms']) && is_array($_POST['platforms'])) {
+                $platforms = $_POST['platforms'];
+                $platform = $platforms[0]; // Use first platform as primary for backward compatibility
+            } else if (!empty($platform)) {
+                $platforms = [$platform];
+            }
+            $platformsJson = json_encode($platforms);
+            
             // Validate required fields
             if (empty($title)) {
                 $this->sendResponse(['error' => 'Title is required'], 400);
                 return;
             }
             
-            $stmt = $con->prepare("INSERT INTO `$tableName` (title, description, status, platform, category, 
-                                    publish_date, publish_time, video_file, thumbnail_url, tags, goals) 
-                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            if (empty($platforms)) {
+                $this->sendResponse(['error' => 'At least one platform is required'], 400);
+                return;
+            }
             
-            $stmt->bind_param("sssssssssss", $title, $description, $status, $platform, $category, 
+            $stmt = $con->prepare("INSERT INTO `$tableName` (title, description, status, platform, platforms, category, 
+                                    publish_date, publish_time, video_file, thumbnail_url, tags, goals) 
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            
+            $stmt->bind_param("ssssssssssss", $title, $description, $status, $platform, $platformsJson, $category, 
                             $publishDate, $publishTime, $videoFilePath, $thumbnailFilePath, $tags, $goals);
             
             if ($stmt->execute()) {
@@ -271,17 +287,32 @@ class VideoUploadsAPI {
             $tags = isset($data['tags']) ? $data['tags'] : '';
             $goals = isset($data['goals']) ? $data['goals'] : '';
             
+            // Handle platforms array (new format) or single platform (backward compatibility)
+            $platforms = [];
+            if (isset($data['platforms']) && is_array($data['platforms'])) {
+                $platforms = $data['platforms'];
+                $platform = $platforms[0]; // Use first platform as primary for backward compatibility
+            } else if (!empty($platform)) {
+                $platforms = [$platform];
+            }
+            $platformsJson = json_encode($platforms);
+            
             // Validate required fields
             if (empty($title)) {
                 $this->sendResponse(['error' => 'Title is required'], 400);
                 return;
             }
             
-            $stmt = $con->prepare("INSERT INTO `$tableName` (title, description, status, platform, category, 
-                                    publish_date, publish_time, video_file, thumbnail_url, tags, goals) 
-                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            if (empty($platforms)) {
+                $this->sendResponse(['error' => 'At least one platform is required'], 400);
+                return;
+            }
             
-            $stmt->bind_param("sssssssssss", $title, $description, $status, $platform, $category, 
+            $stmt = $con->prepare("INSERT INTO `$tableName` (title, description, status, platform, platforms, category, 
+                                    publish_date, publish_time, video_file, thumbnail_url, tags, goals) 
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            
+            $stmt->bind_param("ssssssssssss", $title, $description, $status, $platform, $platformsJson, $category, 
                             $publishDate, $publishTime, $videoFile, $thumbnailUrl, $tags, $goals);
             
             if ($stmt->execute()) {
@@ -314,6 +345,15 @@ class VideoUploadsAPI {
                 // Handle image paths
                 if ($row['thumbnail_url'] && strpos($row['thumbnail_url'], 'http') !== 0) {
                     $row['thumbnail_url'] = $row['thumbnail_url']; // Keep the relative path as is
+                }
+                
+                // Parse platforms JSON for frontend compatibility
+                if (isset($row['platforms']) && !empty($row['platforms'])) {
+                    $row['platforms_array'] = json_decode($row['platforms'], true);
+                } else if (isset($row['platform'])) {
+                    $row['platforms_array'] = [$row['platform']];
+                } else {
+                    $row['platforms_array'] = [];
                 }
                 
                 $videos[] = $row;
@@ -352,6 +392,15 @@ class VideoUploadsAPI {
             // Handle image paths
             if ($video['thumbnail_url'] && strpos($video['thumbnail_url'], 'http') !== 0) {
                 $video['thumbnail_url'] = $video['thumbnail_url']; // Keep the relative path as is
+            }
+            
+            // Parse platforms JSON for frontend compatibility
+            if (isset($video['platforms']) && !empty($video['platforms'])) {
+                $video['platforms_array'] = json_decode($video['platforms'], true);
+            } else if (isset($video['platform'])) {
+                $video['platforms_array'] = [$video['platform']];
+            } else {
+                $video['platforms_array'] = [];
             }
             
             $this->sendResponse(['video' => $video]);

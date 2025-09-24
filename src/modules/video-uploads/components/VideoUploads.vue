@@ -372,18 +372,28 @@
 
                 <div class="form-row">
                   <div class="form-group">
-                    <label class="form-label">Hauptplattform</label>
-                    <select v-model="videoForm.platform" class="modern-select" required>
-                      <option value="">Plattform wählen</option>
-                      <option 
+                    <label class="form-label">Ziel-Plattformen</label>
+                    <div class="platform-checkbox-grid">
+                      <div 
                         v-for="platform in availablePlatforms" 
                         :key="platform.value" 
-                        :value="platform.value">
-                        {{ platform.name }}
-                      </option>
-                    </select>
+                        class="platform-checkbox">
+                        <input 
+                          type="checkbox" 
+                          :id="'platform-' + platform.value"
+                          :value="platform.value"
+                          v-model="videoForm.platforms"
+                          class="platform-checkbox-input">
+                        <label :for="'platform-' + platform.value" class="platform-checkbox-label">
+                          <div class="platform-checkbox-icon">
+                            <ion-icon :name="platform.icon"></ion-icon>
+                          </div>
+                          <span class="platform-checkbox-text">{{ platform.name }}</span>
+                        </label>
+                      </div>
+                    </div>
                     <div class="form-helper-text">
-                      Das Video wird zunächst für diese Plattform erstellt. Später kann es zu anderen Plattformen hochgeladen werden.
+                      Wählen Sie alle Plattformen aus, auf die das Video hochgeladen werden soll.
                     </div>
                   </div>
                 </div>
@@ -499,6 +509,183 @@
             </div>
           </div>
         </div>
+
+        <!-- Video Detail Modal -->
+        <div class="modal-overlay" v-if="showDetailModal" @click="closeDetailModal">
+          <div class="detail-modal" @click.stop>
+            <div class="modal-header">
+              <h3>Video Details</h3>
+              <button class="close-btn" @click="closeDetailModal">
+                <ion-icon name="close-outline"></ion-icon>
+              </button>
+            </div>
+            
+            <div class="modal-content" v-if="selectedVideo">
+              <div class="detail-grid">
+                <!-- Video Info Section -->
+                <div class="detail-section">
+                  <h4>Video Informationen</h4>
+                  <div class="detail-item">
+                    <span class="detail-label">Titel:</span>
+                    <span class="detail-value">{{ selectedVideo.title }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Beschreibung:</span>
+                    <span class="detail-value">{{ selectedVideo.description || 'Keine Beschreibung' }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Status:</span>
+                    <span class="status-badge" :class="selectedVideo.status">
+                      {{ getStatusText(selectedVideo.status) }}
+                    </span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Plattform:</span>
+                    <div class="platform-badge" :class="selectedVideo.platform">
+                      <ion-icon :name="getPlatformIcon(selectedVideo.platform)"></ion-icon>
+                      {{ getPlatformText(selectedVideo.platform) }}
+                    </div>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Kategorie:</span>
+                    <span class="detail-value">{{ selectedVideo.category || 'Keine Kategorie' }}</span>
+                  </div>
+                </div>
+
+                <!-- Publishing Info Section -->
+                <div class="detail-section">
+                  <h4>Veröffentlichung</h4>
+                  <div class="detail-item">
+                    <span class="detail-label">Datum:</span>
+                    <span class="detail-value">{{ formatDate(selectedVideo.publish_date) }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Zeit:</span>
+                    <span class="detail-value">{{ selectedVideo.publish_time || 'Keine Zeit angegeben' }}</span>
+                  </div>
+                  <div class="detail-item" v-if="selectedVideo.scheduled_time">
+                    <span class="detail-label">Geplant für:</span>
+                    <span class="detail-value">{{ formatDateTime(selectedVideo.scheduled_time) }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Erstellt am:</span>
+                    <span class="detail-value">{{ formatDateTime(selectedVideo.created_at) }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Zuletzt bearbeitet:</span>
+                    <span class="detail-value">{{ formatDateTime(selectedVideo.updated_at) }}</span>
+                  </div>
+                </div>
+
+                <!-- Performance Section -->
+                <div class="detail-section">
+                  <h4>Performance</h4>
+                  <div class="performance-grid">
+                    <div class="performance-metric">
+                      <div class="metric-icon">
+                        <ion-icon name="eye-outline"></ion-icon>
+                      </div>
+                      <div class="metric-info">
+                        <div class="metric-value">{{ formatNumber(selectedVideo.views) }}</div>
+                        <div class="metric-label">Aufrufe</div>
+                      </div>
+                    </div>
+                    <div class="performance-metric">
+                      <div class="metric-icon">
+                        <ion-icon name="thumbs-up-outline"></ion-icon>
+                      </div>
+                      <div class="metric-info">
+                        <div class="metric-value">{{ formatNumber(selectedVideo.likes) }}</div>
+                        <div class="metric-label">Likes</div>
+                      </div>
+                    </div>
+                    <div class="performance-metric">
+                      <div class="metric-icon">
+                        <ion-icon name="chatbubble-outline"></ion-icon>
+                      </div>
+                      <div class="metric-info">
+                        <div class="metric-value">{{ formatNumber(selectedVideo.comments) }}</div>
+                        <div class="metric-label">Kommentare</div>
+                      </div>
+                    </div>
+                    <div class="performance-metric">
+                      <div class="metric-icon">
+                        <ion-icon name="share-outline"></ion-icon>
+                      </div>
+                      <div class="metric-info">
+                        <div class="metric-value">{{ formatNumber(selectedVideo.shares) }}</div>
+                        <div class="metric-label">Shares</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Like Rate:</span>
+                    <span class="detail-value">{{ selectedVideo.like_rate }}%</span>
+                  </div>
+                </div>
+
+                <!-- Media Section -->
+                <div class="detail-section">
+                  <h4>Medien</h4>
+                  <div class="media-preview">
+                    <div class="thumbnail-preview" v-if="selectedVideo.thumbnail_url">
+                      <img :src="selectedVideo.thumbnail_url" alt="Video Thumbnail">
+                    </div>
+                    <div class="media-info">
+                      <div class="detail-item" v-if="selectedVideo.video_file">
+                        <span class="detail-label">Video Datei:</span>
+                        <span class="detail-value">{{ selectedVideo.video_file }}</span>
+                      </div>
+                      <div class="detail-item" v-if="selectedVideo.platform_video_id">
+                        <span class="detail-label">Plattform Video ID:</span>
+                        <span class="detail-value">{{ selectedVideo.platform_video_id }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tags and Goals Section -->
+                <div class="detail-section full-width">
+                  <h4>Tags & Ziele</h4>
+                  <div class="detail-item" v-if="selectedVideo.tags">
+                    <span class="detail-label">Tags:</span>
+                    <div class="tags-container">
+                      <span 
+                        v-for="tag in getTagsArray(selectedVideo.tags)" 
+                        :key="tag" 
+                        class="tag-badge">
+                        {{ tag }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="detail-item" v-if="selectedVideo.goals">
+                    <span class="detail-label">Ziele:</span>
+                    <span class="detail-value">{{ selectedVideo.goals }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="modal-actions">
+                <button class="action-btn secondary" @click="editVideo(selectedVideo)">
+                  <ion-icon name="create-outline"></ion-icon>
+                  Bearbeiten
+                </button>
+                <button 
+                  v-if="selectedVideo.status === 'draft' || selectedVideo.status === 'scheduled'"
+                  class="action-btn primary" 
+                  @click="uploadToPlatform(selectedVideo.id, selectedVideo.platform)">
+                  <ion-icon name="cloud-upload-outline"></ion-icon>
+                  Hochladen
+                </button>
+                <button class="action-btn danger" @click="deleteVideo(selectedVideo.id)">
+                  <ion-icon name="trash-outline"></ion-icon>
+                  Löschen
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </ion-content>
   </ion-page>
@@ -532,6 +719,10 @@ export default {
       videoFile: null,
       thumbnailFile: null,
       
+      // Detail Modal
+      showDetailModal: false,
+      selectedVideo: null,
+      
       // Upload Progress
       uploadProgress: 0,
       uploadedBytes: 0,
@@ -561,7 +752,7 @@ export default {
         title: '',
         description: '',
         status: 'draft',
-        platform: 'youtube', // Einzelne Hauptplattform
+        platforms: [], // Array für mehrere Plattformen
         category: '',
         publish_date: '',
         publish_time: '',
@@ -613,7 +804,9 @@ export default {
         
         this.videos = (response.data.videos || []).map(video => ({
           ...video,
-          uploadDropdownOpen: false
+          uploadDropdownOpen: false,
+          // Convert platforms_array from backend to platforms for frontend
+          platforms: video.platforms_array || (video.platform ? [video.platform] : [])
         }));
         this.filteredVideos = [...this.videos];
         
@@ -735,7 +928,7 @@ export default {
         title: '',
         description: '',
         status: 'draft',
-        platform: 'youtube', // Standard Plattform
+        platforms: [], // Zurücksetzen auf leeres Array
         category: '',
         publish_date: '',
         publish_time: '',
@@ -755,6 +948,20 @@ export default {
     editVideo(video) {
       this.editingVideo = video;
       this.videoForm = { ...video };
+      
+      // Ensure platforms is properly set
+      if (video.platforms && Array.isArray(video.platforms)) {
+        this.videoForm.platforms = [...video.platforms];
+      } else if (video.platforms_array && Array.isArray(video.platforms_array)) {
+        this.videoForm.platforms = [...video.platforms_array];
+      } else if (video.platform) {
+        this.videoForm.platforms = [video.platform];
+      } else {
+        this.videoForm.platforms = [];
+      }
+      
+      // Close detail modal if it's open
+      this.closeDetailModal();
       this.showVideoForm = true;
     },
     
@@ -763,8 +970,8 @@ export default {
       
       try {
         // Validate platform selection
-        if (!this.videoForm.platform) {
-          this.error = 'Bitte wählen Sie eine Plattform aus';
+        if (!this.videoForm.platforms || this.videoForm.platforms.length === 0) {
+          this.error = 'Bitte wählen Sie mindestens eine Plattform aus';
           this.saving = false;
           return;
         }
@@ -773,7 +980,14 @@ export default {
         
         // Add all form fields
         Object.keys(this.videoForm).forEach(key => {
-          formData.append(key, this.videoForm[key]);
+          if (key === 'platforms') {
+            // Handle platforms array separately
+            this.videoForm.platforms.forEach(platform => {
+              formData.append('platforms[]', platform);
+            });
+          } else {
+            formData.append(key, this.videoForm[key]);
+          }
         });
         
         // Add project parameter
@@ -1029,8 +1243,13 @@ xhr.send(formData);
     },
     
     viewVideoDetails(video) {
-      // Future implementation for detailed view
-      console.log('View details for video:', video);
+      this.selectedVideo = video;
+      this.showDetailModal = true;
+    },
+
+    closeDetailModal() {
+      this.showDetailModal = false;
+      this.selectedVideo = null;
     },
     
     toggleDropdown() {
@@ -1199,6 +1418,20 @@ xhr.send(formData);
         linkedin: 'logo-linkedin'
       };
       return iconMap[platform] || 'videocam-outline';
+    },
+
+    formatDateTime(dateTimeStr) {
+      if (!dateTimeStr) return '';
+      const date = new Date(dateTimeStr);
+      return date.toLocaleDateString('de-DE') + ' ' + date.toLocaleTimeString('de-DE', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    },
+
+    getTagsArray(tagsStr) {
+      if (!tagsStr) return [];
+      return tagsStr.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
     }
   }
 };
@@ -2130,6 +2363,290 @@ xhr.send(formData);
   
   .form-row {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Platform Checkbox Grid */
+.platform-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.platform-checkbox {
+  position: relative;
+}
+
+.platform-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.platform-checkbox-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 12px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  min-height: 80px;
+  justify-content: center;
+}
+
+.platform-checkbox-label:hover {
+  border-color: var(--primary-color);
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.platform-checkbox-input:checked + .platform-checkbox-label {
+  border-color: var(--primary-color);
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary-color);
+}
+
+.platform-checkbox-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.platform-checkbox-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Detail Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.detail-modal {
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.close-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.modal-content {
+  padding: 24px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.detail-section {
+  background: var(--background);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid var(--border);
+}
+
+.detail-section.full-width {
+  grid-column: 1 / -1;
+}
+
+.detail-section h4 {
+  margin: 0 0 16px 0;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.detail-item:last-child {
+  margin-bottom: 0;
+}
+
+.detail-label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  min-width: 120px;
+  margin-right: 12px;
+}
+
+.detail-value {
+  color: var(--text-primary);
+  flex: 1;
+  word-break: break-word;
+}
+
+.performance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.performance-metric {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+}
+
+.metric-icon {
+  background: rgba(37, 99, 235, 0.1);
+  border-radius: 8px;
+  padding: 8px;
+  margin-right: 12px;
+  color: var(--primary-color);
+  font-size: 20px;
+}
+
+.metric-info {
+  flex: 1;
+}
+
+.metric-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.media-preview {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.thumbnail-preview {
+  flex-shrink: 0;
+}
+
+.thumbnail-preview img {
+  width: 120px;
+  height: 68px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.media-info {
+  flex: 1;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.tag-badge {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary-color);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 10px;
+  }
+  
+  .detail-modal {
+    max-height: 95vh;
+  }
+  
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .performance-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .media-preview {
+    flex-direction: column;
+  }
+  
+  .platform-checkbox-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .modal-actions {
+    flex-direction: column;
   }
 }
 </style>
