@@ -611,7 +611,10 @@ export default {
           }
         });
         
-        this.videos = response.data.videos || [];
+        this.videos = (response.data.videos || []).map(video => ({
+          ...video,
+          uploadDropdownOpen: false
+        }));
         this.filteredVideos = [...this.videos];
         
         // Update stats
@@ -902,14 +905,14 @@ export default {
         }));
 
         if (response.data.success) {
-          this.$toast.success(`Video erfolgreich zu ${platform} hochgeladen!`);
+          this.showSuccessMessage(`Video erfolgreich zu ${platform} hochgeladen!`);
           this.loadVideos(); // Refresh list to show updated status
         } else {
-          this.$toast.error(`Fehler beim Upload zu ${platform}: ${response.data.error}`);
+          this.showErrorMessage(`Fehler beim Upload zu ${platform}: ${response.data.error}`);
         }
       } catch (error) {
         console.error('Error uploading to platform:', error);
-        this.$toast.error(`Fehler beim Upload zu ${platform}`);
+        this.showErrorMessage(`Fehler beim Upload zu ${platform}`);
       }
     },
 
@@ -924,14 +927,14 @@ export default {
         }));
 
         if (response.data.success) {
-          this.$toast.success(`Upload für ${platform} geplant!`);
+          this.showSuccessMessage(`Upload für ${platform} geplant!`);
           this.loadVideos();
         } else {
-          this.$toast.error(`Fehler beim Planen: ${response.data.error}`);
+          this.showErrorMessage(`Fehler beim Planen: ${response.data.error}`);
         }
       } catch (error) {
         console.error('Error scheduling upload:', error);
-        this.$toast.error('Fehler beim Planen des Uploads');
+        this.showErrorMessage('Fehler beim Planen des Uploads');
       }
     },
 
@@ -981,10 +984,10 @@ export default {
 
       try {
         await Promise.all(promises);
-        this.$toast.success('Alle Uploads erfolgreich gestartet!');
+        this.showSuccessMessage('Alle Uploads erfolgreich gestartet!');
       } catch (error) {
         console.error('Error in bulk upload:', error);
-        this.$toast.error('Fehler beim Bulk-Upload');
+        this.showErrorMessage('Fehler beim Bulk-Upload');
       }
     },
 
@@ -992,15 +995,27 @@ export default {
       // Close all other dropdowns first
       this.videos.forEach(video => {
         if (video.id !== videoId) {
-          this.$set(video, 'uploadDropdownOpen', false);
+          video.uploadDropdownOpen = false;
         }
       });
       
       // Toggle the clicked dropdown
       const video = this.videos.find(v => v.id === videoId);
       if (video) {
-        this.$set(video, 'uploadDropdownOpen', !video.uploadDropdownOpen);
+        video.uploadDropdownOpen = !video.uploadDropdownOpen;
       }
+    },
+
+    showSuccessMessage(message) {
+      // Simple console log for now - in production you'd use a toast library
+      console.log('✅ Success:', message);
+      // You can integrate a toast library like vue-toastification here
+    },
+
+    showErrorMessage(message) {
+      // Simple console log for now - in production you'd use a toast library
+      console.error('❌ Error:', message);
+      // You can integrate a toast library like vue-toastification here
     },
     
     viewVideoDetails(video) {
