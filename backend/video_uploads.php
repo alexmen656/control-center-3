@@ -35,6 +35,7 @@ class VideoUploadsAPI {
             `category` varchar(100),
             `publish_date` date,
             `publish_time` time,
+            `scheduled_time` datetime,
             `video_file` varchar(255),
             `thumbnail_url` varchar(255),
             `tags` text,
@@ -89,6 +90,15 @@ class VideoUploadsAPI {
                 break;
             case 'update_status':
                 $this->updateVideoStatus($project);
+                break;
+            case 'upload_to_platform':
+                $this->uploadToPlatform($project);
+                break;
+            case 'schedule_upload':
+                $this->scheduleUpload($project);
+                break;
+            case 'get_upload_progress':
+                $this->getUploadProgress($project);
                 break;
             default:
                 $this->sendResponse(['error' => 'Invalid action'], 400);
@@ -582,6 +592,433 @@ class VideoUploadsAPI {
         }
         
         $stmt->close();
+    }
+    
+    private function uploadToPlatform($project) {
+        $videoId = isset($_REQUEST['video_id']) ? (int)$_REQUEST['video_id'] : 0;
+        $platform = isset($_REQUEST['platform']) ? $_REQUEST['platform'] : '';
+        
+        if ($videoId <= 0) {
+            $this->sendResponse(['error' => 'Invalid video ID'], 400);
+            return;
+        }
+        
+        if (empty($platform)) {
+            $this->sendResponse(['error' => 'Platform is required'], 400);
+            return;
+        }
+        
+        // Get video data
+        $video = $this->getVideoById($videoId, $project);
+        if (!$video) {
+            $this->sendResponse(['error' => 'Video not found'], 404);
+            return;
+        }
+        
+        // Get platform configuration
+        $config = $this->getPlatformConfig($platform, $project);
+        if (empty($config['access_token'])) {
+            $this->sendResponse(['error' => "Platform $platform is not connected"], 400);
+            return;
+        }
+        
+        // Update status to processing
+        $this->updateVideoStatusById($videoId, $project, 'processing');
+        
+        // Upload to the specific platform
+        switch ($platform) {
+            case 'youtube':
+                $result = $this->uploadToYouTube($video, $config, $project);
+                break;
+            case 'instagram':
+                $result = $this->uploadToInstagram($video, $config, $project);
+                break;
+            case 'tiktok':
+                $result = $this->uploadToTikTok($video, $config, $project);
+                break;
+            default:
+                $this->sendResponse(['error' => 'Unsupported platform'], 400);
+                return;
+        }
+        
+        // Update video status based on result
+        if ($result['success']) {
+            $this->updateVideoStatusById($videoId, $project, 'published');
+            if (isset($result['platform_video_id'])) {
+                $this->updatePlatformVideoId($videoId, $project, $result['platform_video_id']);
+            }
+            $this->sendResponse(['success' => true, 'message' => "Video uploaded to $platform successfully", 'result' => $result]);
+        } else {
+            $this->updateVideoStatusById($videoId, $project, 'failed');
+            $this->sendResponse(['error' => $result['error']], 500);
+        }
+    }
+    
+    private function scheduleUpload($project) {
+        $videoId = isset($_REQUEST['video_id']) ? (int)$_REQUEST['video_id'] : 0;
+        $platform = isset($_REQUEST['platform']) ? $_REQUEST['platform'] : '';
+        $scheduledTime = isset($_REQUEST['scheduled_time']) ? $_REQUEST['scheduled_time'] : '';
+        
+        if ($videoId <= 0) {
+            $this->sendResponse(['error' => 'Invalid video ID'], 400);
+            return;
+        }
+        
+        if (empty($platform) || empty($scheduledTime)) {
+            $this->sendResponse(['error' => 'Platform and scheduled time are required'], 400);
+            return;
+        }
+        
+        // Update video status to scheduled
+        $this->updateVideoStatusById($videoId, $project, 'scheduled');
+        
+        // Here you would typically add the video to a job queue or cron system
+        // For now, we'll just update the database with the scheduled time
+        $tableName = $this->getTableName($project);
+        global $con;
+        
+        $stmt = $con->prepare("UPDATE `$tableName` SET scheduled_time = ? WHERE id = ?");
+        $stmt->bind_param("si", $scheduledTime, $videoId);
+        
+        if ($stmt->execute()) {
+            $this->sendResponse(['success' => true, 'message' => 'Video scheduled for upload']);
+        } else {
+            $this->sendResponse(['error' => 'Failed to schedule video'], 500);
+        }
+        
+        $stmt->close();
+    }
+    
+    private function getUploadProgress($project) {
+        $videoId = isset($_REQUEST['video_id']) ? (int)$_REQUEST['video_id'] : 0;
+        
+        if ($videoId <= 0) {
+            $this->sendResponse(['error' => 'Invalid video ID'], 400);
+            return;
+        }
+        
+        // Get video status
+        $video = $this->getVideoById($videoId, $project);
+        if (!$video) {
+            $this->sendResponse(['error' => 'Video not found'], 404);
+            return;
+        }
+        
+        // Return upload progress (in a real implementation, this would track actual upload progress)
+        $progress = [
+            'status' => $video['status'],
+            'progress' => $video['status'] === 'processing' ? rand(10, 90) : ($video['status'] === 'published' ? 100 : 0),
+            'message' => $this->getStatusMessage($video['status'])
+        ];
+        
+        $this->sendResponse(['progress' => $progress]);
+    }
+    
+    private function uploadToYouTube($video, $config, $project) {
+        $accessToken = $config['access_token'];
+        
+        // Check if video file exists
+        $videoPath = "../" . $video['video_file'];
+        if (!file_exists($videoPath)) {
+            return ['success' => false, 'error' => 'Video file not found'];
+        }
+        
+        // Prepare video metadata
+        $metadata = [
+            'snippet' => [
+                'title' => $video['title'],
+                'description' => $video['description'] ?? '',
+                'tags' => !empty($video['tags']) ? explode(',', $video['tags']) : [],
+                'categoryId' => '22' // People & Blogs category
+            ],
+            'status' => [
+                'privacyStatus' => 'public',
+                'publishAt' => $video['publish_date'] ? $video['publish_date'] . 'T' . ($video['publish_time'] ?? '12:00:00') . '.000Z' : null
+            ]
+        ];
+        
+        // Upload to YouTube using resumable upload
+        $uploadUrl = 'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status';
+        
+        // Step 1: Initialize upload session
+        $headers = [
+            'Authorization: Bearer ' . $accessToken,
+            'Content-Type: application/json; charset=UTF-8',
+            'X-Upload-Content-Type: video/*',
+            'X-Upload-Content-Length: ' . filesize($videoPath)
+        ];
+        
+        $ch = curl_init($uploadUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($metadata));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_HEADER, true);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode !== 200) {
+            return ['success' => false, 'error' => 'Failed to initialize YouTube upload: ' . $httpCode];
+        }
+        
+        // Extract upload URL from Location header
+        preg_match('/Location: (.*)/', $response, $matches);
+        if (empty($matches[1])) {
+            return ['success' => false, 'error' => 'Failed to get YouTube upload URL'];
+        }
+        
+        $uploadSessionUrl = trim($matches[1]);
+        
+        // Step 2: Upload video file
+        $ch = curl_init($uploadSessionUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_PUT, true);
+        curl_setopt($ch, CURLOPT_INFILE, fopen($videoPath, 'rb'));
+        curl_setopt($ch, CURLOPT_INFILESIZE, filesize($videoPath));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: video/*',
+            'Content-Length: ' . filesize($videoPath)
+        ]);
+        
+        $uploadResponse = curl_exec($ch);
+        $uploadHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($uploadHttpCode === 200 || $uploadHttpCode === 201) {
+            $responseData = json_decode($uploadResponse, true);
+            return [
+                'success' => true,
+                'platform_video_id' => $responseData['id'] ?? '',
+                'message' => 'Video uploaded to YouTube successfully'
+            ];
+        } else {
+            return ['success' => false, 'error' => 'Failed to upload video to YouTube: ' . $uploadHttpCode];
+        }
+    }
+    
+    private function uploadToInstagram($video, $config, $project) {
+        $accessToken = $config['access_token'];
+        $pageId = $config['page_id'] ?? ''; // Instagram Business Account Page ID
+        
+        if (empty($pageId)) {
+            return ['success' => false, 'error' => 'Instagram Page ID not configured'];
+        }
+        
+        // Check if video file exists
+        $videoPath = "../" . $video['video_file'];
+        if (!file_exists($videoPath)) {
+            return ['success' => false, 'error' => 'Video file not found'];
+        }
+        
+        // Step 1: Upload video to Instagram
+        $uploadUrl = "https://graph.facebook.com/v18.0/{$pageId}/media";
+        $uploadData = [
+            'media_type' => 'REELS',
+            'video_url' => 'https://' . $_SERVER['HTTP_HOST'] . '/' . $video['video_file'], // Public URL needed
+            'caption' => $video['description'] ?? $video['title'],
+            'access_token' => $accessToken
+        ];
+        
+        $ch = curl_init($uploadUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($uploadData));
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode !== 200) {
+            return ['success' => false, 'error' => 'Failed to upload to Instagram: ' . $response];
+        }
+        
+        $responseData = json_decode($response, true);
+        if (!isset($responseData['id'])) {
+            return ['success' => false, 'error' => 'Invalid response from Instagram API'];
+        }
+        
+        $mediaId = $responseData['id'];
+        
+        // Step 2: Publish the media
+        $publishUrl = "https://graph.facebook.com/v18.0/{$pageId}/media_publish";
+        $publishData = [
+            'creation_id' => $mediaId,
+            'access_token' => $accessToken
+        ];
+        
+        $ch = curl_init($publishUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($publishData));
+        
+        $publishResponse = curl_exec($ch);
+        $publishHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($publishHttpCode === 200) {
+            $publishResponseData = json_decode($publishResponse, true);
+            return [
+                'success' => true,
+                'platform_video_id' => $publishResponseData['id'] ?? $mediaId,
+                'message' => 'Video uploaded to Instagram successfully'
+            ];
+        } else {
+            return ['success' => false, 'error' => 'Failed to publish on Instagram: ' . $publishResponse];
+        }
+    }
+    
+    private function uploadToTikTok($video, $config, $project) {
+        $accessToken = $config['access_token'];
+        $openId = $config['open_id'] ?? '';
+        
+        if (empty($openId)) {
+            return ['success' => false, 'error' => 'TikTok Open ID not configured'];
+        }
+        
+        // Check if video file exists
+        $videoPath = "../" . $video['video_file'];
+        if (!file_exists($videoPath)) {
+            return ['success' => false, 'error' => 'Video file not found'];
+        }
+        
+        // Step 1: Initialize video upload
+        $initUrl = 'https://open-api.tiktok.com/v2/post/publish/video/init/';
+        $initData = [
+            'post_info' => [
+                'title' => $video['title'],
+                'description' => $video['description'] ?? '',
+                'privacy_level' => 'MUTUAL_FOLLOW_FRIEND', // or 'PUBLIC_TO_EVERYONE'
+                'disable_duet' => false,
+                'disable_comment' => false,
+                'disable_stitch' => false,
+                'video_cover_timestamp_ms' => 1000
+            ],
+            'source_info' => [
+                'source' => 'FILE_UPLOAD',
+                'video_size' => filesize($videoPath),
+                'chunk_size' => 10 * 1024 * 1024, // 10MB chunks
+                'total_chunk_count' => ceil(filesize($videoPath) / (10 * 1024 * 1024))
+            ]
+        ];
+        
+        $ch = curl_init($initUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($initData));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $accessToken,
+            'Content-Type: application/json'
+        ]);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode !== 200) {
+            return ['success' => false, 'error' => 'Failed to initialize TikTok upload: ' . $response];
+        }
+        
+        $responseData = json_decode($response, true);
+        if (!isset($responseData['data']['upload_url'])) {
+            return ['success' => false, 'error' => 'Invalid response from TikTok API'];
+        }
+        
+        $uploadUrl = $responseData['data']['upload_url'];
+        $publishId = $responseData['data']['publish_id'];
+        
+        // Step 2: Upload video file
+        $videoContent = file_get_contents($videoPath);
+        
+        $ch = curl_init($uploadUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_PUT, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $videoContent);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: video/mp4',
+            'Content-Range: bytes 0-' . (strlen($videoContent) - 1) . '/' . strlen($videoContent)
+        ]);
+        
+        $uploadResponse = curl_exec($ch);
+        $uploadHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($uploadHttpCode === 200 || $uploadHttpCode === 201) {
+            return [
+                'success' => true,
+                'platform_video_id' => $publishId,
+                'message' => 'Video uploaded to TikTok successfully'
+            ];
+        } else {
+            return ['success' => false, 'error' => 'Failed to upload video to TikTok: ' . $uploadHttpCode];
+        }
+    }
+    
+    private function getVideoById($videoId, $project) {
+        $tableName = $this->getTableName($project);
+        global $con;
+        
+        $stmt = $con->prepare("SELECT * FROM `$tableName` WHERE id = ?");
+        $stmt->bind_param("i", $videoId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows > 0) {
+            return $result->fetch_assoc();
+        }
+        
+        return null;
+    }
+    
+    private function updateVideoStatusById($videoId, $project, $status) {
+        $tableName = $this->getTableName($project);
+        global $con;
+        
+        $stmt = $con->prepare("UPDATE `$tableName` SET status = ? WHERE id = ?");
+        $stmt->bind_param("si", $status, $videoId);
+        $stmt->execute();
+        $stmt->close();
+    }
+    
+    private function updatePlatformVideoId($videoId, $project, $platformVideoId) {
+        $tableName = $this->getTableName($project);
+        global $con;
+        
+        $stmt = $con->prepare("UPDATE `$tableName` SET platform_video_id = ? WHERE id = ?");
+        $stmt->bind_param("si", $platformVideoId, $videoId);
+        $stmt->execute();
+        $stmt->close();
+    }
+    
+    private function getPlatformConfig($platform, $project) {
+        global $con;
+        $configTableName = 'video_uploads_config_' . str_replace('-', '_', $project);
+        
+        $sql = "SELECT name, value FROM `$configTableName` WHERE platform = ?";
+        $stmt = $con->prepare($sql);
+        $stmt->bind_param("s", $platform);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $config = [];
+        while ($row = $result->fetch_assoc()) {
+            $config[$row['name']] = $row['value'];
+        }
+        
+        return $config;
+    }
+    
+    private function getStatusMessage($status) {
+        $messages = [
+            'draft' => 'Video is in draft status',
+            'scheduled' => 'Video is scheduled for upload',
+            'processing' => 'Video is being uploaded to platform',
+            'published' => 'Video has been successfully published',
+            'failed' => 'Video upload failed'
+        ];
+        
+        return $messages[$status] ?? 'Unknown status';
     }
     
     private function sendResponse($data, $statusCode = 200) {

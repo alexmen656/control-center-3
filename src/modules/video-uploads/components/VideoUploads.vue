@@ -256,6 +256,30 @@
                     <button class="icon-btn view-btn" @click="viewVideoDetails(video)" title="Details">
                       <ion-icon name="eye-outline"></ion-icon>
                     </button>
+                    
+                    <!-- Upload Buttons für verfügbare Plattformen -->
+                    <div class="upload-dropdown" v-if="video.status === 'draft' || video.status === 'scheduled'">
+                      <button class="icon-btn upload-btn" @click="toggleUploadDropdown(video.id)" title="Hochladen">
+                        <ion-icon name="cloud-upload-outline"></ion-icon>
+                      </button>
+                      <div class="upload-dropdown-menu" :class="{ 'active': video.uploadDropdownOpen }">
+                        <button 
+                          v-for="platform in availablePlatforms.filter(p => p.connected)" 
+                          :key="platform.value"
+                          class="upload-dropdown-item" 
+                          @click="uploadToPlatform(video.id, platform.value)">
+                          <ion-icon :name="platform.icon"></ion-icon>
+                          {{ platform.name }}
+                        </button>
+                        <button 
+                          class="upload-dropdown-item bulk-upload" 
+                          @click="bulkUploadToPlatforms(video.id, availablePlatforms.filter(p => p.connected).map(p => p.value))">
+                          <ion-icon name="layers-outline"></ion-icon>
+                          Alle Plattformen
+                        </button>
+                      </div>
+                    </div>
+                    
                     <button 
                       v-if="video.status === 'draft'" 
                       class="icon-btn play-btn" 
@@ -269,6 +293,13 @@
                       @click="unscheduleVideo(video.id)" 
                       title="Planung aufheben">
                       <ion-icon name="pause-outline"></ion-icon>
+                    </button>
+                    <button 
+                      v-if="video.status === 'processing'"
+                      class="icon-btn processing-btn"
+                      @click="checkUploadProgress(video.id)"
+                      title="Upload-Status prüfen">
+                      <ion-icon name="sync-outline"></ion-icon>
                     </button>
                     <button class="icon-btn delete-btn" @click="deleteVideo(video.id)" title="Löschen">
                       <ion-icon name="trash-outline"></ion-icon>
@@ -341,27 +372,18 @@
 
                 <div class="form-row">
                   <div class="form-group">
-                    <label class="form-label">Plattformen</label>
-                    <div class="platforms-selection">
-                      <div 
+                    <label class="form-label">Hauptplattform</label>
+                    <select v-model="videoForm.platform" class="modern-select" required>
+                      <option value="">Plattform wählen</option>
+                      <option 
                         v-for="platform in availablePlatforms" 
-                        :key="platform.value"
-                        class="platform-checkbox" 
-                        :class="{ 'selected': videoForm.platforms.includes(platform.value) }"
-                        @click="togglePlatform(platform.value)"
-                      >
-                        <div class="platform-icon">
-                          <ion-icon :name="platform.icon"></ion-icon>
-                        </div>
-                        <div class="platform-name">{{ platform.name }}</div>
-                        <div class="platform-check">
-                          <ion-icon v-if="videoForm.platforms.includes(platform.value)" name="checkmark-circle"></ion-icon>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="platform-warning" v-if="!videoForm.platforms.length">
-                      <ion-icon name="alert-circle-outline"></ion-icon>
-                      <span>Mindestens eine Plattform auswählen</span>
+                        :key="platform.value" 
+                        :value="platform.value">
+                        {{ platform.name }}
+                      </option>
+                    </select>
+                    <div class="form-helper-text">
+                      Das Video wird zunächst für diese Plattform erstellt. Später kann es zu anderen Plattformen hochgeladen werden.
                     </div>
                   </div>
                 </div>
@@ -539,7 +561,7 @@ export default {
         title: '',
         description: '',
         status: 'draft',
-        platforms: [], // Array für mehrere Plattformen
+        platform: 'youtube', // Einzelne Hauptplattform
         category: '',
         publish_date: '',
         publish_time: '',
@@ -573,6 +595,7 @@ export default {
   
   mounted() {
     this.loadVideos();
+    this.loadConnectedPlatforms();
   },
   
   methods: {
@@ -709,7 +732,7 @@ export default {
         title: '',
         description: '',
         status: 'draft',
-        platforms: [], // Leeres Array für Plattformen
+        platform: 'youtube', // Standard Plattform
         category: '',
         publish_date: '',
         publish_time: '',
@@ -720,14 +743,7 @@ export default {
       };
     },
     
-    togglePlatform(platform) {
-      const index = this.videoForm.platforms.indexOf(platform);
-      if (index === -1) {
-        this.videoForm.platforms.push(platform);
-      } else {
-        this.videoForm.platforms.splice(index, 1);
-      }
-    },
+
     
     openApiConfig() {
       this.$router.push(`/${this.$route.params.project}/video-uploads/config`);
@@ -743,22 +759,18 @@ export default {
       this.saving = true;
       
       try {
-        // Validate platforms selection
-        if (this.videoForm.platforms.length === 0) {
-          this.error = 'Bitte wählen Sie mindestens eine Plattform aus';
+        // Validate platform selection
+        if (!this.videoForm.platform) {
+          this.error = 'Bitte wählen Sie eine Plattform aus';
           this.saving = false;
           return;
         }
         
         const formData = new FormData();
         
-        // Add all form fields except platforms (handle separately)
+        // Add all form fields
         Object.keys(this.videoForm).forEach(key => {
-          if (key === 'platforms') {
-            formData.append('platforms', JSON.stringify(this.videoForm.platforms));
-          } else {
-            formData.append(key, this.videoForm[key]);
-          }
+          formData.append(key, this.videoForm[key]);
         });
         
         // Add project parameter
@@ -873,6 +885,121 @@ export default {
         this.loadVideos();
       } catch (error) {
         console.error('Error unscheduling video:', error);
+      }
+    },
+
+    async uploadToPlatform(videoId, platform) {
+      if (!confirm(`Möchten Sie das Video zu ${platform} hochladen?`)) {
+        return;
+      }
+
+      try {
+        const response = await this.$axios.post('video_uploads.php', this.$qs.stringify({
+          action: 'upload_to_platform',
+          video_id: videoId,
+          platform: platform,
+          project: this.$route.params.project
+        }));
+
+        if (response.data.success) {
+          this.$toast.success(`Video erfolgreich zu ${platform} hochgeladen!`);
+          this.loadVideos(); // Refresh list to show updated status
+        } else {
+          this.$toast.error(`Fehler beim Upload zu ${platform}: ${response.data.error}`);
+        }
+      } catch (error) {
+        console.error('Error uploading to platform:', error);
+        this.$toast.error(`Fehler beim Upload zu ${platform}`);
+      }
+    },
+
+    async scheduleUpload(videoId, platform, scheduledTime) {
+      try {
+        const response = await this.$axios.post('video_uploads.php', this.$qs.stringify({
+          action: 'schedule_upload',
+          video_id: videoId,
+          platform: platform,
+          scheduled_time: scheduledTime,
+          project: this.$route.params.project
+        }));
+
+        if (response.data.success) {
+          this.$toast.success(`Upload für ${platform} geplant!`);
+          this.loadVideos();
+        } else {
+          this.$toast.error(`Fehler beim Planen: ${response.data.error}`);
+        }
+      } catch (error) {
+        console.error('Error scheduling upload:', error);
+        this.$toast.error('Fehler beim Planen des Uploads');
+      }
+    },
+
+    async checkUploadProgress(videoId) {
+      try {
+        const response = await this.$axios.get('video_uploads.php', {
+          params: {
+            action: 'get_upload_progress',
+            video_id: videoId,
+            project: this.$route.params.project
+          }
+        });
+
+        return response.data.progress;
+      } catch (error) {
+        console.error('Error checking upload progress:', error);
+        return null;
+      }
+    },
+
+    async loadConnectedPlatforms() {
+      try {
+        const response = await this.$axios.get('video_uploads_config.php', {
+          params: {
+            action: 'get_connections',
+            project: this.$route.params.project
+          }
+        });
+
+        if (response.data.connections) {
+          this.connectedPlatforms = response.data.connections;
+          
+          // Update available platforms based on connections
+          this.availablePlatforms.forEach(platform => {
+            platform.connected = this.connectedPlatforms[platform.value]?.connected || false;
+          });
+        }
+      } catch (error) {
+        console.error('Error loading connected platforms:', error);
+      }
+    },
+
+    async bulkUploadToPlatforms(videoId, platforms) {
+      const promises = platforms.map(platform => 
+        this.uploadToPlatform(videoId, platform)
+      );
+
+      try {
+        await Promise.all(promises);
+        this.$toast.success('Alle Uploads erfolgreich gestartet!');
+      } catch (error) {
+        console.error('Error in bulk upload:', error);
+        this.$toast.error('Fehler beim Bulk-Upload');
+      }
+    },
+
+    toggleUploadDropdown(videoId) {
+      // Close all other dropdowns first
+      this.videos.forEach(video => {
+        if (video.id !== videoId) {
+          this.$set(video, 'uploadDropdownOpen', false);
+        }
+      });
+      
+      // Toggle the clicked dropdown
+      const video = this.videos.find(v => v.id === videoId);
+      if (video) {
+        this.$set(video, 'uploadDropdownOpen', !video.uploadDropdownOpen);
       }
     },
     
@@ -1586,6 +1713,7 @@ export default {
 .action-buttons {
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
 .icon-btn {
@@ -1625,6 +1753,67 @@ export default {
 
 .pause-btn:hover {
   color: var(--warning-color);
+}
+
+.upload-btn:hover {
+  color: var(--primary-color);
+}
+
+.processing-btn:hover {
+  color: var(--warning-color);
+}
+
+/* Upload Dropdown */
+.upload-dropdown {
+  position: relative;
+}
+
+.upload-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  z-index: 100;
+  display: none;
+  overflow: hidden;
+}
+
+.upload-dropdown-menu.active {
+  display: block;
+}
+
+.upload-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  background: none;
+  text-align: left;
+}
+
+.upload-dropdown-item:hover {
+  background-color: var(--background);
+  color: var(--text-primary);
+}
+
+.upload-dropdown-item.bulk-upload {
+  border-top: 1px solid var(--border);
+  font-weight: 500;
+}
+
+.upload-dropdown-item.bulk-upload:hover {
+  background-color: rgba(37, 99, 235, 0.1);
+  color: var(--primary-color);
 }
 
 /* Empty State */
@@ -1789,6 +1978,13 @@ export default {
 .modern-textarea {
   resize: vertical;
   min-height: 80px;
+}
+
+.form-helper-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  line-height: 1.4;
 }
 
 /* File Upload */
