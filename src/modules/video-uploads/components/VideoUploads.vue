@@ -942,7 +942,7 @@ export default {
 
     
     openApiConfig() {
-      this.$router.push(`/${this.$route.params.project}/video-uploads/config`);
+      this.$router.push(`/project/${this.$route.params.project}/video-uploads/config`);
     },
     
     editVideo(video) {
