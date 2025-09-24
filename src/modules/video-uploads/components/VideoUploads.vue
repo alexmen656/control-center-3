@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="videocam-outline" title="Video Uploads"/>
+      <SiteTitle icon="videocam-outline" title="Video Uploads" />
 
       <div class="page-container">
         <!-- Action Bar -->
@@ -12,7 +12,7 @@
               <span>Neues Video</span>
             </button>
           </div>
-          
+
           <div class="action-group-right">
             <button class="action-btn secondary" @click="exportVideos()">
               <ion-icon name="download-outline"></ion-icon>
@@ -105,15 +105,10 @@
         <div class="filter-bar">
           <div class="search-box">
             <ion-icon name="search-outline"></ion-icon>
-            <input 
-              type="text" 
-              v-model="searchTerm" 
-              @input="filterVideos" 
-              placeholder="Videos durchsuchen..." 
-              class="search-input" 
-            />
+            <input type="text" v-model="searchTerm" @input="filterVideos" placeholder="Videos durchsuchen..."
+              class="search-input" />
           </div>
-          
+
           <div class="filter-controls">
             <select v-model="statusFilter" @change="filterVideos" class="modern-select">
               <option value="">Alle Status</option>
@@ -123,7 +118,7 @@
               <option value="processing">Verarbeitung</option>
               <option value="failed">Fehlgeschlagen</option>
             </select>
-            
+
             <select v-model="platformFilter" @change="filterVideos" class="modern-select">
               <option value="">Alle Plattformen</option>
               <option value="youtube">YouTube</option>
@@ -142,168 +137,146 @@
             <div class="header-actions">
               <div class="sort-controls">
                 <span>Sortieren nach:</span>
-                <button 
-                  class="sort-button" 
-                  :class="getSortClass('created_at')" 
-                  @click="setSorting('created_at')">
-                  Datum 
+                <button class="sort-button" :class="getSortClass('created_at')" @click="setSorting('created_at')">
+                  Datum
                   <ion-icon :name="getSortIcon('created_at')"></ion-icon>
                 </button>
-                <button 
-                  class="sort-button" 
-                  :class="getSortClass('title')" 
-                  @click="setSorting('title')">
-                  Titel 
+                <button class="sort-button" :class="getSortClass('title')" @click="setSorting('title')">
+                  Titel
                   <ion-icon :name="getSortIcon('title')"></ion-icon>
                 </button>
-                <button 
-                  class="sort-button" 
-                  :class="getSortClass('views')" 
-                  @click="setSorting('views')">
-                  Aufrufe 
+                <button class="sort-button" :class="getSortClass('views')" @click="setSorting('views')">
+                  Aufrufe
                   <ion-icon :name="getSortIcon('views')"></ion-icon>
                 </button>
               </div>
             </div>
           </div>
-          
+
           <div class="table-wrapper">
             <div class="modern-table">
+              <!-- Table Header -->
               <div class="table-header">
                 <div class="table-cell">Video</div>
                 <div class="table-cell">Status</div>
                 <div class="table-cell">Plattform</div>
                 <div class="table-cell">Datum</div>
                 <div class="table-cell">Performance</div>
-                <div class="table-cell">Aktionen</div>
+                <div class="table-cell actions-header">Aktionen</div>
               </div>
-              
-              <!-- Empty State -->
-              <div v-if="filteredVideos.length === 0" class="empty-state">
-                <div class="no-data-content">
-                  <ion-icon name="videocam-outline" size="large"></ion-icon>
-                  <h4>Keine Videos gefunden</h4>
-                  <p>Erstellen Sie Ihr erstes Video, um zu beginnen.</p>
-                  <button class="action-btn primary" @click="toggleVideoForm">
-                    <ion-icon name="add-outline"></ion-icon>
-                    Erstes Video erstellen
-                  </button>
+
+              <!-- Table Body -->
+              <div class="table-body">
+                <!-- No Data State -->
+                <div v-if="filteredVideos.length === 0" class="empty-state">
+                  <div class="no-data-content">
+                    <ion-icon name="videocam-outline" size="large"></ion-icon>
+                    <h4>Keine Videos gefunden</h4>
+                    <p>Erstellen Sie Ihr erstes Video, um zu beginnen.</p>
+                    <button class="action-btn primary" @click="toggleVideoForm">
+                      <ion-icon name="add-outline"></ion-icon>
+                      Erstes Video erstellen
+                    </button>
+                  </div>
                 </div>
-              </div>
-              
-              <!-- Video Rows -->
-              <div 
-                v-for="video in paginatedVideos" 
-                :key="video.id" 
-                class="table-row"
-                :class="{ 'row-hover': true }">
-                
-                <div class="table-cell">
-                  <div class="video-info">
-                    <div class="video-thumbnail">
-                      <img v-if="video.thumbnail_url" :src="video.thumbnail_url" alt="Video Thumbnail">
-                      <div v-else class="default-thumbnail">
-                        <ion-icon name="play-circle-outline"></ion-icon>
+
+                <!-- Video Rows -->
+                <div v-for="video in paginatedVideos" :key="video.id" class="table-row" :class="{ 'row-hover': true }">
+
+                  <div class="table-cell">
+                    <div class="video-info">
+                      <div class="video-thumbnail">
+                        <img v-if="video.thumbnail_url" :src="video.thumbnail_url" alt="Video Thumbnail">
+                        <div v-else class="default-thumbnail">
+                          <ion-icon name="play-circle-outline"></ion-icon>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="video-title">{{ video.title }}</div>
+                        <div class="video-description">{{ video.description }}</div>
                       </div>
                     </div>
-                    <div>
-                      <div class="video-title">{{ video.title }}</div>
-                      <div class="video-description">{{ video.description }}</div>
+                  </div>
+
+                  <div class="table-cell">
+                    <span class="status-badge" :class="video.status">
+                      {{ getStatusText(video.status) }}
+                    </span>
+                  </div>
+
+                  <div class="table-cell">
+                    <div class="platform-badge" :class="video.platform">
+                      <ion-icon :name="getPlatformIcon(video.platform)"></ion-icon>
+                      {{ getPlatformText(video.platform) }}
                     </div>
                   </div>
-                </div>
-                
-                <div class="table-cell">
-                  <span class="status-badge" :class="video.status">
-                    {{ getStatusText(video.status) }}
-                  </span>
-                </div>
-                
-                <div class="table-cell">
-                  <div class="platform-badge" :class="video.platform">
-                    <ion-icon :name="getPlatformIcon(video.platform)"></ion-icon>
-                    {{ getPlatformText(video.platform) }}
-                  </div>
-                </div>
-                
-                <div class="table-cell">
-                  <div class="date-info">
-                    <div class="date-primary">{{ formatDate(video.publish_date) }}</div>
-                    <div class="date-secondary">
-                      {{ video.publish_time || 'Keine Zeit' }}
+
+                  <div class="table-cell">
+                    <div class="date-info">
+                      <div class="date-primary">{{ formatDate(video.publish_date) }}</div>
+                      <div class="date-secondary">
+                        {{ video.publish_time || 'Keine Zeit' }}
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <div class="table-cell">
-                  <div class="performance-metrics">
-                    <div class="metric">
-                      <span class="metric-value">{{ formatNumber(video.views) }}</span>
-                      <span class="metric-label">Views</span>
-                    </div>
-                    <div class="metric">
-                      <span class="metric-value">{{ video.like_rate }}%</span>
-                      <span class="metric-label">Like Rate</span>
+
+                  <div class="table-cell">
+                    <div class="performance-metrics">
+                      <div class="metric">
+                        <span class="metric-value">{{ formatNumber(video.views) }}</span>
+                        <span class="metric-label">Views</span>
+                      </div>
+                      <div class="metric">
+                        <span class="metric-value">{{ video.like_rate }}%</span>
+                        <span class="metric-label">Like Rate</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <div class="actions-cell">
-                  <div class="action-buttons">
-                    <button class="icon-btn edit-btn" @click="editVideo(video)" title="Bearbeiten">
-                      <ion-icon name="create-outline"></ion-icon>
-                    </button>
-                    <button class="icon-btn view-btn" @click="viewVideoDetails(video)" title="Details">
-                      <ion-icon name="eye-outline"></ion-icon>
-                    </button>
-                    
-                    <!-- Upload Buttons für verfügbare Plattformen -->
-                    <div class="upload-dropdown" v-if="video.status === 'draft' || video.status === 'scheduled'">
-                      <button class="icon-btn upload-btn" @click="toggleUploadDropdown(video.id)" title="Hochladen">
-                        <ion-icon name="cloud-upload-outline"></ion-icon>
+
+                  <div class="actions-cell">
+                    <div class="action-buttons">
+                      <button class="icon-btn edit-btn" @click="editVideo(video)" title="Bearbeiten">
+                        <ion-icon name="create-outline"></ion-icon>
                       </button>
-                      <div class="upload-dropdown-menu" :class="{ 'active': video.uploadDropdownOpen }">
-                        <button 
-                          v-for="platform in availablePlatforms.filter(p => p.connected)" 
-                          :key="platform.value"
-                          class="upload-dropdown-item" 
-                          @click="uploadToPlatform(video.id, platform.value)">
-                          <ion-icon :name="platform.icon"></ion-icon>
-                          {{ platform.name }}
+                      <button class="icon-btn view-btn" @click="viewVideoDetails(video)" title="Details">
+                        <ion-icon name="eye-outline"></ion-icon>
+                      </button>
+
+                      <!-- Upload Buttons für verfügbare Plattformen -->
+                      <div class="upload-dropdown" v-if="video.status === 'draft' || video.status === 'scheduled'">
+                        <button class="icon-btn upload-btn" @click="toggleUploadDropdown(video.id)" title="Hochladen">
+                          <ion-icon name="cloud-upload-outline"></ion-icon>
                         </button>
-                        <button 
-                          class="upload-dropdown-item bulk-upload" 
-                          @click="bulkUploadToPlatforms(video.id, availablePlatforms.filter(p => p.connected).map(p => p.value))">
-                          <ion-icon name="layers-outline"></ion-icon>
-                          Alle Plattformen
-                        </button>
+                        <div class="upload-dropdown-menu" :class="{ 'active': video.uploadDropdownOpen }">
+                          <button v-for="platform in availablePlatforms.filter(p => p.connected)" :key="platform.value"
+                            class="upload-dropdown-item" @click="uploadToPlatform(video.id, platform.value)">
+                            <ion-icon :name="platform.icon"></ion-icon>
+                            {{ platform.name }}
+                          </button>
+                          <button class="upload-dropdown-item bulk-upload"
+                            @click="bulkUploadToPlatforms(video.id, availablePlatforms.filter(p => p.connected).map(p => p.value))">
+                            <ion-icon name="layers-outline"></ion-icon>
+                            Alle Plattformen
+                          </button>
+                        </div>
                       </div>
+
+                      <button v-if="video.status === 'draft'" class="icon-btn play-btn" @click="scheduleVideo(video.id)"
+                        title="Planen">
+                        <ion-icon name="calendar-outline"></ion-icon>
+                      </button>
+                      <button v-if="video.status === 'scheduled'" class="icon-btn pause-btn"
+                        @click="unscheduleVideo(video.id)" title="Planung aufheben">
+                        <ion-icon name="pause-outline"></ion-icon>
+                      </button>
+                      <button v-if="video.status === 'processing'" class="icon-btn processing-btn"
+                        @click="checkUploadProgress(video.id)" title="Upload-Status prüfen">
+                        <ion-icon name="sync-outline"></ion-icon>
+                      </button>
+                      <button class="icon-btn delete-btn" @click="deleteVideo(video.id)" title="Löschen">
+                        <ion-icon name="trash-outline"></ion-icon>
+                      </button>
                     </div>
-                    
-                    <button 
-                      v-if="video.status === 'draft'" 
-                      class="icon-btn play-btn" 
-                      @click="scheduleVideo(video.id)" 
-                      title="Planen">
-                      <ion-icon name="calendar-outline"></ion-icon>
-                    </button>
-                    <button 
-                      v-if="video.status === 'scheduled'" 
-                      class="icon-btn pause-btn" 
-                      @click="unscheduleVideo(video.id)" 
-                      title="Planung aufheben">
-                      <ion-icon name="pause-outline"></ion-icon>
-                    </button>
-                    <button 
-                      v-if="video.status === 'processing'"
-                      class="icon-btn processing-btn"
-                      @click="checkUploadProgress(video.id)"
-                      title="Upload-Status prüfen">
-                      <ion-icon name="sync-outline"></ion-icon>
-                    </button>
-                    <button class="icon-btn delete-btn" @click="deleteVideo(video.id)" title="Löschen">
-                      <ion-icon name="trash-outline"></ion-icon>
-                    </button>
                   </div>
                 </div>
               </div>
@@ -312,17 +285,11 @@
 
           <!-- Pagination -->
           <div class="pagination" v-if="totalPages > 1">
-            <button 
-              class="action-btn secondary" 
-              :disabled="currentPage === 1" 
-              @click="currentPage--">
+            <button class="action-btn secondary" :disabled="currentPage === 1" @click="currentPage--">
               <ion-icon name="chevron-back"></ion-icon>
             </button>
             <span>Seite {{ currentPage }} von {{ totalPages }}</span>
-            <button 
-              class="action-btn secondary" 
-              :disabled="currentPage === totalPages" 
-              @click="currentPage++">
+            <button class="action-btn secondary" :disabled="currentPage === totalPages" @click="currentPage++">
               <ion-icon name="chevron-forward"></ion-icon>
             </button>
           </div>
@@ -342,13 +309,8 @@
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label">Video Titel</label>
-                    <input 
-                      v-model="videoForm.title" 
-                      type="text" 
-                      class="modern-input" 
-                      required 
-                      placeholder="Video Titel eingeben..."
-                    />
+                    <input v-model="videoForm.title" type="text" class="modern-input" required
+                      placeholder="Video Titel eingeben..." />
                   </div>
                   <div class="form-group">
                     <label class="form-label">Status</label>
@@ -362,28 +324,17 @@
 
                 <div class="form-group">
                   <label class="form-label">Beschreibung</label>
-                  <textarea 
-                    v-model="videoForm.description" 
-                    class="modern-textarea" 
-                    rows="3"
-                    placeholder="Kurze Beschreibung des Videos..."
-                  ></textarea>
+                  <textarea v-model="videoForm.description" class="modern-textarea" rows="3"
+                    placeholder="Kurze Beschreibung des Videos..."></textarea>
                 </div>
 
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label">Ziel-Plattformen</label>
                     <div class="platform-checkbox-grid">
-                      <div 
-                        v-for="platform in availablePlatforms" 
-                        :key="platform.value" 
-                        class="platform-checkbox">
-                        <input 
-                          type="checkbox" 
-                          :id="'platform-' + platform.value"
-                          :value="platform.value"
-                          v-model="videoForm.platforms"
-                          class="platform-checkbox-input">
+                      <div v-for="platform in availablePlatforms" :key="platform.value" class="platform-checkbox">
+                        <input type="checkbox" :id="'platform-' + platform.value" :value="platform.value"
+                          v-model="videoForm.platforms" class="platform-checkbox-input">
                         <label :for="'platform-' + platform.value" class="platform-checkbox-label">
                           <div class="platform-checkbox-icon">
                             <ion-icon :name="platform.icon"></ion-icon>
@@ -397,44 +348,33 @@
                     </div>
                   </div>
                 </div>
-                
+
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label">Kategorie</label>
-                    <input 
-                      v-model="videoForm.category" 
-                      type="text" 
-                      class="modern-input" 
-                      placeholder="z.B. Unterhaltung, Bildung, Musik"
-                    />
+                    <input v-model="videoForm.category" type="text" class="modern-input"
+                      placeholder="z.B. Unterhaltung, Bildung, Musik" />
                   </div>
                 </div>
 
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label">Veröffentlichungsdatum</label>
-                    <input 
-                      v-model="videoForm.publish_date" 
-                      type="date" 
-                      class="modern-input" 
-                      required
-                    />
+                    <input v-model="videoForm.publish_date" type="date" class="modern-input" required />
                   </div>
                   <div class="form-group">
                     <label class="form-label">Veröffentlichungszeit</label>
-                    <input 
-                      v-model="videoForm.publish_time" 
-                      type="time" 
-                      class="modern-input"
-                    />
+                    <input v-model="videoForm.publish_time" type="time" class="modern-input" />
                   </div>
                 </div>
 
                 <div class="form-group" v-if="!editingVideo || !videoForm.video_file">
                   <label class="form-label">Video Datei</label>
                   <div class="file-upload-container">
-                    <div class="file-upload-box" @click="triggerFileInput" @dragover.prevent @drop.prevent="handleFileDrop">
-                      <input type="file" ref="fileInput" @change="handleFileSelect" style="display: none;" accept="video/*">
+                    <div class="file-upload-box" @click="triggerFileInput" @dragover.prevent
+                      @drop.prevent="handleFileDrop">
+                      <input type="file" ref="fileInput" @change="handleFileSelect" style="display: none;"
+                        accept="video/*">
                       <ion-icon name="cloud-upload-outline" size="large"></ion-icon>
                       <div class="upload-text" v-if="!videoFile">
                         <p>Klicken oder Datei hierher ziehen</p>
@@ -445,7 +385,7 @@
                         <span class="file-size">{{ formatFileSize(videoFile.size) }}</span>
                       </div>
                     </div>
-                    
+
                     <!-- Upload Progress Bar -->
                     <div v-if="uploadProgress > 0 && uploadProgress < 100" class="upload-progress-container">
                       <div class="upload-progress-text">
@@ -458,12 +398,14 @@
                     </div>
                   </div>
                 </div>
-                
+
                 <div class="form-group" v-if="!editingVideo || !videoForm.thumbnail_url">
                   <label class="form-label">Video Thumbnail (optional)</label>
                   <div class="file-upload-container">
-                    <div class="file-upload-box" @click="triggerThumbnailInput" @dragover.prevent @drop.prevent="handleThumbnailDrop">
-                      <input type="file" ref="thumbnailInput" @change="handleThumbnailSelect" style="display: none;" accept="image/*">
+                    <div class="file-upload-box" @click="triggerThumbnailInput" @dragover.prevent
+                      @drop.prevent="handleThumbnailDrop">
+                      <input type="file" ref="thumbnailInput" @change="handleThumbnailSelect" style="display: none;"
+                        accept="image/*">
                       <ion-icon name="image-outline" size="large"></ion-icon>
                       <div class="upload-text" v-if="!thumbnailFile">
                         <p>Klicken oder Thumbnail hierher ziehen</p>
@@ -479,22 +421,14 @@
 
                 <div class="form-group">
                   <label class="form-label">Tags</label>
-                  <input 
-                    v-model="videoForm.tags" 
-                    type="text" 
-                    class="modern-input" 
-                    placeholder="Tags mit Kommas trennen (z.B. sport,fitness,tutorial)"
-                  />
+                  <input v-model="videoForm.tags" type="text" class="modern-input"
+                    placeholder="Tags mit Kommas trennen (z.B. sport,fitness,tutorial)" />
                 </div>
 
                 <div class="form-group">
                   <label class="form-label">Video Ziele</label>
-                  <textarea 
-                    v-model="videoForm.goals" 
-                    class="modern-textarea" 
-                    rows="2"
-                    placeholder="z.B. 10k Aufrufe erreichen, Community aufbauen..."
-                  ></textarea>
+                  <textarea v-model="videoForm.goals" class="modern-textarea" rows="2"
+                    placeholder="z.B. 10k Aufrufe erreichen, Community aufbauen..."></textarea>
                 </div>
 
                 <div class="form-actions">
@@ -510,20 +444,20 @@
           </div>
         </div>
 
-        <!-- Video Detail Modal -->
-        <div class="modal-overlay" v-if="showDetailModal" @click="closeDetailModal">
-          <div class="detail-modal" @click.stop>
-            <div class="modal-header">
+        <!-- Video Detail View -->
+        <div class="detail-section" :class="{ 'detail-visible': showDetailModal }">
+          <div class="detail-card">
+            <div class="detail-header">
               <h3>Video Details</h3>
-              <button class="close-btn" @click="closeDetailModal">
+              <button class="close-detail-btn" @click="closeDetailModal">
                 <ion-icon name="close-outline"></ion-icon>
               </button>
             </div>
-            
-            <div class="modal-content" v-if="selectedVideo">
+
+            <div class="detail-content" v-if="selectedVideo">
               <div class="detail-grid">
                 <!-- Video Info Section -->
-                <div class="detail-section">
+                <div class="detail-info-section">
                   <h4>Video Informationen</h4>
                   <div class="detail-item">
                     <span class="detail-label">Titel:</span>
@@ -553,7 +487,7 @@
                 </div>
 
                 <!-- Publishing Info Section -->
-                <div class="detail-section">
+                <div class="detail-info-section">
                   <h4>Veröffentlichung</h4>
                   <div class="detail-item">
                     <span class="detail-label">Datum:</span>
@@ -578,7 +512,7 @@
                 </div>
 
                 <!-- Performance Section -->
-                <div class="detail-section">
+                <div class="detail-info-section">
                   <h4>Performance</h4>
                   <div class="performance-grid">
                     <div class="performance-metric">
@@ -625,7 +559,7 @@
                 </div>
 
                 <!-- Media Section -->
-                <div class="detail-section">
+                <div class="detail-info-section">
                   <h4>Medien</h4>
                   <div class="media-preview">
                     <div class="thumbnail-preview" v-if="selectedVideo.thumbnail_url">
@@ -645,15 +579,12 @@
                 </div>
 
                 <!-- Tags and Goals Section -->
-                <div class="detail-section full-width">
+                <div class="detail-info-section full-width">
                   <h4>Tags & Ziele</h4>
                   <div class="detail-item" v-if="selectedVideo.tags">
                     <span class="detail-label">Tags:</span>
                     <div class="tags-container">
-                      <span 
-                        v-for="tag in getTagsArray(selectedVideo.tags)" 
-                        :key="tag" 
-                        class="tag-badge">
+                      <span v-for="tag in getTagsArray(selectedVideo.tags)" :key="tag" class="tag-badge">
                         {{ tag }}
                       </span>
                     </div>
@@ -666,15 +597,13 @@
               </div>
 
               <!-- Action Buttons -->
-              <div class="modal-actions">
+              <div class="detail-actions">
                 <button class="action-btn secondary" @click="editVideo(selectedVideo)">
                   <ion-icon name="create-outline"></ion-icon>
                   Bearbeiten
                 </button>
-                <button 
-                  v-if="selectedVideo.status === 'draft' || selectedVideo.status === 'scheduled'"
-                  class="action-btn primary" 
-                  @click="uploadToPlatform(selectedVideo.id, selectedVideo.platform)">
+                <button v-if="selectedVideo.status === 'draft' || selectedVideo.status === 'scheduled'"
+                  class="action-btn primary" @click="uploadToPlatform(selectedVideo.id, selectedVideo.platform)">
                   <ion-icon name="cloud-upload-outline"></ion-icon>
                   Hochladen
                 </button>
@@ -699,7 +628,7 @@ export default {
   components: {
     SiteTitle,
   },
-      data() {
+  data() {
     return {
       videos: [],
       filteredVideos: [],
@@ -718,11 +647,11 @@ export default {
       dropdownOpen: false,
       videoFile: null,
       thumbnailFile: null,
-      
+
       // Detail Modal
       showDetailModal: false,
       selectedVideo: null,
-      
+
       // Upload Progress
       uploadProgress: 0,
       uploadedBytes: 0,
@@ -737,7 +666,7 @@ export default {
         { value: 'facebook', name: 'Facebook', icon: 'logo-facebook' },
         { value: 'linkedin', name: 'LinkedIn', icon: 'logo-linkedin' }
       ],
-      
+
       // Connected Platforms Status
       connectedPlatforms: {
         youtube: false,
@@ -746,7 +675,7 @@ export default {
         facebook: false,
         linkedin: false
       },
-      
+
       // Form data
       videoForm: {
         title: '',
@@ -771,29 +700,29 @@ export default {
       viewsGrowth: 18
     };
   },
-  
+
   computed: {
     paginatedVideos() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
       return this.filteredVideos.slice(start, end);
     },
-    
+
     totalPages() {
       return Math.ceil(this.filteredVideos.length / this.itemsPerPage);
     }
   },
-  
+
   mounted() {
     this.loadVideos();
     this.loadConnectedPlatforms();
   },
-  
+
   methods: {
     async loadVideos() {
       this.loading = true;
       this.error = null;
-      
+
       try {
         const response = await this.$axios.get('video_uploads.php', {
           params: {
@@ -801,7 +730,7 @@ export default {
             project: this.$route.params.project
           }
         });
-        
+
         this.videos = (response.data.videos || []).map(video => ({
           ...video,
           uploadDropdownOpen: false,
@@ -809,26 +738,26 @@ export default {
           platforms: video.platforms_array || (video.platform ? [video.platform] : [])
         }));
         this.filteredVideos = [...this.videos];
-        
+
         // Update stats
         this.totalVideos = this.videos.length;
         this.publishedVideos = this.videos.filter(v => v.status === 'published').length;
         this.scheduledVideos = this.videos.filter(v => v.status === 'scheduled').length;
-        
+
         // Calculate total views and engagements
         this.totalViews = this.videos.reduce((sum, video) => sum + (video.views || 0), 0);
         const totalLikes = this.videos.reduce((sum, video) => sum + (video.likes || 0), 0);
         const totalComments = this.videos.reduce((sum, video) => sum + (video.comments || 0), 0);
         const totalShares = this.videos.reduce((sum, video) => sum + (video.shares || 0), 0);
-        
+
         this.totalEngagements = totalLikes + totalComments + totalShares;
-        
+
         if (this.totalViews > 0) {
           this.avgEngagementRate = Math.round((this.totalEngagements / this.totalViews) * 100);
         } else {
           this.avgEngagementRate = 0;
         }
-        
+
       } catch (error) {
         console.error('Error loading videos:', error);
         this.error = 'Fehler beim Laden der Videos';
@@ -836,51 +765,51 @@ export default {
         this.loading = false;
       }
     },
-    
+
     filterVideos() {
       let filtered = [...this.videos];
-      
+
       // Apply search term filter
       if (this.searchTerm) {
         const term = this.searchTerm.toLowerCase();
-        filtered = filtered.filter(video => 
-          video.title.toLowerCase().includes(term) || 
+        filtered = filtered.filter(video =>
+          video.title.toLowerCase().includes(term) ||
           video.description.toLowerCase().includes(term) ||
           (video.tags && video.tags.toLowerCase().includes(term))
         );
       }
-      
+
       // Apply status filter
       if (this.statusFilter) {
         filtered = filtered.filter(video => video.status === this.statusFilter);
       }
-      
+
       // Apply platform filter
       if (this.platformFilter) {
         filtered = filtered.filter(video => video.platform === this.platformFilter);
       }
-      
+
       // Apply sorting
       filtered.sort((a, b) => {
         let valueA = a[this.sortField];
         let valueB = b[this.sortField];
-        
+
         // Handle numeric values
         if (this.sortField === 'views' || this.sortField === 'likes') {
           valueA = Number(valueA) || 0;
           valueB = Number(valueB) || 0;
         }
-        
+
         // Compare values
         if (valueA < valueB) return this.sortDirection === 'asc' ? -1 : 1;
         if (valueA > valueB) return this.sortDirection === 'asc' ? 1 : -1;
         return 0;
       });
-      
+
       this.filteredVideos = filtered;
       this.currentPage = 1;
     },
-    
+
     setSorting(field) {
       if (this.sortField === field) {
         // Toggle direction if same field clicked
@@ -890,32 +819,32 @@ export default {
         this.sortField = field;
         this.sortDirection = 'asc';
       }
-      
+
       this.filterVideos();
     },
-    
+
     getSortIcon(field) {
       if (this.sortField !== field) return 'chevron-down';
       return this.sortDirection === 'asc' ? 'chevron-up' : 'chevron-down';
     },
-    
+
     getSortClass(field) {
       if (this.sortField !== field) return 'sort-default';
       return 'sort-active';
     },
-    
+
     toggleVideoForm() {
       this.showVideoForm = !this.showVideoForm;
       if (!this.showVideoForm) {
         this.resetForm();
       }
     },
-    
+
     closeVideoForm() {
       this.showVideoForm = false;
       this.resetForm();
     },
-    
+
     resetForm() {
       this.editingVideo = null;
       this.videoFile = null;
@@ -938,17 +867,17 @@ export default {
         goals: ''
       };
     },
-    
 
-    
+
+
     openApiConfig() {
       this.$router.push(`/project/${this.$route.params.project}/video-uploads/config`);
     },
-    
+
     editVideo(video) {
       this.editingVideo = video;
       this.videoForm = { ...video };
-      
+
       // Ensure platforms is properly set
       if (video.platforms && Array.isArray(video.platforms)) {
         this.videoForm.platforms = [...video.platforms];
@@ -959,15 +888,15 @@ export default {
       } else {
         this.videoForm.platforms = [];
       }
-      
+
       // Close detail modal if it's open
       this.closeDetailModal();
       this.showVideoForm = true;
     },
-    
+
     async saveVideo() {
       this.saving = true;
-      
+
       try {
         // Validate platform selection
         if (!this.videoForm.platforms || this.videoForm.platforms.length === 0) {
@@ -975,9 +904,9 @@ export default {
           this.saving = false;
           return;
         }
-        
+
         const formData = new FormData();
-        
+
         // Add all form fields
         Object.keys(this.videoForm).forEach(key => {
           if (key === 'platforms') {
@@ -989,26 +918,26 @@ export default {
             formData.append(key, this.videoForm[key]);
           }
         });
-        
+
         // Add project parameter
         formData.append('project', this.$route.params.project);
         formData.append('action', this.editingVideo ? 'update' : 'create');
-        
+
         if (this.editingVideo) {
           formData.append('id', this.editingVideo.id);
         }
-        
+
         // Add video and thumbnail files if present
         if (this.videoFile) {
           formData.append('video_file', this.videoFile);
-          
+
           // Simuliere Upload mit Fortschrittsbalken
           this.simulateFileUpload();
-          
+
           // XMLHttpRequest statt axios für Upload-Progress
           return new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
-            
+
             xhr.upload.addEventListener('progress', (e) => {
               if (e.lengthComputable) {
                 this.uploadProgress = Math.round((e.loaded / e.total) * 100);
@@ -1016,7 +945,7 @@ export default {
                 this.totalBytes = e.total;
               }
             });
-            
+
             xhr.onreadystatechange = () => {
               if (xhr.readyState === 4) {
                 if (xhr.status === 200) {
@@ -1030,32 +959,32 @@ export default {
                 this.saving = false;
               }
             };
-            
-xhr.open('POST', 'https://alex.polan.sk/control-center/video_uploads.php', true);
 
-// Token aus localStorage holen
-const token = localStorage.getItem('token');
+            xhr.open('POST', 'https://alex.polan.sk/control-center/video_uploads.php', true);
 
-// Falls vorhanden, Bearer-Header setzen
-if (token) {
-  xhr.setRequestHeader('Authorization', token);
-}
+            // Token aus localStorage holen
+            const token = localStorage.getItem('token');
 
-xhr.send(formData);
+            // Falls vorhanden, Bearer-Header setzen
+            if (token) {
+              xhr.setRequestHeader('Authorization', token);
+            }
+
+            xhr.send(formData);
 
           });
         }
-        
+
         if (this.thumbnailFile) {
           formData.append('thumbnail_file', this.thumbnailFile);
         }
-        
+
         await this.$axios.post('video_uploads.php', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         });
-        
+
         this.closeVideoForm();
         this.loadVideos();
       } catch (error) {
@@ -1065,26 +994,26 @@ xhr.send(formData);
         this.saving = false;
       }
     },
-    
+
     async deleteVideo(videoId) {
       if (!confirm('Sind Sie sicher, dass Sie dieses Video löschen möchten?')) {
         return;
       }
-      
+
       try {
         await this.$axios.post('video_uploads.php', this.$qs.stringify({
           action: 'delete',
           id: videoId,
           project: this.$route.params.project
         }));
-        
+
         this.loadVideos();
       } catch (error) {
         console.error('Error deleting video:', error);
         this.error = 'Fehler beim Löschen des Videos';
       }
     },
-    
+
     async scheduleVideo(videoId) {
       try {
         await this.$axios.post('video_uploads.php', this.$qs.stringify({
@@ -1093,13 +1022,13 @@ xhr.send(formData);
           status: 'scheduled',
           project: this.$route.params.project
         }));
-        
+
         this.loadVideos();
       } catch (error) {
         console.error('Error scheduling video:', error);
       }
     },
-    
+
     async unscheduleVideo(videoId) {
       try {
         await this.$axios.post('video_uploads.php', this.$qs.stringify({
@@ -1108,7 +1037,7 @@ xhr.send(formData);
           status: 'draft',
           project: this.$route.params.project
         }));
-        
+
         this.loadVideos();
       } catch (error) {
         console.error('Error unscheduling video:', error);
@@ -1190,7 +1119,7 @@ xhr.send(formData);
 
         if (response.data.connections) {
           this.connectedPlatforms = response.data.connections;
-          
+
           // Update available platforms based on connections
           this.availablePlatforms.forEach(platform => {
             platform.connected = this.connectedPlatforms[platform.value]?.connected || false;
@@ -1202,7 +1131,7 @@ xhr.send(formData);
     },
 
     async bulkUploadToPlatforms(videoId, platforms) {
-      const promises = platforms.map(platform => 
+      const promises = platforms.map(platform =>
         this.uploadToPlatform(videoId, platform)
       );
 
@@ -1222,7 +1151,7 @@ xhr.send(formData);
           video.uploadDropdownOpen = false;
         }
       });
-      
+
       // Toggle the clicked dropdown
       const video = this.videos.find(v => v.id === videoId);
       if (video) {
@@ -1241,7 +1170,7 @@ xhr.send(formData);
       console.error('❌ Error:', message);
       // You can integrate a toast library like vue-toastification here
     },
-    
+
     viewVideoDetails(video) {
       this.selectedVideo = video;
       this.showDetailModal = true;
@@ -1251,29 +1180,29 @@ xhr.send(formData);
       this.showDetailModal = false;
       this.selectedVideo = null;
     },
-    
+
     toggleDropdown() {
       this.dropdownOpen = !this.dropdownOpen;
     },
-    
+
     openAnalyticsModal() {
       // Future implementation
       console.log('Open analytics modal');
       this.dropdownOpen = false;
     },
-    
+
     openTemplatesModal() {
       // Future implementation
       console.log('Open templates modal');
       this.dropdownOpen = false;
     },
-    
+
     openBulkUploadModal() {
       // Future implementation
       console.log('Open bulk upload modal');
       this.dropdownOpen = false;
     },
-    
+
     async exportVideos() {
       try {
         const csvContent = [
@@ -1289,7 +1218,7 @@ xhr.send(formData);
             video.comments || 0
           ])
         ].map(row => row.join(',')).join('\n');
-        
+
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -1301,20 +1230,20 @@ xhr.send(formData);
         console.error('Error exporting videos:', error);
       }
     },
-    
+
     refreshVideos() {
       this.loadVideos();
     },
-    
+
     // File handling methods
     triggerFileInput() {
       this.$refs.fileInput.click();
     },
-    
+
     triggerThumbnailInput() {
       this.$refs.thumbnailInput.click();
     },
-    
+
     handleFileSelect(e) {
       const file = e.target.files[0];
       if (file) {
@@ -1322,30 +1251,30 @@ xhr.send(formData);
         this.totalBytes = file.size;
       }
     },
-    
+
     handleThumbnailSelect(e) {
       const file = e.target.files[0];
       if (file) {
         this.thumbnailFile = file;
       }
     },
-    
+
     // Simuliere Datei-Upload mit Fortschrittsanzeige
     simulateFileUpload() {
       this.uploading = true;
       this.uploadProgress = 0;
       this.uploadedBytes = 0;
-      
+
       // Simuliere Hochladen in 10% Schritten
       const totalSize = this.totalBytes;
       const intervalTime = 500; // 500ms pro Schritt
       const steps = 10;
       const bytesPerStep = totalSize / steps;
-      
+
       const uploadInterval = setInterval(() => {
         this.uploadProgress += 10;
         this.uploadedBytes += bytesPerStep;
-        
+
         if (this.uploadProgress >= 100) {
           clearInterval(uploadInterval);
           this.uploading = false;
@@ -1354,39 +1283,39 @@ xhr.send(formData);
         }
       }, intervalTime);
     },
-    
+
     handleFileDrop(e) {
       const file = e.dataTransfer.files[0];
       if (file && file.type.startsWith('video/')) {
         this.videoFile = file;
       }
     },
-    
+
     handleThumbnailDrop(e) {
       const file = e.dataTransfer.files[0];
       if (file && file.type.startsWith('image/')) {
         this.thumbnailFile = file;
       }
     },
-    
+
     // Helper methods
     formatDate(dateStr) {
       if (!dateStr) return '';
       return new Date(dateStr).toLocaleDateString('de-DE');
     },
-    
+
     formatFileSize(bytes) {
       if (bytes === 0) return '0 Bytes';
-      
+
       const sizes = ['Bytes', 'KB', 'MB', 'GB'];
       const i = Math.floor(Math.log(bytes) / Math.log(1024));
       return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
     },
-    
+
     formatNumber(num) {
       return new Intl.NumberFormat('de-DE').format(num || 0);
     },
-    
+
     getStatusText(status) {
       const statusMap = {
         draft: 'Entwurf',
@@ -1397,7 +1326,7 @@ xhr.send(formData);
       };
       return statusMap[status] || status;
     },
-    
+
     getPlatformText(platform) {
       const platformMap = {
         youtube: 'YouTube',
@@ -1408,7 +1337,7 @@ xhr.send(formData);
       };
       return platformMap[platform] || platform;
     },
-    
+
     getPlatformIcon(platform) {
       const iconMap = {
         youtube: 'logo-youtube',
@@ -1423,9 +1352,9 @@ xhr.send(formData);
     formatDateTime(dateTimeStr) {
       if (!dateTimeStr) return '';
       const date = new Date(dateTimeStr);
-      return date.toLocaleDateString('de-DE') + ' ' + date.toLocaleTimeString('de-DE', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      return date.toLocaleDateString('de-DE') + ' ' + date.toLocaleTimeString('de-DE', {
+        hour: '2-digit',
+        minute: '2-digit'
       });
     },
 
@@ -1485,36 +1414,62 @@ xhr.send(formData);
 }
 
 .action-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 10px 16px;
   border: none;
   border-radius: var(--radius);
-  font-size: 14px;
   font-weight: 500;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
+  text-decoration: none;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .action-btn.primary {
-  background-color: var(--primary-color);
+  background: var(--primary-color);
   color: white;
+  border-color: var(--primary-color);
 }
 
 .action-btn.primary:hover {
-  background-color: var(--primary-hover);
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
 }
 
 .action-btn.secondary {
-  background-color: var(--surface);
+  background: var(--surface);
   color: var(--text-secondary);
   border: 1px solid var(--border);
 }
 
 .action-btn.secondary:hover {
-  background-color: var(--background);
+  background: var(--background);
   color: var(--text-primary);
+}
+
+.action-btn.danger {
+  background: #fef2f2;
+  color: var(--danger-color);
+  border: 1px solid var(--danger-color);
+}
+
+.action-btn.danger:hover {
+  background: #fee2e2;
+}
+
+.action-btn ion-icon {
+  font-size: 16px;
 }
 
 /* Dropdown */
@@ -1706,21 +1661,31 @@ xhr.send(formData);
   box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
-/* Data Table Card */
+/* Data Card */
 .data-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
-  margin-bottom: 32px;
+  border: 1px solid var(--border);
   overflow: hidden;
+  margin-bottom: 24px;
 }
 
 .card-header {
-  padding: 20px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 24px;
   border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.card-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 600;
 }
 
 .card-header h3 {
@@ -1765,47 +1730,62 @@ xhr.send(formData);
   font-weight: 500;
 }
 
-/* Table Styles */
+/* Modern Table */
 .table-wrapper {
   overflow-x: auto;
 }
 
 .modern-table {
   width: 100%;
-  border-collapse: collapse;
+  min-width: 800px;
 }
 
 .table-header {
-  background-color: var(--background);
-  border-bottom: 1px solid var(--border);
   display: flex;
+  background: var(--background);
+  border-bottom: 2px solid var(--border);
 }
 
 .table-header .table-cell {
+  flex: 1;
+  min-width: 120px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
   font-weight: 600;
-  color: var(--text-secondary);
+  font-size: 13px;
   text-transform: uppercase;
-  font-size: 12px;
   letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.actions-header {
+  flex: 0 0 180px;
+  justify-content: center;
+}
+
+.table-body {
+  background: var(--surface);
 }
 
 .table-row {
-  border-bottom: 1px solid var(--border);
-  transition: background-color 0.2s ease;
   display: flex;
+  border-bottom: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.table-row:hover {
+  background: var(--background);
 }
 
 .table-row:last-child {
   border-bottom: none;
 }
 
-.row-hover:hover {
-  background-color: rgba(37, 99, 235, 0.03);
-}
-
 .table-cell {
   flex: 1;
-  padding: 16px 20px;
+  min-width: 120px;
+  padding: 16px;
   display: flex;
   align-items: center;
   font-size: 14px;
@@ -1813,7 +1793,7 @@ xhr.send(formData);
 }
 
 .actions-cell {
-  flex: 0 0 160px;
+  flex: 0 0 180px;
   justify-content: center;
   padding: 12px 16px;
 }
@@ -1975,50 +1955,86 @@ xhr.send(formData);
 }
 
 .icon-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: 6px;
   border: none;
-  background: none;
+  border-radius: var(--radius);
   cursor: pointer;
   transition: all 0.2s ease;
-  color: var(--text-secondary);
+  font-size: 14px;
 }
 
-.icon-btn:hover {
-  background-color: var(--background);
-  color: var(--text-primary);
+.edit-btn {
+  background: #eff6ff;
+  color: var(--primary-color);
 }
 
 .edit-btn:hover {
-  color: var(--primary-color);
+  background: #dbeafe;
+  transform: scale(1.05);
 }
 
-.delete-btn:hover {
+.delete-btn {
+  background: #fef2f2;
   color: var(--danger-color);
 }
 
-.view-btn:hover {
+.delete-btn:hover {
+  background: #fee2e2;
+  transform: scale(1.05);
+}
+
+.view-btn {
+  background: #eff6ff;
   color: var(--primary-color);
 }
 
-.play-btn:hover {
+.view-btn:hover {
+  background: #dbeafe;
+  transform: scale(1.05);
+}
+
+.play-btn {
+  background: #ecfdf5;
   color: var(--success-color);
 }
 
-.pause-btn:hover {
+.play-btn:hover {
+  background: #d1fae5;
+  transform: scale(1.05);
+}
+
+.pause-btn {
+  background: #fef3c7;
   color: var(--warning-color);
 }
 
-.upload-btn:hover {
+.pause-btn:hover {
+  background: #fde68a;
+  transform: scale(1.05);
+}
+
+.upload-btn {
+  background: #eff6ff;
   color: var(--primary-color);
 }
 
-.processing-btn:hover {
+.upload-btn:hover {
+  background: #dbeafe;
+  transform: scale(1.05);
+}
+
+.processing-btn {
+  background: #fef3c7;
   color: var(--warning-color);
+}
+
+.processing-btn:hover {
+  background: #fde68a;
+  transform: scale(1.05);
 }
 
 /* Upload Dropdown */
@@ -2074,37 +2090,36 @@ xhr.send(formData);
   color: var(--primary-color);
 }
 
-/* Empty State */
+/* No Data State */
 .empty-state {
-  padding: 48px 0;
+  padding: 60px 20px;
   text-align: center;
+  background: var(--surface);
 }
 
 .no-data-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   max-width: 400px;
   margin: 0 auto;
 }
 
 .no-data-content ion-icon {
-  font-size: 48px;
+  font-size: 64px;
   color: var(--text-muted);
   margin-bottom: 16px;
+  opacity: 0.5;
 }
 
 .no-data-content h4 {
-  margin: 0 0 12px 0;
+  margin: 0 0 8px 0;
   color: var(--text-primary);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
 }
 
 .no-data-content p {
   margin: 0 0 24px 0;
   color: var(--text-secondary);
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.5;
 }
 
@@ -2321,46 +2336,46 @@ xhr.send(formData);
   .page-container {
     padding: 16px;
   }
-  
+
   .action-bar {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .action-group-left,
   .action-group-right {
     flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .filter-bar {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .filter-controls {
     flex-wrap: wrap;
   }
-  
+
   .card-header {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
   }
-  
+
   .modern-table {
     min-width: 800px;
   }
-  
+
   .form-section {
     width: 100%;
     right: -100%;
   }
-  
+
   .form-row {
     grid-template-columns: 1fr;
   }
@@ -2404,7 +2419,7 @@ xhr.send(formData);
   background: rgba(37, 99, 235, 0.05);
 }
 
-.platform-checkbox-input:checked + .platform-checkbox-label {
+.platform-checkbox-input:checked+.platform-checkbox-label {
   border-color: var(--primary-color);
   background: rgba(37, 99, 235, 0.1);
   color: var(--primary-color);
@@ -2420,64 +2435,69 @@ xhr.send(formData);
   font-weight: 500;
 }
 
-/* Detail Modal */
-.modal-overlay {
+/* Detail View */
+.detail-section {
   position: fixed;
   top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.detail-modal {
+  right: -800px;
+  width: 800px;
+  height: 100vh;
   background: var(--surface);
-  border-radius: 16px;
   box-shadow: var(--shadow-lg);
-  max-width: 900px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
+  transition: right 0.3s ease;
+  z-index: 1000;
+  border-left: 1px solid var(--border);
 }
 
-.modal-header {
+.detail-section.detail-visible {
+  right: 0;
+}
+
+.detail-card {
+  height: 100%;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+}
+
+.detail-header {
+  display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 24px;
   border-bottom: 1px solid var(--border);
+  background: var(--background);
 }
 
-.modal-header h3 {
+.detail-header h3 {
   margin: 0;
   color: var(--text-primary);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
+.close-detail-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s ease;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.close-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
+.close-detail-btn:hover {
+  background: var(--text-muted);
+  color: var(--surface);
 }
 
-.modal-content {
+.detail-content {
+  flex: 1;
   padding: 24px;
+  overflow-y: auto;
 }
 
 .detail-grid {
@@ -2487,18 +2507,18 @@ xhr.send(formData);
   margin-bottom: 24px;
 }
 
-.detail-section {
+.detail-info-section {
   background: var(--background);
   border-radius: 12px;
   padding: 20px;
   border: 1px solid var(--border);
 }
 
-.detail-section.full-width {
+.detail-info-section.full-width {
   grid-column: 1 / -1;
 }
 
-.detail-section h4 {
+.detail-info-section h4 {
   margin: 0 0 16px 0;
   color: var(--text-primary);
   font-size: 16px;
@@ -2611,42 +2631,58 @@ xhr.send(formData);
   font-weight: 500;
 }
 
-.modal-actions {
+.detail-actions {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  padding-top: 16px;
+  padding: 20px 24px;
   border-top: 1px solid var(--border);
+  background: var(--background);
 }
 
+/* Responsive Design */
 @media (max-width: 768px) {
-  .modal-overlay {
-    padding: 10px;
+  .detail-section {
+    width: 100%;
+    right: -100%;
   }
-  
-  .detail-modal {
-    max-height: 95vh;
-  }
-  
+
   .detail-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .performance-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .media-preview {
     flex-direction: column;
   }
-  
+
   .platform-checkbox-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
-  .modal-actions {
+
+  .detail-actions {
     flex-direction: column;
+    gap: 8px;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .action-group-left,
+  .action-group-right {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }
 </style>
