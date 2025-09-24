@@ -1016,11 +1016,11 @@ class VideoUploadsAPI {
     
     private function uploadToTikTok($video, $config, $project) {
         $accessToken = $config['access_token'];
-        $openId = $config['open_id'] ?? '';
+        /*$openId = $config['open_id'] ?? '';
         
         if (empty($openId)) {
             return ['success' => false, 'error' => 'TikTok Open ID not configured'];
-        }
+        }*/
         
         // Check if video file exists
         $videoPath = "../" . $video['video_file'];
@@ -1029,18 +1029,20 @@ class VideoUploadsAPI {
         }
         
         $fileSize = filesize($videoPath);
-        $chunkSize = 10 * 1024 * 1024; // 10MB chunks
-        
+        $chunkSize = 1 * 1024 * 1024; // 10MB chunks
+        if($fileSize < $chunkSize) {
+            $chunkSize = $fileSize; // If file is smaller than chunk size, adjust it
+        }
         // Step 1: Initialize video upload
-        $initUrl = 'https://open-api.tiktok.com/v2/post/publish/video/init/';
+        $initUrl = 'https://open.tiktokapis.com/v2/post/publish/video/init/';
         $initData = [
             'post_info' => [
                 'title' => $video['title'],
-                'description' => $video['description'] ?? '',
-                'privacy_level' => 'PUBLIC_TO_EVERYONE',
-                'disable_duet' => false,
-                'disable_comment' => false,
-                'disable_stitch' => false,
+               // 'description' => $video['description'] ?? '',
+                'privacy_level' => 'SELF_ONLY',//'PUBLIC_TO_EVERYONE',
+                'disable_duet' => false, // boolval('false'),
+                'disable_comment' => false, // boolval('false'),
+                'disable_stitch' => false, // boolval('false'),
                 'video_cover_timestamp_ms' => 1000
             ],
             'source_info' => [
@@ -1050,18 +1052,21 @@ class VideoUploadsAPI {
                 'total_chunk_count' => ceil($fileSize / $chunkSize)
             ]
         ];
-        
+
+        print_r($initData);
+            $jsonData = json_encode($initData, JSON_UNESCAPED_SLASHES);
+print_r($jsonData);
         $result = $this->makeHttpRequest($initUrl, [
             'method' => 'POST',
             'headers' => [
                 'Authorization: Bearer ' . $accessToken,
                 'Content-Type: application/json'
             ],
-            'data' => json_encode($initData)
+            'data' => $jsonData
         ]);
         
         if (!$result['success']) {
-            return ['success' => false, 'error' => 'Failed to initialize TikTok upload: ' . $result['response']];
+            return ['success' => false, 'error' => 'Failed to initialize TikTok upload: ' . $result['response'] .", Var dump chunk size:".var_export($chunkSize, true). ", ACCESS TOKEN:".var_export($accessToken, true) ];
         }
         
         $responseData = json_decode($result['response'], true);

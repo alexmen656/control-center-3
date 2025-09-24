@@ -344,7 +344,7 @@ class VideoUploadsConfigAPI {
                 $this->savePlatformConfig($platform, $project, 'client_secret', $clientSecret);
                 
                 // Generate TikTok OAuth URL
-                $scope = 'user.info.basic,video.list,video.upload';
+                $scope = 'user.info.basic,video.list,video.upload,video.publish';
                 $authUrl = 'https://www.tiktok.com/v2/auth/authorize/';
                 $authUrl .= '?client_key=' . urlencode($clientKey);
                 $authUrl .= '&scope=' . urlencode($scope);
