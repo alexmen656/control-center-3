@@ -437,53 +437,63 @@ class VideoUploadsConfigAPI {
         }
     }
     
-    private function refreshYouTubeToken($config, $project) {
-        $clientId = $config['client_id'] ?? '';
-        $clientSecret = $config['client_secret'] ?? '';
-        $refreshToken = $config['refresh_token'] ?? '';
-        
-        if (empty($clientId) || empty($clientSecret) || empty($refreshToken)) {
-            $this->sendResponse(['error' => 'Missing required credentials'], 400);
-            return;
-        }
-        
-        $url = 'https://oauth2.googleapis.com/token';
-        $data = [
-            'client_id' => $clientId,
-            'client_secret' => $clientSecret,
-            'refresh_token' => $refreshToken,
-            'grant_type' => 'refresh_token'
-        ];
-        
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
-        
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($httpCode == 200) {
-            $tokenData = json_decode($response, true);
-            
-            if (isset($tokenData['access_token'])) {
-                // Update access token and expiry
-                $this->savePlatformConfig('youtube', $project, 'access_token', $tokenData['access_token']);
-                
-                $expiresAt = time() + ($tokenData['expires_in'] ?? 3600);
-                $this->savePlatformConfig('youtube', $project, 'expires_at', $expiresAt);
-                $this->savePlatformConfig('youtube', $project, 'updated_at', time());
-                
-                $this->sendResponse(['success' => true, 'message' => 'Token refreshed successfully']);
-            } else {
-                $this->sendResponse(['error' => 'Invalid response from YouTube API'], 500);
-            }
-        } else {
-            $this->sendResponse(['error' => 'Failed to refresh token: ' . $response], 500);
-        }
+private function refreshYouTubeToken($config, $project) {
+    $clientId = $config['client_id'] ?? '';
+    $clientSecret = $config['client_secret'] ?? '';
+    $refreshToken = $config['refresh_token'] ?? '';
+    
+    if (empty($clientId) || empty($clientSecret) || empty($refreshToken)) {
+        $this->sendResponse(['error' => 'Missing required credentials'], 400);
+        return;
     }
+    
+    $url = 'https://oauth2.googleapis.com/token';
+    $data = [
+        'client_id' => $clientId,
+        'client_secret' => $clientSecret,
+        'refresh_token' => $refreshToken,
+        'grant_type' => 'refresh_token'
+    ];
+
+    $options = [
+        'http' => [
+            'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
+            'method'  => 'POST',
+            'content' => http_build_query($data),
+            'ignore_errors' => true // wichtig, damit auch Fehlerantworten gelesen werden
+        ]
+    ];
+
+    $context  = stream_context_create($options);
+    $response = file_get_contents($url, false, $context);
+
+    // HTTP-Status auslesen
+    $httpCode = 0;
+    if (isset($http_response_header[0])) {
+        preg_match('{HTTP\/\S*\s(\d{3})}', $http_response_header[0], $match);
+        $httpCode = (int)$match[1];
+    }
+
+    if ($httpCode === 200 && $response !== false) {
+        $tokenData = json_decode($response, true);
+
+        if (isset($tokenData['access_token'])) {
+            // Update access token and expiry
+            $this->savePlatformConfig('youtube', $project, 'access_token', $tokenData['access_token']);
+
+            $expiresAt = time() + ($tokenData['expires_in'] ?? 3600);
+            $this->savePlatformConfig('youtube', $project, 'expires_at', $expiresAt);
+            $this->savePlatformConfig('youtube', $project, 'updated_at', time());
+
+            $this->sendResponse(['success' => true, 'message' => 'Token refreshed successfully']);
+        } else {
+            $this->sendResponse(['error' => 'Invalid response from YouTube API'], 500);
+        }
+    } else {
+        $this->sendResponse(['error' => 'Failed to refresh token: ' . $response], 500);
+    }
+}
+
     
     private function refreshInstagramToken($config, $project) {
         $accessToken = $config['access_token'] ?? '';

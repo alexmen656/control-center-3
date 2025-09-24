@@ -817,8 +817,18 @@ export default {
               }
             };
             
-            xhr.open('POST', 'backend/video_uploads.php', true);
-            xhr.send(formData);
+xhr.open('POST', 'https://alex.polan.sk/control-center/video_uploads.php', true);
+
+// Token aus localStorage holen
+const token = localStorage.getItem('token');
+
+// Falls vorhanden, Bearer-Header setzen
+if (token) {
+  xhr.setRequestHeader('Authorization', token);
+}
+
+xhr.send(formData);
+
           });
         }
         

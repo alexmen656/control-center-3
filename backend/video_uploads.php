@@ -30,7 +30,8 @@ class VideoUploadsAPI {
         $context_options = [
             'http' => [
                 'method' => $method,
-                'ignore_errors' => true
+                'ignore_errors' => true,
+                'timeout' => 300 // 5 minutes for large uploads
             ]
         ];
         
@@ -38,17 +39,31 @@ class VideoUploadsAPI {
             $context_options['http']['header'] = implode("\r\n", $headers);
         }
         
-        if ($data && $method === 'POST') {
+        if ($data && ($method === 'POST' || $method === 'PUT')) {
             $context_options['http']['content'] = is_array($data) ? http_build_query($data) : $data;
+            
+            // Set default content type if not specified
             if (!isset($context_options['http']['header'])) {
                 $context_options['http']['header'] = '';
             }
-            if (strpos($context_options['http']['header'], 'Content-Type') === false) {
+            
+            $hasContentType = false;
+            foreach ($headers as $header) {
+                if (stripos($header, 'Content-Type:') === 0) {
+                    $hasContentType = true;
+                    break;
+                }
+            }
+            
+            if (!$hasContentType && is_array($data)) {
                 $context_options['http']['header'] .= "\r\nContent-Type: application/x-www-form-urlencoded";
             }
         }
         
         $context = stream_context_create($context_options);
+        
+        // Capture response headers globally
+        global $http_response_header;
         $response = file_get_contents($url, false, $context);
         
         $http_code = 200;
@@ -64,7 +79,8 @@ class VideoUploadsAPI {
         return [
             'response' => $response,
             'http_code' => $http_code,
-            'success' => $response !== false && $http_code >= 200 && $http_code < 300
+            'success' => $response !== false && $http_code >= 200 && $http_code < 400,
+            'headers' => $http_response_header ?? []
         ];
     }
     
@@ -772,18 +788,90 @@ class VideoUploadsAPI {
             return ['success' => false, 'error' => 'Video file not found'];
         }
         
-        // For now, we'll simulate the upload since we can't use cURL
-        // In a production environment, you would need to implement proper file upload
-        // using YouTube's resumable upload protocol with file_get_contents and streams
-        
-        // Simulate upload success (you can implement actual upload later)
-        $simulatedVideoId = 'yt_' . uniqid();
-        
-        return [
-            'success' => true,
-            'platform_video_id' => $simulatedVideoId,
-            'message' => 'Video prepared for YouTube upload (simulated)'
+        // Prepare video metadata
+        $metadata = [
+            'snippet' => [
+                'title' => $video['title'],
+                'description' => $video['description'] ?? '',
+                'tags' => !empty($video['tags']) ? explode(',', $video['tags']) : [],
+                'categoryId' => '22' // People & Blogs category
+            ],
+            'status' => [
+                'privacyStatus' => 'public'
+            ]
         ];
+        
+        // Step 1: Initialize resumable upload
+        $uploadUrl = 'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status';
+        
+        $headers = [
+            'Authorization: Bearer ' . $accessToken,
+            'Content-Type: application/json; charset=UTF-8',
+            'X-Upload-Content-Type: video/*',
+            'X-Upload-Content-Length: ' . filesize($videoPath)
+        ];
+        
+        $result = $this->makeHttpRequest($uploadUrl, [
+            'method' => 'POST',
+            'headers' => $headers,
+            'data' => json_encode($metadata)
+        ]);
+        
+        if (!$result['success']) {
+            return ['success' => false, 'error' => 'Failed to initialize YouTube upload: ' . $result['http_code'] . ' Headers: '. $accessToken];
+        }
+        
+        // Extract upload URL from Location header
+        $uploadSessionUrl = null;
+        foreach ($result['headers'] as $header) {
+            if (strpos($header, 'Location:') === 0) {
+                $uploadSessionUrl = trim(substr($header, 9));
+                break;
+            }
+        }
+        
+        if (!$uploadSessionUrl) {
+            return ['success' => false, 'error' => 'Failed to get YouTube upload URL'];
+        }
+        
+        // Step 2: Upload video file in chunks
+        $videoData = file_get_contents($videoPath);
+        $fileSize = strlen($videoData);
+        $chunkSize = 1024 * 1024; // 1MB chunks
+        $uploaded = 0;
+        
+        while ($uploaded < $fileSize) {
+            $chunk = substr($videoData, $uploaded, $chunkSize);
+            $chunkEnd = min($uploaded + $chunkSize - 1, $fileSize - 1);
+            
+            $chunkHeaders = [
+                'Content-Type: video/*',
+                'Content-Range: bytes ' . $uploaded . '-' . $chunkEnd . '/' . $fileSize
+            ];
+            
+            $chunkResult = $this->makeHttpRequest($uploadSessionUrl, [
+                'method' => 'PUT',
+                'headers' => $chunkHeaders,
+                'data' => $chunk
+            ]);
+            
+            if ($chunkResult['http_code'] === 308) {
+                // Continue uploading
+                $uploaded += strlen($chunk);
+            } elseif ($chunkResult['http_code'] === 200 || $chunkResult['http_code'] === 201) {
+                // Upload complete
+                $responseData = json_decode($chunkResult['response'], true);
+                return [
+                    'success' => true,
+                    'platform_video_id' => $responseData['id'] ?? 'yt_' . uniqid(),
+                    'message' => 'Video uploaded to YouTube successfully'
+                ];
+            } else {
+                return ['success' => false, 'error' => 'Failed to upload video chunk to YouTube: ' . $chunkResult['http_code']];
+            }
+        }
+        
+        return ['success' => false, 'error' => 'Unexpected end of upload process'];
     }
     
     private function uploadToInstagram($video, $config, $project) {
@@ -800,11 +888,15 @@ class VideoUploadsAPI {
             return ['success' => false, 'error' => 'Video file not found'];
         }
         
-        // Step 1: Upload video to Instagram
+        // For Instagram, we need to upload to a public URL first
+        // Then use that URL in the API call
+        $videoUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/' . $video['video_file'];
+        
+        // Step 1: Create media object
         $uploadUrl = "https://graph.facebook.com/v18.0/{$pageId}/media";
         $uploadData = [
             'media_type' => 'REELS',
-            'video_url' => 'https://' . $_SERVER['HTTP_HOST'] . '/' . $video['video_file'], // Public URL needed
+            'video_url' => $videoUrl,
             'caption' => $video['description'] ?? $video['title'],
             'access_token' => $accessToken
         ];
@@ -815,19 +907,41 @@ class VideoUploadsAPI {
         ]);
         
         if (!$result['success']) {
-            return ['success' => false, 'error' => 'Failed to upload to Instagram: ' . $result['response']];
+            return ['success' => false, 'error' => 'Failed to create Instagram media: ' . $result['response']];
         }
         
-        $response = $result['response'];
-        
-        $responseData = json_decode($response, true);
+        $responseData = json_decode($result['response'], true);
         if (!isset($responseData['id'])) {
-            return ['success' => false, 'error' => 'Invalid response from Instagram API'];
+            return ['success' => false, 'error' => 'Invalid response from Instagram API: ' . $result['response']];
         }
         
         $mediaId = $responseData['id'];
         
-        // Step 2: Publish the media
+        // Step 2: Wait for processing (Instagram needs time to process the video)
+        $maxAttempts = 30;
+        $attempts = 0;
+        
+        while ($attempts < $maxAttempts) {
+            sleep(2); // Wait 2 seconds between checks
+            
+            $statusUrl = "https://graph.facebook.com/v18.0/{$mediaId}?fields=status_code&access_token={$accessToken}";
+            $statusResult = $this->makeHttpRequest($statusUrl);
+            
+            if ($statusResult['success']) {
+                $statusData = json_decode($statusResult['response'], true);
+                $statusCode = $statusData['status_code'] ?? '';
+                
+                if ($statusCode === 'FINISHED') {
+                    break; // Ready to publish
+                } elseif ($statusCode === 'ERROR') {
+                    return ['success' => false, 'error' => 'Instagram video processing failed'];
+                }
+            }
+            
+            $attempts++;
+        }
+        
+        // Step 3: Publish the media
         $publishUrl = "https://graph.facebook.com/v18.0/{$pageId}/media_publish";
         $publishData = [
             'creation_id' => $mediaId,
@@ -865,13 +979,16 @@ class VideoUploadsAPI {
             return ['success' => false, 'error' => 'Video file not found'];
         }
         
+        $fileSize = filesize($videoPath);
+        $chunkSize = 10 * 1024 * 1024; // 10MB chunks
+        
         // Step 1: Initialize video upload
         $initUrl = 'https://open-api.tiktok.com/v2/post/publish/video/init/';
         $initData = [
             'post_info' => [
                 'title' => $video['title'],
                 'description' => $video['description'] ?? '',
-                'privacy_level' => 'MUTUAL_FOLLOW_FRIEND', // or 'PUBLIC_TO_EVERYONE'
+                'privacy_level' => 'PUBLIC_TO_EVERYONE',
                 'disable_duet' => false,
                 'disable_comment' => false,
                 'disable_stitch' => false,
@@ -879,9 +996,9 @@ class VideoUploadsAPI {
             ],
             'source_info' => [
                 'source' => 'FILE_UPLOAD',
-                'video_size' => filesize($videoPath),
-                'chunk_size' => 10 * 1024 * 1024, // 10MB chunks
-                'total_chunk_count' => ceil(filesize($videoPath) / (10 * 1024 * 1024))
+                'video_size' => $fileSize,
+                'chunk_size' => $chunkSize,
+                'total_chunk_count' => ceil($fileSize / $chunkSize)
             ]
         ];
         
@@ -898,23 +1015,63 @@ class VideoUploadsAPI {
             return ['success' => false, 'error' => 'Failed to initialize TikTok upload: ' . $result['response']];
         }
         
-        $response = $result['response'];
-        
-        $responseData = json_decode($response, true);
+        $responseData = json_decode($result['response'], true);
         if (!isset($responseData['data']['upload_url'])) {
-            return ['success' => false, 'error' => 'Invalid response from TikTok API'];
+            return ['success' => false, 'error' => 'Invalid response from TikTok API: ' . $result['response']];
         }
         
-        $uploadUrl = $responseData['data']['upload_url'] ?? '';
-        $publishId = $responseData['data']['publish_id'] ?? 'tt_' . uniqid();
+        $uploadUrl = $responseData['data']['upload_url'];
+        $publishId = $responseData['data']['publish_id'];
         
-        // Simulate successful upload for now
-        // In production, you would need to implement proper file upload to TikTok
-        return [
-            'success' => true,
-            'platform_video_id' => $publishId,
-            'message' => 'Video prepared for TikTok upload (simulated)'
+        // Step 2: Upload video file in chunks
+        $videoData = file_get_contents($videoPath);
+        $totalChunks = ceil($fileSize / $chunkSize);
+        
+        for ($chunkIndex = 0; $chunkIndex < $totalChunks; $chunkIndex++) {
+            $start = $chunkIndex * $chunkSize;
+            $chunkData = substr($videoData, $start, $chunkSize);
+            $chunkEnd = min($start + $chunkSize - 1, $fileSize - 1);
+            
+            $chunkHeaders = [
+                'Content-Type: video/mp4',
+                'Content-Range: bytes ' . $start . '-' . $chunkEnd . '/' . $fileSize
+            ];
+            
+            $chunkResult = $this->makeHttpRequest($uploadUrl, [
+                'method' => 'PUT',
+                'headers' => $chunkHeaders,
+                'data' => $chunkData
+            ]);
+            
+            if (!$chunkResult['success']) {
+                return ['success' => false, 'error' => 'Failed to upload chunk to TikTok: ' . $chunkResult['http_code']];
+            }
+        }
+        
+        // Step 3: Publish the video
+        $publishUrl = 'https://open-api.tiktok.com/v2/post/publish/video/complete/';
+        $publishData = [
+            'publish_id' => $publishId
         ];
+        
+        $publishResult = $this->makeHttpRequest($publishUrl, [
+            'method' => 'POST',
+            'headers' => [
+                'Authorization: Bearer ' . $accessToken,
+                'Content-Type: application/json'
+            ],
+            'data' => json_encode($publishData)
+        ]);
+        
+        if ($publishResult['success']) {
+            return [
+                'success' => true,
+                'platform_video_id' => $publishId,
+                'message' => 'Video uploaded to TikTok successfully'
+            ];
+        } else {
+            return ['success' => false, 'error' => 'Failed to complete TikTok upload: ' . $publishResult['response']];
+        }
     }
     
     private function getVideoById($videoId, $project) {
