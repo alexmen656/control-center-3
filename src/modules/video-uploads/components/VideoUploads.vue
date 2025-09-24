@@ -647,18 +647,12 @@ export default {
       dropdownOpen: false,
       videoFile: null,
       thumbnailFile: null,
-
-      // Detail Modal
       showDetailModal: false,
       selectedVideo: null,
-
-      // Upload Progress
       uploadProgress: 0,
       uploadedBytes: 0,
       totalBytes: 0,
       uploading: false,
-
-      // Available Platforms
       availablePlatforms: [
         { value: 'youtube', name: 'YouTube', icon: 'logo-youtube' },
         { value: 'instagram', name: 'Instagram', icon: 'logo-instagram' },
@@ -666,8 +660,6 @@ export default {
         { value: 'facebook', name: 'Facebook', icon: 'logo-facebook' },
         { value: 'linkedin', name: 'LinkedIn', icon: 'logo-linkedin' }
       ],
-
-      // Connected Platforms Status
       connectedPlatforms: {
         youtube: false,
         instagram: false,
@@ -675,13 +667,11 @@ export default {
         facebook: false,
         linkedin: false
       },
-
-      // Form data
       videoForm: {
         title: '',
         description: '',
         status: 'draft',
-        platforms: [], // Array für mehrere Plattformen
+        platforms: [],
         category: '',
         publish_date: '',
         publish_time: '',
@@ -689,7 +679,7 @@ export default {
         thumbnail_url: '',
         tags: '',
         goals: ''
-      },      // Stats
+      },
       totalVideos: 0,
       publishedVideos: 0,
       scheduledVideos: 0,
@@ -734,22 +724,18 @@ export default {
         this.videos = (response.data.videos || []).map(video => ({
           ...video,
           uploadDropdownOpen: false,
-          // Convert platforms_array from backend to platforms for frontend
           platforms: video.platforms_array || (video.platform ? [video.platform] : [])
         }));
         this.filteredVideos = [...this.videos];
 
-        // Update stats
         this.totalVideos = this.videos.length;
         this.publishedVideos = this.videos.filter(v => v.status === 'published').length;
         this.scheduledVideos = this.videos.filter(v => v.status === 'scheduled').length;
 
-        // Calculate total views and engagements
         this.totalViews = this.videos.reduce((sum, video) => sum + (video.views || 0), 0);
         const totalLikes = this.videos.reduce((sum, video) => sum + (video.likes || 0), 0);
         const totalComments = this.videos.reduce((sum, video) => sum + (video.comments || 0), 0);
         const totalShares = this.videos.reduce((sum, video) => sum + (video.shares || 0), 0);
-
         this.totalEngagements = totalLikes + totalComments + totalShares;
 
         if (this.totalViews > 0) {
@@ -769,7 +755,6 @@ export default {
     filterVideos() {
       let filtered = [...this.videos];
 
-      // Apply search term filter
       if (this.searchTerm) {
         const term = this.searchTerm.toLowerCase();
         filtered = filtered.filter(video =>
@@ -779,28 +764,23 @@ export default {
         );
       }
 
-      // Apply status filter
       if (this.statusFilter) {
         filtered = filtered.filter(video => video.status === this.statusFilter);
       }
 
-      // Apply platform filter
       if (this.platformFilter) {
         filtered = filtered.filter(video => video.platform === this.platformFilter);
       }
 
-      // Apply sorting
       filtered.sort((a, b) => {
         let valueA = a[this.sortField];
         let valueB = b[this.sortField];
 
-        // Handle numeric values
         if (this.sortField === 'views' || this.sortField === 'likes') {
           valueA = Number(valueA) || 0;
           valueB = Number(valueB) || 0;
         }
 
-        // Compare values
         if (valueA < valueB) return this.sortDirection === 'asc' ? -1 : 1;
         if (valueA > valueB) return this.sortDirection === 'asc' ? 1 : -1;
         return 0;
@@ -812,10 +792,8 @@ export default {
 
     setSorting(field) {
       if (this.sortField === field) {
-        // Toggle direction if same field clicked
         this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
       } else {
-        // Set new field and default to ascending
         this.sortField = field;
         this.sortDirection = 'asc';
       }
@@ -857,7 +835,7 @@ export default {
         title: '',
         description: '',
         status: 'draft',
-        platforms: [], // Zurücksetzen auf leeres Array
+        platforms: [],
         category: '',
         publish_date: '',
         publish_time: '',
@@ -868,8 +846,6 @@ export default {
       };
     },
 
-
-
     openApiConfig() {
       this.$router.push(`/project/${this.$route.params.project}/video-uploads/config`);
     },
@@ -878,7 +854,6 @@ export default {
       this.editingVideo = video;
       this.videoForm = { ...video };
 
-      // Ensure platforms is properly set
       if (video.platforms && Array.isArray(video.platforms)) {
         this.videoForm.platforms = [...video.platforms];
       } else if (video.platforms_array && Array.isArray(video.platforms_array)) {
@@ -889,7 +864,6 @@ export default {
         this.videoForm.platforms = [];
       }
 
-      // Close detail modal if it's open
       this.closeDetailModal();
       this.showVideoForm = true;
     },
@@ -898,7 +872,6 @@ export default {
       this.saving = true;
 
       try {
-        // Validate platform selection
         if (!this.videoForm.platforms || this.videoForm.platforms.length === 0) {
           this.error = 'Bitte wählen Sie mindestens eine Plattform aus';
           this.saving = false;
@@ -907,10 +880,8 @@ export default {
 
         const formData = new FormData();
 
-        // Add all form fields
         Object.keys(this.videoForm).forEach(key => {
           if (key === 'platforms') {
-            // Handle platforms array separately
             this.videoForm.platforms.forEach(platform => {
               formData.append('platforms[]', platform);
             });
@@ -919,7 +890,6 @@ export default {
           }
         });
 
-        // Add project parameter
         formData.append('project', this.$route.params.project);
         formData.append('action', this.editingVideo ? 'update' : 'create');
 
@@ -927,14 +897,9 @@ export default {
           formData.append('id', this.editingVideo.id);
         }
 
-        // Add video and thumbnail files if present
         if (this.videoFile) {
           formData.append('video_file', this.videoFile);
 
-          // Simuliere Upload mit Fortschrittsbalken
-          this.simulateFileUpload();
-
-          // XMLHttpRequest statt axios für Upload-Progress
           return new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
 
@@ -961,11 +926,8 @@ export default {
             };
 
             xhr.open('POST', 'https://alex.polan.sk/control-center/video_uploads.php', true);
-
-            // Token aus localStorage holen
             const token = localStorage.getItem('token');
 
-            // Falls vorhanden, Bearer-Header setzen
             if (token) {
               xhr.setRequestHeader('Authorization', token);
             }
@@ -1059,7 +1021,7 @@ export default {
 
         if (response.data.success) {
           this.showSuccessMessage(`Video erfolgreich zu ${platform} hochgeladen!`);
-          this.loadVideos(); // Refresh list to show updated status
+          this.loadVideos();
         } else {
           this.showErrorMessage(`Fehler beim Upload zu ${platform}: ${response.data.error}`);
         }
@@ -1120,7 +1082,6 @@ export default {
         if (response.data.connections) {
           this.connectedPlatforms = response.data.connections;
 
-          // Update available platforms based on connections
           this.availablePlatforms.forEach(platform => {
             platform.connected = this.connectedPlatforms[platform.value]?.connected || false;
           });
@@ -1145,14 +1106,12 @@ export default {
     },
 
     toggleUploadDropdown(videoId) {
-      // Close all other dropdowns first
       this.videos.forEach(video => {
         if (video.id !== videoId) {
           video.uploadDropdownOpen = false;
         }
       });
 
-      // Toggle the clicked dropdown
       const video = this.videos.find(v => v.id === videoId);
       if (video) {
         video.uploadDropdownOpen = !video.uploadDropdownOpen;
@@ -1160,13 +1119,11 @@ export default {
     },
 
     showSuccessMessage(message) {
-      // Simple console log for now - in production you'd use a toast library
       console.log('✅ Success:', message);
       // You can integrate a toast library like vue-toastification here
     },
 
     showErrorMessage(message) {
-      // Simple console log for now - in production you'd use a toast library
       console.error('❌ Error:', message);
       // You can integrate a toast library like vue-toastification here
     },
@@ -1186,19 +1143,16 @@ export default {
     },
 
     openAnalyticsModal() {
-      // Future implementation
       console.log('Open analytics modal');
       this.dropdownOpen = false;
     },
 
     openTemplatesModal() {
-      // Future implementation
       console.log('Open templates modal');
       this.dropdownOpen = false;
     },
 
     openBulkUploadModal() {
-      // Future implementation
       console.log('Open bulk upload modal');
       this.dropdownOpen = false;
     },
@@ -1235,7 +1189,6 @@ export default {
       this.loadVideos();
     },
 
-    // File handling methods
     triggerFileInput() {
       this.$refs.fileInput.click();
     },
@@ -1257,32 +1210,7 @@ export default {
       if (file) {
         this.thumbnailFile = file;
       }
-    },
-
-    // Simuliere Datei-Upload mit Fortschrittsanzeige
-    simulateFileUpload() {
-      this.uploading = true;
-      this.uploadProgress = 0;
-      this.uploadedBytes = 0;
-
-      // Simuliere Hochladen in 10% Schritten
-      const totalSize = this.totalBytes;
-      const intervalTime = 500; // 500ms pro Schritt
-      const steps = 10;
-      const bytesPerStep = totalSize / steps;
-
-      const uploadInterval = setInterval(() => {
-        this.uploadProgress += 10;
-        this.uploadedBytes += bytesPerStep;
-
-        if (this.uploadProgress >= 100) {
-          clearInterval(uploadInterval);
-          this.uploading = false;
-          this.uploadProgress = 100;
-          this.uploadedBytes = totalSize;
-        }
-      }, intervalTime);
-    },
+    },   
 
     handleFileDrop(e) {
       const file = e.dataTransfer.files[0];
@@ -1298,7 +1226,6 @@ export default {
       }
     },
 
-    // Helper methods
     formatDate(dateStr) {
       if (!dateStr) return '';
       return new Date(dateStr).toLocaleDateString('de-DE');
