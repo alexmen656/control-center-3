@@ -241,6 +241,9 @@
                       <button class="icon-btn view-btn" @click="viewVideoDetails(video)" title="Details">
                         <ion-icon name="eye-outline"></ion-icon>
                       </button>
+                      <button class="icon-btn analytics-btn" @click="viewVideoAnalytics(video)" title="Analytics">
+                        <ion-icon name="analytics-outline"></ion-icon>
+                      </button>
 
                       <!-- Upload Buttons für verfügbare Plattformen -->
                       <div class="upload-dropdown" v-if="video.status === 'draft' || video.status === 'scheduled'">
@@ -647,8 +650,7 @@ export default {
       dropdownOpen: false,
       videoFile: null,
       thumbnailFile: null,
-      showDetailModal: false,
-      selectedVideo: null,
+
       uploadProgress: 0,
       uploadedBytes: 0,
       totalBytes: 0,
@@ -864,7 +866,7 @@ export default {
         this.videoForm.platforms = [];
       }
 
-      this.closeDetailModal();
+
       this.showVideoForm = true;
     },
 
@@ -1129,21 +1131,24 @@ export default {
     },
 
     viewVideoDetails(video) {
-      this.selectedVideo = video;
-      this.showDetailModal = true;
+      this.$router.push(`/project/${this.$route.params.project}/video-uploads/${video.id}/details`);
     },
 
-    closeDetailModal() {
-      this.showDetailModal = false;
-      this.selectedVideo = null;
+    viewVideoAnalytics(video) {
+      this.$router.push(`/project/${this.$route.params.project}/video-uploads/${video.id}/analytics`);
     },
+
+
 
     toggleDropdown() {
       this.dropdownOpen = !this.dropdownOpen;
     },
 
     openAnalyticsModal() {
-      console.log('Open analytics modal');
+      // Redirect to analytics for the first video or prompt user to select
+      if (this.videos.length > 0) {
+        this.$router.push(`/project/${this.$route.params.project}/video-uploads/${this.videos[0].id}/analytics`);
+      }
       this.dropdownOpen = false;
     },
 
@@ -1921,6 +1926,16 @@ export default {
 
 .view-btn:hover {
   background: #dbeafe;
+  transform: scale(1.05);
+}
+
+.analytics-btn {
+  background: #f0f9ff;
+  color: #0369a1;
+}
+
+.analytics-btn:hover {
+  background: #e0f2fe;
   transform: scale(1.05);
 }
 
