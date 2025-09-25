@@ -543,12 +543,16 @@ export default defineComponent({
 }
 
 ion-item.new-tool {
-  --background: #333;
-  border-radius: 20px !important;
-  margin-top: 0.5rem !important;
+  --background: #2563eb;
+  border-radius: 8px !important;
+  margin-top: 0.125rem !important;
 }
 
 ion-item.new-tool ion-label {
+  color: #fff;
+}
+
+ion-item.new-tool ion-icon {
   color: #fff;
 }
 

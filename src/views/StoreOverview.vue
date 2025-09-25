@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="storefront-outline" title="Module Store"/>
+      <SiteTitle icon="storefront-outline" title="Module Store" />
 
       <div class="page-container">
         <!-- Header -->
@@ -62,33 +62,18 @@
         <div class="search-filter-container">
           <div class="search-box">
             <ion-icon name="search-outline"></ion-icon>
-            <input 
-              type="text" 
-              placeholder="Search modules..." 
-              @input="handleInput($event)"
-              v-model="keyword"
-            >
+            <input type="text" placeholder="Search modules..." @input="handleInput($event)" v-model="keyword">
           </div>
           <div class="filter-buttons">
-            <button 
-              class="filter-btn" 
-              :class="{ active: selectedFilter === 'all' }" 
-              @click="setFilter('all')"
-            >
+            <button class="filter-btn" :class="{ active: selectedFilter === 'all' }" @click="setFilter('all')">
               All
             </button>
-            <button 
-              class="filter-btn" 
-              :class="{ active: selectedFilter === 'installed' }" 
-              @click="setFilter('installed')"
-            >
+            <button class="filter-btn" :class="{ active: selectedFilter === 'installed' }"
+              @click="setFilter('installed')">
               Installed
             </button>
-            <button 
-              class="filter-btn" 
-              :class="{ active: selectedFilter === 'available' }" 
-              @click="setFilter('available')"
-            >
+            <button class="filter-btn" :class="{ active: selectedFilter === 'available' }"
+              @click="setFilter('available')">
               Available
             </button>
           </div>
@@ -108,25 +93,19 @@
           </div>
 
           <div v-else class="modules-grid">
-            <div 
-              v-for="(module, index) in displayModules" 
-              :key="module.ref || index"
-              class="module-card"
-              :class="getModuleCardClass(module)"
-            >
+            <div v-for="(module, index) in displayModules" :key="module.ref || index" class="module-card"
+              :class="getModuleCardClass(module)">
               <div class="module-header">
                 <div class="module-icon">
                   <ion-icon :name="module.icon || 'cube-outline'"></ion-icon>
+                  <img :src="module.icon" />
                 </div>
                 <div class="module-info">
                   <h3 class="module-name">{{ module.display_name || module.name }}</h3>
                   <p class="module-description">{{ module.description || 'No description available' }}</p>
                 </div>
                 <div class="module-status">
-                  <span 
-                    class="status-badge"
-                    :class="getStatusClass(module.status)"
-                  >
+                  <span class="status-badge" :class="getStatusClass(module.status)">
                     <ion-icon :name="getStatusIcon(module.status)"></ion-icon>
                     {{ getStatusText(module.status) }}
                   </span>
@@ -136,37 +115,24 @@
               <!-- Progress Bar for Installing -->
               <div v-if="module.status === 'installing'" class="progress-container">
                 <div class="progress-bar">
-                  <div 
-                    class="progress-fill" 
-                    :style="{ width: module.progress + '%' }"
-                  ></div>
+                  <div class="progress-fill" :style="{ width: module.progress + '%' }"></div>
                 </div>
                 <span class="progress-text">{{ module.progress }}%</span>
               </div>
 
               <!-- Module Actions -->
               <div class="module-actions">
-                <button 
-                  v-if="module.status === 'not_installed'" 
-                  class="action-btn primary"
-                  @click="installModule(module)"
-                >
+                <button v-if="module.status === 'not_installed'" class="action-btn primary"
+                  @click="installModule(module)">
                   <ion-icon name="download-outline"></ion-icon>
                   Install
                 </button>
-                <button 
-                  v-else-if="module.status === 'installed'" 
-                  class="action-btn danger"
-                  @click="uninstallModule(module)"
-                >
+                <button v-else-if="module.status === 'installed'" class="action-btn danger"
+                  @click="uninstallModule(module)">
                   <ion-icon name="trash-outline"></ion-icon>
                   Uninstall
                 </button>
-                <button 
-                  v-else-if="module.status === 'installing'" 
-                  class="action-btn secondary"
-                  disabled
-                >
+                <button v-else-if="module.status === 'installing'" class="action-btn secondary" disabled>
                   <ion-icon name="sync-outline" class="spinning"></ion-icon>
                   Installing...
                 </button>
@@ -200,14 +166,14 @@ export default {
   computed: {
     displayModules() {
       let filtered = this.results.length > 0 ? this.results : this.modules;
-      
+
       // Apply status filter
       if (this.selectedFilter === 'installed') {
         filtered = filtered.filter(module => module.status === 'installed');
       } else if (this.selectedFilter === 'available') {
         filtered = filtered.filter(module => module.status === 'not_installed');
       }
-      
+
       return filtered;
     },
     totalModules() {
@@ -253,14 +219,14 @@ export default {
   methods: {
     async loadModules() {
       this.loading = true;
-      
+
       try {
         // Load installed modules first
         const installedResponse = await this.$axios.post(
           "modules.php",
           this.$qs.stringify({ project: this.$route.params.project })
         );
-        
+
         if (installedResponse.data) {
           installedResponse.data.forEach((module) => {
             this.installedModules.push(module.name);
@@ -340,9 +306,9 @@ export default {
           project: this.$route.params.project,
         })
       );
-      
+
       this.modules[moduleIndex].status = "installing";
-      
+
       const intervalId = setInterval(() => {
         if (this.modules[moduleIndex].progress < 100) {
           this.modules[moduleIndex].progress = this.modules[moduleIndex].progress + 4;
@@ -832,8 +798,13 @@ export default {
 
 /* Animations */
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Dark mode support */
@@ -861,39 +832,39 @@ export default {
   .page-container {
     padding: 16px;
   }
-  
+
   .page-header {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .search-filter-container {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-box {
     min-width: 100%;
   }
-  
+
   .filter-buttons {
     justify-content: center;
   }
-  
+
   .modules-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .module-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .module-status {
     align-self: flex-start;
   }
