@@ -276,6 +276,11 @@
                         @click="checkUploadProgress(video.id)" title="Upload-Status prüfen">
                         <ion-icon name="sync-outline"></ion-icon>
                       </button>
+                      <!-- Retry Button für fehlgeschlagene Videos -->
+                      <button v-if="video.status === 'failed'" class="icon-btn retry-btn" 
+                        @click="retryUpload(video.id)" title="Upload erneut versuchen">
+                        <ion-icon name="refresh-outline"></ion-icon>
+                      </button>
                       <button class="icon-btn delete-btn" @click="deleteVideo(video.id)" title="Löschen">
                         <ion-icon name="trash-outline"></ion-icon>
                       </button>
@@ -874,10 +879,34 @@ export default {
       this.saving = true;
 
       try {
+        // Validierung: Plattformen
         if (!this.videoForm.platforms || this.videoForm.platforms.length === 0) {
           this.error = 'Bitte wählen Sie mindestens eine Plattform aus';
           this.saving = false;
           return;
+        }
+
+        // Validierung: Datum in der Zukunft (nur bei scheduled Status)
+        if (this.videoForm.publish_date && (this.videoForm.status === 'scheduled' || this.videoForm.status === 'published')) {
+          const publishDate = new Date(this.videoForm.publish_date);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+          
+          if (publishDate < today) {
+            this.error = 'Das Veröffentlichungsdatum muss in der Zukunft liegen';
+            this.saving = false;
+            return;
+          }
+        }
+
+        // Validierung: Thumbnail-Größe (wenn vorhanden)
+        if (this.thumbnailFile) {
+          const validationResult = await this.validateThumbnail(this.thumbnailFile);
+          if (!validationResult.valid) {
+            this.error = validationResult.error;
+            this.saving = false;
+            return;
+          }
         }
 
         const formData = new FormData();
@@ -1030,6 +1059,33 @@ export default {
       } catch (error) {
         console.error('Error uploading to platform:', error);
         this.showErrorMessage(`Fehler beim Upload zu ${platform}`);
+      }
+    },
+
+    async retryUpload(videoId) {
+      const video = this.videos.find(v => v.id === videoId);
+      if (!video) return;
+
+      if (!confirm(`Möchten Sie den Upload für "${video.title}" erneut versuchen?`)) {
+        return;
+      }
+
+      try {
+        const response = await this.$axios.post('video_uploads.php', this.$qs.stringify({
+          action: 'retry_upload',
+          video_id: videoId,
+          project: this.$route.params.project
+        }));
+
+        if (response.data.success) {
+          this.showSuccessMessage(response.data.message || 'Upload erfolgreich wiederholt');
+          this.loadVideos();
+        } else {
+          this.showErrorMessage(response.data.error || 'Fehler beim Wiederholen des Uploads');
+        }
+      } catch (error) {
+        console.error('Error retrying upload:', error);
+        this.showErrorMessage('Fehler beim Wiederholen des Uploads');
       }
     },
 
@@ -1210,10 +1266,17 @@ export default {
       }
     },
 
-    handleThumbnailSelect(e) {
+    async handleThumbnailSelect(e) {
       const file = e.target.files[0];
       if (file) {
-        this.thumbnailFile = file;
+        const validationResult = await this.validateThumbnail(file);
+        if (validationResult.valid) {
+          this.thumbnailFile = file;
+        } else {
+          this.showErrorMessage(validationResult.error);
+          // Reset file input
+          e.target.value = '';
+        }
       }
     },   
 
@@ -1227,8 +1290,64 @@ export default {
     handleThumbnailDrop(e) {
       const file = e.dataTransfer.files[0];
       if (file && file.type.startsWith('image/')) {
-        this.thumbnailFile = file;
+        this.validateThumbnail(file).then(result => {
+          if (result.valid) {
+            this.thumbnailFile = file;
+          } else {
+            this.showErrorMessage(result.error);
+          }
+        });
       }
+    },
+
+    async validateThumbnail(file) {
+      if (!file || !file.type.startsWith('image/')) {
+        return { valid: false, error: 'Bitte wählen Sie eine gültige Bilddatei' };
+      }
+
+      // Check file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        return { valid: false, error: 'Thumbnail ist zu groß (max. 5MB)' };
+      }
+
+      // Check image dimensions
+      return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          
+          // Platform-specific thumbnail requirements
+          const minWidth = 320;
+          const minHeight = 180;
+          const recommendedRatio = 16/9;
+          const currentRatio = img.width / img.height;
+          
+          if (img.width < minWidth || img.height < minHeight) {
+            resolve({ 
+              valid: false, 
+              error: `Thumbnail zu klein (mindestens ${minWidth}x${minHeight}px erforderlich, aktuell: ${img.width}x${img.height}px)` 
+            });
+            return;
+          }
+          
+          // Check for reasonable aspect ratio (warn but don't block)
+          if (Math.abs(currentRatio - recommendedRatio) > 0.5) {
+            console.warn(`Thumbnail hat ungewöhnliches Seitenverhältnis: ${currentRatio.toFixed(2)} (empfohlen: ${recommendedRatio})`);
+          }
+          
+          resolve({ valid: true });
+        };
+        
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          resolve({ valid: false, error: 'Fehler beim Laden des Thumbnails' });
+        };
+        
+        img.src = url;
+      });
     },
 
     formatDate(dateStr) {
@@ -1976,6 +2095,16 @@ export default {
 
 .processing-btn:hover {
   background: #fde68a;
+  transform: scale(1.05);
+}
+
+.retry-btn {
+  background: #dbeafe;
+  color: var(--primary-color);
+}
+
+.retry-btn:hover {
+  background: #bfdbfe;
   transform: scale(1.05);
 }
 

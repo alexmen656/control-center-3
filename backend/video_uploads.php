@@ -166,6 +166,9 @@ class VideoUploadsAPI {
             case 'get_upload_progress':
                 $this->getUploadProgress($project);
                 break;
+            case 'retry_upload':
+                $this->retryUpload($project);
+                break;
             default:
                 $this->sendResponse(['error' => 'Invalid action'], 400);
                 break;
@@ -181,6 +184,15 @@ class VideoUploadsAPI {
             // Handle file uploads
             $videoFilePath = '';
             $thumbnailFilePath = '';
+            
+            // Validate thumbnail file if uploaded (before other processing)
+            if (isset($_FILES['thumbnail_file']) && $_FILES['thumbnail_file']['error'] === 0) {
+                $thumbnailValidation = $this->validateThumbnail($_FILES['thumbnail_file']);
+                if (!$thumbnailValidation['valid']) {
+                    $this->sendResponse(['error' => $thumbnailValidation['error']], 400);
+                    return;
+                }
+            }
             
             if (isset($_FILES['video_file']) && $_FILES['video_file']['error'] === 0) {
                 $targetDir = "../uploads/videos/" . $project . "/";
@@ -243,13 +255,24 @@ class VideoUploadsAPI {
             
             // Validate required fields
             if (empty($title)) {
-                $this->sendResponse(['error' => 'Title is required'], 400);
+                $this->sendResponse(['error' => 'Titel ist erforderlich'], 400);
                 return;
             }
             
             if (empty($platforms)) {
-                $this->sendResponse(['error' => 'At least one platform is required'], 400);
+                $this->sendResponse(['error' => 'Mindestens eine Plattform ist erforderlich'], 400);
                 return;
+            }
+
+            // Validate publish date is in the future for scheduled/published status
+            if (!empty($publishDate) && ($status === 'scheduled' || $status === 'published')) {
+                $publishDateTime = strtotime($publishDate);
+                $today = strtotime('today');
+                
+                if ($publishDateTime < $today) {
+                    $this->sendResponse(['error' => 'Das Veröffentlichungsdatum muss in der Zukunft liegen'], 400);
+                    return;
+                }
             }
             
             $stmt = $con->prepare("INSERT INTO `$tableName` (title, description, status, platform, platforms, category, 
@@ -299,13 +322,24 @@ class VideoUploadsAPI {
             
             // Validate required fields
             if (empty($title)) {
-                $this->sendResponse(['error' => 'Title is required'], 400);
+                $this->sendResponse(['error' => 'Titel ist erforderlich'], 400);
                 return;
             }
             
             if (empty($platforms)) {
-                $this->sendResponse(['error' => 'At least one platform is required'], 400);
+                $this->sendResponse(['error' => 'Mindestens eine Plattform ist erforderlich'], 400);
                 return;
+            }
+
+            // Validate publish date is in the future for scheduled/published status
+            if (!empty($publishDate) && ($status === 'scheduled' || $status === 'published')) {
+                $publishDateTime = strtotime($publishDate);
+                $today = strtotime('today');
+                
+                if ($publishDateTime < $today) {
+                    $this->sendResponse(['error' => 'Das Veröffentlichungsdatum muss in der Zukunft liegen'], 400);
+                    return;
+                }
             }
             
             $stmt = $con->prepare("INSERT INTO `$tableName` (title, description, status, platform, platforms, category, 
@@ -821,11 +855,104 @@ class VideoUploadsAPI {
         // Return upload progress (in a real implementation, this would track actual upload progress)
         $progress = [
             'status' => $video['status'],
-            'progress' => $video['status'] === 'processing' ? rand(10, 90) : ($video['status'] === 'published' ? 100 : 0),
+            'progress' => $video['status'] === 'processing' ? 50 : ($video['status'] === 'published' ? 100 : 0),
             'message' => $this->getStatusMessage($video['status'])
         ];
         
         $this->sendResponse(['progress' => $progress]);
+    }
+
+    private function retryUpload($project) {
+        $videoId = isset($_REQUEST['video_id']) ? (int)$_REQUEST['video_id'] : 0;
+        
+        if ($videoId <= 0) {
+            $this->sendResponse(['error' => 'Invalid video ID'], 400);
+            return;
+        }
+        
+        // Get video data
+        $video = $this->getVideoById($videoId, $project);
+        if (!$video) {
+            $this->sendResponse(['error' => 'Video not found'], 404);
+            return;
+        }
+        
+        // Only allow retry for failed videos
+        if ($video['status'] !== 'failed') {
+            $this->sendResponse(['error' => 'Video ist nicht im Status "fehlgeschlagen"'], 400);
+            return;
+        }
+        
+        // Reset video status to draft for retry
+        $this->updateVideoStatusById($videoId, $project, 'draft');
+        
+        // Get platforms to retry upload
+        $platforms = json_decode($video['platforms'], true);
+        if (empty($platforms)) {
+            $platforms = [$video['platform']];
+        }
+        
+        $successCount = 0;
+        $errorMessages = [];
+        
+        // Try uploading to all configured platforms
+        foreach ($platforms as $platform) {
+            // Check if platform is configured
+            $config = $this->getPlatformConfig($platform, $project);
+            if (empty($config['access_token'])) {
+                $errorMessages[] = "Platform $platform not configured";
+                continue;
+            }
+            
+            // Update status to processing for this retry
+            $this->updateVideoStatusById($videoId, $project, 'processing');
+            
+            // Attempt upload
+            $result = $this->attemplatformUpload($video, $config, $platform, $project);
+            
+            if ($result['success']) {
+                $successCount++;
+                // Update platform video ID if provided
+                if (isset($result['platform_video_id'])) {
+                    $this->updatePlatformVideoId($videoId, $project, $result['platform_video_id']);
+                }
+            } else {
+                $errorMessages[] = $platform . ": " . ($result['error'] ?? 'Unknown error');
+            }
+        }
+        
+        // Update final status based on results
+        if ($successCount > 0) {
+            $this->updateVideoStatusById($videoId, $project, 'published');
+            $message = "Upload erfolgreich wiederholt für $successCount Plattform(en)";
+            if (!empty($errorMessages)) {
+                $message .= ". Fehler: " . implode(", ", $errorMessages);
+            }
+            $this->sendResponse(['success' => true, 'message' => $message]);
+        } else {
+            $this->updateVideoStatusById($videoId, $project, 'failed');
+            $this->sendResponse(['success' => false, 'error' => 'Retry fehlgeschlagen: ' . implode(", ", $errorMessages)]);
+        }
+    }
+
+    private function attemplatformUpload($video, $config, $platform, $project) {
+        // Attempt upload based on platform
+        switch ($platform) {
+            case 'youtube':
+                return $this->uploadToYouTube($video, $config, $project);
+            case 'instagram':
+                return $this->uploadToInstagram($video, $config, $project);
+            case 'tiktok':
+                return $this->uploadToTikTok($video, $config, $project);
+            case 'facebook':
+                // Add Facebook upload logic
+                return ['success' => false, 'error' => 'Facebook upload not yet implemented'];
+            case 'linkedin':
+                // Add LinkedIn upload logic  
+                return ['success' => false, 'error' => 'LinkedIn upload not yet implemented'];
+            default:
+                return ['success' => false, 'error' => 'Unsupported platform: ' . $platform];
+        }
     }
     
     private function uploadToYouTube($video, $config, $project) {
@@ -1182,12 +1309,56 @@ print_r($jsonData);
         return $config;
     }
     
+    private function validateThumbnail($file) {
+        // Check file type
+        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!in_array($file['type'], $allowedTypes)) {
+            return ['valid' => false, 'error' => 'Ungültiges Dateiformat. Erlaubt: JPEG, PNG, GIF, WebP'];
+        }
+        
+        // Check file size (max 5MB)
+        $maxSize = 5 * 1024 * 1024; // 5MB
+        if ($file['size'] > $maxSize) {
+            return ['valid' => false, 'error' => 'Thumbnail ist zu groß (max. 5MB)'];
+        }
+        
+        // Check image dimensions
+        $imageInfo = getimagesize($file['tmp_name']);
+        if ($imageInfo === false) {
+            return ['valid' => false, 'error' => 'Fehler beim Lesen der Bildinformationen'];
+        }
+        
+        $width = $imageInfo[0];
+        $height = $imageInfo[1];
+        
+        // Minimum dimensions based on platform requirements
+        $minWidth = 320;
+        $minHeight = 180;
+        
+        if ($width < $minWidth || $height < $minHeight) {
+            return [
+                'valid' => false, 
+                'error' => "Thumbnail zu klein (mindestens {$minWidth}x{$minHeight}px erforderlich, aktuell: {$width}x{$height}px)"
+            ];
+        }
+        
+        // Check aspect ratio (warn but don't block)
+        $aspectRatio = $width / $height;
+        $recommendedRatio = 16/9;
+        
+        if (abs($aspectRatio - $recommendedRatio) > 0.5) {
+            error_log("Warning: Thumbnail has unusual aspect ratio: " . round($aspectRatio, 2) . " (recommended: " . $recommendedRatio . ")");
+        }
+        
+        return ['valid' => true];
+    }
+
     private function getStatusMessage($status) {
         $messages = [
             'draft' => 'Video is in draft status',
             'scheduled' => 'Video is scheduled for upload',
             'processing' => 'Video is being uploaded to platform',
-            'published' => 'Video has been successfully published',
+            'published' => 'Video has been published',
             'failed' => 'Video upload failed'
         ];
         
