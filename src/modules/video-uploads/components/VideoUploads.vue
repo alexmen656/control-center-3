@@ -321,6 +321,16 @@
                       placeholder="Video Titel eingeben..." />
                   </div>
                   <div class="form-group">
+                    <label class="form-label">Video Format</label>
+                    <select v-model="videoForm.video_format" class="modern-select" @change="onVideoFormatChange" required>
+                      <option value="short">Short/Vertikal (9:16)</option>
+                      <option value="video">Video/Horizontal (16:9)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
                     <label class="form-label">Status</label>
                     <select v-model="videoForm.status" class="modern-select" required>
                       <option value="draft">Entwurf</option>
@@ -340,7 +350,7 @@
                   <div class="form-group">
                     <label class="form-label">Ziel-Plattformen</label>
                     <div class="platform-checkbox-grid">
-                      <div v-for="platform in availablePlatforms" :key="platform.value" class="platform-checkbox">
+                      <div v-for="platform in filteredPlatforms" :key="platform.value" class="platform-checkbox">
                         <input type="checkbox" :id="'platform-' + platform.value" :value="platform.value"
                           v-model="videoForm.platforms" class="platform-checkbox-input">
                         <label :for="'platform-' + platform.value" class="platform-checkbox-label">
@@ -352,7 +362,7 @@
                       </div>
                     </div>
                     <div class="form-helper-text">
-                      Wählen Sie alle Plattformen aus, auf die das Video hochgeladen werden soll.
+                      {{ getVideoFormatPlatformText() }}
                     </div>
                   </div>
                 </div>
@@ -678,6 +688,7 @@ export default {
         title: '',
         description: '',
         status: 'draft',
+        video_format: 'short', // Default to short format
         platforms: [],
         category: '',
         publish_date: '',
@@ -707,6 +718,19 @@ export default {
 
     totalPages() {
       return Math.ceil(this.filteredVideos.length / this.itemsPerPage);
+    },
+
+    // Filter platforms based on video format
+    filteredPlatforms() {
+      if (this.videoForm.video_format === 'short') {
+        // Show all platforms for shorts
+        return this.availablePlatforms;
+      } else {
+        // For video format, exclude short-only platforms or show all if configured
+        return this.availablePlatforms.filter(platform => 
+          ['youtube', 'facebook', 'linkedin'].includes(platform.value) || platform.value === 'instagram'
+        );
+      }
     }
   },
 
@@ -825,6 +849,34 @@ export default {
       }
     },
 
+    onVideoFormatChange() {
+      // Reset platforms when format changes
+      this.videoForm.platforms = [];
+      
+      // Auto-select appropriate platforms based on format
+      if (this.videoForm.video_format === 'short') {
+        // For shorts, select short-friendly platforms that are connected
+        const shortPlatforms = ['tiktok', 'instagram', 'youtube'];
+        this.videoForm.platforms = this.availablePlatforms
+          .filter(p => shortPlatforms.includes(p.value) && p.connected)
+          .map(p => p.value);
+      } else {
+        // For video format, select video-friendly platforms that are connected
+        const videoPlatforms = ['youtube', 'facebook', 'linkedin'];
+        this.videoForm.platforms = this.availablePlatforms
+          .filter(p => videoPlatforms.includes(p.value) && p.connected)
+          .map(p => p.value);
+      }
+    },
+
+    getVideoFormatPlatformText() {
+      if (this.videoForm.video_format === 'short') {
+        return 'Für Shorts: Alle Plattformen verfügbar (optimiert für vertikale Videos 9:16)';
+      } else {
+        return 'Für Videos: YouTube, Facebook, LinkedIn (optimiert für horizontale Videos 16:9)';
+      }
+    },
+
     closeVideoForm() {
       this.showVideoForm = false;
       this.resetForm();
@@ -842,6 +894,7 @@ export default {
         title: '',
         description: '',
         status: 'draft',
+        video_format: 'short', // Default to short format
         platforms: [],
         category: '',
         publish_date: '',
@@ -1319,23 +1372,49 @@ export default {
         img.onload = () => {
           URL.revokeObjectURL(url);
           
-          // Platform-specific thumbnail requirements
-          const minWidth = 320;
-          const minHeight = 180;
-          const recommendedRatio = 16/9;
           const currentRatio = img.width / img.height;
           
-          if (img.width < minWidth || img.height < minHeight) {
-            resolve({ 
-              valid: false, 
-              error: `Thumbnail zu klein (mindestens ${minWidth}x${minHeight}px erforderlich, aktuell: ${img.width}x${img.height}px)` 
-            });
-            return;
-          }
-          
-          // Check for reasonable aspect ratio (warn but don't block)
-          if (Math.abs(currentRatio - recommendedRatio) > 0.5) {
-            console.warn(`Thumbnail hat ungewöhnliches Seitenverhältnis: ${currentRatio.toFixed(2)} (empfohlen: ${recommendedRatio})`);
+          // Video format specific validation
+          if (this.videoForm.video_format === 'short') {
+            // Short format: 9:16 aspect ratio
+            const minWidth = 320;
+            const minHeight = 568; // 9:16 ratio
+            const recommendedRatio = 9/16;
+            
+            if (img.width < minWidth || img.height < minHeight) {
+              resolve({ 
+                valid: false, 
+                error: `Thumbnail für Shorts zu klein (mindestens ${minWidth}x${minHeight}px erforderlich, aktuell: ${img.width}x${img.height}px)` 
+              });
+              return;
+            }
+            
+            // Check aspect ratio for shorts (should be portrait)
+            if (Math.abs(currentRatio - recommendedRatio) > 0.3) {
+              resolve({
+                valid: false,
+                error: `Thumbnail-Format passt nicht zu Shorts (erwartet 9:16, aktuell: ${currentRatio.toFixed(2)})`
+              });
+              return;
+            }
+          } else {
+            // Video format: 16:9 aspect ratio  
+            const minWidth = 320;
+            const minHeight = 180; // 16:9 ratio
+            const recommendedRatio = 16/9;
+            
+            if (img.width < minWidth || img.height < minHeight) {
+              resolve({ 
+                valid: false, 
+                error: `Thumbnail für Videos zu klein (mindestens ${minWidth}x${minHeight}px erforderlich, aktuell: ${img.width}x${img.height}px)` 
+              });
+              return;
+            }
+            
+            // Check aspect ratio for videos (should be landscape)
+            if (Math.abs(currentRatio - recommendedRatio) > 0.5) {
+              console.warn(`Thumbnail hat ungewöhnliches Seitenverhältnis: ${currentRatio.toFixed(2)} (empfohlen: ${recommendedRatio})`);
+            }
           }
           
           resolve({ valid: true });
@@ -2221,6 +2300,7 @@ export default {
   transition: right 0.3s ease;
   z-index: 1000;
   border-left: 1px solid var(--border);
+  padding-bottom: 48px;
 }
 
 .form-section.form-visible {

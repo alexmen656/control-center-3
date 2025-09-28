@@ -96,6 +96,7 @@ class VideoUploadsAPI {
             `title` varchar(255) NOT NULL,
             `description` text,
             `status` enum('draft','scheduled','published','processing','failed') DEFAULT 'draft',
+            `video_format` enum('short','video') DEFAULT 'short' COMMENT 'short=9:16 vertical, video=16:9 horizontal',
             `platform` enum('youtube','instagram','tiktok','facebook','linkedin') DEFAULT 'youtube',
             `platforms` text COMMENT 'JSON array of target platforms',
             `category` varchar(100),
@@ -185,9 +186,12 @@ class VideoUploadsAPI {
             $videoFilePath = '';
             $thumbnailFilePath = '';
             
+            // Get video format first for thumbnail validation
+            $videoFormat = isset($_POST['video_format']) ? $_POST['video_format'] : 'short';
+            
             // Validate thumbnail file if uploaded (before other processing)
             if (isset($_FILES['thumbnail_file']) && $_FILES['thumbnail_file']['error'] === 0) {
-                $thumbnailValidation = $this->validateThumbnail($_FILES['thumbnail_file']);
+                $thumbnailValidation = $this->validateThumbnail($_FILES['thumbnail_file'], $videoFormat);
                 if (!$thumbnailValidation['valid']) {
                     $this->sendResponse(['error' => $thumbnailValidation['error']], 400);
                     return;
@@ -236,6 +240,7 @@ class VideoUploadsAPI {
             $title = isset($_POST['title']) ? $_POST['title'] : '';
             $description = isset($_POST['description']) ? $_POST['description'] : '';
             $status = isset($_POST['status']) ? $_POST['status'] : 'draft';
+            $videoFormat = isset($_POST['video_format']) ? $_POST['video_format'] : 'short';
             $platform = isset($_POST['platform']) ? $_POST['platform'] : 'youtube';
             $category = isset($_POST['category']) ? $_POST['category'] : '';
             $publishDate = isset($_POST['publish_date']) ? $_POST['publish_date'] : null;
@@ -275,11 +280,11 @@ class VideoUploadsAPI {
                 }
             }
             
-            $stmt = $con->prepare("INSERT INTO `$tableName` (title, description, status, platform, platforms, category, 
+            $stmt = $con->prepare("INSERT INTO `$tableName` (title, description, status, video_format, platform, platforms, category, 
                                     publish_date, publish_time, video_file, thumbnail_url, tags, goals) 
-                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             
-            $stmt->bind_param("ssssssssssss", $title, $description, $status, $platform, $platformsJson, $category, 
+            $stmt->bind_param("sssssssssssss", $title, $description, $status, $videoFormat, $platform, $platformsJson, $category, 
                             $publishDate, $publishTime, $videoFilePath, $thumbnailFilePath, $tags, $goals);
             
             if ($stmt->execute()) {
@@ -301,6 +306,7 @@ class VideoUploadsAPI {
             $title = isset($data['title']) ? $data['title'] : '';
             $description = isset($data['description']) ? $data['description'] : '';
             $status = isset($data['status']) ? $data['status'] : 'draft';
+            $videoFormat = isset($data['video_format']) ? $data['video_format'] : 'short';
             $platform = isset($data['platform']) ? $data['platform'] : 'youtube';
             $category = isset($data['category']) ? $data['category'] : '';
             $publishDate = isset($data['publish_date']) ? $data['publish_date'] : null;
@@ -342,11 +348,11 @@ class VideoUploadsAPI {
                 }
             }
             
-            $stmt = $con->prepare("INSERT INTO `$tableName` (title, description, status, platform, platforms, category, 
+            $stmt = $con->prepare("INSERT INTO `$tableName` (title, description, status, video_format, platform, platforms, category, 
                                     publish_date, publish_time, video_file, thumbnail_url, tags, goals) 
-                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             
-            $stmt->bind_param("ssssssssssss", $title, $description, $status, $platform, $platformsJson, $category, 
+            $stmt->bind_param("sssssssssssss", $title, $description, $status, $videoFormat, $platform, $platformsJson, $category, 
                             $publishDate, $publishTime, $videoFile, $thumbnailUrl, $tags, $goals);
             
             if ($stmt->execute()) {
@@ -1309,7 +1315,7 @@ print_r($jsonData);
         return $config;
     }
     
-    private function validateThumbnail($file) {
+    private function validateThumbnail($file, $videoFormat = 'short') {
         // Check file type
         $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
         if (!in_array($file['type'], $allowedTypes)) {
@@ -1330,24 +1336,46 @@ print_r($jsonData);
         
         $width = $imageInfo[0];
         $height = $imageInfo[1];
-        
-        // Minimum dimensions based on platform requirements
-        $minWidth = 320;
-        $minHeight = 180;
-        
-        if ($width < $minWidth || $height < $minHeight) {
-            return [
-                'valid' => false, 
-                'error' => "Thumbnail zu klein (mindestens {$minWidth}x{$minHeight}px erforderlich, aktuell: {$width}x{$height}px)"
-            ];
-        }
-        
-        // Check aspect ratio (warn but don't block)
         $aspectRatio = $width / $height;
-        $recommendedRatio = 16/9;
         
-        if (abs($aspectRatio - $recommendedRatio) > 0.5) {
-            error_log("Warning: Thumbnail has unusual aspect ratio: " . round($aspectRatio, 2) . " (recommended: " . $recommendedRatio . ")");
+        // Video format specific validation
+        if ($videoFormat === 'short') {
+            // Short format: 9:16 aspect ratio (portrait)
+            $minWidth = 320;
+            $minHeight = 568; // 9:16 ratio
+            $recommendedRatio = 9/16;
+            
+            if ($width < $minWidth || $height < $minHeight) {
+                return [
+                    'valid' => false, 
+                    'error' => "Thumbnail für Shorts zu klein (mindestens {$minWidth}x{$minHeight}px erforderlich, aktuell: {$width}x{$height}px)"
+                ];
+            }
+            
+            // Check aspect ratio for shorts (should be portrait)
+            if (abs($aspectRatio - $recommendedRatio) > 0.3) {
+                return [
+                    'valid' => false,
+                    'error' => "Thumbnail-Format passt nicht zu Shorts (erwartet 9:16, aktuell: " . round($aspectRatio, 2) . ")"
+                ];
+            }
+        } else {
+            // Video format: 16:9 aspect ratio (landscape)
+            $minWidth = 320;
+            $minHeight = 180; // 16:9 ratio
+            $recommendedRatio = 16/9;
+            
+            if ($width < $minWidth || $height < $minHeight) {
+                return [
+                    'valid' => false, 
+                    'error' => "Thumbnail für Videos zu klein (mindestens {$minWidth}x{$minHeight}px erforderlich, aktuell: {$width}x{$height}px)"
+                ];
+            }
+            
+            // Check aspect ratio for videos (should be landscape)
+            if (abs($aspectRatio - $recommendedRatio) > 0.5) {
+                error_log("Warning: Thumbnail has unusual aspect ratio: " . round($aspectRatio, 2) . " (recommended: " . $recommendedRatio . ")");
+            }
         }
         
         return ['valid' => true];
