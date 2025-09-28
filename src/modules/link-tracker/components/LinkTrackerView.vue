@@ -30,6 +30,18 @@
           </div>
         </div>
 
+        <!-- Period Selector -->
+        <div class="period-selector">
+          <button 
+            v-for="period in periods" 
+            :key="period.value"
+            :class="['period-btn', { active: selectedPeriod === period.value }]"
+            @click="selectedPeriod = period.value; loadAnalytics()"
+          >
+            {{ period.label }}
+          </button>
+        </div>
+
         <!-- Stats Cards -->
         <div class="stats-grid">
           <div class="stat-card">
@@ -47,6 +59,74 @@
           <div class="stat-card">
             <div class="stat-value">{{ avgClicksPerLink }}</div>
             <div class="stat-label">Ø Klicks/Link</div>
+          </div>
+        </div>
+
+        <!-- Analytics Dashboard -->
+        <div class="analytics-section" v-if="analyticsLoaded">
+          <!-- Timeline Chart -->
+          <div class="data-card">
+            <div class="card-header">
+              <h3>Klicks Timeline</h3>
+            </div>
+            <div class="chart-container">
+              <canvas ref="timelineChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Analytics Grid -->
+          <div class="analytics-grid">
+            <!-- Countries -->
+            <div class="data-card">
+              <div class="card-header">
+                <h3>Länder</h3>
+              </div>
+              <div class="analytics-list">
+                <div v-for="country in analytics.countries" :key="country.country" class="analytics-item">
+                  <span class="country-flag">{{ getCountryFlag(country.country) }}</span>
+                  <span class="analytics-name">{{ getCountryName(country.country) }}</span>
+                  <span class="analytics-count">{{ country.count }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Devices -->
+            <div class="data-card">
+              <div class="card-header">
+                <h3>Geräte</h3>
+              </div>
+              <div class="chart-container">
+                <canvas ref="deviceChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Browsers -->
+            <div class="data-card">
+              <div class="card-header">
+                <h3>Browser</h3>
+              </div>
+              <div class="analytics-list">
+                <div v-for="browser in analytics.browsers" :key="browser.browser" class="analytics-item">
+                  <ion-icon :name="getBrowserIcon(browser.browser)"></ion-icon>
+                  <span class="analytics-name">{{ browser.browser }}</span>
+                  <span class="analytics-count">{{ browser.count }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Platforms -->
+            <div class="data-card">
+              <div class="card-header">
+                <h3>Betriebssysteme</h3>
+              </div>
+              <div class="analytics-list">
+                <div v-for="platform in analytics.platforms" :key="platform.platform" class="analytics-item">
+                  <ion-icon :name="getPlatformIcon(platform.platform)"></ion-icon>
+                  <span class="analytics-name">{{ platform.platform }}</span>
+                  <span class="analytics-count">{{ platform.count }}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -109,7 +189,10 @@
                     <div class="cell-content">{{ truncateUrl(link.target_url) }}</div>
                   </div>
                   <div class="table-cell">
-                    <div class="cell-content">{{ link.visits || 0 }}</div>
+                    <div class="cell-content">
+                      {{ link.visits || 0 }} 
+                      <small v-if="link.unique_visitors">({{ link.unique_visitors }} unique)</small>
+                    </div>
                   </div>
                   <div class="table-cell">
                     <div class="cell-content">{{ formatDate(link.created_at) }}</div>
@@ -197,6 +280,7 @@
 
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
+//import Chart from 'chart.js/auto';
 
 export default {
   name: "LinkTrackerView",
@@ -207,6 +291,20 @@ export default {
     return {
       links: [],
       filteredLinks: [],
+      analytics: {
+        countries: [],
+        devices: [],
+        browsers: [],
+        platforms: [],
+        timeline: []
+      },
+      analyticsLoaded: false,
+      selectedPeriod: 30,
+      periods: [
+        { value: 7, label: '7 Tage' },
+        { value: 30, label: '30 Tage' },
+        { value: 90, label: '90 Tage' }
+      ],
       searchTerm: '',
       showCreateForm: false,
       sortColumn: null,
@@ -217,7 +315,8 @@ export default {
         title: '',
         target_url: '',
         custom_slug: ''
-      }
+      },
+      charts: {}
     };
   },
   
@@ -227,7 +326,7 @@ export default {
     },
     
     uniqueVisitors() {
-      return this.links.length; // Vereinfacht - könnte aus Analytics berechnet werden
+      return this.links.reduce((sum, link) => sum + (parseInt(link.unique_visitors) || 0), 0);
     },
     
     avgClicksPerLink() {
@@ -244,6 +343,7 @@ export default {
   
   mounted() {
     this.loadLinks();
+    this.loadAnalytics();
   },
   
   methods: {
@@ -380,6 +480,144 @@ export default {
     
     formatDate(dateStr) {
       return new Date(dateStr).toLocaleDateString('de-DE');
+    },
+
+    async loadAnalytics() {
+      try {
+        const response = await this.$axios.post('link_tracker_api.php', this.$qs.stringify({
+          getDetailedAnalytics: true,
+          project: this.$route.params.project,
+          period: this.selectedPeriod
+        }));
+        
+        if (response.data.success) {
+          this.analytics = response.data;
+          this.analyticsLoaded = true;
+          this.$nextTick(() => {
+            this.renderCharts();
+          });
+        }
+      } catch (error) {
+        console.error('Error loading analytics:', error);
+      }
+    },
+
+    renderCharts() {
+      this.renderTimelineChart();
+      this.renderDeviceChart();
+    },
+
+    renderTimelineChart() {
+      const ctx = this.$refs.timelineChart;
+      if (!ctx || !this.analytics.timeline) return;
+
+      if (this.charts.timeline) {
+        this.charts.timeline.destroy();
+      }
+      
+      this.charts.timeline = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: this.analytics.timeline.map(item => this.formatDate(item.date)),
+          datasets: [{
+            label: 'Klicks',
+            data: this.analytics.timeline.map(item => item.clicks),
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    },
+
+    renderDeviceChart() {
+      const ctx = this.$refs.deviceChart;
+      if (!ctx || !this.analytics.devices) return;
+
+      if (this.charts.device) {
+        this.charts.device.destroy();
+      }
+      
+      this.charts.device = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: this.analytics.devices.map(item => item.device_type),
+          datasets: [{
+            data: this.analytics.devices.map(item => item.count),
+            backgroundColor: ['#2563eb', '#059669', '#d97706', '#dc2626']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+    },
+
+    getCountryName(code) {
+      const countries = {
+        'DE': 'Deutschland',
+        'US': 'USA',
+        'GB': 'Großbritannien',
+        'FR': 'Frankreich',
+        'AT': 'Österreich',
+        'CH': 'Schweiz',
+        'IT': 'Italien',
+        'ES': 'Spanien',
+        'NL': 'Niederlande',
+        'BE': 'Belgien',
+        'XX': 'Unbekannt'
+      };
+      return countries[code] || code;
+    },
+
+    getCountryFlag(code) {
+      const flags = {
+        'DE': '🇩🇪',
+        'US': '🇺🇸', 
+        'GB': '🇬🇧',
+        'FR': '🇫🇷',
+        'AT': '🇦🇹',
+        'CH': '🇨🇭',
+        'IT': '🇮🇹',
+        'ES': '🇪🇸',
+        'NL': '🇳🇱',
+        'BE': '🇧🇪',
+        'XX': '🌍'
+      };
+      return flags[code] || '🌍';
+    },
+
+    getBrowserIcon(browser) {
+      const icons = {
+        'Chrome': 'logo-chrome',
+        'Firefox': 'logo-firefox', 
+        'Safari': 'logo-safari',
+        'Edge': 'logo-edge',
+        'Opera': 'logo-opera',
+        'Other': 'globe'
+      };
+      return icons[browser] || 'globe';
+    },
+
+    getPlatformIcon(platform) {
+      const icons = {
+        'Windows': 'logo-windows',
+        'macOS': 'logo-apple',
+        'Linux': 'logo-tux',
+        'Android': 'logo-android',
+        'iOS': 'logo-apple',
+        'Other': 'desktop'
+      };
+      return icons[platform] || 'desktop';
     }
   }
 };
@@ -857,6 +1095,91 @@ export default {
   line-height: 1.5;
 }
 
+/* Period Selector */
+.period-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  justify-content: center;
+}
+
+.period-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.period-btn:hover {
+  background: var(--background);
+}
+
+.period-btn.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+/* Analytics Section */
+.analytics-section {
+  margin-top: 32px;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.chart-container {
+  padding: 20px;
+  height: 300px;
+  position: relative;
+}
+
+.analytics-list {
+  padding: 20px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.analytics-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+
+.analytics-item:last-child {
+  border-bottom: none;
+}
+
+.analytics-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.analytics-count {
+  font-weight: 600;
+  color: var(--primary-color);
+  background: var(--background);
+  padding: 4px 8px;
+  border-radius: var(--radius);
+  font-size: 12px;
+}
+
+.country-flag {
+  font-size: 18px;
+  width: 24px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
@@ -885,6 +1208,14 @@ export default {
   .form-section {
     width: 100%;
     right: -100%;
+  }
+
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .period-selector {
+    flex-wrap: wrap;
   }
 }
 
