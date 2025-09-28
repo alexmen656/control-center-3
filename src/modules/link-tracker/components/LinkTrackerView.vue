@@ -1,787 +1,347 @@
 <template>
-  <ion-page class="ion-padding">
-    <ion-content>
-      <div class="dashboard-header">
-        <h2>Link Tracker Dashboard</h2>
-        <ion-segment v-model="selectedPeriod" @ionChange="loadAnalytics">
-          <ion-segment-button value="7">
-            <ion-label>7 Tage</ion-label>
-          </ion-segment-button>
-          <ion-segment-button value="30">
-            <ion-label>30 Tage</ion-label>
-          </ion-segment-button>
-          <ion-segment-button value="90">
-            <ion-label>3 Monate</ion-label>
-          </ion-segment-button>
-        </ion-segment>
-      </div>
+  <ion-page>
+    <ion-content class="modern-content">
+      <SiteTitle icon="link-outline" title="Link Tracker"/>
 
-      <!-- KPI Cards -->
-      <div class="kpi-grid">
-        <ion-card class="kpi-card">
-          <ion-card-content>
-            <div class="kpi-value">{{ formatNumber(stats.totalClicks) }}</div>
-            <div class="kpi-label">Gesamt Klicks</div>
-            <div class="kpi-trend" :class="stats.clicksTrend > 0 ? 'positive' : 'negative'">
-              <ion-icon :name="stats.clicksTrend > 0 ? 'trending-up' : 'trending-down'"></ion-icon>
-              {{ Math.abs(stats.clicksTrend) }}%
+      <div class="page-container">
+        <!-- Action Bar -->
+        <div class="action-bar">
+          <div class="action-group-left">
+            <button class="action-btn primary" @click="showCreateForm = !showCreateForm">
+              <ion-icon name="add-circle"></ion-icon>
+              Neuer Link
+            </button>
+            <button class="action-btn" @click="loadLinks">
+              <ion-icon name="refresh"></ion-icon>
+              Aktualisieren
+            </button>
+          </div>
+          
+          <div class="action-group-right">
+            <div class="search-box">
+              <ion-icon name="search"></ion-icon>
+              <input 
+                type="text" 
+                placeholder="Links durchsuchen..." 
+                v-model="searchTerm" 
+                @input="filterLinks"
+              />
             </div>
-          </ion-card-content>
-        </ion-card>
-
-        <ion-card class="kpi-card">
-          <ion-card-content>
-            <div class="kpi-value">{{ formatNumber(stats.uniqueVisitors) }}</div>
-            <div class="kpi-label">Eindeutige Besucher</div>
-            <div class="kpi-trend" :class="stats.visitorsTrend > 0 ? 'positive' : 'negative'">
-              <ion-icon :name="stats.visitorsTrend > 0 ? 'trending-up' : 'trending-down'"></ion-icon>
-              {{ Math.abs(stats.visitorsTrend) }}%
-            </div>
-          </ion-card-content>
-        </ion-card>
-
-        <ion-card class="kpi-card">
-          <ion-card-content>
-            <div class="kpi-value">{{ stats.activeLinks }}</div>
-            <div class="kpi-label">Aktive Links</div>
-            <div class="kpi-subtitle">{{ stats.totalLinks }} gesamt</div>
-          </ion-card-content>
-        </ion-card>
-
-        <ion-card class="kpi-card">
-          <ion-card-content>
-            <div class="kpi-value">{{ formatNumber(stats.avgClicksPerDay) }}</div>
-            <div class="kpi-label">Ø Klicks/Tag</div>
-            <div class="kpi-subtitle">{{ formatNumber(stats.clickRate) }}% CTR</div>
-          </ion-card-content>
-        </ion-card>
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="quick-actions">
-        <ion-button expand="block" @click="openCreateLinkModal">
-          <ion-icon name="add-circle" slot="start"></ion-icon>
-          Neuen Link erstellen
-        </ion-button>
-      </div>
-
-      <div v-if="loading" class="loading-container">
-        <ion-spinner></ion-spinner>
-        <p>Lade Daten...</p>
-      </div>
-
-      <div v-else-if="error" class="error-container">
-        <ion-icon name="warning"></ion-icon>
-        <p>Fehler: {{ error }}</p>
-      </div>
-
-      <div v-else class="charts-container">
-        <!-- Clicks Timeline Chart -->
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>Klicks Verlauf</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <canvas ref="timelineChart" height="300"></canvas>
-          </ion-card-content>
-        </ion-card>
-
-        <!-- Links Performance -->
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>Top Performance Links</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <div class="links-list">
-              <div v-for="link in topLinks" :key="link.id" class="link-item">
-                <div class="link-info">
-                  <div class="link-title">{{ link.title }}</div>
-                  <div class="link-url">{{ link.shortUrl }}</div>
-                </div>
-                <div class="link-stats">
-                  <div class="stat">
-                    <span class="stat-value">{{ formatNumber(link.clicks) }}</span>
-                    <span class="stat-label">Klicks</span>
-                  </div>
-                  <div class="stat">
-                    <span class="stat-value">{{ formatNumber(link.uniqueVisitors) }}</span>
-                    <span class="stat-label">Besucher</span>
-                  </div>
-                </div>
-                <div class="link-actions">
-                  <ion-button size="small" fill="clear" @click="viewLinkDetails(link.id)">
-                    <ion-icon name="analytics"></ion-icon>
-                  </ion-button>
-                  <ion-button size="small" fill="clear" @click="copyLink(link.shortUrl)">
-                    <ion-icon name="copy"></ion-icon>
-                  </ion-button>
-                  <ion-button size="small" fill="clear" @click="editLink(link.id)">
-                    <ion-icon name="pencil"></ion-icon>
-                  </ion-button>
-                </div>
-              </div>
-            </div>
-          </ion-card-content>
-        </ion-card>
-
-        <!-- Device & Browser Analysis -->
-        <div class="chart-row">
-          <ion-card>
-            <ion-card-header>
-              <ion-card-title>Geräte Verteilung</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <canvas ref="deviceChart" height="250"></canvas>
-            </ion-card-content>
-          </ion-card>
-
-          <ion-card>
-            <ion-card-header>
-              <ion-card-title>Browser Verteilung</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <canvas ref="browserChart" height="250"></canvas>
-            </ion-card-content>
-          </ion-card>
+          </div>
         </div>
 
-        <!-- Geographic Distribution -->
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>Geografische Verteilung</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <div class="chart-row">
-              <div class="chart-container">
-                <canvas ref="countryChart" height="300"></canvas>
-              </div>
-              <div class="country-list">
-                <div v-for="country in topCountries" :key="country.code" class="country-item">
-                  <div class="country-flag">{{ getCountryFlag(country.code) }}</div>
-                  <div class="country-info">
-                    <div class="country-name">{{ getCountryName(country.code) }}</div>
-                    <div class="country-clicks">{{ formatNumber(country.clicks) }} Klicks</div>
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value">{{ totalClicks }}</div>
+            <div class="stat-label">Gesamt Klicks</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ uniqueVisitors }}</div>
+            <div class="stat-label">Unique Besucher</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ links.length }}</div>
+            <div class="stat-label">Aktive Links</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ avgClicksPerLink }}</div>
+            <div class="stat-label">Ø Klicks/Link</div>
+          </div>
+        </div>
+
+        <!-- Data Table Card -->
+        <div class="data-card">
+          <div class="card-header">
+            <div class="header-left">
+              <h3>Deine Links</h3>
+              <p class="entry-count">{{ filteredLinks.length }} Links gefunden</p>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <div class="modern-table">
+              <div class="table-header">
+                <div class="header-cell" @click="sortBy(0)">
+                  <span class="header-text">Titel</span>
+                  <div class="sort-indicator">
+                    <ion-icon :name="getSortIcon(0)" :class="sortColumn === 0 ? 'sort-active' : 'sort-default'"></ion-icon>
                   </div>
-                  <div class="country-percentage">{{ country.percentage }}%</div>
                 </div>
+                <div class="header-cell" @click="sortBy(1)">
+                  <span class="header-text">Kurz-URL</span>
+                  <div class="sort-indicator">
+                    <ion-icon :name="getSortIcon(1)" :class="sortColumn === 1 ? 'sort-active' : 'sort-default'"></ion-icon>
+                  </div>
+                </div>
+                <div class="header-cell" @click="sortBy(2)">
+                  <span class="header-text">Ziel-URL</span>
+                  <div class="sort-indicator">
+                    <ion-icon :name="getSortIcon(2)" :class="sortColumn === 2 ? 'sort-active' : 'sort-default'"></ion-icon>
+                  </div>
+                </div>
+                <div class="header-cell" @click="sortBy(3)">
+                  <span class="header-text">Besuche</span>
+                  <div class="sort-indicator">
+                    <ion-icon :name="getSortIcon(3)" :class="sortColumn === 3 ? 'sort-active' : 'sort-default'"></ion-icon>
+                  </div>
+                </div>
+                <div class="header-cell" @click="sortBy(4)">
+                  <span class="header-text">Erstellt</span>
+                  <div class="sort-indicator">
+                    <ion-icon :name="getSortIcon(4)" :class="sortColumn === 4 ? 'sort-active' : 'sort-default'"></ion-icon>
+                  </div>
+                </div>
+                <div class="actions-header">Aktionen</div>
               </div>
-            </div>
-          </ion-card-content>
-        </ion-card>
 
-        <!-- All Links Management -->
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>
-              Alle Links verwalten
-              <ion-button size="small" fill="outline" @click="exportData">
-                <ion-icon name="download"></ion-icon>
-                Export CSV
-              </ion-button>
-            </ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <div class="table-controls">
-              <ion-searchbar 
-                v-model="searchTerm" 
-                placeholder="Links durchsuchen..."
-                @ionInput="filterLinks">
-              </ion-searchbar>
-              <ion-select v-model="filterStatus" placeholder="Status filtern" @ionChange="filterLinks">
-                <ion-select-option value="">Alle Status</ion-select-option>
-                <ion-select-option value="active">Aktiv</ion-select-option>
-                <ion-select-option value="paused">Pausiert</ion-select-option>
-                <ion-select-option value="expired">Abgelaufen</ion-select-option>
-              </ion-select>
+              <div class="table-body" v-if="filteredLinks.length > 0">
+                <div class="table-row" v-for="link in paginatedLinks" :key="link.id">
+                  <div class="table-cell">
+                    <div class="cell-content">{{ link.title }}</div>
+                  </div>
+                  <div class="table-cell">
+                    <div class="cell-content" @click="copyToClipboard(link.short_url)" style="cursor: pointer; color: var(--primary-color);">
+                      {{ link.short_url }}
+                    </div>
+                  </div>
+                  <div class="table-cell">
+                    <div class="cell-content">{{ truncateUrl(link.target_url) }}</div>
+                  </div>
+                  <div class="table-cell">
+                    <div class="cell-content">{{ link.visits || 0 }}</div>
+                  </div>
+                  <div class="table-cell">
+                    <div class="cell-content">{{ formatDate(link.created_at) }}</div>
+                  </div>
+                  <div class="actions-cell">
+                    <div class="action-buttons">
+                      <button class="icon-btn delete-btn" @click="deleteLink(link.id)" title="Löschen">
+                        <ion-icon name="trash"></ion-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            
-            <div class="table-wrapper">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th @click="sortBy('title')" class="sortable">
-                      Titel <ion-icon :name="getSortIcon('title')"></ion-icon>
-                    </th>
-                    <th>Kurz-URL</th>
-                    <th>Ziel-URL</th>
-                    <th @click="sortBy('clicks')" class="sortable">
-                      Klicks <ion-icon :name="getSortIcon('clicks')"></ion-icon>
-                    </th>
-                    <th @click="sortBy('created')" class="sortable">
-                      Erstellt <ion-icon :name="getSortIcon('created')"></ion-icon>
-                    </th>
-                    <th>Status</th>
-                    <th>Aktionen</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="link in paginatedLinks" :key="link.id">
-                    <td>
-                      <div class="link-title-cell">
-                        <strong>{{ link.title }}</strong>
-                        <div class="link-meta">{{ link.description }}</div>
-                      </div>
-                    </td>
-                    <td>
-                      <div class="short-url-cell" @click="copyLink(link.shortUrl)">
-                        <ion-icon name="link"></ion-icon>
-                        {{ link.shortUrl }}
-                      </div>
-                    </td>
-                    <td class="target-url">{{ truncateUrl(link.targetUrl) }}</td>
-                    <td class="number-cell">{{ formatNumber(link.clicks) }}</td>
-                    <td>{{ formatDate(link.created) }}</td>
-                    <td>
-                      <ion-badge :color="getStatusColor(link.status)">
-                        {{ getStatusText(link.status) }}
-                      </ion-badge>
-                    </td>
-                    <td>
-                      <div class="action-buttons">
-                        <ion-button size="small" fill="clear" @click="viewLinkDetails(link.id)">
-                          <ion-icon name="analytics"></ion-icon>
-                        </ion-button>
-                        <ion-button size="small" fill="clear" @click="editLink(link.id)">
-                          <ion-icon name="pencil"></ion-icon>
-                        </ion-button>
-                        <ion-button size="small" fill="clear" color="danger" @click="deleteLink(link.id)">
-                          <ion-icon name="trash"></ion-icon>
-                        </ion-button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            
-            <div class="pagination" v-if="totalPages > 1">
-              <ion-button 
-                fill="clear" 
-                :disabled="currentPage === 1" 
-                @click="currentPage--">
-                <ion-icon name="chevron-back"></ion-icon>
-              </ion-button>
-              <span>Seite {{ currentPage }} von {{ totalPages }}</span>
-              <ion-button 
-                fill="clear" 
-                :disabled="currentPage === totalPages" 
-                @click="currentPage++">
-                <ion-icon name="chevron-forward"></ion-icon>
-              </ion-button>
-            </div>
-          </ion-card-content>
-        </ion-card>
-      </div>
 
-      <!-- Create Link Modal -->
-      <ion-modal :is-open="createModalOpen" @did-dismiss="createModalOpen = false">
-        <ion-header>
-          <ion-toolbar>
-            <ion-title>Neuen Link erstellen</ion-title>
-            <ion-buttons slot="end">
-              <ion-button @click="createModalOpen = false">
-                <ion-icon name="close"></ion-icon>
-              </ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content class="ion-padding">
-          <form @submit.prevent="createLink">
-            <ion-item>
-              <ion-label position="stacked">Titel</ion-label>
-              <ion-input v-model="newLink.title" placeholder="Link Titel eingeben" required></ion-input>
-            </ion-item>
-            
-            <ion-item>
-              <ion-label position="stacked">Beschreibung (optional)</ion-label>
-              <ion-textarea v-model="newLink.description" placeholder="Kurze Beschreibung"></ion-textarea>
-            </ion-item>
-            
-            <ion-item>
-              <ion-label position="stacked">Ziel-URL</ion-label>
-              <ion-input v-model="newLink.targetUrl" placeholder="https://example.com" type="url" required></ion-input>
-            </ion-item>
-            
-            <ion-item>
-              <ion-label position="stacked">Custom Slug (optional)</ion-label>
-              <ion-input v-model="newLink.slug" placeholder="mein-link"></ion-input>
-              <ion-note slot="helper">Leer lassen für automatische Generierung</ion-note>
-            </ion-item>
-            
-            <ion-item>
-              <ion-label>Ablaufdatum (optional)</ion-label>
-              <ion-datetime v-model="newLink.expiresAt" presentation="date"></ion-datetime>
-            </ion-item>
-            
-            <ion-button type="submit" expand="block" class="ion-margin-top">
-              Link erstellen
-            </ion-button>
-          </form>
-        </ion-content>
-      </ion-modal>
-
-      <!-- Link Details Modal -->
-      <ion-modal :is-open="detailsModalOpen" @did-dismiss="detailsModalOpen = false">
-        <ion-header>
-          <ion-toolbar>
-            <ion-title>Link Details: {{ selectedLink?.title }}</ion-title>
-            <ion-buttons slot="end">
-              <ion-button @click="detailsModalOpen = false">
-                <ion-icon name="close"></ion-icon>
-              </ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content class="ion-padding" v-if="selectedLink">
-          <div class="link-details">
-            <div class="detail-section">
-              <h3>Link Information</h3>
-              <div class="detail-item">
-                <strong>Kurz-URL:</strong> {{ selectedLink.shortUrl }}
-                <ion-button size="small" fill="clear" @click="copyLink(selectedLink.shortUrl)">
-                  <ion-icon name="copy"></ion-icon>
-                </ion-button>
-              </div>
-              <div class="detail-item">
-                <strong>Ziel-URL:</strong> {{ selectedLink.targetUrl }}
-              </div>
-              <div class="detail-item">
-                <strong>Erstellt:</strong> {{ formatDate(selectedLink.created) }}
-              </div>
-              <div class="detail-item">
-                <strong>Status:</strong> 
-                <ion-badge :color="getStatusColor(selectedLink.status)">
-                  {{ getStatusText(selectedLink.status) }}
-                </ion-badge>
-              </div>
-            </div>
-            
-            <div class="detail-section">
-              <h3>Statistiken</h3>
-              <div class="stats-grid">
-                <div class="stat-card">
-                  <div class="stat-value">{{ formatNumber(selectedLink.clicks) }}</div>
-                  <div class="stat-label">Gesamt Klicks</div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-value">{{ formatNumber(selectedLink.uniqueVisitors) }}</div>
-                  <div class="stat-label">Eindeutige Besucher</div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-value">{{ formatNumber(selectedLink.clicksToday) }}</div>
-                  <div class="stat-label">Heute</div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-value">{{ formatNumber(selectedLink.clicksThisWeek) }}</div>
-                  <div class="stat-label">Diese Woche</div>
-                </div>
+            <div v-if="filteredLinks.length === 0" class="no-data-state">
+              <div class="no-data-content">
+                <ion-icon name="link" class="no-data-icon"></ion-icon>
+                <h4>Keine Links gefunden</h4>
+                <p>Erstelle deinen ersten Link mit dem Button oben.</p>
               </div>
             </div>
           </div>
-        </ion-content>
-      </ion-modal>
+        </div>
+
+        <!-- Create Form Section -->
+        <div class="form-section" :class="{ 'form-visible': showCreateForm }">
+          <div class="form-card">
+            <div class="form-header">
+              <h3>Neuen Link erstellen</h3>
+              <button class="close-form-btn" @click="showCreateForm = false">
+                <ion-icon name="close"></ion-icon>
+              </button>
+            </div>
+            <div class="form-content">
+              <form @submit.prevent="createLink" class="modern-form">
+                <div class="form-group">
+                  <label class="form-label">Titel *</label>
+                  <input 
+                    type="text" 
+                    class="modern-input" 
+                    v-model="newLink.title" 
+                    required 
+                    placeholder="z.B. Meine Webseite"
+                  />
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Ziel-URL *</label>
+                  <input 
+                    type="url" 
+                    class="modern-input" 
+                    v-model="newLink.target_url" 
+                    required 
+                    placeholder="https://example.com"
+                  />
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Custom Slug (optional)</label>
+                  <input 
+                    type="text" 
+                    class="modern-input" 
+                    v-model="newLink.custom_slug" 
+                    placeholder="mein-link"
+                  />
+                </div>
+                
+                <div class="form-actions">
+                  <button type="button" class="action-btn" @click="showCreateForm = false">
+                    Abbrechen
+                  </button>
+                  <button type="submit" class="action-btn primary" :disabled="!newLink.title || !newLink.target_url">
+                    Link erstellen
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script>
-import { Chart, LineController, LineElement, PointElement, LinearScale, Title, CategoryScale, BarController, BarElement, DoughnutController, ArcElement, Legend, Tooltip } from 'chart.js';
-Chart.register(LineController, LineElement, PointElement, LinearScale, Title, CategoryScale, BarController, BarElement, DoughnutController, ArcElement, Legend, Tooltip);
-import countryService from '@/services/countryService';
+import SiteTitle from "@/components/SiteTitle.vue";
 
 export default {
-  name: 'LinkTrackerDashboard',
+  name: "LinkTrackerView",
+  components: {
+    SiteTitle
+  },
   data() {
     return {
-      analytics: [],
       links: [],
       filteredLinks: [],
-      stats: {},
-      loading: true,
-      error: null,
-      charts: {},
-      selectedPeriod: '30',
       searchTerm: '',
-      filterStatus: '',
-      sortField: 'created',
-      sortDirection: 'desc',
+      showCreateForm: false,
+      sortColumn: null,
+      sortDirection: 'asc',
       currentPage: 1,
       itemsPerPage: 20,
-      
-      // Modals
-      createModalOpen: false,
-      detailsModalOpen: false,
-      selectedLink: null,
-      
-      // New Link Form
       newLink: {
         title: '',
-        description: '',
-        targetUrl: '',
-        slug: '',
-        expiresAt: null
+        target_url: '',
+        custom_slug: ''
       }
     };
   },
   
   computed: {
-    topLinks() {
-      return this.links
-        .sort((a, b) => b.clicks - a.clicks)
-        .slice(0, 5);
+    totalClicks() {
+      return this.links.reduce((sum, link) => sum + (parseInt(link.visits) || 0), 0);
     },
     
-    topCountries() {
-      const countryData = {};
-      this.analytics.forEach(item => {
-        if (!countryData[item.country]) {
-          countryData[item.country] = 0;
-        }
-        countryData[item.country] += 1;
-      });
-      
-      const total = Object.values(countryData).reduce((sum, count) => sum + count, 0);
-      
-      return Object.entries(countryData)
-        .map(([code, clicks]) => ({
-          code,
-          clicks,
-          percentage: Math.round((clicks / total) * 100)
-        }))
-        .sort((a, b) => b.clicks - a.clicks)
-        .slice(0, 10);
+    uniqueVisitors() {
+      return this.links.length; // Vereinfacht - könnte aus Analytics berechnet werden
+    },
+    
+    avgClicksPerLink() {
+      if (this.links.length === 0) return 0;
+      return Math.round(this.totalClicks / this.links.length);
     },
     
     paginatedLinks() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
       return this.filteredLinks.slice(start, end);
-    },
-    
-    totalPages() {
-      return Math.ceil(this.filteredLinks.length / this.itemsPerPage);
     }
   },
   
   mounted() {
-    this.loadAnalytics();
     this.loadLinks();
   },
   
   methods: {
-    async loadAnalytics() {
-      this.loading = true;
-      this.error = null;
-      
-      try {
-        const res = await this.$axios.get(`link_tracker_api.php?action=analytics&period=${this.selectedPeriod}&project=` + this.$route.params.project);
-        this.analytics = res.data.analytics || [];
-        this.calculateStats();
-        
-        this.$nextTick(() => {
-          this.renderAllCharts();
-        });
-      } catch (e) {
-        this.error = e.message;
-      } finally {
-        this.loading = false;
-      }
-    },
-    
     async loadLinks() {
       try {
-        const res = await this.$axios.get(`link_tracker_api.php?action=links&project=` + this.$route.params.project);
-        this.links = res.data.links || [];
-        this.filteredLinks = [...this.links];
-        this.sortLinks();
-      } catch (e) {
-        console.error('Error loading links:', e);
+        const response = await this.$axios.post('link_tracker_api.php', this.$qs.stringify({
+          getLinks: true,
+          project: this.$route.params.project
+        }));
+        
+        if (response.data.success) {
+          this.links = response.data.links;
+          this.filteredLinks = [...this.links];
+        }
+      } catch (error) {
+        console.error('Error loading links:', error);
       }
-    },
-    
-    calculateStats() {
-      if (!this.analytics.length) return;
-      
-      const totalClicks = this.analytics.length;
-      const uniqueVisitors = new Set(this.analytics.map(item => item.ip_address)).size;
-      const activeLinks = this.links.filter(link => link.status === 'active').length;
-      const totalLinks = this.links.length;
-      
-      const daysInPeriod = parseInt(this.selectedPeriod);
-      const avgClicksPerDay = Math.round(totalClicks / daysInPeriod);
-      
-      // Calculate trends (mock for now)
-      const clicksTrend = Math.floor(Math.random() * 30) - 15;
-      const visitorsTrend = Math.floor(Math.random() * 20) - 10;
-      
-      // Calculate click rate
-      const impressions = totalClicks * 2; // Mock data
-      const clickRate = impressions > 0 ? ((totalClicks / impressions) * 100) : 0;
-      
-      this.stats = {
-        totalClicks,
-        uniqueVisitors,
-        activeLinks,
-        totalLinks,
-        avgClicksPerDay,
-        clickRate: Math.round(clickRate * 100) / 100,
-        clicksTrend,
-        visitorsTrend
-      };
-    },
-    
-    renderAllCharts() {
-      this.destroyAllCharts();
-      this.renderTimelineChart();
-      this.renderCountryChart();
-      this.renderDeviceChart();
-      this.renderBrowserChart();
-    },
-    
-    destroyAllCharts() {
-      Object.values(this.charts).forEach(chart => {
-        if (chart) chart.destroy();
-      });
-      this.charts = {};
-    },
-    
-    renderTimelineChart() {
-      const ctx = this.$refs.timelineChart;
-      if (!ctx) return;
-      
-      // Group clicks by date
-      const dateData = {};
-      this.analytics.forEach(item => {
-        const date = item.clicked_at.split(' ')[0];
-        dateData[date] = (dateData[date] || 0) + 1;
-      });
-      
-      const sortedDates = Object.keys(dateData).sort();
-      const data = sortedDates.map(date => dateData[date]);
-      
-      this.charts.timeline = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: sortedDates.map(date => this.formatDate(date)),
-          datasets: [{
-            label: 'Klicks',
-            data: data,
-            borderColor: '#3880ff',
-            backgroundColor: 'rgba(56,128,255,0.1)',
-            fill: true,
-            tension: 0.4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          }
-        }
-      });
-    },
-    
-    renderCountryChart() {
-      const ctx = this.$refs.countryChart;
-      if (!ctx) return;
-      
-      const topCountriesData = this.topCountries.slice(0, 8);
-      
-      this.charts.country = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: topCountriesData.map(c => this.getCountryName(c.code)),
-          datasets: [{
-            data: topCountriesData.map(c => c.clicks),
-            backgroundColor: [
-              '#3880ff', '#3dc2ff', '#2fdf75', '#ffce00',
-              '#ff6b6b', '#c77dff', '#06ffa5', '#ffc409'
-            ]
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'right'
-            }
-          }
-        }
-      });
-    },
-    
-    renderDeviceChart() {
-      const ctx = this.$refs.deviceChart;
-      if (!ctx) return;
-      
-      const deviceData = {};
-      this.analytics.forEach(item => {
-        const device = this.getDeviceType(item.user_agent);
-        deviceData[device] = (deviceData[device] || 0) + 1;
-      });
-      
-      this.charts.device = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: Object.keys(deviceData),
-          datasets: [{
-            data: Object.values(deviceData),
-            backgroundColor: ['#3880ff', '#2fdf75', '#ffce00', '#ff6b6b']
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false
-        }
-      });
-    },
-    
-    renderBrowserChart() {
-      const ctx = this.$refs.browserChart;
-      if (!ctx) return;
-      
-      const browserData = {};
-      this.analytics.forEach(item => {
-        const browser = this.getBrowserName(item.user_agent);
-        browserData[browser] = (browserData[browser] || 0) + 1;
-      });
-      
-      this.charts.browser = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: Object.keys(browserData),
-          datasets: [{
-            label: 'Klicks',
-            data: Object.values(browserData),
-            backgroundColor: '#2fdf75'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          }
-        }
-      });
     },
     
     async createLink() {
-      if (!this.newLink.title || !this.newLink.targetUrl) {
-        return;
-      }
+      if (!this.newLink.title || !this.newLink.target_url) return;
       
       try {
-        const response = await this.$axios.post('link_tracker_api.php?project=' + this.$route.params.project, {
-          action: 'create_link',
-          ...this.newLink
-        });
+        const response = await this.$axios.post('link_tracker_api.php', this.$qs.stringify({
+          createLink: true,
+          project: this.$route.params.project,
+          title: this.newLink.title,
+          target_url: this.newLink.target_url,
+          custom_slug: this.newLink.custom_slug
+        }));
         
         if (response.data.success) {
-          this.createModalOpen = false;
-          this.resetNewLinkForm();
+          this.showCreateForm = false;
+          this.resetForm();
           this.loadLinks();
-          // Show success toast
+          // Show success toast here
+        } else {
+          alert(response.data.message || 'Fehler beim Erstellen des Links');
         }
-      } catch (e) {
-        console.error('Error creating link:', e);
+      } catch (error) {
+        console.error('Error creating link:', error);
+        alert('Fehler beim Erstellen des Links');
       }
-    },
-    
-    resetNewLinkForm() {
-      this.newLink = {
-        title: '',
-        description: '',
-        targetUrl: '',
-        slug: '',
-        expiresAt: null
-      };
-    },
-    
-    openCreateLinkModal() {
-      this.createModalOpen = true;
-    },
-    
-    async viewLinkDetails(linkId) {
-      try {
-        const response = await this.$axios.get(`link_tracker_api.php?action=link_details&id=${linkId}&project=` + this.$route.params.project);
-        this.selectedLink = response.data.link;
-        this.detailsModalOpen = true;
-      } catch (e) {
-        console.error('Error loading link details:', e);
-      }
-    },
-    
-    editLink(linkId) {
-      // Implementation for edit functionality
-      console.log('Edit link:', linkId);
     },
     
     async deleteLink(linkId) {
-      if (confirm('Möchten Sie diesen Link wirklich löschen?')) {
-        try {
-          await this.$axios.post('link_tracker_api.php?project=' + this.$route.params.project, {
-            action: 'delete_link',
-            id: linkId
-          });
+      if (!confirm('Link wirklich löschen?')) return;
+      
+      try {
+        const response = await this.$axios.post('link_tracker_api.php', this.$qs.stringify({
+          deleteLink: true,
+          project: this.$route.params.project,
+          link_id: linkId
+        }));
+        
+        if (response.data.success) {
           this.loadLinks();
-        } catch (e) {
-          console.error('Error deleting link:', e);
+        } else {
+          alert(response.data.message || 'Fehler beim Löschen');
         }
+      } catch (error) {
+        console.error('Error deleting link:', error);
+        alert('Fehler beim Löschen des Links');
       }
-    },
-    
-    copyLink(url) {
-      navigator.clipboard.writeText(url).then(() => {
-        // Show success toast
-      });
     },
     
     filterLinks() {
-      let filtered = [...this.links];
-      
-      if (this.searchTerm) {
-        filtered = filtered.filter(link => 
-          link.title.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-          link.shortUrl.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-          link.targetUrl.toLowerCase().includes(this.searchTerm.toLowerCase())
-        );
+      if (!this.searchTerm.trim()) {
+        this.filteredLinks = [...this.links];
+        return;
       }
       
-      if (this.filterStatus) {
-        filtered = filtered.filter(link => link.status === this.filterStatus);
-      }
-      
-      this.filteredLinks = filtered;
-      this.sortLinks();
-      this.currentPage = 1;
+      const searchLower = this.searchTerm.toLowerCase();
+      this.filteredLinks = this.links.filter(link => 
+        link.title.toLowerCase().includes(searchLower) ||
+        link.short_url.toLowerCase().includes(searchLower) ||
+        link.target_url.toLowerCase().includes(searchLower)
+      );
     },
     
-    sortBy(field) {
-      if (this.sortField === field) {
+    sortBy(columnIndex) {
+      if (this.sortColumn === columnIndex) {
         this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
       } else {
-        this.sortField = field;
+        this.sortColumn = columnIndex;
         this.sortDirection = 'asc';
       }
-      this.sortLinks();
-    },
-    
-    sortLinks() {
+      
       this.filteredLinks.sort((a, b) => {
-        let aVal = a[this.sortField];
-        let bVal = b[this.sortField];
+        let aVal, bVal;
         
-        if (this.sortField === 'clicks') {
-          aVal = parseInt(aVal);
-          bVal = parseInt(bVal);
+        switch(columnIndex) {
+          case 0: aVal = a.title; bVal = b.title; break;
+          case 1: aVal = a.short_url; bVal = b.short_url; break;
+          case 2: aVal = a.target_url; bVal = b.target_url; break;
+          case 3: aVal = parseInt(a.visits) || 0; bVal = parseInt(b.visits) || 0; break;
+          case 4: aVal = new Date(a.created_at); bVal = new Date(b.created_at); break;
+          default: return 0;
         }
         
         if (this.sortDirection === 'asc') {
@@ -792,449 +352,553 @@ export default {
       });
     },
     
-    getSortIcon(field) {
-      if (this.sortField !== field) return 'swap-vertical';
+    getSortIcon(columnIndex) {
+      if (this.sortColumn !== columnIndex) return 'swap-vertical';
       return this.sortDirection === 'asc' ? 'chevron-up' : 'chevron-down';
     },
     
-    exportData() {
-      const csvContent = [
-        ['Titel', 'Kurz-URL', 'Ziel-URL', 'Klicks', 'Erstellt', 'Status'],
-        ...this.filteredLinks.map(link => [
-          link.title, link.shortUrl, link.targetUrl, link.clicks, link.created, link.status
-        ])
-      ].map(row => row.join(',')).join('\n');
-      
-      const blob = new Blob([csvContent], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `link_tracker_${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
-      window.URL.revokeObjectURL(url);
+    resetForm() {
+      this.newLink = {
+        title: '',
+        target_url: '',
+        custom_slug: ''
+      };
     },
     
-    // Helper methods
-    formatNumber(num) {
-      return new Intl.NumberFormat('de-DE').format(num);
-    },
-    
-    formatDate(dateStr) {
-      return new Date(dateStr).toLocaleDateString('de-DE');
-    },
-    
-    getCountryName(code) {
-      return countryService.getCountryName(code);
-    },
-
-    getCountryFlag(code) {
-      return countryService.getCountryFlag(code);
+    copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        // Show success toast
+        console.log('Link copied to clipboard');
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
+      });
     },
     
     truncateUrl(url) {
       return url.length > 50 ? url.substring(0, 50) + '...' : url;
     },
     
-    getStatusColor(status) {
-      const colors = {
-        'active': 'success',
-        'paused': 'warning',
-        'expired': 'danger'
-      };
-      return colors[status] || 'medium';
-    },
-    
-    getStatusText(status) {
-      const texts = {
-        'active': 'Aktiv',
-        'paused': 'Pausiert',
-        'expired': 'Abgelaufen'
-      };
-      return texts[status] || status;
-    },
-    
-    getDeviceType(userAgent) {
-      if (/Mobile|Android|iPhone|iPad/.test(userAgent)) return 'Mobile';
-      if (/Tablet/.test(userAgent)) return 'Tablet';
-      return 'Desktop';
-    },
-    
-    getBrowserName(userAgent) {
-      if (userAgent.includes('Chrome')) return 'Chrome';
-      if (userAgent.includes('Firefox')) return 'Firefox';
-      if (userAgent.includes('Safari')) return 'Safari';
-      if (userAgent.includes('Edge')) return 'Edge';
-      return 'Other';
+    formatDate(dateStr) {
+      return new Date(dateStr).toLocaleDateString('de-DE');
     }
   }
 };
 </script>
 
 <style scoped>
-/* Reuse most styles from the AppStore module but add specific styles for link tracker */
-.dashboard-header {
-  margin-bottom: 20px;
+/* Use the same modern styling as FormDisplay.vue */
+.modern-content {
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --secondary-color: #64748b;
+  --success-color: #059669;
+  --danger-color: #dc2626;
+  --warning-color: #d97706;
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --radius: 8px;
+  --radius-lg: 12px;
 }
 
-.dashboard-header h2 {
-  margin-bottom: 15px;
+.page-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+  background: var(--background);
 }
 
-.kpi-grid {
+/* Stats Grid */
+.stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  margin-bottom: 25px;
-}
-
-.quick-actions {
-  margin-bottom: 25px;
-}
-
-.kpi-card {
-  margin: 0;
-}
-
-.kpi-card ion-card-content {
-  text-align: center;
-  padding: 20px;
-}
-
-.kpi-value {
-  font-size: 2.5em;
-  font-weight: bold;
-  color: var(--ion-color-primary);
-  margin-bottom: 5px;
-}
-
-.kpi-label {
-  font-size: 0.9em;
-  color: var(--ion-color-medium);
-  margin-bottom: 10px;
-}
-
-.kpi-trend {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8em;
-  font-weight: bold;
-}
-
-.kpi-trend.positive {
-  color: var(--ion-color-success);
-}
-
-.kpi-trend.negative {
-  color: var(--ion-color-danger);
-}
-
-.kpi-trend ion-icon {
-  margin-right: 3px;
-}
-
-.kpi-subtitle {
-  font-size: 0.8em;
-  color: var(--ion-color-medium);
-  margin-top: 5px;
-}
-
-.links-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.link-item {
-  display: flex;
-  align-items: center;
-  padding: 15px;
-  border: 1px solid var(--ion-color-light);
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.link-item:hover {
-  background: var(--ion-color-step-50);
-}
-
-.link-info {
-  flex: 1;
-}
-
-.link-title {
-  font-weight: 600;
-  margin-bottom: 5px;
-}
-
-.link-url {
-  color: var(--ion-color-medium);
-  font-size: 0.9em;
-}
-
-.link-stats {
-  display: flex;
   gap: 20px;
-  margin: 0 20px;
+  margin-bottom: 24px;
 }
 
-.stat {
+.stat-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
   text-align: center;
 }
 
 .stat-value {
-  display: block;
+  font-size: 2.5rem;
   font-weight: bold;
-  color: var(--ion-color-primary);
+  color: var(--primary-color);
+  margin-bottom: 8px;
 }
 
 .stat-label {
-  font-size: 0.8em;
-  color: var(--ion-color-medium);
-}
-
-.link-actions {
-  display: flex;
-  gap: 5px;
-}
-
-.chart-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-.chart-container {
-  position: relative;
-  height: 300px;
-}
-
-.country-list {
-  padding: 10px;
-}
-
-.country-item {
-  display: flex;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--ion-color-light);
-}
-
-.country-flag {
-  font-size: 1.5em;
-  margin-right: 10px;
-}
-
-.country-info {
-  flex: 1;
-}
-
-.country-name {
+  color: var(--text-secondary);
+  font-size: 14px;
   font-weight: 500;
 }
 
-.country-clicks {
-  font-size: 0.9em;
-  color: var(--ion-color-medium);
-}
-
-.country-percentage {
-  font-weight: bold;
-  color: var(--ion-color-primary);
-}
-
-.table-controls {
+/* Action Bar */
+.action-bar {
   display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.action-group-left,
+.action-group-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.action-btn.primary {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.action-btn.primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-btn:disabled:hover {
+  transform: none;
+}
+
+/* Search Box */
+.search-box {
+  position: relative;
+  display: flex;
   align-items: center;
 }
 
-.table-controls ion-searchbar {
-  flex: 1;
+.search-box ion-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  font-size: 16px;
+  z-index: 1;
 }
 
-.table-controls ion-select {
-  min-width: 200px;
+.search-box input {
+  padding: 10px 16px 10px 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: var(--background);
+  color: var(--text-primary);
+  min-width: 250px;
+  transition: all 0.2s ease;
 }
 
+.search-box input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+}
+
+/* Data Card */
+.data-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-left h3 {
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.entry-count {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Modern Table */
 .table-wrapper {
   overflow-x: auto;
 }
 
-.data-table {
+.modern-table {
   width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
+  min-width: 800px;
 }
 
-.data-table th,
-.data-table td {
-  border: 1px solid var(--ion-color-light);
-  padding: 12px 8px;
-  text-align: left;
+.table-header {
+  display: flex;
+  background: var(--background);
+  border-bottom: 2px solid var(--border);
 }
 
-.data-table th {
-  background: var(--ion-color-light);
-  font-weight: 600;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-.data-table th.sortable {
-  cursor: pointer;
-  user-select: none;
-}
-
-.data-table th.sortable:hover {
-  background: var(--ion-color-step-200);
-}
-
-.link-title-cell strong {
-  display: block;
-}
-
-.link-meta {
-  font-size: 0.8em;
-  color: var(--ion-color-medium);
-}
-
-.short-url-cell {
+.header-cell {
+  flex: 1;
+  min-width: 120px;
+  padding: 16px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   cursor: pointer;
-  color: var(--ion-color-primary);
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
 }
 
-.short-url-cell ion-icon {
-  margin-right: 5px;
+.header-cell:hover {
+  background: var(--border);
 }
 
-.short-url-cell:hover {
-  text-decoration: underline;
+.actions-header {
+  flex: 0 0 120px;
+  justify-content: center;
+  cursor: default;
+  padding: 16px;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
 }
 
-.target-url {
-  max-width: 200px;
+.actions-header:hover {
+  background: var(--background);
+}
+
+.sort-indicator {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.sort-indicator ion-icon {
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.sort-default {
+  opacity: 0.3;
+}
+
+.sort-active {
+  opacity: 1;
+  color: var(--primary-color);
+}
+
+.header-cell:hover .sort-default {
+  opacity: 0.6;
+}
+
+/* Table Body */
+.table-body {
+  background: var(--surface);
+}
+
+.table-row {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.table-row:hover {
+  background: var(--background);
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.table-cell {
+  flex: 1;
+  min-width: 120px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.actions-cell {
+  flex: 0 0 120px;
+  justify-content: center;
+  padding: 12px 16px;
+}
+
+.cell-content {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 200px;
 }
 
-.number-cell {
-  text-align: right;
-  font-weight: 500;
-}
-
+/* Action Buttons */
 .action-buttons {
   display: flex;
-  gap: 5px;
+  gap: 8px;
 }
 
-.pagination {
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.delete-btn {
+  background: #fef2f2;
+  color: var(--danger-color);
+}
+
+.delete-btn:hover {
+  background: #fee2e2;
+  transform: scale(1.05);
+}
+
+/* Form Section */
+.form-section {
+  position: fixed;
+  top: 0;
+  right: -600px;
+  width: 600px;
+  height: 100vh;
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  transition: right 0.3s ease;
+  z-index: 1000;
+  border-left: 1px solid var(--border);
+}
+
+.form-section.form-visible {
+  right: 0;
+}
+
+.form-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+
+.form-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.close-form-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
-  margin-top: 20px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.loading-container,
-.error-container {
-  text-align: center;
-  padding: 40px;
+.close-form-btn:hover {
+  background: var(--text-muted);
+  color: var(--surface);
 }
 
-.link-details {
-  padding: 20px 0;
+.form-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
 }
 
-.detail-section {
-  margin-bottom: 30px;
+.modern-form {
+  width: 100%;
 }
 
-.detail-section h3 {
-  margin-bottom: 15px;
-  color: var(--ion-color-primary);
+.form-group {
+  margin-bottom: 20px;
 }
 
-.detail-item {
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.modern-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.modern-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+}
+
+.form-actions {
   display: flex;
-  align-items: center;
-  margin-bottom: 10px;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
 }
 
-.detail-item strong {
-  min-width: 120px;
-  margin-right: 10px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 15px;
-}
-
-.stat-card {
+/* No Data State */
+.no-data-state {
+  padding: 60px 20px;
   text-align: center;
-  padding: 15px;
-  background: var(--ion-color-step-50);
-  border-radius: 8px;
+  background: var(--surface);
 }
 
-.stat-card .stat-value {
-  font-size: 1.5em;
-  font-weight: bold;
-  color: var(--ion-color-primary);
+.no-data-content {
+  max-width: 400px;
+  margin: 0 auto;
 }
 
-.stat-card .stat-label {
-  font-size: 0.9em;
-  color: var(--ion-color-medium);
-  margin-top: 5px;
+.no-data-icon {
+  font-size: 64px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.no-data-content h4 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.no-data-content p {
+  margin: 0 0 24px 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .page-container {
+    padding: 16px;
   }
   
-  .chart-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .table-controls {
+  .action-bar {
     flex-direction: column;
     align-items: stretch;
   }
   
-  .link-item {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-  
-  .link-stats {
-    justify-content: space-around;
-    margin: 10px 0;
-  }
-  
-  .link-actions {
+  .action-group-left,
+  .action-group-right {
+    flex-wrap: wrap;
     justify-content: center;
   }
-}
-
-@media (max-width: 480px) {
-  .kpi-grid {
-    grid-template-columns: 1fr;
+  
+  .search-box input {
+    min-width: 100%;
   }
   
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .form-section {
+    width: 100%;
+    right: -100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .modern-table {
+    min-width: 600px;
+  }
+  
+  .cell-content {
+    max-width: 80px;
   }
 }
 </style>
