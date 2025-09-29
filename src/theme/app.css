@@ -215,7 +215,7 @@
   ion-menu.md ion-content {
     --padding-start: 8px;
     --padding-end: 8px;
-    --padding-top: 46px;
+    --padding-top: 40px;/*46*/
     --padding-bottom: 20px;
   }
   

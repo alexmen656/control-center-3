@@ -161,6 +161,16 @@ ion-toolbar {
   padding-bottom: 0.5rem;
 }
 
+@media (prefers-color-scheme: dark) {
+  ion-toolbar {
+    --background: #0f172a !important;
+  }
+
+  .title-container {
+    color: #fff;
+  }
+}
+
 .actions {
   margin-right: 10px;
   display: inline;
