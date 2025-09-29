@@ -91,6 +91,42 @@ $visitsTable = "CREATE TABLE IF NOT EXISTS link_tracker_visits (
 query($linksTable);
 query($visitsTable);
 
+// Enable CORS for Node.js requests
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit;
+}
+
+// Log visit from Node.js redirect (no authentication required)
+if (isset($_POST['logVisit'])) {
+    $link_id = escape_string($_POST['link_id']);
+    $visitor_ip = escape_string($_POST['visitor_ip']);
+    $user_agent = escape_string($_POST['user_agent']);
+    $referer = escape_string($_POST['referer']);
+    $domain = escape_string($_POST['domain']);
+    $path = escape_string($_POST['path']);
+    
+    // Get analytics data
+    $country = getCountryFromIP($visitor_ip);
+    $device_type = getDeviceType($user_agent);
+    $browser = getBrowser($user_agent);
+    $platform = getPlatform($user_agent);
+    
+    // Insert visit record with full analytics
+    $insert_visit = query("INSERT INTO link_tracker_visits (link_id, ip_address, user_agent, referer, country, device_type, browser, platform) 
+                          VALUES ('$link_id', '$visitor_ip', '$user_agent', '$referer', '$country', '$device_type', '$browser', '$platform')");
+    
+    if ($insert_visit) {
+        echo echoJSON(['success' => true, 'message' => 'Visit logged successfully']);
+    } else {
+        echo echoJSON('Error logging visit');
+    }
+    exit;
+}
+
 if (isset($_POST['createLink'])) {
     $project_link = escape_string($_POST['project']);
     
