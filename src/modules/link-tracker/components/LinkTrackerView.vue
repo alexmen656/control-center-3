@@ -199,6 +199,9 @@
                   </div>
                   <div class="actions-cell">
                     <div class="action-buttons">
+                      <button class="icon-btn analytics-btn" @click="viewAnalytics(link.id)" title="Analytics">
+                        <ion-icon name="analytics"></ion-icon>
+                      </button>
                       <button class="icon-btn delete-btn" @click="deleteLink(link.id)" title="Löschen">
                         <ion-icon name="trash"></ion-icon>
                       </button>
@@ -480,6 +483,16 @@ export default {
     
     formatDate(dateStr) {
       return new Date(dateStr).toLocaleDateString('de-DE');
+    },
+
+    viewAnalytics(linkId) {
+      this.$router.push({
+        name: 'LinkAnalytics',
+        params: {
+          project: this.$route.params.project,
+          linkId: linkId
+        }
+      });
     },
 
     async loadAnalytics() {
@@ -942,6 +955,16 @@ export default {
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 14px;
+}
+
+.analytics-btn {
+  background: #f0f9ff;
+  color: var(--primary-color);
+}
+
+.analytics-btn:hover {
+  background: #e0f2fe;
+  transform: scale(1.05);
 }
 
 .delete-btn {

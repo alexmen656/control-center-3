@@ -356,6 +356,174 @@ elseif (isset($_POST['getDetailedAnalytics'])) {
     ]);
 }
 
+elseif (isset($_POST['getLinkDetails'])) {
+    $project_link = escape_string($_POST['project']);
+    $link_id = escape_string($_POST['link_id']);
+    
+    // Check project access
+    $project = query("SELECT * FROM projects WHERE link='$project_link'");
+    if (mysqli_num_rows($project) == 0) {
+        echo echoJSON('Projekt nicht gefunden');
+        exit;
+    }
+    
+    $projectData = fetch_assoc($project);
+    if (!checkUserProjectPermission($userID, $projectData['projectID'])) {
+        echo echoJSON('Kein Zugriff auf das Projekt');
+        exit;
+    }
+    
+    $projectID = $projectData['projectID'];
+    
+    // Get link details with stats
+    $result = query("SELECT l.*, 
+                            COUNT(v.id) as visits, 
+                            COUNT(DISTINCT v.ip_address) as unique_visitors,
+                            COUNT(CASE WHEN DATE(v.visited_at) = CURDATE() THEN 1 END) as clicks_today,
+                            COUNT(CASE WHEN YEARWEEK(v.visited_at) = YEARWEEK(NOW()) THEN 1 END) as clicks_this_week
+                     FROM link_tracker_links l 
+                     LEFT JOIN link_tracker_visits v ON l.id = v.link_id 
+                     WHERE l.id='$link_id' AND l.projectID='$projectID'
+                     GROUP BY l.id");
+    
+    if (mysqli_num_rows($result) == 0) {
+        echo echoJSON('Link nicht gefunden');
+        exit;
+    }
+    
+    $linkData = fetch_assoc($result);
+    
+    // Get domain
+    $domain_result = query("SELECT domain FROM control_center_project_domains WHERE project='$project_link'");
+    if (mysqli_num_rows($domain_result) > 0) {
+        $domain_data = fetch_assoc($domain_result);
+        $domain = $domain_data['domain'];
+    } else {
+        $domain = $project_link . '.links.control-center.eu';
+    }
+    
+    $linkData['short_url'] = "https://{$linkData['slug']}.$domain/";
+    
+    echo echoJSON(['success' => true, 'link' => $linkData]);
+}
+
+elseif (isset($_POST['getLinkAnalytics'])) {
+    $project_link = escape_string($_POST['project']);
+    $link_id = escape_string($_POST['link_id']);
+    $period = escape_string($_POST['period'] ?? '30');
+    
+    // Check project access
+    $project = query("SELECT * FROM projects WHERE link='$project_link'");
+    if (mysqli_num_rows($project) == 0) {
+        echo echoJSON('Projekt nicht gefunden');
+        exit;
+    }
+    
+    $projectData = fetch_assoc($project);
+    if (!checkUserProjectPermission($userID, $projectData['projectID'])) {
+        echo echoJSON('Kein Zugriff auf das Projekt');
+        exit;
+    }
+    
+    $projectID = $projectData['projectID'];
+    
+    // Verify link belongs to project
+    $linkCheck = query("SELECT id FROM link_tracker_links WHERE id='$link_id' AND projectID='$projectID'");
+    if (mysqli_num_rows($linkCheck) == 0) {
+        echo echoJSON('Link nicht gefunden');
+        exit;
+    }
+    
+    // Country Stats for this link
+    $countries = [];
+    $country_result = query("SELECT country, COUNT(*) as count 
+                            FROM link_tracker_visits 
+                            WHERE link_id='$link_id' 
+                            AND visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)
+                            AND country IS NOT NULL 
+                            GROUP BY country 
+                            ORDER BY count DESC 
+                            LIMIT 10");
+    
+    while ($row = fetch_assoc($country_result)) {
+        $countries[] = $row;
+    }
+    
+    // Device Stats for this link
+    $devices = [];
+    $device_result = query("SELECT device_type, COUNT(*) as count 
+                           FROM link_tracker_visits 
+                           WHERE link_id='$link_id' 
+                           AND visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)
+                           GROUP BY device_type 
+                           ORDER BY count DESC");
+    
+    while ($row = fetch_assoc($device_result)) {
+        $devices[] = $row;
+    }
+    
+    // Browser Stats for this link
+    $browsers = [];
+    $browser_result = query("SELECT browser, COUNT(*) as count 
+                            FROM link_tracker_visits 
+                            WHERE link_id='$link_id' 
+                            AND visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)
+                            GROUP BY browser 
+                            ORDER BY count DESC 
+                            LIMIT 10");
+    
+    while ($row = fetch_assoc($browser_result)) {
+        $browsers[] = $row;
+    }
+    
+    // Platform Stats for this link
+    $platforms = [];
+    $platform_result = query("SELECT platform, COUNT(*) as count 
+                             FROM link_tracker_visits 
+                             WHERE link_id='$link_id' 
+                             AND visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)
+                             GROUP BY platform 
+                             ORDER BY count DESC");
+    
+    while ($row = fetch_assoc($platform_result)) {
+        $platforms[] = $row;
+    }
+    
+    // Daily clicks timeline for this link
+    $timeline = [];
+    $timeline_result = query("SELECT DATE(visited_at) as date, COUNT(*) as clicks 
+                             FROM link_tracker_visits 
+                             WHERE link_id='$link_id' 
+                             AND visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)
+                             GROUP BY DATE(visited_at) 
+                             ORDER BY date ASC");
+    
+    while ($row = fetch_assoc($timeline_result)) {
+        $timeline[] = $row;
+    }
+    
+    // Recent visits for this link
+    $recent_visits = [];
+    $recent_result = query("SELECT * FROM link_tracker_visits 
+                           WHERE link_id='$link_id' 
+                           ORDER BY visited_at DESC 
+                           LIMIT 50");
+    
+    while ($row = fetch_assoc($recent_result)) {
+        $recent_visits[] = $row;
+    }
+    
+    echo echoJSON([
+        'success' => true, 
+        'countries' => $countries,
+        'devices' => $devices,
+        'browsers' => $browsers,
+        'platforms' => $platforms,
+        'timeline' => $timeline,
+        'recent_visits' => $recent_visits
+    ]);
+}
+
 else {
     echo echoJSON('Ungültige Aktion');
 }
