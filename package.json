@@ -40,7 +40,6 @@
     "@vueup/vue-quill": "^1.2.0",
     "@vueuse/core": "^13.0.0",
     "axios": "^1.8.4",
-    "capacitor-face-id": "^2.0.2",
     "chart.js": "^4.4.8",
     "cordova-plugin-nativestorage": "^2.3.2",
     "core-js": "^3.41.0",

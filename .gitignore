@@ -28,8 +28,6 @@ npm-debug.log*
 /coverage
 /dist
 /dist/*
-/ios
-/ios/*
 /.env
 /node_modules
 /platforms
