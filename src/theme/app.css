@@ -392,13 +392,14 @@
     }
     
     /* Adjust padding for mobile */
-    #main-content {
+    /*#main-content {
       padding: 8px 8px 0 8px;
-    }
+    }*/
     
     #main-content ion-router-outlet {
       border-radius: 12px 12px 0 0;
       min-height: calc(100vh - 64px);
+      border: none !important;
     }
   }
   
