@@ -54,6 +54,45 @@ function getPlatform($userAgent) {
     return 'Other';
 }
 
+// Detect if request is from a bot
+function isBotRequest($userAgent, $requestedPath) {
+    error_log("User Agent: " . $userAgent);
+    error_log("Requested Path: " . $requestedPath);
+    // Check user agent for bot patterns
+    $botPatterns = [
+        'bot', 'crawler', 'spider', 'crawl', 'facebook', 'whatsapp', 'telegram',
+        'googlebot', 'bingbot', 'slurp', 'duckduckbot', 'baiduspider', 'yandexbot',
+        'twitterbot', 'linkedinbot', 'discordbot', 'slackbot', 'curl', 'wget',
+        'python-requests', 'scrapy', 'http_request', 'php/', 'go-http-client'
+    ];
+    
+    $userAgentLower = strtolower($userAgent);
+    foreach ($botPatterns as $pattern) {
+        if (strpos($userAgentLower, $pattern) !== false) {
+            return true;
+        }
+    }
+    
+    // Check if requesting suspicious paths (anything other than root)
+    if ($requestedPath && $requestedPath !== '' && $requestedPath !== '/') {
+        $suspiciousPaths = [
+            'robots.txt', 'sitemap.xml', 'favicon.ico', '.well-known',
+            'admin', 'wp-admin', 'wp-login', 'login', 'phpmyadmin',
+            'config', 'backup', 'sql', 'database', 'secrets',
+            '.env', '.git', 'node_modules', 'vendor'
+        ];
+        
+        $pathLower = strtolower($requestedPath);
+        foreach ($suspiciousPaths as $suspicious) {
+            if (strpos($pathLower, $suspicious) !== false) {
+                return true;
+            }
+        }
+    }
+    
+    return false;
+}
+
 // Handle API requests from Vercel Node.js
 if (isset($_POST['processRedirect'])) {
     $domain = escape_string($_POST['domain']);
@@ -61,6 +100,7 @@ if (isset($_POST['processRedirect'])) {
     $visitor_ip = escape_string($_POST['visitor_ip']);
     $user_agent = escape_string($_POST['user_agent']);
     $referer = escape_string($_POST['referer']);
+    $requested_url = escape_string($_POST['requested_url'] ?? '');
     
     // Find link by domain (either main slug or custom domain)
     $link = null;
@@ -104,16 +144,21 @@ if (isset($_POST['processRedirect'])) {
     $device_type = getDeviceType($user_agent);
     $browser = getBrowser($user_agent);  
     $platform = getPlatform($user_agent);
+    $is_bot = isBotRequest($user_agent, $requested_url) ? 1 : 0;
     
-    // Insert visit record with full analytics
-    query("INSERT INTO link_tracker_visits (link_id, ip_address, user_agent, referer, country, device_type, browser, platform) 
-           VALUES ('{$link['id']}', '$visitor_ip', '$user_agent', '$referer', '$country', '$device_type', '$browser', '$platform')");
+    // Insert visit record with full analytics including bot detection
+    query("INSERT INTO link_tracker_visits (link_id, ip_address, user_agent, referer, country, device_type, browser, platform, requested_url, is_bot) 
+           VALUES ('{$link['id']}', '$visitor_ip', '$user_agent', '$referer', '$country', '$device_type', '$browser', '$platform', '$requested_url', $is_bot)");
     
     echo json_encode([
         'success' => true, 
         'redirect_url' => $link['target_url'],
-        'link_id' => $link['id']
+        'link_id' => $link['id'],
+        'is_bot' => $is_bot
     ]);
+
+    error_log("Redirecting to: " . $link['target_url']);
+    error_log('is_bot: ' . $is_bot);
     exit;
 }
 
@@ -159,20 +204,23 @@ if (!$link) {
 $ip = isset($_SERVER['HTTP_CF_CONNECTING_IP']) ? $_SERVER['HTTP_CF_CONNECTING_IP'] : ($_SERVER['REMOTE_ADDR'] ?? '');
 $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
 $referer = $_SERVER['HTTP_REFERER'] ?? '';
+$requested_url = $_SERVER['REQUEST_URI'] ?? '';
 
 // Get analytics data
 $country = getCountryFromIP($ip);
 $device_type = getDeviceType($user_agent);
 $browser = getBrowser($user_agent);  
 $platform = getPlatform($user_agent);
+$is_bot = isBotRequest($user_agent, $path) ? 1 : 0;
 
 // Escape strings for DB
-$user_agent = escape_string($user_agent);
-$referer = escape_string($referer);
+$user_agent_escaped = escape_string($user_agent);
+$referer_escaped = escape_string($referer);
+$requested_url_escaped = escape_string($requested_url);
 
-// Insert visit record
-query("INSERT INTO link_tracker_visits (link_id, ip_address, user_agent, referer, country, device_type, browser, platform) 
-       VALUES ('{$link['id']}', '$ip', '$user_agent', '$referer', '$country', '$device_type', '$browser', '$platform')");
+// Insert visit record with bot detection
+query("INSERT INTO link_tracker_visits (link_id, ip_address, user_agent, referer, country, device_type, browser, platform, requested_url, is_bot) 
+       VALUES ('{$link['id']}', '$ip', '$user_agent_escaped', '$referer_escaped', '$country', '$device_type', '$browser', '$platform', '$requested_url_escaped', '$is_bot')");
 
 // Redirect to target URL
 header("Location: " . $link['target_url'], true, 301);

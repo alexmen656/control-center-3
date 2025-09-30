@@ -63,6 +63,43 @@ function getPlatform($userAgent) {
     return 'Other';
 }
 
+// Detect if request is from a bot
+function isBotRequest($userAgent, $requestedPath) {
+    // Check user agent for bot patterns
+    $botPatterns = [
+        'bot', 'crawler', 'spider', 'crawl', 'facebook', 'whatsapp', 'telegram',
+        'googlebot', 'bingbot', 'slurp', 'duckduckbot', 'baiduspider', 'yandexbot',
+        'twitterbot', 'linkedinbot', 'discordbot', 'slackbot', 'curl', 'wget',
+        'python-requests', 'scrapy', 'http_request', 'php/', 'go-http-client'
+    ];
+    
+    $userAgentLower = strtolower($userAgent);
+    foreach ($botPatterns as $pattern) {
+        if (strpos($userAgentLower, $pattern) !== false) {
+            return true;
+        }
+    }
+    
+    // Check if requesting suspicious paths (anything other than root)
+    if ($requestedPath && $requestedPath !== '' && $requestedPath !== '/') {
+        $suspiciousPaths = [
+            'robots.txt', 'sitemap.xml', 'favicon.ico', '.well-known',
+            'admin', 'wp-admin', 'wp-login', 'login', 'phpmyadmin',
+            'config', 'backup', 'sql', 'database', 'secrets',
+            '.env', '.git', 'node_modules', 'vendor'
+        ];
+        
+        $pathLower = strtolower($requestedPath);
+        foreach ($suspiciousPaths as $suspicious) {
+            if (strpos($pathLower, $suspicious) !== false) {
+                return true;
+            }
+        }
+    }
+    
+    return false;
+}
+
 // Create database tables
 $linksTable = "CREATE TABLE IF NOT EXISTS link_tracker_links (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -84,6 +121,8 @@ $visitsTable = "CREATE TABLE IF NOT EXISTS link_tracker_visits (
     device_type VARCHAR(20),
     browser VARCHAR(50),
     platform VARCHAR(50),
+    requested_url TEXT,
+    is_bot BOOLEAN DEFAULT FALSE,
     visited_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (link_id) REFERENCES link_tracker_links(id) ON DELETE CASCADE
 )";
@@ -108,16 +147,18 @@ if (isset($_POST['logVisit'])) {
     $referer = escape_string($_POST['referer']);
     $domain = escape_string($_POST['domain']);
     $path = escape_string($_POST['path']);
+    $requested_url = escape_string($_POST['requested_url'] ?? '');
     
     // Get analytics data
     $country = getCountryFromIP($visitor_ip);
     $device_type = getDeviceType($user_agent);
     $browser = getBrowser($user_agent);
     $platform = getPlatform($user_agent);
+    $is_bot = isBotRequest($user_agent, $path) ? 1 : 0;
     
     // Insert visit record with full analytics
-    $insert_visit = query("INSERT INTO link_tracker_visits (link_id, ip_address, user_agent, referer, country, device_type, browser, platform) 
-                          VALUES ('$link_id', '$visitor_ip', '$user_agent', '$referer', '$country', '$device_type', '$browser', '$platform')");
+    $insert_visit = query("INSERT INTO link_tracker_visits (link_id, ip_address, user_agent, referer, country, device_type, browser, platform, requested_url, is_bot) 
+                          VALUES ('$link_id', '$visitor_ip', '$user_agent', '$referer', '$country', '$device_type', '$browser', '$platform', '$requested_url', '$is_bot')");
     
     if ($insert_visit) {
         echo echoJSON(['success' => true, 'message' => 'Visit logged successfully']);
@@ -184,6 +225,7 @@ if (isset($_POST['createLink'])) {
 
 elseif (isset($_POST['getLinks'])) {
     $project_link = escape_string($_POST['project']);
+    $exclude_bots = isset($_POST['exclude_bots']) && $_POST['exclude_bots'] == 'true';
     
     // Check project access
     $project = query("SELECT * FROM projects WHERE link='$project_link'");
@@ -209,12 +251,17 @@ elseif (isset($_POST['getLinks'])) {
         $domain = $project_link . '.links.control-center.eu';
     }
     
+    // Add bot filter to visits count
+    $botFilter = $exclude_bots ? 'AND v.is_bot = 0' : '';
+    
     $links = [];
     $result = query("SELECT l.*, 
                             COUNT(v.id) as visits, 
-                            COUNT(DISTINCT v.ip_address) as unique_visitors,
+                            COUNT(DISTINCT CASE WHEN v.is_bot = 0 OR v.is_bot IS NULL THEN v.ip_address END) as unique_visitors,
+                            COUNT(CASE WHEN v.is_bot = 0 OR v.is_bot IS NULL THEN 1 END) as human_visits,
+                            COUNT(CASE WHEN v.is_bot = 1 THEN 1 END) as bot_visits,
                             MAX(v.visited_at) as last_visit FROM link_tracker_links l 
-                     LEFT JOIN link_tracker_visits v ON l.id = v.link_id 
+                     LEFT JOIN link_tracker_visits v ON l.id = v.link_id $botFilter
                      WHERE l.projectID='$projectID' 
                      GROUP BY l.id 
                      ORDER BY l.created_at DESC");
@@ -258,6 +305,7 @@ elseif (isset($_POST['deleteLink'])) {
 elseif (isset($_POST['getAnalytics'])) {
     $project_link = escape_string($_POST['project']);
     $period = escape_string($_POST['period'] ?? '30');
+    $exclude_bots = isset($_POST['exclude_bots']) && $_POST['exclude_bots'] == 'true';
     
     // Check project access
     $project = query("SELECT * FROM projects WHERE link='$project_link'");
@@ -274,6 +322,9 @@ elseif (isset($_POST['getAnalytics'])) {
     
     $projectID = $projectData['projectID'];
     
+    // Add bot filter to query
+    $botFilter = $exclude_bots ? 'AND v.is_bot = 0' : '';
+    
     // Get analytics data
     $analytics = [];
     $result = query("SELECT v.*, l.title, l.slug, l.target_url 
@@ -281,6 +332,7 @@ elseif (isset($_POST['getAnalytics'])) {
                      JOIN link_tracker_links l ON v.link_id = l.id 
                      WHERE l.projectID='$projectID' 
                      AND v.visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY) 
+                     $botFilter
                      ORDER BY v.visited_at DESC");
     
     while ($row = fetch_assoc($result)) {
@@ -293,6 +345,7 @@ elseif (isset($_POST['getAnalytics'])) {
 elseif (isset($_POST['getDetailedAnalytics'])) {
     $project_link = escape_string($_POST['project']);
     $period = escape_string($_POST['period'] ?? '30');
+    $exclude_bots = isset($_POST['exclude_bots']) && $_POST['exclude_bots'] == 'true';
     
     // Check project access
     $project = query("SELECT * FROM projects WHERE link='$project_link'");
@@ -309,6 +362,9 @@ elseif (isset($_POST['getDetailedAnalytics'])) {
     
     $projectID = $projectData['projectID'];
     
+    // Add bot filter to all queries
+    $botFilter = $exclude_bots ? 'AND v.is_bot = 0' : '';
+    
     // Country Stats
     $countries = [];
     $country_result = query("SELECT country, COUNT(*) as count 
@@ -317,6 +373,7 @@ elseif (isset($_POST['getDetailedAnalytics'])) {
                             WHERE l.projectID='$projectID' 
                             AND v.visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)
                             AND country IS NOT NULL 
+                            $botFilter
                             GROUP BY country 
                             ORDER BY count DESC 
                             LIMIT 10");
@@ -332,6 +389,7 @@ elseif (isset($_POST['getDetailedAnalytics'])) {
                            JOIN link_tracker_links l ON v.link_id = l.id 
                            WHERE l.projectID='$projectID' 
                            AND v.visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)
+                           $botFilter
                            GROUP BY device_type 
                            ORDER BY count DESC");
     
@@ -346,6 +404,7 @@ elseif (isset($_POST['getDetailedAnalytics'])) {
                             JOIN link_tracker_links l ON v.link_id = l.id 
                             WHERE l.projectID='$projectID' 
                             AND v.visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)
+                            $botFilter
                             GROUP BY browser 
                             ORDER BY count DESC 
                             LIMIT 10");
@@ -361,6 +420,7 @@ elseif (isset($_POST['getDetailedAnalytics'])) {
                              JOIN link_tracker_links l ON v.link_id = l.id 
                              WHERE l.projectID='$projectID' 
                              AND v.visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)
+                             $botFilter
                              GROUP BY platform 
                              ORDER BY count DESC");
     
@@ -375,6 +435,7 @@ elseif (isset($_POST['getDetailedAnalytics'])) {
                              JOIN link_tracker_links l ON v.link_id = l.id 
                              WHERE l.projectID='$projectID' 
                              AND v.visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)
+                             $botFilter
                              GROUP BY DATE(v.visited_at) 
                              ORDER BY date ASC");
     
@@ -382,13 +443,27 @@ elseif (isset($_POST['getDetailedAnalytics'])) {
         $timeline[] = $row;
     }
     
+    // Bot statistics
+    $bot_stats = [];
+    $bot_result = query("SELECT 
+                            COUNT(CASE WHEN v.is_bot = 1 THEN 1 END) as bot_visits,
+                            COUNT(CASE WHEN v.is_bot = 0 THEN 1 END) as human_visits,
+                            COUNT(*) as total_visits
+                        FROM link_tracker_visits v 
+                        JOIN link_tracker_links l ON v.link_id = l.id 
+                        WHERE l.projectID='$projectID' 
+                        AND v.visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)");
+    
+    $bot_stats = fetch_assoc($bot_result);
+    
     echo echoJSON([
         'success' => true, 
         'countries' => $countries,
         'devices' => $devices,
         'browsers' => $browsers,
         'platforms' => $platforms,
-        'timeline' => $timeline
+        'timeline' => $timeline,
+        'bot_stats' => $bot_stats
     ]);
 }
 
@@ -447,6 +522,7 @@ elseif (isset($_POST['getLinkAnalytics'])) {
     $project_link = escape_string($_POST['project']);
     $link_id = escape_string($_POST['link_id']);
     $period = escape_string($_POST['period'] ?? '30');
+    $exclude_bots = isset($_POST['exclude_bots']) && $_POST['exclude_bots'] == 'true';
     
     // Check project access
     $project = query("SELECT * FROM projects WHERE link='$project_link'");
@@ -470,6 +546,9 @@ elseif (isset($_POST['getLinkAnalytics'])) {
         exit;
     }
     
+    // Add bot filter to all queries
+    $botFilter = $exclude_bots ? 'AND is_bot = 0' : '';
+    
     // Country Stats for this link
     $countries = [];
     $country_result = query("SELECT country, COUNT(*) as count 
@@ -477,6 +556,7 @@ elseif (isset($_POST['getLinkAnalytics'])) {
                             WHERE link_id='$link_id' 
                             AND visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)
                             AND country IS NOT NULL 
+                            $botFilter
                             GROUP BY country 
                             ORDER BY count DESC 
                             LIMIT 10");
@@ -491,6 +571,7 @@ elseif (isset($_POST['getLinkAnalytics'])) {
                            FROM link_tracker_visits 
                            WHERE link_id='$link_id' 
                            AND visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)
+                           $botFilter
                            GROUP BY device_type 
                            ORDER BY count DESC");
     
@@ -504,6 +585,7 @@ elseif (isset($_POST['getLinkAnalytics'])) {
                             FROM link_tracker_visits 
                             WHERE link_id='$link_id' 
                             AND visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)
+                            $botFilter
                             GROUP BY browser 
                             ORDER BY count DESC 
                             LIMIT 10");
@@ -518,6 +600,7 @@ elseif (isset($_POST['getLinkAnalytics'])) {
                              FROM link_tracker_visits 
                              WHERE link_id='$link_id' 
                              AND visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)
+                             $botFilter
                              GROUP BY platform 
                              ORDER BY count DESC");
     
@@ -531,6 +614,7 @@ elseif (isset($_POST['getLinkAnalytics'])) {
                              FROM link_tracker_visits 
                              WHERE link_id='$link_id' 
                              AND visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)
+                             $botFilter
                              GROUP BY DATE(visited_at) 
                              ORDER BY date ASC");
     
@@ -542,12 +626,25 @@ elseif (isset($_POST['getLinkAnalytics'])) {
     $recent_visits = [];
     $recent_result = query("SELECT * FROM link_tracker_visits 
                            WHERE link_id='$link_id' 
+                           $botFilter
                            ORDER BY visited_at DESC 
                            LIMIT 50");
     
     while ($row = fetch_assoc($recent_result)) {
         $recent_visits[] = $row;
     }
+    
+    // Bot statistics for this link
+    $bot_stats = [];
+    $bot_result = query("SELECT 
+                            COUNT(CASE WHEN is_bot = 1 THEN 1 END) as bot_visits,
+                            COUNT(CASE WHEN is_bot = 0 THEN 1 END) as human_visits,
+                            COUNT(*) as total_visits
+                        FROM link_tracker_visits 
+                        WHERE link_id='$link_id' 
+                        AND visited_at >= DATE_SUB(NOW(), INTERVAL $period DAY)");
+    
+    $bot_stats = fetch_assoc($bot_result);
     
     echo echoJSON([
         'success' => true, 
@@ -556,7 +653,8 @@ elseif (isset($_POST['getLinkAnalytics'])) {
         'browsers' => $browsers,
         'platforms' => $platforms,
         'timeline' => $timeline,
-        'recent_visits' => $recent_visits
+        'recent_visits' => $recent_visits,
+        'bot_stats' => $bot_stats
     ]);
 }
 

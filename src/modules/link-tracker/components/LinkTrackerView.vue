@@ -18,20 +18,22 @@
           </div>
 
           <div class="action-group-right">
-            <div class="search-box">
-              <ion-icon name="search"></ion-icon>
-              <input type="text" placeholder="Links durchsuchen..." v-model="searchTerm" @input="filterLinks" />
+            <!-- Period Selector moved here -->
+            <div class="period-selector">
+              <button v-for="period in periods" :key="period.value"
+                :class="['period-btn', { active: selectedPeriod === period.value }]"
+                @click="selectedPeriod = period.value; loadAnalytics()">
+                {{ period.label }}
+              </button>
+            </div>
+            <div class="toggle-container">
+              <label class="toggle-label">
+                <input type="checkbox" v-model="excludeBots" @change="loadLinks" class="toggle-input">
+                <span class="toggle-slider"></span>
+                Bots ausfiltern
+              </label>
             </div>
           </div>
-        </div>
-
-        <!-- Period Selector -->
-        <div class="period-selector">
-          <button v-for="period in periods" :key="period.value"
-            :class="['period-btn', { active: selectedPeriod === period.value }]"
-            @click="selectedPeriod = period.value; loadAnalytics()">
-            {{ period.label }}
-          </button>
         </div>
 
         <!-- Stats Cards -->
@@ -128,6 +130,12 @@
             <div class="header-left">
               <h3>Deine Links</h3>
               <p class="entry-count">{{ filteredLinks.length }} Links gefunden</p>
+            </div>
+            <div class="header-right">
+              <div class="search-box">
+                <ion-icon name="search"></ion-icon>
+                <input type="text" placeholder="Links durchsuchen..." v-model="searchTerm" @input="filterLinks" />
+              </div>
             </div>
           </div>
 
@@ -297,6 +305,7 @@ export default {
         { value: 30, label: '30 Tage' },
         { value: 90, label: '90 Tage' }
       ],
+      excludeBots: true,
       searchTerm: '',
       showCreateForm: false,
       sortColumn: null,
@@ -343,7 +352,8 @@ export default {
       try {
         const response = await this.$axios.post('link_tracker_api.php', this.$qs.stringify({
           getLinks: true,
-          project: this.$route.params.project
+          project: this.$route.params.project,
+          exclude_bots: this.excludeBots
         }));
 
         if (response.data.success) {
@@ -489,7 +499,8 @@ export default {
         const response = await this.$axios.post('link_tracker_api.php', this.$qs.stringify({
           getDetailedAnalytics: true,
           project: this.$route.params.project,
-          period: this.selectedPeriod
+          period: this.selectedPeriod,
+          exclude_bots: this.excludeBots
         }));
 
         if (response.data.success) {
@@ -1130,8 +1141,6 @@ ion-content.modern-content {
 .period-selector {
   display: flex;
   gap: 8px;
-  margin-bottom: 24px;
-  justify-content: center;
 }
 
 .period-btn {
@@ -1153,6 +1162,58 @@ ion-content.modern-content {
   background: var(--primary-color);
   color: white;
   border-color: var(--primary-color);
+}
+
+/* Toggle Container */
+.toggle-container {
+  display: flex;
+  align-items: center;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.toggle-input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.toggle-slider {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: var(--border);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.toggle-slider:before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-input:checked + .toggle-slider {
+  background: var(--primary-color);
+}
+
+.toggle-input:checked + .toggle-slider:before {
+  transform: translateX(20px);
 }
 
 /* Analytics Section */
@@ -1226,6 +1287,22 @@ ion-content.modern-content {
   .action-group-right {
     flex-wrap: wrap;
     justify-content: center;
+    gap: 8px;
+  }
+
+  .period-selector {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .toggle-container {
+    justify-content: center;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
   }
 
   .search-box input {
@@ -1243,10 +1320,6 @@ ion-content.modern-content {
 
   .analytics-grid {
     grid-template-columns: 1fr;
-  }
-
-  .period-selector {
-    flex-wrap: wrap;
   }
 }
 

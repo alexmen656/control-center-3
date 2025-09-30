@@ -18,12 +18,18 @@
           </div>
 
           <div class="action-group-right">
-            <div class="period-selector">
-              <button v-for="period in periods" :key="period.value"
-                :class="['period-btn', { active: selectedPeriod === period.value }]"
-                @click="selectedPeriod = period.value; loadAnalytics()">
-                {{ period.label }}
-              </button>
+            <div class="filter-group">
+              <div class="bot-filter">
+                <ion-toggle v-model="excludeBots" @ionChange="loadAnalytics()"></ion-toggle>
+                <label>Bots ausfiltern</label>
+              </div>
+              <div class="period-selector">
+                <button v-for="period in periods" :key="period.value"
+                  :class="['period-btn', { active: selectedPeriod === period.value }]"
+                  @click="selectedPeriod = period.value; loadAnalytics()">
+                  {{ period.label }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -45,6 +51,14 @@
           <div class="stat-card">
             <div class="stat-value">{{ linkStats.clicksThisWeek }}</div>
             <div class="stat-label">Diese Woche</div>
+          </div>
+          <div v-if="botStats.total_visits > 0" class="stat-card bot-stats">
+            <div class="stat-value">{{ botStats.bot_visits }}</div>
+            <div class="stat-label">Bot Besuche</div>
+          </div>
+          <div v-if="botStats.total_visits > 0" class="stat-card bot-stats">
+            <div class="stat-value">{{ Math.round((botStats.bot_visits / botStats.total_visits) * 100) }}%</div>
+            <div class="stat-label">Bot Anteil</div>
           </div>
         </div>
 
@@ -184,9 +198,11 @@
                 <div class="header-cell">Gerät</div>
                 <div class="header-cell">Browser</div>
                 <div class="header-cell">Referer</div>
+                <div class="header-cell">Bot</div>
+                <!--<div class="header-cell">Angefragt</div>-->
               </div>
               <div class="table-body">
-                <div class="table-row" v-for="visit in recentVisits" :key="visit.id">
+                                <div class="table-row" v-for="visit in recentVisits" :key="visit.id">
                   <div class="table-cell">{{ formatDateTime(visit.visited_at) }}</div>
                   <div class="table-cell">
                     <span class="country-flag">{{ getCountryFlag(visit.country) }}</span>
@@ -195,9 +211,19 @@
                   <div class="table-cell">{{ visit.device_type }}</div>
                   <div class="table-cell">{{ visit.browser }}</div>
                   <div class="table-cell">
-                    <span class="referer-link" v-if="visit.referer">{{ formatReferer(visit.referer) }}</span>
-                    <span v-else class="no-referer">Direct</span>
+                    <span v-if="visit.referer" class="referer-link" @click="openReferer(visit.referer)">
+                      {{ formatReferer(visit.referer) }}
+                    </span>
+                    <span v-else class="no-referer">Kein Referer</span>
                   </div>
+                  <div class="table-cell">
+                    <span :class="['bot-badge', { 'is-bot': Number(visit.is_bot) == 1 }]">
+                      {{ Number(visit.is_bot) == 1 ? 'Bot' : 'Human' }}
+                    </span>
+                  </div>
+                <!-- <div class="table-cell">
+                    <span class="requested-url">{{ visit.requested_url || '/' }}</span>
+                  </div>--> 
                 </div>
               </div>
             </div>
@@ -235,6 +261,11 @@ export default {
         platforms: [],
         timeline: []
       },
+      botStats: {
+        bot_visits: 0,
+        human_visits: 0,
+        total_visits: 0
+      },
       recentVisits: [],
       customDomains: [],
       showDomainForm: false,
@@ -243,6 +274,7 @@ export default {
         subdomain: ''
       },
       selectedPeriod: 30,
+      excludeBots: false,
       periods: [
         { value: 7, label: '7 Tage' },
         { value: 30, label: '30 Tage' },
@@ -288,12 +320,14 @@ export default {
           getLinkAnalytics: true,
           project: this.$route.params.project,
           link_id: this.$route.params.linkId,
-          period: this.selectedPeriod
+          period: this.selectedPeriod,
+          exclude_bots: this.excludeBots
         }));
 
         if (response.data.success) {
           this.analytics = response.data;
           this.recentVisits = response.data.recent_visits || [];
+          this.botStats = response.data.bot_stats || { bot_visits: 0, human_visits: 0, total_visits: 0 };
           this.$nextTick(() => {
             this.renderTimelineChart();
           });
@@ -475,6 +509,12 @@ export default {
       } catch (error) {
         console.error('Error deleting domain:', error);
         alert('Fehler beim Löschen der Domain');
+      }
+    },
+
+    openReferer(referer) {
+      if (referer) {
+        window.open(referer, '_blank');
       }
     }
   }
