@@ -431,6 +431,10 @@
       min-height: calc(100vh - 64px);
       border: none !important;
     }
+
+    ion-header ion-toolbar:first-of-type {
+      padding-top: 0;
+    }
   }
   
   router-link,
