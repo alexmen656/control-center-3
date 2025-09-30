@@ -51,48 +51,60 @@ function addDomainToVercel($userID, $project, $domain) {
     try {
         $vercelHelper = new VercelHelper($userID);
         
-        // Use the fixed Vercel project ID for link tracker
+        // Fixiertes Projekt
         $vercelProjectId = 'prj_Eowk93TG2037GIO6XgYAqVXD85By';
         
-        // Add domain to Vercel project
+        // Domain hinzufügen
         $result = $vercelHelper->getVercelAPI()->addDomain($vercelProjectId, $domain);
         
         if (isset($result['error'])) {
-            return ['success' => false, 'message' => $result['error']['message'] ?? 'Vercel Domain Fehler'];
+            return [
+                'success' => false, 
+                'message' => $result['error']['message'] ?? 'Vercel Domain Fehler'
+            ];
         }
         
-        // Extract the CNAME target from Vercel response
+        // Vercel Token für Domain Config API holen
+        $credentials = getVercelCredentials($userID);
+        $vercel_token = $credentials['token'];
+        
+        // CNAME-Target von Vercel holen über separaten API-Endpunkt
         $cnameTarget = null;
-        if (isset($result['verification'])) {
-            foreach ($result['verification'] as $verification) {
-                if ($verification['type'] === 'TXT' && isset($verification['domain'])) {
-                    // Sometimes the CNAME is in the domain field of verification
-                    if (strpos($verification['domain'], 'vercel-dns') !== false) {
-                        $cnameTarget = $verification['domain'];
-                        break;
-                    }
-                }
+        $vercelDomainConfigUrl = "https://api.vercel.com/v6/domains/$domain/config";
+        $vercelDomainConfigOpts = [
+            'http' => [
+                'method' => 'GET',
+                'header' => "Authorization: Bearer $vercel_token\r\nUser-Agent: ControlCenter\r\nAccept: application/json\r\n"
+            ]
+        ];
+
+        $vercelDomainConfigContext = stream_context_create($vercelDomainConfigOpts);
+        $vercelDomainConfigResponse = @file_get_contents($vercelDomainConfigUrl, false, $vercelDomainConfigContext);
+
+        if ($vercelDomainConfigResponse) {
+            $vercelDomainConfig = json_decode($vercelDomainConfigResponse, true);
+            if (isset($vercelDomainConfig['recommendedCNAME'][0]['value'])) {
+                $cnameTarget = $vercelDomainConfig['recommendedCNAME'][0]['value'];
+            } elseif (isset($vercelDomainConfig['cnameTarget'])) {
+                $cnameTarget = $vercelDomainConfig['cnameTarget'];
+            } elseif (isset($vercelDomainConfig['domain']['cnameTarget'])) {
+                $cnameTarget = $vercelDomainConfig['domain']['cnameTarget'];
             }
         }
-        
-        // If not found in verification, look for it in other fields
-        if (!$cnameTarget && isset($result['cname'])) {
-            $cnameTarget = $result['cname'];
-        }
-        
-        // Fallback: sometimes it's in the configuredBy or other fields
-        if (!$cnameTarget && isset($result['configuredBy'])) {
-            $cnameTarget = $result['configuredBy'];
-        }
-        
+
+        // Rückgabe
         return [
-            'success' => true, 
+            'success' => true,
             'data' => $result,
-            'cname_target' => $cnameTarget
+            'cname_target' => $cnameTarget,
+            'domain_config_response' => $vercelDomainConfig ?? null // Für Debug
         ];
         
     } catch (Exception $e) {
-        return ['success' => false, 'message' => 'Vercel Fehler: ' . $e->getMessage()];
+        return [
+            'success' => false, 
+            'message' => 'Vercel Fehler: ' . $e->getMessage()
+        ];
     }
 }
 
@@ -193,7 +205,7 @@ if (isset($_POST['createCustomDomain'])) {
     }
     
     // Save to database with additional info
-    $vercel_cname_used = mysqli_real_escape_string($connection, $vercel_target);
+    $vercel_cname_used = escape_string($vercel_target);
     $insert = query("INSERT INTO link_tracker_custom_domains (link_id, subdomain, base_domain, full_domain, cloudflare_record_id, vercel_domain_added, vercel_cname_target, created_at) 
                      VALUES ('$link_id', '$custom_subdomain', '$base_domain', '$full_domain', '{$cloudflare_result['data']['id']}', 1, '$vercel_cname_used', NOW())");
     
