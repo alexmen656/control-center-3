@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="link-outline" title="Link Tracker"/>
+      <SiteTitle icon="link-outline" title="Link Tracker" bg="transparent"/>
 
       <div class="page-container">
         <!-- Action Bar -->
@@ -16,28 +16,20 @@
               Aktualisieren
             </button>
           </div>
-          
+
           <div class="action-group-right">
             <div class="search-box">
               <ion-icon name="search"></ion-icon>
-              <input 
-                type="text" 
-                placeholder="Links durchsuchen..." 
-                v-model="searchTerm" 
-                @input="filterLinks"
-              />
+              <input type="text" placeholder="Links durchsuchen..." v-model="searchTerm" @input="filterLinks" />
             </div>
           </div>
         </div>
 
         <!-- Period Selector -->
         <div class="period-selector">
-          <button 
-            v-for="period in periods" 
-            :key="period.value"
+          <button v-for="period in periods" :key="period.value"
             :class="['period-btn', { active: selectedPeriod === period.value }]"
-            @click="selectedPeriod = period.value; loadAnalytics()"
-          >
+            @click="selectedPeriod = period.value; loadAnalytics()">
             {{ period.label }}
           </button>
         </div>
@@ -145,31 +137,36 @@
                 <div class="header-cell" @click="sortBy(0)">
                   <span class="header-text">Titel</span>
                   <div class="sort-indicator">
-                    <ion-icon :name="getSortIcon(0)" :class="sortColumn === 0 ? 'sort-active' : 'sort-default'"></ion-icon>
+                    <ion-icon :name="getSortIcon(0)"
+                      :class="sortColumn === 0 ? 'sort-active' : 'sort-default'"></ion-icon>
                   </div>
                 </div>
                 <div class="header-cell" @click="sortBy(1)">
                   <span class="header-text">Kurz-URL</span>
                   <div class="sort-indicator">
-                    <ion-icon :name="getSortIcon(1)" :class="sortColumn === 1 ? 'sort-active' : 'sort-default'"></ion-icon>
+                    <ion-icon :name="getSortIcon(1)"
+                      :class="sortColumn === 1 ? 'sort-active' : 'sort-default'"></ion-icon>
                   </div>
                 </div>
                 <div class="header-cell" @click="sortBy(2)">
                   <span class="header-text">Ziel-URL</span>
                   <div class="sort-indicator">
-                    <ion-icon :name="getSortIcon(2)" :class="sortColumn === 2 ? 'sort-active' : 'sort-default'"></ion-icon>
+                    <ion-icon :name="getSortIcon(2)"
+                      :class="sortColumn === 2 ? 'sort-active' : 'sort-default'"></ion-icon>
                   </div>
                 </div>
                 <div class="header-cell" @click="sortBy(3)">
                   <span class="header-text">Besuche</span>
                   <div class="sort-indicator">
-                    <ion-icon :name="getSortIcon(3)" :class="sortColumn === 3 ? 'sort-active' : 'sort-default'"></ion-icon>
+                    <ion-icon :name="getSortIcon(3)"
+                      :class="sortColumn === 3 ? 'sort-active' : 'sort-default'"></ion-icon>
                   </div>
                 </div>
                 <div class="header-cell" @click="sortBy(4)">
                   <span class="header-text">Erstellt</span>
                   <div class="sort-indicator">
-                    <ion-icon :name="getSortIcon(4)" :class="sortColumn === 4 ? 'sort-active' : 'sort-default'"></ion-icon>
+                    <ion-icon :name="getSortIcon(4)"
+                      :class="sortColumn === 4 ? 'sort-active' : 'sort-default'"></ion-icon>
                   </div>
                 </div>
                 <div class="actions-header">Aktionen</div>
@@ -181,7 +178,8 @@
                     <div class="cell-content">{{ link.title }}</div>
                   </div>
                   <div class="table-cell">
-                    <div class="cell-content" @click="copyToClipboard(link.short_url)" style="cursor: pointer; color: var(--primary-color);">
+                    <div class="cell-content" @click="copyToClipboard(link.short_url)"
+                      style="cursor: pointer; color: var(--primary-color);">
                       {{ link.short_url }}
                     </div>
                   </div>
@@ -190,7 +188,7 @@
                   </div>
                   <div class="table-cell">
                     <div class="cell-content">
-                      {{ link.visits || 0 }} 
+                      {{ link.visits || 0 }}
                       <small v-if="link.unique_visitors">({{ link.unique_visitors }} unique)</small>
                     </div>
                   </div>
@@ -234,36 +232,21 @@
               <form @submit.prevent="createLink" class="modern-form">
                 <div class="form-group">
                   <label class="form-label">Titel *</label>
-                  <input 
-                    type="text" 
-                    class="modern-input" 
-                    v-model="newLink.title" 
-                    required 
-                    placeholder="z.B. Meine Webseite"
-                  />
+                  <input type="text" class="modern-input" v-model="newLink.title" required
+                    placeholder="z.B. Meine Webseite" />
                 </div>
-                
+
                 <div class="form-group">
                   <label class="form-label">Ziel-URL *</label>
-                  <input 
-                    type="url" 
-                    class="modern-input" 
-                    v-model="newLink.target_url" 
-                    required 
-                    placeholder="https://example.com"
-                  />
+                  <input type="url" class="modern-input" v-model="newLink.target_url" required
+                    placeholder="https://example.com" />
                 </div>
-                
+
                 <div class="form-group">
                   <label class="form-label">Custom Slug (optional)</label>
-                  <input 
-                    type="text" 
-                    class="modern-input" 
-                    v-model="newLink.custom_slug" 
-                    placeholder="mein-link"
-                  />
+                  <input type="text" class="modern-input" v-model="newLink.custom_slug" placeholder="mein-link" />
                 </div>
-                
+
                 <div class="form-actions">
                   <button type="button" class="action-btn" @click="showCreateForm = false">
                     Abbrechen
@@ -283,7 +266,13 @@
 
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
-//import Chart from 'chart.js/auto';
+import CountryService from "@/services/countryService.js"
+
+import {
+  Chart, registerables
+} from 'chart.js';
+
+Chart.register(...registerables);
 
 export default {
   name: "LinkTrackerView",
@@ -322,33 +311,33 @@ export default {
       charts: {}
     };
   },
-  
+
   computed: {
     totalClicks() {
       return this.links.reduce((sum, link) => sum + (parseInt(link.visits) || 0), 0);
     },
-    
+
     uniqueVisitors() {
       return this.links.reduce((sum, link) => sum + (parseInt(link.unique_visitors) || 0), 0);
     },
-    
+
     avgClicksPerLink() {
       if (this.links.length === 0) return 0;
       return Math.round(this.totalClicks / this.links.length);
     },
-    
+
     paginatedLinks() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
       return this.filteredLinks.slice(start, end);
     }
   },
-  
+
   mounted() {
     this.loadLinks();
     this.loadAnalytics();
   },
-  
+
   methods: {
     async loadLinks() {
       try {
@@ -356,7 +345,7 @@ export default {
           getLinks: true,
           project: this.$route.params.project
         }));
-        
+
         if (response.data.success) {
           this.links = response.data.links;
           this.filteredLinks = [...this.links];
@@ -365,10 +354,10 @@ export default {
         console.error('Error loading links:', error);
       }
     },
-    
+
     async createLink() {
       if (!this.newLink.title || !this.newLink.target_url) return;
-      
+
       try {
         const response = await this.$axios.post('link_tracker_api.php', this.$qs.stringify({
           createLink: true,
@@ -377,7 +366,7 @@ export default {
           target_url: this.newLink.target_url,
           custom_slug: this.newLink.custom_slug
         }));
-        
+
         if (response.data.success) {
           this.showCreateForm = false;
           this.resetForm();
@@ -391,17 +380,17 @@ export default {
         alert('Fehler beim Erstellen des Links');
       }
     },
-    
+
     async deleteLink(linkId) {
       if (!confirm('Link wirklich löschen?')) return;
-      
+
       try {
         const response = await this.$axios.post('link_tracker_api.php', this.$qs.stringify({
           deleteLink: true,
           project: this.$route.params.project,
           link_id: linkId
         }));
-        
+
         if (response.data.success) {
           this.loadLinks();
         } else {
@@ -412,21 +401,21 @@ export default {
         alert('Fehler beim Löschen des Links');
       }
     },
-    
+
     filterLinks() {
       if (!this.searchTerm.trim()) {
         this.filteredLinks = [...this.links];
         return;
       }
-      
+
       const searchLower = this.searchTerm.toLowerCase();
-      this.filteredLinks = this.links.filter(link => 
+      this.filteredLinks = this.links.filter(link =>
         link.title.toLowerCase().includes(searchLower) ||
         link.short_url.toLowerCase().includes(searchLower) ||
         link.target_url.toLowerCase().includes(searchLower)
       );
     },
-    
+
     sortBy(columnIndex) {
       if (this.sortColumn === columnIndex) {
         this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -434,11 +423,11 @@ export default {
         this.sortColumn = columnIndex;
         this.sortDirection = 'asc';
       }
-      
+
       this.filteredLinks.sort((a, b) => {
         let aVal, bVal;
-        
-        switch(columnIndex) {
+
+        switch (columnIndex) {
           case 0: aVal = a.title; bVal = b.title; break;
           case 1: aVal = a.short_url; bVal = b.short_url; break;
           case 2: aVal = a.target_url; bVal = b.target_url; break;
@@ -446,7 +435,7 @@ export default {
           case 4: aVal = new Date(a.created_at); bVal = new Date(b.created_at); break;
           default: return 0;
         }
-        
+
         if (this.sortDirection === 'asc') {
           return aVal > bVal ? 1 : -1;
         } else {
@@ -454,12 +443,12 @@ export default {
         }
       });
     },
-    
+
     getSortIcon(columnIndex) {
       if (this.sortColumn !== columnIndex) return 'swap-vertical';
       return this.sortDirection === 'asc' ? 'chevron-up' : 'chevron-down';
     },
-    
+
     resetForm() {
       this.newLink = {
         title: '',
@@ -467,7 +456,7 @@ export default {
         custom_slug: ''
       };
     },
-    
+
     copyToClipboard(text) {
       navigator.clipboard.writeText(text).then(() => {
         // Show success toast
@@ -476,11 +465,11 @@ export default {
         console.error('Failed to copy: ', err);
       });
     },
-    
+
     truncateUrl(url) {
       return url.length > 50 ? url.substring(0, 50) + '...' : url;
     },
-    
+
     formatDate(dateStr) {
       return new Date(dateStr).toLocaleDateString('de-DE');
     },
@@ -502,7 +491,7 @@ export default {
           project: this.$route.params.project,
           period: this.selectedPeriod
         }));
-        
+
         if (response.data.success) {
           this.analytics = response.data;
           this.analyticsLoaded = true;
@@ -527,7 +516,7 @@ export default {
       if (this.charts.timeline) {
         this.charts.timeline.destroy();
       }
-      
+
       this.charts.timeline = new Chart(ctx, {
         type: 'line',
         data: {
@@ -558,7 +547,7 @@ export default {
       if (this.charts.device) {
         this.charts.device.destroy();
       }
-      
+
       this.charts.device = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -576,7 +565,7 @@ export default {
     },
 
     getCountryName(code) {
-      const countries = {
+      /*const countries = {
         'DE': 'Deutschland',
         'US': 'USA',
         'GB': 'Großbritannien',
@@ -589,30 +578,33 @@ export default {
         'BE': 'Belgien',
         'XX': 'Unbekannt'
       };
-      return countries[code] || code;
+      return countries[code] || code;*/
+      return CountryService.getCountryName(code)
     },
 
     getCountryFlag(code) {
-      const flags = {
-        'DE': '🇩🇪',
-        'US': '🇺🇸', 
-        'GB': '🇬🇧',
-        'FR': '🇫🇷',
-        'AT': '🇦🇹',
-        'CH': '🇨🇭',
-        'IT': '🇮🇹',
-        'ES': '🇪🇸',
-        'NL': '🇳🇱',
-        'BE': '🇧🇪',
-        'XX': '🌍'
-      };
-      return flags[code] || '🌍';
+      /* const flags = {
+         'DE': '🇩🇪',
+         'US': '🇺🇸',
+         'GB': '🇬🇧',
+         'FR': '🇫🇷',
+         'AT': '🇦🇹',
+         'CH': '🇨🇭',
+         'IT': '🇮🇹',
+         'ES': '🇪🇸',
+         'NL': '🇳🇱',
+         'BE': '🇧🇪',
+         'XX': '🌍'
+       };
+       return flags[code] || '🌍';*/
+      return CountryService.getCountryFlag(code) || '🌍'
+
     },
 
     getBrowserIcon(browser) {
       const icons = {
         'Chrome': 'logo-chrome',
-        'Firefox': 'logo-firefox', 
+        'Firefox': 'logo-firefox',
         'Safari': 'logo-safari',
         'Edge': 'logo-edge',
         'Opera': 'logo-opera',
@@ -656,6 +648,22 @@ export default {
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --radius: 8px;
   --radius-lg: 12px;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .modern-content {
+    --background: #1e1e1e;
+    --surface: #2a2a2a;
+    --border: #404040;
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+  }
+}
+
+ion-content.modern-content {
+  --background: var(--background);
 }
 
 .page-container {
@@ -1208,26 +1216,26 @@ export default {
   .page-container {
     padding: 16px;
   }
-  
+
   .action-bar {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .action-group-left,
   .action-group-right {
     flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   .search-box input {
     min-width: 100%;
   }
-  
+
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .form-section {
     width: 100%;
     right: -100%;
@@ -1246,11 +1254,11 @@ export default {
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .modern-table {
     min-width: 600px;
   }
-  
+
   .cell-content {
     max-width: 80px;
   }

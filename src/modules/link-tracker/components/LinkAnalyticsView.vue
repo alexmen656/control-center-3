@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle :icon="'analytics-outline'" :title="`Analytics: ${linkData.title}`"/>
+      <SiteTitle :icon="'analytics-outline'" :title="`Analytics: ${linkData.title}`" bg="transparent"/>
 
       <div class="page-container">
         <!-- Back Button & Link Info -->
@@ -16,15 +16,12 @@
               <p class="link-url">{{ linkData.short_url }}</p>
             </div>
           </div>
-          
+
           <div class="action-group-right">
             <div class="period-selector">
-              <button 
-                v-for="period in periods" 
-                :key="period.value"
+              <button v-for="period in periods" :key="period.value"
                 :class="['period-btn', { active: selectedPeriod === period.value }]"
-                @click="selectedPeriod = period.value; loadAnalytics()"
-              >
+                @click="selectedPeriod = period.value; loadAnalytics()">
                 {{ period.label }}
               </button>
             </div>
@@ -141,25 +138,20 @@
               Domain hinzufügen
             </button>
           </div>
-          
+
           <!-- Domain Form -->
           <div v-if="showDomainForm" class="domain-form">
             <form @submit.prevent="createCustomDomain">
               <div class="form-row">
-                <input 
-                  v-model="newDomain.subdomain" 
-                  type="text" 
-                  placeholder="subdomain" 
-                  class="domain-input"
-                  required
-                />
+                <input v-model="newDomain.subdomain" type="text" placeholder="subdomain" class="domain-input"
+                  required />
                 <span class="domain-separator">.</span>
                 <span class="base-domain">{{ baseDomain }}</span>
                 <button type="submit" class="action-btn primary">Erstellen</button>
               </div>
             </form>
           </div>
-          
+
           <!-- Domain List -->
           <div class="domain-list">
             <div v-for="domain in customDomains" :key="domain.id" class="domain-item">
@@ -218,7 +210,9 @@
 
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
-//import Chart from 'chart.js/auto';
+import CountryService from "@/services/countryService.js"
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
 
 export default {
   name: "LinkAnalyticsView",
@@ -257,14 +251,14 @@ export default {
       charts: {}
     };
   },
-  
+
   mounted() {
     this.loadLinkData();
     this.loadAnalytics();
     this.loadCustomDomains();
     this.getBaseDomain();
   },
-  
+
   methods: {
     async loadLinkData() {
       try {
@@ -273,7 +267,7 @@ export default {
           project: this.$route.params.project,
           link_id: this.$route.params.linkId
         }));
-        
+
         if (response.data.success) {
           this.linkData = response.data.link;
           this.linkStats = {
@@ -296,7 +290,7 @@ export default {
           link_id: this.$route.params.linkId,
           period: this.selectedPeriod
         }));
-        
+
         if (response.data.success) {
           this.analytics = response.data;
           this.recentVisits = response.data.recent_visits || [];
@@ -359,22 +353,24 @@ export default {
     },
 
     getCountryName(code) {
-      const countries = {
+      /*const countries = {
         'DE': 'Deutschland', 'US': 'USA', 'GB': 'Großbritannien',
         'FR': 'Frankreich', 'AT': 'Österreich', 'CH': 'Schweiz',
         'IT': 'Italien', 'ES': 'Spanien', 'NL': 'Niederlande',
         'BE': 'Belgien', 'XX': 'Unbekannt'
       };
-      return countries[code] || code;
+      return countries[code] || code;*/
+      return CountryService.getCountryName(code)
     },
 
     getCountryFlag(code) {
-      const flags = {
-        'DE': '🇩🇪', 'US': '🇺🇸', 'GB': '🇬🇧', 'FR': '🇫🇷',
-        'AT': '🇦🇹', 'CH': '🇨🇭', 'IT': '🇮🇹', 'ES': '🇪🇸',
-        'NL': '🇳🇱', 'BE': '🇧🇪', 'XX': '🌍'
-      };
-      return flags[code] || '🌍';
+      /*  const flags = {
+          'DE': '🇩🇪', 'US': '🇺🇸', 'GB': '🇬🇧', 'FR': '🇫🇷',
+          'AT': '🇦🇹', 'CH': '🇨🇭', 'IT': '🇮🇹', 'ES': '🇪🇸',
+          'NL': '🇳🇱', 'BE': '🇧🇪', 'XX': '🌍'
+        };
+        return flags[code] || '🌍';*/
+      return CountryService.getCountryFlag(code) || '🌍'
     },
 
     getBrowserIcon(browser) {
@@ -410,7 +406,7 @@ export default {
           project: this.$route.params.project,
           link_id: this.$route.params.linkId
         }));
-        
+
         if (response.data.success) {
           this.customDomains = response.data.domains;
         }
@@ -425,7 +421,7 @@ export default {
           getProjectInfo: true,
           project: this.$route.params.project
         }));
-        
+
         if (response.data && response.data.domain) {
           this.baseDomain = response.data.domain;
         } else {
@@ -438,7 +434,7 @@ export default {
 
     async createCustomDomain() {
       if (!this.newDomain.subdomain) return;
-      
+
       try {
         const response = await this.$axios.post('link_tracker_domains.php', this.$qs.stringify({
           createCustomDomain: true,
@@ -446,7 +442,7 @@ export default {
           link_id: this.$route.params.linkId,
           custom_subdomain: this.newDomain.subdomain
         }));
-        
+
         if (response.data.success) {
           this.showDomainForm = false;
           this.newDomain.subdomain = '';
@@ -463,14 +459,14 @@ export default {
 
     async deleteCustomDomain(domainId) {
       if (!confirm('Domain wirklich löschen?')) return;
-      
+
       try {
         const response = await this.$axios.post('link_tracker_domains.php', this.$qs.stringify({
           deleteCustomDomain: true,
           project: this.$route.params.project,
           domain_id: domainId
         }));
-        
+
         if (response.data.success) {
           this.loadCustomDomains();
         } else {
@@ -505,6 +501,22 @@ export default {
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --radius: 8px;
   --radius-lg: 12px;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .modern-content {
+    --background: #1e1e1e;
+    --surface: #2a2a2a;
+    --border: #404040;
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+  }
+}
+
+ion-content.modern-content {
+  --background: var(--background);
 }
 
 .page-container {
@@ -853,16 +865,16 @@ export default {
   .page-container {
     padding: 16px;
   }
-  
+
   .action-bar {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .analytics-grid {
     grid-template-columns: 1fr;
   }
@@ -872,7 +884,7 @@ export default {
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .period-selector {
     flex-wrap: wrap;
   }

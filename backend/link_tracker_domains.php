@@ -1,5 +1,6 @@
 <?php
 include "head.php";
+require_once 'vercel_helper.php';
 
 // Cloudflare API Integration für Link Tracker Domains
 function createCloudflareSubdomain($subdomain, $domain, $target) {
@@ -43,6 +44,73 @@ function createCloudflareSubdomain($subdomain, $domain, $target) {
     }
     
     return ['success' => true, 'data' => $result['result']];
+}
+
+// Vercel Domain Integration
+function addDomainToVercel($userID, $project, $domain) {
+    try {
+        $vercelHelper = new VercelHelper($userID);
+        
+        // Use the fixed Vercel project ID for link tracker
+        $vercelProjectId = 'prj_Eowk93TG2037GIO6XgYAqVXD85By';
+        
+        // Add domain to Vercel project
+        $result = $vercelHelper->getVercelAPI()->addDomain($vercelProjectId, $domain);
+        
+        if (isset($result['error'])) {
+            return ['success' => false, 'message' => $result['error']['message'] ?? 'Vercel Domain Fehler'];
+        }
+        
+        // Extract the CNAME target from Vercel response
+        $cnameTarget = null;
+        if (isset($result['verification'])) {
+            foreach ($result['verification'] as $verification) {
+                if ($verification['type'] === 'TXT' && isset($verification['domain'])) {
+                    // Sometimes the CNAME is in the domain field of verification
+                    if (strpos($verification['domain'], 'vercel-dns') !== false) {
+                        $cnameTarget = $verification['domain'];
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // If not found in verification, look for it in other fields
+        if (!$cnameTarget && isset($result['cname'])) {
+            $cnameTarget = $result['cname'];
+        }
+        
+        // Fallback: sometimes it's in the configuredBy or other fields
+        if (!$cnameTarget && isset($result['configuredBy'])) {
+            $cnameTarget = $result['configuredBy'];
+        }
+        
+        return [
+            'success' => true, 
+            'data' => $result,
+            'cname_target' => $cnameTarget
+        ];
+        
+    } catch (Exception $e) {
+        return ['success' => false, 'message' => 'Vercel Fehler: ' . $e->getMessage()];
+    }
+}
+
+function removeDomainFromVercel($userID, $project, $domain) {
+    try {
+        $vercelHelper = new VercelHelper($userID);
+        
+        // Use the fixed Vercel project ID for link tracker
+        $vercelProjectId = 'prj_Eowk93TG2037GIO6XgYAqVXD85By';
+        
+        // Remove domain from Vercel project
+        $result = $vercelHelper->getVercelAPI()->removeDomain($vercelProjectId, $domain);
+        
+        return ['success' => true, 'data' => $result];
+        
+    } catch (Exception $e) {
+        return ['success' => false, 'message' => 'Vercel Fehler: ' . $e->getMessage()];
+    }
 }
 
 if (isset($_POST['createCustomDomain'])) {
@@ -96,22 +164,47 @@ if (isset($_POST['createCustomDomain'])) {
     }
     
     $full_domain = $custom_subdomain . '.' . $base_domain;
-    $target = 'links.control-center.eu'; // Redirect target
     
-    // Create Cloudflare DNS record
-    $cloudflare_result = createCloudflareSubdomain($custom_subdomain, $base_domain, $target);
+    // First add domain to Vercel project to get the correct CNAME target
+    $vercel_result = addDomainToVercel($userID, $project_link, $full_domain);
+    
+    if (!$vercel_result['success']) {
+        echo echoJSON('Vercel Fehler: ' . $vercel_result['message']);
+        exit;
+    }
+    
+    // Get the specific CNAME target from Vercel response
+    $vercel_target = $vercel_result['cname_target'];
+    
+    if (!$vercel_target) {
+        // If we can't get the CNAME target, use the default fallback
+        $vercel_target = 'cname.vercel-dns.com';
+        error_log("Warning: Could not extract CNAME target from Vercel for domain $full_domain, using fallback");
+    }
+    
+    // Create Cloudflare DNS record with the specific Vercel CNAME target
+    $cloudflare_result = createCloudflareSubdomain($custom_subdomain, $base_domain, $vercel_target);
     
     if (!$cloudflare_result['success']) {
+        // Rollback Vercel domain if Cloudflare fails
+        removeDomainFromVercel($userID, $project_link, $full_domain);
         echo echoJSON('Cloudflare Fehler: ' . $cloudflare_result['message']);
         exit;
     }
     
-    // Save to database
-    $insert = query("INSERT INTO link_tracker_custom_domains (link_id, subdomain, base_domain, full_domain, cloudflare_record_id, created_at) 
-                     VALUES ('$link_id', '$custom_subdomain', '$base_domain', '$full_domain', '{$cloudflare_result['data']['id']}', NOW())");
+    // Save to database with additional info
+    $vercel_cname_used = mysqli_real_escape_string($connection, $vercel_target);
+    $insert = query("INSERT INTO link_tracker_custom_domains (link_id, subdomain, base_domain, full_domain, cloudflare_record_id, vercel_domain_added, vercel_cname_target, created_at) 
+                     VALUES ('$link_id', '$custom_subdomain', '$base_domain', '$full_domain', '{$cloudflare_result['data']['id']}', 1, '$vercel_cname_used', NOW())");
     
     if ($insert) {
-        echo echoJSON(['success' => true, 'domain' => $full_domain]);
+        echo echoJSON([
+            'success' => true, 
+            'domain' => $full_domain, 
+            'vercel_added' => true,
+            'vercel_cname_target' => $vercel_target,
+            'debug_vercel_response' => $vercel_result['data'] // For debugging
+        ]);
     } else {
         echo echoJSON('Fehler beim Speichern der Domain');
     }
@@ -174,6 +267,10 @@ elseif (isset($_POST['deleteCustomDomain'])) {
     
     $domainData = fetch_assoc($domainResult);
     
+    // Remove from Vercel first
+    $vercel_removal = removeDomainFromVercel($userID, $project_link, $domainData['full_domain']);
+    // Continue even if Vercel removal fails (domain might not exist there)
+    
     // Delete from Cloudflare if record ID exists
     if ($domainData['cloudflare_record_id']) {
         global $cloudflare_zone_id, $cloudflare_api_token;
@@ -215,8 +312,14 @@ query("CREATE TABLE IF NOT EXISTS link_tracker_custom_domains (
     base_domain VARCHAR(255) NOT NULL,
     full_domain VARCHAR(255) NOT NULL,
     cloudflare_record_id VARCHAR(50),
+    vercel_domain_added TINYINT(1) DEFAULT 0,
+    vercel_cname_target VARCHAR(255) NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (link_id) REFERENCES link_tracker_links(id) ON DELETE CASCADE,
     UNIQUE KEY unique_domain (full_domain)
 )");
+
+// Add missing columns if they don't exist
+query("ALTER TABLE link_tracker_custom_domains ADD COLUMN IF NOT EXISTS vercel_domain_added TINYINT(1) DEFAULT 0");
+query("ALTER TABLE link_tracker_custom_domains ADD COLUMN IF NOT EXISTS vercel_cname_target VARCHAR(255) NULL");
 ?>

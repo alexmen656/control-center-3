@@ -1,23 +1,14 @@
 <template>
-  <ion-toolbar>
+  <ion-toolbar :style="'--background: ' + bg_color">
     <ion-title size="large">
       <div class="title-container">
-      <ion-icon class="before-title" v-if="icon" :name="icon" />
-      <span class="h2">{{ title[0].toUpperCase() + title.slice(1) }}</span>
+        <ion-icon class="before-title" v-if="icon" :name="icon" />
+        <span class="h2">{{ title[0].toUpperCase() + title.slice(1) }}</span>
       </div>
     </ion-title>
     <span class="actions" slot="end">
-      <ion-icon
-        slot="end"
-        @click="toggleBookmark()"
-        :name="isBookmark ? 'star' : 'star-outline'"
-      />
-      <ion-icon
-        @click="share()"
-        slot="end"
-        name="share-social-outline"
-        class="copy-effect"
-      />
+      <ion-icon slot="end" @click="toggleBookmark()" :name="isBookmark ? 'star' : 'star-outline'" />
+      <ion-icon @click="share()" slot="end" name="share-social-outline" class="copy-effect" />
     </span>
   </ion-toolbar>
 </template>
@@ -32,6 +23,10 @@ export default {
     icon: {
       type: String,
     },
+    bg: {
+      type: String,
+      required: false
+    }
   },
   data() {
     return {
@@ -55,10 +50,10 @@ export default {
         this.$axios
           .post(
             "https://alex.polan.sk/control-center/bookmarks.php?" +
-              this.$qs.stringify({
-                location: this.siteLocation,
-                checkBookmark: "checkBookmark",
-              })
+            this.$qs.stringify({
+              location: this.siteLocation,
+              checkBookmark: "checkBookmark",
+            })
           )
           .then((response) => {
             this.isBookmark = response.data;
@@ -68,14 +63,20 @@ export default {
     this.$axios
       .post(
         "https://alex.polan.sk/control-center/bookmarks.php?" +
-          this.$qs.stringify({
-            location: this.siteLocation,
-            checkBookmark: "checkBookmark",
-          })
+        this.$qs.stringify({
+          location: this.siteLocation,
+          checkBookmark: "checkBookmark",
+        })
       )
       .then((response) => {
         this.isBookmark = response.data;
       });
+
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      this.bg_color = this.bg || "#0f172a";
+    } else {
+      this.bg_color = "#f8fafc";
+    }
   },
   methods: {
     share() {
@@ -99,7 +100,7 @@ export default {
         this.$axios
           .post(
             "https://alex.polan.sk/control-center/bookmarks.php?deleteBookmark=deleteBookmark&location=" +
-              this.siteLocation
+            this.siteLocation
           )
           .then(() => {//response
             this.$emit("updateSidebar");
@@ -109,11 +110,11 @@ export default {
         this.$axios
           .post(
             "https://alex.polan.sk/control-center/bookmarks.php?newBookmark=newBookmark&icon=" +
-              this.icon +
-              "&title=" +
-              this.title +
-              "&location=" +
-              this.siteLocation
+            this.icon +
+            "&title=" +
+            this.title +
+            "&location=" +
+            this.siteLocation
           )
           .then(() => {//response
             this.$emit("updateSidebar");
@@ -135,7 +136,7 @@ h1 {
 }
 
 ion-icon {
-font-size: 1.125rem;
+  font-size: 1.125rem;
 }
 
 ion-icon.before-title {
@@ -156,15 +157,15 @@ ion-icon.before-title {
 }
 
 ion-toolbar {
-  --background: #f8fafc !important;
+ /* --background: #f8fafc !important;*/
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
 }
 
 @media (prefers-color-scheme: dark) {
-  ion-toolbar {
+ /* ion-toolbar {
     --background: #0f172a !important;
-  }
+  }*/
 
   .title-container {
     color: #fff;
@@ -176,7 +177,7 @@ ion-toolbar {
   display: inline;
 }
 
-.actions > ion-icon {
+.actions>ion-icon {
   margin-right: 5px;
 }
 
@@ -191,9 +192,11 @@ ion-toolbar {
   0% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.5);
   }
+
   100% {
     transform: scale(1);
   }

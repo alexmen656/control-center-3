@@ -203,6 +203,27 @@ if (!defined('VERCEL_HELPER_LOADED')) {
         public function deleteEnvironmentVariable($projectId, $envId) {
             return $this->makeRequest("/projects/{$projectId}/env/{$envId}", 'DELETE', null, 'v9');
         }
+        
+        // Domain methods
+        public function getDomains($projectId) {
+            return $this->makeRequest("/projects/{$projectId}/domains", 'GET', null, 'v9');
+        }
+        
+        public function addDomain($projectId, $domain) {
+            $data = [
+                'name' => $domain
+            ];
+            
+            return $this->makeRequest("/projects/{$projectId}/domains", 'POST', $data, 'v9');
+        }
+        
+        public function removeDomain($projectId, $domain) {
+            return $this->makeRequest("/projects/{$projectId}/domains/{$domain}", 'DELETE', null, 'v9');
+        }
+        
+        public function verifyDomain($projectId, $domain) {
+            return $this->makeRequest("/projects/{$projectId}/domains/{$domain}/verify", 'POST', null, 'v9');
+        }
     }
 }
 
@@ -214,6 +235,13 @@ class VercelHelper {
         $this->userID = $userID;
         $credentials = getVercelCredentials($userID);
         $this->vercelAPI = new VercelAPIHelper($credentials['token']);
+    }
+    
+    /**
+     * Get the VercelAPI instance for direct access
+     */
+    public function getVercelAPI() {
+        return $this->vercelAPI;
     }
     
     /**
@@ -446,6 +474,43 @@ class VercelHelper {
                 'synced_apis' => $results
             ];
             
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+    
+    // Domain methods
+    public function addDomainToProject($project, $codespace, $domain) {
+        try {
+            $projectInfo = $this->getVercelProjectInfo($project, $codespace);
+            return $this->vercelAPI->addDomain($projectInfo['id'], $domain);
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+    
+    public function removeDomainFromProject($project, $codespace, $domain) {
+        try {
+            $projectInfo = $this->getVercelProjectInfo($project, $codespace);
+            return $this->vercelAPI->removeDomain($projectInfo['id'], $domain);
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+    
+    public function getProjectDomains($project, $codespace) {
+        try {
+            $projectInfo = $this->getVercelProjectInfo($project, $codespace);
+            return $this->vercelAPI->getDomains($projectInfo['id']);
         } catch (Exception $e) {
             return [
                 'success' => false,
