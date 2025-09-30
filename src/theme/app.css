@@ -398,7 +398,8 @@
       left: 0 !important;
       right: 0 !important;
       z-index: 1000 !important;
-      height: 56px !important;
+      height: calc(56px + env(safe-area-inset-top, 0px)) !important;
+      padding-top: env(safe-area-inset-top, 0px) !important;
     }
     
     ion-header ion-toolbar {
@@ -482,8 +483,8 @@
   /* Fix mobile header positioning */
   @media only screen and (max-width: 600px) {
     #main-content {
-      margin-top: 56px !important; /* Increased margin for mobile */
-      min-height: calc(100vh - 56px);
+      margin-top: calc(56px + env(safe-area-inset-top, 0px)) !important;
+      min-height: calc(100vh - 56px - env(safe-area-inset-top, 0px));
     }
   }
   
@@ -568,21 +569,21 @@
   
   /* Add bottom padding to main content when touch bar is visible */
   .has-touch-bar #main-content {
-    padding-bottom: calc(84px + env(safe-area-inset-bottom, 20px)) !important;
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 10px)) !important;
   }
   
   .has-touch-bar #main-content ion-router-outlet {
-    margin-bottom: calc(84px + env(safe-area-inset-bottom, 20px)) !important;
+    margin-bottom: calc(60px + env(safe-area-inset-bottom, 10px)) !important;
   }
   
   /* iPhone X and newer home indicator accommodation */
   @supports (padding-bottom: env(safe-area-inset-bottom)) {
     .has-touch-bar #main-content {
-      padding-bottom: calc(104px + env(safe-area-inset-bottom)) !important;
+      padding-bottom: calc(70px + env(safe-area-inset-bottom)) !important;
     }
     
     .has-touch-bar #main-content ion-router-outlet {
-      margin-bottom: calc(104px + env(safe-area-inset-bottom)) !important;
+      margin-bottom: calc(70px + env(safe-area-inset-bottom)) !important;
     }
   }
   

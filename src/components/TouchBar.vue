@@ -2,23 +2,23 @@
   <div v-if="showTouchBar" class="touch-bar" :class="{ 'touch-bar-dark': isDarkMode }">
     <div class="touch-bar-content">
       <div class="touch-bar-item" @click="goHome">
-        <ion-icon name="home-outline" :class="{ active: isActive('/') }"></ion-icon>
+        <ion-icon :icon="homeOutline" :class="{ active: isActive('/') }"></ion-icon>
         <span class="touch-bar-label">Home</span>
       </div>
       <div class="touch-bar-item" @click="goToProjects">
-        <ion-icon name="folder-outline" :class="{ active: isActive('/manage/projects') || isActive('/info/projects') || isActive('/new/project') }"></ion-icon>
+        <ion-icon :icon="folderOutline" :class="{ active: isActive('/manage/projects') || isActive('/info/projects') || isActive('/new/project') }"></ion-icon>
         <span class="touch-bar-label">Projects</span>
       </div>
       <div class="touch-bar-item" @click="goToTools">
-        <ion-icon name="construct-outline" :class="{ active: isActive('/info') && !isActive('/info/projects') }"></ion-icon>
+        <ion-icon :icon="constructOutline" :class="{ active: isActive('/info') && !isActive('/info/projects') }"></ion-icon>
         <span class="touch-bar-label">Tools</span>
       </div>
       <div class="touch-bar-item" @click="goToBookmarks">
-        <ion-icon name="bookmark-outline" :class="{ active: isActive('/bookmarks') }"></ion-icon>
+        <ion-icon :icon="bookmarkOutline" :class="{ active: isActive('/bookmarks') }"></ion-icon>
         <span class="touch-bar-label">Bookmarks</span>
       </div>
       <div class="touch-bar-item" @click="goToAccount">
-        <ion-icon name="person-outline" :class="{ active: isActive('/my-account') }"></ion-icon>
+        <ion-icon :icon="personOutline" :class="{ active: isActive('/my-account') }"></ion-icon>
         <span class="touch-bar-label">Account</span>
       </div>
     </div>
@@ -28,9 +28,25 @@
 <script>
 import { defineComponent } from 'vue';
 import { isPlatform } from '@ionic/vue';
+import { 
+  homeOutline, 
+  folderOutline, 
+  constructOutline, 
+  bookmarkOutline, 
+  personOutline 
+} from 'ionicons/icons';
 
 export default defineComponent({
   name: 'TouchBar',
+  setup() {
+    return {
+      homeOutline,
+      folderOutline,
+      constructOutline,
+      bookmarkOutline,
+      personOutline
+    };
+  },
   computed: {
     showTouchBar() {
       // Show on iOS and Android mobile devices
@@ -78,8 +94,8 @@ export default defineComponent({
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  height: 84px;
-  padding-bottom: env(safe-area-inset-bottom, 20px);
+  height: 60px;
+  padding-bottom: env(safe-area-inset-bottom, 10px);
   box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -93,7 +109,7 @@ export default defineComponent({
   display: flex;
   justify-content: space-around;
   align-items: center;
-  height: 64px;
+  height: 50px;
   padding: 0 16px;
   max-width: 500px;
   margin: 0 auto;
@@ -104,11 +120,11 @@ export default defineComponent({
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 12px;
-  border-radius: 12px;
+  padding: 4px 8px;
+  border-radius: 8px;
   transition: all 0.2s ease;
   cursor: pointer;
-  min-width: 60px;
+  min-width: 50px;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -118,10 +134,10 @@ export default defineComponent({
 }
 
 .touch-bar-item ion-icon {
-  font-size: 24px;
+  font-size: 20px;
   color: var(--ion-color-medium);
   transition: color 0.2s ease;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .touch-bar-item ion-icon.active {
@@ -129,11 +145,11 @@ export default defineComponent({
 }
 
 .touch-bar-label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 500;
   color: var(--ion-color-medium);
   transition: color 0.2s ease;
-  margin-top: 2px;
+  margin-top: 1px;
   text-align: center;
   line-height: 1;
 }
@@ -151,8 +167,8 @@ export default defineComponent({
 /* iPhone X and newer home indicator accommodation */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .touch-bar {
-    padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
-    height: calc(84px + env(safe-area-inset-bottom));
+    padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
+    height: calc(60px + env(safe-area-inset-bottom));
   }
 }
 
@@ -163,16 +179,16 @@ export default defineComponent({
   }
   
   .touch-bar-item {
-    min-width: 50px;
-    padding: 6px 8px;
+    min-width: 45px;
+    padding: 3px 6px;
   }
   
   .touch-bar-item ion-icon {
-    font-size: 22px;
+    font-size: 18px;
   }
   
   .touch-bar-label {
-    font-size: 9px;
+    font-size: 8px;
   }
 }
 

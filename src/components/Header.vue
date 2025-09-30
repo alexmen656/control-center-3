@@ -184,6 +184,8 @@ ion-toolbar {
     left: 0 !important;
     right: 0 !important;
     z-index: 1000 !important;
+    height: calc(56px + env(safe-area-inset-top, 0px)) !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
   }
   
   ion-toolbar,
