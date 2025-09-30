@@ -15,7 +15,7 @@
                 v-if="showProjectSideBar" @sidebarToggled="onSidebarToggled"></ProjectSideBar>
             </ion-content>
           </ion-menu>
-          <div id="main-content">
+          <div id="main-content" :class="{ 'has-touch-bar': showTouchBar }">
          <!--  <SiteTitle v-if="showSiteTitle" :icon="page.icon" :title="page.title" @updateSidebar="updateSidebar()" />--> 
             <ion-router-outlet v-if="page.title" @updateSidebar="updateSidebar()" :class="{
               showTitle: showTitle,
@@ -27,6 +27,8 @@
             
           </div>
         </ion-split-pane>
+        <!-- TouchBar for mobile devices -->
+        <TouchBar v-if="showTouchBar" />
       </ion-content>
       <!--<div class="offline" v-if="!isOnline"><h6>You are offline!</h6></div>-->
       <ion-footer v-if="!isOnline" class="offline" collapse="fade">
@@ -47,6 +49,7 @@ import SiteHeader from "@/components/Header.vue";
 import SideBar from "@/components/SideBar.vue";
 //import SiteTitle from "@/components/SiteTitle.vue";
 import ProjectSideBar from "@/components/ProjectSideBar.vue";
+import TouchBar from "@/components/TouchBar.vue";
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
 import { initializeApp } from "firebase/app";
 import { useRoute } from "vue-router";
@@ -79,6 +82,7 @@ export default defineComponent({
     SiteHeader,
     SideBar,
     ProjectSideBar,
+    TouchBar,
     //SiteTitle,
     LoadingSpinner,
   },
@@ -147,6 +151,18 @@ export default defineComponent({
     },
     showTitle() {
       return this.page.showTitle === true || this.page.showTitle === "true";
+    },
+    showTouchBar() {
+      // Show TouchBar on mobile platforms when user is logged in and account is active
+      return (
+        (isPlatform('ios') || isPlatform('android') || 
+         (isPlatform('mobile') && window.innerWidth <= 768)) &&
+        this.token && 
+        this.account_active && 
+        this.isJwtValid && 
+        this.$route.path !== "/pin" && 
+        this.$route.path !== "/pin/"
+      );
     },
   },
   watch: {

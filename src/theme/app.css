@@ -391,6 +391,35 @@
       display: none;
     }
     
+    /* Fix mobile header positioning and styling */
+    ion-header {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      z-index: 1000 !important;
+      height: 56px !important;
+    }
+    
+    ion-header ion-toolbar {
+      --background: #eff3f6 !important;
+      background: #eff3f6 !important;
+      height: 56px !important;
+      --min-height: 56px !important;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Dark mode mobile header */
+    @media (prefers-color-scheme: dark) {
+      ion-header ion-toolbar {
+        --background: #1e1e1e !important;
+        background: #1e1e1e !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+      }
+    }
+    
     /* Adjust padding for mobile */
     /*#main-content {
       padding: 8px 8px 0 8px;
@@ -448,6 +477,14 @@
     background: #eff3f6; /* Same as header background */
     min-height: calc(100vh - 48px);
   /*  padding: 16px 16px 0 16px; /* Add padding to create space around content */
+  }
+  
+  /* Fix mobile header positioning */
+  @media only screen and (max-width: 600px) {
+    #main-content {
+      margin-top: 56px !important; /* Increased margin for mobile */
+      min-height: calc(100vh - 56px);
+    }
   }
   
   /* Content wrapper with rounded corners */
@@ -526,6 +563,26 @@
   @media (prefers-color-scheme: dark) {
     ion-split-pane {
       --background: #1e1e1e;
+    }
+  }
+  
+  /* Add bottom padding to main content when touch bar is visible */
+  .has-touch-bar #main-content {
+    padding-bottom: calc(84px + env(safe-area-inset-bottom, 20px)) !important;
+  }
+  
+  .has-touch-bar #main-content ion-router-outlet {
+    margin-bottom: calc(84px + env(safe-area-inset-bottom, 20px)) !important;
+  }
+  
+  /* iPhone X and newer home indicator accommodation */
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .has-touch-bar #main-content {
+      padding-bottom: calc(104px + env(safe-area-inset-bottom)) !important;
+    }
+    
+    .has-touch-bar #main-content ion-router-outlet {
+      margin-bottom: calc(104px + env(safe-area-inset-bottom)) !important;
     }
   }
   

@@ -175,4 +175,35 @@ ion-toolbar {
   --padding-start: 8px;
   --padding-end: 8px;
 }
+
+/* Mobile header improvements */
+@media only screen and (max-width: 600px) {
+  ion-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+  }
+  
+  ion-toolbar,
+  .header {
+    height: 56px !important;
+    --min-height: 56px !important;
+    --background: #eff3f6 !important;
+    background: #eff3f6 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    ion-toolbar,
+    .header {
+      --background: #1e1e1e !important;
+      background: #1e1e1e !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    }
+  }
+}
 </style>
