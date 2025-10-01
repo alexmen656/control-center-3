@@ -549,7 +549,6 @@ export default {
           this.error = res.data.error;
           return;
         }
-
         this.downloads = res.data.downloads || [];
         this.stats = res.data.stats || this.getEmptyStats();
         this.lastUpdate = res.data.last_updated;
@@ -558,14 +557,16 @@ export default {
         this.filteredData = [...this.downloads];
         this.sortData();
         
-        // Wait for DOM update before rendering charts
+        this.loading = false;
+        
+        // Wait for DOM to fully render before creating charts
         await this.$nextTick();
-        await new Promise(resolve => setTimeout(resolve, 100)); // Extra delay to ensure refs are ready
-        this.renderAllCharts();
+        setTimeout(() => {
+          this.renderAllCharts();
+        }, 200);
       } catch (e) {
         console.error('Error loading downloads:', e);
         this.error = e.message || 'Fehler beim Laden der Daten';
-      } finally {
         this.loading = false;
       }
     },
