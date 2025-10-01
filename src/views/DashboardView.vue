@@ -29,6 +29,7 @@
           :charts="charts"
           :editView="editView"
           @deleteChart="deleteChart"
+          @updateCharts="updateCharts"
         />
 
         <!-- Empty State -->
@@ -606,6 +607,21 @@ export default defineComponent({
         })
       );
       this.loadCharts();
+    },
+    async updateCharts(newCharts) {
+      // Update local charts array
+      this.charts = newCharts;
+      
+      // Save to backend
+      await this.$axios.post(
+        "dashboard.php",
+        this.$qs.stringify({
+          update_dashboard: "update_dashboard",
+          dashboard: this.$route.params.dashboard,
+          project: this.$route.params.project,
+          charts: JSON.stringify(newCharts),
+        })
+      );
     },
     async loadCharts() {
       this.charts = [];
