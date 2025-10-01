@@ -118,12 +118,20 @@ class AppStoreConnectAPI {
             $productType = $productIdx !== false ? $fields[$productIdx] : '';
             if ($productType && !in_array($productType, ['1F', '1', 'F1'])) continue;
             
+            // Get values with proper fallbacks
+            $version = $versionIdx !== false && !empty($fields[$versionIdx]) ? $fields[$versionIdx] : '';
+            $platform = $platformIdx !== false && !empty($fields[$platformIdx]) ? $this->mapPlatform($fields[$platformIdx]) : '';
+            $country = $countryIdx !== false && !empty($fields[$countryIdx]) ? $fields[$countryIdx] : 'XX';
+            
+            // Skip entries with missing critical data
+            if (empty($version) || empty($platform)) continue;
+            
             $downloads[] = [
                 'date' => $fields[$dateIdx],
                 'count' => (int)$fields[$countIdx],
-                'version' => $versionIdx !== false ? $fields[$versionIdx] : 'Unknown',
-                'country' => $countryIdx !== false ? $fields[$countryIdx] : 'Unknown',
-                'platform' => $platformIdx !== false ? $this->mapPlatform($fields[$platformIdx]) : 'Unknown',
+                'version' => $version,
+                'country' => $country,
+                'platform' => $platform,
                 'price' => $priceIdx !== false ? (float)$fields[$priceIdx] : 0,
                 'currency' => $currencyIdx !== false ? $fields[$currencyIdx] : 'USD'
             ];
@@ -139,10 +147,12 @@ class AppStoreConnectAPI {
             'iPod touch' => 'iOS',
             'Apple TV' => 'tvOS',
             'Apple Watch' => 'watchOS',
-            'Mac' => 'macOS'
+            'Mac' => 'macOS',
+            'Desktop' => 'macOS'
         ];
         
-        return $platformMap[$platform] ?? $platform;
+        // Return mapped platform or original if not found
+        return isset($platformMap[$platform]) ? $platformMap[$platform] : $platform;
     }
     
     public function getDownloads($period = 30) {
@@ -152,8 +162,13 @@ class AppStoreConnectAPI {
         $startDate->sub(new DateInterval("P{$period}D"));
         
         // Fetch data for each day in the period
-        for ($date = clone $startDate; $date <= $endDate; $date->add(new DateInterval('P1D'))) {
-            $reportDate = $date->format('Y-m-d');
+        $currentDate = clone $startDate;
+        $failedDates = 0;
+        $maxFailures = 5; // Stop if too many consecutive failures
+        
+        while ($currentDate <= $endDate && $failedDates < $maxFailures) {
+            $reportDate = $currentDate->format('Y-m-d');
+            
             try {
                 $url = 'https://api.appstoreconnect.apple.com/v1/salesReports?' . 
                        'filter[reportType]=SALES&' .
@@ -161,19 +176,35 @@ class AppStoreConnectAPI {
                        'filter[frequency]=DAILY&' .
                        'filter[vendorNumber]=' . $this->vendor_number . '&' .
                        'filter[reportDate]=' . $reportDate;
+                       
                 $response = $this->makeRequest($url);
+                
+                if ($response === false) {
+                    // 404 - data not available for this date, skip silently
+                    $currentDate->add(new DateInterval('P1D'));
+                    $failedDates = 0; // Reset failure counter on 404
+                    continue;
+                }
+                
                 $tsv = $this->unzipAndParseTSV($response);
                 $dayDownloads = $this->parseTSVData($tsv);
-                $downloads = array_merge($downloads, $dayDownloads);
-                // Only add delay for periods less than 90 days
+                
+                if (!empty($dayDownloads)) {
+                    $downloads = array_merge($downloads, $dayDownloads);
+                    $failedDates = 0; // Reset failure counter on success
+                }
+                
+                // Only add delay for shorter periods to speed up loading
                 if ($period < 90) {
-                    usleep(100000); // 0.1 seconds
+                    usleep(50000); // 0.05 seconds
                 }
             } catch (Exception $e) {
-                // Log error but continue with next date
                 error_log("Failed to fetch data for $reportDate: " . $e->getMessage());
-                continue;
+                $failedDates++;
+                // Continue with next date even on error
             }
+            
+            $currentDate->add(new DateInterval('P1D'));
         }
         
         return $downloads;
