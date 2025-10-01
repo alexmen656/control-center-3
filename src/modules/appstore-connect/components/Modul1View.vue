@@ -19,6 +19,10 @@
           </div>
           
           <div class="action-group-right">
+            <button class="action-btn" @click="goToConfig">
+              <ion-icon name="settings-outline"></ion-icon>
+              App-Auswahl
+            </button>
             <button class="action-btn" @click="refreshData">
               <ion-icon name="refresh-outline"></ion-icon>
               Aktualisieren
@@ -404,6 +408,7 @@ export default {
     return {
       downloads: [],
       filteredData: [],
+      selectedApp: '',
       stats: {
         total: 0,
         dailyAverage: 0,
@@ -492,6 +497,7 @@ export default {
   },
   
   mounted() {
+    this.loadSavedConfig();
     this.loadDownloads();
   },
 
@@ -500,12 +506,31 @@ export default {
   },
   
   methods: {
+    loadSavedConfig() {
+      const saved = localStorage.getItem('appstore_selected_app');
+      if (saved) {
+        this.selectedApp = saved;
+      }
+    },
+
+    goToConfig() {
+      this.$router.push('appstore-connect/config');
+    },
+
     async loadDownloads() {
       this.loading = true;
       this.error = null;
       
       try {
-        const res = await this.$axios.get(`appstore_downloads.php?period=${this.selectedPeriod}`);
+        const params = new URLSearchParams({
+          period: this.selectedPeriod
+        });
+        
+        if (this.selectedApp) {
+          params.append('app', this.selectedApp);
+        }
+        
+        const res = await this.$axios.get(`appstore_downloads.php?${params.toString()}`);
         
         if (res.data.error) {
           this.error = res.data.error;
@@ -520,9 +545,8 @@ export default {
         this.filteredData = [...this.downloads];
         this.sortData();
         
-        this.$nextTick(() => {
-          this.renderAllCharts();
-        });
+        await this.$nextTick();
+        this.renderAllCharts();
       } catch (e) {
         console.error('Error loading downloads:', e);
         this.error = e.message || 'Fehler beim Laden der Daten';
@@ -531,9 +555,41 @@ export default {
       }
     },
 
-    refreshData() {
-      // Clear cache by adding timestamp
-      this.loadDownloads();
+    async refreshData() {
+      this.loading = true;
+      try {
+        const params = new URLSearchParams({
+          period: this.selectedPeriod,
+          nocache: Date.now()
+        });
+        
+        if (this.selectedApp) {
+          params.append('app', this.selectedApp);
+        }
+        
+        const res = await this.$axios.get(`appstore_downloads.php?${params.toString()}`);
+        
+        if (res.data.error) {
+          this.error = res.data.error;
+          return;
+        }
+
+        this.downloads = res.data.downloads || [];
+        this.stats = res.data.stats || this.getEmptyStats();
+        this.lastUpdate = res.data.last_updated;
+        
+        this.calculateAdditionalStats();
+        this.filteredData = [...this.downloads];
+        this.sortData();
+        
+        await this.$nextTick();
+        this.renderAllCharts();
+      } catch (e) {
+        console.error('Error refreshing:', e);
+        this.error = e.message || 'Fehler beim Aktualisieren';
+      } finally {
+        this.loading = false;
+      }
     },
     
     calculateAdditionalStats() {
@@ -637,7 +693,10 @@ export default {
     
     renderCountryChart() {
       const ctx = this.$refs.countryChart;
-      if (!ctx) return;
+      if (!ctx) {
+        console.warn('Country chart ref not found');
+        return;
+      }
       
       const topCountriesData = this.topCountries.slice(0, 8);
       
@@ -687,7 +746,10 @@ export default {
     
     renderPlatformChart() {
       const ctx = this.$refs.platformChart;
-      if (!ctx) return;
+      if (!ctx) {
+        console.warn('Platform chart ref not found');
+        return;
+      }
       
       const platforms = Object.keys(this.platformStats).filter(p => p !== 'Unbekannt');
       const data = platforms.map(p => this.platformStats[p]);
@@ -732,7 +794,10 @@ export default {
     
     renderVersionChart() {
       const ctx = this.$refs.versionChart;
-      if (!ctx) return;
+      if (!ctx) {
+        console.warn('Version chart ref not found');
+        return;
+      }
       
       const versions = Object.keys(this.versionStats).filter(v => v !== 'Unbekannt').slice(0, 10);
       const data = versions.map(v => this.versionStats[v]);
@@ -775,7 +840,10 @@ export default {
     
     renderWeekdayChart() {
       const ctx = this.$refs.weekdayChart;
-      if (!ctx) return;
+      if (!ctx) {
+        console.warn('Weekday chart ref not found');
+        return;
+      }
       
       const weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
       const weekdayData = new Array(7).fill(0);
@@ -1091,10 +1159,11 @@ ion-content.modern-content {
   font-size: 16px;
 }
 
-/* Period Selector */
+/* Period & App Selector */
 .period-selector {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .period-btn {
@@ -1155,40 +1224,62 @@ ion-content.modern-content {
 /* Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .stat-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
-  padding: 20px;
-  box-shadow: var(--shadow);
+  padding: 24px;
+  box-shadow: var(--shadow-md);
   border: 1px solid var(--border);
   display: flex;
   align-items: flex-start;
   gap: 16px;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color), var(--info-color));
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.stat-card:hover::before {
+  opacity: 1;
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius);
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .stat-icon ion-icon {
-  font-size: 24px;
+  font-size: 28px;
+  position: relative;
+  z-index: 1;
 }
 
 .stat-icon.primary {
@@ -1222,26 +1313,30 @@ ion-content.modern-content {
 }
 
 .stat-value {
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 4px;
-  line-height: 1.2;
+  margin-bottom: 6px;
+  line-height: 1.1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  letter-spacing: -0.02em;
 }
 
 .stat-label {
   color: var(--text-secondary);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .stat-subtitle {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .stat-trend {

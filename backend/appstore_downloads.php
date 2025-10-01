@@ -39,7 +39,6 @@ class AppStoreConnectAPI {
     
     private function makeRequest($url) {
         $token = $this->generateJWT();
-        
         $opts = [
             'http' => [
                 'method' => 'GET',
@@ -112,6 +111,7 @@ class AppStoreConnectAPI {
             // If gzip fails, maybe it's already decompressed?
             error_log('Failed to open as gzip, trying as plain text');
             $tsv = file_get_contents($tmpFile);
+            print_r($tsv);
         }
         
         unlink($tmpFile);
@@ -153,44 +153,47 @@ class AppStoreConnectAPI {
             // Map header fields to indices
             $dateIdx = array_search('Begin Date', $header);
             $countIdx = array_search('Units', $header);
-            $versionIdx = array_search('App Version', $header);
+            $versionIdx = array_search('Version', $header);
             $countryIdx = array_search('Country Code', $header);
-            $platformIdx = array_search('Platform', $header);
+            $deviceIdx = array_search('Device', $header);
+            $platformIdx = array_search('Supported Platforms', $header);
             $productIdx = array_search('Product Type Identifier', $header);
             $priceIdx = array_search('Customer Price', $header);
             $currencyIdx = array_search('Customer Currency', $header);
+            $skuIdx = array_search('SKU', $header);
+            $titleIdx = array_search('Title', $header);
             
             if ($dateIdx === false || $countIdx === false) {
                 error_log('Required columns not found in header. Date idx: ' . var_export($dateIdx, true) . ', Count idx: ' . var_export($countIdx, true));
                 continue;
             }
             
-            // Filter product types
-            $productType = $productIdx !== false && isset($fields[$productIdx]) ? $fields[$productIdx] : '';
+            // Filter product types - exclude in-app purchases and subscriptions
+            $productType = $productIdx !== false && isset($fields[$productIdx]) ? trim($fields[$productIdx]) : '';
             
-            // Log first few product types for debugging
-            if ($i <= 5) {
-                error_log('Line ' . $i . ' - Product Type: "' . $productType . '"');
-            }
-            
-            // Exclude only specific types we don't want (in-app purchases, subscriptions, etc.)
-            // Include: 1, 1F, F1 (new downloads), 7, 7F, F7 (updates), 3, 3F (re-downloads), empty
-            // Exclude: IA* (in-app), subscription types, etc.
-            $excludedTypes = ['IA1', 'IA9', 'IAY', 'IAC', 'FI1'];
-            
-            if (!empty($productType) && in_array($productType, $excludedTypes)) {
-                if ($i <= 5) {
-                    error_log('Skipping line ' . $i . ' due to excluded product type: ' . $productType);
-                }
+            // Exclude: IA* (in-app), IAY (subscription), FI1, etc.
+            if (!empty($productType) && (preg_match('/^IA/', $productType) || $productType === 'FI1')) {
                 continue;
             }
             
             // Get values with proper fallbacks
-            $version = $versionIdx !== false && isset($fields[$versionIdx]) && !empty($fields[$versionIdx]) ? $fields[$versionIdx] : 'Unknown';
-            $platform = $platformIdx !== false && isset($fields[$platformIdx]) && !empty($fields[$platformIdx]) ? $this->mapPlatform($fields[$platformIdx]) : 'Unknown';
-            $country = $countryIdx !== false && isset($fields[$countryIdx]) && !empty($fields[$countryIdx]) ? $fields[$countryIdx] : 'XX';
+            $version = $versionIdx !== false && isset($fields[$versionIdx]) && !empty(trim($fields[$versionIdx])) ? trim($fields[$versionIdx]) : 'Unknown';
             
-            // Don't skip entries with missing platform/version - include them as "Unknown"
+            // Get device (iPhone, iPad, Desktop)
+            $device = $deviceIdx !== false && isset($fields[$deviceIdx]) && !empty(trim($fields[$deviceIdx])) ? trim($fields[$deviceIdx]) : '';
+            
+            // Get platform (iOS, macOS, etc.) 
+            $platformRaw = $platformIdx !== false && isset($fields[$platformIdx]) && !empty(trim($fields[$platformIdx])) ? trim($fields[$platformIdx]) : '';
+            
+            // Map platform based on device and platform column
+            $platform = $this->mapPlatform($device, $platformRaw);
+            
+            $country = $countryIdx !== false && isset($fields[$countryIdx]) && !empty(trim($fields[$countryIdx])) ? trim($fields[$countryIdx]) : 'XX';
+            
+            // Get SKU and Title for app identification
+            $sku = $skuIdx !== false && isset($fields[$skuIdx]) ? trim($fields[$skuIdx]) : '';
+            $title = $titleIdx !== false && isset($fields[$titleIdx]) ? trim($fields[$titleIdx]) : '';
+            
             $downloads[] = [
                 'date' => isset($fields[$dateIdx]) ? $fields[$dateIdx] : '',
                 'count' => isset($fields[$countIdx]) ? (int)$fields[$countIdx] : 0,
@@ -198,7 +201,10 @@ class AppStoreConnectAPI {
                 'country' => $country,
                 'platform' => $platform,
                 'price' => $priceIdx !== false && isset($fields[$priceIdx]) ? (float)$fields[$priceIdx] : 0,
-                'currency' => $currencyIdx !== false && isset($fields[$currencyIdx]) ? $fields[$currencyIdx] : 'USD'
+                'currency' => $currencyIdx !== false && isset($fields[$currencyIdx]) ? $fields[$currencyIdx] : 'USD',
+                'sku' => $sku,
+                'title' => $title,
+                'device' => $device
             ];
         }
         
@@ -207,19 +213,36 @@ class AppStoreConnectAPI {
         return $downloads;
     }
     
-    private function mapPlatform($platform) {
-        $platformMap = [
-            'iPhone' => 'iOS',
-            'iPad' => 'iOS',
-            'iPod touch' => 'iOS',
-            'Apple TV' => 'tvOS',
-            'Apple Watch' => 'watchOS',
-            'Mac' => 'macOS',
-            'Desktop' => 'macOS'
-        ];
+    private function mapPlatform($device, $platformRaw) {
+        // Priority: Use Supported Platforms column if available
+        if (!empty($platformRaw)) {
+            $platformRaw = trim($platformRaw);
+            if ($platformRaw === 'iOS') return 'iOS';
+            if ($platformRaw === 'macOS') return 'macOS';
+            if ($platformRaw === 'tvOS') return 'tvOS';
+            if ($platformRaw === 'watchOS') return 'watchOS';
+        }
         
-        // Return mapped platform or original if not found
-        return isset($platformMap[$platform]) ? $platformMap[$platform] : $platform;
+        // Fallback: Map based on device
+        if (!empty($device)) {
+            $device = trim($device);
+            $deviceMap = [
+                'iPhone' => 'iOS',
+                'iPad' => 'iOS',
+                'iPod touch' => 'iOS',
+                'Apple TV' => 'tvOS',
+                'Apple Watch' => 'watchOS',
+                'Mac' => 'macOS',
+                'Desktop' => 'macOS'
+            ];
+            
+            if (isset($deviceMap[$device])) {
+                return $deviceMap[$device];
+            }
+        }
+        
+        // Final fallback
+        return 'Unknown';
     }
     
     public function getDownloads($period = 30) {
@@ -546,18 +569,59 @@ class DownloadAnalytics {
 
 // Main execution
 try {
+    // Get available apps
+    if (isset($_GET['get_apps']) && $_GET['get_apps'] === 'true') {
+        $period = isset($_GET['period']) ? (int)$_GET['period'] : 30;
+        $period = max(1, min(90, $period));
+        
+        $api = new AppStoreConnectAPI($private_key, $key_id, $issuer_id, $vendor_number);
+        $downloads = $api->getDownloads($period);
+        
+        // Extract unique apps
+        $apps = [];
+        $appMap = [];
+        
+        foreach ($downloads as $download) {
+            $sku = $download['sku'];
+            $title = $download['title'];
+            
+            if (!empty($sku) && !isset($appMap[$sku])) {
+                $appMap[$sku] = true;
+                $apps[] = [
+                    'sku' => $sku,
+                    'title' => $title
+                ];
+            }
+        }
+        
+        // Sort by title
+        usort($apps, function($a, $b) {
+            return strcmp($a['title'], $b['title']);
+        });
+        
+        echo json_encode([
+            'apps' => $apps,
+            'count' => count($apps)
+        ]);
+        return;
+    }
+    
     $period = isset($_GET['period']) ? (int)$_GET['period'] : 30;
     $period = max(1, min(90, $period)); // Limit between 1 and 90 days
     
-    // Allow cache bypass for debugging
+    // Get app filter
+    $filterApp = isset($_GET['app']) ? trim($_GET['app']) : '';
+    
+    // Allow cache bypass
     $skipCache = isset($_GET['nocache']) || isset($_GET['refresh']);
     
-    error_log("Starting App Store downloads fetch - Period: $period days, Skip cache: " . ($skipCache ? 'yes' : 'no'));
+    error_log("Starting App Store downloads fetch - Period: $period days, Skip cache: " . ($skipCache ? 'yes' : 'no') . ", App filter: " . ($filterApp ?: 'none'));
     
     $api = new AppStoreConnectAPI($private_key, $key_id, $issuer_id, $vendor_number);
     
-    // Check if we have cached data
-    $cacheFile = "cache/downloads_cache_{$period}.json";
+    // Cache key includes app filter
+    $cacheKey = $filterApp ? "{$period}_{$filterApp}" : $period;
+    $cacheFile = "cache/downloads_cache_{$cacheKey}.json";
     $cacheTime = 3600; // 1 hour cache
     
     if (!$skipCache && file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTime) {
@@ -570,7 +634,16 @@ try {
         error_log("Fetching fresh data from App Store Connect API");
         $downloads = $api->getDownloads($period);
         
-        error_log("Total downloads fetched: " . count($downloads));
+        error_log("Total downloads fetched before filtering: " . count($downloads));
+        
+        // Filter by app if specified
+        if (!empty($filterApp)) {
+            $downloads = array_filter($downloads, function($download) use ($filterApp) {
+                return $download['sku'] === $filterApp;
+            });
+            $downloads = array_values($downloads); // Re-index array
+            error_log("Downloads after app filter: " . count($downloads));
+        }
         
         // Calculate advanced statistics
         $analytics = new DownloadAnalytics($downloads);
@@ -580,6 +653,7 @@ try {
             'downloads' => $downloads,
             'stats' => $stats,
             'period' => $period,
+            'filter_app' => $filterApp,
             'last_updated' => date('Y-m-d H:i:s'),
             'total_records' => count($downloads),
             'from_cache' => false,
