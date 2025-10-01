@@ -150,76 +150,211 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.stat-card {
+/* Modern Design System */
+ion-grid {
+  --ion-grid-padding: 0;
+}
+
+ion-row {
+  gap: 20px;
+  margin: 0;
+}
+
+ion-col {
+  padding: 0;
+}
+
+/* Modern Card Styling */
+ion-card {
+  margin: 0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  border: 1px solid var(--ion-color-step-150, #e2e8f0);
+  background: var(--ion-background-color, #ffffff);
+  transition: all 0.2s ease;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+ion-card:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transform: translateY(-2px);
+}
+
+ion-card-header {
+  padding: 20px 20px 0;
+  background: transparent;
+}
+
+ion-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ion-text-color, #1e293b);
+  margin: 0;
+}
+
+ion-card-content {
+  flex: 1;
+  padding: 20px;
+}
+
+/* Stat Card Styling */
+.stat-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--ion-color-primary), var(--ion-color-secondary));
 }
 
 .stat-card ion-card-content {
-  padding: 20px;
+  padding: 24px;
 }
 
 .stat-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .stat-icon {
-  font-size: 28px;
+  font-size: 32px;
   color: var(--ion-color-primary);
+  opacity: 0.9;
 }
 
 .stat-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--ion-color-medium);
   margin: 0;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
 }
 
 .stat-value {
-  font-size: 2.5rem;
+  font-size: 2.75rem;
   font-weight: 700;
-  color: var(--ion-color-dark);
+  color: var(--ion-text-color, #1e293b);
   margin-bottom: 8px;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-label {
   font-size: 14px;
   color: var(--ion-color-medium);
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  font-weight: 500;
 }
 
 .stat-trend {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  border-radius: 12px;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 .stat-trend.positive {
-  background-color: rgba(16, 185, 129, 0.1);
-  color: var(--ion-color-success);
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #059669;
 }
 
 .stat-trend.negative {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: var(--ion-color-danger);
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
 }
 
 .stat-trend ion-icon {
-  font-size: 16px;
+  font-size: 18px;
 }
 
+/* Delete Button */
+ion-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Dark Mode */
 @media (prefers-color-scheme: dark) {
+  ion-card {
+    background: var(--ion-background-color, #1e293b);
+    border-color: var(--ion-color-step-250, #334155);
+  }
+
+  ion-card-title {
+    color: var(--ion-text-color, #f1f5f9);
+  }
+
   .stat-value {
-    color: var(--ion-color-light);
+    color: var(--ion-text-color, #f1f5f9);
+  }
+
+  .stat-card::before {
+    opacity: 0.8;
+  }
+
+  .stat-trend.positive {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+  }
+
+  .stat-trend.negative {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  ion-row {
+    gap: 16px;
+  }
+
+  .stat-value {
+    font-size: 2.25rem;
+  }
+
+  .stat-icon {
+    font-size: 28px;
+  }
+
+  ion-card-content {
+    padding: 16px;
+  }
+
+  .stat-card ion-card-content {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stat-value {
+    font-size: 2rem;
+  }
+
+  .stat-header {
+    gap: 10px;
+  }
+
+  .stat-title {
+    font-size: 12px;
   }
 }
 </style>
