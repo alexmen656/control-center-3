@@ -120,10 +120,20 @@ export default {
   },
   
   methods: {
-    loadSavedConfig() {
-      const saved = localStorage.getItem('appstore_selected_app');
-      if (saved) {
-        this.selectedApp = saved;
+    async loadSavedConfig() {
+      // Try to load from database first
+      try {
+        const res = await this.$axios.get('appstore_connections.php');
+        if (res.data.connection) {
+          this.selectedApp = res.data.connection.app_sku;
+        }
+      } catch (e) {
+        console.warn('Could not load connection from database:', e);
+        // Fallback to localStorage
+        const saved = localStorage.getItem('appstore_selected_app');
+        if (saved) {
+          this.selectedApp = saved;
+        }
       }
     },
 
@@ -132,7 +142,8 @@ export default {
       this.error = null;
       
       try {
-        const res = await this.$axios.get('appstore_downloads.php?get_apps=true&period=30');
+        // Load apps list with optimized API call
+        const res = await this.$axios.get('appstore_downloads.php?get_apps=true');
         
         if (res.data.error) {
           this.error = res.data.error;
@@ -140,6 +151,11 @@ export default {
         }
 
         this.apps = res.data.apps || [];
+        
+        // Show cache info if available
+        if (res.data.from_cache) {
+          console.log('Apps loaded from cache, cached at:', res.data.cached_at);
+        }
       } catch (e) {
         console.error('Error loading apps:', e);
         this.error = e.message || 'Fehler beim Laden der Apps';
@@ -158,20 +174,43 @@ export default {
       this.saveConfig();
     },
 
-    saveConfig() {
-      if (this.selectedApp) {
-        localStorage.setItem('appstore_selected_app', this.selectedApp);
-      } else {
-        localStorage.removeItem('appstore_selected_app');
+    async saveConfig() {
+      try {
+        if (this.selectedApp) {
+          // Save to database
+          const selectedAppData = this.apps.find(app => app.sku === this.selectedApp);
+          await this.$axios.post('appstore_connections.php', {
+            app_sku: this.selectedApp,
+            app_title: selectedAppData?.title || 'Unknown'
+          });
+          
+          // Also save to localStorage as backup
+          localStorage.setItem('appstore_selected_app', this.selectedApp);
+        } else {
+          // Remove from database
+          await this.$axios.delete('appstore_connections.php');
+          
+          // Remove from localStorage
+          localStorage.removeItem('appstore_selected_app');
+        }
+        
+        // Show success message
+        if (this.$toast) {
+          this.$toast.success('Einstellung gespeichert');
+        }
+      } catch (e) {
+        console.error('Error saving config:', e);
+        if (this.$toast) {
+          this.$toast.error('Fehler beim Speichern');
+        }
       }
-      
-      // Show success message
-      this.$toast?.success('Einstellung gespeichert');
     },
 
     saveAndReturn() {
       this.saveConfig();
-      this.$router.back();
+      setTimeout(() => {
+        this.$router.back();
+      }, 500);
     }
   }
 };

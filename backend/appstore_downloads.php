@@ -569,10 +569,23 @@ class DownloadAnalytics {
 
 // Main execution
 try {
-    // Get available apps
+    // Get available apps - OPTIMIZED: Use cached data from a shorter period
     if (isset($_GET['get_apps']) && $_GET['get_apps'] === 'true') {
-        $period = isset($_GET['period']) ? (int)$_GET['period'] : 30;
-        $period = max(1, min(90, $period));
+        // Use cache for apps list
+        $appsCacheFile = "cache/apps_list_cache.json";
+        $appsCacheTime = 3600 * 6; // 6 hours cache for apps list
+        
+        if (file_exists($appsCacheFile) && (time() - filemtime($appsCacheFile)) < $appsCacheTime) {
+            // Return cached apps list
+            $cachedApps = json_decode(file_get_contents($appsCacheFile), true);
+            $cachedApps['from_cache'] = true;
+            $cachedApps['cached_at'] = date('Y-m-d H:i:s', filemtime($appsCacheFile));
+            echo json_encode($cachedApps);
+            return;
+        }
+        
+        // Fetch from API with shorter period for faster loading
+        $period = 7; // Only 7 days needed to get app list
         
         $api = new AppStoreConnectAPI($private_key, $key_id, $issuer_id, $vendor_number);
         $downloads = $api->getDownloads($period);
@@ -599,10 +612,19 @@ try {
             return strcmp($a['title'], $b['title']);
         });
         
-        echo json_encode([
+        $result = [
             'apps' => $apps,
-            'count' => count($apps)
-        ]);
+            'count' => count($apps),
+            'from_cache' => false
+        ];
+        
+        // Cache the apps list
+        if (!is_dir('cache')) {
+            mkdir('cache', 0755, true);
+        }
+        file_put_contents($appsCacheFile, json_encode($result));
+        
+        echo json_encode($result);
         return;
     }
     

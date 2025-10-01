@@ -409,6 +409,7 @@ export default {
       downloads: [],
       filteredData: [],
       selectedApp: '',
+      availableApps: [], // Store available apps separately
       stats: {
         total: 0,
         dailyAverage: 0,
@@ -506,7 +507,19 @@ export default {
   },
   
   methods: {
-    loadSavedConfig() {
+    async loadSavedConfig() {
+      // Try to load from database first
+      try {
+        const res = await this.$axios.get('appstore_connections.php');
+        if (res.data.connection) {
+          this.selectedApp = res.data.connection.app_sku;
+          return;
+        }
+      } catch (e) {
+        console.warn('Could not load connection from database:', e);
+      }
+      
+      // Fallback to localStorage
       const saved = localStorage.getItem('appstore_selected_app');
       if (saved) {
         this.selectedApp = saved;
@@ -545,7 +558,9 @@ export default {
         this.filteredData = [...this.downloads];
         this.sortData();
         
+        // Wait for DOM update before rendering charts
         await this.$nextTick();
+        await new Promise(resolve => setTimeout(resolve, 100)); // Extra delay to ensure refs are ready
         this.renderAllCharts();
       } catch (e) {
         console.error('Error loading downloads:', e);
@@ -582,7 +597,9 @@ export default {
         this.filteredData = [...this.downloads];
         this.sortData();
         
+        // Wait for DOM update before rendering charts
         await this.$nextTick();
+        await new Promise(resolve => setTimeout(resolve, 100)); // Extra delay to ensure refs are ready
         this.renderAllCharts();
       } catch (e) {
         console.error('Error refreshing:', e);
@@ -624,11 +641,43 @@ export default {
     
     renderAllCharts() {
       this.destroyAllCharts();
-      this.renderTimelineChart();
-      this.renderCountryChart();
-      this.renderPlatformChart();
-      this.renderVersionChart();
-      this.renderWeekdayChart();
+      
+      // Check if we have data
+      if (!this.downloads || this.downloads.length === 0) {
+        console.warn('No downloads data available for charts');
+        return;
+      }
+      
+      // Render each chart with error handling
+      try {
+        this.renderTimelineChart();
+      } catch (e) {
+        console.error('Error rendering timeline chart:', e);
+      }
+      
+      try {
+        this.renderCountryChart();
+      } catch (e) {
+        console.error('Error rendering country chart:', e);
+      }
+      
+      try {
+        this.renderPlatformChart();
+      } catch (e) {
+        console.error('Error rendering platform chart:', e);
+      }
+      
+      try {
+        this.renderVersionChart();
+      } catch (e) {
+        console.error('Error rendering version chart:', e);
+      }
+      
+      try {
+        this.renderWeekdayChart();
+      } catch (e) {
+        console.error('Error rendering weekday chart:', e);
+      }
     },
     
     destroyAllCharts() {
@@ -640,7 +689,17 @@ export default {
     
     renderTimelineChart() {
       const ctx = this.$refs.timelineChart;
-      if (!ctx) return;
+      if (!ctx) {
+        console.warn('Timeline chart ref not found');
+        return;
+      }
+      
+      // Get the canvas context
+      const canvasCtx = ctx.getContext ? ctx.getContext('2d') : null;
+      if (!canvasCtx) {
+        console.warn('Could not get canvas context for timeline chart');
+        return;
+      }
       
       // Group by date
       const dateData = {};
@@ -652,7 +711,7 @@ export default {
       const sortedDates = Object.keys(dateData).sort();
       const data = sortedDates.map(date => dateData[date]);
       
-      this.charts.timeline = new Chart(ctx, {
+      this.charts.timeline = new Chart(canvasCtx, {
         type: 'line',
         data: {
           labels: sortedDates.map(date => this.formatDate(date)),
@@ -698,6 +757,12 @@ export default {
         return;
       }
       
+      const canvasCtx = ctx.getContext ? ctx.getContext('2d') : null;
+      if (!canvasCtx) {
+        console.warn('Could not get canvas context for country chart');
+        return;
+      }
+      
       const topCountriesData = this.topCountries.slice(0, 8);
       
       const colors = [
@@ -705,7 +770,7 @@ export default {
         '#059669', '#10b981', '#34d399', '#6ee7b7'
       ];
       
-      this.charts.country = new Chart(ctx, {
+      this.charts.country = new Chart(canvasCtx, {
         type: 'doughnut',
         data: {
           labels: topCountriesData.map(c => this.getCountryName(c.code)),
@@ -751,10 +816,16 @@ export default {
         return;
       }
       
+      const canvasCtx = ctx.getContext ? ctx.getContext('2d') : null;
+      if (!canvasCtx) {
+        console.warn('Could not get canvas context for platform chart');
+        return;
+      }
+      
       const platforms = Object.keys(this.platformStats).filter(p => p !== 'Unbekannt');
       const data = platforms.map(p => this.platformStats[p]);
       
-      this.charts.platform = new Chart(ctx, {
+      this.charts.platform = new Chart(canvasCtx, {
         type: 'doughnut',
         data: {
           labels: platforms,
@@ -799,10 +870,16 @@ export default {
         return;
       }
       
+      const canvasCtx = ctx.getContext ? ctx.getContext('2d') : null;
+      if (!canvasCtx) {
+        console.warn('Could not get canvas context for version chart');
+        return;
+      }
+      
       const versions = Object.keys(this.versionStats).filter(v => v !== 'Unbekannt').slice(0, 10);
       const data = versions.map(v => this.versionStats[v]);
       
-      this.charts.version = new Chart(ctx, {
+      this.charts.version = new Chart(canvasCtx, {
         type: 'bar',
         data: {
           labels: versions,
@@ -845,6 +922,12 @@ export default {
         return;
       }
       
+      const canvasCtx = ctx.getContext ? ctx.getContext('2d') : null;
+      if (!canvasCtx) {
+        console.warn('Could not get canvas context for weekday chart');
+        return;
+      }
+      
       const weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
       const weekdayData = new Array(7).fill(0);
       
@@ -854,7 +937,7 @@ export default {
         weekdayData[dayIndex] += item.count;
       });
       
-      this.charts.weekday = new Chart(ctx, {
+      this.charts.weekday = new Chart(canvasCtx, {
         type: 'bar',
         data: {
           labels: weekdays,
