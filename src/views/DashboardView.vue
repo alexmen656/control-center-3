@@ -1,8 +1,8 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="stats-chart" title="Dashboard" bg="transparent"/>
-      
+      <SiteTitle icon="stats-chart" title="Dashboard" bg="transparent" />
+
       <div class="page-container">
         <!-- Action Bar -->
         <div class="action-bar">
@@ -25,12 +25,8 @@
         </div>
 
         <!-- Dashboard Display -->
-        <DashboardDisplay
-          :charts="charts"
-          :editView="editView"
-          @deleteChart="deleteChart"
-          @updateCharts="updateCharts"
-        />
+        <DashboardDisplay :charts="charts" :editView="editView" @deleteChart="deleteChart"
+          @updateCharts="updateCharts" />
 
         <!-- Empty State -->
         <div v-if="charts.length === 0" class="no-data-state">
@@ -55,7 +51,7 @@
               <ion-icon icon="close-outline"></ion-icon>
             </button>
           </div>
-          
+
           <div class="custom-modal-body">
             <div class="form-group">
               <label class="form-label">Widget Typ</label>
@@ -78,7 +74,7 @@
                   </option>
                 </select>
               </div>
-              
+
               <div v-if="module" class="form-group">
                 <label class="form-label">Widget</label>
                 <select v-model="widget" class="modern-select">
@@ -114,7 +110,7 @@
                   </option>
                 </select>
               </div>
-              
+
               <div v-if="chart_type" class="form-group">
                 <label class="form-label">Form</label>
                 <select v-model="form" class="modern-select">
@@ -124,7 +120,7 @@
                   </option>
                 </select>
               </div>
-              
+
               <div v-if="form" class="form-group">
                 <label class="form-label">Datenfeld</label>
                 <select v-model="form_data" class="modern-select">
@@ -134,7 +130,7 @@
                   </option>
                 </select>
               </div>
-              
+
               <div v-if="form_data" class="form-group">
                 <label class="form-label">Label</label>
                 <select v-model="form_label" class="modern-select">
@@ -144,7 +140,7 @@
                   </option>
                 </select>
               </div>
-              
+
               <div v-if="form_label && chart_type == 'date_bar_chart'" class="form-group">
                 <label class="form-label">Zeitstempel</label>
                 <select v-model="date_stamps" class="modern-select">
@@ -154,7 +150,7 @@
                   </option>
                 </select>
               </div>
-              
+
               <div v-if="date_stamps && chart_type == 'date_bar_chart'" class="form-group">
                 <label class="form-label">Methode</label>
                 <select v-model="date_bar_method" class="modern-select">
@@ -166,7 +162,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="form-actions">
             <button class="action-btn" @click="cancel()">Abbrechen</button>
             <button class="action-btn primary" @click="confirm()">Widget hinzufügen</button>
@@ -344,7 +340,7 @@ export default defineComponent({
   created() {
     // Load available modules for the selector
     this.loadModuleOptions();
-    
+
     this.$axios
       .post(
         "form.php",
@@ -437,7 +433,7 @@ export default defineComponent({
         this.label_select.options = options;
       }
     );
-    
+
     // Watch module selection to load widgets
     this.$watch(
       () => this.module,
@@ -462,7 +458,7 @@ export default defineComponent({
         label: module.moduleName
       }));
     },
-    
+
     cancel() {
       // this.$refs.modal.$el.dismiss(null, "cancel");
       this.setOpen(false);
@@ -476,13 +472,13 @@ export default defineComponent({
           alert("Bitte wähle ein Modul und ein Widget aus");
           return;
         }
-        
+
         const widgetConfig = {
           chart_type: "module_widget",
           module: this.module,
           widget: this.widget,
         };
-        
+
         let chartsData = localStorage.getItem("charts");
         if (chartsData) {
           chartsData = JSON.parse(chartsData);
@@ -491,7 +487,7 @@ export default defineComponent({
         } else {
           await localStorage.setItem("charts", JSON.stringify([widgetConfig]));
         }
-        
+
         await this.$axios.post(
           "dashboard.php",
           this.$qs.stringify({
@@ -503,7 +499,7 @@ export default defineComponent({
         );
 
         this.loadCharts();
-        
+
         this.module = "";
         this.widget = "";
       } else if (this.comp === "chart") {
@@ -611,7 +607,7 @@ export default defineComponent({
     async updateCharts(newCharts) {
       // Update local charts array
       this.charts = newCharts;
-      
+
       // Save to backend
       await this.$axios.post(
         "dashboard.php",
@@ -639,15 +635,15 @@ export default defineComponent({
         if (chart.chart_type === "module_widget") {
           try {
             const widget = dashboardRegistry.getWidget(chart.module, chart.widget);
-            
+
             if (widget) {
               const widgetData = await widget.getData({
                 period: 30,
                 project: this.$route.params.project
               });
-              
+
               let new_chart = {};
-              
+
               if (widget.type === 'stat') {
                 // Stat widget
                 new_chart = {
@@ -664,14 +660,14 @@ export default defineComponent({
                   'bar': 'bar_chart',
                   'line': 'date_bar_chart'
                 };
-                
+
                 new_chart = {
                   chart_type: chartTypeMap[widget.config?.chartType] || 'bar_chart',
                   title: widget.title,
                   data: widgetData
                 };
               }
-              
+
               await this.charts.push(new_chart);
             }
           } catch (error) {
@@ -1254,6 +1250,7 @@ ion-content.modern-content {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -1264,6 +1261,7 @@ ion-content.modern-content {
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);

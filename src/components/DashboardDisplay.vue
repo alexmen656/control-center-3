@@ -1,18 +1,10 @@
 <template>
   <div class="dashboard-grid" ref="gridContainer">
     <!-- Stat Widgets (4x2 grid cells - small info cards) -->
-    <div
-      v-for="(chart, index) in statCharts"
-      :key="'stat-' + index"
-      class="grid-item stat-widget"
+    <div v-for="(chart, index) in statCharts" :key="'stat-' + index" class="grid-item stat-widget"
       :class="{ 'edit-mode': editView, 'dragging': draggingIndex === charts.indexOf(chart) }"
-      :style="getWidgetStyle(chart)"
-      :draggable="editView"
-      @dragstart="handleDragStart($event, charts.indexOf(chart))"
-      @dragend="handleDragEnd"
-      @dragover.prevent
-      @drop="handleDrop($event, charts.indexOf(chart))"
-    >
+      :style="getWidgetStyle(chart)" :draggable="editView" @dragstart="handleDragStart($event, charts.indexOf(chart))"
+      @dragend="handleDragEnd" @dragover.prevent @drop="handleDrop($event, charts.indexOf(chart))">
       <div class="widget-card stat-card">
         <div class="drag-handle" v-if="editView">
           <ion-icon icon="move-outline"></ion-icon>
@@ -24,7 +16,8 @@
           </div>
           <div class="stat-value">{{ formatStatValue(chart.data.value) }}</div>
           <div class="stat-label">{{ chart.data.label }}</div>
-          <div v-if="chart.data.trend" class="stat-trend" :class="{ 'positive': chart.data.trend > 0, 'negative': chart.data.trend < 0 }">
+          <div v-if="chart.data.trend" class="stat-trend"
+            :class="{ 'positive': chart.data.trend > 0, 'negative': chart.data.trend < 0 }">
             <ion-icon :icon="chart.data.trend > 0 ? 'trending-up' : 'trending-down'"></ion-icon>
             {{ Math.abs(chart.data.trend) }}%
           </div>
@@ -44,18 +37,10 @@
     </div>
 
     <!-- Medium Charts (8x4 grid cells - Pie, Donut) -->
-    <div
-      v-for="(chart, index) in smallCharts"
-      :key="'small-' + index"
-      class="grid-item medium-widget"
+    <div v-for="(chart, index) in smallCharts" :key="'small-' + index" class="grid-item medium-widget"
       :class="{ 'edit-mode': editView, 'dragging': draggingIndex === charts.indexOf(chart) }"
-      :style="getWidgetStyle(chart)"
-      :draggable="editView"
-      @dragstart="handleDragStart($event, charts.indexOf(chart))"
-      @dragend="handleDragEnd"
-      @dragover.prevent
-      @drop="handleDrop($event, charts.indexOf(chart))"
-    >
+      :style="getWidgetStyle(chart)" :draggable="editView" @dragstart="handleDragStart($event, charts.indexOf(chart))"
+      @dragend="handleDragEnd" @dragover.prevent @drop="handleDrop($event, charts.indexOf(chart))">
       <div class="widget-card">
         <div class="drag-handle" v-if="editView">
           <ion-icon icon="move-outline"></ion-icon>
@@ -64,21 +49,9 @@
           <h3 class="widget-title">{{ chart.title }}</h3>
         </div>
         <div class="widget-content chart-content">
-          <DonutChart
-            v-if="chart.chart_type == 'donut_chart'"
-            :data="chart.data"
-            :options="options"
-          />
-          <PieChart
-            v-if="chart.chart_type == 'pie_chart'"
-            :data="chart.data"
-            :options="options"
-          />
-          <ShortcutCard
-            v-if="chart.chart_type == 'card'"
-            :link="'/' + chart.url"
-            :title="chart.name"
-          />
+          <DonutChart v-if="chart.chart_type == 'donut_chart'" :data="chart.data" :options="options" />
+          <PieChart v-if="chart.chart_type == 'pie_chart'" :data="chart.data" :options="options" />
+          <ShortcutCard v-if="chart.chart_type == 'card'" :link="'/' + chart.url" :title="chart.name" />
         </div>
         <button v-if="editView" @click="deleteChart(charts.indexOf(chart))" class="delete-btn">
           <ion-icon icon="trash-outline"></ion-icon>
@@ -95,18 +68,10 @@
     </div>
 
     <!-- Large Charts (16x6 grid cells - Bar, Line) -->
-    <div
-      v-for="(chart, index) in largeCharts"
-      :key="'large-' + index"
-      class="grid-item large-widget"
+    <div v-for="(chart, index) in largeCharts" :key="'large-' + index" class="grid-item large-widget"
       :class="{ 'edit-mode': editView, 'dragging': draggingIndex === charts.indexOf(chart) }"
-      :style="getWidgetStyle(chart)"
-      :draggable="editView"
-      @dragstart="handleDragStart($event, charts.indexOf(chart))"
-      @dragend="handleDragEnd"
-      @dragover.prevent
-      @drop="handleDrop($event, charts.indexOf(chart))"
-    >
+      :style="getWidgetStyle(chart)" :draggable="editView" @dragstart="handleDragStart($event, charts.indexOf(chart))"
+      @dragend="handleDragEnd" @dragover.prevent @drop="handleDrop($event, charts.indexOf(chart))">
       <div class="widget-card">
         <div class="drag-handle" v-if="editView">
           <ion-icon icon="move-outline"></ion-icon>
@@ -173,15 +138,15 @@ export default defineComponent({
       return this.charts.filter(chart => chart.chart_type === 'stat');
     },
     smallCharts() {
-      return this.charts.filter(chart => 
-        chart.chart_type !== 'date_bar_chart' && 
+      return this.charts.filter(chart =>
+        chart.chart_type !== 'date_bar_chart' &&
         chart.chart_type !== 'bar_chart' &&
         chart.chart_type !== 'stat'
       );
     },
     largeCharts() {
-      return this.charts.filter(chart => 
-        chart.chart_type === 'date_bar_chart' || 
+      return this.charts.filter(chart =>
+        chart.chart_type === 'date_bar_chart' ||
         chart.chart_type === 'bar_chart'
       );
     }
@@ -196,61 +161,61 @@ export default defineComponent({
       }
       return value;
     },
-    
+
     // Drag & Drop Methods
     handleDragStart(event, index) {
       this.draggingIndex = index;
       event.dataTransfer.effectAllowed = 'move';
       event.dataTransfer.setData('text/html', event.target.innerHTML);
-      
+
       // Add ghost image
       const ghost = event.target.cloneNode(true);
       ghost.style.opacity = '0.5';
       event.dataTransfer.setDragImage(ghost, 0, 0);
     },
-    
+
     handleDragEnd() {
       this.draggingIndex = null;
       this.dragOverIndex = null;
     },
-    
+
     handleDrop(event, dropIndex) {
       event.preventDefault();
-      
+
       if (this.draggingIndex === null || this.draggingIndex === dropIndex) {
         return;
       }
-      
+
       // Reorder charts array
       const newCharts = [...this.charts];
       const draggedItem = newCharts[this.draggingIndex];
-      
+
       // Remove from old position
       newCharts.splice(this.draggingIndex, 1);
-      
+
       // Insert at new position
       const adjustedDropIndex = this.draggingIndex < dropIndex ? dropIndex - 1 : dropIndex;
       newCharts.splice(adjustedDropIndex, 0, draggedItem);
-      
+
       // Emit update to parent
       this.$emit('updateCharts', newCharts);
-      
+
       this.draggingIndex = null;
       this.dragOverIndex = null;
     },
-    
+
     // Resize Methods
     resizeWidget(index, direction) {
       const chart = this.charts[index];
-      
+
       // Initialize size if not set
       if (!chart.gridSize) {
         chart.gridSize = this.getDefaultSize(chart.chart_type);
       }
-      
+
       const currentSize = chart.gridSize;
       const newSize = { ...currentSize };
-      
+
       if (direction === 'larger') {
         // Increase by 2 columns and 1 row
         newSize.cols = Math.min(currentSize.cols + 2, 16);
@@ -260,17 +225,17 @@ export default defineComponent({
         newSize.cols = Math.max(currentSize.cols - 2, 4);
         newSize.rows = Math.max(currentSize.rows - 1, 2);
       }
-      
+
       // Update chart with new size
       const newCharts = [...this.charts];
       newCharts[index] = {
         ...chart,
         gridSize: newSize
       };
-      
+
       this.$emit('updateCharts', newCharts);
     },
-    
+
     getDefaultSize(chartType) {
       const sizes = {
         'stat': { cols: 4, rows: 2 },
@@ -282,12 +247,12 @@ export default defineComponent({
       };
       return sizes[chartType] || { cols: 8, rows: 4 };
     },
-    
+
     getWidgetStyle(chart) {
       if (!chart.gridSize) {
         return {};
       }
-      
+
       return {
         gridColumn: `span ${chart.gridSize.cols}`,
         gridRow: `span ${chart.gridSize.rows}`,
@@ -637,6 +602,7 @@ export default defineComponent({
 
 /* Responsive Design - Adjust grid for smaller screens */
 @media (max-width: 1400px) {
+
   /* On medium screens: reduce to 12 columns */
   .dashboard-grid {
     grid-template-columns: repeat(12, 1fr);
@@ -656,6 +622,7 @@ export default defineComponent({
 }
 
 @media (max-width: 1024px) {
+
   /* On tablets: reduce to 8 columns */
   .dashboard-grid {
     grid-template-columns: repeat(8, 1fr);
@@ -684,6 +651,7 @@ export default defineComponent({
 }
 
 @media (max-width: 768px) {
+
   /* On mobile: single column (4 columns grid) */
   .dashboard-grid {
     grid-template-columns: repeat(4, 1fr);
