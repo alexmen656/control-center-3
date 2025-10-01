@@ -532,18 +532,14 @@ export default defineComponent({
         // Handle module widgets
         if (chart.chart_type === "module_widget") {
           try {
-            const widgetData = await this.dashboardData.fetchWidgetData(
-              chart.module,
-              chart.widget,
-              {
-                period: 30,
-                project: this.$route.params.project
-              }
-            );
-            
-            const widget = this.dashboardData.getWidget(chart.module, chart.widget);
+            const widget = dashboardRegistry.getWidget(chart.module, chart.widget);
             
             if (widget) {
+              const widgetData = await widget.getData({
+                period: 30,
+                project: this.$route.params.project
+              });
+              
               let new_chart = {};
               
               if (widget.type === 'stat') {
