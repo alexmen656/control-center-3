@@ -50,6 +50,12 @@ const debug = false;
 const emitter = mitt();
 const app = createApp(App).use(IonicVue).use(router);
 
+// Load all modules with dashboard providers
+const modules = import.meta.glob('./modules/*/index.ts', { eager: true });
+console.log('📦 Loading modules with dashboard providers...');
+Object.keys(modules).forEach(path => {
+  console.log(`✓ Loaded module: ${path}`);
+});
 
 //app.component("QuillEditor", QuillEditor);
 

@@ -36,6 +36,18 @@
         <ion-content class="ion-padding">
           <FloatingSelect v-model="comp" :select="comp_select" />
 
+          <!-- Module Widget Selects -->
+          <FloatingSelect
+            v-if="comp === 'module_widget'"
+            v-model="module"
+            :select="module_select"
+          />
+          <FloatingSelect
+            v-if="comp === 'module_widget' && module"
+            v-model="widget"
+            :select="widget_select"
+          />
+
           <!-- Card Selects s-->
           <FloatingSelect
             v-if="comp === 'card'"
@@ -87,6 +99,7 @@ import {
   useMagicKeys,
   //whenever
 } from "@vueuse/core";
+import { dashboardRegistry } from "@/core/registry/DashboardRegistry";
 
 export default defineComponent({
   name: "DefaultPage",
@@ -101,6 +114,8 @@ export default defineComponent({
       form: "",
       view: "",
       comp: "",
+      module: "",
+      widget: "",
       options: {
         responsive: true,
       },
@@ -117,7 +132,22 @@ export default defineComponent({
         options: [
           { value: "card", label: "Card" },
           { value: "chart", label: "Chart" },
+          { value: "module_widget", label: "Module Widget" },
         ],
+      },
+      module_select: {
+        type: "select",
+        name: "module",
+        label: "Module",
+        placeholder: "Select Module",
+        options: [],
+      },
+      widget_select: {
+        type: "select",
+        name: "widget",
+        label: "Widget",
+        placeholder: "Select Widget",
+        options: [],
       },
       view_select: {
         type: "select",
@@ -221,6 +251,9 @@ export default defineComponent({
     };
   },
   created() {
+    // Load available modules for the selector
+    this.loadModuleOptions();
+    
     this.$axios
       .post(
         "form.php",
@@ -313,8 +346,32 @@ export default defineComponent({
         this.label_select.options = options;
       }
     );
+    
+    // Watch module selection to load widgets
+    this.$watch(
+      () => this.module,
+      () => {
+        if (this.module) {
+          const provider = dashboardRegistry.getProvider(this.module);
+          if (provider) {
+            this.widget_select.options = provider.widgets.map(widget => ({
+              value: widget.id,
+              label: widget.title
+            }));
+          }
+        }
+      }
+    );
   },
   methods: {
+    loadModuleOptions() {
+      const providers = dashboardRegistry.getAllProviders();
+      this.module_select.options = providers.map(module => ({
+        value: module.moduleId,
+        label: module.moduleName
+      }));
+    },
+    
     cancel() {
       // this.$refs.modal.$el.dismiss(null, "cancel");
       this.setOpen(false);
@@ -322,7 +379,43 @@ export default defineComponent({
     async confirm() {
       this.setOpen(false);
 
-      if (this.comp === "chart") {
+      if (this.comp === "module_widget") {
+        // Handle module widget
+        if (!this.module || !this.widget) {
+          alert("Bitte wähle ein Modul und ein Widget aus");
+          return;
+        }
+        
+        const widgetConfig = {
+          chart_type: "module_widget",
+          module: this.module,
+          widget: this.widget,
+        };
+        
+        let chartsData = localStorage.getItem("charts");
+        if (chartsData) {
+          chartsData = JSON.parse(chartsData);
+          chartsData.push(widgetConfig);
+          await localStorage.setItem("charts", JSON.stringify(chartsData));
+        } else {
+          await localStorage.setItem("charts", JSON.stringify([widgetConfig]));
+        }
+        
+        await this.$axios.post(
+          "dashboard.php",
+          this.$qs.stringify({
+            new_chart: "new_chart",
+            json: JSON.stringify([widgetConfig]),
+            dashboard: this.$route.params.dashboard,
+            project: this.$route.params.project,
+          })
+        );
+
+        this.loadCharts();
+        
+        this.module = "";
+        this.widget = "";
+      } else if (this.comp === "chart") {
         let json = {};
         if (this.chart_type == "date_bar_chart") {
           console.log("date_bar_chart");
@@ -436,7 +529,54 @@ export default defineComponent({
         })
       );
       request.data.forEach(async (chart) => {
-        if (
+        // Handle module widgets
+        if (chart.chart_type === "module_widget") {
+          try {
+            const widgetData = await this.dashboardData.fetchWidgetData(
+              chart.module,
+              chart.widget,
+              {
+                period: 30,
+                project: this.$route.params.project
+              }
+            );
+            
+            const widget = this.dashboardData.getWidget(chart.module, chart.widget);
+            
+            if (widget) {
+              let new_chart = {};
+              
+              if (widget.type === 'stat') {
+                // Stat widget
+                new_chart = {
+                  chart_type: 'stat',
+                  title: widget.title,
+                  icon: widget.icon,
+                  data: widgetData
+                };
+              } else if (widget.type === 'chart') {
+                // Chart widget
+                const chartTypeMap = {
+                  'pie': 'pie_chart',
+                  'donut': 'donut_chart',
+                  'bar': 'bar_chart',
+                  'line': 'date_bar_chart'
+                };
+                
+                new_chart = {
+                  chart_type: chartTypeMap[widget.config?.chartType] || 'bar_chart',
+                  title: widget.title,
+                  data: widgetData
+                };
+              }
+              
+              await this.charts.push(new_chart);
+            }
+          } catch (error) {
+            console.error('Error loading module widget:', error);
+          }
+        }
+        else if (
           chart.chart_type == "pie_chart" ||
           chart.chart_type == "donut_chart" ||
           chart.chart_type == "date_bar_chart" ||
