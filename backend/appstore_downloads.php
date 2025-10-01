@@ -44,36 +44,63 @@ class AppStoreConnectAPI {
             'http' => [
                 'method' => 'GET',
                 'header' => "Authorization: Bearer $token\r\nAccept: application/a-gzip\r\n",
-                'timeout' => 30
+                'timeout' => 30,
+                'ignore_errors' => true
             ]
         ];
         
         $context = stream_context_create($opts);
-        $response = @file_get_contents($url, false, $context);
-        $http_response_header = isset($http_response_header) ? $http_response_header : [];
+        $response = file_get_contents($url, false, $context);
+        
+        // Parse response headers
         $statusCode = null;
-        foreach ($http_response_header as $header) {
-            if (preg_match('#^HTTP/\d+\.\d+\s+(\d+)#', $header, $matches)) {
-                $statusCode = (int)$matches[1];
-                break;
+        if (isset($http_response_header)) {
+            foreach ($http_response_header as $header) {
+                if (preg_match('#^HTTP/\d+\.\d+\s+(\d+)#', $header, $matches)) {
+                    $statusCode = (int)$matches[1];
+                    break;
+                }
             }
         }
+        
+        // Log detailed response info for debugging
+        error_log("App Store API Response - Status: " . ($statusCode ?? 'unknown') . ", Response length: " . strlen($response ?? ''));
+        
         if ($statusCode === 404) {
-            // Log 404 but do not throw, just return false so the day is skipped
             error_log('App Store Connect API returned 404 Not Found for URL: ' . $url);
             return false;
         }
-        if ($response === false || ($statusCode !== null && $statusCode >= 400)) {
-            throw new Exception('App Store Connect API error (HTTP ' . ($statusCode ?? 'unknown') . ') for URL: ' . $url);
+        
+        if ($response === false) {
+            error_log('App Store Connect API request failed for URL: ' . $url);
+            throw new Exception('App Store Connect API request failed');
         }
+        
+        if ($statusCode !== null && $statusCode >= 400) {
+            error_log('App Store Connect API error (HTTP ' . $statusCode . ') for URL: ' . $url . ' - Response: ' . substr($response, 0, 500));
+            throw new Exception('App Store Connect API error (HTTP ' . $statusCode . ')');
+        }
+        
+        // Check if response is empty
+        if (empty($response)) {
+            error_log('App Store Connect API returned empty response for URL: ' . $url);
+            return false;
+        }
+        
         return $response;
     }
     
     private function unzipAndParseTSV($response) {
+        if (empty($response)) {
+            error_log('Cannot unzip empty response');
+            return '';
+        }
+        
         $tmpFile = tempnam(sys_get_temp_dir(), 'appstore_report_');
         file_put_contents($tmpFile, $response);
         
-        $unzipped = gzopen($tmpFile, 'r');
+        // Try to decompress
+        $unzipped = @gzopen($tmpFile, 'r');
         $tsv = '';
         
         if ($unzipped) {
@@ -81,26 +108,47 @@ class AppStoreConnectAPI {
                 $tsv .= gzread($unzipped, 4096);
             }
             gzclose($unzipped);
+        } else {
+            // If gzip fails, maybe it's already decompressed?
+            error_log('Failed to open as gzip, trying as plain text');
+            $tsv = file_get_contents($tmpFile);
         }
         
         unlink($tmpFile);
+        
+        error_log('TSV data length: ' . strlen($tsv) . ', first 200 chars: ' . substr($tsv, 0, 200));
+        
         return $tsv;
     }
     
     private function parseTSVData($tsv) {
+        if (empty($tsv)) {
+            error_log('Empty TSV data to parse');
+            return [];
+        }
+        
         $lines = explode("\n", trim($tsv));
         $downloads = [];
         $header = [];
         
+        error_log('Parsing TSV with ' . count($lines) . ' lines');
+        
         foreach ($lines as $i => $line) {
+            $line = trim($line);
+            if (empty($line)) continue;
+            
             $fields = explode("\t", $line);
             
             if ($i === 0) {
                 $header = $fields;
+                error_log('TSV Header: ' . implode(', ', $header));
                 continue;
             }
             
-            if (count($fields) < 5) continue; // skip empty/invalid lines
+            if (count($fields) < 5) {
+                error_log('Line ' . $i . ' has only ' . count($fields) . ' fields, skipping');
+                continue;
+            }
             
             // Map header fields to indices
             $dateIdx = array_search('Begin Date', $header);
@@ -112,30 +160,49 @@ class AppStoreConnectAPI {
             $priceIdx = array_search('Customer Price', $header);
             $currencyIdx = array_search('Customer Currency', $header);
             
-            if ($dateIdx === false || $countIdx === false) continue;
+            if ($dateIdx === false || $countIdx === false) {
+                error_log('Required columns not found in header. Date idx: ' . var_export($dateIdx, true) . ', Count idx: ' . var_export($countIdx, true));
+                continue;
+            }
             
-            // Only include app downloads, not in-app purchases
-            $productType = $productIdx !== false ? $fields[$productIdx] : '';
-            if ($productType && !in_array($productType, ['1F', '1', 'F1'])) continue;
+            // Filter product types
+            $productType = $productIdx !== false && isset($fields[$productIdx]) ? $fields[$productIdx] : '';
+            
+            // Log first few product types for debugging
+            if ($i <= 5) {
+                error_log('Line ' . $i . ' - Product Type: "' . $productType . '"');
+            }
+            
+            // Exclude only specific types we don't want (in-app purchases, subscriptions, etc.)
+            // Include: 1, 1F, F1 (new downloads), 7, 7F, F7 (updates), 3, 3F (re-downloads), empty
+            // Exclude: IA* (in-app), subscription types, etc.
+            $excludedTypes = ['IA1', 'IA9', 'IAY', 'IAC', 'FI1'];
+            
+            if (!empty($productType) && in_array($productType, $excludedTypes)) {
+                if ($i <= 5) {
+                    error_log('Skipping line ' . $i . ' due to excluded product type: ' . $productType);
+                }
+                continue;
+            }
             
             // Get values with proper fallbacks
-            $version = $versionIdx !== false && !empty($fields[$versionIdx]) ? $fields[$versionIdx] : '';
-            $platform = $platformIdx !== false && !empty($fields[$platformIdx]) ? $this->mapPlatform($fields[$platformIdx]) : '';
-            $country = $countryIdx !== false && !empty($fields[$countryIdx]) ? $fields[$countryIdx] : 'XX';
+            $version = $versionIdx !== false && isset($fields[$versionIdx]) && !empty($fields[$versionIdx]) ? $fields[$versionIdx] : 'Unknown';
+            $platform = $platformIdx !== false && isset($fields[$platformIdx]) && !empty($fields[$platformIdx]) ? $this->mapPlatform($fields[$platformIdx]) : 'Unknown';
+            $country = $countryIdx !== false && isset($fields[$countryIdx]) && !empty($fields[$countryIdx]) ? $fields[$countryIdx] : 'XX';
             
-            // Skip entries with missing critical data
-            if (empty($version) || empty($platform)) continue;
-            
+            // Don't skip entries with missing platform/version - include them as "Unknown"
             $downloads[] = [
-                'date' => $fields[$dateIdx],
-                'count' => (int)$fields[$countIdx],
+                'date' => isset($fields[$dateIdx]) ? $fields[$dateIdx] : '',
+                'count' => isset($fields[$countIdx]) ? (int)$fields[$countIdx] : 0,
                 'version' => $version,
                 'country' => $country,
                 'platform' => $platform,
-                'price' => $priceIdx !== false ? (float)$fields[$priceIdx] : 0,
-                'currency' => $currencyIdx !== false ? $fields[$currencyIdx] : 'USD'
+                'price' => $priceIdx !== false && isset($fields[$priceIdx]) ? (float)$fields[$priceIdx] : 0,
+                'currency' => $currencyIdx !== false && isset($fields[$currencyIdx]) ? $fields[$currencyIdx] : 'USD'
             ];
         }
+        
+        error_log('Parsed ' . count($downloads) . ' download entries from TSV');
         
         return $downloads;
     }
@@ -161,13 +228,18 @@ class AppStoreConnectAPI {
         $startDate = new DateTime();
         $startDate->sub(new DateInterval("P{$period}D"));
         
+        error_log('Fetching downloads from ' . $startDate->format('Y-m-d') . ' to ' . $endDate->format('Y-m-d'));
+        
         // Fetch data for each day in the period
         $currentDate = clone $startDate;
         $failedDates = 0;
-        $maxFailures = 5; // Stop if too many consecutive failures
+        $maxFailures = 10; // Increase max failures tolerance
+        $totalAttempts = 0;
+        $successfulDays = 0;
         
         while ($currentDate <= $endDate && $failedDates < $maxFailures) {
             $reportDate = $currentDate->format('Y-m-d');
+            $totalAttempts++;
             
             try {
                 $url = 'https://api.appstoreconnect.apple.com/v1/salesReports?' . 
@@ -176,22 +248,36 @@ class AppStoreConnectAPI {
                        'filter[frequency]=DAILY&' .
                        'filter[vendorNumber]=' . $this->vendor_number . '&' .
                        'filter[reportDate]=' . $reportDate;
+                
+                error_log("Attempting to fetch data for $reportDate");
                        
                 $response = $this->makeRequest($url);
                 
                 if ($response === false) {
                     // 404 - data not available for this date, skip silently
+                    error_log("No data available for $reportDate (404 or empty)");
                     $currentDate->add(new DateInterval('P1D'));
                     $failedDates = 0; // Reset failure counter on 404
                     continue;
                 }
                 
                 $tsv = $this->unzipAndParseTSV($response);
+                
+                if (empty($tsv)) {
+                    error_log("Empty TSV for $reportDate");
+                    $currentDate->add(new DateInterval('P1D'));
+                    continue;
+                }
+                
                 $dayDownloads = $this->parseTSVData($tsv);
                 
                 if (!empty($dayDownloads)) {
+                    error_log("Successfully parsed " . count($dayDownloads) . " entries for $reportDate");
                     $downloads = array_merge($downloads, $dayDownloads);
                     $failedDates = 0; // Reset failure counter on success
+                    $successfulDays++;
+                } else {
+                    error_log("No downloads parsed for $reportDate despite having TSV data");
                 }
                 
                 // Only add delay for shorter periods to speed up loading
@@ -206,6 +292,8 @@ class AppStoreConnectAPI {
             
             $currentDate->add(new DateInterval('P1D'));
         }
+        
+        error_log("Download fetch complete: $successfulDays successful days out of $totalAttempts attempts, total entries: " . count($downloads));
         
         return $downloads;
     }
@@ -461,18 +549,28 @@ try {
     $period = isset($_GET['period']) ? (int)$_GET['period'] : 30;
     $period = max(1, min(90, $period)); // Limit between 1 and 90 days
     
+    // Allow cache bypass for debugging
+    $skipCache = isset($_GET['nocache']) || isset($_GET['refresh']);
+    
+    error_log("Starting App Store downloads fetch - Period: $period days, Skip cache: " . ($skipCache ? 'yes' : 'no'));
+    
     $api = new AppStoreConnectAPI($private_key, $key_id, $issuer_id, $vendor_number);
     
     // Check if we have cached data
     $cacheFile = "cache/downloads_cache_{$period}.json";
     $cacheTime = 3600; // 1 hour cache
     
-    if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTime) {
+    if (!$skipCache && file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTime) {
         // Use cached data
+        error_log("Using cached data from: " . date('Y-m-d H:i:s', filemtime($cacheFile)));
         $result = json_decode(file_get_contents($cacheFile), true);
+        $result['from_cache'] = true;
     } else {
         // Fetch fresh data
+        error_log("Fetching fresh data from App Store Connect API");
         $downloads = $api->getDownloads($period);
+        
+        error_log("Total downloads fetched: " . count($downloads));
         
         // Calculate advanced statistics
         $analytics = new DownloadAnalytics($downloads);
@@ -483,24 +581,36 @@ try {
             'stats' => $stats,
             'period' => $period,
             'last_updated' => date('Y-m-d H:i:s'),
-            'total_records' => count($downloads)
+            'total_records' => count($downloads),
+            'from_cache' => false,
+            'debug_info' => [
+                'vendor_number' => $vendor_number,
+                'key_id' => substr($key_id, 0, 4) . '...',
+                'issuer_id' => substr($issuer_id, 0, 8) . '...'
+            ]
         ];
         
         // Cache the result
         if (!is_dir('cache')) {
             mkdir('cache', 0755, true);
         }
-        file_put_contents($cacheFile, json_encode($result));
+        
+        $cacheWritten = file_put_contents($cacheFile, json_encode($result));
+        error_log("Cache written: " . ($cacheWritten ? 'success' : 'failed'));
     }
     
+    error_log("Returning response with " . count($result['downloads']) . " downloads");
     echo json_encode($result);
     
 } catch (Exception $e) {
+    error_log("Exception in main execution: " . $e->getMessage() . "\n" . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode([
         'error' => $e->getMessage(),
+        'error_trace' => $e->getTraceAsString(),
         'downloads' => [],
-        'stats' => (new DownloadAnalytics([]))->calculateAdvancedStats()
+        'stats' => (new DownloadAnalytics([]))->calculateAdvancedStats(),
+        'debug_mode' => true
     ]);
 }
 ?>
