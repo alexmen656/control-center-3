@@ -29,12 +29,14 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string; period?: number }) => {
         try {
-          const response = await axios.post('link_tracker_api.php', {
-            getLinks: true,
-            project: params?.project || ''
-          });
+          const formData = new FormData();
+          formData.append('getLinks', 'true');
+          formData.append('project', params?.project || '');
           
-          const links = response.data || [];
+          const response = await axios.post('link_tracker_api.php', formData);
+          
+          const data = response.data;
+          const links = data.links || [];
           return {
             value: links.length || 0,
             label: 'Gesamte Links'
@@ -58,15 +60,21 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string; period?: number }) => {
         try {
-          const response = await axios.post('link_tracker_api.php', {
-            getAnalytics: true,
-            project: params?.project || ''
-          });
+          const formData = new FormData();
+          formData.append('getDetailedAnalytics', 'true');
+          formData.append('project', params?.project || '');
+          formData.append('period', String(params?.period || 30));
           
-          const analytics = response.data || {};
+          const response = await axios.post('link_tracker_api.php', formData);
+          
+          const data = response.data;
+          if (!data.success) {
+            return { value: 0, label: 'Gesamte Klicks' };
+          }
+          
+          const totalClicks = data.bot_stats?.total_visits || 0;
           return {
-            value: analytics.total_clicks || 0,
-            trend: analytics.trend || 0,
+            value: totalClicks,
             label: 'Gesamte Klicks'
           };
         } catch (error) {
@@ -88,14 +96,22 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string; period?: number }) => {
         try {
-          const response = await axios.post('link_tracker_api.php', {
-            getAnalytics: true,
-            project: params?.project || ''
-          });
+          const formData = new FormData();
+          formData.append('getLinks', 'true');
+          formData.append('project', params?.project || '');
           
-          const analytics = response.data || {};
+          const response = await axios.post('link_tracker_api.php', formData);
+          
+          const data = response.data;
+          const links = data.links || [];
+          
+          // Calculate unique visitors from all links
+          const uniqueVisitors = links.reduce((sum: number, link: any) => 
+            sum + (parseInt(link.unique_visitors) || 0), 0
+          );
+          
           return {
-            value: analytics.unique_visitors || 0,
+            value: uniqueVisitors,
             label: 'Einzigartige Besucher'
           };
         } catch (error) {
@@ -117,14 +133,21 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string; period?: number }) => {
         try {
-          const response = await axios.post('link_tracker_api.php', {
-            getAnalytics: true,
-            project: params?.project || ''
-          });
+          const formData = new FormData();
+          formData.append('getDetailedAnalytics', 'true');
+          formData.append('project', params?.project || '');
+          formData.append('period', String(params?.period || 30));
           
-          const analytics = response.data || {};
+          const response = await axios.post('link_tracker_api.php', formData);
+          
+          const data = response.data;
+          if (!data.success) {
+            return { value: 0, label: 'Länder' };
+          }
+          
+          const countries = data.countries || [];
           return {
-            value: analytics.countries_count || 0,
+            value: countries.length || 0,
             label: 'Länder'
           };
         } catch (error) {
@@ -147,20 +170,27 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string; period?: number; linkId?: string }) => {
         try {
-          const response = await axios.post('link_tracker_api.php', {
-            getClicksTimeline: true,
-            project: params?.project || '',
-            linkId: params?.linkId,
-            period: params?.period || 7
-          });
+          const formData = new FormData();
+          formData.append('getDetailedAnalytics', 'true');
+          formData.append('project', params?.project || '');
+          formData.append('period', String(params?.period || 7));
           
-          const timeline = response.data || {};
+          const response = await axios.post('link_tracker_api.php', formData);
+          
+          const data = response.data;
+          if (!data.success) {
+            return { labels: [], datasets: [] };
+          }
+          
+          const timeline = data.timeline || [];
+          const labels = timeline.map((item: any) => item.date);
+          const clicksData = timeline.map((item: any) => item.clicks);
           
           return {
-            labels: timeline.labels || [],
+            labels,
             datasets: [{
               label: 'Klicks',
-              data: timeline.data || [],
+              data: clicksData,
               backgroundColor: 'rgba(37, 99, 235, 0.1)',
               borderColor: '#2563eb',
               borderWidth: 2,
@@ -186,16 +216,21 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string; limit?: number }) => {
         try {
-          const response = await axios.post('link_tracker_api.php', {
-            getCountryStats: true,
-            project: params?.project || '',
-            limit: params?.limit || 10
-          });
+          const formData = new FormData();
+          formData.append('getDetailedAnalytics', 'true');
+          formData.append('project', params?.project || '');
+          formData.append('period', '30');
           
-          const countries = response.data || [];
+          const response = await axios.post('link_tracker_api.php', formData);
           
+          const data = response.data;
+          if (!data.success) {
+            return { labels: [], datasets: [] };
+          }
+          
+          const countries = (data.countries || []).slice(0, params?.limit || 10);
           const labels = countries.map((c: any) => c.country || 'Unknown');
-          const data = countries.map((c: any) => c.count || 0);
+          const countsData = countries.map((c: any) => c.count || 0);
           
           const colors = [
             '#2563eb', '#059669', '#d97706', '#dc2626', '#8b5cf6',
@@ -206,7 +241,7 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
             labels,
             datasets: [{
               label: 'Klicks',
-              data,
+              data: countsData,
               backgroundColor: colors,
               borderColor: '#ffffff',
               borderWidth: 2
@@ -230,15 +265,21 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const response = await axios.post('link_tracker_api.php', {
-            getDeviceStats: true,
-            project: params?.project || ''
-          });
+          const formData = new FormData();
+          formData.append('getDetailedAnalytics', 'true');
+          formData.append('project', params?.project || '');
+          formData.append('period', '30');
           
-          const devices = response.data || [];
+          const response = await axios.post('link_tracker_api.php', formData);
           
+          const data = response.data;
+          if (!data.success) {
+            return { labels: [], datasets: [] };
+          }
+          
+          const devices = data.devices || [];
           const labels = devices.map((d: any) => d.device_type || 'Unknown');
-          const data = devices.map((d: any) => d.count || 0);
+          const countsData = devices.map((d: any) => d.count || 0);
           
           const colors = ['#2563eb', '#059669', '#d97706', '#dc2626'];
           
@@ -246,7 +287,7 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
             labels,
             datasets: [{
               label: 'Klicks',
-              data,
+              data: countsData,
               backgroundColor: colors,
               borderColor: '#ffffff',
               borderWidth: 2
@@ -270,22 +311,27 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string; limit?: number }) => {
         try {
-          const response = await axios.post('link_tracker_api.php', {
-            getBrowserStats: true,
-            project: params?.project || '',
-            limit: params?.limit || 10
-          });
+          const formData = new FormData();
+          formData.append('getDetailedAnalytics', 'true');
+          formData.append('project', params?.project || '');
+          formData.append('period', '30');
           
-          const browsers = response.data || [];
+          const response = await axios.post('link_tracker_api.php', formData);
           
+          const data = response.data;
+          if (!data.success) {
+            return { labels: [], datasets: [] };
+          }
+          
+          const browsers = (data.browsers || []).slice(0, params?.limit || 10);
           const labels = browsers.map((b: any) => b.browser || 'Unknown');
-          const data = browsers.map((b: any) => b.count || 0);
+          const countsData = browsers.map((b: any) => b.count || 0);
           
           return {
             labels,
             datasets: [{
               label: 'Klicks',
-              data,
+              data: countsData,
               backgroundColor: '#2563eb',
               borderColor: '#1d4ed8',
               borderWidth: 1
@@ -309,12 +355,18 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string; limit?: number }) => {
         try {
-          const response = await axios.post('link_tracker_api.php', {
-            getLinks: true,
-            project: params?.project || ''
-          });
+          const formData = new FormData();
+          formData.append('getLinks', 'true');
+          formData.append('project', params?.project || '');
           
-          const links = response.data || [];
+          const response = await axios.post('link_tracker_api.php', formData);
+          
+          const data = response.data;
+          if (!data.success) {
+            return { labels: [], datasets: [] };
+          }
+          
+          const links = data.links || [];
           
           // Sort by visits and take top N
           const sorted = links
@@ -322,13 +374,13 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
             .slice(0, params?.limit || 10);
           
           const labels = sorted.map((l: any) => l.title || l.slug || 'Unknown');
-          const data = sorted.map((l: any) => l.visits || 0);
+          const countsData = sorted.map((l: any) => l.visits || 0);
           
           return {
             labels,
             datasets: [{
               label: 'Klicks',
-              data,
+              data: countsData,
               backgroundColor: '#059669',
               borderColor: '#047857',
               borderWidth: 1

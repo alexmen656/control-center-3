@@ -29,13 +29,14 @@ export const videoUploadsDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const formData = new FormData();
-          formData.append('action', 'getVideos');
-          formData.append('project', params?.project || '');
+          const response = await axios.get('video_uploads.php', {
+            params: {
+              action: 'list',
+              project: params?.project || ''
+            }
+          });
           
-          const response = await axios.post('video_uploads.php', formData);
-          
-          const videos = response.data.videos || [];
+          const videos = response.data.videos || response.data || [];
           return {
             value: videos.length || 0,
             label: 'Gesamte Uploads'
@@ -59,13 +60,14 @@ export const videoUploadsDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const formData = new FormData();
-          formData.append('action', 'getVideos');
-          formData.append('project', params?.project || '');
+          const response = await axios.get('video_uploads.php', {
+            params: {
+              action: 'list',
+              project: params?.project || ''
+            }
+          });
           
-          const response = await axios.post('video_uploads.php', formData);
-          
-          const videos = response.data.videos || [];
+          const videos = response.data.videos || response.data || [];
           const published = videos.filter((v: any) => v.status === 'published');
           
           return {
@@ -91,16 +93,20 @@ export const videoUploadsDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const formData = new FormData();
-          formData.append('action', 'getAnalytics');
-          formData.append('project', params?.project || '');
+          const response = await axios.get('video_uploads.php', {
+            params: {
+              action: 'list',
+              project: params?.project || ''
+            }
+          });
           
-          const response = await axios.post('video_uploads.php', formData);
+          const videos = response.data.videos || response.data || [];
+          const totalViews = videos.reduce((sum: number, v: any) => 
+            sum + (parseInt(v.views) || 0), 0
+          );
           
-          const analytics = response.data.analytics || {};
           return {
-            value: analytics.total_views || 0,
-            trend: analytics.views_trend || 0,
+            value: totalViews,
             label: 'Gesamte Aufrufe'
           };
         } catch (error) {
@@ -122,15 +128,20 @@ export const videoUploadsDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const formData = new FormData();
-          formData.append('action', 'getAnalytics');
-          formData.append('project', params?.project || '');
+          const response = await axios.get('video_uploads.php', {
+            params: {
+              action: 'list',
+              project: params?.project || ''
+            }
+          });
           
-          const response = await axios.post('video_uploads.php', formData);
+          const videos = response.data.videos || response.data || [];
+          const totalLikes = videos.reduce((sum: number, v: any) => 
+            sum + (parseInt(v.likes) || 0), 0
+          );
           
-          const analytics = response.data.analytics || {};
           return {
-            value: analytics.total_likes || 0,
+            value: totalLikes,
             label: 'Gesamte Likes'
           };
         } catch (error) {
@@ -152,15 +163,20 @@ export const videoUploadsDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const formData = new FormData();
-          formData.append('action', 'getAnalytics');
-          formData.append('project', params?.project || '');
+          const response = await axios.get('video_uploads.php', {
+            params: {
+              action: 'list',
+              project: params?.project || ''
+            }
+          });
           
-          const response = await axios.post('video_uploads.php', formData);
+          const videos = response.data.videos || response.data || [];
+          const totalComments = videos.reduce((sum: number, v: any) => 
+            sum + (parseInt(v.comments) || 0), 0
+          );
           
-          const analytics = response.data.analytics || {};
           return {
-            value: analytics.total_comments || 0,
+            value: totalComments,
             label: 'Gesamte Kommentare'
           };
         } catch (error) {
