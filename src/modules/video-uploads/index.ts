@@ -4,13 +4,12 @@ import dashboardProvider from './dashboard.provider';
 // Dashboard Provider registrieren
 dashboardRegistry.register(dashboardProvider);
 
-console.log('📦 Link Tracker Module initialized with Dashboard Provider');
+console.log('📦 Video Uploads Module initialized with Dashboard Provider');
 
 export { default as routes } from './routes';
-export { default as config } from './config';
 
 export default {
-  name: 'link-tracker',
+  name: 'video-uploads',
   version: '1.0.0',
   dashboardProvider
 };
