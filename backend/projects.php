@@ -13,7 +13,7 @@ if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
         exit;
     }
 
-    $mysqli = query("INSERT INTO projects VALUES (0, '$icon', '$name', '$href', CURDATE(), '$projectID')");
+    $mysqli = query("INSERT INTO projects VALUES (0, '$icon', '$name', '$href', CURDATE(), '$projectID', 0)");
 
     if (!$mysqli) {
         echo jsonResponse("Failed to create project", false);
@@ -153,7 +153,7 @@ if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
               (0, 'globe-outline', 'Web Builder', 'web-builder', 0, 2, '$projectID')");
 
     // Web Builder Setup mit Benutzer-ID
-    $webBuilderProjectId = setupWebBuilderProject($projectID, $href, $name, $userID);
+    //$webBuilderProjectId = setupWebBuilderProject($projectID, $href, $name, $userID);
 
     // Benutzer zum Projekt hinzufügen
     if (!addUserToProject($userID, $projectID)) {
@@ -197,22 +197,22 @@ if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
     $id = escape_string($_POST['projectID']);
     $name = isset($_POST['projectName']) ? escape_string($_POST['projectName']) : '';
     $icon = isset($_POST['projectIcon']) ? escape_string($_POST['projectIcon']) : '';
-    
+
     // Check if project exists and user has permission
     $project = query("SELECT * FROM projects WHERE id='$id'");
     if (mysqli_num_rows($project) == 0) {
         echo jsonResponse('Project not found', false);
         exit;
     }
-    
+
     $projectData = fetch_assoc($project);
     $projectID = $projectData['projectID'];
-    
+
     if (!checkUserProjectPermission($userID, $projectID)) {
         echo jsonResponse('Permission denied', false);
         exit;
     }
-    
+
     $updateFields = [];
     if ($name !== '') {
         $updateFields[] = "name='$name'";
@@ -220,11 +220,11 @@ if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
     if ($icon !== '') {
         $updateFields[] = "icon='$icon'";
     }
-    
+
     if (!empty($updateFields)) {
         $updateQuery = "UPDATE projects SET " . implode(", ", $updateFields) . " WHERE id='$id'";
         $mysqli = query($updateQuery);
-        
+
         if ($mysqli) {
             echo jsonResponse('Project updated successfully');
         } else {
@@ -237,31 +237,31 @@ if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
     // Projekt Sichtbarkeit umschalten
     $id = escape_string($_POST['projectID']);
     $hidden = isset($_POST['hidden']) ? ($_POST['hidden'] === 'true' || $_POST['hidden'] === true) : false;
-    
+
     // Check if project exists and user has permission
     $project = query("SELECT * FROM projects WHERE id='$id'");
     if (mysqli_num_rows($project) == 0) {
         echo jsonResponse('Project not found', false);
         exit;
     }
-    
+
     $projectData = fetch_assoc($project);
     $projectID = $projectData['projectID'];
-    
+
     if (!checkUserProjectPermission($userID, $projectID)) {
         echo jsonResponse('Permission denied', false);
         exit;
     }
-    
+
     // Check if hidden column exists, if not add it
     $checkColumn = query("SHOW COLUMNS FROM projects LIKE 'hidden'");
     if (mysqli_num_rows($checkColumn) == 0) {
         query("ALTER TABLE projects ADD COLUMN hidden BOOLEAN DEFAULT FALSE");
     }
-    
+
     $hiddenValue = $hidden ? 1 : 0;
     $mysqli = query("UPDATE projects SET hidden='$hiddenValue' WHERE id='$id'");
-    
+
     if ($mysqli) {
         echo jsonResponse('Project visibility updated successfully');
     } else {
@@ -367,9 +367,9 @@ if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
 } elseif (isset($_POST['getAllProjects'])) {
     // Alle verfügbaren Projekte abrufen (für Admin-Bereich)
     try {
-        $projects = query("SELECT projectID, icon, name, link FROM projects ORDER BY name ASC");//date
+        $projects = query("SELECT projectID, icon, name, link FROM projects ORDER BY name ASC"); //date
         $projectList = [];
-        
+
         foreach ($projects as $project) {
             $projectList[] = [
                 'id' => $project['projectID'],
@@ -379,7 +379,7 @@ if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
                 //'date' => $project['date']
             ];
         }
-        
+
         echo jsonResponse(['success' => true, 'projects' => $projectList]);
     } catch (Exception $e) {
         echo jsonResponse(['success' => false, 'message' => 'Error loading projects: ' . $e->getMessage()]);
@@ -387,15 +387,15 @@ if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
 } elseif (isset($_POST['get_projects_for_import']) && isset($_POST['current_project'])) {
     // Get all projects except the current one for importing tables
     $currentProject = escape_string($_POST['current_project']);
-    
+
     if (!$userID) {
         echo json_encode(['error' => 'User not authenticated']);
         exit;
     }
-    
+
     $projects = [];
     $projectList = getUserProjectsByUserID($userID);
-    
+
     foreach ($projectList as $project) {
         // Exclude current project from list
         if ($project['name'] !== $currentProject) {
@@ -406,7 +406,7 @@ if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
             ];
         }
     }
-    
+
     echo json_encode($projects);
 } else {
     // Alle Projekte des Benutzers abrufen
