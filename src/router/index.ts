@@ -159,14 +159,6 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/TelegramBotConfig.vue'),
   },
   {
-    path: '/project/:project/newsletter/config',
-    component: () => import('../views/NewsletterViewConfig.vue'),
-  },
-  {
-    path: '/project/:project/newsletter',
-    component: () => import('../views/NewsletterView.vue'),
-  },
-  {
     path: '/project/:project/ai-dashboard-generator',
     component: () => import('../views/AIDashboardGenerator.vue'),
   },
