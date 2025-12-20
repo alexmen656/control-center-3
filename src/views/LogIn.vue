@@ -1,33 +1,25 @@
 <template>
   <ion-page>
     <ion-content :fullscreen="true" class="login-content">
-      <!-- Background Pattern -->
       <div class="background-pattern"></div>
-      
-      <!-- Main Container -->
       <div class="login-container">
         <div class="login-card">
-          
-          <!-- Logo Section -->
           <div class="logo-section">
-            <picture>
-              <source
-                media="(min-width:465px)"
-                srcset="/assets/logo_inline_large.png"
-              />
-              <source
-                media="(max-width:465px)"
-                srcset="/assets/logo_block_large.png"
-              />
-              <img
-                src="/assets/logo_inline_large.png"
-                alt="Control Center Logo"
-                class="logo-image"
-              />
-            </picture>
+            <template v-if="isCustomLogin && customLoginConfig?.logo_url">
+              <img :src="customLoginConfig.logo_url" :alt="companyName + ' Logo'" class="logo-image custom-logo" />
+            </template>
+            <template v-else>
+              <picture>
+                <source media="(min-width:465px)" srcset="/assets/logo_inline_large.png" />
+                <source media="(max-width:465px)" srcset="/assets/logo_block_large.png" />
+                <img src="/assets/logo_inline_large.png" alt="Control Center Logo" class="logo-image" />
+              </picture>
+            </template>
             <h1 class="welcome-title" v-if="!createPasswordView">Welcome Back</h1>
             <h1 class="welcome-title" v-else>Complete Setup</h1>
-            <p class="welcome-subtitle" v-if="!createPasswordView">Sign in to your account</p>
+            <p class="welcome-subtitle" v-if="!createPasswordView">
+              {{ isCustomLogin ? 'Sign in to ' + companyName : 'Sign in to your account' }}
+            </p>
             <p class="welcome-subtitle" v-else>Create a password for your account</p>
           </div>
 
@@ -51,12 +43,7 @@
                 <label class="input-label">Password *</label>
                 <div class="input-container">
                   <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
-                  <input
-                    type="password"
-                    v-model="g_password"
-                    placeholder="Enter your password"
-                    class="custom-input"
-                  />
+                  <input type="password" v-model="g_password" placeholder="Enter your password" class="custom-input" />
                 </div>
               </div>
 
@@ -64,21 +51,13 @@
                 <label class="input-label">Confirm Password *</label>
                 <div class="input-container">
                   <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
-                  <input
-                    type="password"
-                    v-model="g_confirmPassword"
-                    placeholder="Confirm your password"
-                    class="custom-input"
-                  />
+                  <input type="password" v-model="g_confirmPassword" placeholder="Confirm your password"
+                    class="custom-input" />
                 </div>
               </div>
             </div>
 
-            <button 
-              @click="onSignUp()" 
-              type="submit" 
-              class="primary-button"
-            >
+            <button @click="onSignUp()" type="submit" class="primary-button">
               <ion-icon name="checkmark-circle" class="button-icon"></ion-icon>
               Complete Setup
             </button>
@@ -92,21 +71,12 @@
                   <label class="input-label">Username</label>
                   <div class="input-container">
                     <ion-icon name="person-outline" class="input-icon"></ion-icon>
-                    <input
-                      v-model="username"
-                      name="username"
-                      type="text"
-                      spellcheck="false"
-                      autocapitalize="off"
+                    <input v-model="username" name="username" type="text" spellcheck="false" autocapitalize="off"
                       @input="
                         username = $event.target.value;
-                        showUsernameError = false;
-                        usernameError = '';
-                      "
-                      required
-                      placeholder="Enter your username"
-                      class="custom-input"
-                    />
+                      showUsernameError = false;
+                      usernameError = '';
+                      " required placeholder="Enter your username" class="custom-input" />
                   </div>
                 </div>
 
@@ -114,30 +84,18 @@
                   <label class="input-label">Password</label>
                   <div class="input-container">
                     <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
-                    <input
-                      v-model="password"
-                      name="password"
-                      type="password"
-                      @input="
-                        password = $event.target.value;
-                        showPasswordError = false;
-                        passwordError = '';
-                      "
-                      required
-                      placeholder="Enter your password"
-                      class="custom-input"
-                    />
+                    <input v-model="password" name="password" type="password" @input="
+                      password = $event.target.value;
+                    showPasswordError = false;
+                    passwordError = '';
+                    " required placeholder="Enter your password" class="custom-input" />
                   </div>
                 </div>
               </div>
 
               <!-- Main Actions -->
               <div class="button-group">
-                <button 
-                  @click="onLogin()" 
-                  type="submit" 
-                  class="primary-button"
-                >
+                <button @click="onLogin()" type="submit" class="primary-button">
                   <ion-icon name="log-in" class="button-icon"></ion-icon>
                   Sign In
                 </button>
@@ -157,26 +115,14 @@
 
               <!-- Social Login -->
               <div class="social-buttons">
-                <button
-                  @click="continueWithGoogle()"
-                  class="social-button google-button"
-                >
+                <button @click="continueWithGoogle()" class="social-button google-button">
                   <img height="20" src="/assets/g-logo3.png" alt="Google" class="social-icon" />
                   Google
                 </button>
 
-                <button
-                  @click="loginWM"
-                  class="social-button microsoft-button"
-                >
-                  <svg
-                    height="18"
-                    aria-hidden="true"
-                    viewBox="0 0 25 25"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="social-icon"
-                  >
+                <button @click="loginWM" class="social-button microsoft-button">
+                  <svg height="18" aria-hidden="true" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg"
+                    class="social-icon">
                     <path d="M11.5216 0.5H0V11.9067H11.5216V0.5Z" fill="#f25022"></path>
                     <path d="M24.2418 0.5H12.7202V11.9067H24.2418V0.5Z" fill="#7fba00"></path>
                     <path d="M11.5216 13.0933H0V24.5H11.5216V13.0933Z" fill="#00a4ef"></path>
@@ -192,7 +138,7 @@
         <!-- Footer -->
         <div class="footer-section">
           <p class="footer-text">
-            © 2025 Control Center. All rights reserved.
+            © 2025 {{ isCustomLogin ? companyName : 'Control Center' }}. All rights reserved.
           </p>
         </div>
       </div>
@@ -228,6 +174,14 @@ interface VerificationData {
   verification_token: string;
 }
 
+interface CustomLoginConfig {
+  domain: string;
+  primary_color: string;
+  logo_url: string;
+  company_name: string;
+  project_name: string;
+}
+
 export default defineComponent({
   data() {
     return {
@@ -244,10 +198,70 @@ export default defineComponent({
       g_password: "",
       g_confirmPassword: "",
       loginWith: "",
+      // Custom Login
+      customLoginConfig: null as CustomLoginConfig | null,
+      isCustomLogin: false,
     };
+  },
+  computed: {
+    primaryColor(): string {
+      return this.customLoginConfig?.primary_color || '#e53e3e';
+    },
+    logoUrl(): string {
+      return this.customLoginConfig?.logo_url || '/assets/logo_inline_large.png';
+    },
+    companyName(): string {
+      return this.customLoginConfig?.company_name || 'Control Center';
+    }
   },
   components: {},
   methods: {
+    async checkCustomLoginDomain() {
+      const currentDomain = window.location.hostname;
+
+      // Skip for localhost and default domains
+      if (currentDomain === 'localhost' /*||
+        currentDomain.includes('control-center.eu') ||
+        currentDomain.includes('polan.sk')*/) {
+        return;
+      }
+
+      try {
+        const res = await this.$axios.get(`custom_login_config.php?domain=${currentDomain}`);
+        if (res.data.success && res.data.config) {
+          this.customLoginConfig = res.data.config;
+          this.isCustomLogin = true;
+          this.applyCustomStyles();
+        }
+      } catch (e) {
+        console.log('No custom login config found for domain:', currentDomain);
+      }
+    },
+    applyCustomStyles() {
+      if (!this.customLoginConfig) return;
+
+      // CSS Variables für Custom Colors setzen
+      const root = document.documentElement;
+      root.style.setProperty('--brand-red', this.primaryColor);
+      root.style.setProperty('--brand-red-light', this.lightenColor(this.primaryColor, 30));
+      root.style.setProperty('--brand-red-dark', this.darkenColor(this.primaryColor, 20));
+    },
+    lightenColor(hex: string, percent: number): string {
+      const num = parseInt(hex.replace('#', ''), 16);
+      const amt = Math.round(2.55 * percent);
+      const R = Math.min(255, (num >> 16) + amt);
+      const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
+      const B = Math.min(255, (num & 0x0000FF) + amt);
+      return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+    },
+    darkenColor(hex: string, percent: number): string {
+      const num = parseInt(hex.replace('#', ''), 16);
+      const amt = Math.round(2.55 * percent);
+      const R = Math.max(0, (num >> 16) - amt);
+      const G = Math.max(0, ((num >> 8) & 0x00FF) - amt);
+      const B = Math.max(0, (num & 0x0000FF) - amt);
+      return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+    },
     async continueWithGoogle() {
       try {
         this.user = await GoogleAuth.signIn();
@@ -319,9 +333,9 @@ export default defineComponent({
       }
 
       let lwg = "false";
-      if(this.loginWith == "google") {
+      if (this.loginWith == "google") {
         lwg = "true";
-      } else if(this.loginWith == "microsoft") {
+      } else if (this.loginWith == "microsoft") {
         lwg = "Microsoft";
       }
 
@@ -366,7 +380,6 @@ export default defineComponent({
               if (res.data.token) {
                 localStorage.setItem("token", res.data.token);
                 console.log(localStorage.getItem("token"));
-                // Check for assigned project and redirect accordingly
                 if (res.data.assigned_project) {
                   location.href = `/project/${res.data.assigned_project}`;
                 } else {
@@ -501,6 +514,9 @@ export default defineComponent({
     },
   },
   async mounted() {
+    // Custom Login Domain Check
+    await this.checkCustomLoginDomain();
+
     await msalInstance.initialize(); // Initialisiere hier
 
     // Stelle sicher, dass die MSAL-Instanz initialisiert wird
@@ -536,7 +552,7 @@ export default defineComponent({
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
+  background-image:
     radial-gradient(circle at 20% 50%, rgba(229, 62, 62, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(229, 62, 62, 0.05) 0%, transparent 50%),
     radial-gradient(circle at 40% 80%, rgba(229, 62, 62, 0.03) 0%, transparent 50%);
@@ -552,17 +568,20 @@ export default defineComponent({
   justify-content: center;
   align-items: center;
   padding: 2rem 1rem;
-  max-width: 600px; /* Increased width */
+  max-width: 600px;
+  /* Increased width */
   margin: 0 auto;
 }
 
 .login-card {
   width: 100%;
-  max-width: 450px; /* Increased width */
+  max-width: 450px;
+  /* Increased width */
   background: white;
   border-radius: 24px;
-  padding: 3rem 2.5rem; /* Increased padding */
-  box-shadow: 
+  padding: 3rem 2.5rem;
+  /* Increased padding */
+  box-shadow:
     0 25px 50px -12px rgba(0, 0, 0, 0.1),
     0 10px 20px -5px rgba(0, 0, 0, 0.04);
   border: 1px solid rgba(0, 0, 0, 0.05);
@@ -575,13 +594,15 @@ export default defineComponent({
 }
 
 .logo-image {
-  max-width: 220px; /* Increased logo size */
+  max-width: 220px;
+  /* Increased logo size */
   height: auto;
   margin-bottom: 1.5rem;
 }
 
 .welcome-title {
-  font-size: 2rem; /* Increased font size */
+  font-size: 2rem;
+  /* Increased font size */
   font-weight: 700;
   color: var(--brand-text);
   margin: 0 0 0.5rem 0;
@@ -589,7 +610,8 @@ export default defineComponent({
 }
 
 .welcome-subtitle {
-  font-size: 1.1rem; /* Increased font size */
+  font-size: 1.1rem;
+  /* Increased font size */
   color: var(--brand-text-light);
   margin: 0;
   font-weight: 400;
@@ -640,12 +662,14 @@ export default defineComponent({
 }
 
 .input-group {
-  margin-bottom: 2rem; /* Increased spacing */
+  margin-bottom: 2rem;
+  /* Increased spacing */
 }
 
 .custom-input-wrapper {
   width: 100%;
-  margin-bottom: 1.5rem; /* Increased spacing */
+  margin-bottom: 1.5rem;
+  /* Increased spacing */
 }
 
 .input-label {
@@ -672,8 +696,10 @@ export default defineComponent({
 
 .custom-input {
   width: 100%;
-  height: 52px; /* Increased height */
-  padding: 0 1rem 0 3rem; /* More padding */
+  height: 52px;
+  /* Increased height */
+  padding: 0 1rem 0 3rem;
+  /* More padding */
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   font-size: 1rem;
@@ -699,12 +725,14 @@ export default defineComponent({
 
 /* Button Styles */
 .button-group {
-  margin-bottom: 2rem; /* Increased spacing */
+  margin-bottom: 2rem;
+  /* Increased spacing */
 }
 
 .primary-button {
   width: 100%;
-  height: 52px; /* Increased height */
+  height: 52px;
+  /* Increased height */
   background: linear-gradient(135deg, var(--brand-red), var(--brand-red-dark));
   border: none;
   border-radius: 12px;
@@ -733,7 +761,8 @@ export default defineComponent({
 
 .secondary-button {
   width: 100%;
-  height: 52px; /* Increased height */
+  height: 52px;
+  /* Increased height */
   background: white;
   border: 2px solid var(--brand-red);
   border-radius: 12px;
@@ -766,7 +795,8 @@ export default defineComponent({
 .divider {
   display: flex;
   align-items: center;
-  margin: 2rem 0; /* Increased spacing */
+  margin: 2rem 0;
+  /* Increased spacing */
   color: var(--brand-text-light);
 }
 
@@ -779,7 +809,8 @@ export default defineComponent({
 }
 
 .divider-text {
-  padding: 0 1.5rem; /* Increased padding */
+  padding: 0 1.5rem;
+  /* Increased padding */
   font-size: 0.9rem;
   font-weight: 500;
   white-space: nowrap;
@@ -789,12 +820,14 @@ export default defineComponent({
 .social-buttons {
   display: flex;
   flex-direction: column;
-  gap: 1rem; /* Increased gap */
+  gap: 1rem;
+  /* Increased gap */
 }
 
 .social-button {
   width: 100%;
-  height: 52px; /* Increased height */
+  height: 52px;
+  /* Increased height */
   background: white;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
@@ -804,7 +837,8 @@ export default defineComponent({
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem; /* Increased gap */
+  gap: 0.75rem;
+  /* Increased gap */
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -831,15 +865,18 @@ export default defineComponent({
 
 /* Footer */
 .footer-section {
-  margin-top: 2.5rem; /* Increased spacing */
+  margin-top: 2.5rem;
+  /* Increased spacing */
   text-align: center;
 }
 
 .footer-text {
-  font-size: 0.85rem; /* Slightly larger */
+  font-size: 0.85rem;
+  /* Slightly larger */
   color: var(--brand-text-light);
   margin: 0;
-  line-height: 1.5; /* Better line height */
+  line-height: 1.5;
+  /* Better line height */
 }
 
 /* Responsive Design */
@@ -848,17 +885,17 @@ export default defineComponent({
     padding: 1.5rem 1rem;
     max-width: 100%;
   }
-  
+
   .login-card {
     padding: 2.5rem 2rem;
     border-radius: 20px;
     max-width: 100%;
   }
-  
+
   .logo-image {
     max-width: 180px;
   }
-  
+
   .welcome-title {
     font-size: 1.7rem;
   }
@@ -869,16 +906,16 @@ export default defineComponent({
     justify-content: flex-start;
     padding-top: 2rem;
   }
-  
+
   .logo-section {
     margin-bottom: 2rem;
   }
-  
+
   .logo-image {
     max-width: 160px;
     margin-bottom: 1rem;
   }
-  
+
   .welcome-title {
     font-size: 1.6rem;
   }
@@ -894,6 +931,7 @@ export default defineComponent({
     opacity: 0;
     transform: translateY(40px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -901,7 +939,7 @@ export default defineComponent({
 }
 
 /* Focus and Accessibility */
-.custom-input:focus + .input-icon,
+.custom-input:focus+.input-icon,
 .input-container:focus-within .input-icon {
   color: var(--brand-red);
 }
