@@ -10,25 +10,16 @@
                   <ion-icon name="document-text-outline"></ion-icon>
                   Notepad
                 </h1>
-                <p class="page-subtitle">Create and manage your notes with rich text editing</p>
-              </div>
-              <div class="header-stats">
-                <div class="stat-card">
-                  <span class="stat-number">{{ notes.length }}</span>
-                  <span class="stat-label">Total Notes</span>
-                </div>
               </div>
             </div>
           </div>
 
           <!-- Action Bar -->
           <div class="action-bar">
-            <div class="action-group-left">
-              <button class="action-btn primary" @click="scrollToForm">
-                <ion-icon name="add-outline"></ion-icon>
-                <span>{{ isEditing ? 'Editing Note' : 'New Note' }}</span>
-              </button>
-            </div>
+            <button class="action-btn primary" @click="scrollToForm">
+              <ion-icon name="add-outline"></ion-icon>
+              {{ isEditing ? 'Editing Note' : 'New Note' }}
+            </button>
           </div>
 
           <!-- New Note Form Card -->
@@ -331,51 +322,36 @@
   
   
   <style scoped>
-  /* Modern Design System */
+  /* Mobile-First Design System */
   .modern-content {
     --primary-color: #2563eb;
-    --primary-hover: #1d4ed8;
-    --secondary-color: #64748b;
     --success-color: #059669;
     --danger-color: #dc2626;
-    --warning-color: #d97706;
     --background: #f8fafc;
     --surface: #ffffff;
     --border: #e2e8f0;
     --text-primary: #1e293b;
     --text-secondary: #64748b;
-    --text-muted: #94a3b8;
-    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --radius: 8px;
-    --radius-lg: 12px;
+    --radius: 12px;
     background: var(--background);
   }
 
   .page-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px;
+    padding: 16px;
     min-height: 100vh;
   }
 
   /* Page Header */
   .page-header {
-    margin-bottom: 32px;
+    margin-bottom: 20px;
   }
 
   .header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 24px;
+    margin-bottom: 16px;
   }
 
   .header-info {
     flex: 1;
-    min-width: 300px;
   }
 
   .page-title {
@@ -384,90 +360,41 @@
     gap: 12px;
     margin: 0 0 8px 0;
     color: var(--text-primary);
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 700;
-    letter-spacing: -0.025em;
   }
 
   .page-title ion-icon {
-    font-size: 36px;
+    font-size: 28px;
     color: var(--primary-color);
   }
 
   .page-subtitle {
     margin: 0;
     color: var(--text-secondary);
-    font-size: 16px;
-    line-height: 1.5;
-  }
-
-  .header-stats {
-    display: flex;
-    gap: 16px;
-  }
-
-  .stat-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 16px 24px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow);
-    min-width: 100px;
-  }
-
-  .stat-number {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--primary-color);
-    line-height: 1;
-  }
-
-  .stat-label {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-top: 4px;
-    text-align: center;
+    font-size: 14px;
   }
 
   /* Action Bar */
   .action-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-
-  .action-group-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    margin-bottom: 20px;
   }
 
   .action-btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 16px;
     border: none;
     border-radius: var(--radius);
     font-weight: 500;
     font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s ease;
     background: var(--surface);
     color: var(--text-primary);
     border: 1px solid var(--border);
-    box-shadow: var(--shadow);
-  }
-
-  .action-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    -webkit-tap-highlight-color: transparent;
+    min-height: 44px;
   }
 
   .action-btn.primary {
@@ -476,24 +403,8 @@
     border-color: var(--primary-color);
   }
 
-  .action-btn.primary:hover {
-    background: var(--primary-hover);
-    border-color: var(--primary-hover);
-  }
-
-  .action-btn.secondary {
-    background: var(--surface);
-    color: var(--text-secondary);
-    border-color: var(--border);
-  }
-
-  .action-btn.secondary:hover {
-    color: var(--text-primary);
-    border-color: var(--text-muted);
-  }
-
   .action-btn ion-icon {
-    font-size: 16px;
+    font-size: 18px;
   }
 
   /* Data Card */
@@ -550,17 +461,16 @@
     padding: 12px 16px;
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    font-size: 14px;
+    font-size: 16px;
     background: var(--surface);
     color: var(--text-primary);
-    transition: all 0.2s ease;
     box-sizing: border-box;
+    min-height: 44px;
   }
 
   .modern-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
   }
 
   .editor-group {
@@ -676,20 +586,9 @@
   .note-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow);
+    border-radius: var(--radius);
     overflow: hidden;
-    transition: all 0.2s ease;
     position: relative;
-  }
-
-  .note-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-  }
-
-  .note-card:hover .note-actions {
-    opacity: 1;
   }
 
   .note-actions {
@@ -697,9 +596,7 @@
     top: 12px;
     right: 12px;
     display: flex;
-    gap: 4px;
-    opacity: 0;
-    transition: opacity 0.2s ease;
+    gap: 8px;
     z-index: 2;
   }
 
@@ -707,33 +604,22 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
     border: none;
     border-radius: var(--radius);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(4px);
     border: 1px solid var(--border);
+    -webkit-tap-highlight-color: transparent;
   }
 
   .note-action-btn.edit {
     color: var(--primary-color);
   }
 
-  .note-action-btn.edit:hover {
-    background: var(--primary-color);
-    color: white;
-  }
-
   .note-action-btn.delete {
     color: var(--danger-color);
-  }
-
-  .note-action-btn.delete:hover {
-    background: var(--danger-color);
-    color: white;
   }
 
   .note-image-container {
@@ -806,60 +692,4 @@
     font-size: 14px;
   }
 
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .page-container {
-      padding: 16px;
-    }
-    
-    .header-content {
-      flex-direction: column;
-      align-items: stretch;
-    }
-    
-    .page-title {
-      font-size: 28px;
-    }
-    
-    .notes-grid {
-      grid-template-columns: 1fr;
-    }
-    
-    .card-header,
-    .card-content {
-      padding: 20px;
-    }
-    
-    .form-actions {
-      flex-direction: column;
-    }
-    
-    .action-btn {
-      justify-content: center;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .page-container {
-      padding: 12px;
-    }
-    
-    .page-title {
-      font-size: 24px;
-    }
-    
-    .card-header,
-    .card-content {
-      padding: 16px;
-    }
-    
-    .modern-editor :deep(.ql-container) {
-      min-height: 150px;
-    }
-    
-    .modern-editor :deep(.ql-editor) {
-      min-height: 150px;
-      padding: 12px;
-    }
-  }
   </style>

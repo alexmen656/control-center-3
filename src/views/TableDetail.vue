@@ -6,16 +6,10 @@
         <div class="page-header">
           <div class="header-content">
             <h1>{{ $route.params.name }}</h1>
-            <p>Database table overview and data management</p>
           </div>
           <div class="header-actions">
-            <button class="action-btn secondary" @click="refreshData">
+            <button class="action-btn" @click="refreshData">
               <ion-icon name="refresh-outline"></ion-icon>
-              Refresh
-            </button>
-            <button class="action-btn secondary" @click="exportData">
-              <ion-icon name="download-outline"></ion-icon>
-              Export
             </button>
             <button class="action-btn primary" @click="addNewRow">
               <ion-icon name="add-outline"></ion-icon>
@@ -24,34 +18,15 @@
           </div>
         </div>
 
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="list-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ data.length }}</h3>
-              <p>Total Rows</p>
-            </div>
+        <!-- Simple Stats Bar -->
+        <div class="stats-bar">
+          <div class="stat-item">
+            <span class="stat-value">{{ data.length }}</span>
+            <span class="stat-label">Rows</span>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="grid-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ labels.length }}</h3>
-              <p>Columns</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="search-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ filteredData.length }}</h3>
-              <p>Filtered Rows</p>
-            </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ labels.length }}</span>
+            <span class="stat-label">Columns</span>
           </div>
         </div>
 
@@ -408,142 +383,95 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* Modern Design System - Same as FormDisplay and ManageUsers */
+/* Mobile-First Design System */
 .modern-content {
   --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
-  --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
-  --warning-color: #d97706;
   --background: #f8fafc;
   --surface: #ffffff;
   --border: #e2e8f0;
   --text-primary: #1e293b;
   --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
+  --radius: 12px;
 }
 
 .page-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
+  padding: 16px;
   min-height: 100vh;
   background: var(--background);
 }
 
 /* Page Header */
 .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-  gap: 20px;
+  margin-bottom: 20px;
 }
 
 .header-content h1 {
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
   color: var(--text-primary);
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 700;
-  line-height: 1.2;
 }
 
 .header-content p {
-  margin: 0;
+  margin: 0 0 12px 0;
   color: var(--text-secondary);
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 14px;
 }
 
 .header-actions {
   display: flex;
-  align-items: center;
+  gap: 8px;
+}
+
+/* Stats Bar */
+.stats-bar {
+  display: flex;
   gap: 12px;
-  flex-wrap: wrap;
-}
-
-/* Stats Grid */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
-}
-
-.stat-card {
+  margin-bottom: 20px;
+  padding: 12px;
   background: var(--surface);
+  border-radius: var(--radius);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow);
-  transition: all 0.3s ease;
+}
+
+.stat-item {
+  flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
+  padding: 8px;
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  color: white;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-  flex-shrink: 0;
-}
-
-.stat-content h3 {
-  margin: 0 0 4px 0;
-  font-size: 28px;
+.stat-value {
+  font-size: 20px;
   font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1;
+  color: var(--primary-color);
 }
 
-.stat-content p {
-  margin: 0;
+.stat-label {
+  font-size: 11px;
   color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
+  margin-top: 2px;
 }
 
 /* Action Buttons */
 .action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 16px;
   border: none;
   border-radius: var(--radius);
   font-weight: 500;
   font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
   background: var(--surface);
   color: var(--text-primary);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  -webkit-tap-highlight-color: transparent;
+  min-height: 44px;
 }
 
 .action-btn.primary {
@@ -552,13 +480,8 @@ export default defineComponent({
   border-color: var(--primary-color);
 }
 
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-}
-
 .action-btn ion-icon {
-  font-size: 16px;
+  font-size: 18px;
 }
 
 /* Data Card */
@@ -768,11 +691,6 @@ export default defineComponent({
 .table-row {
   display: flex;
   border-bottom: 1px solid var(--border);
-  transition: all 0.2s ease;
-}
-
-.table-row:hover {
-  background: var(--background);
 }
 
 .table-row:last-child {
@@ -781,29 +699,18 @@ export default defineComponent({
 
 .table-cell {
   flex: 1;
-  min-width: 120px;
-  padding: 16px;
+  min-width: 100px;
+  padding: 12px 8px;
   display: flex;
   align-items: center;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-primary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.table-cell:hover {
-  background: rgba(37, 99, 235, 0.05);
 }
 
 .actions-cell {
-  flex: 0 0 140px;
+  flex: 0 0 120px;
   justify-content: center;
-  padding: 12px 16px;
-  cursor: default;
-}
-
-.actions-cell:hover {
-  background: transparent;
+  padding: 8px;
 }
 
 .cell-content {
@@ -838,13 +745,12 @@ export default defineComponent({
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border: none;
   border-radius: var(--radius);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 14px;
+  font-size: 18px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .edit-btn {
@@ -852,19 +758,9 @@ export default defineComponent({
   color: var(--primary-color);
 }
 
-.edit-btn:hover {
-  background: #dbeafe;
-  transform: scale(1.05);
-}
-
 .delete-btn {
   background: #fef2f2;
   color: var(--danger-color);
-}
-
-.delete-btn:hover {
-  background: #fee2e2;
-  transform: scale(1.05);
 }
 
 /* Schema Grid */
@@ -950,58 +846,5 @@ export default defineComponent({
   }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .page-container {
-    padding: 16px;
-  }
 
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .header-actions {
-    justify-content: center;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .search-box input {
-    min-width: 100%;
-  }
-
-  .header-cell,
-  .table-cell {
-    min-width: 100px;
-    padding: 12px 8px;
-    font-size: 12px;
-  }
-
-  .modern-table {
-    min-width: 600px;
-  }
-
-  .cell-content {
-    max-width: 80px;
-  }
-
-  .schema-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
-  }
-}
 </style>

@@ -6,8 +6,7 @@
         <!-- Header -->
         <div class="page-header">
           <div class="header-content">
-            <h1>Table Management</h1>
-            <p>Manage your project's form tables and data</p>
+            <h1>Form Tables</h1>
           </div>
           <div class="header-actions">
             <button class="action-btn secondary" @click="refreshTables">
@@ -17,43 +16,15 @@
           </div>
         </div>
 
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="layers-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ tables.length }}</h3>
-              <p>Total Tables</p>
-            </div>
+        <!-- Simple Stats Bar -->
+        <div class="stats-bar">
+          <div class="stat-item">
+            <span class="stat-value">{{ tables.length }}</span>
+            <span class="stat-label">Tables</span>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="document-text-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ totalRows }}</h3>
-              <p>Total Records</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ activeTables }}</h3>
-              <p>Active Tables</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="alert-circle-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ inactiveTables }}</h3>
-              <p>Missing Tables</p>
-            </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ totalRows }}</span>
+            <span class="stat-label">Records</span>
           </div>
         </div>
 
@@ -308,11 +279,9 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* Modern Design System */
+/* Mobile-First Design System */
 .modern-content {
   --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
-  --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
   --warning-color: #d97706;
@@ -321,18 +290,11 @@ export default defineComponent({
   --border: #e2e8f0;
   --text-primary: #1e293b;
   --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
+  --radius: 12px;
 }
 
 .page-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
+  padding: 16px;
   min-height: 100vh;
   background: var(--background);
 }
@@ -369,23 +331,16 @@ export default defineComponent({
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 12px 16px;
   border: none;
   border-radius: var(--radius);
   font-weight: 500;
   font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
   background: var(--surface);
   color: var(--text-primary);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  -webkit-tap-highlight-color: transparent;
+  min-height: 44px;
 }
 
 .action-btn.secondary {
@@ -399,78 +354,57 @@ export default defineComponent({
   border-color: var(--danger-color);
 }
 
-.action-btn.danger:hover {
-  background: #b91c1c;
-  border-color: #b91c1c;
-}
-
-/* Stats Grid */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 32px;
-}
-
-.stat-card {
+/* Stats Bar */
+.stats-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 12px;
   background: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
   border-radius: var(--radius);
-  background: var(--primary-color);
+  border: 1px solid var(--border);
+}
+
+.stat-item {
+  flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
+  padding: 8px;
 }
 
-.stat-content h3 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 24px;
+.stat-value {
+  font-size: 20px;
   font-weight: 700;
+  color: var(--primary-color);
 }
 
-.stat-content p {
-  margin: 0;
+.stat-label {
+  font-size: 11px;
   color: var(--text-secondary);
-  font-size: 14px;
+  margin-top: 2px;
 }
 
 /* Tables Card */
 .tables-card {
   background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+  border-radius: var(--radius);
   border: 1px solid var(--border);
   overflow: hidden;
 }
 
 .card-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
   border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-  gap: 16px;
 }
 
 .card-header h2 {
   margin: 0;
   color: var(--text-primary);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
 }
 
@@ -478,63 +412,63 @@ export default defineComponent({
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .search-box ion-icon {
   position: absolute;
   left: 12px;
-  color: var(--text-muted);
-  font-size: 16px;
+  color: var(--text-secondary);
+  font-size: 18px;
   z-index: 1;
 }
 
 .search-box input {
-  padding: 10px 16px 10px 40px;
+  width: 100%;
+  padding: 12px 16px 12px 44px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  font-size: 14px;
+  font-size: 16px;
   background: var(--background);
   color: var(--text-primary);
-  min-width: 250px;
-  transition: all 0.2s ease;
+  min-height: 44px;
 }
 
 .search-box input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
 /* Tables Container */
 .tables-container {
-  padding: 24px;
+  padding: 16px;
 }
 
 .loading-state,
 .no-data-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 40px 20px;
   color: var(--text-secondary);
 }
 
 .loading-icon {
-  font-size: 48px;
+  font-size: 40px;
   color: var(--primary-color);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   animation: spin 1s linear infinite;
 }
 
 .no-data-icon {
-  font-size: 64px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
+  font-size: 48px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
   opacity: 0.5;
 }
 
 .no-data-state h3 {
   margin: 0 0 8px 0;
   color: var(--text-primary);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -543,85 +477,92 @@ export default defineComponent({
   font-size: 14px;
 }
 
-/* Tables Grid */
+/* Tables Grid - Mobile First */
 .tables-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .table-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  transition: all 0.2s ease;
-}
-
-.table-card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .table-card.table-active {
-  border-left: 4px solid var(--success-color);
+  border-left: 3px solid var(--success-color);
 }
 
 .table-card.table-inactive {
-  border-left: 4px solid var(--warning-color);
-  background: #fefce8;
+  border-left: 3px solid var(--warning-color);
+  opacity: 0.6;
 }
 
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+.table-info {
+  flex: 1;
+  min-width: 0;
 }
 
-.table-status {
+.table-name-row {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-bottom: 4px;
 }
 
 .table-name {
   font-weight: 600;
-  font-size: 16px;
+  font-size: 15px;
   color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .status-active {
   color: var(--success-color);
   font-size: 18px;
+  flex-shrink: 0;
 }
 
 .status-inactive {
   color: var(--warning-color);
   font-size: 18px;
+  flex-shrink: 0;
+}
+
+.table-meta {
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 
 .table-actions {
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
 }
 
-.icon-btn {
-  display: inline-flex;
+.action-btn-mobile {
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: var(--radius);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 14px;
+  font-size: 18px;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.icon-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.action-btn-mobile:disabled {
+  opacity: 0.3;
 }
 
 .view-btn {
@@ -629,77 +570,14 @@ export default defineComponent({
   color: var(--primary-color);
 }
 
-.view-btn:hover:not(:disabled) {
-  background: #dbeafe;
-}
-
 .edit-btn {
   background: #f0fdf4;
   color: var(--success-color);
 }
 
-.edit-btn:hover {
-  background: #dcfce7;
-}
-
 .delete-btn {
   background: #fef2f2;
   color: var(--danger-color);
-}
-
-.delete-btn:hover {
-  background: #fee2e2;
-}
-
-/* Table Details */
-.table-details {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.detail-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-}
-
-.detail-label {
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.detail-value {
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-.table-name-code {
-  font-family: monospace;
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: normal;
-}
-
-/* Table Warning */
-.table-warning {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  background: #fef3c7;
-  border: 1px solid #f59e0b;
-  border-radius: var(--radius);
-  color: #92400e;
-  font-size: 12px;
-  margin-top: 12px;
-}
-
-.table-warning ion-icon {
-  font-size: 16px;
-  color: #f59e0b;
 }
 
 /* Modal Styles */
@@ -752,23 +630,17 @@ export default defineComponent({
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: var(--radius);
   background: transparent;
   color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.modal-close-btn:hover {
-  background: var(--border);
-  color: var(--text-primary);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .custom-modal-body {
-  padding: 24px;
+  padding: 20px;
 }
 
 .warning-content {
@@ -802,8 +674,13 @@ export default defineComponent({
 
 .form-actions {
   display: flex;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  justify-content: flex-end;
+}
+
+.form-actions .action-btn {
+  width: 100%;
 }
 
 /* Animations */
@@ -828,37 +705,4 @@ export default defineComponent({
   }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .page-container {
-    padding: 16px;
-  }
-  
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .card-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .search-box input {
-    min-width: 100%;
-  }
-  
-  .tables-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .custom-modal-content {
-    width: 95vw;
-    margin: 20px;
-  }
-}
 </style>

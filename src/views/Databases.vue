@@ -7,7 +7,6 @@
         <div class="page-header">
           <div class="header-content">
             <h1>Database Management</h1>
-            <p>Browse and manage your database tables</p>
           </div>
           <div class="header-actions">
             <button class="action-btn secondary" @click="refreshTables">
@@ -21,34 +20,11 @@
           </div>
         </div>
 
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="server-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ tables.length }}</h3>
-              <p>Total Tables</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="search-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ filteredTables.length }}</h3>
-              <p>Filtered Results</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="grid-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ search ? 'Active' : 'Inactive' }}</h3>
-              <p>Search Filter</p>
-            </div>
+        <!-- Simple Stats Bar -->
+        <div class="stats-bar">
+          <div class="stat-item">
+            <span class="stat-value">{{ tables.length }}</span>
+            <span class="stat-label">Tables</span>
           </div>
         </div>
 
@@ -102,17 +78,12 @@
                 class="table-card"
                 @click="openTable(table[0])"
               >
-                <div class="table-icon">
-                  <ion-icon name="grid-outline"></ion-icon>
+                <ion-icon name="server-outline" class="table-icon"></ion-icon>
+                <div class="table-name">
+                  <span v-if="search && search.length > 0" v-html="highlightMatch(table[0], search)"></span>
+                  <span v-else>{{ table[0] }}</span>
                 </div>
-                <div class="table-info">
-                  <h4 v-if="search && search.length > 0" v-html="highlightMatch(table[0], search)"></h4>
-                  <h4 v-else>{{ table[0] }}</h4>
-                  <p>Database Table</p>
-                </div>
-                <div class="table-actions">
-                  <ion-icon name="chevron-forward-outline"></ion-icon>
-                </div>
+                <ion-icon name="chevron-forward-outline" class="chevron-icon"></ion-icon>
               </div>
             </div>
           </div>
@@ -255,118 +226,77 @@ export default defineComponent({
 });
 </script>
 <style scoped>
-/* Modern Design System - Same as FormDisplay */
+/* Mobile-First Design System */
 .modern-content {
   --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
-  --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
-  --warning-color: #d97706;
   --background: #f8fafc;
   --surface: #ffffff;
   --border: #e2e8f0;
   --text-primary: #1e293b;
   --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
+  --radius: 12px;
 }
 
 .page-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
+  padding: 16px;
   min-height: 100vh;
   background: var(--background);
 }
 
 /* Page Header */
 .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-  gap: 20px;
+  margin-bottom: 20px;
 }
 
 .header-content h1 {
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
   color: var(--text-primary);
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 700;
-  line-height: 1.2;
 }
 
 .header-content p {
-  margin: 0;
+  margin: 0 0 12px 0;
   color: var(--text-secondary);
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 14px;
 }
 
 .header-actions {
   display: flex;
-  align-items: center;
+  gap: 8px;
+}
+
+/* Stats Bar */
+.stats-bar {
+  display: flex;
   gap: 12px;
-  flex-wrap: wrap;
-}
-
-/* Stats Grid */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
-}
-
-.stat-card {
+  margin-bottom: 20px;
+  padding: 12px;
   background: var(--surface);
+  border-radius: var(--radius);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow);
-  transition: all 0.3s ease;
+}
+
+.stat-item {
+  flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
+  padding: 8px;
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  color: white;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-  flex-shrink: 0;
-}
-
-.stat-content h3 {
-  margin: 0 0 4px 0;
-  font-size: 28px;
+.stat-value {
+  font-size: 20px;
   font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1;
+  color: var(--primary-color);
 }
 
-.stat-content p {
-  margin: 0;
+.stat-label {
+  font-size: 11px;
   color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
+  margin-top: 2px;
 }
 
 /* Search Container */
@@ -391,20 +321,18 @@ export default defineComponent({
 
 .search-input {
   width: 100%;
-  padding: 12px 16px 12px 40px;
+  padding: 12px 16px 12px 44px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  font-size: 14px;
+  font-size: 16px;
   background: var(--surface);
   color: var(--text-primary);
-  transition: all 0.2s ease;
-  box-shadow: var(--shadow);
+  min-height: 44px;
 }
 
 .search-input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
 .clear-search {
@@ -412,40 +340,30 @@ export default defineComponent({
   right: 8px;
   background: none;
   border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
+  color: var(--text-secondary);
+  padding: 8px;
   border-radius: var(--radius);
-  transition: all 0.2s ease;
-}
-
-.clear-search:hover {
-  background: var(--background);
-  color: var(--text-primary);
+  -webkit-tap-highlight-color: transparent;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 /* Action Buttons */
 .action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 16px;
   border: none;
   border-radius: var(--radius);
   font-weight: 500;
   font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
   background: var(--surface);
   color: var(--text-primary);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  -webkit-tap-highlight-color: transparent;
+  min-height: 44px;
 }
 
 .action-btn.primary {
@@ -454,13 +372,8 @@ export default defineComponent({
   border-color: var(--primary-color);
 }
 
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-}
-
 .action-btn ion-icon {
-  font-size: 16px;
+  font-size: 18px;
 }
 
 /* Data Card */
@@ -572,109 +485,40 @@ export default defineComponent({
 .table-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  border-radius: var(--radius);
+  padding: 16px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  box-shadow: var(--shadow);
+  gap: 12px;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.table-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--primary-color);
+.table-card:active {
+  background: var(--background);
 }
 
 .table-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius);
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
   font-size: 24px;
-  flex-shrink: 0;
-}
-
-.table-info {
-  flex: 1;
-}
-
-.table-info h4 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.table-info p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.table-actions {
-  color: var(--text-muted);
-  font-size: 20px;
-}
-
-/* Quick Actions */
-.quick-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  margin-top: 24px;
-}
-
-.quick-action-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: var(--shadow);
-}
-
-.quick-action-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--primary-color);
-}
-
-.quick-action-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius);
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(29, 78, 216, 0.1) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   color: var(--primary-color);
-  font-size: 24px;
   flex-shrink: 0;
+  width: 24px;
 }
 
-.quick-action-content h4 {
-  margin: 0 0 4px 0;
+.table-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 500;
   color: var(--text-primary);
-  font-size: 16px;
-  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.quick-action-content p {
-  margin: 0;
+.chevron-icon {
+  font-size: 20px;
   color: var(--text-secondary);
-  font-size: 14px;
-  line-height: 1.4;
+  flex-shrink: 0;
 }
 
 /* Highlight Match */
@@ -684,50 +528,5 @@ export default defineComponent({
   padding: 0 2px;
   border-radius: 2px;
   font-weight: 600;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .page-container {
-    padding: 16px;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .header-actions {
-    justify-content: center;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .tables-grid {
-    grid-template-columns: 1fr;
-    padding: 16px;
-  }
-
-  .quick-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .search-box {
-    max-width: 100%;
-  }
-}
-
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
-  }
 }
 </style>
