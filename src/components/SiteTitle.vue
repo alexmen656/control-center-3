@@ -9,7 +9,10 @@
             <span>Home</span>
           </span>
           <ion-icon name="chevron-forward-outline" class="separator-icon"></ion-icon>
-          <span class="breadcrumb-current">{{ title[0].toUpperCase() + title.slice(1) }}</span>
+          <span class="breadcrumb-item" v-if="$route.params.project">{{ $route.params.project }}</span>
+          <ion-icon name="chevron-forward-outline" class="separator-icon" v-if="$route.params.project"></ion-icon>
+          <span class="breadcrumb-current" v-if="title">{{ title[0].toUpperCase() + title.slice(1) }}</span>
+          <span class="breadcrumb-current" v-else>Page</span>
         </div>
         <!-- Actions
         <div class="title-actions">
@@ -32,6 +35,7 @@ export default {
   props: {
     title: {
       type: String,
+      default: "Page"
     },
     icon: {
       type: String,
