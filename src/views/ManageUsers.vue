@@ -4,7 +4,6 @@
       <SiteTitle icon="people-outline" title="User Management" />
 
       <div class="page-container">
-        <!-- Page Header -->
         <div class="page-header">
           <div class="header-content">
             <h1>User Management</h1>
@@ -21,8 +20,6 @@
             </button>
           </div>
         </div>
-
-        <!-- Stats Cards -->
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon">
@@ -116,8 +113,10 @@
 
                   <!-- Profile Image -->
                   <div class="table-cell cell-avatar">
-                    <div class="user-avatar">
-                      <img v-if="user[1] && user[1] !== 'null'" :src="user[1]" alt="Profile" />
+                    <div class="user-avatar" :class="{ 'avatar-initials': user[1] === 'avatar' }" 
+                         :style="user[1] === 'avatar' ? { backgroundColor: getAvatarColor(user[0]) } : {}">
+                      <img v-if="user[1] && user[1] !== 'null' && user[1] !== 'avatar' && user[1] !== 'google'" :src="user[1]" alt="Profile" />
+                      <span v-else-if="user[1] === 'avatar'" class="initials">{{ getInitials(user[2], user[3]) }}</span>
                       <ion-icon v-else name="person-outline"></ion-icon>
                     </div>
                   </div>
@@ -186,8 +185,10 @@
           <div class="pending-users">
             <div v-for="user in pendingVerificationEntries" :key="user[0]" class="pending-user-card">
               <div class="pending-user-info">
-                <div class="user-avatar">
-                  <img v-if="user[1] && user[1] !== 'null'" :src="user[1]" alt="Profile" />
+                <div class="user-avatar" :class="{ 'avatar-initials': user[1] === 'avatar' }"
+                     :style="user[1] === 'avatar' ? { backgroundColor: getAvatarColor(user[0]) } : {}">
+                  <img v-if="user[1] && user[1] !== 'null' && user[1] !== 'avatar' && user[1] !== 'google'" :src="user[1]" alt="Profile" />
+                  <span v-else-if="user[1] === 'avatar'" class="initials">{{ getInitials(user[2], user[3]) }}</span>
                   <ion-icon v-else name="person-outline"></ion-icon>
                 </div>
                 <div class="user-details">
@@ -265,9 +266,11 @@
           </div>
           <div class="custom-modal-body">
             <div class="assign-user-info">
-              <div class="user-avatar">
-                <img v-if="selectedUser?.image && selectedUser?.image !== 'null'" :src="selectedUser.image"
+              <div class="user-avatar" :class="{ 'avatar-initials': selectedUser?.image === 'avatar' }"
+                   :style="selectedUser?.image === 'avatar' ? { backgroundColor: getAvatarColor(selectedUser.id) } : {}">
+                <img v-if="selectedUser?.image && selectedUser?.image !== 'null' && selectedUser?.image !== 'avatar' && selectedUser?.image !== 'google'" :src="selectedUser.image"
                   alt="Profile" />
+                <span v-else-if="selectedUser?.image === 'avatar'" class="initials">{{ getInitialsFromName(selectedUser.name) }}</span>
                 <ion-icon v-else name="person-outline"></ion-icon>
               </div>
               <div class="user-details">
@@ -311,9 +314,11 @@
           </div>
           <div class="custom-modal-body">
             <div class="assign-user-info">
-              <div class="user-avatar">
-                <img v-if="editUserData.image && editUserData.image !== 'null'" :src="editUserData.image"
+              <div class="user-avatar" :class="{ 'avatar-initials': editUserData.image === 'avatar' }"
+                   :style="editUserData.image === 'avatar' ? { backgroundColor: getAvatarColor(editUserData.id) } : {}">
+                <img v-if="editUserData.image && editUserData.image !== 'null' && editUserData.image !== 'avatar' && editUserData.image !== 'google'" :src="editUserData.image"
                   alt="Profile" />
+                <span v-else-if="editUserData.image === 'avatar'" class="initials">{{ getInitials(editUserData.first_name, editUserData.last_name) }}</span>
                 <ion-icon v-else name="person-outline"></ion-icon>
               </div>
               <div class="user-details">
@@ -796,6 +801,29 @@ export default defineComponent({
       setTimeout(() => {
         this.successMessage = '';
       }, 3000);
+    },
+    getInitials(firstName, lastName) {
+      const first = firstName ? firstName.charAt(0).toUpperCase() : '';
+      const last = lastName ? lastName.charAt(0).toUpperCase() : '';
+      return first + last;
+    },
+    getInitialsFromName(fullName) {
+      if (!fullName) return '';
+      const parts = fullName.split(' ');
+      if (parts.length >= 2) {
+        return parts[0].charAt(0).toUpperCase() + parts[parts.length - 1].charAt(0).toUpperCase();
+      }
+      return fullName.charAt(0).toUpperCase();
+    },
+    getAvatarColor(userId) {
+      // Generate consistent colors based on user ID
+      const colors = [
+        '#667eea', '#764ba2', '#f093fb', '#f5576c',
+        '#4facfe', '#00f2fe', '#43e97b', '#38f9d7',
+        '#fa709a', '#fee140', '#30cfd0', '#330867',
+        '#a8edea', '#fed6e3', '#ff9a9e', '#fecfef'
+      ];
+      return colors[userId % colors.length];
     }
   },
 });
@@ -1297,7 +1325,7 @@ export default defineComponent({
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 2px solid var(--border);
+  border: 2px solid var(--border) !important;
 }
 
 .user-avatar img {
@@ -1309,6 +1337,18 @@ export default defineComponent({
 .user-avatar ion-icon {
   font-size: 20px;
   color: var(--text-secondary);
+}
+
+.user-avatar.avatar-initials {
+  border: none;
+}
+
+.user-avatar .initials {
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  user-select: none;
 }
 
 /* User Info */
