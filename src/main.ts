@@ -5,6 +5,10 @@ import "./axios";
 
 import { IonicVue } from "@ionic/vue";
 
+/* Ionicons */
+import { addIcons } from 'ionicons';
+import * as allIcons from 'ionicons/icons';
+
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/vue/css/core.css";
 
@@ -46,6 +50,9 @@ import { ToastService } from "./services/ToastService";
 
 
 const debug = false;
+
+// Register all Ionicons
+addIcons(allIcons);
 
 const emitter = mitt();
 const app = createApp(App).use(IonicVue).use(router);
