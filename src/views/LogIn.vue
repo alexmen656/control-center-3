@@ -9,11 +9,14 @@
               <img :src="customLoginConfig.logo_url" :alt="companyName + ' Logo'" class="logo-image custom-logo" />
             </template>
             <template v-else>
-              <picture>
+              <!-- <picture>
                 <source media="(min-width:465px)" srcset="/assets/logo_inline_large.png" />
                 <source media="(max-width:465px)" srcset="/assets/logo_block_large.png" />
                 <img src="/assets/logo_inline_large.png" alt="Control Center Logo" class="logo-image" />
-              </picture>
+              </picture>-->
+              <span class="logo">
+                Control Center
+              </span>
             </template>
             <h1 class="welcome-title" v-if="!createPasswordView">Welcome Back</h1>
             <h1 class="welcome-title" v-else>Complete Setup</h1>
@@ -67,7 +70,7 @@
           <div v-else class="form-section">
             <form @submit.prevent="login">
               <div class="input-group">
-                <div class="custom-input-wrapper">
+                <!-- <div class="custom-input-wrapper">
                   <label class="input-label">Username</label>
                   <div class="input-container">
                     <ion-icon name="person-outline" class="input-icon"></ion-icon>
@@ -77,6 +80,18 @@
                       showUsernameError = false;
                       usernameError = '';
                       " required placeholder="Enter your username" class="custom-input" />
+                  </div>-->
+
+                <div class="custom-input-wrapper">
+                  <label class="input-label">Email</label>
+                  <div class="input-container">
+                    <ion-icon name="mail-outline" class="input-icon"></ion-icon>
+                    <input v-model="username" name="username" type="email" spellcheck="false" autocapitalize="off"
+                      @input="
+                        username = $event.target.value;
+                      showUsernameError = false;
+                      usernameError = '';
+                      " required placeholder="Enter your email" class="custom-input" />
                   </div>
                 </div>
 
@@ -938,23 +953,30 @@ export default defineComponent({
   }
 }
 
-/* Focus and Accessibility */
 .custom-input:focus+.input-icon,
 .input-container:focus-within .input-icon {
   color: var(--brand-red);
 }
 
-/* Remove iOS input styling */
 .custom-input {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
 }
 
-/* Prevent zoom on iOS */
 @media screen and (max-width: 767px) {
   .custom-input {
     font-size: 16px;
   }
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 42px;
+  color: var(--ion-color-primary);
+  letter-spacing: -0.8px;
+  line-height: 1;
+  transition: color 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 </style>

@@ -477,11 +477,14 @@
   
   #main-content {
     /*padding-top: 100px !important;*/
-    margin-top: 48px !important;
     width: 100%;
     background: #eff3f6; /* Same as header background */
     min-height: calc(100vh - 48px);
   /*  padding: 16px 16px 0 16px; /* Add padding to create space around content */
+  }
+
+  #main-content.isNotLogin {
+    margin-top: 48px !important;
   }
   
   /* Fix mobile header positioning */
@@ -497,11 +500,15 @@
     background: var(--ion-background-color, #ffffff);
     border-radius: 12px 0 0 0; /* Rounded top corners */
     border: var(--border);
-    min-height: calc(100vh - 48px); /* Adjust for padding */
+    min-height: 100vh;
     overflow: hidden;
     transition: all 0.3s ease; /* Smooth transitions */
     position: relative;
     z-index: 1;
+  }
+
+  #main-content.isNotLogin ion-router-outlet {
+    min-height: calc(100vh - 48px); /* Adjust for padding */
   }
   
   /* Dark mode support */

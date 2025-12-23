@@ -15,8 +15,8 @@
                 v-if="showProjectSideBar" @sidebarToggled="onSidebarToggled"></ProjectSideBar>
             </ion-content>
           </ion-menu>
-          <div id="main-content" :class="{ 'has-touch-bar': showTouchBar }">
-         <!--  <SiteTitle v-if="showSiteTitle" :icon="page.icon" :title="page.title" @updateSidebar="updateSidebar()" />--> 
+          <div id="main-content" :class="{ 'has-touch-bar': showTouchBar, 'isNotLogin': isLoginPage }">
+            <!--  <SiteTitle v-if="showSiteTitle" :icon="page.icon" :title="page.title" @updateSidebar="updateSidebar()" />-->
             <ion-router-outlet v-if="page.title" @updateSidebar="updateSidebar()" :class="{
               showTitle: showTitle,
             }"></ion-router-outlet>
@@ -24,7 +24,7 @@
               <h1>Error 404, Site not found.</h1>
             </div>
 
-            
+
           </div>
         </ion-split-pane>
         <!-- TouchBar for mobile devices -->
@@ -155,15 +155,22 @@ export default defineComponent({
     showTouchBar() {
       // Show TouchBar on mobile platforms when user is logged in and account is active
       return (
-        (isPlatform('ios') || isPlatform('android') || 
-         (isPlatform('mobile') && window.innerWidth <= 768)) &&
-        this.token && 
-        this.account_active && 
-        this.isJwtValid && 
-        this.$route.path !== "/pin" && 
+        (isPlatform('ios') || isPlatform('android') ||
+          (isPlatform('mobile') && window.innerWidth <= 768)) &&
+        this.token &&
+        this.account_active &&
+        this.isJwtValid &&
+        this.$route.path !== "/pin" &&
         this.$route.path !== "/pin/"
       );
     },
+    isLoginPage() {
+      return !(
+        this.$route.path === "/login" || this.$route.path === "/login/" ||
+        this.$route.path === "/login/verification" || this.$route.path === "/login/verification/" ||
+        this.$route.path === "/signup" || this.$route.path === "/signup/"
+      );
+    }
   },
   watch: {
     '$route'() {
