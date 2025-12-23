@@ -1,121 +1,77 @@
 <template>
   <ion-list id="inbox-list" :class="{ collapsed: isCollapsed }">
     <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
-      <ion-item
-        button
-        @click="this.selectedIndex = i"
-        lines="none"
-        detail="false"
-        :router-link="'/' + p.name[0].toLowerCase() + p.name.substring(1)"
-        class="hydrated menu-item"
+      <ion-item button @click="this.selectedIndex = i" lines="none" detail="false"
+        :router-link="'/' + p.name.toLowerCase().replaceAll(' ', '-') + '/'" class="hydrated menu-item"
         :class="{ selected: this.selectedIndex === i, collapsed: isCollapsed }"
-        :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''"
-      >
+        :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''">
         <ion-icon slot="start" :name="p.icon"></ion-icon>
-        <ion-label v-if="!isCollapsed"
-          >{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label
-        >
+        <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
       </ion-item>
     </ion-menu-toggle>
   </ion-list>
-  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }"
-    ><h4 v-if="!isCollapsed">Projects</h4>
+  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
+    <h4 v-if="!isCollapsed">Projects</h4>
     <div v-if="!isCollapsed">
-      <router-link to="/manage/projects/"
-        ><ion-icon
+      <router-link to="/manage/projects/"><ion-icon style="color: var(--ion-color-medium-shade)"
+          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/projects/"><ion-icon
           style="color: var(--ion-color-medium-shade)"
-          name="ellipsis-horizontal-circle-outline" /></router-link
-      ><router-link to="/info/projects/"
-        ><ion-icon
-          style="color: var(--ion-color-medium-shade)"
-          name="information-circle-outline"
-        ></ion-icon></router-link
-      ><router-link to="/new/project/"
-        ><ion-icon
-          style="color: var(--ion-color-medium-shade)"
-          name="add-circle-outline"
-        ></ion-icon
-      ></router-link></div
-  ></ion-note>
+          name="information-circle-outline"></ion-icon></router-link><router-link to="/new/project/"><ion-icon
+          style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>
+    </div>
+  </ion-note>
   <ion-list :class="{ collapsed: isCollapsed }">
     <ion-menu-toggle auto-hide="false" v-for="(p, i) in projects" :key="i">
-      <ion-item
-        button
-        lines="none"
-        detail="false"
-        @click="goToProject(p.link)"
-        class="hydrated menu-item"
+      <ion-item button lines="none" detail="false" @click="goToProject(p.link)" class="hydrated menu-item"
         :class="{ collapsed: isCollapsed }"
-        :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''"
-        ><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
+        :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''"><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
         <ion-icon slot="start" :name="p.icon ? p.icon : 'folder-outline'"></ion-icon>
-        <ion-label v-if="!isCollapsed"
-          >{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label
-        >
+        <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
       </ion-item>
     </ion-menu-toggle>
   </ion-list>
-  
+
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
     <h4 v-if="!isCollapsed">AI Tools</h4>
   </ion-note>
   <ion-list :class="{ collapsed: isCollapsed }">
     <ion-menu-toggle auto-hide="false">
-      <ion-item
-        button
-        lines="none"
-        detail="false"
-        router-link="/ai-website-generator"
-        class="hydrated menu-item"
-        :class="{ collapsed: isCollapsed }"
-        :data-tooltip="isCollapsed ? 'AI Website Generator' : ''"
-      >
+      <ion-item button lines="none" detail="false" router-link="/ai-website-generator" class="hydrated menu-item"
+        :class="{ collapsed: isCollapsed }" :data-tooltip="isCollapsed ? 'AI Website Generator' : ''">
         <ion-icon slot="start" name="rocket-outline"></ion-icon>
         <ion-label v-if="!isCollapsed">AI Website Generator</ion-label>
       </ion-item>
     </ion-menu-toggle>
   </ion-list>
 
-  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }"
-    ><h4 v-if="!isCollapsed">Bookmarks</h4>
+  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
+    <h4 v-if="!isCollapsed">Bookmarks</h4>
     <div v-if="!isCollapsed">
-      <router-link to="/manage/bookmarks/"
-        ><ion-icon
+      <router-link to="/manage/bookmarks/"><ion-icon style="color: var(--ion-color-medium-shade)"
+          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/bookmarks/"><ion-icon
           style="color: var(--ion-color-medium-shade)"
-          name="ellipsis-horizontal-circle-outline" /></router-link
-      ><router-link to="/info/bookmarks/"
-        ><ion-icon
-          style="color: var(--ion-color-medium-shade)"
-          name="information-circle-outline"
-        ></ion-icon></router-link
-      ><!--<router-link to="/new/bookmark/"><ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>-->
-    </div></ion-note
-  >
+          name="information-circle-outline"></ion-icon></router-link><!--<router-link to="/new/bookmark/"><ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>-->
+    </div>
+  </ion-note>
   <ion-list v-if="bookmarks.length > 0" :class="{ collapsed: isCollapsed }">
     <ion-menu-toggle auto-hide="false" v-for="(p, i) in bookmarks" :key="i">
-      <ion-item
-        button
-        lines="none"
-        detail="false"
-        @click="goToBookmark(p.location)"
-        class="hydrated menu-item"
+      <ion-item button lines="none" detail="false" @click="goToBookmark(p.location)" class="hydrated menu-item"
         :class="{ collapsed: isCollapsed }"
         :data-tooltip="isCollapsed ? (p.title[0].toUpperCase() + p.title.substring(1)) : ''"
-        v-if="p.title"
-        ><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
+        v-if="p.title"><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
         <ion-icon slot="start" :name="p.icon ? p.icon : 'help-circle-outline'"></ion-icon>
-        <ion-label v-if="!isCollapsed"
-          >{{ p.title[0].toUpperCase() }}{{ p.title.substring(1) }}</ion-label
-        >
+        <ion-label v-if="!isCollapsed">{{ p.title[0].toUpperCase() }}{{ p.title.substring(1) }}</ion-label>
       </ion-item>
     </ion-menu-toggle>
-    <div v-if="!isCollapsed">{{ version }}</div>
   </ion-list>
+      <div v-if="!isCollapsed" class="version-footer">
+      <ion-icon name="information-circle-outline"></ion-icon>
+      <span>v{{ version }}</span>
+    </div>
 </template>
 
 <script>
 import { defineComponent, ref } from "vue";
-//import axios from "axios";
 
 export default defineComponent({
   name: "SideBar",
@@ -135,27 +91,18 @@ export default defineComponent({
   },
   methods: {
     toggleSidebar() {
-      // Emit event to parent to toggle collapsed state
       this.$emit('sidebarToggled', !this.isCollapsed);
     },
     goToProject(name) {
-      /* window.location.href =
+      this.$router.push(
         "/project/" +
         (name[0].toLowerCase() + name.substring(1))
           .replaceAll(` `, `-`)
           .replaceAll(`'`, ``)
-          .toLowerCase();*/
-
-      this.$router.push(
-        "/project/" +
-          (name[0].toLowerCase() + name.substring(1))
-            .replaceAll(` `, `-`)
-            .replaceAll(`'`, ``)
-            .toLowerCase()
+          .toLowerCase()
       );
     },
     goToBookmark(link) {
-      // window.location.href = link;
       this.$router.push(link);
     },
   },
@@ -171,8 +118,12 @@ export default defineComponent({
 
 <style scoped>
 @media (prefers-color-scheme: light) {
-  ion-item, ion-list, ion-reorder-group {
-    --background: #eff3f6;/*#f7fcff;*/
+
+  ion-item,
+  ion-list,
+  ion-reorder-group {
+    --background: #eff3f6;
+    /*#f7fcff;*/
     background: #eff3f6;
   }
 }
@@ -180,9 +131,11 @@ export default defineComponent({
 ion-menu.md ion-list[data-v-7ba5bd90] {
   padding-top: 48px;
 }
+
 .btn-red {
   --background: var(--ion-color-primary) !important;
 }
+
 .ion-menu {
   width: 300px;
 }
@@ -362,6 +315,7 @@ a {
   display: flex;
   justify-content: center;
 }
+
 ion-footer ion-toolbar {
   color: #000;
 }
@@ -401,17 +355,17 @@ ion-item:focus {
   margin-top: 12px;
 }
 
-.projects-headline > h4 {
+.projects-headline>h4 {
   margin: 0;
   /*margin-top: 0.35rem !important;*/
   padding: 0;
 }
 
-.projects-headline > div {
-display: flex;
+.projects-headline>div {
+  display: flex;
 }
 
-.projects-headline > div > a {
+.projects-headline>div>a {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -517,7 +471,7 @@ display: flex;
 }
 
 /* Hide version and other text elements when collapsed */
-.collapsed + div {
+.collapsed+div {
   display: none;
 }
 
@@ -551,6 +505,7 @@ display: flex;
     opacity: 0;
     transform: translateY(-50%) translateX(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(-50%) translateX(0);
@@ -560,5 +515,36 @@ display: flex;
 .inner-scroll {
   padding-left: 0 !important;
   padding-right: 0 !important;
+}
+
+.version-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 10px;
+  margin-top: 16px;
+  border-top: 1px solid var(--ion-color-step-150, #d7d8da);
+  font-size: 12px;
+  color: var(--ion-color-medium-shade);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.version-footer ion-icon {
+  font-size: 16px;
+  color: var(--ion-color-medium);
+}
+
+.version-footer:hover {
+  color: var(--ion-color-primary);
+  background: var(--ion-color-step-50, #f9f9f9);
+  border-radius: 4px;
+}
+
+.version-footer:hover ion-icon {
+  color: var(--ion-color-primary);
 }
 </style>
