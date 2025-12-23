@@ -1,5 +1,5 @@
 <template>
-  <ion-header :translucent="true">
+  <ion-header>
     <ion-toolbar class="header">
       <ion-buttons slot="start">
         <ion-menu-button></ion-menu-button>
@@ -185,7 +185,12 @@ ion-toolbar {
     right: 0 !important;
     z-index: 1000 !important;
     height: calc(56px + env(safe-area-inset-top, 0px)) !important;
-    padding-top: env(safe-area-inset-top, 0px) !important;
+  /*  padding-top: env(safe-area-inset-top, 0px) !important;*/
+  background-color: #1e1e1e;
+  }
+
+  ion-toolbar {
+    margin-top: env(safe-area-inset-top, 0px) !important;
   }
   
   ion-toolbar,
@@ -195,7 +200,7 @@ ion-toolbar {
     --background: #eff3f6 !important;
     background: #eff3f6 !important;
     border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0;
   }
   
   @media (prefers-color-scheme: dark) {
@@ -204,7 +209,6 @@ ion-toolbar {
       --background: #1e1e1e !important;
       background: #1e1e1e !important;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
     }
   }
 }

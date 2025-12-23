@@ -227,6 +227,7 @@ export default defineComponent({
         window.location.pathname.replace(/\/$/, "").replace(/^\//, "");
 
       if (isOnline.value) {
+        //console.log("eferfv", route.path);
         if (route.path !== "/login" && route.path !== "/login/verification" && route.path !== "/login/verification/" && route.path !== "/signup" && route.path !== "/signup/") {
 
 

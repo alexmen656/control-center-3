@@ -3,23 +3,23 @@
     <div class="touch-bar-content">
       <div class="touch-bar-item" @click="goHome">
         <ion-icon :icon="homeOutline" :class="{ active: isActive('/') }"></ion-icon>
-        <span class="touch-bar-label">Home</span>
+      <!--   <span class="touch-bar-label">Home</span>-->
       </div>
       <div class="touch-bar-item" @click="goToProjects">
         <ion-icon :icon="folderOutline" :class="{ active: isActive('/manage/projects') || isActive('/info/projects') || isActive('/new/project') }"></ion-icon>
-        <span class="touch-bar-label">Projects</span>
+      <!--   <span class="touch-bar-label">Projects</span>-->
       </div>
       <div class="touch-bar-item" @click="goToTools">
         <ion-icon :icon="constructOutline" :class="{ active: isActive('/info') && !isActive('/info/projects') }"></ion-icon>
-        <span class="touch-bar-label">Tools</span>
+      <!--   <span class="touch-bar-label">Tools</span>-->
       </div>
       <div class="touch-bar-item" @click="goToBookmarks">
         <ion-icon :icon="bookmarkOutline" :class="{ active: isActive('/bookmarks') }"></ion-icon>
-        <span class="touch-bar-label">Bookmarks</span>
+       <!--  <span class="touch-bar-label">Bookmarks</span>-->
       </div>
       <div class="touch-bar-item" @click="goToAccount">
         <ion-icon :icon="personOutline" :class="{ active: isActive('/my-account') }"></ion-icon>
-        <span class="touch-bar-label">Account</span>
+       <!-- <span class="touch-bar-label">Account</span>-->
       </div>
     </div>
   </div>
@@ -134,7 +134,7 @@ export default defineComponent({
 }
 
 .touch-bar-item ion-icon {
-  font-size: 20px;
+  font-size: 28px;
   color: var(--ion-color-medium);
   transition: color 0.2s ease;
   margin-bottom: 1px;
