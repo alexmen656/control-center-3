@@ -58,6 +58,7 @@ import { loadUserData, getUserData } from "@/userData";
 import offlineTools from "@/offline/tools.json";
 import offlinePages from "@/offline/pages.json";
 import { SplashScreen } from "@capacitor/splash-screen";
+import { StatusBar, Style } from "@capacitor/status-bar";
 //import { Plugins } from "@capacitor/core";
 import { isPlatform } from "@ionic/vue";
 import { FirebaseMessaging } from "@capacitor-firebase/messaging";
@@ -457,7 +458,20 @@ export default defineComponent({
       }
     }
 
-    await SplashScreen.hide();
+    try {
+      await SplashScreen.hide();
+      
+      // Configure iOS Status Bar
+      if (isPlatform('ios')) {
+        // Use Dark style (black text) for light mode header (#eff3f6)
+        await StatusBar.setStyle({ style: Style.Dark });
+        await StatusBar.setOverlaysWebView({ overlay: false });
+        await StatusBar.setBackgroundColor({ color: '#eff3f6' });
+      }
+    } catch (error) {
+      console.error('Error configuring status bar:', error);
+    }
+
     this.$watch(() => this.$route.params, this.handleRouteChange);
 
     this.$watch(
@@ -467,6 +481,29 @@ export default defineComponent({
 
     this.loadPageData("Mounted");
     this.checkMonacoRoute();
+
+    // Watch for theme changes to update status bar
+    if (isPlatform('ios')) {
+      const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const updateStatusBar = async (e) => {
+        try {
+          if (e.matches) {
+            // Dark mode
+            await StatusBar.setStyle({ style: Style.Light });
+            await StatusBar.setBackgroundColor({ color: '#1e1e1e' });
+          } else {
+            // Light mode
+            await StatusBar.setStyle({ style: Style.Dark });
+            await StatusBar.setBackgroundColor({ color: '#eff3f6' });
+          }
+        } catch (error) {
+          console.error('Error updating status bar:', error);
+        }
+      };
+      darkModeQuery.addEventListener('change', updateStatusBar);
+      // Set initial state
+      updateStatusBar(darkModeQuery);
+    }
   },
   methods: {
     onSidebarToggled(isCollapsed) {

@@ -393,13 +393,7 @@
     
     /* Fix mobile header positioning and styling */
     ion-header {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      z-index: 1000 !important;
-      height: calc(56px + env(safe-area-inset-top, 0px)) !important;
-      /*padding-top: env(safe-area-inset-top, 0px) !important;*/
+      position: relative !important;
     }
     
     ion-header ion-toolbar {
@@ -489,8 +483,7 @@
   /* Fix mobile header positioning */
   @media only screen and (max-width: 600px) {
     #main-content {
-      margin-top: calc(56px + env(safe-area-inset-top, 0px)) !important;
-      min-height: calc(100vh - 56px - env(safe-area-inset-top, 0px));
+      padding-top: 0 !important;
     }
   }
   

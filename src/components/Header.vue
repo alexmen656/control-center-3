@@ -179,18 +179,11 @@ ion-toolbar {
 /* Mobile header improvements */
 @media only screen and (max-width: 600px) {
   ion-header {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 1000 !important;
-    height: calc(56px + env(safe-area-inset-top, 0px)) !important;
-  /*  padding-top: env(safe-area-inset-top, 0px) !important;*/
-  background-color: #1e1e1e;
+    position: relative !important;
   }
 
   ion-toolbar {
-    margin-top: env(safe-area-inset-top, 0px) !important;
+    height: 56px !important;
   }
   
   ion-toolbar,
