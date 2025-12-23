@@ -1,7 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="people-outline" title="User Management" />
 
       <div class="page-container">
         <div class="page-header">
@@ -382,14 +381,10 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
 import { defineComponent, ref, getCurrentInstance } from "vue";
 
 export default defineComponent({
   name: "ManageUsers",
-  components: {
-    SiteTitle,
-  },
   setup() {
     const { appContext } = getCurrentInstance();
     const axios = appContext.config.globalProperties.$axios;
@@ -910,11 +905,6 @@ export default defineComponent({
   gap: 20px;
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
 .stat-icon {
   width: 56px;
   height: 56px;
@@ -991,20 +981,10 @@ export default defineComponent({
   box-shadow: var(--shadow);
 }
 
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
 .action-btn.primary {
   background: var(--primary-color);
   color: white;
   border-color: var(--primary-color);
-}
-
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
 }
 
 .action-btn ion-icon {
@@ -1058,11 +1038,6 @@ export default defineComponent({
   padding: 24px;
   box-shadow: var(--shadow);
   transition: all 0.3s ease;
-}
-
-.stats-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
 }
 
 .stats-card .card-icon {
@@ -1231,18 +1206,10 @@ export default defineComponent({
   transition: all 0.2s ease;
 }
 
-.header-cell:hover {
-  background: var(--border);
-}
-
 .actions-header {
   flex: 0 0 140px;
   justify-content: center;
   cursor: default;
-}
-
-.actions-header:hover {
-  background: var(--background);
 }
 
 .header-text {
@@ -1269,10 +1236,6 @@ export default defineComponent({
   color: var(--primary-color);
 }
 
-.header-cell:hover .sort-default {
-  opacity: 0.6;
-}
-
 /* Table Body */
 .table-body {
   background: var(--surface);
@@ -1282,10 +1245,6 @@ export default defineComponent({
   display: flex;
   border-bottom: 1px solid var(--border);
   transition: all 0.2s ease;
-}
-
-.table-row:hover {
-  background: var(--background);
 }
 
 .table-row:last-child {
@@ -1440,19 +1399,9 @@ export default defineComponent({
   color: var(--success-color);
 }
 
-.approve-btn:hover {
-  background: rgba(5, 150, 105, 0.2);
-  transform: scale(1.05);
-}
-
 .assign-btn {
   background: rgba(37, 99, 235, 0.1);
   color: var(--primary-color);
-}
-
-.assign-btn:hover {
-  background: rgba(37, 99, 235, 0.2);
-  transform: scale(1.05);
 }
 
 .edit-btn {
@@ -1460,22 +1409,11 @@ export default defineComponent({
   color: var(--primary-color);
 }
 
-.edit-btn:hover {
-  background: #dbeafe;
-  transform: scale(1.05);
-}
-
 .delete-btn {
   background: #fef2f2;
   color: var(--danger-color);
 }
 
-.delete-btn:hover {
-  background: #fee2e2;
-  transform: scale(1.05);
-}
-
-/* Pending Users */
 .pending-users {
   padding: 24px;
 }
@@ -1490,12 +1428,6 @@ export default defineComponent({
   border-radius: var(--radius);
   margin-bottom: 16px;
   transition: all 0.2s ease;
-}
-
-.pending-user-card:hover {
-  background: var(--surface);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow);
 }
 
 .pending-user-info {
@@ -1575,11 +1507,6 @@ export default defineComponent({
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.modal-close-btn:hover {
-  background: var(--border);
-  color: var(--text-primary);
 }
 
 .custom-modal-body {

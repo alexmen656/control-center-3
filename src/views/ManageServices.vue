@@ -2,7 +2,6 @@
   <ion-page>
     <ion-content class="modern-content">
       <div class="page-container">
-        <SiteTitle title="Manage Services" icon="construct-outline" />
         
         <!-- Stats Cards -->
         <div class="stats-grid">
@@ -257,13 +256,9 @@
 
 <script>
 import { defineComponent } from "vue";
-import SiteTitle from '@/components/SiteTitle.vue';
 
 export default defineComponent({
   name: "ManageServices",
-  components: {
-    SiteTitle
-  },
   data() {
     return {
       services: [],

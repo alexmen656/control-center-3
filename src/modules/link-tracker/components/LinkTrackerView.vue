@@ -1,8 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="link-outline" title="Link Tracker" bg="transparent"/>
-
+]
       <div class="page-container">
         <!-- Action Bar -->
         <div class="action-bar">
@@ -273,7 +272,6 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
 import CountryService from "@/services/countryService.js"
 
 import {
@@ -284,9 +282,6 @@ Chart.register(...registerables);
 
 export default {
   name: "LinkTrackerView",
-  components: {
-    SiteTitle
-  },
   data() {
     return {
       links: [],

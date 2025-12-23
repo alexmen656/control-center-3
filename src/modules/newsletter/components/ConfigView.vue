@@ -1,7 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="settings-outline" title="Newsletter - Einstellungen" bg="transparent"/>
       
       <div class="page-container">
         <!-- Back Button -->
@@ -303,7 +302,6 @@
 
 <script>
 import { defineComponent } from 'vue';
-import SiteTitle from '@/components/SiteTitle.vue';
 import { IonPage, IonContent, IonIcon, toastController } from '@ionic/vue';
 
 export default defineComponent({
@@ -312,7 +310,6 @@ export default defineComponent({
     IonPage,
     IonContent,
     IonIcon,
-    SiteTitle
   },
   data() {
     return {

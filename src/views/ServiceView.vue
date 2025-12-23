@@ -1,8 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle :icon="service?.icon || 'cog-outline'" :title="service?.name || 'Service'"/>
-
       <div class="page-container">
         <!-- Loading State -->
         <div v-if="loading" class="loading-state">
@@ -370,7 +368,6 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
 import ApiKeyManager from '../components/ApiKeyManager.vue';
 import ServiceStatusHistory from '../components/ServiceStatusHistory.vue';
 import ServiceLogs from '../components/ServiceLogs.vue';
@@ -378,7 +375,6 @@ import ServiceLogs from '../components/ServiceLogs.vue';
 export default {
   name: 'ServiceView',
   components: {
-    SiteTitle,
     ApiKeyManager,
     ServiceStatusHistory,
     ServiceLogs

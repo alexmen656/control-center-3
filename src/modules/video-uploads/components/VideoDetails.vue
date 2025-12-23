@@ -1,10 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle 
-        icon="videocam-outline" 
-        :title="`Video Details - ${video?.title || 'Loading...'}`" 
-      />
+     
 
       <div class="page-container" v-if="video">
         <!-- Header Actions -->
@@ -275,13 +272,9 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
 
 export default {
   name: "VideoDetails",
-  components: {
-    SiteTitle,
-  },
   data() {
     return {
       video: null,

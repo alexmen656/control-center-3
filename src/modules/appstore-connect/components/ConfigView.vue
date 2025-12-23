@@ -1,7 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="settings-outline" title="App Store Connect - Einstellungen" bg="transparent"/>
       
       <div class="page-container">
         <!-- Info Card -->
@@ -98,13 +97,9 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
 
 export default {
   name: 'AppStoreConfig',
-  components: {
-    SiteTitle
-  },
   data() {
     return {
       apps: [],

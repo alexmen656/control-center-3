@@ -357,12 +357,6 @@ export default defineComponent({
   transition: all 0.2s ease;
 }
 
-.action-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--primary-color);
-}
-
 .action-icon {
   display: flex;
   align-items: center;
@@ -404,11 +398,6 @@ export default defineComponent({
   font-size: 20px;
   transition: all 0.2s ease;
   flex-shrink: 0;
-}
-
-.action-card:hover .action-arrow {
-  color: var(--primary-color);
-  transform: translateX(4px);
 }
 
 /* Analytics Section */
@@ -528,20 +517,10 @@ export default defineComponent({
   box-shadow: var(--shadow);
 }
 
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
 .action-btn.primary {
   background: var(--primary-color);
   color: white;
   border-color: var(--primary-color);
-}
-
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
 }
 
 .action-btn ion-icon {

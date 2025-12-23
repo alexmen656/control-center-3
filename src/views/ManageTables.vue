@@ -1,7 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="server-outline" title="Manage Tables"/>
 
       <div class="page-container">
         <!-- Header -->
@@ -189,14 +188,10 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "ManageTables",
-  components: {
-    SiteTitle,
-  },
   data() {
     return {
       tables: [],

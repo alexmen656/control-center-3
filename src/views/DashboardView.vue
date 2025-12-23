@@ -1,7 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="stats-chart" title="Dashboard" bg="transparent" />
 
       <div class="page-container">
         <!-- Action Bar -->
@@ -176,7 +175,6 @@
 <script>
 import { defineComponent, ref, watch } from "vue";
 import DashboardDisplay from "@/components/DashboardDisplay.vue";
-import SiteTitle from "@/components/SiteTitle.vue";
 import {
   useMagicKeys,
   //whenever
@@ -187,7 +185,6 @@ export default defineComponent({
   name: "DefaultPage",
   components: {
     DashboardDisplay,
-    SiteTitle,
   },
   data() {
     return {

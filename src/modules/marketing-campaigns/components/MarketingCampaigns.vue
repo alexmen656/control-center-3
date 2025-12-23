@@ -1,7 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="megaphone-outline" title="Marketing Campaigns"/>
 
       <div class="page-container">
         <!-- Action Bar -->
@@ -470,13 +469,8 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
-
 export default {
   name: "MarketingCampaigns",
-  components: {
-    SiteTitle,
-  },
   data() {
     return {
       campaigns: [],

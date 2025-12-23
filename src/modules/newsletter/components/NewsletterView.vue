@@ -1,7 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="mail-outline" title="Newsletter" bg="transparent"/>
       
       <div class="page-container">
         <!-- Action Bar -->
@@ -277,7 +276,6 @@
 
 <script>
 import { defineComponent } from 'vue';
-import SiteTitle from '@/components/SiteTitle.vue';
 import { IonPage, IonContent, IonIcon, toastController, alertController } from '@ionic/vue';
 
 export default defineComponent({
@@ -286,7 +284,6 @@ export default defineComponent({
     IonPage,
     IonContent,
     IonIcon,
-    SiteTitle
   },
   data() {
     return {

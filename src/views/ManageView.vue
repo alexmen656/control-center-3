@@ -1,7 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="folder-outline" title="Manage Projects"/>
 
       <div class="page-container">
         <!-- Header -->
@@ -282,14 +281,10 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "ManageView",
-  components: {
-    SiteTitle,
-  },
   data() {
     return {
       projects: [],

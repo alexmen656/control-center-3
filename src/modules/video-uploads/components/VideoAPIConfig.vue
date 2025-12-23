@@ -1,8 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="key-outline" title="Video API Konfiguration" />
-
+\
       <div class="page-container">
         <!-- Action Bar -->
         <div class="action-bar">
@@ -424,13 +423,9 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
 
 export default {
   name: "VideoAPIConfig",
-  components: {
-    SiteTitle,
-  },
   data() {
     return {
       // Platform Connections Status

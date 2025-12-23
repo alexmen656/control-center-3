@@ -1,7 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle :icon="'analytics-outline'" :title="`Analytics: ${linkData.title}`" bg="transparent"/>
 
       <div class="page-container">
         <!-- Back Button & Link Info -->
@@ -235,16 +234,12 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
 import CountryService from "@/services/countryService.js"
 import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
 
 export default {
   name: "LinkAnalyticsView",
-  components: {
-    SiteTitle
-  },
   data() {
     return {
       linkData: {},

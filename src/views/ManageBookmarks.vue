@@ -1,7 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="bookmarks-outline" title="Manage Bookmarks"/>
 
       <div class="page-container">
         <!-- Header -->
@@ -303,14 +302,11 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "ManageBookmarks",
-  components: {
-    SiteTitle,
-  },
+
   data() {
     return {
       bookmarks: [],

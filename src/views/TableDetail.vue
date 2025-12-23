@@ -1,8 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle :icon="'grid-outline'" :title="`Table: ${$route.params.name}`" />
-
       <div class="page-container">
         <!-- Page Header -->
         <div class="page-header">
@@ -200,14 +198,10 @@
 
 <script>
 import { defineComponent, ref, getCurrentInstance, computed } from "vue";
-import SiteTitle from "@/components/SiteTitle.vue";
 import { useRoute } from "vue-router";
 
 export default defineComponent({
   name: "TableDetailView",
-  components: {
-    SiteTitle,
-  },
   setup() {
     const labels = ref([]);
     const data = ref([]);

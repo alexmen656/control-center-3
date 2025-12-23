@@ -1,7 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="server-outline" title="Database Tables" />
 
       <div class="page-container">
         <!-- Page Header -->
@@ -156,13 +155,9 @@
 
 <script>
 import { defineComponent, ref, getCurrentInstance, computed, onMounted, onUnmounted } from "vue";
-import SiteTitle from "@/components/SiteTitle.vue";
 
 export default defineComponent({
   name: "DatabasesView",
-  components: {
-    SiteTitle,
-  },
   data() {
     return {
       labels: ["Table Name"],

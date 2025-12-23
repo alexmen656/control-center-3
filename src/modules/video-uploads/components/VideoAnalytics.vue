@@ -1,11 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle 
-        icon="analytics-outline" 
-        :title="`Video Analytics - ${video?.title || 'Loading...'}`" 
-      />
-
+     
       <div class="page-container" v-if="video">
         <!-- Header Actions -->
         <div class="action-bar">
@@ -363,13 +359,10 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
 
 export default {
   name: "VideoAnalytics",
-  components: {
-    SiteTitle,
-  },
+
   data() {
     return {
       video: null,

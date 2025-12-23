@@ -1,7 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="storefront-outline" title="Module Store" />
 
       <div class="page-container">
         <!-- Header -->
@@ -146,12 +145,8 @@
 </template>
 <script>
 import lunr from "lunr";
-import SiteTitle from "@/components/SiteTitle.vue";
 
 export default {
-  components: {
-    SiteTitle,
-  },
   data() {
     return {
       modules: [],

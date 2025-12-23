@@ -1,8 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle v-if="true" icon="folder-outline" title="File System"/>
-
       <div class="page-container">
         <!-- Page Header -->
         <div class="page-header">
@@ -351,7 +349,6 @@ import {
   IonButton, 
   IonSpinner 
 } from "@ionic/vue";
-import SiteTitle from "@/components/SiteTitle.vue";
 import axios from "axios";
 
 export default defineComponent({
@@ -367,7 +364,6 @@ export default defineComponent({
     IonButtons,
     IonButton,
     IonSpinner,
-    SiteTitle,
   },
   data() {
     return {

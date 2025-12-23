@@ -1,7 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle v-if="true" icon="cloud-outline" title="API Documentation"/>
       
       <div class="page-container">
         <!-- Navigation Header -->
@@ -460,14 +459,12 @@ import {
   IonModal, IonHeader, IonToolbar, IonButtons, IonTitle, IonSpinner,
   alertController, toastController
 } from '@ionic/vue';
-import SiteTitle from '@/components/SiteTitle.vue';
 
 export default defineComponent({
   name: 'ApiDocumentation',
   components: {
     IonPage, IonContent, IonButton, IonIcon, IonBadge,
     IonModal, IonHeader, IonToolbar, IonButtons, IonTitle, IonSpinner,
-    SiteTitle
   },
   setup() {
     const route = useRoute();

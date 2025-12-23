@@ -2,10 +2,7 @@
   <ion-page>
     <ion-content class="modern-content">
       <div class="page-container">
-        <SiteTitle 
-          :title="`Configure ${service?.name || 'Service'}`" 
-          :icon="service?.icon || 'settings-outline'"
-        />
+      
 
         <!-- Loading State -->
         <div v-if="loading" class="loading-state">
@@ -199,13 +196,9 @@
 </template>
 
 <script>
-import SiteTitle from '@/components/SiteTitle.vue';
 
 export default {
   name: 'ServiceConfigView',
-  components: {
-    SiteTitle
-  },
   data() {
     return {
       service: null,

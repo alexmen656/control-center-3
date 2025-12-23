@@ -2,7 +2,6 @@
   <ion-page>
     <ion-content class="modern-content">
       <div class="page-container">
-        <SiteTitle title="New Service" />
         
         <div class="form-container">
           <div class="form-header">
@@ -118,13 +117,10 @@
 
 <script>
 import { defineComponent } from "vue";
-import SiteTitle from '@/components/SiteTitle.vue';
 
 export default defineComponent({
   name: "NewService",
-  components: {
-    SiteTitle
-  },
+
   data() {
     return {
       name: "",

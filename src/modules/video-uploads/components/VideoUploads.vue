@@ -1,7 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="videocam-outline" title="Video Uploads" />
 
       <div class="page-container">
         <!-- Action Bar -->
@@ -639,13 +638,9 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
 
 export default {
   name: "VideoUploads",
-  components: {
-    SiteTitle,
-  },
   data() {
     return {
       videos: [],

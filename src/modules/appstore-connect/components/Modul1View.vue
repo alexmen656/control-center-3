@@ -1,7 +1,6 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="logo-apple-appstore" title="App Store Analytics" bg="transparent"/>
       
       <div class="page-container">
         <!-- Action Bar -->
@@ -394,16 +393,12 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
 import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
 import countryService from '@/services/countryService';
 
 export default {
   name: 'AppStoreDashboard',
-  components: {
-    SiteTitle
-  },
   data() {
     return {
       downloads: [],
