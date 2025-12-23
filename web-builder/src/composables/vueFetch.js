@@ -34,9 +34,9 @@ export function useFetch(baseUrl = 'https://alex.polan.sk/backend/api') {
 
       // Füge Authorization-Header hinzu, wenn ein Token im localStorage vorhanden ist
       // oder wenn es als Parameter übergeben wurde
-      const token = options.token || localStorage.getItem('authToken');
+      const token = options.token || localStorage.getItem('controlCenter_auth_token');
       if (token) {
-        options.headers.Authorization = `Bearer ${token}`;
+        options.headers.Authorization = token;
       }
       
       // Entferne das token-Property aus den options, bevor wir fetch aufrufen
@@ -196,9 +196,9 @@ const vueFetch = async (url, options = {}) => {
 
     // Füge Authorization-Header hinzu, wenn ein Token im localStorage vorhanden ist
     // oder wenn es als Parameter übergeben wurde
-    const token = options.token || localStorage.getItem('authToken');
+    const token = options.token || localStorage.getItem('controlCenter_auth_token');
     if (token) {
-      options.headers.Authorization = `Bearer ${token}`;
+      options.headers.Authorization = token;
     }
     
     // Entferne das token-Property aus den options, bevor wir fetch aufrufen
