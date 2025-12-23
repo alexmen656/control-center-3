@@ -18,12 +18,12 @@
                 Control Center
               </span>
             </template>
-            <h1 class="welcome-title" v-if="!createPasswordView">Welcome Back</h1>
-            <h1 class="welcome-title" v-else>Complete Setup</h1>
+            <!--<h1 class="welcome-title" v-if="!createPasswordView">Welcome Back</h1>
+            <h1 class="welcome-title" v-else>Complete Setup</h1>-->
             <p class="welcome-subtitle" v-if="!createPasswordView">
               {{ isCustomLogin ? 'Sign in to ' + companyName : 'Sign in to your account' }}
             </p>
-            <p class="welcome-subtitle" v-else>Create a password for your account</p>
+            <!-- <p class="welcome-subtitle" v-else>Create a password for your account</p>-->
           </div>
 
           <!-- Error Message -->
@@ -131,7 +131,7 @@
               <!-- Social Login -->
               <div class="social-buttons">
                 <button @click="continueWithGoogle()" class="social-button google-button">
-                  <img height="20" src="/assets/g-logo3.png" alt="Google" class="social-icon" />
+                  <img height="24" src="/assets/g-logo3.png" alt="Google" class="social-icon" />
                   Google
                 </button>
 
@@ -147,14 +147,12 @@
                 </button>
               </div>
             </form>
+            <div class="footer-section">
+              <p class="footer-text">
+                © 2025 {{ isCustomLogin ? companyName : 'Control Center' }}. All rights reserved.
+              </p>
+            </div>
           </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="footer-section">
-          <p class="footer-text">
-            © 2025 {{ isCustomLogin ? companyName : 'Control Center' }}. All rights reserved.
-          </p>
         </div>
       </div>
     </ion-content>
@@ -594,7 +592,7 @@ export default defineComponent({
   /* Increased width */
   background: white;
   border-radius: 24px;
-  padding: 3rem 2.5rem;
+  padding: 3rem 2.5rem 1.5rem 2.5rem;
   /* Increased padding */
   box-shadow:
     0 25px 50px -12px rgba(0, 0, 0, 0.1),
@@ -617,19 +615,19 @@ export default defineComponent({
 
 .welcome-title {
   font-size: 2rem;
-  /* Increased font size */
   font-weight: 700;
-  color: var(--brand-text);
+  color: #1a202c;
   margin: 0 0 0.5rem 0;
   letter-spacing: -0.025em;
 }
 
 .welcome-subtitle {
   font-size: 1.1rem;
-  /* Increased font size */
-  color: var(--brand-text-light);
+  color: #4a5568;
   margin: 0;
   font-weight: 400;
+  margin-top: 0.5rem;
+  margin-bottom: 2rem;
 }
 
 /* Error Styles */
@@ -683,7 +681,7 @@ export default defineComponent({
 
 .custom-input-wrapper {
   width: 100%;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   /* Increased spacing */
 }
 
@@ -692,7 +690,7 @@ export default defineComponent({
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--brand-text);
+  color: #2d3748;
 }
 
 .input-container {
@@ -712,26 +710,25 @@ export default defineComponent({
 .custom-input {
   width: 100%;
   height: 52px;
-  /* Increased height */
   padding: 0 1rem 0 3rem;
-  /* More padding */
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   font-size: 1rem;
-  background: white;
-  color: var(--brand-text);
+  background: #ffffff;
+  color: #1a202c;
   transition: all 0.3s ease;
   outline: none;
 }
 
 .custom-input::placeholder {
-  color: var(--brand-text-light);
-  opacity: 0.7;
+  color: #a0aec0;
+  opacity: 0.8;
 }
 
 .custom-input:focus {
-  border-color: var(--brand-red);
-  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+  border-color: #e53e3e;
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.15);
+  background: #ffffff;
 }
 
 .custom-input:hover {
@@ -747,11 +744,10 @@ export default defineComponent({
 .primary-button {
   width: 100%;
   height: 52px;
-  /* Increased height */
-  background: linear-gradient(135deg, var(--brand-red), var(--brand-red-dark));
+  background: #e53e3e;
   border: none;
   border-radius: 12px;
-  color: white;
+  color: #ffffff;
   font-size: 1rem;
   font-weight: 600;
   display: flex;
@@ -761,27 +757,24 @@ export default defineComponent({
   cursor: pointer;
   transition: all 0.3s ease;
   margin-bottom: 1rem;
-  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
 }
 
 .primary-button:hover {
-  background: linear-gradient(135deg, var(--brand-red-dark), #b91c1c);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(229, 62, 62, 0.4);
+  background: #c53030;
 }
 
 .primary-button:active {
   transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.3);
 }
 
 .secondary-button {
   width: 100%;
   height: 52px;
-  /* Increased height */
   background: white;
-  border: 2px solid var(--brand-red);
+  border: 2px solid #e53e3e;
   border-radius: 12px;
-  color: var(--brand-red);
+  color: #e53e3e;
   font-size: 1rem;
   font-weight: 600;
   display: flex;
@@ -790,12 +783,16 @@ export default defineComponent({
   gap: 0.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .secondary-button:hover {
-  background: var(--brand-red);
+  background: #e53e3e;
   color: white;
-  transform: translateY(-1px);
+}
+
+.secondary-button:active {
+  transform: translateY(0);
 }
 
 .signup-link {
@@ -842,26 +839,30 @@ export default defineComponent({
 .social-button {
   width: 100%;
   height: 52px;
-  /* Increased height */
-  background: white;
+  background: #ffffff;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
-  color: var(--brand-text);
+  color: #2d3748;
   font-size: 1rem;
   font-weight: 500;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  /* Increased gap */
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .social-button:hover {
   border-color: #cbd5e0;
   background: #f7fafc;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.social-button:active {
+  transform: translateY(0);
 }
 
 .social-icon {
@@ -870,17 +871,19 @@ export default defineComponent({
 
 .google-button:hover {
   border-color: #4285f4;
-  background: rgba(66, 133, 244, 0.05);
+  background: rgba(66, 133, 244, 0.08);
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.15);
 }
 
 .microsoft-button:hover {
   border-color: #00a4ef;
-  background: rgba(0, 164, 239, 0.05);
+  background: rgba(0, 164, 239, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 164, 239, 0.15);
 }
 
 /* Footer */
 .footer-section {
-  margin-top: 2.5rem;
+  margin-top: 1.5rem;
   /* Increased spacing */
   text-align: center;
 }
@@ -971,11 +974,13 @@ export default defineComponent({
 }
 
 .logo {
+  display: block;
   font-weight: 700;
-  font-size: 42px;
-  color: var(--ion-color-primary);
+  font-size: 48px;
+  color: #e53e3e;
   letter-spacing: -0.8px;
-  line-height: 1;
+  line-height: 1.2;
+  margin-bottom: 0 !important;
   transition: color 0.2s ease;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }

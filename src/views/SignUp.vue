@@ -10,21 +10,9 @@
           
           <!-- Logo Section -->
           <div class="logo-section">
-            <picture>
-              <source
-                media="(min-width:465px)"
-                srcset="/assets/logo_inline_large.png"
-              />
-              <source
-                media="(max-width:465px)"
-                srcset="/assets/logo_block_large.png"
-              />
-              <img
-                src="/assets/logo_inline_large.png"
-                alt="Control Center Logo"
-                class="logo-image"
-              />
-            </picture>
+            <span class="logo">
+              Control Center
+            </span>
             <h1 class="welcome-title" v-if="!createPasswordView">Create Account</h1>
             <h1 class="welcome-title" v-else>Complete Setup</h1>
             <p class="welcome-subtitle" v-if="!createPasswordView">Join Control Center today</p>
@@ -604,22 +592,27 @@ export default defineComponent({
 }
 
 .logo-image {
-  max-width: 200px; /* Increased logo size */
+  max-width: 200px;
   height: auto;
   margin-bottom: 1.5rem;
 }
 
+.logo {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+}
+
 .welcome-title {
-  font-size: 2rem; /* Increased font size */
+  font-size: 2rem;
   font-weight: 700;
-  color: var(--brand-text);
+  color: #1a202c;
   margin: 0 0 0.5rem 0;
   letter-spacing: -0.025em;
 }
 
 .welcome-subtitle {
-  font-size: 1.1rem; /* Increased font size */
-  color: var(--brand-text-light);
+  font-size: 1.1rem;
+  color: #4a5568;
   margin: 0;
   font-weight: 400;
 }
@@ -688,7 +681,7 @@ export default defineComponent({
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--brand-text);
+  color: #2d3748;
 }
 
 .input-container {
@@ -707,25 +700,26 @@ export default defineComponent({
 
 .custom-input {
   width: 100%;
-  height: 52px; /* Increased height */
-  padding: 0 1rem 0 3rem; /* More padding */
+  height: 52px;
+  padding: 0 1rem 0 3rem;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   font-size: 1rem;
-  background: white;
-  color: var(--brand-text);
+  background: #ffffff;
+  color: #1a202c;
   transition: all 0.3s ease;
   outline: none;
 }
 
 .custom-input::placeholder {
-  color: var(--brand-text-light);
-  opacity: 0.7;
+  color: #a0aec0;
+  opacity: 0.8;
 }
 
 .custom-input:focus {
-  border-color: var(--brand-red);
-  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+  border-color: #e53e3e;
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.15);
+  background: #ffffff;
 }
 
 .custom-input:hover {
@@ -739,11 +733,11 @@ export default defineComponent({
 
 .primary-button {
   width: 100%;
-  height: 52px; /* Increased height */
-  background: linear-gradient(135deg, var(--brand-red), var(--brand-red-dark));
+  height: 52px;
+  background: #e53e3e;
   border: none;
   border-radius: 12px;
-  color: white;
+  color: #ffffff;
   font-size: 1rem;
   font-weight: 600;
   display: flex;
@@ -753,26 +747,27 @@ export default defineComponent({
   cursor: pointer;
   transition: all 0.3s ease;
   margin-bottom: 1rem;
-  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.35);
 }
 
 .primary-button:hover {
-  background: linear-gradient(135deg, var(--brand-red-dark), #b91c1c);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(229, 62, 62, 0.4);
+  background: #c53030;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(229, 62, 62, 0.45);
 }
 
 .primary-button:active {
   transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.3);
 }
 
 .secondary-button {
   width: 100%;
-  height: 52px; /* Increased height */
+  height: 52px;
   background: white;
-  border: 2px solid var(--brand-red);
+  border: 2px solid #e53e3e;
   border-radius: 12px;
-  color: var(--brand-red);
+  color: #e53e3e;
   font-size: 1rem;
   font-weight: 600;
   display: flex;
@@ -781,12 +776,18 @@ export default defineComponent({
   gap: 0.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .secondary-button:hover {
-  background: var(--brand-red);
+  background: #e53e3e;
   color: white;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.25);
+}
+
+.secondary-button:active {
+  transform: translateY(0);
 }
 
 .login-link {
@@ -829,25 +830,31 @@ export default defineComponent({
 
 .social-button {
   width: 100%;
-  height: 52px; /* Increased height */
-  background: white;
+  height: 52px;
+  background: #ffffff;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
-  color: var(--brand-text);
+  color: #2d3748;
   font-size: 1rem;
   font-weight: 500;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem; /* Increased gap */
+  gap: 0.75rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .social-button:hover {
   border-color: #cbd5e0;
   background: #f7fafc;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.social-button:active {
+  transform: translateY(0);
 }
 
 .social-icon {
@@ -856,12 +863,14 @@ export default defineComponent({
 
 .google-button:hover {
   border-color: #4285f4;
-  background: rgba(66, 133, 244, 0.05);
+  background: rgba(66, 133, 244, 0.08);
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.15);
 }
 
 .microsoft-button:hover {
   border-color: #00a4ef;
-  background: rgba(0, 164, 239, 0.05);
+  background: rgba(0, 164, 239, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 164, 239, 0.15);
 }
 
 /* Footer */
@@ -890,8 +899,8 @@ export default defineComponent({
     max-width: 100%;
   }
   
-  .logo-image {
-    max-width: 160px;
+  .logo {
+    font-size: 36px;
   }
   
   .welcome-title {
@@ -915,8 +924,8 @@ export default defineComponent({
     margin-bottom: 2rem;
   }
   
-  .logo-image {
-    max-width: 140px;
+  .logo {
+    font-size: 36px;
     margin-bottom: 1rem;
   }
   
@@ -959,5 +968,17 @@ export default defineComponent({
   .custom-input {
     font-size: 16px;
   }
+}
+
+.logo {
+  display: block;
+  font-weight: 700;
+  font-size: 42px;
+  color: #e53e3e;
+  letter-spacing: -0.8px;
+  line-height: 1.2;
+  margin-bottom: 2rem;
+  transition: color 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 </style>
