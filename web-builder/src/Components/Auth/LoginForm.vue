@@ -27,11 +27,9 @@ const handleLogin = async () => {
     });
     
     if (result.success) {
-      // Login war erfolgreich, die App wird durch Watcher in App.vue neu gerendert
       email.value = '';
       password.value = '';
     }
-    // If requires2FA, the form will automatically switch to show 2FA input
   } catch (err) {
     // Error is already handled in store
   }

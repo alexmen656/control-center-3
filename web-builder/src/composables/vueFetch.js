@@ -6,7 +6,7 @@ import { ref } from 'vue';
  * @param {String} baseUrl - Base URL for API calls
  * @returns {Object} - Functions for API calls
  */
-export function useFetch(baseUrl = 'https://alex.polan.sk/backend/api') {
+export function useFetch(baseUrl = 'https://alex.polan.sk/control-center/web-builder') {
   const data = ref(null);
   const error = ref(null);
   const loading = ref(false);

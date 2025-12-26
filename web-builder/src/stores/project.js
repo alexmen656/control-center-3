@@ -20,7 +20,7 @@ export const useProjectStore = defineStore('project', () => {
     error.value = null;
     
     try {
-      const response = await vueFetch('https://alex.polan.sk/backend/api/projects.php', {
+      const response = await vueFetch('https://alex.polan.sk/control-center/web-builder/projects.php', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -46,7 +46,7 @@ export const useProjectStore = defineStore('project', () => {
     error.value = null;
     
     try {
-      const response = await vueFetch('https://alex.polan.sk/backend/api/projects.php', {
+      const response = await vueFetch('https://alex.polan.sk/control-center/web-builder/projects.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -89,7 +89,7 @@ export const useProjectStore = defineStore('project', () => {
     error.value = null;
     
     try {
-      const response = await vueFetch(`https://alex.polan.sk/backend/api/projects.php?id=${projectId}`, {
+      const response = await vueFetch(`https://alex.polan.sk/control-center/web-builder/projects.php?id=${projectId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -127,7 +127,7 @@ export const useProjectStore = defineStore('project', () => {
     error.value = null;
     
     try {
-      const response = await vueFetch(`https://alex.polan.sk/backend/api/projects.php?id=${projectId}`, {
+      const response = await vueFetch(`https://alex.polan.sk/control-center/web-builder/projects.php?id=${projectId}`, {
         method: 'DELETE'
       });
 
