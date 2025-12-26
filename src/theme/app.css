@@ -419,7 +419,7 @@
       padding: 8px 8px 0 8px;
     }*/
     
-    #main-content ion-router-outlet {
+    #main-content ion-router-outlet, #main-content .error404 {
       border-radius: 12px 12px 0 0;
       min-height: calc(100vh - 64px);
       border: none !important;
@@ -488,7 +488,7 @@
   }
   
   /* Content wrapper with rounded corners */
-  #main-content ion-router-outlet {
+  #main-content ion-router-outlet, #main-content .error404 {
     background: var(--ion-background-color, #ffffff);
     border-radius: 12px 0 0 0; /* Rounded top corners */
     border: var(--border);
@@ -499,7 +499,7 @@
     z-index: 1;
   }
 
-  #main-content.isNotLogin ion-router-outlet {
+  #main-content.isNotLogin ion-router-outlet, #main-content.isNotLogin .error404 {
     min-height: calc(100vh - 48px); /* Adjust for padding */
   }
   
@@ -509,7 +509,7 @@
       background: #1e1e1e; /* Dark header color */
     }
     
-    #main-content ion-router-outlet {
+    #main-content ion-router-outlet, #main-content .error404 {
       background: var(--ion-background-color, #121212);
     }
   }
@@ -577,7 +577,7 @@
     padding-bottom: calc(60px + env(safe-area-inset-bottom, 10px)) !important;
   }
   
-  .has-touch-bar #main-content ion-router-outlet {
+  .has-touch-bar #main-content ion-router-outlet, .has-touch-bar #main-content .error404 {
     margin-bottom: calc(60px + env(safe-area-inset-bottom, 10px)) !important;
   }
   
@@ -587,7 +587,7 @@
       padding-bottom: calc(70px + env(safe-area-inset-bottom)) !important;
     }
     
-    .has-touch-bar #main-content ion-router-outlet {
+    .has-touch-bar #main-content ion-router-outlet, .has-touch-bar #main-content .error404 {
       margin-bottom: calc(70px + env(safe-area-inset-bottom)) !important;
     }
   }
