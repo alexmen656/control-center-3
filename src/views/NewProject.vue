@@ -4,13 +4,13 @@
       <ion-grid>
         <ion-row>
           <ion-col size="0" size-lg="1"></ion-col>
-          <ion-col size="12" size-lg="10"><ion-grid><ion-row>
-
-                <ion-col size="12"><!-- size-lg="8"-->
+          <ion-col size="12" size-lg="10">
+            <ion-grid>
+              <ion-row>
+                <ion-col size="12">
                   <h2>Create a new project</h2>
                 </ion-col>
-
-                <ion-col size="12"><!-- size-lg="8"-->
+                <ion-col size="12">
                   <ion-item>
                     <ion-label position="floating">Icon</ion-label>
                     <ion-input type="text" v-model="icon" :value="icon" @ionInput="icon = $event.target.value"
@@ -20,29 +20,17 @@
                       :name="icon ? icon : 'help-circle-outline'"></ion-icon>
                   </ion-item>
                 </ion-col>
-
-                <ion-col size="12"><!-- size-lg="8"-->
+                <ion-col size="12">
                   <ion-item>
                     <ion-label position="floating">Project Name</ion-label>
                     <ion-input v-model="name" :value="name" @ionInput="name = $event.target.value" type="text"
                       placeholder="Enter Project Name"></ion-input>
                   </ion-item>
                 </ion-col>
-
-                <ion-col size="12"><!-- size-lg="8"-->
+                <ion-col size="12">
                   <project-template-selector v-model="selectedTemplateId" />
                 </ion-col>
-                <ion-col size="12">
-                  <ion-item>
-                    <ion-checkbox v-model="createGithubRepo" slot="start"></ion-checkbox>
-                    <ion-label>Automatisch ein GitHub-Repository für dieses Projekt anlegen</ion-label>
-                  </ion-item>
-                  <ion-note color="medium" class="ion-margin-start" style="font-size:0.95em;">
-                    If you wish to connect an existing repository, you can do it later in the project info.
-                  </ion-note>
-                </ion-col>
-
-                <ion-col size="12" class="ion-margin-top"><!-- size-lg="8"-->
+                <ion-col size="12" class="ion-margin-top">
                   <div class="action-buttons">
                     <ion-button @click="createWithoutTemplate" :disabled="!name">Create Empty Project</ion-button>
                     <ion-button @click="createFromTemplate" color="primary" :disabled="!name || !selectedTemplateId">
@@ -50,7 +38,9 @@
                     </ion-button>
                   </div>
                 </ion-col>
-              </ion-row></ion-grid></ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-col>
           <ion-col size="0" size-lg="1"></ion-col>
         </ion-row>
       </ion-grid>
@@ -61,8 +51,6 @@
 <script>
 import ProjectTemplateSelector from '@/components/ProjectTemplateSelector.vue';
 import { defineComponent } from 'vue';
-import axios from 'axios';
-import qs from 'qs';
 
 export default defineComponent({
   name: "NewProject",
@@ -91,15 +79,16 @@ export default defineComponent({
         this.showError("Project Name is empty!");
         return;
       }
+
       if (!this.selectedTemplateId) {
         this.showError("Please select a template");
         return;
       }
-      // Create project from template
+
       try {
-        const response = await axios.post(
+        const response = await this.$axios.post(
           "project_templates.php",
-          qs.stringify({
+          this.$qs.stringify({
             action: "apply",
             template_id: this.selectedTemplateId,
             project_name: this.name,
@@ -107,9 +96,6 @@ export default defineComponent({
           })
         );
         if (response.data.success) {
-          if (this.createGithubRepo) {
-            await this.createAndConnectGithubRepo();
-          }
           this.showSuccess("Project created successfully from template!");
           this.emitter.emit("updateSidebar");
           this.$router.push(`/project/${this.name}/`);
@@ -124,69 +110,21 @@ export default defineComponent({
 
     async createProject() {
       try {
-        await axios.post(
+        await this.$axios.post(
           "projects.php",
-          qs.stringify({
+          this.$qs.stringify({
             createProject: "createProject",
             projectName: this.name,
             projectIcon: this.icon,
           })
         );
-        if (this.createGithubRepo) {
-          await this.createAndConnectGithubRepo();
-        }
+
         this.showSuccess("Project created successfully");
         this.emitter.emit("updateSidebar");
-        this.$router.push(`/project/${this.name}/`);
+        this.$router.push(`/project/${this.name.toLowerCase().replace(/\s+/g, '-')}/`);
       } catch (error) {
         console.error("Error creating project:", error);
         this.showError("Network or server error");
-      }
-    },
-    async createAndConnectGithubRepo() {
-      try {
-        // Hole Userdaten
-        const { getUserData } = await import('@/userData');
-        const user = getUserData();
-        if (!user || !user.userID) {
-          this.showError('Kein User eingeloggt.');
-          return;
-        }
-        // 1. GitHub-Repo anlegen
-        const res = await axios.post('project_repo.php', qs.stringify({
-          action: 'create_github_repo',
-          project: this.name,
-          user_id: user.userID,
-        }));
-        let repo_full_name = '';
-        let repo_id = '';
-        if (res.data && res.data.success && res.data.repo) {
-          repo_full_name = res.data.repo.full_name || '';
-          repo_id = res.data.repo.id || '';
-        }
-        if (res.data && res.data.success) {
-          this.showSuccess('GitHub-Repository wurde erstellt und verbunden!');
-          try {
-            const vercelRes = await axios.post('project_vercel.php', qs.stringify({
-              action: 'create_vercel_project',
-              project: this.name,
-              user_id: user.userID,
-              repo_full_name: repo_full_name,
-              repo_id: repo_id,
-            }));
-            if (vercelRes.data && vercelRes.data.success) {
-              this.showSuccess('Vercel-Projekt wurde automatisch erstellt und verbunden!');
-            } else {
-              this.showError(vercelRes.data && vercelRes.data.error ? vercelRes.data.error : 'Fehler beim Anlegen des Vercel-Projekts.');
-            }
-          } catch (e) {
-            this.showError('Fehler beim Anlegen des Vercel-Projekts.');
-          }
-        } else {
-          this.showError(res.data && res.data.error ? res.data.error : 'Fehler beim Anlegen des GitHub-Repos.');
-        }
-      } catch (e) {
-        this.showError('Fehler beim Anlegen des GitHub-Repos.');
       }
     },
 
