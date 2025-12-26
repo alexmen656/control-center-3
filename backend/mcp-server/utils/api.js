@@ -33,8 +33,19 @@ export async function cmsRequest(endpoint, options = {}, context) {
   
   try {
     const response = await fetch(url, fetchOptions);
-    const data = await response.json();
-    return data;
+    const text = await response.text();
+    
+    // If expectJson is false, return text as-is
+    if (options.expectJson === false) {
+      return text;
+    }
+    
+    // Try to parse as JSON, if it fails return text
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
   } catch (error) {
     throw new Error(`CMS API Error: ${error.message}`);
   }

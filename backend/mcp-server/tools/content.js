@@ -307,22 +307,33 @@ async function listForms(args, context) {
 
 async function createForm(args, context) {
   try {
+    // Convert fields to the format expected by backend
+    const formJson = {
+      title: args.name,
+      inputs: args.fields.map(field => ({
+        name: field.name,
+        type: field.type,
+        label: field.label || field.name,
+        required: field.required || false,
+        options: field.options || []
+      }))
+    };
+    
     const data = await cmsRequest('form.php', {
       method: 'POST',
-      contentType: 'application/json',
       body: {
-        createForm: true,
+        create_form: '1',
         project: args.project,
         name: args.name,
-        fields: args.fields,
-        settings: args.settings || {}
-      }
+        form: JSON.stringify(formJson)
+      },
+      expectJson: false
     }, context);
     
     return formatResponse({
       success: true,
-      message: 'Form created successfully',
-      form: data
+      message: data || 'Form created successfully',
+      formName: args.name
     });
   } catch (error) {
     return formatError(error.message);
