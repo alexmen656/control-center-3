@@ -1,9 +1,9 @@
 <template>
-  <ion-page>
+  <div class="ion-page">
     <ion-content class="modern-content">
       <DefaultPage />
     </ion-content>
-  </ion-page>
+  </div>
 </template>
 
 <script lang="ts">
@@ -19,7 +19,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.modern-content {
+/*.modern-content {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
   --secondary-color: #64748b;
@@ -38,5 +38,5 @@ export default defineComponent({
   --radius: 8px;
   --radius-lg: 12px;
   background: var(--background);
-}
+}*/
 </style>

@@ -244,10 +244,11 @@ export default defineComponent({
   --radius-lg: 12px;
   
   padding: 20px;
-  max-width: 1400px;
+  /*max-width: 1400px;*/
   margin: 0 auto;
   min-height: 100vh;
   background: var(--background);
+  overflow: hidden;
 }
 
 /* Dashboard Header */
@@ -306,6 +307,7 @@ export default defineComponent({
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   min-width: 100px;
+  overflow: hidden;
 }
 
 .stat-number {
@@ -355,6 +357,7 @@ export default defineComponent({
   box-shadow: var(--shadow);
   cursor: pointer;
   transition: all 0.2s ease;
+  overflow: hidden;
 }
 
 .action-card:hover {
