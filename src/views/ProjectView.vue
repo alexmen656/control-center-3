@@ -295,8 +295,17 @@ ion-card:nth-of-type(2) {
 @media (prefers-color-scheme: dark) {
   ion-list,
   ion-item {
-    background: black;
-    --background: black;
+    background: #1a1a1a;
+    --background: #1a1a1a;
+  }
+  
+  ion-card {
+    background: #2a2a2a;
+    border-color: #3a3a3a;
+  }
+  
+  ion-content {
+    --background: #0a0a0a;
   }
 }
 

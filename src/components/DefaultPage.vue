@@ -642,12 +642,12 @@ export default defineComponent({
 /* Dark mode compatibility */
 @media (prefers-color-scheme: dark) {
   .modern-dashboard {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
+    --background: #121212;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
     --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
+    --text-secondary: #b0b0b0;
+    --text-muted: #707070;
   }
 }
 </style>

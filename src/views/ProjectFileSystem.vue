@@ -1677,12 +1677,12 @@ export default defineComponent({
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
+    --background: #121212;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
     --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
+    --text-secondary: #b0b0b0;
+    --text-muted: #707070;
   }
   
   .search-box input,

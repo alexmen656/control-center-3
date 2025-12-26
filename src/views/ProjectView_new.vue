@@ -36,9 +36,7 @@
         </div>
 
         <div class="cards-grid" v-if="tools.length > 0">
-          <div v-for="tool in tools" :key="tool.id" 
-               class="tool-card" 
-               @click="goToTool(tool.name)">
+          <div v-for="tool in tools" :key="tool.id" class="tool-card" @click="goToTool(tool.name)">
             <div class="card-icon">
               <ion-icon :name="tool.icon || 'construct-outline'"></ion-icon>
             </div>
@@ -87,8 +85,8 @@
 
         <!-- Download Link -->
         <div v-if="downloadLink" class="download-section">
-          <a :href="'https://alex.polan.sk/control-center/website_builder/exports/' + downloadLink" 
-             download class="download-link">
+          <a :href="'https://alex.polan.sk/control-center/website_builder/exports/' + downloadLink" download
+            class="download-link">
             <ion-icon name="download-outline"></ion-icon>
             {{ downloadLink }}
           </a>
@@ -175,18 +173,13 @@
             <ion-icon name="close"></ion-icon>
           </button>
         </div>
-        
+
         <div class="modal-content">
           <div class="form-group">
             <label class="form-label">Email Address</label>
             <div class="input-container">
-              <input 
-                type="email" 
-                v-model="email" 
-                placeholder="john.doe@control-center.eu"
-                class="form-input"
-                @keyup.enter="confirm"
-              />
+              <input type="email" v-model="email" placeholder="john.doe@control-center.eu" class="form-input"
+                @keyup.enter="confirm" />
               <ion-icon name="mail-outline" class="input-icon"></ion-icon>
             </div>
           </div>
@@ -300,16 +293,16 @@ export default {
       if (tool.toLowerCase().includes("dashboard-")) {
         this.$router.push(
           "/project/" +
-            this.$route.params.project +
-            "/dashboard/" +
-            tool.toLowerCase().replaceAll(" ", "-")
+          this.$route.params.project +
+          "/dashboard/" +
+          tool.toLowerCase().replaceAll(" ", "-")
         );
       } else {
         this.$router.push(
           "/project/" +
-            this.$route.params.project +
-            "/" +
-            tool.toLowerCase().replaceAll(" ", "-")
+          this.$route.params.project +
+          "/" +
+          tool.toLowerCase().replaceAll(" ", "-")
         );
       }
     },
@@ -353,12 +346,12 @@ export default {
             permission: this.selectedPermission,
           })
         );
-        
+
         this.setOpen(false);
         this.email = "";
         this.selectedPermission = "write";
         this.loadData(); // Refresh user list
-        
+
         // Show success notification (you can implement a proper notification system)
         alert("User invitation sent successfully!");
       } catch (error) {
@@ -555,7 +548,8 @@ export default {
 }
 
 /* Tool Cards */
-.tool-card, .component-card {
+.tool-card,
+.component-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -566,13 +560,15 @@ export default {
   overflow: hidden;
 }
 
-.tool-card:hover, .component-card:hover {
+.tool-card:hover,
+.component-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
   border-color: var(--primary-color);
 }
 
-.tool-card::before, .component-card::before {
+.tool-card::before,
+.component-card::before {
   content: '';
   position: absolute;
   top: 0;
@@ -584,7 +580,8 @@ export default {
   transition: transform 0.2s ease;
 }
 
-.tool-card:hover::before, .component-card:hover::before {
+.tool-card:hover::before,
+.component-card:hover::before {
   transform: scaleX(1);
 }
 
@@ -822,6 +819,7 @@ export default {
     opacity: 0;
     transform: scale(0.95) translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -979,12 +977,12 @@ export default {
 
 /* Dark Mode */
 .modern-project-view.dark-mode {
-  --surface: #1e293b;
-  --background: #0f172a;
-  --border: #334155;
+  --background: #121212;
+  --surface: #1a1a1a;
+  --border: #2a2a2a;
   --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-muted: #64748b;
+  --text-secondary: #b0b0b0;
+  --text-muted: #707070;
 }
 
 /* Responsive Design */
@@ -1031,7 +1029,10 @@ export default {
 }
 
 @media (max-width: 480px) {
-  .tool-card, .component-card, .user-card {
+
+  .tool-card,
+  .component-card,
+  .user-card {
     padding: 16px;
   }
 
