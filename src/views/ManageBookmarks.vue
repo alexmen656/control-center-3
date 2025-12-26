@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="bookmarks-outline" title="Manage Bookmarks"/>
+      <SiteTitle icon="bookmarks-outline" title="Manage Bookmarks" />
 
       <div class="page-container">
         <!-- Header -->
@@ -68,11 +68,7 @@
             <h2>Your Bookmarks</h2>
             <div class="search-box">
               <ion-icon name="search-outline"></ion-icon>
-              <input 
-                type="text" 
-                placeholder="Search bookmarks..." 
-                v-model="searchTerm"
-              >
+              <input type="text" placeholder="Search bookmarks..." v-model="searchTerm">
             </div>
           </div>
 
@@ -85,7 +81,8 @@
             <div v-else-if="filteredBookmarks.length === 0" class="no-data-state">
               <ion-icon name="bookmarks-outline" class="no-data-icon"></ion-icon>
               <h3>No Bookmarks Found</h3>
-              <p>{{ searchTerm ? 'No bookmarks match your search criteria.' : 'You haven\'t saved any bookmarks yet.' }}</p>
+              <p>{{ searchTerm ? 'No bookmarks match your search criteria.' : 'You haven\'t saved any bookmarks yet.' }}
+              </p>
               <button class="action-btn primary" @click="showCreateModal = true">
                 <ion-icon name="add-outline"></ion-icon>
                 Create Your First Bookmark
@@ -93,15 +90,10 @@
             </div>
 
             <div v-else class="bookmarks-grid">
-              <div 
-                v-for="bookmark in filteredBookmarks" 
-                :key="bookmark.id"
-                class="bookmark-card"
-                :class="{
-                  'bookmark-external': isExternalLink(bookmark.location),
-                  'bookmark-internal': !isExternalLink(bookmark.location)
-                }"
-              >
+              <div v-for="bookmark in filteredBookmarks" :key="bookmark.id" class="bookmark-card" :class="{
+                'bookmark-external': isExternalLink(bookmark.location),
+                'bookmark-internal': !isExternalLink(bookmark.location)
+              }">
                 <div class="bookmark-header">
                   <div class="bookmark-info">
                     <div class="bookmark-icon">
@@ -113,43 +105,26 @@
                     </div>
                   </div>
                   <div class="bookmark-status">
-                    <span 
-                      class="status-badge"
-                      :class="isExternalLink(bookmark.location) ? 'status-external' : 'status-internal'"
-                    >
-                      <ion-icon :name="isExternalLink(bookmark.location) ? 'globe-outline' : 'folder-outline'"></ion-icon>
+                    <span class="status-badge"
+                      :class="isExternalLink(bookmark.location) ? 'status-external' : 'status-internal'">
+                      <ion-icon
+                        :name="isExternalLink(bookmark.location) ? 'globe-outline' : 'folder-outline'"></ion-icon>
                       {{ isExternalLink(bookmark.location) ? 'External' : 'Internal' }}
                     </span>
                   </div>
                 </div>
 
                 <div class="bookmark-actions">
-                  <button 
-                    class="icon-btn visit-btn" 
-                    @click="visitBookmark(bookmark)"
-                    title="Visit Link"
-                  >
+                  <button class="icon-btn visit-btn" @click="visitBookmark(bookmark)" title="Visit Link">
                     <ion-icon name="open-outline"></ion-icon>
                   </button>
-                  <button 
-                    class="icon-btn edit-btn"
-                    @click="editBookmark(bookmark)"
-                    title="Edit Bookmark"
-                  >
+                  <button class="icon-btn edit-btn" @click="editBookmark(bookmark)" title="Edit Bookmark">
                     <ion-icon name="pencil-outline"></ion-icon>
                   </button>
-                  <button 
-                    class="icon-btn copy-btn"
-                    @click="copyToClipboard(bookmark.location)"
-                    title="Copy URL"
-                  >
+                  <button class="icon-btn copy-btn" @click="copyToClipboard(bookmark.location)" title="Copy URL">
                     <ion-icon name="copy-outline"></ion-icon>
                   </button>
-                  <button 
-                    class="icon-btn delete-btn"
-                    @click="confirmDelete(bookmark)"
-                    title="Delete Bookmark"
-                  >
+                  <button class="icon-btn delete-btn" @click="confirmDelete(bookmark)" title="Delete Bookmark">
                     <ion-icon name="trash-outline"></ion-icon>
                   </button>
                 </div>
@@ -171,33 +146,18 @@
           <div class="custom-modal-body">
             <div class="form-group">
               <label for="bookmark-title">Title</label>
-              <input 
-                id="bookmark-title"
-                type="text" 
-                v-model="newBookmark.title"
-                placeholder="Enter bookmark title"
-                class="form-input"
-              >
+              <input id="bookmark-title" type="text" v-model="newBookmark.title" placeholder="Enter bookmark title"
+                class="form-input">
             </div>
             <div class="form-group">
               <label for="bookmark-url">URL</label>
-              <input 
-                id="bookmark-url"
-                type="text" 
-                v-model="newBookmark.location"
-                placeholder="Enter URL (e.g., https://example.com or /internal/path)"
-                class="form-input"
-              >
+              <input id="bookmark-url" type="text" v-model="newBookmark.location"
+                placeholder="Enter URL (e.g., https://example.com or /internal/path)" class="form-input">
             </div>
             <div class="form-group">
               <label for="bookmark-icon">Icon</label>
-              <input 
-                id="bookmark-icon"
-                type="text" 
-                v-model="newBookmark.icon"
-                placeholder="Enter Ionic icon name (e.g., bookmark-outline)"
-                class="form-input"
-              >
+              <input id="bookmark-icon" type="text" v-model="newBookmark.icon"
+                placeholder="Enter Ionic icon name (e.g., bookmark-outline)" class="form-input">
               <div class="icon-preview" v-if="newBookmark.icon">
                 <ion-icon :name="newBookmark.icon"></ion-icon>
                 <span>Preview</span>
@@ -207,7 +167,8 @@
               <button class="action-btn secondary" @click="showCreateModal = false">
                 Cancel
               </button>
-              <button class="action-btn primary" @click="createBookmark" :disabled="!newBookmark.title.trim() || !newBookmark.location.trim()">
+              <button class="action-btn primary" @click="createBookmark"
+                :disabled="!newBookmark.title.trim() || !newBookmark.location.trim()">
                 Create Bookmark
               </button>
             </div>
@@ -227,33 +188,18 @@
           <div class="custom-modal-body">
             <div class="form-group">
               <label for="edit-bookmark-title">Title</label>
-              <input 
-                id="edit-bookmark-title"
-                type="text" 
-                v-model="editingBookmark.title"
-                placeholder="Enter bookmark title"
-                class="form-input"
-              >
+              <input id="edit-bookmark-title" type="text" v-model="editingBookmark.title"
+                placeholder="Enter bookmark title" class="form-input">
             </div>
             <div class="form-group">
               <label for="edit-bookmark-url">URL</label>
-              <input 
-                id="edit-bookmark-url"
-                type="text" 
-                v-model="editingBookmark.location"
-                placeholder="Enter URL"
-                class="form-input"
-              >
+              <input id="edit-bookmark-url" type="text" v-model="editingBookmark.location" placeholder="Enter URL"
+                class="form-input">
             </div>
             <div class="form-group">
               <label for="edit-bookmark-icon">Icon</label>
-              <input 
-                id="edit-bookmark-icon"
-                type="text" 
-                v-model="editingBookmark.icon"
-                placeholder="Enter Ionic icon name"
-                class="form-input"
-              >
+              <input id="edit-bookmark-icon" type="text" v-model="editingBookmark.icon"
+                placeholder="Enter Ionic icon name" class="form-input">
               <div class="icon-preview" v-if="editingBookmark.icon">
                 <ion-icon :name="editingBookmark.icon"></ion-icon>
                 <span>Preview</span>
@@ -340,7 +286,7 @@ export default defineComponent({
       if (!this.searchTerm.trim()) {
         return this.bookmarks;
       }
-      
+
       const searchLower = this.searchTerm.toLowerCase();
       return this.bookmarks.filter(bookmark =>
         bookmark.title.toLowerCase().includes(searchLower) ||
@@ -397,7 +343,7 @@ export default defineComponent({
             icon: this.newBookmark.icon || 'bookmark-outline'
           })
         );
-        
+
         alert("Bookmark created successfully");
         this.showCreateModal = false;
         this.newBookmark = { title: '', location: '', icon: '' };
@@ -426,7 +372,7 @@ export default defineComponent({
             location: this.editingBookmark.location
           })
         );
-        
+
         // Then create the updated one
         await this.$axios.post(
           "bookmarks.php",
@@ -437,7 +383,7 @@ export default defineComponent({
             icon: this.editingBookmark.icon || 'bookmark-outline'
           })
         );
-        
+
         alert("Bookmark updated successfully");
         this.showEditModal = false;
         await this.loadBookmarks();
@@ -452,7 +398,7 @@ export default defineComponent({
     },
     async deleteBookmark() {
       if (!this.deleteModal.bookmark) return;
-      
+
       try {
         await this.$axios.post(
           "bookmarks.php",
@@ -461,7 +407,7 @@ export default defineComponent({
             location: this.deleteModal.bookmark.location
           })
         );
-        
+
         alert("Bookmark deleted successfully");
         this.bookmarks = this.bookmarks.filter(b => b.id !== this.deleteModal.bookmark.id);
         this.deleteModal.show = false;
@@ -1068,13 +1014,23 @@ export default defineComponent({
 
 /* Animations */
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes modalFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modalSlideIn {
@@ -1082,6 +1038,7 @@ export default defineComponent({
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1093,42 +1050,51 @@ export default defineComponent({
   .page-container {
     padding: 16px;
   }
-  
+
   .page-header {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .card-header {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-box input {
     min-width: 100%;
   }
-  
+
   .bookmarks-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .custom-modal-content {
     width: 95vw;
     margin: 20px;
   }
-  
+
   .bookmark-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .bookmark-status {
     align-self: flex-start;
   }
+}
+
+.modern-content {
+  --background: #121212;
+  --surface: #1a1a1a;
+  --border: #2a2a2a;
+  --text-primary: #f1f5f9;
+  --text-secondary: #b0b0b0;
+  --text-muted: #707070;
 }
 </style>

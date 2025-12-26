@@ -1098,4 +1098,13 @@ export default defineComponent({
     align-self: flex-start;
   }
 }
+
+  .modern-content {
+    --background: #121212;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
+    --text-primary: #f1f5f9;
+    --text-secondary: #b0b0b0;
+    --text-muted: #707070;
+  }
 </style>
