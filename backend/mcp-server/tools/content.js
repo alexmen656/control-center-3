@@ -62,26 +62,90 @@ export const contentTools = [
   },
   {
     name: 'content_form_submissions',
-    description: 'Get form submissions',
+    description: 'Get form submissions/data entries',
     inputSchema: {
       type: 'object',
       properties: {
-        formId: {
+        project: {
           type: 'string',
-          description: 'Form ID'
+          description: 'Project link/slug'
         },
-        limit: {
-          type: 'number',
-          description: 'Maximum number of submissions to return',
-          default: 50
-        },
-        offset: {
-          type: 'number',
-          description: 'Offset for pagination',
-          default: 0
+        formName: {
+          type: 'string',
+          description: 'Form name'
         }
       },
-      required: ['formId']
+      required: ['project', 'formName']
+    }
+  },
+  {
+    name: 'content_form_submit',
+    description: 'Submit/add data to a form',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project: {
+          type: 'string',
+          description: 'Project link/slug'
+        },
+        formName: {
+          type: 'string',
+          description: 'Form name'
+        },
+        data: {
+          type: 'object',
+          description: 'Form data as key-value pairs (field name: value)'
+        }
+      },
+      required: ['project', 'formName', 'data']
+    }
+  },
+  {
+    name: 'content_form_update',
+    description: 'Update a form data entry',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project: {
+          type: 'string',
+          description: 'Project link/slug'
+        },
+        formName: {
+          type: 'string',
+          description: 'Form name'
+        },
+        entryId: {
+          type: 'string',
+          description: 'Entry ID to update'
+        },
+        data: {
+          type: 'object',
+          description: 'Updated form data as key-value pairs'
+        }
+      },
+      required: ['project', 'formName', 'entryId', 'data']
+    }
+  },
+  {
+    name: 'content_form_delete',
+    description: 'Delete a form data entry',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project: {
+          type: 'string',
+          description: 'Project link/slug'
+        },
+        formName: {
+          type: 'string',
+          description: 'Form name'
+        },
+        entryId: {
+          type: 'string',
+          description: 'Entry ID to delete'
+        }
+      },
+      required: ['project', 'formName', 'entryId']
     }
   },
   {
@@ -257,6 +321,15 @@ export async function handleContentTool(toolName, args, context) {
     case 'content_form_submissions':
       return await getFormSubmissions(args, context);
       
+    case 'content_form_submit':
+      return await submitFormData(args, context);
+      
+    case 'content_form_update':
+      return await updateFormData(args, context);
+      
+    case 'content_form_delete':
+      return await deleteFormData(args, context);
+      
     case 'content_newsletter_list':
       return await listNewsletterSubscribers(args, context);
       
@@ -344,17 +417,80 @@ async function getFormSubmissions(args, context) {
   try {
     const data = await cmsRequest('form.php', {
       body: {
-        getSubmissions: 'true',
-        formId: args.formId,
-        limit: args.limit || 50,
-        offset: args.offset || 0
+        get_form_data: '1',
+        project: args.project,
+        form: args.formName
       }
     }, context);
     
     return formatResponse({
       success: true,
-      submissions: data.submissions || data,
-      total: data.total
+      data: data,
+      count: Array.isArray(data) ? data.length : 0
+    });
+  } catch (error) {
+    return formatError(error.message);
+  }
+}
+
+async function submitFormData(args, context) {
+  try {
+    const data = await cmsRequest('form.php', {
+      body: {
+        submit_form: '1',
+        project: args.project,
+        form_name: args.formName,
+        form: JSON.stringify(args.data)
+      },
+      expectJson: false
+    }, context);
+    
+    return formatResponse({
+      success: true,
+      message: data || 'Form data submitted successfully'
+    });
+  } catch (error) {
+    return formatError(error.message);
+  }
+}
+
+async function updateFormData(args, context) {
+  try {
+    const data = await cmsRequest('form.php', {
+      body: {
+        update_entry: '1',
+        project: args.project,
+        form_name: args.formName,
+        entry_id: args.entryId,
+        form: JSON.stringify(args.data)
+      },
+      expectJson: false
+    }, context);
+    
+    return formatResponse({
+      success: true,
+      message: data || 'Entry updated successfully'
+    });
+  } catch (error) {
+    return formatError(error.message);
+  }
+}
+
+async function deleteFormData(args, context) {
+  try {
+    const data = await cmsRequest('form.php', {
+      body: {
+        delete_entry: '1',
+        project: args.project,
+        form_name: args.formName,
+        entry_id: args.entryId
+      },
+      expectJson: false
+    }, context);
+    
+    return formatResponse({
+      success: true,
+      message: data || 'Entry deleted successfully'
     });
   } catch (error) {
     return formatError(error.message);
