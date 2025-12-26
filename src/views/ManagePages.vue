@@ -2,7 +2,6 @@
   <ion-page>
     <ion-content class="modern-content">
       <div class="page-container">
-        <!-- Header Section -->
         <div class="page-header">
           <div class="header-content">
             <div class="header-info">
@@ -12,30 +11,8 @@
               </h1>
               <p class="page-subtitle">Create and organize website pages with custom URLs and icons</p>
             </div>
-            <div class="header-stats">
-              <div class="stat-card">
-                <span class="stat-number">{{ pages.length }}</span>
-                <span class="stat-label">Total Pages</span>
-              </div>
-              <div class="stat-card">
-                <span class="stat-number">{{ currentPage }}</span>
-                <span class="stat-label">Current Page</span>
-              </div>
-            </div>
           </div>
         </div>
-
-        <!-- Action Bar -->
-        <div class="action-bar">
-          <div class="action-group-left">
-            <button class="action-btn primary" @click="scrollToForm">
-              <ion-icon name="add-outline"></ion-icon>
-              <span>New Page</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Add New Page Form -->
         <div class="data-card add-page-card">
           <div class="card-header">
             <div class="header-left">
@@ -43,7 +20,6 @@
               <span class="form-description">Add a new page to your website with custom configuration</span>
             </div>
           </div>
-
           <div class="card-content">
             <div class="modern-form">
               <div class="form-grid">
@@ -52,13 +28,11 @@
                   <input v-model="title" type="text" placeholder="Enter a descriptive page title..."
                     class="modern-input" required />
                 </div>
-
                 <div class="form-group">
                   <label class="form-label">URL Path *</label>
                   <input v-model="url" type="text" placeholder="e.g., /about, /contact, /services" class="modern-input"
                     required />
                 </div>
-
                 <div class="form-group">
                   <label class="form-label">Icon Name</label>
                   <input v-model="icon" type="text" placeholder="e.g., home-outline, person-outline, settings-outline"
@@ -68,7 +42,6 @@
                   </div>
                 </div>
               </div>
-
               <div class="form-actions">
                 <button class="action-btn primary" @click="submitPage" :disabled="!title || !url">
                   <ion-icon name="add-outline"></ion-icon>
@@ -78,8 +51,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Existing Pages -->
         <div class="data-card pages-list-card">
           <div class="card-header">
             <div class="header-left">
@@ -92,7 +63,6 @@
               </div>
             </div>
           </div>
-
           <div class="card-content">
             <div v-if="pages.length === 0" class="no-data-state">
               <div class="no-data-content">
@@ -101,7 +71,6 @@
                 <p>Create your first page to get started with building your website structure.</p>
               </div>
             </div>
-
             <div v-else class="pages-list">
               <div v-for="(page, index) in pages" :key="index" class="page-item">
                 <div class="page-icon">
@@ -121,20 +90,16 @@
                 </div>
               </div>
             </div>
-
-            <!-- Pagination Controls -->
             <div v-if="totalPages > 1" class="pagination-controls">
               <button class="pagination-btn" @click="prevPage" :disabled="currentPage <= 1">
                 <ion-icon name="chevron-back-outline"></ion-icon>
                 Previous
               </button>
-
               <div class="page-numbers">
                 <span class="current-page">{{ currentPage }}</span>
                 <span class="page-separator">of</span>
                 <span class="total-pages">{{ totalPages }}</span>
               </div>
-
               <button class="pagination-btn" @click="nextPage" :disabled="currentPage >= totalPages">
                 Next
                 <ion-icon name="chevron-forward-outline"></ion-icon>
@@ -152,11 +117,9 @@ export default {
   name: "ManagePages",
   data() {
     return {
-      // Fields for adding a new page
       title: "",
       url: "",
       icon: "",
-      // Pagination for existing pages
       pages: [],
       currentPage: 1,
       totalPages: 1,
@@ -192,7 +155,6 @@ export default {
     },
     submitPage() {
       if (this.title && this.url) {
-        // Always pass an empty string for html content
         const postData = this.$qs.stringify({
           addPage: "addPage",
           title: this.title,
@@ -205,11 +167,9 @@ export default {
           .then((response) => {
             if (response.data.status === "success") {
               alert("Page added successfully!");
-              // Reset fields and reload pages
               this.title = "";
               this.url = "";
               this.icon = "";
-              // Optionally, go to the first page when a new item is added
               this.currentPage = 1;
               this.loadPages();
             } else {
@@ -241,7 +201,6 @@ export default {
 </script>
 
 <style scoped>
-/* Modern Design System */
 .modern-content {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
@@ -270,7 +229,6 @@ export default {
   min-height: 100vh;
 }
 
-/* Page Header */
 .page-header {
   margin-bottom: 32px;
 }
@@ -311,23 +269,6 @@ export default {
   line-height: 1.5;
 }
 
-.header-stats {
-  display: flex;
-  gap: 16px;
-}
-
-.stat-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 16px 24px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  min-width: 100px;
-}
-
 .stat-number {
   font-size: 24px;
   font-weight: 700;
@@ -340,22 +281,6 @@ export default {
   color: var(--text-secondary);
   margin-top: 4px;
   text-align: center;
-}
-
-/* Action Bar */
-.action-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.action-group-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
 }
 
 .action-btn {
@@ -401,7 +326,6 @@ export default {
   font-size: 16px;
 }
 
-/* Data Card */
 .data-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -445,7 +369,6 @@ export default {
   padding: 24px;
 }
 
-/* Modern Form */
 .modern-form {
   width: 100%;
 }
@@ -502,7 +425,6 @@ export default {
   border-top: 1px solid var(--border);
 }
 
-/* No Data State */
 .no-data-state {
   padding: 60px 20px;
   text-align: center;
@@ -534,7 +456,6 @@ export default {
   line-height: 1.5;
 }
 
-/* Pages List */
 .pages-list {
   display: flex;
   flex-direction: column;
@@ -627,7 +548,6 @@ export default {
   background: rgba(220, 38, 38, 0.05);
 }
 
-/* Pagination Controls */
 .pagination-controls {
   display: flex;
   justify-content: space-between;
@@ -676,7 +596,6 @@ export default {
   color: var(--primary-color);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
@@ -728,16 +647,6 @@ export default {
   .card-header,
   .card-content {
     padding: 16px;
-  }
-
-  .header-stats {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .stat-card {
-    flex-direction: row;
-    gap: 12px;
   }
 }
 
