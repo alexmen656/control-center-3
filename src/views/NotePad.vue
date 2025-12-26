@@ -2,7 +2,6 @@
   <ion-page>
     <ion-content class="modern-content">
       <div class="page-container">
-        <!-- Header Section -->
         <div class="page-header">
           <div class="header-content">
             <div class="header-info">
@@ -12,26 +11,8 @@
               </h1>
               <p class="page-subtitle">Create and manage your notes with rich text editing</p>
             </div>
-            <div class="header-stats">
-              <div class="stat-card">
-                <span class="stat-number">{{ notes.length }}</span>
-                <span class="stat-label">Total Notes</span>
-              </div>
-            </div>
           </div>
         </div>
-
-        <!-- Action Bar -->
-        <div class="action-bar">
-          <div class="action-group-left">
-            <button class="action-btn primary" @click="scrollToForm">
-              <ion-icon name="add-outline"></ion-icon>
-              <span>{{ isEditing ? 'Editing Note' : 'New Note' }}</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- New Note Form Card -->
         <div class="data-card note-form-card">
           <div class="card-header">
             <div class="header-left">
@@ -39,7 +20,6 @@
               <span class="form-description">Use the rich text editor to create formatted notes</span>
             </div>
           </div>
-
           <div class="card-content">
             <div class="modern-form">
               <div class="form-group">
@@ -47,7 +27,6 @@
                 <input v-model="newNote.header" type="text" placeholder="Enter a descriptive title for your note..."
                   class="modern-input" />
               </div>
-
               <div class="form-group editor-group">
                 <label class="form-label">Content</label>
                 <div class="editor-wrapper">
@@ -55,7 +34,6 @@
                     :options="editorOptions" class="modern-editor" />
                 </div>
               </div>
-
               <div class="form-actions">
                 <button v-if="isEditing" class="action-btn secondary" @click="cancelEdit">
                   Cancel
@@ -68,14 +46,11 @@
             </div>
           </div>
         </div>
-
-        <!-- Notes Grid -->
         <div class="notes-section">
           <div class="section-header">
             <h3>Your Notes</h3>
             <span class="notes-count">{{ notes.length }} notes</span>
           </div>
-
           <div v-if="notes.length === 0" class="no-data-state">
             <div class="no-data-content">
               <ion-icon name="document-outline" class="no-data-icon"></ion-icon>
@@ -83,7 +58,6 @@
               <p>Create your first note to get started with organizing your thoughts and ideas.</p>
             </div>
           </div>
-
           <div v-else class="notes-grid">
             <div v-for="(note, index) in notes" :key="index" class="note-card">
               <div class="note-actions">
@@ -94,11 +68,9 @@
                   <ion-icon name="trash-outline"></ion-icon>
                 </button>
               </div>
-
               <div v-if="note.image" class="note-image-container">
                 <img :src="note.image" class="note-image" alt="Note image" />
               </div>
-
               <div class="note-content-area">
                 <h4 v-if="note.header" class="note-title">{{ note.header }}</h4>
                 <div v-if="note.content" class="note-preview" v-html="note.content"></div>
@@ -110,8 +82,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Delete Confirmation Alert -->
       <ion-alert :is-open="showDeleteAlert" header="Confirm Delete"
         message="Are you sure you want to delete this note? This action cannot be undone." :buttons="[
           {
@@ -264,7 +234,6 @@ export default {
     },
 
     saveNote() {
-      // Get HTML content directly from the editor
       let contentToSave = '';
 
       if (this.$refs.quillEditor && this.$refs.quillEditor.getHTML) {
@@ -276,7 +245,6 @@ export default {
       const trimmedHeader = this.newNote.header.trim();
       const trimmedImage = this.newNote.image.trim();
 
-      // Validate before saving
       if (!trimmedHeader && !contentToSave.trim()) {
         alert("Please enter either a header or content for your note.");
         return;
@@ -313,7 +281,6 @@ export default {
 
 
 <style scoped>
-/* Modern Design System */
 .modern-content {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
@@ -342,7 +309,6 @@ export default {
   min-height: 100vh;
 }
 
-/* Page Header */
 .page-header {
   margin-bottom: 32px;
 }
@@ -381,53 +347,6 @@ export default {
   color: var(--text-secondary);
   font-size: 16px;
   line-height: 1.5;
-}
-
-.header-stats {
-  display: flex;
-  gap: 16px;
-}
-
-.stat-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 16px 24px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  min-width: 100px;
-}
-
-.stat-number {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--primary-color);
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-top: 4px;
-  text-align: center;
-}
-
-/* Action Bar */
-.action-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.action-group-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
 }
 
 .action-btn {
@@ -478,7 +397,6 @@ export default {
   font-size: 16px;
 }
 
-/* Data Card */
 .data-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -510,7 +428,6 @@ export default {
   padding: 24px;
 }
 
-/* Modern Form */
 .modern-form {
   width: 100%;
 }
@@ -588,7 +505,6 @@ export default {
   border-top: 1px solid var(--border);
 }
 
-/* Notes Section */
 .notes-section {
   margin-top: 48px;
 }
@@ -612,7 +528,6 @@ export default {
   font-size: 14px;
 }
 
-/* No Data State */
 .no-data-state {
   padding: 60px 20px;
   text-align: center;
@@ -648,7 +563,6 @@ export default {
   line-height: 1.5;
 }
 
-/* Notes Grid */
 .notes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -762,7 +676,6 @@ export default {
   background: linear-gradient(transparent, var(--surface));
 }
 
-/* Clean up Quill content */
 .note-preview :deep(h1),
 .note-preview :deep(h2),
 .note-preview :deep(h3),
@@ -788,7 +701,6 @@ export default {
   font-size: 14px;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
