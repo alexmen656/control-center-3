@@ -155,7 +155,7 @@ ion-toolbar,
 .header {
   --background: #eff3f6;
   box-shadow: none;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+ /* border-bottom: 1px solid rgba(0, 0, 0, 0.05);*/
 }
 
 @media (prefers-color-scheme: dark) {
@@ -163,7 +163,7 @@ ion-toolbar,
   ion-toolbar,
   .header {
     --background: #1e1e1e;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    /*border-bottom: 1px solid rgba(255, 255, 255, 0.1);*/
   }
 }
 
