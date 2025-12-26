@@ -1,17 +1,5 @@
 <?php
 
-/**
- * project_helper.php
- * 
- * Helper-Funktionen für Projektoperationen im Control Center
- */
-
-/**
- * Erstellt das Hauptverzeichnis für das Dateisystem eines Projekts
- *
- * @param string $projectID Die Projekt-ID
- * @return bool True bei Erfolg, False bei Fehler
- */
 function createFileSystemMainDir($projectID)
 {
     $dir = "/data/project_filesystems/" . $projectID;
@@ -22,12 +10,6 @@ function createFileSystemMainDir($projectID)
     return chmod($dir, 0777);
 }
 
-/**
- * Erstellt einen Dateisystem-Eintrag in der Datenbank und das zugehörige Verzeichnis
- *
- * @param string $projectID Die Projekt-ID
- * @return bool True bei Erfolg, False bei Fehler
- */
 function createFileSystem($projectID)
 {
     if (!query("INSERT INTO project_filesystem VALUES (0, '', '', NULL, 0, '$projectID')")) {
@@ -36,13 +18,6 @@ function createFileSystem($projectID)
 
     return createFileSystemMainDir($projectID);
 }
-
-/**
- * Findet ein Projekt anhand des Link-Namens
- *
- * @param string $link Der Link-Name des Projekts
- * @return array|null Die Projektdaten oder null, wenn nicht gefunden
- */
 function getProjectByLink($link)
 {
     $link = escape_string($link);
@@ -51,12 +26,6 @@ function getProjectByLink($link)
     return (mysqli_num_rows($query) == 1) ? fetch_assoc($query) : null;
 }
 
-/**
- * Findet ein Projekt anhand der Projekt-ID
- *
- * @param string $projectID Die Projekt-ID
- * @return array|null Die Projektdaten oder null, wenn nicht gefunden
- */
 function getProjectByID($projectID)
 {
     $projectID = escape_string($projectID);
@@ -65,12 +34,6 @@ function getProjectByID($projectID)
     return (mysqli_num_rows($query) == 1) ? fetch_assoc($query) : null;
 }
 
-/**
- * Findet einen Benutzer anhand des Login-Tokens
- *
- * @param string $token Das Login-Token
- * @return array|null Die Benutzerdaten oder null, wenn nicht gefunden
- */
 function getUserByToken($token)
 {
     $token = escape_string($token);
@@ -79,12 +42,6 @@ function getUserByToken($token)
     return (mysqli_num_rows($data) == 1) ? fetch_assoc($data) : null;
 }
 
-/**
- * Ruft alle Benutzer eines Projekts ab
- *
- * @param string $projectID Die Projekt-ID
- * @return array Ein Array mit Benutzerdaten
- */
 function getUsersByProjectID($projectID)
 {
     $users = query("SELECT * FROM control_center_user_projects WHERE projectID='$projectID'");
@@ -108,12 +65,6 @@ function getUsersByProjectID($projectID)
     return $result;
 }
 
-/**
- * Ruft alle Ansichten eines Projekts ab
- *
- * @param string $projectID Die Projekt-ID
- * @return array Ein Array mit Ansichtsdaten
- */
 function getProjectViewsByProjectID($projectID)
 {
     $views = query("SELECT * FROM control_center_project_views WHERE projectID='$projectID'");
@@ -169,13 +120,6 @@ function getUserProjectsByUserID($userID)
     return $result;
 }
 
-/**
- * Erzeugt eine standardisierte JSON-Antwort
- *
- * @param mixed $data Die Daten oder Nachricht
- * @param bool $success True für Erfolg, False für Fehler
- * @return string Die JSON-Antwort
- */
 function jsonResponse($data, $success = true)
 {
     if ($success) {
@@ -191,110 +135,6 @@ function jsonResponse($data, $success = true)
     return echoJson($response);
 }
 
-/**
- * Richtet ein Web Builder Projekt ein
- *
- * @param string $projectID Die Projekt-ID
- * @param string $href Der Link-Name des Projekts
- * @param string $name Der Anzeigename des Projekts
- * @param int $userID Die Benutzer-ID des Erstellers (optional)
- * @return int|bool Die ID des Web Builder Projekts oder False bei Fehler
- */
-function setupWebBuilderProject($projectID, $href, $name, $userID = 1)
-{
-    global $con;
-
-    // Zuerst prüfen, ob der Benutzer in der Web Builder Tabelle existiert
-    //$userExists = query("SELECT id FROM control_center_web_builder_users WHERE id='$userID'");
-    $username = escape_string("user_$userID") . "_" . $userID;
-    $userExists = query("SELECT id, username FROM control_center_web_builder_users WHERE username='user_$userID' OR username='$username' OR id='$userID'");
-    // Wenn der Benutzer nicht existiert, einen neuen Benutzer anlegen
-    if (mysqli_num_rows($userExists) == 0) {
-        // Benutzerinformationen aus der Haupttabelle holen
-        $userData = fetch_assoc(query("SELECT * FROM control_center_users WHERE userID='$userID'"));
-
-        if ($userData) {
-            // Benutzer in der Web Builder Tabelle anlegen
-            $firstName = escape_string($userData['firstname']);
-            $lastName = escape_string($userData['lastname']);
-            $email = escape_string($userData['email']);
-            $currentDate = date('Y-m-d H:i:s');
-
-            query("INSERT INTO control_center_web_builder_users 
-                  (id, username, email, created_at, updated_at) 
-                  VALUES ('$userID', 'user_$userID', '$email', '$currentDate', '$currentDate')");
-            //$firstName $lastName
-            // Wenn das nicht geklappt hat, Admin-Benutzer verwenden
-            if (mysqli_affected_rows($con) == 0) {
-                $userID = 1; // Admin-Benutzer
-            }
-        } else {
-            $userID = 1; // Admin-Benutzer, wenn keine Benutzerdaten gefunden wurden
-        }
-    } else {
-        // Benutzer existiert bereits, also verwenden wir die vorhandene ID
-        $userID = mysqli_fetch_assoc($userExists)['id'];
-    }
-
-    // Erstelle einen Eintrag in der control_center_web_builder_projects Tabelle
-    // mit eindeutiger Referenz zum Control Center Projekt
-    $currentDate = date('Y-m-d H:i:s');
-    $description = "Web Builder Project for $name (Control Center Project ID: $projectID)";
-
-    query("INSERT INTO control_center_web_builder_projects 
-           (name, description, user_id, created_at, updated_at) 
-           VALUES ('$name', '$description', '$userID', '$currentDate', '$currentDate')");
-
-    $webBuilderProjectId = mysqli_insert_id($con);
-
-    // Erstelle eine Standard-Homepage
-    if ($webBuilderProjectId) {
-        query("INSERT INTO control_center_web_builder_pages 
-               (project_id, name, slug, title, meta_description, is_home, created_at, updated_at) 
-               VALUES ('$webBuilderProjectId', 'Home', 'home', 'Homepage', 'Welcome to the $name website', 1, '$currentDate', '$currentDate')");
-
-        // Erstelle eine erste HTML-Komponente für die Homepage
-        $homepageId = mysqli_insert_id($con);
-        if ($homepageId) {
-            // Generiere UUID für die Komponente
-            $uuid = sprintf(
-                '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0x0fff) | 0x4000,
-                mt_rand(0, 0x3fff) | 0x8000,
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff)
-            );
-
-            $defaultHTML = "<div class=\"container mt-5\"><h1>Welcome to $name</h1><p>This is your new homepage. Start editing to customize it!</p></div>";
-
-            query("INSERT INTO control_center_web_builder_components 
-                  (page_id, component_id, html_code, position, created_at, updated_at) 
-                  VALUES ('$homepageId', '$uuid', '$defaultHTML', 0, '$currentDate', '$currentDate')");
-        }
-
-        // Auch einen Benutzer-Projekt-Eintrag in der Web Builder Tabelle erstellen
-        query("INSERT INTO control_center_user_projects 
-               (userID, projectID, role) 
-               VALUES ('$userID', '$webBuilderProjectId', 'owner')");
-
-
-        // , created_at, updated_at
-        // /, '$currentDate', '$currentDate'
-    }
-
-    return $webBuilderProjectId;
-}
-
-/**
- * Prüft, ob ein Projekt bereits existiert
- *
- * @param string $name Der Name des Projekts
- * @return bool True wenn das Projekt existiert, sonst False
- */
 function projectExists($name)
 {
     $name = escape_string($name);
@@ -304,14 +144,6 @@ function projectExists($name)
     return mysqli_num_rows($check) > 0;
 }
 
-/**
- * Erstellt die Verzeichnisstruktur für ein neues Projekt
- *
- * @param string $href Der Link-Name des Projekts
- * @param string $name Der Anzeigename des Projekts
- * @param string $projectID Die Projekt-ID
- * @return bool True bei Erfolg, False bei Fehler
- */
 function createProjectDirectories($href, $name, $projectID)
 {
     global $userID; // Make userID available
@@ -545,13 +377,6 @@ const uploadResult = await FilesAPI.upload(file);
     file_put_contents($apisDir . '/README.md', $readmeContent);
 }
 
-/**
- * Fügt einen Benutzer zu einem Projekt hinzu
- *
- * @param int $userID Die Benutzer-ID
- * @param string $projectID Die Projekt-ID
- * @return bool True bei Erfolg, False bei Fehler
- */
 function addUserToProject($userID, $projectID)
 {
     $userID = (int)$userID;
@@ -562,16 +387,9 @@ function addUserToProject($userID, $projectID)
         return (bool)query("INSERT INTO control_center_user_projects VALUES (0, $userID, '$projectID', 1)");
     }
 
-    return true; // Benutzer ist bereits Teil des Projekts
+    return true;
 }
 
-/**
- * Generiert die Web Builder URL für ein Projekt
- * 
- * @param string $projectLink Der Link-Name des Projekts
- * @param string $page Optional: Die Seite im Web Builder
- * @return string Die vollständige Web Builder URL
- */
 function getWebBuilderUrl($projectLink, $page = '')
 {
     $baseUrl = "https://web-builder.control-center.eu/";

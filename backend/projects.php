@@ -153,7 +153,6 @@ if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
               (0, 'globe-outline', 'Web Builder', 'web-builder', 0, 2, '$projectID')");
 
     // Web Builder Setup mit Benutzer-ID
-    //$webBuilderProjectId = setupWebBuilderProject($projectID, $href, $name, $userID);
 
     // Benutzer zum Projekt hinzufügen
     if (!addUserToProject($userID, $projectID)) {
