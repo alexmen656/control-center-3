@@ -30,27 +30,18 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="profile-form">
               <h3>Basic Information</h3>
-              
+
               <div class="form-grid">
                 <!-- First Name -->
                 <div class="form-group">
                   <label class="form-label">First Name</label>
                   <div class="input-group">
-                    <input
-                      v-model="user.firstName.value"
-                      :disabled="!user.firstName.editable"
-                      class="modern-input"
-                      type="text"
-                      placeholder="Enter your first name"
-                    />
-                    <button 
-                      v-if="!user.firstName.editable"
-                      @click="edit('firstName')"
-                      class="edit-btn"
-                    >
+                    <input v-model="user.firstName.value" :disabled="!user.firstName.editable" class="modern-input"
+                      type="text" placeholder="Enter your first name" />
+                    <button v-if="!user.firstName.editable" @click="edit('firstName')" class="edit-btn">
                       <ion-icon name="pencil-outline"></ion-icon>
                     </button>
                   </div>
@@ -60,18 +51,9 @@
                 <div class="form-group">
                   <label class="form-label">Last Name</label>
                   <div class="input-group">
-                    <input
-                      v-model="user.lastName.value"
-                      :disabled="!user.lastName.editable"
-                      class="modern-input"
-                      type="text"
-                      placeholder="Enter your last name"
-                    />
-                    <button 
-                      v-if="!user.lastName.editable"
-                      @click="edit('lastName')"
-                      class="edit-btn"
-                    >
+                    <input v-model="user.lastName.value" :disabled="!user.lastName.editable" class="modern-input"
+                      type="text" placeholder="Enter your last name" />
+                    <button v-if="!user.lastName.editable" @click="edit('lastName')" class="edit-btn">
                       <ion-icon name="pencil-outline"></ion-icon>
                     </button>
                   </div>
@@ -81,18 +63,9 @@
                 <div class="form-group full-width">
                   <label class="form-label">Email Address</label>
                   <div class="input-group">
-                    <input
-                      v-model="user.email.value"
-                      :disabled="!user.email.editable"
-                      class="modern-input"
-                      type="email"
-                      placeholder="Enter your email"
-                    />
-                    <button 
-                      v-if="!user.email.editable"
-                      @click="edit('email')"
-                      class="edit-btn"
-                    >
+                    <input v-model="user.email.value" :disabled="!user.email.editable" class="modern-input" type="email"
+                      placeholder="Enter your email" />
+                    <button v-if="!user.email.editable" @click="edit('email')" class="edit-btn">
                       <ion-icon name="pencil-outline"></ion-icon>
                     </button>
                   </div>
@@ -103,18 +76,9 @@
                 <div class="form-group">
                   <label class="form-label">Phone Number</label>
                   <div class="input-group">
-                    <input
-                      v-model="user.phone.value"
-                      :disabled="!user.phone.editable"
-                      class="modern-input"
-                      type="tel"
-                      placeholder="Enter your phone number"
-                    />
-                    <button 
-                      v-if="!user.phone.editable"
-                      @click="edit('phone')"
-                      class="edit-btn"
-                    >
+                    <input v-model="user.phone.value" :disabled="!user.phone.editable" class="modern-input" type="tel"
+                      placeholder="Enter your phone number" />
+                    <button v-if="!user.phone.editable" @click="edit('phone')" class="edit-btn">
                       <ion-icon name="pencil-outline"></ion-icon>
                     </button>
                   </div>
@@ -124,17 +88,9 @@
                 <div class="form-group">
                   <label class="form-label">Birthday</label>
                   <div class="input-group">
-                    <input
-                      v-model="user.birthday.value"
-                      :disabled="!user.birthday.editable"
-                      class="modern-input"
-                      type="date"
-                    />
-                    <button 
-                      v-if="!user.birthday.editable"
-                      @click="edit('birthday')"
-                      class="edit-btn"
-                    >
+                    <input v-model="user.birthday.value" :disabled="!user.birthday.editable" class="modern-input"
+                      type="date" />
+                    <button v-if="!user.birthday.editable" @click="edit('birthday')" class="edit-btn">
                       <ion-icon name="pencil-outline"></ion-icon>
                     </button>
                   </div>
@@ -144,18 +100,9 @@
                 <div class="form-group full-width">
                   <label class="form-label">Address</label>
                   <div class="input-group">
-                    <textarea
-                      v-model="user.address.value"
-                      :disabled="!user.address.editable"
-                      class="modern-textarea"
-                      rows="3"
-                      placeholder="Enter your address"
-                    ></textarea>
-                    <button 
-                      v-if="!user.address.editable"
-                      @click="edit('address')"
-                      class="edit-btn"
-                    >
+                    <textarea v-model="user.address.value" :disabled="!user.address.editable" class="modern-textarea"
+                      rows="3" placeholder="Enter your address"></textarea>
+                    <button v-if="!user.address.editable" @click="edit('address')" class="edit-btn">
                       <ion-icon name="pencil-outline"></ion-icon>
                     </button>
                   </div>
@@ -242,7 +189,7 @@ export default defineComponent({
         }
       }
       filteredUser["editData"] = "editData";
-      
+
       this.$axios
         .post("user.php?" + this.$qs.stringify(filteredUser), {
           headers: {
@@ -604,15 +551,14 @@ export default defineComponent({
   font-size: 16px;
 }
 
-/* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
+    --background: #121212;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
     --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
+    --text-secondary: #b0b0b0;
+    --text-muted: #707070;
   }
 }
 
@@ -621,27 +567,27 @@ export default defineComponent({
   .page-container {
     padding: 16px;
   }
-  
+
   .profile-card {
     flex-direction: column;
     align-items: center;
     padding: 24px;
     gap: 24px;
   }
-  
+
   .profile-image-section {
     order: -1;
   }
-  
+
   .form-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .form-actions {
     flex-direction: column-reverse;
   }
-  
+
   .action-btn {
     justify-content: center;
   }
@@ -653,11 +599,11 @@ export default defineComponent({
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .header-left h1 {
     font-size: 24px;
   }
-  
+
   .profile-avatar {
     width: 100px !important;
     height: 100px !important;

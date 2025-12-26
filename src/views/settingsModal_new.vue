@@ -28,16 +28,11 @@
                 <p>Choose your preferred color scheme</p>
               </div>
             </div>
-            
+
             <div class="card-content">
               <div class="theme-grid">
-                <div 
-                  v-for="themeOption in themeOptions" 
-                  :key="themeOption.value"
-                  class="theme-option"
-                  :class="{ active: theme === themeOption.value }"
-                  @click="selectTheme(themeOption.value)"
-                >
+                <div v-for="themeOption in themeOptions" :key="themeOption.value" class="theme-option"
+                  :class="{ active: theme === themeOption.value }" @click="selectTheme(themeOption.value)">
                   <div class="theme-preview" :style="{ background: themeOption.color }">
                     <div class="theme-dot"></div>
                   </div>
@@ -46,10 +41,7 @@
                     <p>{{ themeOption.description }}</p>
                   </div>
                   <div class="theme-radio">
-                    <ion-radio 
-                      :value="themeOption.value" 
-                      v-model="theme"
-                    ></ion-radio>
+                    <ion-radio :value="themeOption.value" v-model="theme"></ion-radio>
                   </div>
                 </div>
               </div>
@@ -67,7 +59,7 @@
                 <p>Configure display preferences</p>
               </div>
             </div>
-            
+
             <div class="card-content">
               <div class="settings-list">
                 <div class="setting-item">
@@ -79,7 +71,7 @@
                     <ion-toggle color="primary"></ion-toggle>
                   </div>
                 </div>
-                
+
                 <div class="setting-item">
                   <div class="setting-info">
                     <h4>Compact View</h4>
@@ -89,7 +81,7 @@
                     <ion-toggle color="primary"></ion-toggle>
                   </div>
                 </div>
-                
+
                 <div class="setting-item">
                   <div class="setting-info">
                     <h4>Font Size</h4>
@@ -118,7 +110,7 @@
                 <p>Manage notification preferences</p>
               </div>
             </div>
-            
+
             <div class="card-content">
               <div class="settings-list">
                 <div class="setting-item">
@@ -130,7 +122,7 @@
                     <ion-toggle color="primary"></ion-toggle>
                   </div>
                 </div>
-                
+
                 <div class="setting-item">
                   <div class="setting-info">
                     <h4>Email Notifications</h4>
@@ -140,7 +132,7 @@
                     <ion-toggle color="primary"></ion-toggle>
                   </div>
                 </div>
-                
+
                 <div class="setting-item">
                   <div class="setting-info">
                     <h4>Sound</h4>
@@ -187,7 +179,7 @@ export default defineComponent({
         },
         {
           name: "Pink",
-          value: "darkPink", 
+          value: "darkPink",
           color: "#c51162",
           description: "Playful and vibrant"
         },
@@ -586,43 +578,41 @@ export default defineComponent({
   font-size: 16px;
 }
 
-/* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
+    --background: #121212;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
     --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
+    --text-secondary: #b0b0b0;
+    --text-muted: #707070;
   }
-  
+
   .theme-option.active {
     background: #1e293b;
   }
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
   }
-  
+
   .card-header,
   .card-content {
     padding: 20px;
   }
-  
+
   .theme-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .setting-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .setting-control {
     align-self: stretch;
     display: flex;
@@ -636,18 +626,18 @@ export default defineComponent({
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .header-left h1 {
     font-size: 24px;
   }
-  
+
   .card-header {
     flex-direction: column;
     align-items: center;
     text-align: center;
     gap: 12px;
   }
-  
+
   .theme-option {
     flex-direction: column;
     text-align: center;

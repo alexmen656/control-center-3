@@ -28,7 +28,7 @@
                 <p>Configure your preferred login options</p>
               </div>
             </div>
-            
+
             <div class="card-content">
               <div class="login-methods">
                 <!-- Google Login -->
@@ -43,11 +43,7 @@
                     </div>
                   </div>
                   <div class="method-toggle">
-                    <ion-toggle 
-                      :checked="login_with_google" 
-                      @ionChange="update($event)"
-                      color="success"
-                    ></ion-toggle>
+                    <ion-toggle :checked="login_with_google" @ionChange="update($event)" color="success"></ion-toggle>
                   </div>
                 </div>
 
@@ -63,11 +59,8 @@
                     </div>
                   </div>
                   <div class="method-toggle">
-                    <ion-toggle 
-                      :checked="login_with_microsoft" 
-                      @ionChange="update2($event)"
-                      color="success"
-                    ></ion-toggle>
+                    <ion-toggle :checked="login_with_microsoft" @ionChange="update2($event)"
+                      color="success"></ion-toggle>
                   </div>
                 </div>
               </div>
@@ -85,7 +78,7 @@
                 <p>External services linked to your account</p>
               </div>
             </div>
-            
+
             <div class="card-content">
               <div class="connected-services">
                 <!-- GitHub Connection -->
@@ -143,7 +136,7 @@
                 <p>Additional security measures</p>
               </div>
             </div>
-            
+
             <div class="card-content">
               <div class="security-actions">
                 <button class="action-btn primary">
@@ -672,28 +665,27 @@ export default defineComponent({
   font-size: 16px;
 }
 
-/* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
+    --background: #121212;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
     --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
+    --text-secondary: #b0b0b0;
+    --text-muted: #707070;
   }
-  
+
   .status-badge.connected {
     background: #065f46;
     color: #10b981;
   }
-  
+
   .action-btn.danger {
     background: #7f1d1d;
     color: #f87171;
     border-color: #991b1b;
   }
-  
+
   .action-btn.danger:hover {
     background: #991b1b;
     border-color: #dc2626;
@@ -705,12 +697,12 @@ export default defineComponent({
   .page-container {
     padding: 16px;
   }
-  
+
   .card-header,
   .card-content {
     padding: 20px;
   }
-  
+
   .login-method,
   .service-item {
     flex-direction: column;
@@ -718,14 +710,14 @@ export default defineComponent({
     gap: 12px;
     padding: 16px;
   }
-  
+
   .method-toggle,
   .service-status {
     align-self: stretch;
     display: flex;
     justify-content: center;
   }
-  
+
   .security-actions {
     grid-template-columns: 1fr;
   }
@@ -737,11 +729,11 @@ export default defineComponent({
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .header-left h1 {
     font-size: 24px;
   }
-  
+
   .card-header {
     flex-direction: column;
     align-items: center;

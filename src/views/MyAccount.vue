@@ -7,12 +7,8 @@
           <div class="profile-card">
             <div class="avatar-section">
               <div class="profile-avatar-wrapper">
-                <AvatarLarge
-                  :profileImg="userData.profileImg"
-                  :firstName="userData.firstName"
-                  :lastName="userData.lastName"
-                  avatarColor="green"
-                />
+                <AvatarLarge :profileImg="userData.profileImg" :firstName="userData.firstName"
+                  :lastName="userData.lastName" avatarColor="green" />
               </div>
             </div>
             <div class="user-info">
@@ -33,14 +29,9 @@
             <h3>Account Management</h3>
             <p>Manage your account settings and preferences</p>
           </div>
-          
+
           <div class="cards-grid">
-            <div
-              v-for="card in cards"
-              :key="card.title"
-              class="account-card"
-              @click="navigateToCard(card)"
-            >
+            <div v-for="card in cards" :key="card.title" class="account-card" @click="navigateToCard(card)">
               <div class="card-icon">
                 <ion-icon :name="card.icon"></ion-icon>
               </div>
@@ -216,7 +207,8 @@ export default defineComponent({
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
-  min-height: 120px; /* Ensure minimum height */
+  min-height: 120px;
+  /* Ensure minimum height */
   width: 100%;
 }
 
@@ -253,7 +245,8 @@ export default defineComponent({
 
 .user-info {
   flex: 1;
-  min-width: 0; /* Prevents flex items from overflowing */
+  min-width: 0;
+  /* Prevents flex items from overflowing */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -482,35 +475,35 @@ export default defineComponent({
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
+    --background: #121212;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
     --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
+    --text-secondary: #b0b0b0;
+    --text-muted: #707070;
   }
-  
+
   .status-active {
     background: #065f46;
     color: #10b981;
   }
-  
+
   .status-pending {
     background: #92400e;
     color: #f59e0b;
   }
-  
+
   .status-suspended {
     background: #991b1b;
     color: #ef4444;
   }
-  
+
   .action-btn.danger {
     background: #7f1d1d;
     color: #f87171;
     border-color: #991b1b;
   }
-  
+
   .action-btn.danger:hover {
     background: #991b1b;
     border-color: #dc2626;
@@ -522,7 +515,7 @@ export default defineComponent({
   .page-container {
     padding: 16px;
   }
-  
+
   .profile-card {
     flex-direction: column;
     text-align: center;
@@ -530,39 +523,39 @@ export default defineComponent({
     gap: 16px;
     align-items: center;
   }
-  
+
   .profile-avatar-wrapper {
     width: 100px;
     height: 100px;
   }
-  
+
   .profile-avatar {
     width: 100px !important;
     height: 100px !important;
   }
-  
+
   .user-name {
     font-size: 24px;
   }
-  
+
   .grid-header,
   .cards-grid,
   .quick-actions {
     padding: 20px;
   }
-  
+
   .cards-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .account-card {
     padding: 16px;
   }
-  
+
   .actions-grid {
     flex-direction: column;
   }
-  
+
   .action-btn {
     justify-content: center;
   }
@@ -574,11 +567,11 @@ export default defineComponent({
     text-align: center;
     gap: 12px;
   }
-  
+
   .card-arrow {
     transform: rotate(90deg);
   }
-  
+
   .account-card:hover .card-arrow {
     transform: rotate(90deg) translateX(4px);
   }
