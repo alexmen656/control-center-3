@@ -2,7 +2,11 @@
 include "head.php";
 include "project_helper.php";
 
-if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
+function handleCreateProject($userID)
+{
+    if (!isset($_POST['projectName']))
+        return;
+
     $name = escape_string($_POST['projectName']);
     $icon = escape_string($_POST['projectIcon']);
     $href = str_replace("\\", "", createLink($name));
@@ -13,402 +17,293 @@ if (isset($_POST['createProject']) && isset($_POST['projectName'])) {
         exit;
     }
 
-    $mysqli = query("INSERT INTO projects VALUES (0, '$icon', '$name', '$href', CURDATE(), '$projectID', 0)");
-
-    if (!$mysqli) {
+    if (!query("INSERT INTO projects VALUES (0, '$icon', '$name', '$href', CURDATE(), '$projectID', 0)")) {
         echo jsonResponse("Failed to create project", false);
         exit;
     }
 
-    // Standard-Endpoints mit allen Eigenschaften in einem Array definieren
-    $endpointsConfig = [
-        [
-            'path' => '',
-            'title' => 'Project Dashboard',
-            'icon' => '',
-            'isVisible' => 'true'
-        ],
-        [
-            'path' => 'new-tool',
-            'title' => 'Create new tool',
-            'icon' => '',
-            'isVisible' => 'true'
-        ],
-        [
-            'path' => 'manage/tools',
-            'title' => 'Manage Tools',
-            'icon' => '',
-            'isVisible' => 'true'
-        ],
-        [
-            'path' => 'manage/pages',
-            'title' => 'Manage Pages',
-            'icon' => '',
-            'isVisible' => 'true'
-        ],
-        [
-            'path' => 'new/page',
-            'title' => 'Create New Component',
-            'icon' => '',
-            'isVisible' => 'true'
-        ],
-        [
-            'path' => 'info',
-            'title' => 'Project Info',
-            'icon' => '',
-            'isVisible' => 'true'
-        ],
-        [
-            'path' => 'page/main',
-            'title' => 'Main',
-            'icon' => '',
-            'isVisible' => 'true'
-        ],
-        [
-            'path' => 'module-store',
-            'title' => 'Module Store',
-            'icon' => '',
-            'isVisible' => 'false'
-        ],
-        [
-            'path' => 'package-manager',
-            'title' => 'Package Manager',
-            'icon' => '',
-            'isVisible' => 'true'
-        ],
-        [
-            'path' => 'filesystem',
-            'title' => 'Filesystem',
-            'icon' => 'file-tray-full-outlinepr',
-            'isVisible' => 'true'
-        ],
-        [
-            'path' => 'new/service',
-            'title' => 'New Service',
-            'icon' => '',
-            'isVisible' => 'true'
-        ],
-        [
-            'path' => 'manage/services',
-            'title' => 'Manage Services',
-            'icon' => '',
-            'isVisible' => 'true'
-        ],
-        [
-            'path' => 'web-builder',
-            'title' => 'Web Builder',
-            'icon' => 'globe-outline',
-            'isVisible' => 'true'
-        ]
+    $endpoints = [
+        ['', 'Project Dashboard', '', 'true'],
+        ['new-tool', 'Create new tool', '', 'true'],
+        ['manage/tools', 'Manage Tools', '', 'true'],
+        ['manage/pages', 'Manage Pages', '', 'true'],
+        ['new/page', 'Create New Component', '', 'true'],
+        ['info', 'Project Info', '', 'true'],
+        ['page/main', 'Main', '', 'true'],
+        ['module-store', 'Module Store', '', 'false'],
+        ['package-manager', 'Package Manager', '', 'true'],
+        ['filesystem', 'Filesystem', 'file-tray-full-outlinepr', 'true'],
+        ['new/service', 'New Service', '', 'true'],
+        ['manage/services', 'Manage Services', '', 'true'],
+        ['web-builder', 'Web Builder', 'globe-outline', 'true']
     ];
 
-    // URLs generieren und Seiten erstellen
     $urls = [];
-    $pagesQuery = "INSERT INTO control_center_pages VALUES ";
     $pageValues = [];
-
-    foreach ($endpointsConfig as $endpoint) {
-        $path = $endpoint['path'];
-        $title = $endpoint['title'];
-        $icon = $endpoint['icon'];
-        $isVisible = $endpoint['isVisible'];
-
-        // URL für diesen Endpunkt generieren
-        $url = "project/" . $href . ($path ? "/" . $path : "");
+    foreach ($endpoints as [$path, $title, $icon, $visible]) {
+        $url = "project/$href" . ($path ? "/$path" : "");
         $urls[] = $url;
-
-        // SQL-Wert für diesen Endpunkt erstellen
-        $pageValues[] = "(0, '$url', '$isVisible', '$icon', '$title', '', 0)";
+        $pageValues[] = "(0, '$url', '$visible', '$icon', '$title', '', 0)";
     }
 
-    // Alle Seiten in einer SQL-Anweisung einfügen
-    $pagesQuery .= implode(', ', $pageValues);
-    query($pagesQuery);
+    query("INSERT INTO control_center_pages VALUES " . implode(', ', $pageValues));
 
-    // Projekt-Ansichten erstellen
     foreach ($urls as $u) {
-        $page = query("SELECT * FROM control_center_pages WHERE url='$u'");
+        $page = query("SELECT id FROM control_center_pages WHERE url='$u'");
         if (mysqli_num_rows($page) == 1) {
-            $page = fetch_assoc($page);
-            $pageID = $page['id'];
+            $pageID = fetch_assoc($page)['id'];
             query("INSERT INTO control_center_project_views VALUES (0, $pageID, '$projectID')");
         }
     }
 
-    // Verzeichnisstruktur erstellen
-    if (!createProjectDirectories($href, $name, $projectID)) {
-        echo jsonResponse("Failed to create project directories", false);
-        exit;
-    }
-
-    // Haupt-Komponente erstellen
     query("INSERT INTO project_components VALUES (0, 'main.php', 'script', 'Main', 'main', NOW(), NOW(), 'System', '1234567890', '$projectID', NULL)");
 
-    // Projekt-Tools erstellen
-    query("INSERT INTO project_tools 
-              (`id`, `icon`, `name`, `link`, `hasConfig`, `order`, `projectID`) 
-              VALUES 
-              (0, 'file-tray-full-outline', 'Filesystem', 'filesystem', 0, 0, '$projectID'),
-              (0, 'storefront-outline', 'Module Store', 'module-store', 0, 1, '$projectID'),
-              (0, 'globe-outline', 'Web Builder', 'web-builder', 0, 2, '$projectID')");
+    query("INSERT INTO project_tools (`id`, `icon`, `name`, `link`, `hasConfig`, `order`, `projectID`) VALUES 
+        (0, 'file-tray-full-outline', 'Filesystem', 'filesystem', 0, 0, '$projectID'),
+        (0, 'storefront-outline', 'Module Store', 'module-store', 0, 1, '$projectID'),
+        (0, 'globe-outline', 'Web Builder', 'web-builder', 0, 2, '$projectID')");
 
-    // Web Builder Setup mit Benutzer-ID
-
-    // Benutzer zum Projekt hinzufügen
     if (!addUserToProject($userID, $projectID)) {
         echo jsonResponse("Failed to add user to project", false);
         exit;
     }
 
-    // Standard-Service "My Service" erstellen
-    $serviceIcon = "cog-outline";
-    $serviceName = "My Service";
-    $serviceLink = "my-service";
-    $serviceDescription = "Default service for your project";
+    $serviceUrl = "project/$href/services/my-service";
+    query("INSERT INTO project_services VALUES (0, 'cog-outline', 'My Service', 'my-service', 'Default service for your project', 'active', '$projectID')");
+    query("INSERT INTO control_center_pages VALUES 
+        (0, '$serviceUrl', 'true', 'cog-outline', 'My Service', '', 0),
+        (0, '$serviceUrl/config', 'true', 'cog-outline', 'My Service Config', '', 0)");
 
-    query("INSERT INTO project_services VALUES (0, '$serviceIcon', '$serviceName', '$serviceLink', '$serviceDescription', 'active', '$projectID')");
+    echo createFileSystem($projectID)
+        ? jsonResponse('The project was created successfully. <a href="/paxar/projects/' . $href . '/">Go to the project</a>')
+        : jsonResponse('Project created but file system setup failed', false);
+}
 
-    // Service-Seiten in Control Center Pages hinzufügen
-    $serviceUrl = "project/" . $href . "/services/" . $serviceLink;
-    $serviceConfigUrl = $serviceUrl . "/config";
+function handleDeleteProject()
+{
+    if (!isset($_POST['projectID']))
+        return;
 
-    query("INSERT INTO control_center_pages VALUES (0, '$serviceUrl', 'true', '$serviceIcon', '$serviceName', '', 0)");
-    query("INSERT INTO control_center_pages VALUES (0, '$serviceConfigUrl', 'true', 'cog-outline', '$serviceName Config', '', 0)");
-
-    // Dateisystem erstellen
-    if (createFileSystem($projectID)) {
-        echo jsonResponse('The project was created successfully. <a href="/paxar/projects/' . $href . '/">Go to the project</a>');
-    } else {
-        echo jsonResponse('Project created but file system setup failed', false);
-    }
-} elseif (isset($_POST['deleteProject']) && isset($_POST['projectID'])) {
-    // Projekt löschen
     $id = escape_string($_POST['projectID']);
-    $mysqli = query("DELETE FROM projects WHERE id='$id'");
+    echo query("DELETE FROM projects WHERE id='$id'")
+        ? jsonResponse('Project deleted successfully')
+        : jsonResponse('Failed to delete project', false);
+}
 
-    if ($mysqli) {
-        echo jsonResponse('Project deleted successfully');
-    } else {
-        echo jsonResponse('Failed to delete project', false);
-    }
-} elseif (isset($_POST['updateProject']) && isset($_POST['projectID'])) {
-    // Projekt aktualisieren
+function handleUpdateProject($userID)
+{
+    if (!isset($_POST['projectID']))
+        return;
+
     $id = escape_string($_POST['projectID']);
     $name = isset($_POST['projectName']) ? escape_string($_POST['projectName']) : '';
     $icon = isset($_POST['projectIcon']) ? escape_string($_POST['projectIcon']) : '';
 
-    // Check if project exists and user has permission
     $project = query("SELECT * FROM projects WHERE id='$id'");
     if (mysqli_num_rows($project) == 0) {
         echo jsonResponse('Project not found', false);
         exit;
     }
 
-    $projectData = fetch_assoc($project);
-    $projectID = $projectData['projectID'];
-
+    $projectID = fetch_assoc($project)['projectID'];
     if (!checkUserProjectPermission($userID, $projectID)) {
         echo jsonResponse('Permission denied', false);
         exit;
     }
 
-    $updateFields = [];
-    if ($name !== '') {
-        $updateFields[] = "name='$name'";
-    }
-    if ($icon !== '') {
-        $updateFields[] = "icon='$icon'";
-    }
+    $fields = [];
+    if ($name !== '')
+        $fields[] = "name='$name'";
+    if ($icon !== '')
+        $fields[] = "icon='$icon'";
 
-    if (!empty($updateFields)) {
-        $updateQuery = "UPDATE projects SET " . implode(", ", $updateFields) . " WHERE id='$id'";
-        $mysqli = query($updateQuery);
-
-        if ($mysqli) {
-            echo jsonResponse('Project updated successfully');
-        } else {
-            echo jsonResponse('Failed to update project', false);
-        }
-    } else {
+    if (empty($fields)) {
         echo jsonResponse('No fields to update', false);
+        exit;
     }
-} elseif (isset($_POST['toggleProjectVisibility']) && isset($_POST['projectID'])) {
-    // Projekt Sichtbarkeit umschalten
+
+    echo query("UPDATE projects SET " . implode(", ", $fields) . " WHERE id='$id'")
+        ? jsonResponse('Project updated successfully')
+        : jsonResponse('Failed to update project', false);
+}
+
+function handleToggleVisibility($userID)
+{
+    if (!isset($_POST['projectID']))
+        return;
+
     $id = escape_string($_POST['projectID']);
     $hidden = isset($_POST['hidden']) ? ($_POST['hidden'] === 'true' || $_POST['hidden'] === true) : false;
 
-    // Check if project exists and user has permission
     $project = query("SELECT * FROM projects WHERE id='$id'");
     if (mysqli_num_rows($project) == 0) {
         echo jsonResponse('Project not found', false);
         exit;
     }
 
-    $projectData = fetch_assoc($project);
-    $projectID = $projectData['projectID'];
-
+    $projectID = fetch_assoc($project)['projectID'];
     if (!checkUserProjectPermission($userID, $projectID)) {
         echo jsonResponse('Permission denied', false);
         exit;
     }
 
-    // Check if hidden column exists, if not add it
     $checkColumn = query("SHOW COLUMNS FROM projects LIKE 'hidden'");
     if (mysqli_num_rows($checkColumn) == 0) {
         query("ALTER TABLE projects ADD COLUMN hidden BOOLEAN DEFAULT FALSE");
     }
 
-    $hiddenValue = $hidden ? 1 : 0;
-    $mysqli = query("UPDATE projects SET hidden='$hiddenValue' WHERE id='$id'");
+    echo query("UPDATE projects SET hidden=" . ($hidden ? 1 : 0) . " WHERE id='$id'")
+        ? jsonResponse('Project visibility updated successfully')
+        : jsonResponse('Failed to update project visibility', false);
+}
 
-    if ($mysqli) {
-        echo jsonResponse('Project visibility updated successfully');
-    } else {
-        echo jsonResponse('Failed to update project visibility', false);
-    }
-} elseif (isset($_POST['getProjectInfo']) && isset($_POST['project'])) {
-    // Projekt-Informationen abrufen
-    $link = escape_string($_POST['project']);
-    $project = getProjectByLink($link);
+function handleGetProjectInfo()
+{
+    if (!isset($_POST['project']))
+        return;
 
-    if ($project) {
-        echo jsonResponse([
-            'icon' => $project['icon'],
-            'name' => $project['name'],
-            'createdOn' => $project['createdOn']
-        ]);
-    } else {
-        echo jsonResponse("No project found", false);
-    }
-} elseif (isset($_POST['getProjectUsers']) && isset($_POST['project'])) {
-    // Projekt-Benutzer abrufen
-    $link = escape_string($_POST['project']);
-    $project = getProjectByLink($link);
+    $project = getProjectByLink(escape_string($_POST['project']));
+    echo $project
+        ? jsonResponse(['icon' => $project['icon'], 'name' => $project['name'], 'createdOn' => $project['createdOn']])
+        : jsonResponse("No project found", false);
+}
 
-    if ($project) {
-        $users = getUsersByProjectID($project['projectID']);
-        echo jsonResponse(['users' => $users]);
-    } else {
-        echo jsonResponse("No project found", false);
-    }
-} elseif (isset($_POST['getProjectViews']) && isset($_POST['project'])) {
-    // Projekt-Ansichten abrufen
-    $link = escape_string($_POST['project']);
-    $project = getProjectByLink($link);
+function handleGetProjectUsers()
+{
+    if (!isset($_POST['project']))
+        return;
 
-    if ($project) {
-        $views = getProjectViewsByProjectID($project['projectID']);
-        echo jsonResponse(['views' => $views]);
-    } else {
-        echo jsonResponse("No project found", false);
-    }
-} elseif (isset($_POST['addUserToProject']) && isset($_POST['project']) && isset($_POST['email'])) {
-    // Benutzer zum Projekt hinzufügen
-    $link = escape_string($_POST['project']);
-    $email = escape_string($_POST['email']);
-    $project = getProjectByLink($link);
+    $project = getProjectByLink(escape_string($_POST['project']));
+    echo $project
+        ? jsonResponse(['users' => getUsersByProjectID($project['projectID'])])
+        : jsonResponse("No project found", false);
+}
 
+function handleGetProjectViews()
+{
+    if (!isset($_POST['project']))
+        return;
+
+    $project = getProjectByLink(escape_string($_POST['project']));
+    echo $project
+        ? jsonResponse(['views' => getProjectViewsByProjectID($project['projectID'])])
+        : jsonResponse("No project found", false);
+}
+
+function handleAddUserToProject()
+{
+    if (!isset($_POST['project'], $_POST['email']))
+        return;
+
+    $project = getProjectByLink(escape_string($_POST['project']));
     if (!$project) {
         echo jsonResponse("No project found", false);
         exit;
     }
 
-    $projectID = $project['projectID'];
-    $user = query("SELECT * FROM control_center_users WHERE email='$email'");
-
-    if (mysqli_num_rows($user) == 1) {
-        $newUserID = fetch_assoc($user)['userID'];
-
-        if (addUserToProject($newUserID, $projectID)) {
-            echo jsonResponse("User added to project successfully");
-        } else {
-            echo jsonResponse("Failed to add user to project", false);
-        }
-    } else {
+    $user = query("SELECT * FROM control_center_users WHERE email='" . escape_string($_POST['email']) . "'");
+    if (mysqli_num_rows($user) != 1) {
         echo jsonResponse("User not found", false);
+        exit;
     }
-} elseif (isset($_POST['checkUserPermissions']) && isset($_POST['project'])) {
-    // Benutzerberechtigungen für ein Projekt prüfen
-    $link = escape_string($_POST['project']);
-    $project = getProjectByLink($link);
 
+    $newUserID = fetch_assoc($user)['userID'];
+    echo addUserToProject($newUserID, $project['projectID'])
+        ? jsonResponse("User added to project successfully")
+        : jsonResponse("Failed to add user to project", false);
+}
+
+function handleCheckPermissions($userID)
+{
+    if (!isset($_POST['project']))
+        return;
+
+    $project = getProjectByLink(escape_string($_POST['project']));
     if (!$project) {
         echo jsonResponse("No project found", false);
         exit;
     }
 
-    $projectID = $project['projectID'];
-    $hasPermission = checkUserProjectPermission($userID, $projectID);
+    echo checkUserProjectPermission($userID, $project['projectID'])
+        ? jsonResponse(["success" => "authorized"])
+        : jsonResponse(["error" => "permission"], false);
+}
 
-    if ($hasPermission) {
-        echo jsonResponse(["success" => "authorized"]);
-    } else {
-        echo jsonResponse(["error" => "permission"], false);
-    }
-} elseif (isset($_POST['openWebBuilder']) && isset($_POST['project'])) {
-    // Web Builder für ein bestimmtes Projekt öffnen
-    $link = escape_string($_POST['project']);
-    $project = getProjectByLink($link);
+function handleOpenWebBuilder()
+{
+    if (!isset($_POST['project']))
+        return;
 
+    $project = getProjectByLink(escape_string($_POST['project']));
     if (!$project) {
         echo jsonResponse("No project found", false);
         exit;
     }
-
-    $projectID = $project['projectID'];
-    $webBuilderUrl = getWebBuilderUrl($link);
 
     echo jsonResponse([
-        "url" => $webBuilderUrl,
-        "projectID" => $projectID,
+        "url" => getWebBuilderUrl($project['link']),
+        "projectID" => $project['projectID'],
         "projectName" => $project['name']
     ]);
-} elseif (isset($_POST['getAllProjects'])) {
-    // Alle verfügbaren Projekte abrufen (für Admin-Bereich)
+}
+
+function handleGetAllProjects()
+{
     try {
-        $projects = query("SELECT projectID, icon, name, link FROM projects ORDER BY name ASC"); //date
-        $projectList = [];
-
-        foreach ($projects as $project) {
-            $projectList[] = [
-                'id' => $project['projectID'],
-                'icon' => $project['icon'],
-                'name' => $project['name'],
-                'link' => $project['link'],
-                //'date' => $project['date']
-            ];
+        $projects = query("SELECT projectID, icon, name, link FROM projects ORDER BY name ASC");
+        $list = [];
+        foreach ($projects as $p) {
+            $list[] = ['id' => $p['projectID'], 'icon' => $p['icon'], 'name' => $p['name'], 'link' => $p['link']];
         }
-
-        echo jsonResponse(['success' => true, 'projects' => $projectList]);
+        echo jsonResponse(['success' => true, 'projects' => $list]);
     } catch (Exception $e) {
         echo jsonResponse(['success' => false, 'message' => 'Error loading projects: ' . $e->getMessage()]);
     }
-} elseif (isset($_POST['get_projects_for_import']) && isset($_POST['current_project'])) {
-    // Get all projects except the current one for importing tables
-    $currentProject = escape_string($_POST['current_project']);
+}
+
+function handleGetProjectsForImport($userID)
+{
+    if (!isset($_POST['current_project']))
+        return;
 
     if (!$userID) {
         echo json_encode(['error' => 'User not authenticated']);
         exit;
     }
 
+    $current = escape_string($_POST['current_project']);
     $projects = [];
-    $projectList = getUserProjectsByUserID($userID);
-
-    foreach ($projectList as $project) {
-        // Exclude current project from list
-        if ($project['name'] !== $currentProject) {
-            $projects[] = [
-                'name' => $project['name'],
-                'display_name' => $project['name'],
-                'icon' => $project['icon']
-            ];
+    foreach (getUserProjectsByUserID($userID) as $p) {
+        if ($p['name'] !== $current) {
+            $projects[] = ['name' => $p['name'], 'display_name' => $p['name'], 'icon' => $p['icon']];
         }
     }
-
-    echo json_encode($projects);
-} else {
-    // Alle Projekte des Benutzers abrufen
-    $projects = getUserProjectsByUserID($userID);
     echo json_encode($projects);
 }
+
+if (isset($_POST['createProject']))
+    handleCreateProject($userID);
+elseif (isset($_POST['deleteProject']))
+    handleDeleteProject();
+elseif (isset($_POST['updateProject']))
+    handleUpdateProject($userID);
+elseif (isset($_POST['toggleProjectVisibility']))
+    handleToggleVisibility($userID);
+elseif (isset($_POST['getProjectInfo']))
+    handleGetProjectInfo();
+elseif (isset($_POST['getProjectUsers']))
+    handleGetProjectUsers();
+elseif (isset($_POST['getProjectViews']))
+    handleGetProjectViews();
+elseif (isset($_POST['addUserToProject']))
+    handleAddUserToProject();
+elseif (isset($_POST['checkUserPermissions']))
+    handleCheckPermissions($userID);
+elseif (isset($_POST['openWebBuilder']))
+    handleOpenWebBuilder();
+elseif (isset($_POST['getAllProjects']))
+    handleGetAllProjects();
+elseif (isset($_POST['get_projects_for_import']))
+    handleGetProjectsForImport($userID);
+else
+    echo json_encode(getUserProjectsByUserID($userID));
