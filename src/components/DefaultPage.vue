@@ -642,7 +642,6 @@ export default defineComponent({
   }
 }
 
-/* Dark mode compatibility */
 @media (prefers-color-scheme: dark) {
   .modern-dashboard {
     --background: #121212;
