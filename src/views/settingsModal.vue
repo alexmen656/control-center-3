@@ -2,7 +2,6 @@
   <ion-page>
     <ion-content class="modern-content">
       <div class="page-container">
-        <!-- Header -->
         <div class="page-header">
           <div class="header-left">
             <button class="back-btn" @click="$router.go(-1)">
@@ -14,10 +13,7 @@
             </div>
           </div>
         </div>
-
-        <!-- Settings Sections -->
         <div class="settings-sections">
-          <!-- Theme Settings -->
           <div class="settings-card">
             <div class="card-header">
               <div class="header-icon">
@@ -28,7 +24,6 @@
                 <p>Choose your preferred color scheme</p>
               </div>
             </div>
-
             <div class="card-content">
               <div class="theme-grid">
                 <div v-for="themeOption in themeOptions" :key="themeOption.value" class="theme-option"
@@ -47,8 +42,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Display Settings -->
           <div class="settings-card">
             <div class="card-header">
               <div class="header-icon">
@@ -59,7 +52,6 @@
                 <p>Configure display preferences</p>
               </div>
             </div>
-
             <div class="card-content">
               <div class="settings-list">
                 <div class="setting-item">
@@ -71,7 +63,6 @@
                     <ion-toggle color="primary"></ion-toggle>
                   </div>
                 </div>
-
                 <div class="setting-item">
                   <div class="setting-info">
                     <h4>Compact View</h4>
@@ -81,7 +72,6 @@
                     <ion-toggle color="primary"></ion-toggle>
                   </div>
                 </div>
-
                 <div class="setting-item">
                   <div class="setting-info">
                     <h4>Font Size</h4>
@@ -98,8 +88,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Notifications -->
           <div class="settings-card">
             <div class="card-header">
               <div class="header-icon">
@@ -110,7 +98,6 @@
                 <p>Manage notification preferences</p>
               </div>
             </div>
-
             <div class="card-content">
               <div class="settings-list">
                 <div class="setting-item">
@@ -122,7 +109,6 @@
                     <ion-toggle color="primary"></ion-toggle>
                   </div>
                 </div>
-
                 <div class="setting-item">
                   <div class="setting-info">
                     <h4>Email Notifications</h4>
@@ -132,7 +118,6 @@
                     <ion-toggle color="primary"></ion-toggle>
                   </div>
                 </div>
-
                 <div class="setting-item">
                   <div class="setting-info">
                     <h4>Sound</h4>
@@ -145,8 +130,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Save Button -->
           <div class="save-section">
             <button class="action-btn primary save-btn" @click="setTheme">
               <ion-icon name="checkmark-outline"></ion-icon>
@@ -259,7 +242,6 @@ export default defineComponent({
     setTheme() {
       localStorage.setItem("themeSet", this.theme);
       store.setItem();
-      // Optional: Show success message or navigate back
       this.$router.go(-1);
     },
   },
@@ -273,7 +255,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* Modern Design System */
 .modern-content {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
@@ -302,7 +283,6 @@ export default defineComponent({
   background: var(--background);
 }
 
-/* Page Header */
 .page-header {
   margin-bottom: 32px;
 }
@@ -353,7 +333,6 @@ export default defineComponent({
   font-size: 16px;
 }
 
-/* Settings Sections */
 .settings-sections {
   display: flex;
   flex-direction: column;
@@ -409,7 +388,6 @@ export default defineComponent({
   padding: 24px;
 }
 
-/* Theme Grid */
 .theme-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -477,7 +455,6 @@ export default defineComponent({
   flex-shrink: 0;
 }
 
-/* Settings List */
 .settings-list {
   display: flex;
   flex-direction: column;
@@ -534,7 +511,6 @@ export default defineComponent({
   box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
-/* Save Section */
 .save-section {
   display: flex;
   justify-content: center;

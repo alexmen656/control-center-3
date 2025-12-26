@@ -2,7 +2,6 @@
   <ion-page>
     <ion-content class="modern-content" v-if="token">
       <div class="page-container">
-        <!-- Profile Header -->
         <div class="profile-header">
           <div class="profile-card">
             <div class="avatar-section">
@@ -22,14 +21,10 @@
             </div>
           </div>
         </div>
-
-        <!-- Account Management Grid -->
         <div class="account-grid">
           <div class="grid-header">
             <h3>Account Management</h3>
-            <p>Manage your account settings and preferences</p>
           </div>
-
           <div class="cards-grid">
             <div v-for="card in cards" :key="card.title" class="account-card" @click="navigateToCard(card)">
               <div class="card-icon">
@@ -44,8 +39,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Quick Actions -->
           <div class="quick-actions">
             <div class="action-header">
               <h4>Quick Actions</h4>
@@ -72,7 +65,7 @@
 </template>
 
 <script>
-import { defineComponent } from "vue"; //, ref
+import { defineComponent } from "vue";
 import { getUserData } from "@/userData";
 import AvatarLarge from "@/components/AvatarLarge.vue";
 
@@ -164,7 +157,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* Modern Design System */
 .modern-content {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
@@ -193,7 +185,6 @@ export default defineComponent({
   background: var(--background);
 }
 
-/* Profile Header */
 .profile-header {
   margin-bottom: 32px;
 }
@@ -208,7 +199,6 @@ export default defineComponent({
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
   min-height: 120px;
-  /* Ensure minimum height */
   width: 100%;
 }
 
@@ -246,7 +236,6 @@ export default defineComponent({
 .user-info {
   flex: 1;
   min-width: 0;
-  /* Prevents flex items from overflowing */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -296,7 +285,6 @@ export default defineComponent({
   color: var(--danger-color);
 }
 
-/* Account Grid */
 .account-grid {
   background: var(--surface);
   border-radius: var(--radius-lg);
@@ -399,7 +387,6 @@ export default defineComponent({
   font-size: 20px;
 }
 
-/* Quick Actions */
 .quick-actions {
   border-top: 1px solid var(--border);
   padding: 24px 32px;
@@ -472,7 +459,6 @@ export default defineComponent({
   font-size: 16px;
 }
 
-/* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   .modern-content {
     --background: #121212;
@@ -510,7 +496,6 @@ export default defineComponent({
   }
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
