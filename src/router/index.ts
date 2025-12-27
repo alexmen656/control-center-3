@@ -176,7 +176,7 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/PagesView.vue"),
   },
   {
-    path: "/project/:project/new/page",
+    path: "/project/:project/new/wb",
     component: () => import("../views/NewComponent.vue"),
   },
   {
@@ -319,7 +319,15 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/WebBuilderView.vue"),
   },*/
   {
-    path: "/project/:project/wb/:section",
+    path: "/project/:project/wb/:wb_project",
+    component: () => import("../views/WebBuilderView.vue"),
+  },
+  {
+    path: "/project/:project/wb/:wb_project/overview",
+    component: () => import("../views/WebBuilderView.vue"),
+  },
+  {
+    path: "/project/:project/wb/:wb_project/:page",
     component: () => import("../views/WebBuilderView.vue"),
   },
   {

@@ -27,15 +27,14 @@ function handleCreateProject($userID)
         ['new-tool', 'Create new tool', '', 'true'],
         ['manage/tools', 'Manage Tools', '', 'true'],
         ['manage/pages', 'Manage Pages', '', 'true'],
-        ['new/page', 'Create New Component', '', 'true'],
+        ['new/wb', 'Create New Web Builder Project', '', 'true'],
         ['info', 'Project Info', '', 'true'],
         ['page/main', 'Main', '', 'true'],
         ['module-store', 'Module Store', '', 'false'],
         ['package-manager', 'Package Manager', '', 'true'],
         ['filesystem', 'Filesystem', 'file-tray-full-outlinepr', 'true'],
         ['new/service', 'New Service', '', 'true'],
-        ['manage/services', 'Manage Services', '', 'true'],
-        ['web-builder', 'Web Builder', 'globe-outline', 'true']
+        ['manage/services', 'Manage Services', '', 'true']
     ];
 
     $urls = [];
@@ -60,8 +59,7 @@ function handleCreateProject($userID)
 
     query("INSERT INTO project_tools (`id`, `icon`, `name`, `link`, `hasConfig`, `order`, `projectID`) VALUES 
         (0, 'file-tray-full-outline', 'Filesystem', 'filesystem', 0, 0, '$projectID'),
-        (0, 'storefront-outline', 'Module Store', 'module-store', 0, 1, '$projectID'),
-        (0, 'globe-outline', 'Web Builder', 'web-builder', 0, 2, '$projectID')");
+        (0, 'storefront-outline', 'Module Store', 'module-store', 0, 1, '$projectID')");
 
     if (!addUserToProject($userID, $projectID)) {
         echo jsonResponse("Failed to add user to project", false);

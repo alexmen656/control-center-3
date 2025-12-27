@@ -82,17 +82,15 @@
           name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/forms/"><ion-icon
           style="color: var(--ion-color-medium-shade)"
           name="information-circle-outline"></ion-icon></router-link><router-link
-        :to="'/project/' + $route.params.project + '/new/form'"><ion-icon
-          style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>
+        :to="'/project/' + $route.params.project + '/new/form'"><ion-icon style="color: var(--ion-color-medium-shade)"
+          name="add-circle-outline"></ion-icon></router-link>
     </div>
   </ion-note>
   <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
       <ion-menu-toggle auto-hide="false" v-for="(form, i) in forms" :key="`form-${i}`">
-        <ion-item
-          @click="this.selectedIndex = Number(tools.length) + Number(i) + 1"
-          lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/forms/' + form.name"
-          class="hydrated menu-item" :class="{
+        <ion-item @click="this.selectedIndex = Number(tools.length) + Number(i) + 1" lines="none" detail="false"
+          :router-link="'/project/' + $route.params.project + '/forms/' + form.name" class="hydrated menu-item" :class="{
             selected: this.selectedIndex === Number(tools.length) + Number(i) + 1,
             collapsed: isCollapsed,
             hasToBeDarkmode: hasToBeDarkmode
@@ -101,8 +99,6 @@
           <ion-label v-if="!isCollapsed">{{ form.name[0].toUpperCase() + form.name.substring(1) }}</ion-label>
         </ion-item>
       </ion-menu-toggle>
-
-      <!-- No Forms message -->
       <ion-menu-toggle auto-hide="false" v-if="forms.length === 0 && !isCollapsed">
         <ion-item lines="none" detail="false" class="no-forms-item">
           <ion-icon slot="start" name="document-outline" color="medium" />
@@ -128,8 +124,9 @@
       <ion-menu-toggle auto-hide="false" v-for="(codespace, i) in codespaces" :key="`codespace-${i}`">
         <ion-item
           @click="this.selectedIndex = Number(tools.length) + Number(forms.length) + Number(components.length) + Number(services.length) + Number(i) + 1"
-          lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/codespace/' + codespace.slug"
-          class="hydrated menu-item" :class="{
+          lines="none" detail="false"
+          :router-link="'/project/' + $route.params.project + '/codespace/' + codespace.slug" class="hydrated menu-item"
+          :class="{
             selected: this.selectedIndex === Number(tools.length) + Number(forms.length) + Number(components.length) + Number(services.length) + Number(i) + 1,
             collapsed: isCollapsed,
             hasToBeDarkmode: hasToBeDarkmode
@@ -139,13 +136,11 @@
           <!--<ion-badge v-if="!isCollapsed && codespace.language" color="primary" class="codespace-language-badge">{{ codespace.language }}</ion-badge>-->
           <span v-if="!isCollapsed" class="codespace-status-indicator"
             :class="{ 'status-active': codespace.status === 'active', 'status-inactive': codespace.status === 'inactive' }"></span>
-       <!--  <ion-reorder v-if="!isCollapsed" slot="end">
+          <!--  <ion-reorder v-if="!isCollapsed" slot="end">
             <ion-icon style="cursor: pointer; z-index: 1000" name="settings-outline" />
-          </ion-reorder>--> 
+          </ion-reorder>-->
         </ion-item>
       </ion-menu-toggle>
-
-      <!-- No Codespaces message -->
       <ion-menu-toggle auto-hide="false" v-if="codespaces.length === 0 && !isCollapsed">
         <ion-item lines="none" detail="false" class="no-codespaces-item">
           <ion-icon slot="start" name="code-slash-outline" color="medium" />
@@ -162,14 +157,13 @@
           name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/pages/"><ion-icon
           style="color: var(--ion-color-medium-shade)"
           name="information-circle-outline"></ion-icon></router-link><router-link
-        :to="'/project/' + $route.params.project + '/new/page'"><ion-icon style="color: var(--ion-color-medium-shade)"
+        :to="'/project/' + $route.params.project + '/new/wb'"><ion-icon style="color: var(--ion-color-medium-shade)"
           name="add-circle-outline"></ion-icon></router-link>
     </div>
   </ion-note>
   <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
       <template v-for="(component, i) in components" :key="i">
-        <!-- Parent component -->
         <ion-menu-toggle auto-hide="false">
           <ion-item @dblclick="
             goToConfig(
@@ -201,13 +195,13 @@
                 .replaceAll('Ü', 'u')
                 .replaceAll('ü', 'u')*/
               " class="hydrated menu-item parent-component" :class="{
-                  selected: selectedIndex === Number(i) + Number(tools.length) + Number(forms.length) + 1,
-                  collapsed: isCollapsed,
-                  hasToBeDarkmode: hasToBeDarkmode
-                }" :data-tooltip="isCollapsed ? component.name : ''">
+                selected: selectedIndex === Number(i) + Number(tools.length) + Number(forms.length) + 1,
+                collapsed: isCollapsed,
+                hasToBeDarkmode: hasToBeDarkmode
+              }" :data-tooltip="isCollapsed ? component.name : ''">
             <ion-icon slot="start" :name="getIcon(component.type)" />
             <ion-label v-if="!isCollapsed">{{ component.name[0].toUpperCase() }}{{ component.name.substring(1)
-              }}</ion-label>
+            }}</ion-label>
             <ion-icon v-if="!isCollapsed"
               :name="isComponentExpanded(component.id) ? 'chevron-down-outline' : 'chevron-forward-outline'"
               slot="end"></ion-icon>
@@ -218,16 +212,15 @@
             </ion-reorder>
           </ion-item>
         </ion-menu-toggle>
-
-        <!-- Sub components with improved tree structure -->
         <div v-if="isComponentExpanded(component.id) && !isCollapsed" class="sub-components">
           <ion-menu-toggle auto-hide="false" v-for="(subComp, j) in getSubComponents(component.id)" :key="`${i}-${j}`"
             class="sub-item-container">
             <div class="horizontal-tree-line"></div>
-            <ion-item @click="selectedIndex = Number(i) + Number(tools.length) + Number(forms.length) + 1 + Number(j) + 0.1" lines="none"
-              detail="false" :router-link="'/project/' +
+            <ion-item
+              @click="selectedIndex = Number(i) + Number(tools.length) + Number(forms.length) + 1 + Number(j) + 0.1"
+              lines="none" detail="false" :router-link="'/project/' +
                 $route.params.project +
-                '/page/' +
+                '/wb/' +
                 component.slug
                 /*component.name
                   .toLowerCase()
@@ -307,7 +300,7 @@
           }" :data-tooltip="isCollapsed ? api.name : ''">
           <ion-icon slot="start" :name="api.icon || 'code-outline'" />
           <ion-label v-if="!isCollapsed">{{ api.name }}</ion-label>
-        <!--  <ion-badge v-if="!isCollapsed && api.category" color="medium" class="api-category-badge">{{ api.category
+          <!--  <ion-badge v-if="!isCollapsed && api.category" color="medium" class="api-category-badge">{{ api.category
             }}</ion-badge>
           <span v-if="!isCollapsed" class="api-status-indicator"
             :class="{ 'status-active': api.status === 'active', 'status-inactive': api.status === 'inactive' }"></span>
@@ -316,8 +309,6 @@
           </ion-reorder>-->
         </ion-item>
       </ion-menu-toggle>
-
-      <!-- No APIs message -->
       <ion-menu-toggle auto-hide="false" v-if="apis.length === 0 && !isCollapsed">
         <ion-item lines="none" detail="false" class="no-apis-item">
           <ion-icon slot="start" name="code-slash-outline" color="medium" />
@@ -536,8 +527,12 @@ export default defineComponent({
 
 <style scoped>
 @media (prefers-color-scheme: light) {
-  ion-item, ion-list, ion-reorder-group {
-    --background: #eff3f6;/*#f7fcff;*/
+
+  ion-item,
+  ion-list,
+  ion-reorder-group {
+    --background: #eff3f6;
+    /*#f7fcff;*/
     background: #eff3f6;
   }
 }

@@ -91,7 +91,7 @@ if (isset($headers['Authorization'])) {
 
                 $json['components'][$z]["id"] = $wbProjectId;
                 $json['components'][$z]["name"] = $wbProjectName;
-                $json['components'][$z]["slug"] = 'wb-project-' . $wbProjectId;
+                $json['components'][$z]["slug"] = $wbProjectId; //'wb-project-' . 
                 $json['components'][$z]["type"] = 'web-builder';
 
                 $json['componentSubItems'][$wbProjectId] = [];
