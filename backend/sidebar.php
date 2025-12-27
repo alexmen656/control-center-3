@@ -75,74 +75,66 @@ if (isset($headers['Authorization'])) {
             }
         }
 
-        // Mock components with sub-components
-        $mockComponents = [
-            [
-                'id' => 1,
-                'name' => 'Header Section',
-                'slug' => 'header-section',
-                'type' => 'script',
-                'subItems' => [
-                    ['id' => 101, 'name' => 'Logo', 'type' => 'script', 'icon' => 'image', 'position' => 0],
-                    ['id' => 102, 'name' => 'Navigation Menu', 'type' => 'script', 'icon' => 'menu', 'position' => 1],
-                    ['id' => 103, 'name' => 'Call to Action Button', 'type' => 'script', 'icon' => 'arrow-forward', 'position' => 2]
-                ]
-            ],
-            [
-                'id' => 2,
-                'name' => 'Hero Banner',
-                'slug' => 'hero-banner',
-                'type' => 'script',
-                'subItems' => [
-                    ['id' => 201, 'name' => 'Background Image', 'type' => 'script', 'icon' => 'image', 'position' => 0],
-                    ['id' => 202, 'name' => 'Title Text', 'type' => 'script', 'icon' => 'text', 'position' => 1],
-                    ['id' => 203, 'name' => 'Subtitle', 'type' => 'script', 'icon' => 'text', 'position' => 2]
-                ]
-            ],
-            [
-                'id' => 3,
-                'name' => 'Features Grid',
-                'slug' => 'features-grid',
-                'type' => 'script',
-                'subItems' => [
-                    ['id' => 301, 'name' => 'Feature Card 1', 'type' => 'script', 'icon' => 'card', 'position' => 0],
-                    ['id' => 302, 'name' => 'Feature Card 2', 'type' => 'script', 'icon' => 'card', 'position' => 1],
-                    ['id' => 303, 'name' => 'Feature Card 3', 'type' => 'script', 'icon' => 'card', 'position' => 2]
-                ]
-            ],
-            [
-                'id' => 4,
-                'name' => 'Footer',
-                'slug' => 'footer',
-                'type' => 'script',
-                'subItems' => [
-                    ['id' => 401, 'name' => 'Links Section', 'type' => 'script', 'icon' => 'link', 'position' => 0],
-                    ['id' => 402, 'name' => 'Social Media Icons', 'type' => 'script', 'icon' => 'share-social', 'position' => 1],
-                    ['id' => 403, 'name' => 'Copyright Text', 'type' => 'script', 'icon' => 'text', 'position' => 2]
-                ]
-            ]
-        ];
+        $webBuilderProjects = query("SELECT wb.id, wb.name, wb.description, wb.created_at, wb.updated_at
+                                     FROM control_center_modul_web_builder_projects wb
+                                     WHERE wb.project_id = '$projectID' AND wb.user_id = '$userID'
+                                     ORDER BY wb.updated_at DESC");
 
         $json['components'] = [];
         $json['componentSubItems'] = [];
 
-        foreach ($mockComponents as $z => $component) {
-            $json['components'][$z]["id"] = $component['id'];
-            $json['components'][$z]["name"] = $component['name'];
-            $json['components'][$z]["slug"] = $component['slug'];
-            $json['components'][$z]["type"] = $component['type'];
+        if (mysqli_num_rows($webBuilderProjects) > 0) {
+            $z = 0;
+            foreach ($webBuilderProjects as $wbProject) {
+                $wbProjectId = $wbProject['id'];
+                $wbProjectName = $wbProject['name'];
 
-            $componentId = $component['id'];
-            $json['componentSubItems'][$componentId] = [];
+                $json['components'][$z]["id"] = $wbProjectId;
+                $json['components'][$z]["name"] = $wbProjectName;
+                $json['components'][$z]["slug"] = 'wb-project-' . $wbProjectId;
+                $json['components'][$z]["type"] = 'web-builder';
 
-            foreach ($component['subItems'] as $counter => $subItem) {
-                $json['componentSubItems'][$componentId][$counter] = [
-                    'id' => $subItem['id'],
-                    'name' => $subItem['name'],
-                    'type' => $subItem['type'],
-                    'icon' => $subItem['icon'],
-                    'position' => $subItem['position']
+                $json['componentSubItems'][$wbProjectId] = [];
+
+                $json['componentSubItems'][$wbProjectId][] = [
+                    'id' => 'overview-' . $wbProjectId,
+                    'name' => 'Overview',
+                    'type' => 'overview',
+                    'icon' => 'apps',
+                    'position' => 0
                 ];
+
+                $pages = query("SELECT id, name, slug, title, is_home
+                               FROM control_center_modul_web_builder_pages
+                               WHERE project_id = '$wbProjectId'
+                               ORDER BY is_home DESC, name ASC");
+
+                $pageCounter = 1;
+                if (mysqli_num_rows($pages) > 0) {
+                    foreach ($pages as $page) {
+                        $componentsResult = query("SELECT COUNT(*) as count 
+                                                  FROM control_center_modul_web_builder_components 
+                                                  WHERE page_id = '{$page['id']}'");
+                        $componentsCount = 0;
+                        if (mysqli_num_rows($componentsResult) > 0) {
+                            $countRow = fetch_assoc($componentsResult);
+                            $componentsCount = $countRow['count'];
+                        }
+
+                        $json['componentSubItems'][$wbProjectId][] = [
+                            'id' => $page['id'],
+                            'name' => $page['name'],
+                            'slug' => $page['slug'],
+                            'type' => 'page',
+                            'icon' => $page['is_home'] == 1 ? 'home' : 'document-text',
+                            'position' => $pageCounter,
+                            'components_count' => $componentsCount
+                        ];
+                        $pageCounter++;
+                    }
+                }
+
+                $z++;
             }
         }
 
