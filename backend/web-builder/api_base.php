@@ -157,6 +157,71 @@ function getUserData($userId) {
 }
 
 /**
+ * Verify user has access to a Control Center project
+ * 
+ * @param int $userId The user ID
+ * @param string $projectId The Control Center project ID (projects.projectID)
+ * @return bool True if user has access, false otherwise
+ */
+function userHasProjectAccess($userId, $projectId) {
+    $projectId = escape_string($projectId);
+    $userId = intval($userId);
+    
+    // Check if project exists
+    $projectResult = query("SELECT projectID FROM projects WHERE projectID = '$projectId'");
+    if (!$projectResult || mysqli_num_rows($projectResult) === 0) {
+        return false;
+    }
+    
+    // Check if user has access to this project
+    $accessResult = query("SELECT userID FROM control_center_user_projects 
+                          WHERE userID = $userId AND projectID = '$projectId'");
+    
+    return $accessResult && mysqli_num_rows($accessResult) > 0;
+}
+
+/**
+ * Get Control Center project data
+ * 
+ * @param string $projectId The Control Center project ID
+ * @return array|null Project data or null if not found
+ */
+function getControlCenterProject($projectId) {
+    $projectId = escape_string($projectId);
+    $result = query("SELECT projectID, name, link, icon FROM projects WHERE projectID = '$projectId'");
+    
+    if ($result && mysqli_num_rows($result) > 0) {
+        return fetch_assoc($result);
+    }
+    
+    return null;
+}
+
+/**
+ * Get all Control Center projects for a user
+ * 
+ * @param int $userId The user ID
+ * @return array List of projects the user has access to
+ */
+function getUserControlCenterProjects($userId) {
+    $userId = intval($userId);
+    $result = query("SELECT p.projectID, p.name, p.link, p.icon 
+                    FROM projects p
+                    INNER JOIN control_center_user_projects up ON p.projectID = up.projectID
+                    WHERE up.userID = $userId
+                    ORDER BY p.name ASC");
+    
+    $projects = [];
+    if ($result) {
+        while ($row = fetch_assoc($result)) {
+            $projects[] = $row;
+        }
+    }
+    
+    return $projects;
+}
+
+/**
  * Debug logging for development
  * 
  * @param string $message The log message

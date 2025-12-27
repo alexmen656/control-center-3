@@ -45,7 +45,7 @@ function getProjects($userId) {
     if ($projectId) {
         // Get specific project
         $projectId = intval($projectId);
-        $result = query("SELECT id, user_id, name, description, created_at, updated_at 
+        $result = query("SELECT id, user_id, project_id, name, description, created_at, updated_at 
                         FROM control_center_modul_web_builder_projects 
                         WHERE id = $projectId AND user_id = $userId");
         
@@ -54,6 +54,12 @@ function getProjects($userId) {
         }
         
         $project = fetch_assoc($result);
+        
+        // Get Control Center project info
+        $ccProject = getControlCenterProject($project['project_id']);
+        if ($ccProject) {
+            $project['control_center_project'] = $ccProject;
+        }
         
         // Get pages for this project
         $pagesResult = query("SELECT id, name, slug, title, meta_description, is_home 
@@ -68,11 +74,14 @@ function getProjects($userId) {
         
         sendResponse($project);
     } else {
-        // Get all projects
-        $result = query("SELECT id, user_id, name, description, created_at, updated_at 
-                        FROM control_center_modul_web_builder_projects 
-                        WHERE user_id = $userId 
-                        ORDER BY updated_at DESC");
+        // Get all projects - only those where user has access to the CC project
+        $result = query("SELECT wb.id, wb.user_id, wb.project_id, wb.name, wb.description, wb.created_at, wb.updated_at,
+                               p.name as cc_project_name, p.link as cc_project_link
+                        FROM control_center_modul_web_builder_projects wb
+                        INNER JOIN projects p ON wb.project_id = p.projectID
+                        INNER JOIN control_center_user_projects up ON p.projectID = up.projectID
+                        WHERE wb.user_id = $userId AND up.userID = $userId
+                        ORDER BY wb.updated_at DESC");
         
         $projects = [];
         while ($row = fetch_assoc($result)) {
@@ -88,6 +97,14 @@ function getProjects($userId) {
             }
             
             $row['pages'] = $pages;
+            $row['control_center_project'] = [
+                'projectID' => $row['project_id'],
+                'name' => $row['cc_project_name'],
+                'link' => $row['cc_project_link']
+            ];
+            unset($row['cc_project_name']);
+            unset($row['cc_project_link']);
+            
             $projects[] = $row;
         }
         
@@ -100,14 +117,26 @@ function getProjects($userId) {
  */
 function createProject($userId) {
     $data = getJsonData();
-    validateRequiredFields($data, ['name']);
+    validateRequiredFields($data, ['name', 'project_id']);
     
     $name = escape_string($data['name']);
     $description = isset($data['description']) ? escape_string($data['description']) : '';
+    $ccProjectId = escape_string($data['project_id']);
+    
+    // Validate that user has access to the Control Center project
+    if (!userHasProjectAccess($userId, $ccProjectId)) {
+        sendError('Access denied: You do not have access to this Control Center project', 403);
+    }
+    
+    // Check if web builder project already exists for this CC project
+    $existingCheck = query("SELECT id FROM control_center_modul_web_builder_projects WHERE project_id = '$ccProjectId'");
+    if ($existingCheck && mysqli_num_rows($existingCheck) > 0) {
+        sendError('A web builder project already exists for this Control Center project', 409);
+    }
     
     // Insert project
-    $insertResult = query("INSERT INTO control_center_modul_web_builder_projects (user_id, name, description) 
-                          VALUES ($userId, '$name', '$description')");
+    $insertResult = query("INSERT INTO control_center_modul_web_builder_projects (user_id, project_id, name, description) 
+                          VALUES ($userId, '$ccProjectId', '$name', '$description')");
     
     if (!$insertResult) {
         sendError('Failed to create project', 500);
@@ -124,14 +153,19 @@ function createProject($userId) {
     
     $pageId = mysqli_insert_id($GLOBALS['con']);
     
+    // Get Control Center project info
+    $ccProject = getControlCenterProject($ccProjectId);
+    
     // Return created project
     $newProject = [
         'id' => $projectId,
         'user_id' => $userId,
+        'project_id' => $ccProjectId,
         'name' => $data['name'],
         'description' => $description,
         'created_at' => date('Y-m-d H:i:s'),
         'updated_at' => date('Y-m-d H:i:s'),
+        'control_center_project' => $ccProject,
         'pages' => [
             [
                 'id' => $pageId,
@@ -157,12 +191,19 @@ function updateProject($userId) {
         sendError('Invalid project ID', 400);
     }
     
-    // Check ownership
-    $checkResult = query("SELECT id FROM control_center_modul_web_builder_projects 
+    // Check ownership and get project data
+    $checkResult = query("SELECT id, project_id FROM control_center_modul_web_builder_projects 
                          WHERE id = $projectId AND user_id = $userId");
     
     if (!$checkResult || mysqli_num_rows($checkResult) === 0) {
         sendError('Project not found or access denied', 403);
+    }
+    
+    $projectData = fetch_assoc($checkResult);
+    
+    // Verify user still has access to the linked CC project
+    if (!userHasProjectAccess($userId, $projectData['project_id'])) {
+        sendError('Access denied: You no longer have access to the linked Control Center project', 403);
     }
     
     $data = getJsonData();
@@ -178,6 +219,11 @@ function updateProject($userId) {
         $updates[] = "description = '" . escape_string($data['description']) . "'";
     }
     
+    // Don't allow changing project_id - it's immutable
+    if (isset($data['project_id'])) {
+        sendError('Cannot change the linked Control Center project', 400);
+    }
+    
     if (empty($updates)) {
         sendError('No data to update', 400);
     }
@@ -189,10 +235,16 @@ function updateProject($userId) {
     
     if ($result) {
         // Get updated project
-        $projectResult = query("SELECT id, user_id, name, description, created_at, updated_at 
+        $projectResult = query("SELECT id, user_id, project_id, name, description, created_at, updated_at 
                                FROM control_center_modul_web_builder_projects 
                                WHERE id = $projectId");
         $project = fetch_assoc($projectResult);
+        
+        // Add CC project info
+        $ccProject = getControlCenterProject($project['project_id']);
+        if ($ccProject) {
+            $project['control_center_project'] = $ccProject;
+        }
         
         sendJsonResponse('success', 'Project updated successfully', 200, $project);
     } else {
@@ -210,12 +262,19 @@ function deleteProject($userId) {
         sendError('Invalid project ID', 400);
     }
     
-    // Check ownership
-    $checkResult = query("SELECT id FROM control_center_modul_web_builder_projects 
+    // Check ownership and get project data
+    $checkResult = query("SELECT id, project_id FROM control_center_modul_web_builder_projects 
                          WHERE id = $projectId AND user_id = $userId");
     
     if (!$checkResult || mysqli_num_rows($checkResult) === 0) {
         sendError('Project not found or access denied', 403);
+    }
+    
+    $projectData = fetch_assoc($checkResult);
+    
+    // Verify user still has access to the linked CC project
+    if (!userHasProjectAccess($userId, $projectData['project_id'])) {
+        sendError('Access denied: You no longer have access to the linked Control Center project', 403);
     }
     
     // Delete components first (foreign key constraint)

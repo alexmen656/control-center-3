@@ -18,15 +18,18 @@ DROP TABLE IF EXISTS `control_center_modul_web_builder_projects`;
 -- =============================================
 -- Projects table
 -- =============================================
--- Stores web builder projects linked to Control Center users
+-- Stores web builder projects linked to Control Center projects
+-- MUST be linked to an existing Control Center project (projects.projectID)
 CREATE TABLE `control_center_modul_web_builder_projects` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL COMMENT 'References control_center_users.userID',
+  `project_id` varchar(255) NOT NULL COMMENT 'References projects.projectID - REQUIRED link to Control Center project',
   `name` varchar(100) NOT NULL,
   `description` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_project_id` (`project_id`),
   KEY `idx_user_id` (`user_id`),
   KEY `idx_updated_at` (`updated_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

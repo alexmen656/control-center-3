@@ -28,8 +28,8 @@ if (!$pageId) {
 
 $pageId = intval($pageId);
 
-// Verify user has access to this page
-$pageResult = query("SELECT p.*, pr.user_id FROM control_center_modul_web_builder_pages p
+// Verify user has access to this page and the linked CC project
+$pageResult = query("SELECT p.*, pr.user_id, pr.project_id FROM control_center_modul_web_builder_pages p
                     INNER JOIN control_center_modul_web_builder_projects pr ON p.project_id = pr.id
                     WHERE p.id = $pageId");
 
@@ -41,6 +41,11 @@ $page = fetch_assoc($pageResult);
 
 if ($page['user_id'] != $userId) {
     sendError('Access denied', 403);
+}
+
+// Verify user still has access to the linked CC project
+if (!userHasProjectAccess($userId, $page['project_id'])) {
+    sendError('Access denied: You no longer have access to the linked Control Center project', 403);
 }
 
 switch ($method) {
