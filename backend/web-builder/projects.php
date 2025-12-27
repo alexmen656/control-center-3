@@ -128,12 +128,6 @@ function createProject($userId) {
         sendError('Access denied: You do not have access to this Control Center project', 403);
     }
     
-    // Check if web builder project already exists for this CC project
-    $existingCheck = query("SELECT id FROM control_center_modul_web_builder_projects WHERE project_id = '$ccProjectId'");
-    if ($existingCheck && mysqli_num_rows($existingCheck) > 0) {
-        sendError('A web builder project already exists for this Control Center project', 409);
-    }
-    
     // Insert project
     $insertResult = query("INSERT INTO control_center_modul_web_builder_projects (user_id, project_id, name, description) 
                           VALUES ($userId, '$ccProjectId', '$name', '$description')");

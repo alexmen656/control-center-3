@@ -168,6 +168,17 @@ function handleGetProjectInfo()
         : jsonResponse("No project found", false);
 }
 
+function handleGetProject()
+{
+    if (!isset($_POST['link']))
+        return;
+
+    $project = getProjectByLink(escape_string($_POST['link']));
+    echo $project
+        ? jsonResponse($project)
+        : jsonResponse("No project found", false);
+}
+
 function handleGetProjectUsers()
 {
     if (!isset($_POST['project']))
@@ -289,6 +300,8 @@ elseif (isset($_POST['updateProject']))
     handleUpdateProject($userID);
 elseif (isset($_POST['toggleProjectVisibility']))
     handleToggleVisibility($userID);
+elseif (isset($_POST['getProject']))
+    handleGetProject();
 elseif (isset($_POST['getProjectInfo']))
     handleGetProjectInfo();
 elseif (isset($_POST['getProjectUsers']))

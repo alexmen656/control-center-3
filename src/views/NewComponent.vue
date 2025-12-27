@@ -1,295 +1,463 @@
 <template>
   <ion-page>
-    <ion-content>
-      <ion-grid>
-        <ion-row>
-          <ion-col size="12" size-lg="8">
-            <ion-item
-              @dblclick="
-                code = name
-                  .toLowerCase()
-                  .replaceAll(' ', '-')
-                  .replaceAll(`'`, '')
-              "
-            >
-              <ion-label position="floating">Name</ion-label>
-              <ion-input
-                type="text"
-                v-model="name"
-                :value="name"
-                @ionInput="name = $event.target.value"
-                placeholder="Enter Icon Code"
-              />
-            </ion-item>
-          </ion-col>
-          <ion-col size="12" size-lg="8">
-            <ion-item>
-              <ion-label position="floating">Code</ion-label>
-              <ion-input
-                v-model="code"
-                :value="code"
-                @ionInput="code = $event.target.value"
-                type="text"
-                placeholder="Enter Project Name"
-              />
-            </ion-item>
-          </ion-col>
-          <ion-col size="12" size-lg="8">
-            <div id="file-drag-drop">
-              <form ref="fileform">
-                <span class="drop-files">Drop the files here!</span>
-              </form>
-              <progress max="100" :value.prop="uploadPercentage"></progress>
-              <div v-for="(file, key) in files" :key="key" class="file-listing">
-                <img class="preview" v-bind:ref="'preview' + parseInt(key)" />
-                {{ file.name }}
-                <div class="remove-container">
-                  <a class="remove" v-on:click="removeFile(key)">Remove</a>
+    <ion-content class="modern-content">
+      <SiteTitle icon="add-circle-outline" title="Neues Projekt" />
+      <div class="page-container">
+        <div class="page-header">
+          <div class="header-content">
+            <h1>Neues Web Builder Projekt</h1>
+          </div>
+        </div>
+        <div v-if="successMessage" class="success-toast">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          {{ successMessage }}
+        </div>
+        <div class="data-card">
+          <div class="card-header">
+            <div class="header-left">
+              <h3>Projektdetails</h3>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="modern-edit-form">
+              <div class="form-group">
+                <label class="form-label">
+                  Projektname <span class="required">*</span>
+                </label>
+                <input v-model="projectName" type="text" placeholder="Geben Sie einen Projektnamen ein"
+                  class="modern-input" :disabled="creating" />
+                <p class="form-help">Der Name Ihres Web Builder Projekts</p>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Beschreibung</label>
+                <textarea v-model="description" placeholder="Geben Sie eine optionale Beschreibung ein"
+                  class="modern-input modern-textarea" rows="4" :disabled="creating"></textarea>
+                <p class="form-help">Eine kurze Beschreibung des Projekts (optional)</p>
+              </div>
+              <div v-if="errorMessage" class="error-banner">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                <div>
+                  <strong>Fehler</strong>
+                  <p>{{ errorMessage }}</p>
                 </div>
               </div>
+              <div class="form-actions">
+                <button @click="cancel" :disabled="creating" class="action-btn secondary">
+                  <ion-icon name="close-outline"></ion-icon>
+                  Abbrechen
+                </button>
+                <button @click="createProject" :disabled="!canCreate || creating" class="action-btn primary">
+                  <ion-icon v-if="creating" name="sync-outline" class="loading-icon"></ion-icon>
+                  <ion-icon v-else name="add-outline"></ion-icon>
+                  {{ creating ? 'Erstelle...' : 'Projekt Erstellen' }}
+                </button>
+              </div>
             </div>
-            <ion-button @click="submit()"> Create </ion-button>
-            <ion-button @click="submitMenu()"> Create Menu</ion-button>
-          </ion-col>
-          <!--<ion-col size="12" size-lg="8">
-            Create new Menu:
-
-            <ion-item
-              @dblclick="
-                code = name
-                  .toLowerCase()
-                  .replaceAll(' ', '-')
-                  .replaceAll(`'`, '')
-              "
-            >
-              <ion-label position="floating">Name</ion-label>
-              <ion-input
-                type="text"
-                v-model="name"
-                :value="name"
-                @ionInput="name = $event.target.value"
-                placeholder="Enter Icon Code"
-              />
-            </ion-item>
-          </ion-col>
-          <ion-col size="12" size-lg="8">
-            <ion-item>
-              <ion-label position="floating">Code</ion-label>
-              <ion-input
-                v-model="code"
-                :value="code"
-                @ionInput="code = $event.target.value"
-                type="text"
-                placeholder="Enter Project Name"
-              />
-            </ion-item>
-          </ion-col>-->
-        </ion-row>
-      </ion-grid>
+          </div>
+        </div>
+      </div>
     </ion-content>
   </ion-page>
 </template>
 
-<script>
+<script lang="ts">
 import { defineComponent } from "vue";
+import SiteTitle from "@/components/SiteTitle.vue";
 
 export default defineComponent({
   name: "NewComponent",
+  components: {
+    SiteTitle,
+  },
   data() {
     return {
-      name: "",
-      code: "",
-      dragAndDropCapable: false,
-      files: [],
-      uploadPercentage: 0,
+      projectName: "",
+      description: "",
+      creating: false,
+      errorMessage: "",
+      successMessage: "",
     };
   },
-  mounted() {
-    this.dragAndDropCapable = this.determineDragAndDropCapable();
-
-    if (this.dragAndDropCapable) {
-      [
-        "drag",
-        "dragstart",
-        "dragend",
-        "dragover",
-        "dragenter",
-        "dragleave",
-        "drop",
-      ].forEach(
-        function (evt) {
-          this.$refs.fileform.addEventListener(
-            evt,
-            function (e) {
-              e.preventDefault();
-              e.stopPropagation();
-            }.bind(this),
-            false
-          );
-        }.bind(this)
-      );
-
-      this.$refs.fileform.addEventListener(
-        "drop",
-        function (e) {
-          for (let i = 0; i < e.dataTransfer.files.length; i++) {
-            this.files.push(e.dataTransfer.files[i]);
-            this.getImagePreviews();
-          }
-        }.bind(this)
-      );
-    }
+  computed: {
+    canCreate(): boolean {
+      return this.projectName.trim() !== "" && !this.creating;
+    },
+    projectLink(): string {
+      return this.$route.params.project as string;
+    },
   },
   methods: {
-    determineDragAndDropCapable() {
-      const div = document.createElement("div");
-      return (
-        ("draggable" in div || ("ondragstart" in div && "ondrop" in div)) &&
-        "FormData" in window &&
-        "FileReader" in window
-      );
-    },
+    async createProject() {
+      if (!this.canCreate) return;
 
-    getImagePreviews() {
-      for (let i = 0; i < this.files.length; i++) {
-        if (/\.(jpe?g|png|gif)$/i.test(this.files[i].name)) {
-          const reader = new FileReader();
+      this.creating = true;
+      this.errorMessage = "";
+      this.successMessage = "";
 
-          reader.addEventListener(
-            "load",
-            function () {
-              this.$refs["preview" + parseInt(i)][0].src = reader.result;
-            }.bind(this),
-            false
-          );
+      try {
+        const projectResponse = await this.$axios.post(
+          "projects.php",
+          this.$qs.stringify({
+            getProject: true,
+            link: this.projectLink,
+          })
+        );
 
-          reader.readAsDataURL(this.files[i]);
+        if (!projectResponse.data.success) {
+          this.errorMessage = "Projekt nicht gefunden";
+          return;
+        }
+
+        const ccProjectId = projectResponse.data?.projectID;
+        if (!ccProjectId) {
+          this.errorMessage = "Projekt-ID nicht gefunden";
+          return;
+        }
+
+        const response = await this.$axios.post(
+          "/web-builder/projects.php",
+          {
+            project_id: ccProjectId,
+            name: this.projectName.trim(),
+            description: this.description.trim(),
+          }
+        );
+
+        if (response.data.status === "success") {
+          this.successMessage = "Projekt erstellt!";
+          setTimeout(() => {
+            this.$router.push(`/project/${this.projectLink}/wb/${this.projectName.trim().toLowerCase().replace(/\s+/g, "-")}`);
+          }, 1000);
         } else {
-          this.$nextTick(function () {
-            this.$refs["preview" + parseInt(i)][0].src = "/images/file.png";
-          });
+          this.errorMessage = response.data.message || "Fehler beim Erstellen";
         }
+      } catch (error: any) {
+        console.error("Error:", error);
+        this.errorMessage = error.response?.data?.message || "Fehler beim Erstellen";
+      } finally {
+        this.creating = false;
       }
     },
 
-    submit() {
-      if (this.name != "" && this.code != "") {
-        const formData = new FormData();
-
-        for (let i = 0; i < this.files.length; i++) {
-          const file = this.files[i];
-
-          formData.append("files[" + i + "]", file);
-        }
-
-        formData.append("name", this.name);
-        formData.append("code", this.code);
-        formData.append("project", this.$route.params.project);
-        formData.append("newComponent", "newComponent");
-
-        this.$axios
-          .post("components.php", formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-            onUploadProgress: function (progressEvent) {
-              this.uploadPercentage = parseInt(
-                Math.round((progressEvent.loaded * 100) / progressEvent.total)
-              );
-            }.bind(this),
-          })
-          .then(() =>{
-            console.log("SUCCESS!!");
-            this.emitter.emit("updateSidebar");
-          })
-          .catch((err) => {
-            console.log("FAILURE!!", err);
-          });
-      } else {
-        alert("Name or Code empty!");
-      }
-    },
-    submitMenu() {
-      if (this.name != "" && this.code != "") {
-        this.$axios
-          .post(
-            "components.php",
-            this.$qs.stringify({
-              name: this.name,
-              code: this.code,
-              project: this.$route.params.project,
-              newComponent: "newComponent",
-              type: "menu",
-            })
-          )
-          .then(() => {
-            console.log("SUCCESS!!");
-            this.emitter.emit("updateSidebar");
-          })
-          .catch(() => {
-            console.log("FAILURE!!");
-          });
-      } else {
-        alert("Name or Code empty!");
-      }
-    },
-    removeFile(key) {
-      this.files.splice(key, 1);
+    cancel() {
+      this.$router.back();
     },
   },
 });
 </script>
-<style>
-form {
+
+<style scoped>
+.modern-content {
+  --background: #f8f9fa;
+  --surface: #ffffff;
+  --border: #e5e7eb;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --success-color: #059669;
+  --danger-color: #dc2626;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.page-header {
+  margin-bottom: 32px;
+}
+
+.header-content h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+}
+
+.header-content p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.data-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-left h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.entry-count {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.card-body {
+  padding: 24px;
+}
+
+.modern-edit-form {
+  width: 100%;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-label {
   display: block;
-  height: 400px;
-  width: 400px;
-  background: #ccc;
-  margin: auto;
-  margin-top: 40px;
-  text-align: center;
-  line-height: 400px;
-  border-radius: 4px;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 14px;
 }
 
-div.file-listing {
-  width: 400px;
-  margin: auto;
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
+.required {
+  color: var(--danger-color);
+  margin-left: 2px;
 }
 
-div.file-listing img {
-  height: 100px;
+.modern-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  font-family: inherit;
 }
 
-div.remove-container {
-  text-align: center;
+.modern-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
-div.remove-container a {
-  color: red;
+.modern-input:disabled {
+  background: var(--background);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.modern-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-help {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius);
+  margin-bottom: 24px;
+}
+
+.error-banner ion-icon {
+  color: var(--danger-color);
+  font-size: 24px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.error-banner strong {
+  display: block;
+  color: var(--danger-color);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.error-banner p {
+  margin: 0;
+  color: #991b1b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-a.submit-button {
-  display: block;
-  margin: auto;
-  text-align: center;
-  width: 200px;
-  padding: 10px;
-  text-transform: uppercase;
-  background-color: #ccc;
+.action-btn ion-icon {
+  font-size: 18px;
+}
+
+.action-btn.primary {
+  background: var(--primary-color);
   color: white;
-  font-weight: bold;
-  margin-top: 20px;
 }
 
-progress {
-  width: 400px;
-  margin: auto;
-  display: block;
-  margin-top: 20px;
-  margin-bottom: 20px;
+.action-btn.primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.action-btn.secondary {
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.action-btn.secondary:hover:not(:disabled) {
+  background: var(--background);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.loading-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.success-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(5, 150, 105, 0.95);
+  color: white;
+  padding: 16px 20px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+  z-index: 10001;
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-lg);
+  animation: slideInRight 0.3s ease;
+}
+
+.success-toast ion-icon {
+  font-size: 24px;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 16px;
+  }
+
+  .header-content h1 {
+    font-size: 24px;
+  }
+
+  .card-header,
+  .card-body {
+    padding: 16px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .success-toast {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .modern-content {
+    --background: #121212;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
+    --text-primary: #f1f5f9;
+    --text-secondary: #b0b0b0;
+    --text-muted: #707070;
+  }
+
+  .error-banner {
+    background: rgba(220, 38, 38, 0.1);
+    border-color: rgba(220, 38, 38, 0.3);
+  }
+
+  .error-banner p {
+    color: #fca5a5;
+  }
 }
 </style>

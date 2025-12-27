@@ -29,7 +29,7 @@ CREATE TABLE `control_center_modul_web_builder_projects` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_project_id` (`project_id`),
+  KEY `idx_project_id` (`project_id`),
   KEY `idx_user_id` (`user_id`),
   KEY `idx_updated_at` (`updated_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
