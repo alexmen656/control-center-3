@@ -155,7 +155,7 @@
     </ion-reorder-group>
   </ion-list>
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
-    <h4 v-if="!isCollapsed">Pages</h4>
+    <h4 v-if="!isCollapsed">Web Builder</h4>
     <div v-if="!isCollapsed">
       <router-link :to="'/project/' + $route.params.project + '/manage/pages'"><ion-icon
           style="color: var(--ion-color-medium-shade)"
@@ -175,7 +175,7 @@
             goToConfig(
               '/project/' +
               $route.params.project +
-              '/page/' +
+              '/wb/' +
               component.name
                 .toLowerCase()
                 .replaceAll(' ', '-')
@@ -189,7 +189,7 @@
             )
             " @click="toggleComponentExpanded(component.id)" lines="none" detail="false" :router-link="'/project/' +
               $route.params.project +
-              '/page/' +
+              '/wb/' +
               component.slug
               /*component.name
                 .toLowerCase()

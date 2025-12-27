@@ -75,58 +75,77 @@ if (isset($headers['Authorization'])) {
             }
         }
 
-        $projectQuery = query("SELECT id FROM control_center_web_builder_projects WHERE name='$projectName'");
+        // Mock components with sub-components
+        $mockComponents = [
+            [
+                'id' => 1,
+                'name' => 'Header Section',
+                'slug' => 'header-section',
+                'type' => 'script',
+                'subItems' => [
+                    ['id' => 101, 'name' => 'Logo', 'type' => 'script', 'icon' => 'image', 'position' => 0],
+                    ['id' => 102, 'name' => 'Navigation Menu', 'type' => 'script', 'icon' => 'menu', 'position' => 1],
+                    ['id' => 103, 'name' => 'Call to Action Button', 'type' => 'script', 'icon' => 'arrow-forward', 'position' => 2]
+                ]
+            ],
+            [
+                'id' => 2,
+                'name' => 'Hero Banner',
+                'slug' => 'hero-banner',
+                'type' => 'script',
+                'subItems' => [
+                    ['id' => 201, 'name' => 'Background Image', 'type' => 'script', 'icon' => 'image', 'position' => 0],
+                    ['id' => 202, 'name' => 'Title Text', 'type' => 'script', 'icon' => 'text', 'position' => 1],
+                    ['id' => 203, 'name' => 'Subtitle', 'type' => 'script', 'icon' => 'text', 'position' => 2]
+                ]
+            ],
+            [
+                'id' => 3,
+                'name' => 'Features Grid',
+                'slug' => 'features-grid',
+                'type' => 'script',
+                'subItems' => [
+                    ['id' => 301, 'name' => 'Feature Card 1', 'type' => 'script', 'icon' => 'card', 'position' => 0],
+                    ['id' => 302, 'name' => 'Feature Card 2', 'type' => 'script', 'icon' => 'card', 'position' => 1],
+                    ['id' => 303, 'name' => 'Feature Card 3', 'type' => 'script', 'icon' => 'card', 'position' => 2]
+                ]
+            ],
+            [
+                'id' => 4,
+                'name' => 'Footer',
+                'slug' => 'footer',
+                'type' => 'script',
+                'subItems' => [
+                    ['id' => 401, 'name' => 'Links Section', 'type' => 'script', 'icon' => 'link', 'position' => 0],
+                    ['id' => 402, 'name' => 'Social Media Icons', 'type' => 'script', 'icon' => 'share-social', 'position' => 1],
+                    ['id' => 403, 'name' => 'Copyright Text', 'type' => 'script', 'icon' => 'text', 'position' => 2]
+                ]
+            ]
+        ];
 
-        if (mysqli_num_rows($projectQuery) == 0) {
-            $projectQuery = query("SELECT id FROM control_center_web_builder_projects WHERE description LIKE '%$projectID%'");
-        }
+        $json['components'] = [];
+        $json['componentSubItems'] = [];
 
-        if (mysqli_num_rows($projectQuery) > 0) {
-            $projectData = fetch_assoc($projectQuery);
-            $webBuilderProjectId = $projectData['id'];
-            $components = query("SELECT * FROM control_center_web_builder_pages WHERE project_id='$webBuilderProjectId' ORDER BY `control_center_web_builder_pages`.`id` ASC");
+        foreach ($mockComponents as $z => $component) {
+            $json['components'][$z]["id"] = $component['id'];
+            $json['components'][$z]["name"] = $component['name'];
+            $json['components'][$z]["slug"] = $component['slug'];
+            $json['components'][$z]["type"] = $component['type'];
 
-            $z = 0;
-            foreach ($components as $c) {
-                $json['components'][$z]["id"] = $c['id'];
-                // $json['tools'][$z]["icon"] = $c['icon'];
-                $json['components'][$z]["name"] = $c['name'];
-                $json['components'][$z]["slug"] = $c['slug'];
-                $json['components'][$z]["type"] = 'script';
+            $componentId = $component['id'];
+            $json['componentSubItems'][$componentId] = [];
 
-                //echo $c['id'];
-                $comps = query("SELECT * FROM control_center_web_builder_components WHERE page_id='" . $c['id'] . "' ORDER BY `control_center_web_builder_components`.`position` ASC");
-                $counter = 0;
-                foreach ($comps as $comp) {
-                    if ($comp['original_template_id'] !== NULL) {
-                        $comp2 = $comp;
-                        $comp = fetch_assoc(query("SELECT * FROM control_center_web_builder_templates WHERE id='" . $comp['original_template_id'] . "'"));
-                        $comp['id'] = $comp2['id'];
-                        $comp['position'] = $comp2['position'];
-                    } else {
-                        $comp['title'] = "Header";
-                    }
-
-                    $comp['icon'] = "home";
-                    $comp['type'] = "script";
-                    $componentId = $c['id'];
-                    $json['componentSubItems'][$componentId][$counter] = [
-                        'id' => $comp['id'],
-                        'name' => $comp['title'],
-                        'type' => $comp['type'],
-                        'icon' => $comp['icon'],
-                        'position' => $comp['position']
-                    ];
-                    $counter++;
-                }
-                $z++;
+            foreach ($component['subItems'] as $counter => $subItem) {
+                $json['componentSubItems'][$componentId][$counter] = [
+                    'id' => $subItem['id'],
+                    'name' => $subItem['name'],
+                    'type' => $subItem['type'],
+                    'icon' => $subItem['icon'],
+                    'position' => $subItem['position']
+                ];
             }
-        } else {
-            $json['components'] = [];
-            $json['componentSubItems'] = [];
         }
 
-        // Get services for this project
         $services = query("SELECT * FROM project_services WHERE projectID='$projectID'");
 
         if (mysqli_num_rows($services) == 0) {
