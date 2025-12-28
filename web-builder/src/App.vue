@@ -179,6 +179,8 @@ watch(
   ([project, routeName]) => {
     if (project && routeName === 'project') {
       openPageBuilder.value = true;
+      // Setze die Projekt-ID im Page Builder State Store
+      pageBuilderStateStore.setProjectId(project.id);
     } else {
       openPageBuilder.value = false;
     }

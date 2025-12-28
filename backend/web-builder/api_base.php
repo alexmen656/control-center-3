@@ -74,18 +74,25 @@ function sendJsonResponse($status, $message, $statusCode = 200, $data = null) {
 
 /**
  * Get JSON data from request body
+ * Caches the result to allow multiple calls
  * 
  * @return array The decoded JSON data
  */
 function getJsonData() {
-    $json = file_get_contents('php://input');
-    $data = json_decode($json, true);
+    static $cachedData = null;
     
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        sendError("Invalid JSON data: " . json_last_error_msg(), 400);
+    if ($cachedData === null) {
+        $json = file_get_contents('php://input');
+        $cachedData = json_decode($json, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            sendError("Invalid JSON data: " . json_last_error_msg(), 400);
+        }
+        
+        $cachedData = $cachedData ?? [];
     }
     
-    return $data ?? [];
+    return $cachedData;
 }
 
 /**

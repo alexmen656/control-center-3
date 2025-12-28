@@ -1,24 +1,18 @@
 <?php
-/**
- * Web Builder Pages API
- * 
- * Handles CRUD operations for web builder pages
- * Uses Control Center authentication
- */
-
 require_once __DIR__ . '/api_base.php';
 
-// Authenticate user
 $userId = authenticateUser();
-
-// HTTP method
 $method = $_SERVER['REQUEST_METHOD'];
 $projectId = $_GET['project_id'] ?? null;
 
-// Validate project ownership and CC project access for all requests
+if (($method === 'POST' || $method === 'PUT') && !$projectId) {
+    $bodyData = getJsonData();
+    $projectId = $bodyData['project_id'] ?? null;
+}
+
 if ($projectId) {
     $projectId = intval($projectId);
-    $checkResult = query("SELECT id, project_id FROM control_center_modul_web_builder_projects 
+    $checkResult = query("SELECT id, project_id as cc_project_id FROM control_center_modul_web_builder_projects 
                          WHERE id = $projectId AND user_id = $userId");
 
     if (!$checkResult || mysqli_num_rows($checkResult) === 0) {
@@ -26,7 +20,7 @@ if ($projectId) {
     }
 
     $projectData = fetch_assoc($checkResult);
-    if (!userHasProjectAccess($userId, $projectData['project_id'])) {
+    if (!userHasProjectAccess($userId, $projectData['cc_project_id'])) {
         sendError('Access denied: You no longer have access to the linked Control Center project', 403);
     }
 }
@@ -53,9 +47,6 @@ switch ($method) {
         break;
 }
 
-/**
- * Get pages
- */
 function getPages($userId, $projectId)
 {
     $pageId = $_GET['id'] ?? null;

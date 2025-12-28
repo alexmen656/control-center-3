@@ -27,26 +27,19 @@ if (!$pageId) {
 }
 
 $pageId = intval($pageId);
-
-// Verify user has access to this page and the linked CC project
-$pageResult = query("SELECT p.*, pr.user_id, pr.project_id FROM control_center_modul_web_builder_pages p
-                    INNER JOIN control_center_modul_web_builder_projects pr ON p.project_id = pr.id
-                    WHERE p.id = $pageId");
+$pageResult = query("SELECT p.id as page_id, p.project_id as wb_project_id, 
+                            wb.user_id, wb.project_id as cc_project_id
+                    FROM control_center_modul_web_builder_pages p
+                    INNER JOIN control_center_modul_web_builder_projects wb ON p.project_id = wb.id
+                    INNER JOIN projects cc ON wb.project_id = cc.projectID
+                    INNER JOIN control_center_user_projects up ON cc.projectID = up.projectID
+                    WHERE p.id = $pageId AND wb.user_id = $userId AND up.userID = $userId");
 
 if (!$pageResult || mysqli_num_rows($pageResult) === 0) {
-    sendError('Page not found', 404);
+    sendError('Page not found or access denied', 404);
 }
 
 $page = fetch_assoc($pageResult);
-
-if ($page['user_id'] != $userId) {
-    sendError('Access denied', 403);
-}
-
-// Verify user still has access to the linked CC project
-if (!userHasProjectAccess($userId, $page['project_id'])) {
-    sendError('Access denied: You no longer have access to the linked Control Center project', 403);
-}
 
 switch ($method) {
     case 'GET':
