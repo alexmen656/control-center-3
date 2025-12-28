@@ -199,7 +199,7 @@
                 collapsed: isCollapsed,
                 hasToBeDarkmode: hasToBeDarkmode
               }" :data-tooltip="isCollapsed ? component.name : ''">
-            <ion-icon slot="start" :name="getIcon(component.type)" />
+            <ion-icon slot="start" name="cube-outline" />
             <ion-label v-if="!isCollapsed">{{ component.name[0].toUpperCase() }}{{ component.name.substring(1)
             }}</ion-label>
             <ion-icon v-if="!isCollapsed"
@@ -232,7 +232,7 @@
                   .replaceAll('Ü', 'u')
                   .replaceAll('ü', 'u')*/
                 + '/' +
-                subComp.name
+                subComp.slug
                   .toLowerCase()
                   .replaceAll(' ', '-')" class="hydrated menu-item sub-component-item" :class="{
                     selected: selectedIndex === Number(i) + Number(tools.length) + 1 + Number(j) + 0.1, hasToBeDarkmode: hasToBeDarkmode
@@ -508,19 +508,6 @@ export default defineComponent({
           this.componentSubItems = response.data.componentSubItems || {};
         });
     });
-  },
-  methods: {
-    getIcon(type) {
-      if (type == "script") {
-        return "code-slash-outline";
-      } else if (type == "image") {
-        return "image-outline";
-      } else if (type == "menu") {
-        return "menu-outline";
-      } else {
-        return "help-outline";
-      }
-    },
   },
 });
 </script>

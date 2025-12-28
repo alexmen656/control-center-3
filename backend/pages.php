@@ -175,6 +175,52 @@ foreach ($webbuilderProjects as $project) {
     }
 }
 
+$webBuilderProjectsAll = query("SELECT wb.id, wb.name, wb.description, p.link as project_link, p.projectID
+                                FROM control_center_modul_web_builder_projects wb
+                                JOIN projects p ON wb.project_id = p.projectID
+                                ORDER BY wb.updated_at DESC");
+
+foreach ($webBuilderProjectsAll as $wbProject) {
+    $wbProjectId = $wbProject['id'];
+    $wbProjectName = $wbProject['name'];
+    $projectLink = $wbProject['project_link'];
+    $projectID = $wbProject['projectID'];
+    
+    $wbProjectSlug = strtolower(str_replace([' ', 'ä', 'ö', 'ü', 'ß'], ['-', 'ae', 'oe', 'ue', 'ss'], $wbProjectName));
+    
+    $json[$i]['id'] = 'wb_overview_' . $wbProjectId;
+    $json[$i]['url'] = 'project/' . $projectLink . '/wb/' . $wbProjectId . '/overview';
+    $json[$i]['showTitle'] = true;
+    $json[$i]['icon'] = 'apps-outline';
+    $json[$i]['title'] = $wbProjectName . ' - Overview';
+    $json[$i]['html'] = '';
+    $json[$i]['pageID'] = 'wb_overview_' . $wbProjectId;
+    $i++;
+    
+    $wbPages = query("SELECT id, name, slug, title, is_home
+                     FROM control_center_modul_web_builder_pages
+                     WHERE project_id = '$wbProjectId'
+                     ORDER BY is_home DESC, name ASC");
+    
+    foreach ($wbPages as $wbPage) {
+        $wbPageId = $wbPage['id'];
+        $wbPageName = $wbPage['name'];
+        $wbPageSlug = $wbPage['slug'];
+        $wbPageTitle = $wbPage['title'] ?: $wbPageName;
+        $isHome = $wbPage['is_home'];
+        
+        // Add page route
+        $json[$i]['id'] = 'wb_page_' . $wbPageId;
+        $json[$i]['url'] = 'project/' . $projectLink . '/wb/' . $wbProjectId . '/' . $wbPageSlug;//. '/page/'
+        $json[$i]['showTitle'] = true;
+        $json[$i]['icon'] = $isHome ? 'home-outline' : 'document-text-outline';
+        $json[$i]['title'] = $wbPageTitle;
+        $json[$i]['html'] = '';
+        $json[$i]['pageID'] = 'wb_page_' . $wbPageId;
+        $i++;
+    }
+}
+
 $projects = query("SELECT projectID, link, name FROM projects");
 foreach ($projects as $project) {
     $projectID = $project['projectID'];

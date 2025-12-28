@@ -99,6 +99,7 @@ if (isset($headers['Authorization'])) {
                 $json['componentSubItems'][$wbProjectId][] = [
                     'id' => 'overview-' . $wbProjectId,
                     'name' => 'Overview',
+                    'slug' => 'overview',
                     'type' => 'overview',
                     'icon' => 'apps',
                     'position' => 0
