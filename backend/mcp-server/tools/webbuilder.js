@@ -331,8 +331,44 @@ export const webBuilderTools = [
   // Domain Management
   // ============================================
   {
+    name: 'webbuilder_main_domain_get',
+    description: 'Get the main domain configured for a Control Center project. The main domain is required before configuring a Web Builder subdomain. Format: xxx.sites.control-center.eu',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ccProject: {
+          type: 'string',
+          description: 'Control Center project link/slug'
+        }
+      },
+      required: ['ccProject']
+    }
+  },
+  {
+    name: 'webbuilder_main_domain_configure',
+    description: 'Configure the main domain for a Control Center project. This creates a subdomain under sites.control-center.eu (e.g., "myproject" becomes "myproject.sites.control-center.eu"). MUST be done before configuring Web Builder subdomain.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ccProject: {
+          type: 'string',
+          description: 'Control Center project link/slug'
+        },
+        subdomain: {
+          type: 'string',
+          description: 'Subdomain name (e.g., "myproject" for myproject.sites.control-center.eu). Only lowercase letters, numbers, and hyphens allowed.'
+        },
+        userId: {
+          type: 'number',
+          description: 'User ID (from user_profile or context)'
+        }
+      },
+      required: ['ccProject', 'subdomain', 'userId']
+    }
+  },
+  {
     name: 'webbuilder_domain_get',
-    description: 'Get the configured domain/subdomain for a Web Builder project',
+    description: 'Get the Web Builder subdomain configured for a project. This is a subdomain of the main domain (e.g., blog.myproject.sites.control-center.eu)',
     inputSchema: {
       type: 'object',
       properties: {
@@ -346,7 +382,7 @@ export const webBuilderTools = [
   },
   {
     name: 'webbuilder_domain_configure',
-    description: 'Configure a subdomain for a Web Builder project. Creates DNS record and SSL certificate automatically.',
+    description: 'Configure a Web Builder subdomain. IMPORTANT: The project MUST have a main domain configured first (use webbuilder_main_domain_get to check, webbuilder_main_domain_configure to create). The Web Builder subdomain will be: subdomain.main_domain (e.g., "blog" + "myproject.sites.control-center.eu" = "blog.myproject.sites.control-center.eu")',
     inputSchema: {
       type: 'object',
       properties: {
@@ -356,11 +392,7 @@ export const webBuilderTools = [
         },
         subdomain: {
           type: 'string',
-          description: 'Subdomain to configure (e.g., "mysite" for mysite.yourdomain.com). Must be lowercase, alphanumeric with hyphens, min 3 characters.'
-        },
-        mainDomain: {
-          type: 'string',
-          description: 'Main domain to use (e.g., "control-center.eu")'
+          description: 'Web Builder subdomain prefix (e.g., "blog", "shop", "app"). Min 3 characters, lowercase alphanumeric with hyphens.'
         },
         enabled: {
           type: 'boolean',
@@ -368,7 +400,7 @@ export const webBuilderTools = [
           default: true
         }
       },
-      required: ['ccProject', 'subdomain', 'mainDomain']
+      required: ['ccProject', 'subdomain']
     }
   },
   {
@@ -511,6 +543,12 @@ export async function handleWebBuilderTool(name, args, context) {
     // ============================================
     // Domain Tools
     // ============================================
+    case 'webbuilder_main_domain_get':
+      return await getMainDomain(args, context);
+    
+    case 'webbuilder_main_domain_configure':
+      return await configureMainDomain(args, context);
+    
     case 'webbuilder_domain_get':
       return await getDomain(args, context);
     
@@ -1024,6 +1062,77 @@ async function replaceAllComponents(args, context) {
 // Domain Implementation
 // ============================================
 
+async function getMainDomain(args, context) {
+  try {
+    const params = new URLSearchParams({
+      action: 'get',
+      project: args.ccProject
+    });
+    
+    const response = await cmsRequest('project_domain.php', {
+      method: 'POST',
+      body: params
+    }, context);
+    
+    if (response.error) {
+      return formatResponse({
+        success: true,
+        hasMainDomain: false,
+        message: 'No main domain configured for this project. Use webbuilder_main_domain_configure to create one.',
+        hint: 'Main domain format: subdomain.sites.control-center.eu'
+      });
+    }
+    
+    return formatResponse({
+      success: true,
+      hasMainDomain: true,
+      domain: response.domain,
+      message: `Main domain is: ${response.domain}`
+    });
+  } catch (error) {
+    return formatError(`Failed to get main domain: ${error.message}`);
+  }
+}
+
+async function configureMainDomain(args, context) {
+  try {
+    // Validate subdomain
+    if (!/^[a-z0-9-]+$/.test(args.subdomain)) {
+      return formatError('Subdomain must contain only lowercase letters, numbers, and hyphens');
+    }
+    
+    if (args.subdomain.length < 2) {
+      return formatError('Subdomain must be at least 2 characters long');
+    }
+    
+    const params = new URLSearchParams({
+      action: 'connect',
+      project: args.ccProject,
+      domain: args.subdomain.toLowerCase(),
+      user_id: args.userId.toString()
+    });
+    
+    const response = await cmsRequest('project_domain.php', {
+      method: 'POST',
+      body: params
+    }, context);
+    
+    if (response.error) {
+      return formatError(response.error);
+    }
+    
+    return formatResponse({
+      success: true,
+      message: 'Main domain configured successfully',
+      domain: response.domain,
+      fullDomain: response.domain,
+      note: 'You can now configure a Web Builder subdomain using webbuilder_domain_configure'
+    });
+  } catch (error) {
+    return formatError(`Failed to configure main domain: ${error.message}`);
+  }
+}
+
 async function getDomain(args, context) {
   try {
     const params = new URLSearchParams({
@@ -1051,6 +1160,27 @@ async function getDomain(args, context) {
 
 async function configureDomain(args, context) {
   try {
+    // First, check if main domain exists
+    const mainDomainParams = new URLSearchParams({
+      action: 'get',
+      project: args.ccProject
+    });
+    
+    const mainDomainResponse = await cmsRequest('project_domain.php', {
+      method: 'POST',
+      body: mainDomainParams
+    }, context);
+    
+    if (mainDomainResponse.error || !mainDomainResponse.domain) {
+      return formatError(
+        'No main domain configured for this project. ' +
+        'You must first configure a main domain using webbuilder_main_domain_configure. ' +
+        'The main domain will be: subdomain.sites.control-center.eu'
+      );
+    }
+    
+    const mainDomain = mainDomainResponse.domain;
+    
     // Validate subdomain
     if (!/^[a-z0-9-]+$/.test(args.subdomain)) {
       return formatError('Subdomain must contain only lowercase letters, numbers, and hyphens');
@@ -1064,7 +1194,7 @@ async function configureDomain(args, context) {
       action: 'save',
       project: args.ccProject,
       subdomain: args.subdomain.toLowerCase(),
-      main_domain: args.mainDomain,
+      main_domain: mainDomain,
       is_enabled: args.enabled !== false ? 'true' : 'false'
     });
     
@@ -1077,10 +1207,15 @@ async function configureDomain(args, context) {
       return formatError(response.error || 'Failed to configure domain');
     }
     
+    const fullDomain = `${args.subdomain.toLowerCase()}.${mainDomain}`;
+    
     return formatResponse({
       success: true,
       message: response.message || 'Domain configured successfully',
-      domain: response.domain,
+      subdomain: args.subdomain.toLowerCase(),
+      mainDomain: mainDomain,
+      fullDomain: fullDomain,
+      domain: response.domain || fullDomain,
       sslNote: 'SSL certificate will be automatically created within a few minutes'
     });
   } catch (error) {

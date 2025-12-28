@@ -224,8 +224,10 @@ Authorization: Bearer <jwt_token>
 | `webbuilder_component_update` | Komponente aktualisieren |
 | `webbuilder_component_delete` | Komponente löschen |
 | `webbuilder_components_replace_all` | Alle Komponenten ersetzen |
-| `webbuilder_domain_get` | Domain-Konfiguration abrufen |
-| `webbuilder_domain_configure` | Domain konfigurieren |
+| `webbuilder_main_domain_get` | Main Domain eines Projekts abrufen |
+| `webbuilder_main_domain_configure` | Main Domain konfigurieren (xxx.sites.control-center.eu) |
+| `webbuilder_domain_get` | Web Builder Subdomain abrufen |
+| `webbuilder_domain_configure` | Web Builder Subdomain konfigurieren |
 | `webbuilder_domain_delete` | Domain löschen |
 | `webbuilder_domains_list` | Alle Domains auflisten |
 | `webbuilder_create_landing_page` | Landing Page mit Template erstellen |
@@ -346,7 +348,35 @@ const response = await fetch('http://localhost:3001/mcp/tools/webbuilder_create_
 ### Domain konfigurieren
 
 ```javascript
-// Subdomain für Web Builder Projekt einrichten
+// Schritt 1: Prüfen ob Main Domain existiert
+const mainDomainCheck = await fetch('http://localhost:3001/mcp/tools/webbuilder_main_domain_get', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${jwtToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    ccProject: 'my-project'
+  })
+});
+
+// Schritt 2: Falls keine Main Domain, erst diese erstellen
+// Main Domain wird: myproject.sites.control-center.eu
+const mainDomainResponse = await fetch('http://localhost:3001/mcp/tools/webbuilder_main_domain_configure', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${jwtToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    ccProject: 'my-project',
+    subdomain: 'myproject',  // -> myproject.sites.control-center.eu
+    userId: 123
+  })
+});
+
+// Schritt 3: Web Builder Subdomain einrichten
+// Wird: blog.myproject.sites.control-center.eu
 const response = await fetch('http://localhost:3001/mcp/tools/webbuilder_domain_configure', {
   method: 'POST',
   headers: {
@@ -355,8 +385,7 @@ const response = await fetch('http://localhost:3001/mcp/tools/webbuilder_domain_
   },
   body: JSON.stringify({
     ccProject: 'my-project',
-    subdomain: 'mywebsite',       // -> mywebsite.control-center.eu
-    mainDomain: 'control-center.eu',
+    subdomain: 'blog',  // -> blog.myproject.sites.control-center.eu
     enabled: true
   })
 });
