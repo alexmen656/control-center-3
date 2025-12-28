@@ -44,11 +44,13 @@ function getProjects($userId)
     $projectId = $_GET['id'] ?? null;
 
     if ($projectId) {
-        // Get specific project
+        // Get specific project - with CC project access check
         $projectId = intval($projectId);
-        $result = query("SELECT id, user_id, project_id, name, description, created_at, updated_at 
-                        FROM control_center_modul_web_builder_projects 
-                        WHERE id = $projectId AND user_id = $userId");
+        $result = query("SELECT wb.id, wb.user_id, wb.project_id, wb.name, wb.description, wb.created_at, wb.updated_at 
+                        FROM control_center_modul_web_builder_projects wb
+                        INNER JOIN projects p ON wb.project_id = p.projectID
+                        INNER JOIN control_center_user_projects up ON p.projectID = up.projectID
+                        WHERE wb.id = $projectId AND wb.user_id = $userId AND up.userID = $userId");
 
         if (!$result || mysqli_num_rows($result) === 0) {
             sendError('Project not found or access denied', 404);

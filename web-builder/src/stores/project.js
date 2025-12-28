@@ -171,6 +171,50 @@ export const useProjectStore = defineStore('project', () => {
     }
   };
 
+  // Einzelnes Projekt anhand der ID laden
+  const loadProjectById = async (projectId) => {
+    isLoading.value = true;
+    error.value = null;
+    
+    try {
+      const response = await vueFetch(`https://alex.polan.sk/control-center/web-builder/projects.php?id=${projectId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Backend gibt das Projekt direkt zurück (nicht mit status-Wrapper)
+      // oder es hat ein error-Property bei Fehlern
+      if (response.error) {
+        throw new Error(response.message || 'Projekt nicht gefunden');
+      }
+
+      const project = response;
+      
+      // Stelle sicher, dass die ID ein Integer ist für Vergleiche
+      project.id = parseInt(project.id);
+      
+      // Aktualisiere das Projekt in der Liste oder füge es hinzu
+      const index = projects.value.findIndex(p => parseInt(p.id) === project.id);
+      if (index !== -1) {
+        projects.value[index] = project;
+      } else {
+        projects.value.push(project);
+      }
+      
+      // Setze als aktuelles Projekt
+      setCurrentProject(project);
+      return project;
+    } catch (err) {
+      console.error('Fehler beim Laden des Projekts:', err);
+      error.value = err.message;
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
   return {
     projects,
     currentProject,
@@ -185,6 +229,7 @@ export const useProjectStore = defineStore('project', () => {
     setCurrentProject,
     updateProject,
     deleteProject,
-    restoreCurrentProject
+    restoreCurrentProject,
+    loadProjectById
   };
 });

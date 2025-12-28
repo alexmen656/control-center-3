@@ -24,7 +24,8 @@
     "date-fns": "^2.30.0",
     "pinia": "^2.1.7",
     "uuid": "^9.0.0",
-    "vue": "^3.4.29"
+    "vue": "^3.4.29",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.8.0",
