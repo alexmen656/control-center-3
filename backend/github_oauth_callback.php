@@ -20,12 +20,12 @@ $post_fields = [
 
 $options = [
     'http' => [
-        'header'  => "Content-type: application/x-www-form-urlencoded\r\nAccept: application/json\r\n",
-        'method'  => 'POST',
+        'header' => "Content-type: application/x-www-form-urlencoded\r\nAccept: application/json\r\n",
+        'method' => 'POST',
         'content' => http_build_query($post_fields),
     ],
 ];
-$context  = stream_context_create($options);
+$context = stream_context_create($options);
 $response = file_get_contents($token_url, false, $context);
 
 $data = json_decode($response, true);
@@ -38,7 +38,30 @@ if (isset($data['access_token'])) {
         $userID = intval($matches[1]);
     }
     if ($userID > 0) {
-        require_once __DIR__ . '/head.php';
+        include_once 'jwt_helper.php';
+        include_once 'config.php';
+
+        $origin_url = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'];
+        $allowed_origins = ['alexsblog.de', 'localhost:8100', 'polan.sk', 'http://localhost:8100/login', 'http://localhost:8100', 'localhost'];
+        $request_host = parse_url($origin_url, PHP_URL_HOST);
+        $host_domain = implode('.', array_slice(explode('.', $request_host), -2));
+        ini_set('display_errors', true);
+        session_start();
+
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Headers: *');
+        header('Access-Control-Allow-Methods: *');
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
+
+        include "use_template_function.php";
+        include "db_connection.php";
+        include "functions.php";
+
         $access_token_esc = escape_string($access_token);
         $userID_esc = escape_string($userID);
         query("DELETE FROM control_center_github_tokens WHERE userID='$userID_esc'");
