@@ -123,13 +123,27 @@ function createProject($userId)
     $data = getJsonData();
     validateRequiredFields($data, ['name', 'project_id']);
 
-    //print_r($data);
     $name = escape_string($data['name']);
     $description = isset($data['description']) ? escape_string($data['description']) : '';
-    $ccProjectId = escape_string($data['project_id']);
+    $ccProjectInput = escape_string($data['project_id']);
+
+    // Resolve the project - could be projectID or link
+    $ccProject = getControlCenterProject($ccProjectInput);
+    if (!$ccProject) {
+        sendError('Control Center project not found: ' . $ccProjectInput, 404);
+    }
+    
+    // Use the actual projectID from the database
+    $ccProjectId = $ccProject['projectID'];
 
     if (!userHasProjectAccess($userId, $ccProjectId)) {
         sendError('Access denied: You do not have access to this Control Center project', 403);
+    }
+
+    // Check if a Web Builder project already exists for this CC project
+    $existingCheck = query("SELECT id FROM control_center_modul_web_builder_projects WHERE project_id = '$ccProjectId'");
+    if ($existingCheck && mysqli_num_rows($existingCheck) > 0) {
+        sendError('A Web Builder project already exists for this Control Center project', 409);
     }
 
     $insertResult = query("INSERT INTO control_center_modul_web_builder_projects (user_id, project_id, name, description) 
@@ -147,7 +161,6 @@ function createProject($userId)
           VALUES ($projectId, 'Homepage', 'home', '$title', '$metaDescription', 1)");
 
     $pageId = mysqli_insert_id($GLOBALS['con']);
-    $ccProject = getControlCenterProject($ccProjectId);
 
     $newProject = [
         'id' => $projectId,

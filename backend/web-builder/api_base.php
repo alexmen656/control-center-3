@@ -167,22 +167,26 @@ function getUserData($userId) {
  * Verify user has access to a Control Center project
  * 
  * @param int $userId The user ID
- * @param string $projectId The Control Center project ID (projects.projectID)
+ * @param string $projectId The Control Center project ID (projects.projectID) or link (projects.link)
  * @return bool True if user has access, false otherwise
  */
 function userHasProjectAccess($userId, $projectId) {
     $projectId = escape_string($projectId);
     $userId = intval($userId);
     
-    // Check if project exists
-    $projectResult = query("SELECT projectID FROM projects WHERE projectID = '$projectId'");
+    // Check if project exists - search by both projectID and link
+    $projectResult = query("SELECT projectID FROM projects WHERE projectID = '$projectId' OR link = '$projectId'");
     if (!$projectResult || mysqli_num_rows($projectResult) === 0) {
         return false;
     }
     
+    // Get the actual projectID (in case we matched by link)
+    $projectRow = fetch_assoc($projectResult);
+    $actualProjectId = $projectRow['projectID'];
+    
     // Check if user has access to this project
     $accessResult = query("SELECT userID FROM control_center_user_projects 
-                          WHERE userID = $userId AND projectID = '$projectId'");
+                          WHERE userID = $userId AND projectID = '$actualProjectId'");
     
     return $accessResult && mysqli_num_rows($accessResult) > 0;
 }
@@ -190,12 +194,12 @@ function userHasProjectAccess($userId, $projectId) {
 /**
  * Get Control Center project data
  * 
- * @param string $projectId The Control Center project ID
+ * @param string $projectId The Control Center project ID or link
  * @return array|null Project data or null if not found
  */
 function getControlCenterProject($projectId) {
     $projectId = escape_string($projectId);
-    $result = query("SELECT projectID, name, link, icon FROM projects WHERE projectID = '$projectId'");
+    $result = query("SELECT projectID, name, link, icon FROM projects WHERE projectID = '$projectId' OR link = '$projectId'");
     
     if ($result && mysqli_num_rows($result) > 0) {
         return fetch_assoc($result);

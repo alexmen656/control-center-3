@@ -205,6 +205,31 @@ Authorization: Bearer <jwt_token>
 | `user_add_bookmark` | Lesezeichen hinzufügen |
 | `user_delete_bookmark` | Lesezeichen löschen |
 
+### Web Builder
+
+| Tool | Beschreibung |
+|------|-------------|
+| `webbuilder_project_list` | Alle Web Builder Projekte auflisten |
+| `webbuilder_project_create` | Neues Web Builder Projekt erstellen |
+| `webbuilder_project_get` | Projekt-Details abrufen |
+| `webbuilder_project_update` | Projekt aktualisieren |
+| `webbuilder_project_delete` | Projekt löschen |
+| `webbuilder_page_list` | Seiten eines Projekts auflisten |
+| `webbuilder_page_create` | Neue Seite erstellen |
+| `webbuilder_page_get` | Seiten-Details |
+| `webbuilder_page_update` | Seite aktualisieren |
+| `webbuilder_page_delete` | Seite löschen |
+| `webbuilder_components_get` | Komponenten einer Seite |
+| `webbuilder_component_add` | Komponente hinzufügen |
+| `webbuilder_component_update` | Komponente aktualisieren |
+| `webbuilder_component_delete` | Komponente löschen |
+| `webbuilder_components_replace_all` | Alle Komponenten ersetzen |
+| `webbuilder_domain_get` | Domain-Konfiguration abrufen |
+| `webbuilder_domain_configure` | Domain konfigurieren |
+| `webbuilder_domain_delete` | Domain löschen |
+| `webbuilder_domains_list` | Alle Domains auflisten |
+| `webbuilder_create_landing_page` | Landing Page mit Template erstellen |
+
 ## Beispiele
 
 ### Projekt erstellen
@@ -270,6 +295,93 @@ const response = await fetch('http://localhost:3001/mcp/batch', {
         }
       }
     ]
+  })
+});
+```
+
+### Web Builder Projekt erstellen
+
+```javascript
+// 1. Web Builder Projekt erstellen (verknüpft mit CC Projekt)
+const response = await fetch('http://localhost:3001/mcp/tools/webbuilder_project_create', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${jwtToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    name: 'Meine Website',
+    description: 'Eine moderne Landingpage',
+    ccProjectId: 'my-project-id'  // Control Center Projekt ID
+  })
+});
+```
+
+### Landing Page mit Template erstellen
+
+```javascript
+// Quick Action: Landing Page mit Hero, Features und CTA
+const response = await fetch('http://localhost:3001/mcp/tools/webbuilder_create_landing_page', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${jwtToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    projectId: 42,
+    pageName: 'Product Launch',
+    headline: 'Revolutionieren Sie Ihr Business',
+    subheadline: 'Mit unserer innovativen Lösung sparen Sie Zeit und Geld',
+    ctaText: 'Jetzt starten',
+    ctaLink: '#signup',
+    features: [
+      { title: 'Schnell', description: 'Blitzschnelle Performance', icon: '⚡' },
+      { title: 'Sicher', description: 'Enterprise-Grade Security', icon: '🔒' },
+      { title: 'Einfach', description: 'Intuitive Bedienung', icon: '✨' }
+    ]
+  })
+});
+```
+
+### Domain konfigurieren
+
+```javascript
+// Subdomain für Web Builder Projekt einrichten
+const response = await fetch('http://localhost:3001/mcp/tools/webbuilder_domain_configure', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${jwtToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    ccProject: 'my-project',
+    subdomain: 'mywebsite',       // -> mywebsite.control-center.eu
+    mainDomain: 'control-center.eu',
+    enabled: true
+  })
+});
+// SSL-Zertifikat wird automatisch erstellt!
+```
+
+### HTML-Komponenten hinzufügen
+
+```javascript
+// Custom HTML Komponente zu einer Seite hinzufügen
+const response = await fetch('http://localhost:3001/mcp/tools/webbuilder_component_add', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${jwtToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    pageId: 123,
+    componentId: 'custom-hero-1',
+    htmlCode: `
+      <section class="hero" style="padding: 100px 20px; background: #667eea; color: white;">
+        <h1>Willkommen</h1>
+        <p>Dies ist meine benutzerdefinierte Hero-Sektion</p>
+      </section>
+    `
   })
 });
 ```

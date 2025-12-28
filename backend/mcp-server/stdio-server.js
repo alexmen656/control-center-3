@@ -20,6 +20,7 @@ import { apiTools, handleApiTool } from './tools/apis.js';
 import { contentTools, handleContentTool } from './tools/content.js';
 import { fileTools, handleFileTool } from './tools/files.js';
 import { userTools, handleUserTool } from './tools/users.js';
+import { webBuilderTools, handleWebBuilderTool } from './tools/webbuilder.js';
 
 // Import resources
 import { getResources, readResource } from './resources/index.js';
@@ -82,7 +83,8 @@ async function main() {
       ...apiTools,
       ...contentTools,
       ...fileTools,
-      ...userTools
+      ...userTools,
+      ...webBuilderTools
     ];
     
     return { tools: allTools };
@@ -104,6 +106,8 @@ async function main() {
         return await handleFileTool(name, args, context);
       } else if (name.startsWith('user_')) {
         return await handleUserTool(name, args, context);
+      } else if (name.startsWith('webbuilder_')) {
+        return await handleWebBuilderTool(name, args, context);
       }
       
       return {

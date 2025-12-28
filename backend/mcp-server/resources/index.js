@@ -81,6 +81,21 @@ export async function getResources(user, backendUrl) {
       mimeType: 'application/json'
     });
     
+    // Add Web Builder resources
+    resources.push({
+      uri: 'cms://webbuilder/projects',
+      name: 'Web Builder Projects',
+      description: 'All Web Builder projects',
+      mimeType: 'application/json'
+    });
+    
+    resources.push({
+      uri: 'cms://webbuilder/domains',
+      name: 'Web Builder Domains',
+      description: 'Configured Web Builder domains',
+      mimeType: 'application/json'
+    });
+    
   } catch (error) {
     console.error('Error fetching resources:', error);
   }
@@ -129,6 +144,18 @@ export async function readResource(uri, user, backendUrl) {
       case 'apis':
         if (id === 'available') {
           data = await fetchAvailableApis(backendUrl);
+        }
+        break;
+      
+      case 'webbuilder':
+        if (id === 'projects') {
+          data = await fetchWebBuilderProjects(backendUrl, user);
+        } else if (id === 'domains') {
+          data = await fetchWebBuilderDomains(backendUrl);
+        } else if (id && subResource === 'pages') {
+          data = await fetchWebBuilderPages(id, backendUrl, user);
+        } else if (id && subResource === 'components') {
+          data = await fetchWebBuilderComponents(id, backendUrl, user);
         }
         break;
         
@@ -220,4 +247,66 @@ async function fetchAvailableApis(backendUrl) {
     body: new URLSearchParams({ getAvailableApis: 'true' })
   });
   return response.json();
+}
+
+// ============================================
+// Web Builder Fetch Functions
+// ============================================
+
+async function fetchWebBuilderProjects(backendUrl, user) {
+  try {
+    const response = await fetch(`${backendUrl}/web-builder/projects.php`, {
+      method: 'GET',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': user?.token || ''
+      }
+    });
+    return response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+async function fetchWebBuilderDomains(backendUrl) {
+  try {
+    const response = await fetch(`${backendUrl}/web_builder_domains.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ action: 'list' })
+    });
+    return response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+async function fetchWebBuilderPages(projectId, backendUrl, user) {
+  try {
+    const response = await fetch(`${backendUrl}/web-builder/pages.php?project_id=${projectId}`, {
+      method: 'GET',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': user?.token || ''
+      }
+    });
+    return response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+async function fetchWebBuilderComponents(pageId, backendUrl, user) {
+  try {
+    const response = await fetch(`${backendUrl}/web-builder/components.php?page_id=${pageId}`, {
+      method: 'GET',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': user?.token || ''
+      }
+    });
+    return response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
 }

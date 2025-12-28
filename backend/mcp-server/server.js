@@ -24,6 +24,7 @@ import { apiTools, handleApiTool } from './tools/apis.js';
 import { contentTools, handleContentTool } from './tools/content.js';
 import { fileTools, handleFileTool } from './tools/files.js';
 import { userTools, handleUserTool } from './tools/users.js';
+import { webBuilderTools, handleWebBuilderTool } from './tools/webbuilder.js';
 
 // Import resources
 import { getResources, readResource } from './resources/index.js';
@@ -87,7 +88,8 @@ function createMcpServer(user) {
       ...apiTools,
       ...contentTools,
       ...fileTools,
-      ...userTools
+      ...userTools,
+      ...webBuilderTools
     ];
     
     return { tools: allTools };
@@ -113,6 +115,8 @@ function createMcpServer(user) {
         return await handleFileTool(name, args, context);
       } else if (name.startsWith('user_')) {
         return await handleUserTool(name, args, context);
+      } else if (name.startsWith('webbuilder_')) {
+        return await handleWebBuilderTool(name, args, context);
       }
       
       return {
@@ -197,7 +201,8 @@ app.get('/mcp/tools', authMiddleware, async (req, res) => {
       ...apiTools,
       ...contentTools,
       ...fileTools,
-      ...userTools
+      ...userTools,
+      ...webBuilderTools
     ];
     
     res.json({ tools: allTools });
@@ -233,6 +238,8 @@ app.post('/mcp/tools/:toolName', authMiddleware, async (req, res) => {
       result = await handleFileTool(toolName, args, context);
     } else if (toolName.startsWith('user_')) {
       result = await handleUserTool(toolName, args, context);
+    } else if (toolName.startsWith('webbuilder_')) {
+      result = await handleWebBuilderTool(toolName, args, context);
     } else {
       return res.status(404).json({ error: `Unknown tool: ${toolName}` });
     }
@@ -327,6 +334,8 @@ app.post('/mcp/batch', authMiddleware, async (req, res) => {
         result = await handleFileTool(tool, args, context);
       } else if (tool.startsWith('user_')) {
         result = await handleUserTool(tool, args, context);
+      } else if (tool.startsWith('webbuilder_')) {
+        result = await handleWebBuilderTool(tool, args, context);
       } else {
         result = { error: `Unknown tool: ${tool}` };
       }
