@@ -30,15 +30,6 @@
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-              <ion-icon name="home-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ homePages }}</h3>
-              <p>Homepage</p>
-            </div>
-          </div>
-          <div class="stat-card">
             <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
               <ion-icon name="globe-outline"></ion-icon>
             </div>
@@ -57,22 +48,17 @@
             </div>
           </div>
         </div>
-
-            <!-- Web Builder Domain Configuration -->
         <div class="data-card">
           <div class="card-header">
             <div class="header-left">
-              <h3>Web Builder Subdomain</h3>
-              <p class="header-subtitle">Verbinden Sie eine eigene Subdomain mit Ihrem Web Builder Projekt</p>
+              <h3>Domain Settings</h3>
             </div>
           </div>
-
           <div class="card-body">
             <div v-if="loadingWebBuilderDomain" class="loading-state">
               <ion-icon name="hourglass-outline" class="loading-icon"></ion-icon>
               <p>Laden...</p>
             </div>
-
             <div v-else-if="!mainDomain" class="no-data-state">
               <div class="no-data-content">
                 <ion-icon name="alert-circle-outline" class="no-data-icon"></ion-icon>
@@ -94,12 +80,8 @@
               <div class="form-group">
                 <label class="form-label">Subdomain</label>
                 <div class="domain-input-wrapper">
-                  <input 
-                    v-model="webBuilderDomain.subdomain" 
-                    placeholder="blog"
-                    class="modern-input subdomain-input" 
-                    :disabled="savingWebBuilderDomain" 
-                  />
+                  <input v-model="webBuilderDomain.subdomain" placeholder="blog" class="modern-input subdomain-input"
+                    :disabled="savingWebBuilderDomain" />
                   <span class="domain-suffix">.{{ mainDomain }}</span>
                 </div>
                 <small class="form-help">Beispiel: blog.{{ mainDomain }}</small>
@@ -109,23 +91,18 @@
                 <div class="toggle-wrapper">
                   <label class="form-label">Aktiviert</label>
                   <label class="toggle-switch">
-                    <input 
-                      type="checkbox" 
-                      v-model="webBuilderDomain.is_enabled"
-                      :disabled="savingWebBuilderDomain || !webBuilderDomain.subdomain" 
-                    />
+                    <input type="checkbox" v-model="webBuilderDomain.is_enabled"
+                      :disabled="savingWebBuilderDomain || !webBuilderDomain.subdomain" />
                     <span class="toggle-slider"></span>
                   </label>
                 </div>
               </div>
-
-              <div v-if="webBuilderDomain.ssl_status" class="form-group">
+              <!--    <div v-if="webBuilderDomain.ssl_status" class="form-group">
                 <label class="form-label">SSL Status</label>
                 <span :class="['status-badge', sslStatusColor(webBuilderDomain.ssl_status)]">
                   {{ webBuilderDomain.ssl_status }}
                 </span>
-              </div>
-
+              </div>-->
               <div v-if="webBuilderDomain.id" class="info-message success">
                 <ion-icon name="checkmark-circle-outline"></ion-icon>
                 <div>
@@ -146,27 +123,20 @@
               </div>
 
               <div class="form-actions">
-                <button 
-                  v-if="webBuilderDomain.id" 
-                  class="action-btn secondary"
-                  @click="deleteWebBuilderDomain"
-                  :disabled="savingWebBuilderDomain"
-                >
+                <button v-if="webBuilderDomain.id" class="action-btn secondary" @click="deleteWebBuilderDomain"
+                  :disabled="savingWebBuilderDomain">
                   <ion-icon name="trash-outline"></ion-icon>
                   Löschen
                 </button>
-                <button 
-                  class="action-btn primary"
-                  @click="saveWebBuilderDomain"
-                  :disabled="savingWebBuilderDomain || !webBuilderDomain.subdomain"
-                >
+                <button class="action-btn primary" @click="saveWebBuilderDomain"
+                  :disabled="savingWebBuilderDomain || !webBuilderDomain.subdomain">
                   <ion-icon name="save-outline"></ion-icon>
                   {{ webBuilderDomain.id ? 'Aktualisieren' : 'Speichern' }}
                 </button>
               </div>
             </div>
           </div>
-        </div>        <!-- Projekt-Seiten -->
+        </div> <!-- Projekt-Seiten -->
         <div class="data-card">
           <div class="card-header">
             <div class="header-left">
@@ -219,10 +189,8 @@
                 <div v-for="page in pages" :key="page.id" class="table-row">
                   <div class="table-cell">
                     <div class="page-info">
-                      <ion-icon 
-                        :name="Number(page.is_home) === 1 ? 'home' : 'document-text-outline'" 
-                        :style="{ color: Number(page.is_home) === 1 ? 'var(--primary-color)' : 'var(--text-secondary)' }"
-                      ></ion-icon>
+                      <ion-icon :name="Number(page.is_home) === 1 ? 'home' : 'document-text-outline'"
+                        :style="{ color: Number(page.is_home) === 1 ? 'var(--primary-color)' : 'var(--text-secondary)' }"></ion-icon>
                       <span class="page-name">{{ page.name }}</span>
                     </div>
                   </div>
@@ -230,10 +198,7 @@
                     <span class="cell-content">{{ page.slug }}</span>
                   </div>
                   <div class="table-cell">
-                    <span 
-                      v-if="Number(page.is_home) === 1" 
-                      class="status-badge status-active"
-                    >
+                    <span v-if="Number(page.is_home) === 1" class="status-badge status-active">
                       Homepage
                     </span>
                     <span v-else class="status-badge status-pending">
@@ -256,8 +221,8 @@
           </div>
         </div>
 
-            <!-- Abschnitt für Komponenten-Vorlagen -->
-            <!--<ion-card>
+        <!-- Abschnitt für Komponenten-Vorlagen -->
+        <!--<ion-card>
               <ion-card-header>
                 <ion-card-title>
                   <div class="section-title">Komponenten-Vorlagen</div>
@@ -353,40 +318,24 @@
           <div class="custom-modal-body">
             <div class="form-group">
               <label class="form-label">Seitenname*</label>
-              <input 
-                v-model="newPage.name" 
-                placeholder="z.B. Über Uns" 
-                class="modern-input"
-              />
+              <input v-model="newPage.name" placeholder="z.B. Über Uns" class="modern-input" />
             </div>
 
             <div class="form-group">
               <label class="form-label">URL-Slug</label>
-              <input 
-                v-model="newPage.slug" 
-                placeholder="z.B. ueber-uns" 
-                class="modern-input"
-              />
+              <input v-model="newPage.slug" placeholder="z.B. ueber-uns" class="modern-input" />
               <small class="form-help">Wird automatisch aus dem Namen generiert, wenn leer</small>
             </div>
 
             <div class="form-group">
               <label class="form-label">Meta-Titel</label>
-              <input 
-                v-model="newPage.title" 
-                placeholder="SEO-Titel der Seite" 
-                class="modern-input"
-              />
+              <input v-model="newPage.title" placeholder="SEO-Titel der Seite" class="modern-input" />
             </div>
 
             <div class="form-group">
               <label class="form-label">Meta-Beschreibung</label>
-              <textarea 
-                v-model="newPage.metaDescription"
-                placeholder="Kurze Beschreibung für Suchmaschinen"
-                class="modern-input"
-                rows="3"
-              ></textarea>
+              <textarea v-model="newPage.metaDescription" placeholder="Kurze Beschreibung für Suchmaschinen"
+                class="modern-input" rows="3"></textarea>
             </div>
 
             <div class="form-group">
@@ -495,11 +444,6 @@ export default defineComponent({
     // Template Vorschau Modal
     const isTemplatePreviewOpen = ref(false);
     const selectedTemplate = ref(null);
-
-    // Computed
-    const homePages = computed(() => {
-      return pages.value.filter(page => Number(page.is_home) === 1).length;
-    });
 
     const fetchPages = async () => {
       isLoading.value = true;
@@ -844,7 +788,6 @@ export default defineComponent({
       deleteWebBuilderDomain,
       sslStatusColor,
       projectName,
-      homePages,
       successMessage
     };
   }
@@ -1080,6 +1023,7 @@ export default defineComponent({
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -1255,15 +1199,15 @@ textarea.modern-input {
   border-radius: 50%;
 }
 
-.toggle-switch input:checked + .toggle-slider {
+.toggle-switch input:checked+.toggle-slider {
   background-color: var(--primary-color);
 }
 
-.toggle-switch input:checked + .toggle-slider:before {
+.toggle-switch input:checked+.toggle-slider:before {
   transform: translateX(22px);
 }
 
-.toggle-switch input:disabled + .toggle-slider {
+.toggle-switch input:disabled+.toggle-slider {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -1675,6 +1619,7 @@ textarea.modern-input {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -1685,6 +1630,7 @@ textarea.modern-input {
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1696,6 +1642,7 @@ textarea.modern-input {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;

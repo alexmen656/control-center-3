@@ -184,7 +184,7 @@
             " @click="toggleComponentExpanded(component.id)" lines="none" detail="false" :router-link="'/project/' +
               $route.params.project +
               '/wb/' +
-              component.slug
+              component.slug + '/overview'
               /*component.name
                 .toLowerCase()
                 .replaceAll(' ', '-')
