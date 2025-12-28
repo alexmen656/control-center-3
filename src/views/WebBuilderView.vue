@@ -51,6 +51,89 @@
         <div class="data-card">
           <div class="card-header">
             <div class="header-left">
+              <h3>Projekt-Seiten</h3>
+              <p class="entry-count">{{ pages.length }} Seite(n)</p>
+            </div>
+            <div class="header-actions">
+              <button class="action-btn primary" @click="createNewPage">
+                <ion-icon name="add-outline"></ion-icon>
+                Neue Seite
+              </button>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <div v-if="isLoading" class="loading-state">
+              <ion-icon name="hourglass-outline" class="loading-icon"></ion-icon>
+              <p>Laden...</p>
+            </div>
+
+            <div v-else-if="pages.length === 0" class="no-data-state">
+              <div class="no-data-content">
+                <ion-icon name="document-outline" class="no-data-icon"></ion-icon>
+                <h4>Keine Seiten vorhanden</h4>
+                <p>Erstellen Sie Ihre erste Seite, um mit dem Web Builder zu starten</p>
+                <button class="action-btn primary" @click="createNewPage">
+                  <ion-icon name="add-outline"></ion-icon>
+                  Erste Seite erstellen
+                </button>
+              </div>
+            </div>
+
+            <div v-else class="modern-table">
+              <div class="table-header">
+                <div class="header-cell">
+                  <span class="header-text">Name</span>
+                </div>
+                <div class="header-cell">
+                  <span class="header-text">URL/Slug</span>
+                </div>
+                <div class="header-cell">
+                  <span class="header-text">Status</span>
+                </div>
+                <div class="header-cell actions-header">
+                  <span class="header-text">Aktionen</span>
+                </div>
+              </div>
+
+              <div class="table-body">
+                <div v-for="page in pages" :key="page.id" class="table-row">
+                  <div class="table-cell">
+                    <div class="page-info">
+                      <ion-icon :name="Number(page.is_home) === 1 ? 'home' : 'document-text-outline'"
+                        :style="{ color: Number(page.is_home) === 1 ? 'var(--primary-color)' : 'var(--text-secondary)' }"></ion-icon>
+                      <span class="page-name">{{ page.name }}</span>
+                    </div>
+                  </div>
+                  <div class="table-cell">
+                    <span class="cell-content">{{ page.slug }}</span>
+                  </div>
+                  <div class="table-cell">
+                    <span v-if="Number(page.is_home) === 1" class="status-badge status-active">
+                      Homepage
+                    </span>
+                    <span v-else class="status-badge status-pending">
+                      Seite
+                    </span>
+                  </div>
+                  <div class="table-cell actions-cell">
+                    <div class="action-buttons">
+                      <button class="icon-btn edit-btn" @click="openPageEditor(page)" title="Im Editor öffnen">
+                        <ion-icon name="open-outline"></ion-icon>
+                      </button>
+                      <button class="icon-btn assign-btn" @click="editPage(page)" title="Bearbeiten">
+                        <ion-icon name="create-outline"></ion-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="data-card">
+          <div class="card-header">
+            <div class="header-left">
               <h3>Domain Settings</h3>
             </div>
           </div>
@@ -137,89 +220,6 @@
             </div>
           </div>
         </div> <!-- Projekt-Seiten -->
-        <div class="data-card">
-          <div class="card-header">
-            <div class="header-left">
-              <h3>Projekt-Seiten</h3>
-              <p class="entry-count">{{ pages.length }} Seite(n)</p>
-            </div>
-            <div class="header-actions">
-              <button class="action-btn primary" @click="createNewPage">
-                <ion-icon name="add-outline"></ion-icon>
-                Neue Seite
-              </button>
-            </div>
-          </div>
-
-          <div class="table-wrapper">
-            <div v-if="isLoading" class="loading-state">
-              <ion-icon name="hourglass-outline" class="loading-icon"></ion-icon>
-              <p>Laden...</p>
-            </div>
-
-            <div v-else-if="pages.length === 0" class="no-data-state">
-              <div class="no-data-content">
-                <ion-icon name="document-outline" class="no-data-icon"></ion-icon>
-                <h4>Keine Seiten vorhanden</h4>
-                <p>Erstellen Sie Ihre erste Seite, um mit dem Web Builder zu starten</p>
-                <button class="action-btn primary" @click="createNewPage">
-                  <ion-icon name="add-outline"></ion-icon>
-                  Erste Seite erstellen
-                </button>
-              </div>
-            </div>
-
-            <div v-else class="modern-table">
-              <div class="table-header">
-                <div class="header-cell">
-                  <span class="header-text">Name</span>
-                </div>
-                <div class="header-cell">
-                  <span class="header-text">URL/Slug</span>
-                </div>
-                <div class="header-cell">
-                  <span class="header-text">Status</span>
-                </div>
-                <div class="header-cell actions-header">
-                  <span class="header-text">Aktionen</span>
-                </div>
-              </div>
-
-              <div class="table-body">
-                <div v-for="page in pages" :key="page.id" class="table-row">
-                  <div class="table-cell">
-                    <div class="page-info">
-                      <ion-icon :name="Number(page.is_home) === 1 ? 'home' : 'document-text-outline'"
-                        :style="{ color: Number(page.is_home) === 1 ? 'var(--primary-color)' : 'var(--text-secondary)' }"></ion-icon>
-                      <span class="page-name">{{ page.name }}</span>
-                    </div>
-                  </div>
-                  <div class="table-cell">
-                    <span class="cell-content">{{ page.slug }}</span>
-                  </div>
-                  <div class="table-cell">
-                    <span v-if="Number(page.is_home) === 1" class="status-badge status-active">
-                      Homepage
-                    </span>
-                    <span v-else class="status-badge status-pending">
-                      Seite
-                    </span>
-                  </div>
-                  <div class="table-cell actions-cell">
-                    <div class="action-buttons">
-                      <button class="icon-btn edit-btn" @click="openPageEditor(page)" title="Im Editor öffnen">
-                        <ion-icon name="open-outline"></ion-icon>
-                      </button>
-                      <button class="icon-btn assign-btn" @click="editPage(page)" title="Bearbeiten">
-                        <ion-icon name="create-outline"></ion-icon>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <!-- Abschnitt für Komponenten-Vorlagen -->
         <!--<ion-card>
@@ -422,7 +422,7 @@ export default defineComponent({
     const savingWebBuilderDomain = ref(false);
     const webBuilderDomainError = ref('');
     const webBuilderDomainSuccess = ref('');
-    const mainDomain = ref(''); // Main Domain aus Project Info
+    const mainDomain = ref('');
     const webBuilderDomain = ref({
       id: null,
       subdomain: '',
@@ -431,7 +431,6 @@ export default defineComponent({
       ssl_status: ''
     });
 
-    // Neue Seite Modal
     const isNewPageModalOpen = ref(false);
     const newPage = ref({
       name: '',
@@ -441,23 +440,39 @@ export default defineComponent({
       isHome: false
     });
 
-    // Template Vorschau Modal
     const isTemplatePreviewOpen = ref(false);
     const selectedTemplate = ref(null);
 
     const fetchPages = async () => {
       isLoading.value = true;
       try {
-        const response = await axios.post(
-          'web_pages.php',
-          qs.stringify({
-            getPagesByProject: true,
-            project: projectName.value
-          })
+        const response = await axios.get(
+          `sidebar.php?getSideBarByProjectName=${projectName.value}`
         );
 
-        if (response.data) {
-          pages.value = response.data.pages || [];
+        if (response.data && response.data.components) {
+          // Extrahiere alle Web Builder Pages aus den components
+          const webBuilderPages = [];
+          response.data.components.forEach(component => {
+            const componentId = component.id;
+            const subItems = response.data.componentSubItems[componentId] || [];
+
+            subItems.forEach(subItem => {
+              if (subItem.type === 'page') {
+                webBuilderPages.push({
+                  id: subItem.id,
+                  name: subItem.name,
+                  slug: subItem.slug,
+                  is_home: subItem.icon === 'home' ? 1 : 0,
+                  wb_project_id: componentId
+                });
+              }
+            });
+          });
+
+          pages.value = webBuilderPages;
+        } else {
+          pages.value = [];
         }
       } catch (error) {
         console.error('Fehler beim Laden der Seiten:', error);
@@ -488,7 +503,6 @@ export default defineComponent({
           return;
         }
 
-        // Dann Web Builder Domain laden
         const response = await axios.post(
           'web_builder_domains.php',
           qs.stringify({
@@ -631,23 +645,7 @@ export default defineComponent({
     };
 
     const openWebBuilder = () => {
-      axios.post(
-        'projects.php',
-        qs.stringify({
-          openWebBuilder: true,
-          project: projectName.value
-        })
-      )
-        .then(response => {
-          if (response.data.success && response.data.url) {
-            window.open(response.data.url, '_blank');
-          } else {
-            console.error('Fehler beim Öffnen des Web Builders:', response.data.message);
-          }
-        })
-        .catch(error => {
-          console.error('Fehler beim Öffnen des Web Builders:', error);
-        });
+      window.open(`http://localhost:5174/project/${route.params.wb_project}`, '_blank');
     };
 
     const openPageEditor = (page) => {
