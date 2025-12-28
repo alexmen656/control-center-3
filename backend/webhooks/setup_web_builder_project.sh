@@ -125,11 +125,12 @@ else
     warning "Web root already exists"
 fi
 
-# 2. Nginx Konfiguration erstellen
+# 2. Nginx Konfiguration erstellen (HTTP first, Certbot adds SSL)
 log "Creating Nginx configuration"
 cat > "$NGINX_CONFIG" <<EOF
 server {
     listen 80;
+    listen [::]:80;
     server_name $DOMAIN;
     
     root $WEB_ROOT;
@@ -194,19 +195,13 @@ log "Reloading Nginx"
 systemctl reload nginx
 log "✓ Nginx reloaded"
 
-# 6. SSL-Zertifikat mit Certbot (optional, mit Bestätigung)
-echo ""
-read -p "SSL-Zertifikat mit Certbot erstellen? (j/N) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Jj]$ ]]; then
-    log "Creating SSL certificate with Certbot"
-    if certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --email admin@control-center.eu; then
-        log "✓ SSL certificate created successfully"
-    else
-        warning "SSL certificate creation failed - you can try manually later"
-    fi
+# 6. SSL-Zertifikat mit Certbot (automatisch)
+log "Creating SSL certificate with Certbot"
+if certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --email admin@control-center.eu --redirect 2>&1; then
+    log "✓ SSL certificate created successfully"
 else
-    warning "Skipping SSL certificate creation"
+    warning "SSL certificate creation failed - DNS may not be propagated yet"
+    warning "Try running manually: certbot --nginx -d $DOMAIN"
 fi
 
 # Erfolgsmeldung
