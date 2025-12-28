@@ -93,10 +93,6 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/NewProject.vue"),
   },
   {
-    path: "/telegram/bot",
-    component: () => import("../views/TelegramBot.vue"),
-  },
-  {
     path: "/filesystem/",
     component: () => import("../views/FileSystem.vue"),
   },
@@ -149,14 +145,6 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/project/:project/info",
     component: () => import("../views/ProjectInfo.vue"),
-  },
-  {
-    path: "/project/:project/telegram-bot",
-    component: () => import("../views/TelegramBot.vue"),
-  },
-  {
-    path: "/project/:project/telegram-bot/config",
-    component: () => import("../views/TelegramBotConfig.vue"),
   },
   {
     path: "/project/:project/ai-dashboard-generator",
@@ -270,22 +258,6 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../apis/ApiSettings.vue"),
   },
   {
-    path: "/project/:project/qr-code-generator", ///:qr-code-generator
-    component: () => import("../views/QrCodeGenerator.vue"),
-  },
-  {
-    path: "/project/:project/qr-code-generator/config", ///:qr-code-generator
-    component: () => import("../views/QrCodeGeneratorConfig.vue"),
-  },
-  {
-    path: "/project/:project/qr-code-scanner", ///:qr-code-scanner
-    component: () => import("../views/QrCodeScanner.vue"),
-  },
-  {
-    path: "/project/:project/qr-code-scanner/config", ///:qr-code-scanner
-    component: () => import("../views/QrCodeScannerConfig.vue"),
-  },
-  {
     path: "/project/:project/chat-app",
     component: () => import("../views/ChatApp.vue"),
   },
@@ -362,13 +334,13 @@ for (const path in modules) {
   }));
 
   // Add the `/config` route for each module
-  const configRoute: RouteRecordRaw = {
+  /*const configRoute: RouteRecordRaw = {
     path: `/project/:project/${moduleName}/config`,
     name: `${moduleName}-config`,
     component: () => import(`@/views/ConfigView.vue`),
-  };
+  };*/
 
-  routes.push(...transformedRoutes, configRoute);
+  routes.push(...transformedRoutes);//, configRoute
 }
 
 const services = import.meta.glob("@/user_services/*/routes.ts", {

@@ -1,34 +1,44 @@
 <template>
-  <div class="ion-padding">
-    <h1>Telegram-Bot Nachricht senden</h1>
-    <ion-input
-      placeholder="Nachricht"
-      v-model="message"
-      :value="message"
-      @ionInput="message = $event.target.value"
-    ></ion-input>
-    <ion-button @click="sendMessage()">Senden</ion-button>
-  </div>
+  <ion-page>
+    <ion-content>
+      <div class="ion-padding">
+        <h1>Telegram-Bot Nachricht senden</h1>
+        <ion-input
+          placeholder="Nachricht"
+          v-model="message"
+          :value="message"
+          @ionInput="message = $event.target.value"
+        ></ion-input>
+        <ion-button @click="sendMessage()">Senden</ion-button>
+      </div>
+    </ion-content>
+  </ion-page>
 </template>
 
 <script>
-import { IonButton, IonInput } from "@ionic/vue";
+import { defineComponent } from "vue";
+import { IonPage, IonContent, IonButton, IonInput } from "@ionic/vue";
 import { useRoute } from "vue-router";
 import qs from "qs";
 
-export default {
+export default defineComponent({
+  name: "TelegramBotView",
   components: {
+    IonPage,
+    IonContent,
     IonButton,
     IonInput,
   },
   data() {
     return {
       message: "",
+      token: "",
+      chatID: "",
     };
   },
   mounted() {
     const route = useRoute();
-    $axios
+    this.$axios
       .post(
         "telegram_bot.php",
         qs.stringify({ getConfig: "getConfig", project: route.params.project })
@@ -39,8 +49,8 @@ export default {
         const baseUrl = `https://api.telegram.org/bot${this.token}`;
         const repliedMessages = {};
 
-        function getUpdates() {
-          $axios
+        const getUpdates = () => {
+          this.$axios
             .post(`${baseUrl}/getUpdates`)
             .then((response) => {
               const updates = response.data.result;
@@ -50,7 +60,7 @@ export default {
                 const messageId = message.message_id;
                 if (!repliedMessages[messageId]) {
                   repliedMessages[messageId] = true;
-                  $axios.post(`${baseUrl}/sendMessage`, {
+                  this.$axios.post(`${baseUrl}/sendMessage`, {
                     chat_id: chatId,
                     text: "Hallo",
                   });
@@ -62,7 +72,7 @@ export default {
               console.log(error);
               setTimeout(getUpdates, 5000);
             });
-        }
+        };
         getUpdates();
       });
   },
@@ -70,13 +80,14 @@ export default {
     sendMessage() {
       const url = "https://api.telegram.org/bot" + this.token + "/sendMessage";
       const fullUrl = url + "?chat_id=" + this.chatID + "&text=" + this.message;
-      $axios.post(fullUrl);
-
-      //send image
-      //const url2 = "https://api.telegram.org/bot" + token + "/sendPhoto";
-      //const fullUrl2 = url2 + '?chat_id=796382938&photo=https://www.simplilearn.com/ice9/free_resources_article_thumb/what_is_image_Processing.jpg&caption=Ty mas mega velky penis hahahahahah';
-      //$axios.post(fullUrl2);
+      this.$axios.post(fullUrl);
     },
   },
-};
+});
 </script>
+
+<style scoped>
+h1 {
+  margin-bottom: 1rem;
+}
+</style>

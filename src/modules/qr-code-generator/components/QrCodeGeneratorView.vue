@@ -8,23 +8,22 @@
         :select="code_type_select"
       />
 
-      <ion-button v-if="code_type" @click="generate()"
-        >Generate
-        {{ code_type == "barcode" ? "Barcode" : "QR Code" }}</ion-button
-      >
+      <ion-button v-if="code_type" @click="generate()">
+        Generate {{ code_type == "barcode" ? "Barcode" : "QR Code" }}
+      </ion-button>
+      
       <div class="img-box">
         <h2>{{ h2 }}</h2>
         <img v-if="link" alt="Barcode Generator TEC-IT" :src="link" />
       </div>
+      
       <ion-grid>
         <ion-row>
           <ion-col>
             <img v-if="link" class="img2" alt="Barcode Generator TEC-IT" :src="link" />
-
-            <ion-button v-if="link" @click="print()"
-              >Print
-              {{ code_type == "barcode" ? "Barcode" : "QR Code" }}</ion-button
-            >
+            <ion-button v-if="link" @click="print()">
+              Print {{ code_type == "barcode" ? "Barcode" : "QR Code" }}
+            </ion-button>
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -36,11 +35,25 @@
 import { getConfig } from "@/getToolConfig";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 import { defineComponent, ref } from "vue";
+import {
+  IonPage,
+  IonContent,
+  IonButton,
+  IonGrid,
+  IonRow,
+  IonCol
+} from "@ionic/vue";
 
 export default defineComponent({
-  name: "BarcodeScanner",
+  name: "QrCodeGeneratorView",
   components: {
     FloatingSelect,
+    IonPage,
+    IonContent,
+    IonButton,
+    IonGrid,
+    IonRow,
+    IonCol
   },
   setup() {
     const isOpen = ref(false);
@@ -64,7 +77,6 @@ export default defineComponent({
       display: "",
       link_data: 0,
       link_dataa: {},
-
       entry: "",
       select: {
         type: "select",
@@ -142,7 +154,8 @@ export default defineComponent({
   },
 });
 </script>
-<style>
+
+<style scoped>
 img {
   max-height: 35%;
 }
@@ -162,6 +175,7 @@ h2 {
     font-size: 3rem;
     margin-bottom: 1.25rem;
   }
+  
   .img-box {
     width: 100% !important;
     height: 100% !important;

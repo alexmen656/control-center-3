@@ -3,28 +3,25 @@
     <StreamBarcodeReader
       class="reader"
       @decode="onDecode"
-    /><!--      @loaded="onLoaded"-->
+    />
     <ion-modal :is-open="isOpen" ref="modal">
       <ion-header>
         <ion-toolbar>
           <ion-buttons slot="start">
-            <ion-button color="primary" @click="setOpen(false)"
-              >Cancel</ion-button
-            >
+            <ion-button color="primary" @click="setOpen(false)">
+              Cancel
+            </ion-button>
           </ion-buttons>
-          <ion-title style="text-align: center">{{ display }}</ion-title
-          ><!-- Found Entry -->
+          <ion-title style="text-align: center">{{ display }}</ion-title>
           <ion-buttons slot="end">
-            <ion-button color="primary" :strong="true" @click="setOpen(false)"
-              >Confirm</ion-button
-            >
+            <ion-button color="primary" :strong="true" @click="setOpen(false)">
+              Confirm
+            </ion-button>
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
       <ion-content class="ion-padding">
         Details:<br />
-        <!--  {{ display }}
-     {{ found[1] }}-->
         <span v-for="(value, key) in found" :key="value">
           {{ key }}: {{ value }}<br />
         </span>
@@ -37,11 +34,29 @@
 import { StreamBarcodeReader } from "vue-barcode-reader";
 import { getConfig } from "@/getToolConfig";
 import { defineComponent, ref } from "vue";
+import {
+  IonPage,
+  IonModal,
+  IonHeader,
+  IonToolbar,
+  IonButtons,
+  IonButton,
+  IonTitle,
+  IonContent
+} from "@ionic/vue";
 
 export default defineComponent({
-  name: "BarcodeScanner",
+  name: "QrCodeScannerView",
   components: {
     StreamBarcodeReader,
+    IonPage,
+    IonModal,
+    IonHeader,
+    IonToolbar,
+    IonButtons,
+    IonButton,
+    IonTitle,
+    IonContent
   },
   setup() {
     const isOpen = ref(false);
@@ -96,13 +111,11 @@ export default defineComponent({
         this.found = found;
       });
     },
-    /*onLoaded() {
-      console.log(`Ready to start scanning barcodes`);
-    },*/
   },
 });
 </script>
-<style>
+
+<style scoped>
 @media print {
   .img-box {
     width: 210mm !important;
@@ -117,7 +130,6 @@ export default defineComponent({
   img {
     display: block !important;
     width: 11cm;
-    /*  left: 5cm !important;*/
     top: 40% !important;
   }
 
@@ -132,8 +144,8 @@ export default defineComponent({
   }
 
   @page {
-    size: auto; /* auto is the initial value */
-    margin: 0; /* this affects the margin in the printer settings */
+    size: auto;
+    margin: 0;
   }
 }
 </style>
