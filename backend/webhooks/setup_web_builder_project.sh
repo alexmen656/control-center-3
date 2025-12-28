@@ -65,7 +65,7 @@ log "Creating web root: $WEB_ROOT"
 if [ ! -d "$WEB_ROOT" ]; then
     mkdir -p "$WEB_ROOT"
     chown -R ftpuser:ftpuser "$WEB_ROOT"
-    chmod 755 "$WEB_ROOT"
+    chmod 775 "$WEB_ROOT"  # Group-writable für www-data (Publish-Webhook)
     log "✓ Web root created"
     
     # Erstelle eine einfache index.html als Platzhalter
@@ -120,6 +120,7 @@ if [ ! -d "$WEB_ROOT" ]; then
 </html>
 EOF
     chown ftpuser:ftpuser "$WEB_ROOT/index.html"
+    chmod 664 "$WEB_ROOT/index.html"  # Group-writable für www-data (Publish-Webhook)
     log "✓ Created placeholder index.html"
 else
     warning "Web root already exists"

@@ -116,16 +116,38 @@ const saveOnly = async function() {
     // Erst lokal speichern
     await pageBuilder.saveComponentsToBackend();
     
-    // Dann die Publish-URL anpingen
-    //console.log(currentProject);
-    const response = await fetch(`https://www.control-center.eu/publish.php?project_id=${currentProject.value.id}&css=true`);
-    if (!response.ok) {
-      console.error('Veröffentlichung fehlgeschlagen:', response.status);
-      toastMessage.value = 'Fehler beim Veröffentlichen!';
+    // Auth Token holen
+    const token = localStorage.getItem('controlCenter_auth_token');
+    
+    // Dann das neue Publish-API aufrufen mit Deployment
+    const response = await fetch(
+      `https://alex.polan.sk/control-center/web-builder/publish.php?project_id=${currentProject.value.id}&deploy=true`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    const result = await response.json();
+    
+    if (!response.ok || !result.success) {
+      console.error('Veröffentlichung fehlgeschlagen:', result);
+      toastMessage.value = result.message || 'Fehler beim Veröffentlichen!';
       toastType.value = 'error';
     } else {
-      console.log('Seite erfolgreich veröffentlicht');
-      toastMessage.value = 'Erfolgreich gespeichert und veröffentlicht!';
+      console.log('Seite erfolgreich veröffentlicht:', result);
+      
+      // Zeige unterschiedliche Nachrichten je nach Deployment-Status
+      if (result.deployment?.success) {
+        toastMessage.value = `Veröffentlicht auf ${result.deployment.domain}!`;
+      } else if (result.deployment?.error) {
+        toastMessage.value = `Gespeichert! (${result.deployment.error})`;
+      } else {
+        toastMessage.value = 'Erfolgreich gespeichert!';
+      }
       toastType.value = 'success';
     }
     

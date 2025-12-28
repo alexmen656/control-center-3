@@ -14,10 +14,15 @@ header('Content-Type: application/json');
  * Parameter:
  * - project_id: ID des zu veröffentlichenden Projekts (erforderlich)
  * - css: Bei 'true' wird die CSS-Datei optimiert, um unbenutzte Klassen zu entfernen (optional)
+ * - deploy: Bei 'true' werden die Dateien an den Publish-Server gesendet (optional)
  */
 
 // CSS-Optimizer-Klasse einbinden
 require_once 'css-optimizer.php';
+
+// Webhook-Konfiguration für Deployment
+define('PUBLISH_WEBHOOK_URL', 'https://webhook.control-center.eu/publish_web_builder.php');
+define('PUBLISH_WEBHOOK_SECRET', 'cc_web_builder_publish_secret_2025');
 
 // Check if project_id is provided
 if (!isset($_GET['project_id']) || empty($_GET['project_id'])) {
@@ -28,6 +33,9 @@ $projectId = (int)$_GET['project_id'];
 
 // Überprüfen, ob CSS-Optimierung aktiviert werden soll
 $optimizeCss = isset($_GET['css']) && ($_GET['css'] === 'true' || $_GET['css'] === '1');
+
+// Überprüfen, ob Deployment aktiviert werden soll
+$deployToServer = isset($_GET['deploy']) && ($_GET['deploy'] === 'true' || $_GET['deploy'] === '1');
 
 // Database connection
 $dbConfig = [
@@ -168,6 +176,107 @@ if ($optimizeCss) {
 } else {
     echo "<h3>CSS-Optimierung übersprungen</h3>";
     echo "<p>CSS-Datei wurde unverändert übernommen. Füge '?css=true' zur URL hinzu, um ungenutzte CSS-Klassen zu entfernen.</p>";
+}
+
+// ============================================
+// DEPLOYMENT ZUM PUBLISH-SERVER
+// ============================================
+if ($deployToServer) {
+    echo "<h3>Deploying to Publish Server...</h3>";
+    
+    // Hole den CC Project Link (project_id in der Web Builder Tabelle)
+    $stmtProjectLink = $pdo->prepare('SELECT project_id FROM control_center_modul_web_builder_projects WHERE id = ?');
+    $stmtProjectLink->execute([$projectId]);
+    $projectLinkRow = $stmtProjectLink->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$projectLinkRow || empty($projectLinkRow['project_id'])) {
+        echo "<p style='color: orange;'>⚠️ Kein Control Center Projekt verknüpft. Deployment übersprungen.</p>";
+    } else {
+        $ccProjectLink = $projectLinkRow['project_id'];
+        
+        // Hole den CC Project Slug (link-Feld aus projects-Tabelle)
+        $stmtCCProject = $pdo->prepare('SELECT link FROM projects WHERE projectID = ?');
+        $stmtCCProject->execute([$ccProjectLink]);
+        $ccProject = $stmtCCProject->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$ccProject || empty($ccProject['link'])) {
+            echo "<p style='color: orange;'>⚠️ Control Center Projekt nicht gefunden. Deployment übersprungen.</p>";
+        } else {
+            $projectSlug = $ccProject['link'];
+            
+            // Prüfe ob eine Domain konfiguriert ist
+            $stmtDomain = $pdo->prepare('SELECT domain FROM web_builder_domains WHERE projectID = ? AND is_enabled = 1 LIMIT 1');
+            $stmtDomain->execute([$ccProjectLink]);
+            $domainRow = $stmtDomain->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$domainRow) {
+                echo "<p style='color: orange;'>⚠️ Keine Domain konfiguriert. Deployment übersprungen.</p>";
+                echo "<p>Bitte zuerst eine Domain im Web Builder konfigurieren.</p>";
+            } else {
+                echo "<p>📤 Deploying zu: {$domainRow['domain']}</p>";
+                echo "<p>Project Slug: {$projectSlug}</p>";
+                
+                // Sammle alle Dateien aus dem published-Verzeichnis
+                $filesToDeploy = [];
+                $publishedDir = $outputDir;
+                
+                if (is_dir($publishedDir)) {
+                    $files = scandir($publishedDir);
+                    foreach ($files as $file) {
+                        if ($file === '.' || $file === '..') continue;
+                        $filePath = $publishedDir . $file;
+                        if (is_file($filePath)) {
+                            $filesToDeploy[] = [
+                                'filename' => $file,
+                                'content' => file_get_contents($filePath)
+                            ];
+                        }
+                    }
+                }
+                
+                echo "<p>📁 " . count($filesToDeploy) . " Dateien zum Deployment bereit</p>";
+                
+                // Sende an Webhook
+                $webhookData = [
+                    'secret' => PUBLISH_WEBHOOK_SECRET,
+                    'project_slug' => $projectSlug,
+                    'files' => $filesToDeploy
+                ];
+                
+                $opts = [
+                    'http' => [
+                        'method' => 'POST',
+                        'header' => "Content-Type: application/json\r\n",
+                        'content' => json_encode($webhookData),
+                        'timeout' => 30
+                    ]
+                ];
+                
+                $context = stream_context_create($opts);
+                $response = @file_get_contents(PUBLISH_WEBHOOK_URL, false, $context);
+                
+                if ($response === false) {
+                    echo "<p style='color: red;'>❌ Deployment fehlgeschlagen - Server nicht erreichbar</p>";
+                } else {
+                    $result = json_decode($response, true);
+                    if ($result && isset($result['success']) && $result['success']) {
+                        echo "<p style='color: green;'>✅ Deployment erfolgreich!</p>";
+                        echo "<p>Veröffentlichte Dateien: " . implode(', ', $result['published']) . "</p>";
+                        echo "<p><a href='https://{$domainRow['domain']}' target='_blank'>🌐 Live ansehen: https://{$domainRow['domain']}</a></p>";
+                    } else {
+                        $errorMsg = isset($result['error']) ? $result['error'] : 'Unbekannter Fehler';
+                        echo "<p style='color: red;'>❌ Deployment fehlgeschlagen: {$errorMsg}</p>";
+                        if (isset($result['errors'])) {
+                            echo "<pre>" . print_r($result['errors'], true) . "</pre>";
+                        }
+                    }
+                }
+            }
+        }
+    }
+} else {
+    echo "<h3>Deployment übersprungen</h3>";
+    echo "<p>Füge '&deploy=true' zur URL hinzu, um die Seite auf dem Publish-Server zu veröffentlichen.</p>";
 }
 
 echo "<h3>Publishing complete for project '{$project['name']}'</h3>";
