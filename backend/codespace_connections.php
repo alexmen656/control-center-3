@@ -1,6 +1,7 @@
 <?php
 require_once 'config.php';
 require_once 'head.php';
+require_once __DIR__ . '/helpers/cloudflare.php';
 
 function getVercelFrameworkPreset($template)
 {
@@ -606,34 +607,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        // DNS-Eintrag über Cloudflare erstellen
-        $cloudflare_zone_id = isset($cloudflare_zone_id) ? $cloudflare_zone_id : '';
-        $cloudflare_api_token = isset($cloudflare_api_token) ? $cloudflare_api_token : '';
-        $cloudflare_api_url = "https://api.cloudflare.com/client/v4/zones/$cloudflare_zone_id/dns_records";
-        $cloudflare_post = json_encode([
-            'type' => 'CNAME',
-            'name' => $full_domain,
-            'content' => $cnameTarget,
-            'ttl' => 300,
-            'proxied' => false
-        ]);
+        // DNS-Eintrag über Cloudflare erstellen (nutzt zentralen Helper)
+        $cloudflareResult = cloudflare_createCNAMERecord($full_domain, $cnameTarget, false);
 
-        $cloudflareOpts = [
-            'http' => [
-                'method' => 'POST',
-                'header' => "Authorization: Bearer $cloudflare_api_token\r\nContent-Type: application/json\r\n",
-                'content' => $cloudflare_post
-            ]
-        ];
-
-        $cloudflareContext = stream_context_create($cloudflareOpts);
-        $cloudflareResponse = @file_get_contents($cloudflare_api_url, false, $cloudflareContext);
-        $cloudflareResult = $cloudflareResponse ? json_decode($cloudflareResponse, true) : null;
-
-        if (!$cloudflareResponse || (isset($cloudflareResult['success']) && !$cloudflareResult['success'])) {
+        if (!$cloudflareResult['success']) {
             query("DELETE FROM codespace_domains WHERE codespace_id='$codespace_id'");
-            $errMsg = isset($cloudflareResult['errors'][0]['message']) ? $cloudflareResult['errors'][0]['message'] : 'Cloudflare API Fehler';
-            echo json_encode(['error' => 'Cloudflare: ' . $errMsg]);
+            echo json_encode(['error' => 'Cloudflare: ' . ($cloudflareResult['message'] ?? 'Cloudflare API Fehler')]);
             exit;
         }
 

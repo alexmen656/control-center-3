@@ -6,6 +6,7 @@
 
 include "head.php";
 include "project_helper.php";
+require_once __DIR__ . '/helpers/cloudflare.php';
 
 // Tabelle erstellen falls nicht existiert
 function ensureCustomLoginDomainsTable() {
@@ -95,82 +96,23 @@ function triggerNginxWebhook($domain, $action = 'add') {
 
 /**
  * Cloudflare A-Record erstellen für Custom Login Domain (nur für interne Domains)
+ * Nutzt den zentralen Cloudflare Helper
  */
 function createCloudflareARecord($domain) {
-    global $cloudflare_zone_id, $cloudflare_api_token;
-    
     // Nur für interne Domains
     if (!isInternalDomain($domain)) {
         return ['success' => true, 'data' => ['id' => null], 'external' => true];
     }
     
-    if (empty($cloudflare_zone_id) || empty($cloudflare_api_token)) {
-        return ['success' => false, 'message' => 'Cloudflare API nicht konfiguriert'];
-    }
-    
-    $api_url = "https://api.cloudflare.com/client/v4/zones/$cloudflare_zone_id/dns_records";
-    
-    $data = [
-        'type' => 'A',
-        'name' => $domain,
-        'content' => LOGIN_SERVER_IP,
-        'ttl' => 300,
-        'proxied' => true  // Cloudflare Proxy für SSL
-    ];
-    
-    $opts = [
-        'http' => [
-            'method' => 'POST',
-            'header' => "Authorization: Bearer $cloudflare_api_token\r\nContent-Type: application/json\r\n",
-            'content' => json_encode($data)
-        ]
-    ];
-    
-    $context = stream_context_create($opts);
-    $response = @file_get_contents($api_url, false, $context);
-    
-    if (!$response) {
-        return ['success' => false, 'message' => 'Cloudflare API Request fehlgeschlagen'];
-    }
-    
-    $result = json_decode($response, true);
-    
-    if (!$result['success']) {
-        $error = isset($result['errors'][0]['message']) ? $result['errors'][0]['message'] : 'Unbekannter Cloudflare Fehler';
-        return ['success' => false, 'message' => $error];
-    }
-    
-    return ['success' => true, 'data' => $result['result']];
+    return cloudflare_createARecord($domain, LOGIN_SERVER_IP, true); // proxied = true für SSL
 }
 
 /**
  * Cloudflare DNS Record löschen
+ * Nutzt den zentralen Cloudflare Helper
  */
 function deleteCloudflareRecord($recordId) {
-    global $cloudflare_zone_id, $cloudflare_api_token;
-    
-    if (empty($cloudflare_zone_id) || empty($cloudflare_api_token) || empty($recordId)) {
-        return ['success' => false, 'message' => 'Cloudflare API nicht konfiguriert oder Record ID fehlt'];
-    }
-    
-    $api_url = "https://api.cloudflare.com/client/v4/zones/$cloudflare_zone_id/dns_records/$recordId";
-    
-    $opts = [
-        'http' => [
-            'method' => 'DELETE',
-            'header' => "Authorization: Bearer $cloudflare_api_token\r\nContent-Type: application/json\r\n"
-        ]
-    ];
-    
-    $context = stream_context_create($opts);
-    $response = @file_get_contents($api_url, false, $context);
-    
-    if (!$response) {
-        return ['success' => false, 'message' => 'Cloudflare API Request fehlgeschlagen'];
-    }
-    
-    $result = json_decode($response, true);
-    return ['success' => $result['success'] ?? false];
+    return cloudflare_deleteRecord($recordId);
 }
 
 // API Endpunkte

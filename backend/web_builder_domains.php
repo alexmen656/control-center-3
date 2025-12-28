@@ -1,6 +1,7 @@
 <?php
 include "head.php";
 include "project_helper.php";
+require_once __DIR__ . '/helpers/cloudflare.php';
 
 function ensureWebBuilderDomainsTable()
 {
@@ -26,80 +27,25 @@ define('WEB_BUILDER_SERVER_IP', '92.5.112.145');
 define('NGINX_WEBHOOK_URL', 'https://webhook.control-center.eu/web_builder_webhook.php');
 define('WEBHOOK_SECRET', 'cc_web_builder_webhook_secret_2025');
 
+/**
+ * Erstellt einen A-Record für Web Builder Domain
+ * Nutzt den zentralen Cloudflare Helper
+ */
 function createCloudflareARecord($domain)
 {
-    global $cloudflare_zone_id, $cloudflare_api_token;
-
-    if (empty($cloudflare_zone_id) || empty($cloudflare_api_token)) {
-        return ['success' => false, 'message' => 'Cloudflare API nicht konfiguriert'];
-    }
-
-    $api_url = "https://api.cloudflare.com/client/v4/zones/$cloudflare_zone_id/dns_records";
-
-    $data = [
-        'type' => 'A',
-        'name' => $domain,
-        'content' => WEB_BUILDER_SERVER_IP,
-        'ttl' => 300,
-        'proxied' => false
-    ];
-
-    $opts = [
-        'http' => [
-            'method' => 'POST',
-            'header' => "Authorization: Bearer $cloudflare_api_token\r\nContent-Type: application/json\r\n",
-            'content' => json_encode($data),
-            'timeout' => 10
-        ]
-    ];
-
-    $context = stream_context_create($opts);
-    $response = @file_get_contents($api_url, false, $context);
-
-    if (!$response) {
-        return ['success' => false, 'message' => 'Cloudflare API Request fehlgeschlagen'];
-    }
-
-    $result = json_decode($response, true);
-
-    if (!$result['success']) {
-        $error = isset($result['errors'][0]['message']) ? $result['errors'][0]['message'] : 'Unbekannter Cloudflare Fehler';
-        return ['success' => false, 'message' => $error, 'data' => $result];
-    }
-
-    return ['success' => true, 'data' => $result['result']];
+    error_log("[WebBuilder] createCloudflareARecord aufgerufen für: $domain");
+    $result = cloudflare_createARecord($domain, WEB_BUILDER_SERVER_IP, false);
+    error_log("[WebBuilder] Cloudflare Result: " . json_encode($result));
+    return $result;
 }
 
 /**
- * Cloudflare DNS Record löschen
+ * Löscht einen Cloudflare DNS Record
+ * Nutzt den zentralen Cloudflare Helper
  */
 function deleteCloudflareRecord($recordId)
 {
-    global $cloudflare_zone_id, $cloudflare_api_token;
-
-    if (empty($cloudflare_zone_id) || empty($cloudflare_api_token) || empty($recordId)) {
-        return ['success' => false, 'message' => 'Cloudflare API nicht konfiguriert oder Record ID fehlt'];
-    }
-
-    $api_url = "https://api.cloudflare.com/client/v4/zones/$cloudflare_zone_id/dns_records/$recordId";
-
-    $opts = [
-        'http' => [
-            'method' => 'DELETE',
-            'header' => "Authorization: Bearer $cloudflare_api_token\r\nContent-Type: application/json\r\n",
-            'timeout' => 10
-        ]
-    ];
-
-    $context = stream_context_create($opts);
-    $response = @file_get_contents($api_url, false, $context);
-
-    if (!$response) {
-        return ['success' => false, 'message' => 'Cloudflare API Request fehlgeschlagen'];
-    }
-
-    $result = json_decode($response, true);
-    return ['success' => $result['success'] ?? false];
+    return cloudflare_deleteRecord($recordId);
 }
 
 /**

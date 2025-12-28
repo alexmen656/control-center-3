@@ -1,6 +1,7 @@
 <?php
 include "head.php";
 include "project_helper.php";
+require_once __DIR__ . '/helpers/cloudflare.php';
 
 function slugExists($projectID, $slug)
 {
@@ -784,65 +785,19 @@ function removeDomainFromVercel($domain, $codespaceID, $userID)
     }
 }
 
+/**
+ * Domain aus Cloudflare entfernen
+ * Nutzt den zentralen Cloudflare Helper
+ */
 function removeDomainFromCloudflare($domain)
 {
-    global $cloudflare_api_token, $cloudflare_zone_id;
+    $result = cloudflare_deleteRecordByDomain($domain, 'CNAME');
     
-    try {
-        // Erst die Domain-Record ID finden
-        $listApiUrl = "https://api.cloudflare.com/client/v4/zones/$cloudflare_zone_id/dns_records?name=$domain&type=CNAME";
-        $opts = [
-            'http' => [
-                'method' => 'GET',
-                'header' => "Authorization: Bearer $cloudflare_api_token\r\nContent-Type: application/json\r\n"
-            ]
-        ];
-        
-        $context = stream_context_create($opts);
-        $result = @file_get_contents($listApiUrl, false, $context);
-        
-        if (!$result) {
-            error_log("Failed to fetch Cloudflare DNS records for domain $domain");
-            return false;
-        }
-        
-        $data = json_decode($result, true);
-        
-        if (!$data['success'] || empty($data['result'])) {
-            error_log("Domain $domain not found in Cloudflare zone");
-            return false;
-        }
-        
-        // Domain Record gefunden - löschen
-        $recordId = $data['result'][0]['id'];
-        $deleteApiUrl = "https://api.cloudflare.com/client/v4/zones/$cloudflare_zone_id/dns_records/$recordId";
-        
-        $deleteOpts = [
-            'http' => [
-                'method' => 'DELETE',
-                'header' => "Authorization: Bearer $cloudflare_api_token\r\nContent-Type: application/json\r\n"
-            ]
-        ];
-        
-        $deleteContext = stream_context_create($deleteOpts);
-        $deleteResult = @file_get_contents($deleteApiUrl, false, $deleteContext);
-        
-        if ($deleteResult) {
-            $deleteData = json_decode($deleteResult, true);
-            if ($deleteData['success']) {
-                error_log("Successfully removed domain $domain from Cloudflare");
-                return true;
-            } else {
-                error_log("Failed to remove domain $domain from Cloudflare: " . json_encode($deleteData['errors']));
-                return false;
-            }
-        } else {
-            error_log("Failed to delete domain $domain from Cloudflare");
-            return false;
-        }
-        
-    } catch (Exception $e) {
-        error_log("Error removing domain from Cloudflare: " . $e->getMessage());
+    if ($result['success']) {
+        error_log("Successfully removed domain $domain from Cloudflare");
+        return true;
+    } else {
+        error_log("Failed to remove domain $domain from Cloudflare: " . ($result['message'] ?? 'Unknown error'));
         return false;
     }
 }

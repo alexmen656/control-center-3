@@ -1,49 +1,15 @@
 <?php
 include "head.php";
 require_once 'vercel_helper.php';
+require_once __DIR__ . '/helpers/cloudflare.php';
 
-// Cloudflare API Integration für Link Tracker Domains
+/**
+ * Cloudflare CNAME-Record für Link Tracker Subdomain erstellen
+ * Nutzt den zentralen Cloudflare Helper
+ */
 function createCloudflareSubdomain($subdomain, $domain, $target) {
-    global $cloudflare_zone_id, $cloudflare_api_token;
-    
-    if (empty($cloudflare_zone_id) || empty($cloudflare_api_token)) {
-        return ['success' => false, 'message' => 'Cloudflare API nicht konfiguriert'];
-    }
-    
     $full_domain = $subdomain . '.' . $domain;
-    $api_url = "https://api.cloudflare.com/client/v4/zones/$cloudflare_zone_id/dns_records";
-    
-    $data = [
-        'type' => 'CNAME',
-        'name' => $full_domain,
-        'content' => $target,
-        'ttl' => 300,
-        'proxied' => false
-    ];
-    
-    $opts = [
-        'http' => [
-            'method' => 'POST',
-            'header' => "Authorization: Bearer $cloudflare_api_token\r\nContent-Type: application/json\r\n",
-            'content' => json_encode($data)
-        ]
-    ];
-    
-    $context = stream_context_create($opts);
-    $response = @file_get_contents($api_url, false, $context);
-    
-    if (!$response) {
-        return ['success' => false, 'message' => 'Cloudflare API Request fehlgeschlagen'];
-    }
-    
-    $result = json_decode($response, true);
-    
-    if (!$result['success']) {
-        $error = isset($result['errors'][0]['message']) ? $result['errors'][0]['message'] : 'Unbekannter Cloudflare Fehler';
-        return ['success' => false, 'message' => $error];
-    }
-    
-    return ['success' => true, 'data' => $result['result']];
+    return cloudflare_createCNAMERecord($full_domain, $target, false);
 }
 
 // Vercel Domain Integration
@@ -285,21 +251,7 @@ elseif (isset($_POST['deleteCustomDomain'])) {
     
     // Delete from Cloudflare if record ID exists
     if ($domainData['cloudflare_record_id']) {
-        global $cloudflare_zone_id, $cloudflare_api_token;
-        
-        if (!empty($cloudflare_zone_id) && !empty($cloudflare_api_token)) {
-            $delete_url = "https://api.cloudflare.com/client/v4/zones/$cloudflare_zone_id/dns_records/{$domainData['cloudflare_record_id']}";
-            
-            $opts = [
-                'http' => [
-                    'method' => 'DELETE',
-                    'header' => "Authorization: Bearer $cloudflare_api_token\r\n"
-                ]
-            ];
-            
-            $context = stream_context_create($opts);
-            @file_get_contents($delete_url, false, $context);
-        }
+        cloudflare_deleteRecord($domainData['cloudflare_record_id']);
     }
     
     // Delete from database
