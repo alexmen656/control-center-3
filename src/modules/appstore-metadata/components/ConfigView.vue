@@ -5,7 +5,7 @@
       
       <div class="page-container">
         <!-- Back Button -->
-        <button class="back-btn" @click="$router.push('appstore-metadata')">
+        <button class="back-btn" @click="$router.push(`/project/${this.projectId}/appstore-metadata`)">
           <ion-icon name="arrow-back-outline"></ion-icon>
           Zurück zum Dashboard
         </button>

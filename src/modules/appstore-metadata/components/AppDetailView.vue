@@ -5,7 +5,7 @@
       
       <div class="page-container">
         <!-- Back Button -->
-        <button class="back-btn" @click="$router.push('appstore-metadata')">
+        <button class="back-btn" @click="$router.push(`/project/${this.projectId}/appstore-metadata`)">
           <ion-icon name="arrow-back-outline"></ion-icon>
           Zurück zum Dashboard
         </button>
@@ -645,11 +645,11 @@ export default {
     },
     
     openVersionEditor(versionId) {
-      this.$router.push(`appstore-metadata/app/${this.appId}/version/${versionId}`);
+      this.$router.push(`/project/${this.projectId}/appstore-metadata/app/${this.appId}/version/${versionId}`);
     },
     
     openScreenshotManager(versionId) {
-      this.$router.push(`appstore-metadata/app/${this.appId}/screenshots/${versionId}`);
+      this.$router.push(`/project/${this.projectId}/appstore-metadata/app/${this.appId}/screenshots/${versionId}`);
     },
     
     async saveCategories() {

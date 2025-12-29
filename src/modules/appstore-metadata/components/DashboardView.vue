@@ -559,11 +559,11 @@ export default {
     },
 
     openApp(appId) {
-      this.$router.push(`appstore-metadata/app/${appId}`);
+      this.$router.push(`/project/${this.projectId}/appstore-metadata/app/${appId}`);
     },
     
     goToConfig() {
-      this.$router.push('appstore-metadata/config');
+      this.$router.push(`/project/${this.projectId}/appstore-metadata/config`);
     },
     
     async syncApp(appId) {

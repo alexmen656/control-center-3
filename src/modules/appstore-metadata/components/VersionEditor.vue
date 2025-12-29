@@ -457,7 +457,7 @@ export default {
     },
     
     goBack() {
-      this.$router.push(`appstore-metadata/app/${this.appId}`);
+      this.$router.push(`/project/${this.projectId}/appstore-metadata/app/${this.appId}`);
     },
     
     getStatusLabel(status) {
