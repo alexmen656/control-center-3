@@ -415,4 +415,94 @@ foreach ($tables as $table) {
     $i++;
 }
 
+// App Store Metadata Manager - Register routes only for projects with the module enabled
+$projects = query("SELECT id, projectID, link, name FROM projects");
+foreach ($projects as $project) {
+    $projectID = $project['projectID'];
+    $ID = $project['id'];
+    $projectLink = $project['link'];
+    $projectName = $project['name'];
+    
+    // Check if appstore-metadata tool is enabled for this project
+    $toolCheck = query("SELECT id FROM project_tools WHERE projectID='$projectID' AND link='appstore-metadata'");
+    if (mysqli_num_rows($toolCheck) == 0) {
+        continue; // Skip if module not enabled
+    }
+    
+    // App Store Metadata Dashboard
+    $json[$i]['id'] = 'appstore_metadata_' . $projectID;
+    $json[$i]['url'] = 'project/' . $projectLink . '/appstore-metadata';
+    $json[$i]['showTitle'] = false;
+    $json[$i]['icon'] = 'logo-apple-appstore';
+    $json[$i]['title'] = 'App Store Metadata - ' . $projectName;
+    $json[$i]['html'] = '';
+    $json[$i]['pageID'] = 'appstore_metadata_' . $projectID;
+    $i++;
+    
+    // App Store Metadata Config
+    $json[$i]['id'] = 'appstore_metadata_config_' . $projectID;
+    $json[$i]['url'] = 'project/' . $projectLink . '/appstore-metadata/config';
+    $json[$i]['showTitle'] = false;
+    $json[$i]['icon'] = 'key-outline';
+    $json[$i]['title'] = 'App Store API Settings - ' . $projectName;
+    $json[$i]['html'] = '';
+    $json[$i]['pageID'] = 'appstore_metadata_config_' . $projectID;
+    $i++;
+    
+    // Get all apps for this project (using projectID as foreign key)
+    $apps = query("SELECT id, name, app_id FROM appstore_apps WHERE project_id='$ID'");
+    foreach ($apps as $app) {
+        $appId = $app['id'];
+        $appName = $app['name'];
+        $appStoreId = $app['app_id'];
+        
+        // App Detail
+        $json[$i]['id'] = 'appstore_app_' . $appId;
+        $json[$i]['url'] = 'project/' . $projectLink . '/appstore-metadata/app/' . $appId;
+        $json[$i]['showTitle'] = false;
+        $json[$i]['icon'] = 'apps-outline';
+        $json[$i]['title'] = $appName . ' - Details';
+        $json[$i]['html'] = '';
+        $json[$i]['pageID'] = 'appstore_app_' . $appId;
+        $i++;
+        
+        // App Localization
+        $json[$i]['id'] = 'appstore_app_localization_' . $appId;
+        $json[$i]['url'] = 'project/' . $projectLink . '/appstore-metadata/app/' . $appId . '/localization';
+        $json[$i]['showTitle'] = false;
+        $json[$i]['icon'] = 'language-outline';
+        $json[$i]['title'] = $appName . ' - Localization';
+        $json[$i]['html'] = '';
+        $json[$i]['pageID'] = 'appstore_app_localization_' . $appId;
+        $i++;
+        
+        // Get all versions for this app
+        $versions = query("SELECT id, version_string FROM appstore_app_versions WHERE app_id='$appId'");
+        foreach ($versions as $version) {
+            $versionId = $version['id'];
+            $versionString = $version['version_string'];
+            
+            // Version Editor
+            $json[$i]['id'] = 'appstore_version_' . $versionId;
+            $json[$i]['url'] = 'project/' . $projectLink . '/appstore-metadata/app/' . $appId . '/version/' . $versionId;
+            $json[$i]['showTitle'] = false;
+            $json[$i]['icon'] = 'git-branch-outline';
+            $json[$i]['title'] = $appName . ' - Version ' . $versionString;
+            $json[$i]['html'] = '';
+            $json[$i]['pageID'] = 'appstore_version_' . $versionId;
+            $i++;
+            
+            // Screenshot Manager
+            $json[$i]['id'] = 'appstore_screenshots_' . $versionId;
+            $json[$i]['url'] = 'project/' . $projectLink . '/appstore-metadata/app/' . $appId . '/screenshots/' . $versionId;
+            $json[$i]['showTitle'] = false;
+            $json[$i]['icon'] = 'images-outline';
+            $json[$i]['title'] = $appName . ' - Screenshots (v' . $versionString . ')';
+            $json[$i]['html'] = '';
+            $json[$i]['pageID'] = 'appstore_screenshots_' . $versionId;
+            $i++;
+        }
+    }
+}
+
 echo echoJson($json);
