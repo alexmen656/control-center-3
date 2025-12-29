@@ -14,43 +14,47 @@ require_once 'ECSign.php';
 /**
  * App Store Connect API Client for Metadata Management
  */
-class AppStoreMetadataAPI {
+class AppStoreMetadataAPI
+{
     private $private_key;
     private $key_id;
     private $issuer_id;
     private $base_url = 'https://api.appstoreconnect.apple.com/v1';
-    
-    public function __construct($private_key, $key_id, $issuer_id) {
+
+    public function __construct($private_key, $key_id, $issuer_id)
+    {
         $this->private_key = $private_key;
         $this->key_id = $key_id;
         $this->issuer_id = $issuer_id;
     }
-    
-    private function generateJWT() {
+
+    private function generateJWT()
+    {
         $header = [
             'alg' => 'ES256',
             'kid' => $this->key_id,
             'typ' => 'JWT',
         ];
-        
+
         $payload = [
             'iss' => $this->issuer_id,
             'exp' => time() + 1200, // 20 minutes
             'aud' => 'appstoreconnect-v1'
         ];
-        
+
         return ECSign::sign($payload, $header, $this->private_key);
     }
-    
-    private function makeRequest($endpoint, $method = 'GET', $data = null) {
+
+    private function makeRequest($endpoint, $method = 'GET', $data = null)
+    {
         $token = $this->generateJWT();
         $url = $this->base_url . $endpoint;
-        
+
         $headers = [
             "Authorization: Bearer $token",
             "Content-Type: application/json"
         ];
-        
+
         $httpOptions = [
             'http' => [
                 'method' => $method,
@@ -59,72 +63,77 @@ class AppStoreMetadataAPI {
                 'ignore_errors' => true
             ]
         ];
-        
+
         if ($data && in_array($method, ['POST', 'PATCH', 'PUT'])) {
             $httpOptions['http']['content'] = json_encode($data);
         }
-        
+
         $context = stream_context_create($httpOptions);
         $response = @file_get_contents($url, false, $context);
-        
+
         // Get HTTP status code from response headers
         $httpCode = 0;
         if (isset($http_response_header)) {
             foreach ($http_response_header as $header) {
                 if (preg_match('#^HTTP/\d+\.\d+\s+(\d+)#', $header, $matches)) {
-                    $httpCode = (int)$matches[1];
+                    $httpCode = (int) $matches[1];
                     break;
                 }
             }
         }
-        
+
         if ($response === false) {
             throw new Exception("HTTP Request failed to: $endpoint");
         }
-        
+
         if ($httpCode >= 400) {
             $errorData = json_decode($response, true);
             $errorMessage = $errorData['errors'][0]['detail'] ?? "HTTP Error: $httpCode";
             throw new Exception($errorMessage);
         }
-        
+
         return json_decode($response, true);
     }
-    
+
     // Get all apps
-    public function getApps() {
+    public function getApps()
+    {
         $response = $this->makeRequest('/apps?limit=200');
         return $response['data'] ?? [];
     }
-    
+
     // Get single app
-    public function getApp($appId) {
+    public function getApp($appId)
+    {
         $response = $this->makeRequest("/apps/$appId");
         return $response['data'] ?? null;
     }
-    
+
     // Get app info (for localizations)
-    public function getAppInfo($appId) {
+    public function getAppInfo($appId)
+    {
         $response = $this->makeRequest("/apps/$appId/appInfos");
         return $response['data'] ?? [];
     }
-    
+
     // Get app info localizations
-    public function getAppInfoLocalizations($appId) {
+    public function getAppInfoLocalizations($appId)
+    {
         $appInfos = $this->getAppInfo($appId);
         $localizations = [];
-        
+
         foreach ($appInfos as $appInfo) {
             $appInfoId = $appInfo['id'];
             $response = $this->makeRequest("/appInfos/$appInfoId/appInfoLocalizations");
             $localizations = array_merge($localizations, $response['data'] ?? []);
         }
-        
+
         return $localizations;
     }
-    
+
     // Update app info localization
-    public function updateAppInfoLocalization($localizationId, $data) {
+    public function updateAppInfoLocalization($localizationId, $data)
+    {
         $payload = [
             'data' => [
                 'type' => 'appInfoLocalizations',
@@ -138,24 +147,54 @@ class AppStoreMetadataAPI {
                 ])
             ]
         ];
-        
+
         return $this->makeRequest("/appInfoLocalizations/$localizationId", 'PATCH', $payload);
     }
-    
+
+    public function createAppInfoLocalization($appInfoId, $locale, $data)
+    {
+        $payload = [
+            'data' => [
+                'type' => 'appInfoLocalizations',
+                'attributes' => array_filter([
+                    'locale' => $locale,
+                    'name' => $data['name'] ?? null,
+                    'subtitle' => $data['subtitle'] ?? null,
+                    'privacyPolicyUrl' => $data['privacyPolicyUrl'] ?? null,
+                    'privacyPolicyText' => $data['privacyPolicyText'] ?? null,
+                    'privacyChoicesUrl' => $data['privacyChoicesUrl'] ?? null,
+                ]),
+                'relationships' => [
+                    'appInfo' => [
+                        'data' => [
+                            'type' => 'appInfos',
+                            'id' => $appInfoId
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        return $this->makeRequest("/appInfoLocalizations", 'POST', $payload);
+    }
+
     // Get app store versions
-    public function getAppStoreVersions($appId) {
+    public function getAppStoreVersions($appId)
+    {
         $response = $this->makeRequest("/apps/$appId/appStoreVersions?limit=10");
         return $response['data'] ?? [];
     }
-    
+
     // Get version localizations
-    public function getAppStoreVersionLocalizations($versionId) {
+    public function getAppStoreVersionLocalizations($versionId)
+    {
         $response = $this->makeRequest("/appStoreVersions/$versionId/appStoreVersionLocalizations");
         return $response['data'] ?? [];
     }
-    
+
     // Update version localization
-    public function updateAppStoreVersionLocalization($localizationId, $data) {
+    public function updateAppStoreVersionLocalization($localizationId, $data)
+    {
         $payload = [
             'data' => [
                 'type' => 'appStoreVersionLocalizations',
@@ -170,12 +209,13 @@ class AppStoreMetadataAPI {
                 ])
             ]
         ];
-        
+
         return $this->makeRequest("/appStoreVersionLocalizations/$localizationId", 'PATCH', $payload);
     }
-    
+
     // Create version localization
-    public function createAppStoreVersionLocalization($versionId, $locale, $data) {
+    public function createAppStoreVersionLocalization($versionId, $locale, $data)
+    {
         $payload = [
             'data' => [
                 'type' => 'appStoreVersionLocalizations',
@@ -198,12 +238,13 @@ class AppStoreMetadataAPI {
                 ]
             ]
         ];
-        
+
         return $this->makeRequest("/appStoreVersionLocalizations", 'POST', $payload);
     }
-    
+
     // Get screenshots for a localization
-    public function getScreenshots($localizationId) {
+    public function getScreenshots($localizationId)
+    {
         $response = $this->makeRequest("/appStoreVersionLocalizations/$localizationId/appScreenshotSets");
         return $response['data'] ?? [];
     }
@@ -222,7 +263,7 @@ if (!$project) {
 $project = escape_string($project);
 $project_result = query("SELECT id FROM projects WHERE link = '$project'");
 $project_row = fetch_assoc($project_result);
-$project_id = $project_row ? (int)$project_row['id'] : null;
+$project_id = $project_row ? (int) $project_row['id'] : null;
 
 if (!$project_id) {
     http_response_code(400);
@@ -241,107 +282,107 @@ try {
         case 'apps':
             handleApps($project_id, $method);
             break;
-            
+
         case 'app':
-            $app_id = isset($_GET['app_id']) ? (int)$_GET['app_id'] : null;
+            $app_id = isset($_GET['app_id']) ? (int) $_GET['app_id'] : null;
             handleSingleApp($project_id, $app_id, $method);
             break;
-            
+
         // ============================================
         // VERSION MANAGEMENT
         // ============================================
         case 'versions':
-            $app_id = isset($_GET['app_id']) ? (int)$_GET['app_id'] : null;
+            $app_id = isset($_GET['app_id']) ? (int) $_GET['app_id'] : null;
             handleVersions($project_id, $app_id, $method);
             break;
-            
+
         case 'version':
-            $version_id = isset($_GET['version_id']) ? (int)$_GET['version_id'] : null;
+            $version_id = isset($_GET['version_id']) ? (int) $_GET['version_id'] : null;
             handleSingleVersion($project_id, $version_id, $method);
             break;
-            
+
         // ============================================
         // LOCALIZATION MANAGEMENT
         // ============================================
         case 'app_localizations':
-            $app_id = isset($_GET['app_id']) ? (int)$_GET['app_id'] : null;
+            $app_id = isset($_GET['app_id']) ? (int) $_GET['app_id'] : null;
             handleAppLocalizations($project_id, $app_id, $method);
             break;
-            
+
         case 'version_localizations':
-            $version_id = isset($_GET['version_id']) ? (int)$_GET['version_id'] : null;
+            $version_id = isset($_GET['version_id']) ? (int) $_GET['version_id'] : null;
             handleVersionLocalizations($project_id, $version_id, $method);
             break;
-            
+
         // ============================================
         // SCREENSHOTS MANAGEMENT
         // ============================================
         case 'screenshots':
-            $version_id = isset($_GET['version_id']) ? (int)$_GET['version_id'] : null;
+            $version_id = isset($_GET['version_id']) ? (int) $_GET['version_id'] : null;
             handleScreenshots($project_id, $version_id, $method);
             break;
-            
+
         // ============================================
         // API CREDENTIALS
         // ============================================
         case 'credentials':
             handleCredentials($project_id, $method);
             break;
-            
+
         // ============================================
         // SUPPORTED LOCALES
         // ============================================
         case 'locales':
             handleLocales($method);
             break;
-            
+
         // ============================================
         // CATEGORIES
         // ============================================
         case 'categories':
-            $app_id = isset($_GET['app_id']) ? (int)$_GET['app_id'] : null;
+            $app_id = isset($_GET['app_id']) ? (int) $_GET['app_id'] : null;
             handleCategories($project_id, $app_id, $method);
             break;
-            
+
         // ============================================
         // AGE RATINGS
         // ============================================
         case 'age_ratings':
-            $app_id = isset($_GET['app_id']) ? (int)$_GET['app_id'] : null;
+            $app_id = isset($_GET['app_id']) ? (int) $_GET['app_id'] : null;
             handleAgeRatings($project_id, $app_id, $method);
             break;
-            
+
         // ============================================
         // SYNC WITH APP STORE CONNECT
         // ============================================
         case 'sync_pull':
-            $app_id = isset($_GET['app_id']) ? (int)$_GET['app_id'] : null;
+            $app_id = isset($_GET['app_id']) ? (int) $_GET['app_id'] : null;
             handleSyncPull($project_id, $app_id);
             break;
-            
+
         case 'sync_push':
-            $app_id = isset($_GET['app_id']) ? (int)$_GET['app_id'] : null;
+            $app_id = isset($_GET['app_id']) ? (int) $_GET['app_id'] : null;
             handleSyncPush($project_id, $app_id);
             break;
-            
+
         // ============================================
         // BROWSE & CONNECT APPS FROM APP STORE CONNECT
         // ============================================
         case 'browse_apps':
             handleBrowseApps($project_id);
             break;
-            
+
         case 'connect_app':
             handleConnectApp($project_id);
             break;
-            
+
         // ============================================
         // DASHBOARD / OVERVIEW
         // ============================================
         case 'dashboard':
             handleDashboard($project_id);
             break;
-            
+
         default:
             // Return overview if no action
             handleDashboard($project_id);
@@ -358,9 +399,10 @@ try {
 // HANDLER FUNCTIONS
 // ============================================
 
-function handleApps($project_id, $method) {
+function handleApps($project_id, $method)
+{
     global $con;
-    
+
     if ($method === 'GET') {
         // List all apps for project
         $result = query("
@@ -375,12 +417,12 @@ function handleApps($project_id, $method) {
             GROUP BY a.id
             ORDER BY a.updated_at DESC
         ");
-        
+
         $apps = [];
         while ($row = fetch_assoc($result)) {
             $apps[] = $row;
         }
-        
+
         echo json_encode([
             'success' => true,
             'apps' => $apps,
@@ -389,7 +431,7 @@ function handleApps($project_id, $method) {
     } elseif ($method === 'POST') {
         // Create new app
         $input = json_decode(file_get_contents('php://input'), true);
-        
+
         $required = ['app_id', 'bundle_id', 'name'];
         foreach ($required as $field) {
             if (empty($input[$field])) {
@@ -398,29 +440,29 @@ function handleApps($project_id, $method) {
                 return;
             }
         }
-        
+
         $app_store_id = escape_string($input['app_id']);
         $bundle_id = escape_string($input['bundle_id']);
         $name = escape_string($input['name']);
         $sku = escape_string($input['sku'] ?? '');
         $primary_locale = escape_string($input['primary_locale'] ?? 'en-US');
-        
+
         query("
             INSERT INTO appstore_apps (project_id, app_id, bundle_id, name, sku, primary_locale, status)
             VALUES ($project_id, '$app_store_id', '$bundle_id', '$name', '$sku', '$primary_locale', 'draft')
         ");
-        
+
         $newId = mysqli_insert_id($con);
-        
+
         // Create default localization for primary locale
         query("
             INSERT INTO appstore_app_localizations (app_id, locale, name)
             VALUES ($newId, '$primary_locale', '$name')
         ");
-        
+
         // Log operation
         logOperation($project_id, $newId, 'create_app', 'success', json_encode(['app_id' => $app_store_id]));
-        
+
         echo json_encode([
             'success' => true,
             'id' => $newId,
@@ -429,25 +471,26 @@ function handleApps($project_id, $method) {
     }
 }
 
-function handleSingleApp($project_id, $app_id, $method) {
+function handleSingleApp($project_id, $app_id, $method)
+{
     global $con;
-    
+
     if (!$app_id) {
         http_response_code(400);
         echo json_encode(['error' => 'App ID is required']);
         return;
     }
-    
+
     // Verify app belongs to project
     $result = query("SELECT * FROM appstore_apps WHERE id = $app_id AND project_id = $project_id");
     $app = fetch_assoc($result);
-    
+
     if (!$app) {
         http_response_code(404);
         echo json_encode(['error' => 'App not found']);
         return;
     }
-    
+
     if ($method === 'GET') {
         // Get localizations
         $locResult = query("SELECT * FROM appstore_app_localizations WHERE app_id = $app_id");
@@ -455,25 +498,25 @@ function handleSingleApp($project_id, $app_id, $method) {
         while ($row = fetch_assoc($locResult)) {
             $localizations[] = $row;
         }
-        
+
         // Get versions
         $verResult = query("SELECT * FROM appstore_app_versions WHERE app_id = $app_id ORDER BY created_at DESC");
         $versions = [];
         while ($row = fetch_assoc($verResult)) {
             $versions[] = $row;
         }
-        
+
         // Get categories
         $catResult = query("SELECT * FROM appstore_app_categories WHERE app_id = $app_id");
         $categories = [];
         while ($row = fetch_assoc($catResult)) {
             $categories[] = $row;
         }
-        
+
         // Get age rating
         $ageResult = query("SELECT * FROM appstore_age_ratings WHERE app_id = $app_id");
         $ageRating = fetch_assoc($ageResult);
-        
+
         echo json_encode([
             'success' => true,
             'app' => $app,
@@ -485,33 +528,39 @@ function handleSingleApp($project_id, $app_id, $method) {
     } elseif ($method === 'PUT' || $method === 'PATCH') {
         // Update app
         $input = json_decode(file_get_contents('php://input'), true);
-        
+
         $updateParts = [];
-        $allowedFields = ['name', 'sku', 'primary_locale', 'content_rights_declaration', 
-                         'is_available_in_new_territories', 'status'];
-        
+        $allowedFields = [
+            'name',
+            'sku',
+            'primary_locale',
+            'content_rights_declaration',
+            'is_available_in_new_territories',
+            'status'
+        ];
+
         foreach ($allowedFields as $field) {
             if (isset($input[$field])) {
                 $value = escape_string($input[$field]);
                 $updateParts[] = "$field = '$value'";
             }
         }
-        
+
         if (empty($updateParts)) {
             http_response_code(400);
             echo json_encode(['error' => 'No fields to update']);
             return;
         }
-        
+
         query("UPDATE appstore_apps SET " . implode(', ', $updateParts) . " WHERE id = $app_id AND project_id = $project_id");
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'App updated successfully'
         ]);
     } elseif ($method === 'DELETE') {
         query("DELETE FROM appstore_apps WHERE id = $app_id AND project_id = $project_id");
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'App deleted successfully'
@@ -519,15 +568,16 @@ function handleSingleApp($project_id, $app_id, $method) {
     }
 }
 
-function handleVersions($project_id, $app_id, $method) {
+function handleVersions($project_id, $app_id, $method)
+{
     global $con;
-    
+
     if (!$app_id) {
         http_response_code(400);
         echo json_encode(['error' => 'App ID is required']);
         return;
     }
-    
+
     // Verify app belongs to project
     $result = query("SELECT id FROM appstore_apps WHERE id = $app_id AND project_id = $project_id");
     if (!fetch_assoc($result)) {
@@ -535,7 +585,7 @@ function handleVersions($project_id, $app_id, $method) {
         echo json_encode(['error' => 'App not found']);
         return;
     }
-    
+
     if ($method === 'GET') {
         $result = query("
             SELECT v.*, 
@@ -548,45 +598,45 @@ function handleVersions($project_id, $app_id, $method) {
             GROUP BY v.id
             ORDER BY v.created_at DESC
         ");
-        
+
         $versions = [];
         while ($row = fetch_assoc($result)) {
             $versions[] = $row;
         }
-        
+
         echo json_encode([
             'success' => true,
             'versions' => $versions
         ]);
     } elseif ($method === 'POST') {
         $input = json_decode(file_get_contents('php://input'), true);
-        
+
         if (empty($input['version_string'])) {
             http_response_code(400);
             echo json_encode(['error' => 'version_string is required']);
             return;
         }
-        
+
         $version_string = escape_string($input['version_string']);
         $build_number = escape_string($input['build_number'] ?? '');
         $platform = escape_string($input['platform'] ?? 'iOS');
         $release_type = escape_string($input['release_type'] ?? 'afterApproval');
         $copyright = escape_string($input['copyright'] ?? '');
         $review_notes = escape_string($input['review_notes'] ?? '');
-        
+
         query("
             INSERT INTO appstore_app_versions 
             (app_id, version_string, build_number, platform, release_type, copyright, review_notes, status)
             VALUES ($app_id, '$version_string', '$build_number', '$platform', '$release_type', '$copyright', '$review_notes', 'draft')
         ");
-        
+
         $newId = mysqli_insert_id($con);
-        
+
         logOperation($project_id, $app_id, 'create_version', 'success', json_encode([
             'version_id' => $newId,
             'version_string' => $version_string
         ]));
-        
+
         echo json_encode([
             'success' => true,
             'id' => $newId,
@@ -595,15 +645,16 @@ function handleVersions($project_id, $app_id, $method) {
     }
 }
 
-function handleSingleVersion($project_id, $version_id, $method) {
+function handleSingleVersion($project_id, $version_id, $method)
+{
     global $con;
-    
+
     if (!$version_id) {
         http_response_code(400);
         echo json_encode(['error' => 'Version ID is required']);
         return;
     }
-    
+
     // Verify version belongs to project
     $result = query("
         SELECT v.* FROM appstore_app_versions v
@@ -611,13 +662,13 @@ function handleSingleVersion($project_id, $version_id, $method) {
         WHERE v.id = $version_id AND a.project_id = $project_id
     ");
     $version = fetch_assoc($result);
-    
+
     if (!$version) {
         http_response_code(404);
         echo json_encode(['error' => 'Version not found']);
         return;
     }
-    
+
     if ($method === 'GET') {
         // Get localizations
         $locResult = query("SELECT * FROM appstore_version_localizations WHERE version_id = $version_id");
@@ -625,14 +676,14 @@ function handleSingleVersion($project_id, $version_id, $method) {
         while ($row = fetch_assoc($locResult)) {
             $localizations[] = $row;
         }
-        
+
         // Get screenshots
         $ssResult = query("SELECT * FROM appstore_screenshots WHERE version_id = $version_id ORDER BY locale, display_type, position");
         $screenshots = [];
         while ($row = fetch_assoc($ssResult)) {
             $screenshots[] = $row;
         }
-        
+
         echo json_encode([
             'success' => true,
             'version' => $version,
@@ -641,33 +692,41 @@ function handleSingleVersion($project_id, $version_id, $method) {
         ]);
     } elseif ($method === 'PUT' || $method === 'PATCH') {
         $input = json_decode(file_get_contents('php://input'), true);
-        
+
         $updateParts = [];
-        $allowedFields = ['version_string', 'build_number', 'platform', 'release_type',
-                         'earliest_release_date', 'copyright', 'review_notes', 'status'];
-        
+        $allowedFields = [
+            'version_string',
+            'build_number',
+            'platform',
+            'release_type',
+            'earliest_release_date',
+            'copyright',
+            'review_notes',
+            'status'
+        ];
+
         foreach ($allowedFields as $field) {
             if (isset($input[$field])) {
                 $value = escape_string($input[$field]);
                 $updateParts[] = "$field = '$value'";
             }
         }
-        
+
         if (empty($updateParts)) {
             http_response_code(400);
             echo json_encode(['error' => 'No fields to update']);
             return;
         }
-        
+
         query("UPDATE appstore_app_versions SET " . implode(', ', $updateParts) . " WHERE id = $version_id");
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Version updated successfully'
         ]);
     } elseif ($method === 'DELETE') {
         query("DELETE FROM appstore_app_versions WHERE id = $version_id");
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Version deleted successfully'
@@ -675,15 +734,16 @@ function handleSingleVersion($project_id, $version_id, $method) {
     }
 }
 
-function handleAppLocalizations($project_id, $app_id, $method) {
+function handleAppLocalizations($project_id, $app_id, $method)
+{
     global $con;
-    
+
     if (!$app_id) {
         http_response_code(400);
         echo json_encode(['error' => 'App ID is required']);
         return;
     }
-    
+
     // Verify app belongs to project
     $result = query("SELECT id FROM appstore_apps WHERE id = $app_id AND project_id = $project_id");
     if (!fetch_assoc($result)) {
@@ -691,7 +751,7 @@ function handleAppLocalizations($project_id, $app_id, $method) {
         echo json_encode(['error' => 'App not found']);
         return;
     }
-    
+
     if ($method === 'GET') {
         $result = query("
             SELECT l.*, s.name as locale_name, s.native_name 
@@ -700,32 +760,32 @@ function handleAppLocalizations($project_id, $app_id, $method) {
             WHERE l.app_id = $app_id
             ORDER BY l.locale
         ");
-        
+
         $localizations = [];
         while ($row = fetch_assoc($result)) {
             $localizations[] = $row;
         }
-        
+
         echo json_encode([
             'success' => true,
             'localizations' => $localizations
         ]);
     } elseif ($method === 'POST') {
         $input = json_decode(file_get_contents('php://input'), true);
-        
+
         if (empty($input['locale'])) {
             http_response_code(400);
             echo json_encode(['error' => 'locale is required']);
             return;
         }
-        
+
         $locale = escape_string($input['locale']);
         $name = escape_string($input['name'] ?? '');
         $subtitle = escape_string($input['subtitle'] ?? '');
         $privacy_policy_url = escape_string($input['privacy_policy_url'] ?? '');
         $privacy_policy_text = escape_string($input['privacy_policy_text'] ?? '');
         $privacy_choices_url = escape_string($input['privacy_choices_url'] ?? '');
-        
+
         query("
             INSERT INTO appstore_app_localizations 
             (app_id, locale, name, subtitle, privacy_policy_url, privacy_policy_text, privacy_choices_url)
@@ -738,7 +798,7 @@ function handleAppLocalizations($project_id, $app_id, $method) {
                 privacy_choices_url = '$privacy_choices_url',
                 updated_at = CURRENT_TIMESTAMP
         ");
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Localization saved successfully'
@@ -750,9 +810,9 @@ function handleAppLocalizations($project_id, $app_id, $method) {
             echo json_encode(['error' => 'locale is required']);
             return;
         }
-        
+
         query("DELETE FROM appstore_app_localizations WHERE app_id = $app_id AND locale = '$locale'");
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Localization deleted successfully'
@@ -760,15 +820,16 @@ function handleAppLocalizations($project_id, $app_id, $method) {
     }
 }
 
-function handleVersionLocalizations($project_id, $version_id, $method) {
+function handleVersionLocalizations($project_id, $version_id, $method)
+{
     global $con;
-    
+
     if (!$version_id) {
         http_response_code(400);
         echo json_encode(['error' => 'Version ID is required']);
         return;
     }
-    
+
     // Verify version belongs to project
     $result = query("
         SELECT v.id FROM appstore_app_versions v
@@ -780,7 +841,7 @@ function handleVersionLocalizations($project_id, $version_id, $method) {
         echo json_encode(['error' => 'Version not found']);
         return;
     }
-    
+
     if ($method === 'GET') {
         $result = query("
             SELECT l.*, s.name as locale_name, s.native_name 
@@ -789,25 +850,25 @@ function handleVersionLocalizations($project_id, $version_id, $method) {
             WHERE l.version_id = $version_id
             ORDER BY l.locale
         ");
-        
+
         $localizations = [];
         while ($row = fetch_assoc($result)) {
             $localizations[] = $row;
         }
-        
+
         echo json_encode([
             'success' => true,
             'localizations' => $localizations
         ]);
     } elseif ($method === 'POST') {
         $input = json_decode(file_get_contents('php://input'), true);
-        
+
         if (empty($input['locale'])) {
             http_response_code(400);
             echo json_encode(['error' => 'locale is required']);
             return;
         }
-        
+
         $locale = escape_string($input['locale']);
         $description = escape_string($input['description'] ?? '');
         $keywords = escape_string($input['keywords'] ?? '');
@@ -815,7 +876,7 @@ function handleVersionLocalizations($project_id, $version_id, $method) {
         $marketing_url = escape_string($input['marketing_url'] ?? '');
         $support_url = escape_string($input['support_url'] ?? '');
         $promotional_text = escape_string($input['promotional_text'] ?? '');
-        
+
         query("
             INSERT INTO appstore_version_localizations 
             (version_id, locale, description, keywords, whats_new, marketing_url, support_url, promotional_text)
@@ -829,7 +890,7 @@ function handleVersionLocalizations($project_id, $version_id, $method) {
                 promotional_text = '$promotional_text',
                 updated_at = CURRENT_TIMESTAMP
         ");
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Version localization saved successfully'
@@ -841,9 +902,9 @@ function handleVersionLocalizations($project_id, $version_id, $method) {
             echo json_encode(['error' => 'locale is required']);
             return;
         }
-        
+
         query("DELETE FROM appstore_version_localizations WHERE version_id = $version_id AND locale = '$locale'");
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Version localization deleted successfully'
@@ -851,15 +912,16 @@ function handleVersionLocalizations($project_id, $version_id, $method) {
     }
 }
 
-function handleScreenshots($project_id, $version_id, $method) {
+function handleScreenshots($project_id, $version_id, $method)
+{
     global $con;
-    
+
     if (!$version_id && $method !== 'GET') {
         http_response_code(400);
         echo json_encode(['error' => 'Version ID is required']);
         return;
     }
-    
+
     if ($version_id) {
         // Verify version belongs to project
         $result = query("
@@ -873,28 +935,28 @@ function handleScreenshots($project_id, $version_id, $method) {
             return;
         }
     }
-    
+
     if ($method === 'GET') {
         $locale = escape_string($_GET['locale'] ?? '');
         $display_type = escape_string($_GET['display_type'] ?? '');
-        
+
         $sql = "SELECT * FROM appstore_screenshots WHERE version_id = $version_id";
-        
+
         if ($locale) {
             $sql .= " AND locale = '$locale'";
         }
         if ($display_type) {
             $sql .= " AND display_type = '$display_type'";
         }
-        
+
         $sql .= " ORDER BY locale, display_type, position";
-        
+
         $result = query($sql);
         $screenshots = [];
         while ($row = fetch_assoc($result)) {
             $screenshots[] = $row;
         }
-        
+
         echo json_encode([
             'success' => true,
             'screenshots' => $screenshots
@@ -903,36 +965,36 @@ function handleScreenshots($project_id, $version_id, $method) {
         // Handle file upload
         $locale = escape_string($_POST['locale'] ?? 'en-US');
         $display_type = escape_string($_POST['display_type'] ?? 'APP_IPHONE_67');
-        $position = (int)($_POST['position'] ?? 0);
-        
+        $position = (int) ($_POST['position'] ?? 0);
+
         if (!isset($_FILES['screenshot']) && !isset($_FILES['file'])) {
             http_response_code(400);
             echo json_encode(['error' => 'No file uploaded']);
             return;
         }
-        
+
         $file = $_FILES['screenshot'] ?? $_FILES['file'];
         $uploadDir = '../uploads/screenshots/' . $project_id . '/' . $version_id . '/';
-        
+
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
-        
+
         $fileName = uniqid() . '_' . basename($file['name']);
         $filePath = $uploadDir . $fileName;
-        
+
         if (move_uploaded_file($file['tmp_name'], $filePath)) {
             $imageSize = getimagesize($filePath);
             $width = $imageSize[0] ?? 0;
             $height = $imageSize[1] ?? 0;
             $fileSize = $file['size'];
-            
+
             query("
                 INSERT INTO appstore_screenshots 
                 (version_id, locale, display_type, asset_type, file_name, file_path, file_size, width, height, position)
                 VALUES ($version_id, '$locale', '$display_type', 'screenshot', '$fileName', '$filePath', $fileSize, $width, $height, $position)
             ");
-            
+
             echo json_encode([
                 'success' => true,
                 'id' => mysqli_insert_id($con),
@@ -945,37 +1007,37 @@ function handleScreenshots($project_id, $version_id, $method) {
     } elseif ($method === 'PUT') {
         // Update order
         $input = json_decode(file_get_contents('php://input'), true);
-        
+
         if (isset($input['order_updates']) && is_array($input['order_updates'])) {
             foreach ($input['order_updates'] as $update) {
-                $id = (int)$update['id'];
-                $order = (int)$update['display_order'];
+                $id = (int) $update['id'];
+                $order = (int) $update['display_order'];
                 query("UPDATE appstore_screenshots SET position = $order WHERE id = $id");
             }
         }
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Order updated successfully'
         ]);
     } elseif ($method === 'DELETE') {
-        $screenshot_id = (int)($_GET['id'] ?? $_GET['screenshot_id'] ?? 0);
+        $screenshot_id = (int) ($_GET['id'] ?? $_GET['screenshot_id'] ?? 0);
         if (!$screenshot_id) {
             http_response_code(400);
             echo json_encode(['error' => 'screenshot id is required']);
             return;
         }
-        
+
         // Get file path before deleting
         $result = query("SELECT file_path FROM appstore_screenshots WHERE id = $screenshot_id");
         $screenshot = fetch_assoc($result);
-        
+
         if ($screenshot && !empty($screenshot['file_path']) && file_exists($screenshot['file_path'])) {
             unlink($screenshot['file_path']);
         }
-        
+
         query("DELETE FROM appstore_screenshots WHERE id = $screenshot_id");
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Screenshot deleted successfully'
@@ -983,9 +1045,10 @@ function handleScreenshots($project_id, $version_id, $method) {
     }
 }
 
-function handleCredentials($project_id, $method) {
+function handleCredentials($project_id, $method)
+{
     global $con;
-    
+
     if ($method === 'GET') {
         $result = query("
             SELECT id, issuer_id, key_id, vendor_number, is_active, last_used_at, created_at, updated_at
@@ -993,15 +1056,15 @@ function handleCredentials($project_id, $method) {
             WHERE project_id = $project_id
         ");
         $credentials = fetch_assoc($result);
-        
+
         echo json_encode([
             'success' => true,
             'credentials' => $credentials,
-            'has_credentials' => (bool)$credentials
+            'has_credentials' => (bool) $credentials
         ]);
     } elseif ($method === 'POST') {
         $input = json_decode(file_get_contents('php://input'), true);
-        
+
         $required = ['issuer_id', 'key_id', 'private_key'];
         foreach ($required as $field) {
             if (empty($input[$field])) {
@@ -1010,12 +1073,12 @@ function handleCredentials($project_id, $method) {
                 return;
             }
         }
-        
+
         $issuer_id = escape_string($input['issuer_id']);
         $key_id = escape_string($input['key_id']);
         $private_key = escape_string(base64_encode($input['private_key']));
         $vendor_number = escape_string($input['vendor_number'] ?? '');
-        
+
         query("
             INSERT INTO appstore_api_credentials 
             (project_id, issuer_id, key_id, private_key, vendor_number)
@@ -1027,14 +1090,14 @@ function handleCredentials($project_id, $method) {
                 vendor_number = '$vendor_number',
                 updated_at = CURRENT_TIMESTAMP
         ");
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Credentials saved successfully'
         ]);
     } elseif ($method === 'DELETE') {
         query("DELETE FROM appstore_api_credentials WHERE project_id = $project_id");
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Credentials deleted successfully'
@@ -1042,15 +1105,16 @@ function handleCredentials($project_id, $method) {
     }
 }
 
-function handleLocales($method) {
+function handleLocales($method)
+{
     if ($method === 'GET') {
         $result = query("SELECT * FROM appstore_supported_locales WHERE is_active = 1 ORDER BY name");
-        
+
         $locales = [];
         while ($row = fetch_assoc($result)) {
             $locales[] = $row;
         }
-        
+
         echo json_encode([
             'success' => true,
             'locales' => $locales
@@ -1058,9 +1122,10 @@ function handleLocales($method) {
     }
 }
 
-function handleCategories($project_id, $app_id, $method) {
+function handleCategories($project_id, $app_id, $method)
+{
     global $con;
-    
+
     if (!$app_id) {
         // Return available categories list
         $categories = getAppStoreCategories();
@@ -1070,7 +1135,7 @@ function handleCategories($project_id, $app_id, $method) {
         ]);
         return;
     }
-    
+
     // Verify app belongs to project
     $result = query("SELECT id FROM appstore_apps WHERE id = $app_id AND project_id = $project_id");
     if (!fetch_assoc($result)) {
@@ -1078,33 +1143,33 @@ function handleCategories($project_id, $app_id, $method) {
         echo json_encode(['error' => 'App not found']);
         return;
     }
-    
+
     if ($method === 'GET') {
         $result = query("SELECT * FROM appstore_app_categories WHERE app_id = $app_id");
         $categories = [];
         while ($row = fetch_assoc($result)) {
             $categories[] = $row;
         }
-        
+
         echo json_encode([
             'success' => true,
             'categories' => $categories
         ]);
     } elseif ($method === 'POST') {
         $input = json_decode(file_get_contents('php://input'), true);
-        
+
         if (empty($input['category_type']) || empty($input['category_id'])) {
             http_response_code(400);
             echo json_encode(['error' => 'category_type and category_id are required']);
             return;
         }
-        
+
         $category_type = escape_string($input['category_type']);
         $category_id = escape_string($input['category_id']);
         $category_name = escape_string($input['category_name'] ?? '');
         $subcategory_id = escape_string($input['subcategory_id'] ?? '');
         $subcategory_name = escape_string($input['subcategory_name'] ?? '');
-        
+
         query("
             INSERT INTO appstore_app_categories 
             (app_id, category_type, category_id, category_name, subcategory_id, subcategory_name)
@@ -1115,7 +1180,7 @@ function handleCategories($project_id, $app_id, $method) {
                 subcategory_id = '$subcategory_id',
                 subcategory_name = '$subcategory_name'
         ");
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Category saved successfully'
@@ -1123,15 +1188,16 @@ function handleCategories($project_id, $app_id, $method) {
     }
 }
 
-function handleAgeRatings($project_id, $app_id, $method) {
+function handleAgeRatings($project_id, $app_id, $method)
+{
     global $con;
-    
+
     if (!$app_id) {
         http_response_code(400);
         echo json_encode(['error' => 'App ID is required']);
         return;
     }
-    
+
     // Verify app belongs to project
     $result = query("SELECT id FROM appstore_apps WHERE id = $app_id AND project_id = $project_id");
     if (!fetch_assoc($result)) {
@@ -1139,30 +1205,41 @@ function handleAgeRatings($project_id, $app_id, $method) {
         echo json_encode(['error' => 'App not found']);
         return;
     }
-    
+
     if ($method === 'GET') {
         $result = query("SELECT * FROM appstore_age_ratings WHERE app_id = $app_id");
         $ageRating = fetch_assoc($result);
-        
+
         echo json_encode([
             'success' => true,
             'age_rating' => $ageRating
         ]);
     } elseif ($method === 'POST') {
         $input = json_decode(file_get_contents('php://input'), true);
-        
+
         $fields = [
-            'alcohol_tobacco_or_drug_use_or_references', 'contests', 'gambling_simulated',
-            'gambling', 'horror_fear_themes', 'mature_suggestive_themes', 'medical_treatment_info',
-            'profanity_or_crude_humor', 'sexual_content_graphic_nudity', 'sexual_content_or_nudity',
-            'violence_cartoon_or_fantasy', 'violence_realistic', 'violence_realistic_prolonged_graphic',
-            'unrestricted_web_access', 'kids_band', 'seventeen_plus'
+            'alcohol_tobacco_or_drug_use_or_references',
+            'contests',
+            'gambling_simulated',
+            'gambling',
+            'horror_fear_themes',
+            'mature_suggestive_themes',
+            'medical_treatment_info',
+            'profanity_or_crude_humor',
+            'sexual_content_graphic_nudity',
+            'sexual_content_or_nudity',
+            'violence_cartoon_or_fantasy',
+            'violence_realistic',
+            'violence_realistic_prolonged_graphic',
+            'unrestricted_web_access',
+            'kids_band',
+            'seventeen_plus'
         ];
-        
+
         $insertFields = ['app_id'];
         $insertValues = [$app_id];
         $updateParts = [];
-        
+
         foreach ($fields as $field) {
             if (isset($input[$field])) {
                 $value = escape_string($input[$field]);
@@ -1171,13 +1248,13 @@ function handleAgeRatings($project_id, $app_id, $method) {
                 $updateParts[] = "$field = '$value'";
             }
         }
-        
+
         $sql = "INSERT INTO appstore_age_ratings (" . implode(', ', $insertFields) . ") 
                 VALUES (" . implode(', ', $insertValues) . ")
                 ON DUPLICATE KEY UPDATE " . implode(', ', $updateParts) . ", updated_at = CURRENT_TIMESTAMP";
-        
+
         query($sql);
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Age rating saved successfully'
@@ -1185,16 +1262,17 @@ function handleAgeRatings($project_id, $app_id, $method) {
     }
 }
 
-function handleSyncPull($project_id, $app_id) {
+function handleSyncPull($project_id, $app_id)
+{
     global $con;
-    
+
     logOperation($project_id, $app_id, 'pull', 'started', '{}');
-    
+
     try {
         // Get API credentials
         $result = query("SELECT * FROM appstore_api_credentials WHERE project_id = $project_id AND is_active = 1");
         $credentials = fetch_assoc($result);
-        
+
         if (!$credentials) {
             logOperation($project_id, $app_id, 'pull', 'failed', '{}', 'No API credentials configured');
             echo json_encode([
@@ -1203,26 +1281,26 @@ function handleSyncPull($project_id, $app_id) {
             ]);
             return;
         }
-        
+
         // Initialize API client
         $api = new AppStoreMetadataAPI(
             base64_decode($credentials['private_key']),
             $credentials['key_id'],
             $credentials['issuer_id']
         );
-        
+
         // If app_id is provided, sync specific app; otherwise sync all apps
         if ($app_id) {
             $result = query("SELECT * FROM appstore_apps WHERE id = $app_id AND project_id = $project_id");
             $app = fetch_assoc($result);
-            
+
             if (!$app) {
                 throw new Exception('App not found');
             }
-            
+
             $syncResult = syncAppFromAppStore($api, $app, $project_id);
             logOperation($project_id, $app_id, 'pull', 'completed', json_encode($syncResult));
-            
+
             echo json_encode([
                 'success' => true,
                 'message' => 'App synced successfully',
@@ -1232,24 +1310,24 @@ function handleSyncPull($project_id, $app_id) {
             // Fetch all apps from App Store Connect
             $appsData = $api->getApps();
             $syncedApps = [];
-            
+
             foreach ($appsData as $appData) {
                 $syncResult = syncAppDataToDatabase($appData, $project_id, $api);
                 $syncedApps[] = $syncResult;
             }
-            
+
             logOperation($project_id, null, 'pull', 'completed', json_encode(['synced_apps' => count($syncedApps)]));
-            
+
             echo json_encode([
                 'success' => true,
                 'message' => 'Synced ' . count($syncedApps) . ' apps from App Store Connect',
                 'synced_apps' => $syncedApps
             ]);
         }
-        
+
         // Update last_used_at for credentials
         query("UPDATE appstore_api_credentials SET last_used_at = NOW() WHERE project_id = $project_id");
-        
+
     } catch (Exception $e) {
         logOperation($project_id, $app_id, 'pull', 'failed', '{}', $e->getMessage());
         echo json_encode([
@@ -1259,16 +1337,17 @@ function handleSyncPull($project_id, $app_id) {
     }
 }
 
-function handleSyncPush($project_id, $app_id) {
+function handleSyncPush($project_id, $app_id)
+{
     global $con;
-    
+
     logOperation($project_id, $app_id, 'push', 'started', '{}');
-    
+
     try {
         // Get API credentials
         $result = query("SELECT * FROM appstore_api_credentials WHERE project_id = $project_id AND is_active = 1");
         $credentials = fetch_assoc($result);
-        
+
         if (!$credentials) {
             logOperation($project_id, $app_id, 'push', 'failed', '{}', 'No API credentials configured');
             echo json_encode([
@@ -1277,7 +1356,7 @@ function handleSyncPush($project_id, $app_id) {
             ]);
             return;
         }
-        
+
         if (!$app_id) {
             echo json_encode([
                 'success' => false,
@@ -1285,24 +1364,35 @@ function handleSyncPush($project_id, $app_id) {
             ]);
             return;
         }
-        
+
         // Get app data
         $result = query("SELECT * FROM appstore_apps WHERE id = $app_id AND project_id = $project_id");
         $app = fetch_assoc($result);
-        
+
         if (!$app) {
             throw new Exception('App not found');
         }
-        
+
         // Initialize API client
         $api = new AppStoreMetadataAPI(
             base64_decode($credentials['private_key']),
             $credentials['key_id'],
             $credentials['issuer_id']
         );
-        
+
         $pushResults = [];
-        
+
+        // Get current appInfo ID from App Store (needed for creating new localizations)
+        $appInfoId = null;
+        try {
+            $appInfos = $api->getAppInfo($app['app_id']);
+            if (!empty($appInfos) && isset($appInfos[0]['id'])) {
+                $appInfoId = $appInfos[0]['id'];
+            }
+        } catch (Exception $e) {
+            // Continue without appInfoId - won't be able to create new localizations
+        }
+
         // Push app-level localizations
         $locResult = query("SELECT * FROM appstore_app_localizations WHERE app_id = $app_id");
         while ($loc = fetch_assoc($locResult)) {
@@ -1317,19 +1407,54 @@ function handleSyncPush($project_id, $app_id) {
                         'privacyChoicesUrl' => $loc['privacy_choices_url']
                     ]);
                     $pushResults[] = ['type' => 'app_localization', 'locale' => $loc['locale'], 'status' => 'updated'];
+                } elseif ($appInfoId) {
+                    // Create new localization in App Store
+                    $createResult = $api->createAppInfoLocalization($appInfoId, $loc['locale'], [
+                        'name' => $loc['name'],
+                        'subtitle' => $loc['subtitle'],
+                        'privacyPolicyUrl' => $loc['privacy_policy_url'],
+                        'privacyPolicyText' => $loc['privacy_policy_text'],
+                        'privacyChoicesUrl' => $loc['privacy_choices_url']
+                    ]);
+                    // Store the new appstore_localization_id
+                    if (!empty($createResult['data']['id'])) {
+                        $newLocId = escape_string($createResult['data']['id']);
+                        query("UPDATE appstore_app_localizations SET appstore_localization_id = '$newLocId' WHERE id = " . (int) $loc['id']);
+                    }
+                    $pushResults[] = ['type' => 'app_localization', 'locale' => $loc['locale'], 'status' => 'created'];
+                } else {
+                    $pushResults[] = ['type' => 'app_localization', 'locale' => $loc['locale'], 'status' => 'skipped', 'reason' => 'No appstore_localization_id and could not get appInfoId'];
                 }
             } catch (Exception $e) {
                 $pushResults[] = ['type' => 'app_localization', 'locale' => $loc['locale'], 'status' => 'failed', 'error' => $e->getMessage()];
             }
         }
-        
-        // Push version localizations
+
+        // Editable version states - only push to these
+        $editableStates = ['PREPARE_FOR_SUBMISSION', 'DEVELOPER_REJECTED', 'REJECTED', 'WAITING_FOR_REVIEW', 'DEVELOPER_REMOVED_FROM_SALE'];
+
+        // Push version localizations - only for editable versions
         $verResult = query("SELECT * FROM appstore_app_versions WHERE app_id = $app_id");
         while ($version = fetch_assoc($verResult)) {
-            $vlocResult = query("SELECT * FROM appstore_version_localizations WHERE version_id = " . (int)$version['id']);
+            // Check if version is editable
+            $versionState = strtoupper($version['status'] ?? '');
+            $isEditable = in_array($versionState, $editableStates) || empty($versionState) || $versionState === 'DRAFT';
+
+            if (!$isEditable) {
+                $pushResults[] = [
+                    'type' => 'version',
+                    'version' => $version['version_string'],
+                    'status' => 'skipped',
+                    'reason' => "Version state '$versionState' is not editable"
+                ];
+                continue;
+            }
+
+            $vlocResult = query("SELECT * FROM appstore_version_localizations WHERE version_id = " . (int) $version['id']);
             while ($vloc = fetch_assoc($vlocResult)) {
                 try {
                     if (!empty($vloc['appstore_localization_id'])) {
+                        // Update existing
                         $api->updateAppStoreVersionLocalization($vloc['appstore_localization_id'], [
                             'description' => $vloc['description'],
                             'keywords' => $vloc['keywords'],
@@ -1339,24 +1464,42 @@ function handleSyncPush($project_id, $app_id) {
                             'promotionalText' => $vloc['promotional_text']
                         ]);
                         $pushResults[] = ['type' => 'version_localization', 'version' => $version['version_string'], 'locale' => $vloc['locale'], 'status' => 'updated'];
+                    } elseif (!empty($version['appstore_version_id'])) {
+                        // Create new localization for this version in App Store
+                        $createResult = $api->createAppStoreVersionLocalization($version['appstore_version_id'], $vloc['locale'], [
+                            'description' => $vloc['description'],
+                            'keywords' => $vloc['keywords'],
+                            'whatsNew' => $vloc['whats_new'],
+                            'marketingUrl' => $vloc['marketing_url'],
+                            'supportUrl' => $vloc['support_url'],
+                            'promotionalText' => $vloc['promotional_text']
+                        ]);
+                        // Store the new appstore_localization_id
+                        if (!empty($createResult['data']['id'])) {
+                            $newLocId = escape_string($createResult['data']['id']);
+                            query("UPDATE appstore_version_localizations SET appstore_localization_id = '$newLocId' WHERE id = " . (int) $vloc['id']);
+                        }
+                        $pushResults[] = ['type' => 'version_localization', 'version' => $version['version_string'], 'locale' => $vloc['locale'], 'status' => 'created'];
+                    } else {
+                        $pushResults[] = ['type' => 'version_localization', 'version' => $version['version_string'], 'locale' => $vloc['locale'], 'status' => 'skipped', 'reason' => 'No appstore IDs available'];
                     }
                 } catch (Exception $e) {
                     $pushResults[] = ['type' => 'version_localization', 'version' => $version['version_string'], 'locale' => $vloc['locale'], 'status' => 'failed', 'error' => $e->getMessage()];
                 }
             }
         }
-        
+
         logOperation($project_id, $app_id, 'push', 'completed', json_encode($pushResults));
-        
+
         // Update last_used_at for credentials
         query("UPDATE appstore_api_credentials SET last_used_at = NOW() WHERE project_id = $project_id");
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Changes pushed to App Store Connect',
             'results' => $pushResults
         ]);
-        
+
     } catch (Exception $e) {
         logOperation($project_id, $app_id, 'push', 'failed', '{}', $e->getMessage());
         echo json_encode([
@@ -1367,12 +1510,13 @@ function handleSyncPush($project_id, $app_id) {
 }
 
 // Browse all apps from App Store Connect account
-function handleBrowseApps($project_id) {
+function handleBrowseApps($project_id)
+{
     try {
         // Get API credentials
         $result = query("SELECT * FROM appstore_api_credentials WHERE project_id = $project_id AND is_active = 1");
         $credentials = fetch_assoc($result);
-        
+
         if (!$credentials) {
             echo json_encode([
                 'success' => false,
@@ -1380,24 +1524,24 @@ function handleBrowseApps($project_id) {
             ]);
             return;
         }
-        
+
         // Initialize API client
         $api = new AppStoreMetadataAPI(
             base64_decode($credentials['private_key']),
             $credentials['key_id'],
             $credentials['issuer_id']
         );
-        
+
         // Get all apps from App Store Connect
         $appsData = $api->getApps();
-        
+
         // Get already connected apps for this project
         $connectedResult = query("SELECT app_id FROM appstore_apps WHERE project_id = $project_id");
         $connectedAppIds = [];
         while ($row = fetch_assoc($connectedResult)) {
             $connectedAppIds[] = $row['app_id'];
         }
-        
+
         // Format apps for response
         $apps = [];
         foreach ($appsData as $appData) {
@@ -1411,16 +1555,16 @@ function handleBrowseApps($project_id) {
                 'is_connected' => in_array($appData['id'], $connectedAppIds)
             ];
         }
-        
+
         // Update last_used_at for credentials
         query("UPDATE appstore_api_credentials SET last_used_at = NOW() WHERE project_id = $project_id");
-        
+
         echo json_encode([
             'success' => true,
             'apps' => $apps,
             'count' => count($apps)
         ]);
-        
+
     } catch (Exception $e) {
         echo json_encode([
             'success' => false,
@@ -1430,23 +1574,24 @@ function handleBrowseApps($project_id) {
 }
 
 // Connect an existing app from App Store Connect
-function handleConnectApp($project_id) {
+function handleConnectApp($project_id)
+{
     global $con;
-    
+
     $input = json_decode(file_get_contents('php://input'), true);
     $appStoreId = $input['app_store_id'] ?? null;
-    
+
     if (!$appStoreId) {
         http_response_code(400);
         echo json_encode(['error' => 'app_store_id is required']);
         return;
     }
-    
+
     try {
         // Get API credentials
         $result = query("SELECT * FROM appstore_api_credentials WHERE project_id = $project_id AND is_active = 1");
         $credentials = fetch_assoc($result);
-        
+
         if (!$credentials) {
             echo json_encode([
                 'success' => false,
@@ -1454,7 +1599,7 @@ function handleConnectApp($project_id) {
             ]);
             return;
         }
-        
+
         // Check if already connected
         $appStoreIdEsc = escape_string($appStoreId);
         $existing = query("SELECT id FROM appstore_apps WHERE app_id = '$appStoreIdEsc' AND project_id = $project_id");
@@ -1465,38 +1610,38 @@ function handleConnectApp($project_id) {
             ]);
             return;
         }
-        
+
         // Initialize API client
         $api = new AppStoreMetadataAPI(
             base64_decode($credentials['private_key']),
             $credentials['key_id'],
             $credentials['issuer_id']
         );
-        
+
         // Fetch app data from App Store Connect
         $appData = $api->getApp($appStoreId);
-        
+
         if (!$appData) {
             throw new Exception('App not found in App Store Connect');
         }
-        
+
         // Sync the app to our database
         $syncResult = syncAppDataToDatabase($appData, $project_id, $api);
-        
+
         logOperation($project_id, $syncResult['app_id'], 'connect', 'completed', json_encode([
             'app_store_id' => $appStoreId,
             'name' => $syncResult['name']
         ]));
-        
+
         // Update last_used_at for credentials
         query("UPDATE appstore_api_credentials SET last_used_at = NOW() WHERE project_id = $project_id");
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'App connected successfully',
             'app' => $syncResult
         ]);
-        
+
     } catch (Exception $e) {
         echo json_encode([
             'success' => false,
@@ -1506,23 +1651,25 @@ function handleConnectApp($project_id) {
 }
 
 // Sync specific app from App Store
-function syncAppFromAppStore($api, $app, $project_id) {
+function syncAppFromAppStore($api, $app, $project_id)
+{
     global $con;
-    
+
     $appStoreId = $app['app_id'];
     $appData = $api->getApp($appStoreId);
-    
+
     if (!$appData) {
         throw new Exception('Could not fetch app from App Store Connect');
     }
-    
+
     return syncAppDataToDatabase($appData, $project_id, $api, $app['id']);
 }
 
 // Save app data from API to database
-function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = null) {
+function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = null)
+{
     global $con;
-    
+
     $attributes = $appData['attributes'] ?? [];
     $app_store_id = escape_string($appData['id'] ?? '');
     $bundle_id = escape_string($attributes['bundleId'] ?? '');
@@ -1531,7 +1678,7 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
     $primary_locale = escape_string($attributes['primaryLocale'] ?? 'en-US');
     $content_rights = escape_string($attributes['contentRightsDeclaration'] ?? '');
     $available_territories = isset($attributes['isAvailableInNewTerritories']) && $attributes['isAvailableInNewTerritories'] ? '1' : '0';
-    
+
     if ($existingAppId) {
         // Update existing app
         query("
@@ -1550,7 +1697,7 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
         // Check if app already exists
         $result = query("SELECT id FROM appstore_apps WHERE app_id = '$app_store_id' AND project_id = $project_id");
         $existing = fetch_assoc($result);
-        
+
         if ($existing) {
             $localAppId = $existing['id'];
             query("
@@ -1573,7 +1720,7 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
             $localAppId = mysqli_insert_id($con);
         }
     }
-    
+
     // Sync app info localizations
     try {
         $appInfoLocalizations = $api->getAppInfoLocalizations($app_store_id);
@@ -1586,7 +1733,7 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
             $privacyUrl = escape_string($locAttrs['privacyPolicyUrl'] ?? '');
             $privacyText = escape_string($locAttrs['privacyPolicyText'] ?? '');
             $privacyChoices = escape_string($locAttrs['privacyChoicesUrl'] ?? '');
-            
+
             if ($locale) {
                 query("
                     INSERT INTO appstore_app_localizations 
@@ -1606,7 +1753,7 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
     } catch (Exception $e) {
         error_log("Failed to sync app localizations: " . $e->getMessage());
     }
-    
+
     // Sync versions
     try {
         $versions = $api->getAppStoreVersions($app_store_id);
@@ -1618,11 +1765,11 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
             $appStoreState = escape_string($verAttrs['appStoreState'] ?? '');
             $releaseType = escape_string($verAttrs['releaseType'] ?? '');
             $copyright = escape_string($verAttrs['copyright'] ?? '');
-            
+
             // Check if version exists
             $result = query("SELECT id FROM appstore_app_versions WHERE appstore_version_id = '$verId'");
             $existingVer = fetch_assoc($result);
-            
+
             if ($existingVer) {
                 $localVersionId = $existingVer['id'];
                 query("
@@ -1642,7 +1789,7 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
                 ");
                 $localVersionId = mysqli_insert_id($con);
             }
-            
+
             // Sync version localizations
             try {
                 $versionLocalizations = $api->getAppStoreVersionLocalizations($verId);
@@ -1656,7 +1803,7 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
                     $marketingUrl = escape_string($vlocAttrs['marketingUrl'] ?? '');
                     $supportUrl = escape_string($vlocAttrs['supportUrl'] ?? '');
                     $promoText = escape_string($vlocAttrs['promotionalText'] ?? '');
-                    
+
                     if ($vlocLocale) {
                         query("
                             INSERT INTO appstore_version_localizations 
@@ -1681,7 +1828,7 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
     } catch (Exception $e) {
         error_log("Failed to sync versions: " . $e->getMessage());
     }
-    
+
     return [
         'app_id' => $localAppId,
         'app_store_id' => $app_store_id,
@@ -1689,14 +1836,15 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
     ];
 }
 
-function handleDashboard($project_id) {
+function handleDashboard($project_id)
+{
     $stats = [];
-    
+
     // Total apps
     $result = query("SELECT COUNT(*) as cnt FROM appstore_apps WHERE project_id = $project_id");
     $row = fetch_assoc($result);
-    $stats['total_apps'] = (int)($row['cnt'] ?? 0);
-    
+    $stats['total_apps'] = (int) ($row['cnt'] ?? 0);
+
     // Total versions
     $result = query("
         SELECT COUNT(*) as cnt FROM appstore_app_versions v
@@ -1704,8 +1852,8 @@ function handleDashboard($project_id) {
         WHERE a.project_id = $project_id
     ");
     $row = fetch_assoc($result);
-    $stats['total_versions'] = (int)($row['cnt'] ?? 0);
-    
+    $stats['total_versions'] = (int) ($row['cnt'] ?? 0);
+
     // Total localizations
     $result = query("
         SELECT COUNT(DISTINCT l.locale) as cnt FROM appstore_app_localizations l
@@ -1713,13 +1861,13 @@ function handleDashboard($project_id) {
         WHERE a.project_id = $project_id
     ");
     $row = fetch_assoc($result);
-    $stats['total_locales'] = (int)($row['cnt'] ?? 0);
-    
+    $stats['total_locales'] = (int) ($row['cnt'] ?? 0);
+
     // Has credentials
     $result = query("SELECT COUNT(*) as cnt FROM appstore_api_credentials WHERE project_id = $project_id AND is_active = 1");
     $row = fetch_assoc($result);
-    $stats['has_credentials'] = (int)($row['cnt'] ?? 0) > 0;
-    
+    $stats['has_credentials'] = (int) ($row['cnt'] ?? 0) > 0;
+
     // Recent apps
     $result = query("
         SELECT a.*, COUNT(DISTINCT v.id) as version_count
@@ -1734,7 +1882,7 @@ function handleDashboard($project_id) {
     while ($row = fetch_assoc($result)) {
         $recentApps[] = $row;
     }
-    
+
     // Recent activity
     $result = query("
         SELECT * FROM appstore_sync_log
@@ -1746,7 +1894,7 @@ function handleDashboard($project_id) {
     while ($row = fetch_assoc($result)) {
         $recentActivity[] = $row;
     }
-    
+
     echo json_encode([
         'success' => true,
         'stats' => $stats,
@@ -1759,18 +1907,20 @@ function handleDashboard($project_id) {
 // HELPER FUNCTIONS
 // ============================================
 
-function logOperation($project_id, $app_id, $operation, $status, $details, $error = null) {
+function logOperation($project_id, $app_id, $operation, $status, $details, $error = null)
+{
     $details = escape_string($details);
     $error = $error ? "'" . escape_string($error) . "'" : "NULL";
     $app_id = $app_id ?: "NULL";
-    
+
     query("
         INSERT INTO appstore_sync_log (project_id, app_id, operation, status, details, error_message)
         VALUES ($project_id, $app_id, '$operation', '$status', '$details', $error)
     ");
 }
 
-function getAppStoreCategories() {
+function getAppStoreCategories()
+{
     return [
         ['id' => 'BOOKS', 'name' => 'Books'],
         ['id' => 'BUSINESS', 'name' => 'Business'],
@@ -1779,23 +1929,27 @@ function getAppStoreCategories() {
         ['id' => 'ENTERTAINMENT', 'name' => 'Entertainment'],
         ['id' => 'FINANCE', 'name' => 'Finance'],
         ['id' => 'FOOD_AND_DRINK', 'name' => 'Food & Drink'],
-        ['id' => 'GAMES', 'name' => 'Games', 'subcategories' => [
-            ['id' => 'GAMES_ACTION', 'name' => 'Action'],
-            ['id' => 'GAMES_ADVENTURE', 'name' => 'Adventure'],
-            ['id' => 'GAMES_BOARD', 'name' => 'Board'],
-            ['id' => 'GAMES_CARD', 'name' => 'Card'],
-            ['id' => 'GAMES_CASINO', 'name' => 'Casino'],
-            ['id' => 'GAMES_CASUAL', 'name' => 'Casual'],
-            ['id' => 'GAMES_FAMILY', 'name' => 'Family'],
-            ['id' => 'GAMES_PUZZLE', 'name' => 'Puzzle'],
-            ['id' => 'GAMES_RACING', 'name' => 'Racing'],
-            ['id' => 'GAMES_ROLE_PLAYING', 'name' => 'Role Playing'],
-            ['id' => 'GAMES_SIMULATION', 'name' => 'Simulation'],
-            ['id' => 'GAMES_SPORTS', 'name' => 'Sports'],
-            ['id' => 'GAMES_STRATEGY', 'name' => 'Strategy'],
-            ['id' => 'GAMES_TRIVIA', 'name' => 'Trivia'],
-            ['id' => 'GAMES_WORD', 'name' => 'Word'],
-        ]],
+        [
+            'id' => 'GAMES',
+            'name' => 'Games',
+            'subcategories' => [
+                ['id' => 'GAMES_ACTION', 'name' => 'Action'],
+                ['id' => 'GAMES_ADVENTURE', 'name' => 'Adventure'],
+                ['id' => 'GAMES_BOARD', 'name' => 'Board'],
+                ['id' => 'GAMES_CARD', 'name' => 'Card'],
+                ['id' => 'GAMES_CASINO', 'name' => 'Casino'],
+                ['id' => 'GAMES_CASUAL', 'name' => 'Casual'],
+                ['id' => 'GAMES_FAMILY', 'name' => 'Family'],
+                ['id' => 'GAMES_PUZZLE', 'name' => 'Puzzle'],
+                ['id' => 'GAMES_RACING', 'name' => 'Racing'],
+                ['id' => 'GAMES_ROLE_PLAYING', 'name' => 'Role Playing'],
+                ['id' => 'GAMES_SIMULATION', 'name' => 'Simulation'],
+                ['id' => 'GAMES_SPORTS', 'name' => 'Sports'],
+                ['id' => 'GAMES_STRATEGY', 'name' => 'Strategy'],
+                ['id' => 'GAMES_TRIVIA', 'name' => 'Trivia'],
+                ['id' => 'GAMES_WORD', 'name' => 'Word'],
+            ]
+        ],
         ['id' => 'GRAPHICS_AND_DESIGN', 'name' => 'Graphics & Design'],
         ['id' => 'HEALTH_AND_FITNESS', 'name' => 'Health & Fitness'],
         ['id' => 'LIFESTYLE', 'name' => 'Lifestyle'],
