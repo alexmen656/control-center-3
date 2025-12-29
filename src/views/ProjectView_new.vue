@@ -1,208 +1,199 @@
 <template>
-  <div class="modern-project-view" :class="{ 'dark-mode': isDarkMode }">
-    <!-- Project Header -->
-    <div class="project-header">
-      <div class="header-content">
-        <div class="project-info">
-          <h1 class="project-title">{{ $route.params.project }}</h1>
-          <p class="project-subtitle">Project Overview & Management</p>
-        </div>
-        <div class="header-actions">
-          <button class="action-btn" @click="refreshData" title="Refresh">
-            <ion-icon name="refresh-outline"></ion-icon>
-          </button>
-          <button class="action-btn" @click="openSettings" title="Settings">
-            <ion-icon name="settings-outline"></ion-icon>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-      <!-- Tools Section -->
-      <div class="content-section">
-        <div class="section-header">
-          <div class="section-title">
-            <ion-icon name="build-outline" class="section-icon"></ion-icon>
-            <h2>Tools</h2>
-          </div>
-          <div class="section-actions">
-            <router-link :to="`/project/${$route.params.project}/new-tool/`" class="add-btn">
-              <ion-icon name="add"></ion-icon>
-              <span>New Tool</span>
-            </router-link>
-          </div>
-        </div>
-
-        <div class="cards-grid" v-if="tools.length > 0">
-          <div v-for="tool in tools" :key="tool.id" class="tool-card" @click="goToTool(tool.name)">
-            <div class="card-icon">
-              <ion-icon :name="tool.icon || 'construct-outline'"></ion-icon>
+  <div class="ion-page">
+    <ion-content>
+      <div class="modern-project-view" :class="{ 'dark-mode': isDarkMode }">
+        <!-- Project Header -->
+        <div class="project-header">
+          <div class="header-content">
+            <div class="project-info">
+              <h1 class="project-title">{{ $route.params.project }}</h1>
+              <p class="project-subtitle">Project Overview & Management</p>
             </div>
-            <div class="card-content">
-              <h3 class="card-title">{{ tool.name.charAt(0).toUpperCase() + tool.name.slice(1) }}</h3>
-              <p class="card-description">Tool Module</p>
-            </div>
-            <div class="card-actions">
-              <button class="card-action-btn" @click.stop="configureTool(tool)" title="Configure">
-                <ion-icon name="cog-outline"></ion-icon>
+            <div class="header-actions">
+              <button class="action-btn" @click="refreshData" title="Refresh">
+                <ion-icon name="refresh-outline"></ion-icon>
+              </button>
+              <button class="action-btn" @click="openSettings" title="Settings">
+                <ion-icon name="settings-outline"></ion-icon>
               </button>
             </div>
           </div>
         </div>
 
-        <div v-else class="empty-state">
-          <ion-icon name="construct-outline" class="empty-icon"></ion-icon>
-          <h3>No Tools Yet</h3>
-          <p>Start by creating your first tool module</p>
-          <router-link :to="`/project/${$route.params.project}/new-tool/`" class="empty-action-btn">
-            <ion-icon name="add"></ion-icon>
-            Create Tool
-          </router-link>
-        </div>
-      </div>
-
-      <!-- Components Section -->
-      <div class="content-section">
-        <div class="section-header">
-          <div class="section-title">
-            <ion-icon name="cube-outline" class="section-icon"></ion-icon>
-            <h2>Components</h2>
-          </div>
-          <div class="section-actions">
-            <button class="icon-btn" @click="openWebBuilder()" title="Web Builder">
-              <ion-icon name="globe-outline"></ion-icon>
-            </button>
-            <button class="icon-btn" @click="exportWeb()" title="Export">
-              <ion-icon name="download-outline"></ion-icon>
-            </button>
-            <button class="icon-btn" @click="viewWWW()" title="Preview">
-              <ion-icon name="earth-outline"></ion-icon>
-            </button>
-          </div>
-        </div>
-
-        <!-- Download Link -->
-        <div v-if="downloadLink" class="download-section">
-          <a :href="'https://alex.polan.sk/control-center/website_builder/exports/' + downloadLink" download
-            class="download-link">
-            <ion-icon name="download-outline"></ion-icon>
-            {{ downloadLink }}
-          </a>
-        </div>
-
-        <div class="cards-grid" v-if="components && components.length > 0">
-          <div v-for="component in components" :key="component.id" class="component-card">
-            <div class="card-icon" :class="`type-${component.type}`">
-              <ion-icon :name="getComponentIcon(component.type)"></ion-icon>
+        <!-- Main Content -->
+        <div class="main-content">
+          <!-- Tools Section -->
+          <div class="content-section">
+            <div class="section-header">
+              <div class="section-title">
+                <ion-icon name="build-outline" class="section-icon"></ion-icon>
+                <h2>Tools</h2>
+              </div>
+              <div class="section-actions">
+                <router-link :to="`/project/${$route.params.project}/new-tool/`" class="add-btn">
+                  <ion-icon name="add"></ion-icon>
+                  <span>New Tool</span>
+                </router-link>
+              </div>
             </div>
-            <div class="card-content">
-              <h3 class="card-title">{{ component.name.charAt(0).toUpperCase() + component.name.slice(1) }}</h3>
-              <p class="card-description">{{ component.type.charAt(0).toUpperCase() + component.type.slice(1) }}</p>
+
+            <div class="cards-grid" v-if="tools.length > 0">
+              <div v-for="tool in tools" :key="tool.id" class="tool-card" @click="goToTool(tool.name)">
+                <div class="card-icon">
+                  <ion-icon :name="tool.icon || 'construct-outline'"></ion-icon>
+                </div>
+                <div class="card-content">
+                  <h3 class="card-title">{{ tool.name.charAt(0).toUpperCase() + tool.name.slice(1) }}</h3>
+                  <p class="card-description">Tool Module</p>
+                </div>
+                <div class="card-actions">
+                  <button class="card-action-btn" @click.stop="configureTool(tool)" title="Configure">
+                    <ion-icon name="cog-outline"></ion-icon>
+                  </button>
+                </div>
+              </div>
             </div>
-            <div class="card-actions">
-              <button class="card-action-btn" @click="editComponent(component)" title="Edit">
-                <ion-icon name="create-outline"></ion-icon>
+
+            <div v-else class="empty-state">
+              <ion-icon name="construct-outline" class="empty-icon"></ion-icon>
+              <h3>No Tools Yet</h3>
+              <p>Start by creating your first tool module</p>
+              <router-link :to="`/project/${$route.params.project}/new-tool/`" class="empty-action-btn">
+                <ion-icon name="add"></ion-icon>
+                Create Tool
+              </router-link>
+            </div>
+          </div>
+
+          <!-- Components Section -->
+          <div class="content-section">
+            <div class="section-header">
+              <div class="section-title">
+                <ion-icon name="cube-outline" class="section-icon"></ion-icon>
+                <h2>Web Builder</h2>
+              </div>
+              <div class="section-actions">
+                <button class="icon-btn" @click="openWebBuilder()" title="Web Builder">
+                  <ion-icon name="globe-outline"></ion-icon>
+                </button>
+                <button class="icon-btn" @click="exportWeb()" title="Export">
+                  <ion-icon name="download-outline"></ion-icon>
+                </button>
+                <button class="icon-btn" @click="viewWWW()" title="Preview">
+                  <ion-icon name="earth-outline"></ion-icon>
+                </button>
+              </div>
+            </div>
+            <div v-if="downloadLink" class="download-section">
+              <a :href="'https://alex.polan.sk/control-center/website_builder/exports/' + downloadLink" download
+                class="download-link">
+                <ion-icon name="download-outline"></ion-icon>
+                {{ downloadLink }}
+              </a>
+            </div>
+            <div class="cards-grid" v-if="components && components.length > 0">
+              <div v-for="component in components" :key="component.id" class="component-card">
+                <div class="card-icon" :class="`type-${component.type}`">
+                  <ion-icon :name="getComponentIcon(component.type)"></ion-icon>
+                </div>
+                <div class="card-content">
+                  <h3 class="card-title">{{ component.name.charAt(0).toUpperCase() + component.name.slice(1) }}</h3>
+                  <p class="card-description">{{ component.type.charAt(0).toUpperCase() + component.type.slice(1) }}</p>
+                </div>
+                <div class="card-actions">
+                  <button class="card-action-btn" @click="editComponent(component)" title="Edit">
+                    <ion-icon name="create-outline"></ion-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div v-else class="empty-state">
+              <ion-icon name="cube-outline" class="empty-icon"></ion-icon>
+              <h3>No Components Yet</h3>
+              <p>Create your first UI component</p>
+              <button class="empty-action-btn" @click="openWebBuilder()">
+                <ion-icon name="add"></ion-icon>
+                Create Component
+              </button>
+            </div>
+          </div>
+          <div class="content-section">
+            <div class="section-header">
+              <div class="section-title">
+                <ion-icon name="people-outline" class="section-icon"></ion-icon>
+                <h2>Team Members</h2>
+              </div>
+              <div class="section-actions">
+                <button class="add-btn" @click="setOpen(true)">
+                  <ion-icon name="person-add"></ion-icon>
+                  <span>Invite User</span>
+                </button>
+              </div>
+            </div>
+            <div class="users-grid" v-if="users.length > 0">
+              <div v-for="user in users" :key="user.id" class="user-card">
+                <div class="user-avatar">
+                  <ion-icon name="person"></ion-icon>
+                </div>
+                <div class="user-info">
+                  <h3 class="user-name">{{ user.name.charAt(0).toUpperCase() + user.name.slice(1) }}</h3>
+                  <p class="user-role">Read, Edit & Write</p>
+                </div>
+                <div class="user-actions">
+                  <button class="card-action-btn" @click="manageUser(user)" title="Manage">
+                    <ion-icon name="ellipsis-horizontal"></ion-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div v-else class="empty-state">
+              <ion-icon name="people-outline" class="empty-icon"></ion-icon>
+              <h3>No Team Members</h3>
+              <p>Invite collaborators to your project</p>
+              <button class="empty-action-btn" @click="setOpen(true)">
+                <ion-icon name="person-add"></ion-icon>
+                Invite User
               </button>
             </div>
           </div>
         </div>
-
-        <div v-else class="empty-state">
-          <ion-icon name="cube-outline" class="empty-icon"></ion-icon>
-          <h3>No Components Yet</h3>
-          <p>Create your first UI component</p>
-          <button class="empty-action-btn" @click="openWebBuilder()">
-            <ion-icon name="add"></ion-icon>
-            Create Component
-          </button>
-        </div>
-      </div>
-
-      <!-- Users Section -->
-      <div class="content-section">
-        <div class="section-header">
-          <div class="section-title">
-            <ion-icon name="people-outline" class="section-icon"></ion-icon>
-            <h2>Team Members</h2>
-          </div>
-          <div class="section-actions">
-            <button class="add-btn" @click="setOpen(true)">
-              <ion-icon name="person-add"></ion-icon>
-              <span>Invite User</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="users-grid" v-if="users.length > 0">
-          <div v-for="user in users" :key="user.id" class="user-card">
-            <div class="user-avatar">
-              <ion-icon name="person"></ion-icon>
+        <div v-if="isOpen" class="modal-overlay" @click="setOpen(false)">
+          <div class="modern-modal" @click.stop>
+            <div class="modal-header">
+              <h3>Invite Team Member</h3>
+              <button class="close-btn" @click="setOpen(false)">
+                <ion-icon name="close"></ion-icon>
+              </button>
             </div>
-            <div class="user-info">
-              <h3 class="user-name">{{ user.name.charAt(0).toUpperCase() + user.name.slice(1) }}</h3>
-              <p class="user-role">Read, Edit & Write</p>
+            <div class="modal-content">
+              <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <div class="input-container">
+                  <input type="email" v-model="email" placeholder="john.doe@control-center.eu" class="form-input"
+                    @keyup.enter="confirm" />
+                  <ion-icon name="mail-outline" class="input-icon"></ion-icon>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Permission Level</label>
+                <select class="form-select" v-model="selectedPermission">
+                  <option value="read">Read Only</option>
+                  <option value="write">Read & Write</option>
+                  <option value="admin">Administrator</option>
+                </select>
+              </div>
             </div>
-            <div class="user-actions">
-              <button class="card-action-btn" @click="manageUser(user)" title="Manage">
-                <ion-icon name="ellipsis-horizontal"></ion-icon>
+            <div class="modal-actions">
+              <button class="btn-secondary" @click="setOpen(false)">Cancel</button>
+              <button class="btn-primary" @click="confirm" :disabled="!email">
+                <ion-icon name="paper-plane-outline"></ion-icon>
+                Send Invitation
               </button>
             </div>
           </div>
         </div>
-
-        <div v-else class="empty-state">
-          <ion-icon name="people-outline" class="empty-icon"></ion-icon>
-          <h3>No Team Members</h3>
-          <p>Invite collaborators to your project</p>
-          <button class="empty-action-btn" @click="setOpen(true)">
-            <ion-icon name="person-add"></ion-icon>
-            Invite User
-          </button>
-        </div>
       </div>
-    </div>
-
-    <!-- Invite User Modal -->
-    <div v-if="isOpen" class="modal-overlay" @click="setOpen(false)">
-      <div class="modern-modal" @click.stop>
-        <div class="modal-header">
-          <h3>Invite Team Member</h3>
-          <button class="close-btn" @click="setOpen(false)">
-            <ion-icon name="close"></ion-icon>
-          </button>
-        </div>
-
-        <div class="modal-content">
-          <div class="form-group">
-            <label class="form-label">Email Address</label>
-            <div class="input-container">
-              <input type="email" v-model="email" placeholder="john.doe@control-center.eu" class="form-input"
-                @keyup.enter="confirm" />
-              <ion-icon name="mail-outline" class="input-icon"></ion-icon>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Permission Level</label>
-            <select class="form-select" v-model="selectedPermission">
-              <option value="read">Read Only</option>
-              <option value="write">Read & Write</option>
-              <option value="admin">Administrator</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn-secondary" @click="setOpen(false)">Cancel</button>
-          <button class="btn-primary" @click="confirm" :disabled="!email">
-            <ion-icon name="paper-plane-outline"></ion-icon>
-            Send Invitation
-          </button>
-        </div>
-      </div>
-    </div>
+    </ion-content>
   </div>
 </template>
 
@@ -286,7 +277,7 @@ export default {
     },
 
     openSettings() {
-      this.$router.push(`/project/${this.$route.params.project}/settings`);
+      this.$router.push(`/project/${this.$route.params.project}/info`);
     },
 
     goToTool(tool) {
@@ -364,7 +355,7 @@ export default {
 </script>
 
 <style scoped>
-/* Modern Project View Design */
+/* Modern Project View Design - Aligned with ManageUsers */
 .modern-project-view {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
@@ -385,8 +376,11 @@ export default {
   --radius-lg: 12px;
 
   min-height: 100vh;
+  height: 100%;
   background: var(--background);
   padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Project Header */
@@ -395,13 +389,15 @@ export default {
   border-bottom: 1px solid var(--border);
   padding: 24px 32px;
   margin-bottom: 32px;
+  box-shadow: var(--shadow);
+  z-index: 10;
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -410,17 +406,19 @@ export default {
 }
 
 .project-title {
-  margin: 0;
-  font-size: 32px;
+  margin: 0 0 8px 0;
+  font-size: 28px;
   font-weight: 700;
   color: var(--text-primary);
   text-transform: capitalize;
+  letter-spacing: -0.5px;
 }
 
 .project-subtitle {
-  margin: 4px 0 0 0;
+  margin: 0;
   color: var(--text-secondary);
-  font-size: 16px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .header-actions {
@@ -434,7 +432,7 @@ export default {
   justify-content: center;
   width: 44px;
   height: 44px;
-  background: var(--background);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text-secondary);
@@ -447,11 +445,12 @@ export default {
   color: white;
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
+  border-color: var(--primary-color);
 }
 
 /* Main Content */
 .main-content {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 32px 32px;
 }
@@ -476,9 +475,10 @@ export default {
 
 .section-title h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--text-primary);
+  letter-spacing: -0.3px;
 }
 
 .section-icon {
@@ -497,20 +497,22 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 20px;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-  color: white;
+  padding: 10px 16px;
+  background: var(--primary-color);
+  color: white !important;
   border: none;
   border-radius: var(--radius);
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
 }
 
 .add-btn:hover {
+  background: var(--primary-hover);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
   color: white;
 }
 
@@ -518,8 +520,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -532,13 +534,14 @@ export default {
   background: var(--primary-color);
   color: white;
   transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 /* Cards Grid */
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
 }
 
 .users-grid {
@@ -553,7 +556,7 @@ export default {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: 20px;
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
@@ -563,41 +566,23 @@ export default {
 .tool-card:hover,
 .component-card:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
   border-color: var(--primary-color);
-}
-
-.tool-card::before,
-.component-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-  transform: scaleX(0);
-  transition: transform 0.2s ease;
-}
-
-.tool-card:hover::before,
-.component-card:hover::before {
-  transform: scaleX(1);
 }
 
 .card-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-  border-radius: var(--radius-lg);
-  margin-bottom: 16px;
+  border-radius: var(--radius);
+  margin-bottom: 12px;
 }
 
 .card-icon ion-icon {
-  font-size: 28px;
+  font-size: 24px;
   color: white;
 }
 
@@ -615,12 +600,12 @@ export default {
 
 .card-content {
   flex: 1;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .card-title {
-  margin: 0 0 8px 0;
-  font-size: 18px;
+  margin: 0 0 4px 0;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -628,7 +613,7 @@ export default {
 .card-description {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .card-actions {
@@ -640,8 +625,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   background: var(--background);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -653,7 +638,7 @@ export default {
 .card-action-btn:hover {
   background: var(--primary-color);
   color: white;
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 /* User Cards */
@@ -664,12 +649,12 @@ export default {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 16px;
   transition: all 0.2s ease;
 }
 
 .user-card:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
   border-color: var(--primary-color);
 }
@@ -678,15 +663,15 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .user-avatar ion-icon {
-  font-size: 24px;
+  font-size: 22px;
   color: white;
 }
 
@@ -695,8 +680,8 @@ export default {
 }
 
 .user-name {
-  margin: 0 0 4px 0;
-  font-size: 16px;
+  margin: 0 0 2px 0;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -704,7 +689,7 @@ export default {
 .user-role {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .user-actions {
@@ -713,19 +698,20 @@ export default {
 
 /* Download Section */
 .download-section {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .download-link {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 10px 16px;
   background: var(--success-color);
   color: white;
   border-radius: var(--radius);
   text-decoration: none;
   font-weight: 500;
+  font-size: 13px;
   transition: all 0.2s ease;
 }
 
@@ -733,6 +719,7 @@ export default {
   background: #047857;
   transform: translateY(-1px);
   color: white;
+  box-shadow: var(--shadow-md);
 }
 
 /* Empty States */
@@ -741,7 +728,7 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 64px 32px;
+  padding: 48px 24px;
   text-align: center;
   background: var(--surface);
   border: 2px dashed var(--border);
@@ -751,39 +738,42 @@ export default {
 .empty-icon {
   font-size: 48px;
   color: var(--text-muted);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .empty-state h3 {
   margin: 0 0 8px 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .empty-state p {
-  margin: 0 0 24px 0;
+  margin: 0 0 20px 0;
   color: var(--text-secondary);
+  font-size: 14px;
 }
 
 .empty-action-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  padding: 10px 16px;
+  background: var(--primary-color);
   color: white;
   border: none;
   border-radius: var(--radius);
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
 }
 
 .empty-action-btn:hover {
+  background: var(--primary-hover);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
   color: white;
 }
 
@@ -812,6 +802,7 @@ export default {
   max-height: 90vh;
   overflow: hidden;
   animation: modalAppear 0.2s ease-out;
+  border: 1px solid var(--border);
 }
 
 @keyframes modalAppear {
@@ -830,14 +821,14 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 24px 0;
+  padding: 20px;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 24px;
+  background: var(--background);
 }
 
 .modal-header h3 {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -857,16 +848,16 @@ export default {
 }
 
 .close-btn:hover {
-  background: var(--background);
+  background: var(--border);
   color: var(--text-primary);
 }
 
 .modal-content {
-  padding: 0 24px 24px;
+  padding: 20px;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .form-label {
@@ -874,7 +865,7 @@ export default {
   margin-bottom: 8px;
   font-weight: 500;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .input-container {
@@ -883,10 +874,10 @@ export default {
 
 .form-input {
   width: 100%;
-  padding: 12px 16px 12px 44px;
+  padding: 10px 14px 10px 40px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  font-size: 16px;
+  font-size: 14px;
   background: var(--surface);
   color: var(--text-primary);
   transition: all 0.2s ease;
@@ -896,24 +887,24 @@ export default {
 .form-input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
 .input-icon {
   position: absolute;
-  left: 14px;
+  left: 12px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-muted);
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .form-select {
   width: 100%;
-  padding: 12px 16px;
+  padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  font-size: 16px;
+  font-size: 14px;
   background: var(--surface);
   color: var(--text-primary);
   cursor: pointer;
@@ -924,24 +915,26 @@ export default {
 .form-select:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
 .modal-actions {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  padding: 24px;
+  padding: 16px;
   border-top: 1px solid var(--border);
+  background: var(--background);
 }
 
 .btn-secondary {
-  padding: 12px 24px;
-  background: var(--background);
-  color: var(--text-secondary);
+  padding: 10px 16px;
+  background: var(--surface);
+  color: var(--text-primary);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-weight: 500;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -955,17 +948,19 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  padding: 10px 16px;
+  background: var(--primary-color);
   color: white;
   border: none;
   border-radius: var(--radius);
   font-weight: 500;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -988,12 +983,12 @@ export default {
 /* Responsive Design */
 @media (max-width: 768px) {
   .project-header {
-    padding: 20px 16px;
+    padding: 16px;
   }
 
   .header-content {
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     align-items: flex-start;
   }
 
@@ -1003,7 +998,7 @@ export default {
 
   .section-header {
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     align-items: flex-start;
   }
 
@@ -1024,7 +1019,7 @@ export default {
   }
 
   .project-title {
-    font-size: 24px;
+    font-size: 22px;
   }
 }
 
@@ -1033,11 +1028,11 @@ export default {
   .tool-card,
   .component-card,
   .user-card {
-    padding: 16px;
+    padding: 12px;
   }
 
   .empty-state {
-    padding: 48px 24px;
+    padding: 32px 16px;
   }
 }
 </style>
