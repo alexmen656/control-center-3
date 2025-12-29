@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle :icon="service?.icon || 'cog-outline'" :title="service?.name || 'Service'"/>
+      <SiteTitle :icon="service?.icon || 'cog-outline'" :title="service?.name || 'Service'" bg="#121212"/>
 
       <div class="page-container">
         <!-- Loading State -->

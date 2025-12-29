@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-                  <SiteTitle v-if="true" icon="person-outline" title="Yyyyy"/>
+      <SiteTitle v-if="true" icon="person-outline" title="Yyyyy" />
 
       <div class="page-container">
 
@@ -13,7 +13,7 @@
               <span>Add Entry</span>
             </button>
           </div>
-          
+
           <div class="action-group-right">
             <button class="action-btn secondary" @click="exportCSV()">
               <ion-icon name="download-outline"></ion-icon>
@@ -51,12 +51,7 @@
             <div class="header-right">
               <div class="search-box">
                 <ion-icon name="search-outline"></ion-icon>
-                <input 
-                  type="text" 
-                  placeholder="Search entries..." 
-                  v-model="searchTerm"
-                  @input="handleSearch"
-                >
+                <input type="text" placeholder="Search entries..." v-model="searchTerm" @input="handleSearch">
               </div>
             </div>
           </div>
@@ -65,29 +60,14 @@
             <div class="modern-table">
               <!-- Table Header -->
               <div class="table-header">
-                <div 
-                  v-for="(label, index) in labels" 
-                  :key="label"
-                  class="header-cell"
-                  @click="sortBy(index)"
-                >
+                <div v-for="(label, index) in labels" :key="label" class="header-cell" @click="sortBy(index)">
                   <span class="header-text">{{ label }}</span>
                   <div class="sort-indicator">
-                    <ion-icon 
-                      v-if="sortColumn === index && sortDirection === 'asc'" 
-                      name="chevron-up-outline"
-                      class="sort-active"
-                    ></ion-icon>
-                    <ion-icon 
-                      v-else-if="sortColumn === index && sortDirection === 'desc'" 
-                      name="chevron-down-outline"
-                      class="sort-active"
-                    ></ion-icon>
-                    <ion-icon 
-                      v-else 
-                      name="swap-vertical-outline" 
-                      class="sort-default"
-                    ></ion-icon>
+                    <ion-icon v-if="sortColumn === index && sortDirection === 'asc'" name="chevron-up-outline"
+                      class="sort-active"></ion-icon>
+                    <ion-icon v-else-if="sortColumn === index && sortDirection === 'desc'" name="chevron-down-outline"
+                      class="sort-active"></ion-icon>
+                    <ion-icon v-else name="swap-vertical-outline" class="sort-default"></ion-icon>
                   </div>
                 </div>
                 <div class="header-cell actions-header">Actions</div>
@@ -100,26 +80,19 @@
                   <div class="no-data-content">
                     <ion-icon name="folder-open-outline" class="no-data-icon"></ion-icon>
                     <h4>No Data Available</h4>
-                    <p>{{ searchTerm ? 'No entries match your search criteria.' : 'No entries have been created yet.' }}</p>
+                    <p>{{ searchTerm ? 'No entries match your search criteria.' : 'No entries have been created yet.' }}
+                    </p>
                     <button v-if="!searchTerm" class="action-btn primary" @click="toggleFormView">
                       <ion-icon name="add-outline"></ion-icon>
                       Add First Entry
                     </button>
                   </div>
                 </div>
-                
+
                 <!-- Data Rows -->
-                <div 
-                  v-for="(tr, rowIndex) in sortedData" 
-                  :key="rowIndex"
-                  class="table-row"
-                  :class="{ 'row-hover': true }"
-                >
-                  <div 
-                    v-for="(td, colIndex) in tr" 
-                    :key="colIndex"
-                    class="table-cell"
-                  >
+                <div v-for="(tr, rowIndex) in sortedData" :key="rowIndex" class="table-row"
+                  :class="{ 'row-hover': true }">
+                  <div v-for="(td, colIndex) in tr" :key="colIndex" class="table-cell">
                     <span class="cell-content">{{ td }}</span>
                   </div>
                   <div class="table-cell actions-cell">
@@ -161,7 +134,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- Custom Modals -->
       <!-- Edit Entry Modal -->
       <div v-if="isOpenRef" class="custom-modal-overlay" @click="closeModal(false)">
@@ -176,70 +149,40 @@
             <div v-if="editFormData.length > 0" class="modern-edit-form">
               <div v-for="field in editFormData" :key="field.name" class="form-group">
                 <label class="form-label">{{ field.label }}</label>
-                
+
                 <!-- Text Input -->
-                <input 
-                  v-if="field.type === 'text' || field.type === 'email' || field.type === 'number'"
-                  v-model="editFormValues[field.name]"
-                  :type="field.type"
-                  :placeholder="field.placeholder || field.label"
-                  class="modern-input"
-                />
-                
+                <input v-if="field.type === 'text' || field.type === 'email' || field.type === 'number'"
+                  v-model="editFormValues[field.name]" :type="field.type"
+                  :placeholder="field.placeholder || field.label" class="modern-input" />
+
                 <!-- Textarea -->
-                <textarea 
-                  v-else-if="field.type === 'textarea'"
-                  v-model="editFormValues[field.name]"
-                  :placeholder="field.placeholder || field.label"
-                  class="modern-textarea"
-                  rows="4"
-                ></textarea>
-                
+                <textarea v-else-if="field.type === 'textarea'" v-model="editFormValues[field.name]"
+                  :placeholder="field.placeholder || field.label" class="modern-textarea" rows="4"></textarea>
+
                 <!-- Select -->
-                <select 
-                  v-else-if="field.type === 'select'"
-                  v-model="editFormValues[field.name]"
-                  class="modern-select"
-                >
+                <select v-else-if="field.type === 'select'" v-model="editFormValues[field.name]" class="modern-select">
                   <option value="">Select {{ field.label }}</option>
-                  <option 
-                    v-for="option in field.options" 
-                    :key="option.value" 
-                    :value="option.value"
-                  >
+                  <option v-for="option in field.options" :key="option.value" :value="option.value">
                     {{ option.label }}
                   </option>
                 </select>
-                
+
                 <!-- Checkbox -->
                 <label v-else-if="field.type === 'checkbox'" class="checkbox-container">
-                  <input 
-                    type="checkbox" 
-                    v-model="editFormValues[field.name]"
-                    class="modern-checkbox"
-                  />
+                  <input type="checkbox" v-model="editFormValues[field.name]" class="modern-checkbox" />
                   <span class="checkmark"></span>
                   {{ field.label }}
                 </label>
-                
+
                 <!-- Date -->
-                <input 
-                  v-else-if="field.type === 'date'"
-                  v-model="editFormValues[field.name]"
-                  type="date"
-                  class="modern-input"
-                />
-                
+                <input v-else-if="field.type === 'date'" v-model="editFormValues[field.name]" type="date"
+                  class="modern-input" />
+
                 <!-- Default text input for other types -->
-                <input 
-                  v-else
-                  v-model="editFormValues[field.name]"
-                  type="text"
-                  :placeholder="field.placeholder || field.label"
-                  class="modern-input"
-                />
+                <input v-else v-model="editFormValues[field.name]" type="text"
+                  :placeholder="field.placeholder || field.label" class="modern-input" />
               </div>
-              
+
               <div class="form-actions">
                 <button class="action-btn secondary" @click="closeModal(false)">
                   Cancel
@@ -249,7 +192,7 @@
                 </button>
               </div>
             </div>
-            
+
             <div v-else class="loading-state">
               <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
               <p>Loading entry data...</p>
@@ -259,22 +202,12 @@
       </div>
 
       <!-- Trigger Manager Modal (Component has its own modal) -->
-      <TriggerManager 
-        v-if="triggerModalOpen"
-        :project="$route.params.project"
-        :form="$route.params.form"
-        @close="triggerModalOpen = false"
-      />
+      <TriggerManager v-if="triggerModalOpen" :project="$route.params.project" :form="$route.params.form"
+        @close="triggerModalOpen = false" />
 
       <!-- Rename Form Modal (Component has its own modal) -->
-      <RenameForm 
-        v-if="renameModalOpen"
-        :project="$route.params.project"
-        :form="$route.params.form"
-        @close="renameModalOpen = false"
-        @success="handleRenameSuccess"
-        @sidebarRefresh="refreshSidebar"
-      />
+      <RenameForm v-if="renameModalOpen" :project="$route.params.project" :form="$route.params.form"
+        @close="renameModalOpen = false" @success="handleRenameSuccess" @sidebarRefresh="refreshSidebar" />
     </ion-content>
   </ion-page>
 </template>
@@ -319,44 +252,44 @@ export default defineComponent({
       if (!this.data || !Array.isArray(this.data)) {
         return [];
       }
-      
+
       // First apply search filter
       let dataToSort = this.data;
-      
+
       if (this.searchTerm.trim()) {
         const searchLower = this.searchTerm.toLowerCase();
-        dataToSort = this.data.filter(row => 
-          row.some(cell => 
+        dataToSort = this.data.filter(row =>
+          row.some(cell =>
             String(cell).toLowerCase().includes(searchLower)
           )
         );
       }
-      
+
       // Then apply sorting
       if (this.sortColumn === null) {
         return dataToSort;
       }
-      
+
       const sorted = [...dataToSort].sort((a, b) => {
         const aVal = a[this.sortColumn];
         const bVal = b[this.sortColumn];
-        
+
         // Check if values are dates (datetime format like "2025-08-12 21:55:09")
         const dateRegex = /^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}$/;
         const aIsDate = dateRegex.test(aVal);
         const bIsDate = dateRegex.test(bVal);
-        
+
         if (aIsDate && bIsDate) {
           // Date sort
           const aDate = new Date(aVal);
           const bDate = new Date(bVal);
           return this.sortDirection === 'asc' ? aDate - bDate : bDate - aDate;
         }
-        
+
         // Check if values are numbers
         const aNum = parseFloat(aVal);
         const bNum = parseFloat(bVal);
-        
+
         if (!isNaN(aNum) && !isNaN(bNum)) {
           // Numeric sort
           return this.sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
@@ -364,7 +297,7 @@ export default defineComponent({
           // String sort
           const aStr = String(aVal).toLowerCase();
           const bStr = String(bVal).toLowerCase();
-          
+
           if (this.sortDirection === 'asc') {
             return aStr.localeCompare(bStr);
           } else {
@@ -372,7 +305,7 @@ export default defineComponent({
           }
         }
       });
-      
+
       return sorted;
     }
   },
@@ -447,7 +380,7 @@ export default defineComponent({
             project: this.$route.params.project,
           })
         );
-        
+
         // Load current entry data
         const entryResponse = await this.$axios.post(
           "form.php",
@@ -458,16 +391,16 @@ export default defineComponent({
             project: this.$route.params.project,
           })
         );
-        
+
         this.editFormData = formResponse.data.schema || [];
         const entryData = entryResponse.data.entry || {};
-        
+
         // Initialize form values with current data
         this.editFormValues = {};
         this.editFormData.forEach(field => {
           this.editFormValues[field.name] = entryData[field.name] || '';
         });
-        
+
       } catch (error) {
         console.error('Error loading edit form data:', error);
         // Fallback: use labels as field names
@@ -476,7 +409,7 @@ export default defineComponent({
           label: label,
           type: 'text'
         }));
-        
+
         // Find current row data
         const currentRow = this.data.find(row => row[0] == this.edit_id);
         this.editFormValues = {};
@@ -533,26 +466,26 @@ export default defineComponent({
       form.method = 'POST';
       form.action = 'https://alex.polan.sk/control-center/triggers.php'; // Fixed path
       form.target = '_blank';
-      
+
       const exportField = document.createElement('input');
       exportField.type = 'hidden';
       exportField.name = 'export_csv';
       exportField.value = 'true';
-      
+
       const projectField = document.createElement('input');
       projectField.type = 'hidden';
       projectField.name = 'project';
       projectField.value = this.$route.params.project;
-      
+
       const formField = document.createElement('input');
       formField.type = 'hidden';
       formField.name = 'form_name';
       formField.value = this.$route.params.form;
-      
+
       form.appendChild(exportField);
       form.appendChild(projectField);
       form.appendChild(formField);
-      
+
       document.body.appendChild(form);
       form.submit();
       document.body.removeChild(form);
@@ -598,12 +531,12 @@ export default defineComponent({
           this.current_limit = 1;
         });
     },
-    loadMore(){
+    loadMore() {
       const table_name = `${this.$route.params.project.replaceAll("-", "_")}_${this.$route.params.form}`;
-      this.$axios.post("mysql.php", this.$qs.stringify({load_more: "load_more", current_limit: this.current_limit,table: table_name})).then((res) => {
-        this.current_limit = this.current_limit+1;
+      this.$axios.post("mysql.php", this.$qs.stringify({ load_more: "load_more", current_limit: this.current_limit, table: table_name })).then((res) => {
+        this.current_limit = this.current_limit + 1;
 
-        res.data.data.forEach(element =>{
+        res.data.data.forEach(element => {
           this.data.push(element);
         });
       });
@@ -1073,7 +1006,7 @@ export default defineComponent({
     --text-secondary: #cbd5e1;
     --text-muted: #64748b;
   }
-  
+
   .search-box input {
     background: var(--background);
     color: var(--text-primary);
@@ -1098,40 +1031,40 @@ export default defineComponent({
   .page-container {
     padding: 16px;
   }
-  
+
   .action-bar {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .action-group-left,
   .action-group-right {
     flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   .card-header {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
   }
-  
+
   .search-box input {
     min-width: 100%;
   }
-  
+
   .header-cell,
   .table-cell {
     min-width: 100px;
     padding: 12px 8px;
     font-size: 12px;
   }
-  
+
   .form-section {
     width: 100%;
     right: -100%;
   }
-  
+
   .dropdown-menu {
     right: auto;
     left: 0;
@@ -1142,7 +1075,7 @@ export default defineComponent({
   .modern-table {
     min-width: 600px;
   }
-  
+
   .cell-content {
     max-width: 80px;
   }
@@ -1258,6 +1191,7 @@ export default defineComponent({
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -1268,6 +1202,7 @@ export default defineComponent({
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1281,7 +1216,7 @@ export default defineComponent({
     max-width: none;
     margin: 20px;
   }
-  
+
   .custom-modal-header,
   .custom-modal-body {
     padding: 20px;
@@ -1378,6 +1313,7 @@ export default defineComponent({
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -1386,5 +1322,16 @@ export default defineComponent({
 .loading-state p {
   margin: 0;
   font-size: 14px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .modern-content {
+    --background: #121212;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
+    --text-primary: #f1f5f9;
+    --text-secondary: #b0b0b0;
+    --text-muted: #707070;
+  }
 }
 </style>
