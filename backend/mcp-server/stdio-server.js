@@ -21,6 +21,7 @@ import { contentTools, handleContentTool } from './tools/content.js';
 import { fileTools, handleFileTool } from './tools/files.js';
 import { userTools, handleUserTool } from './tools/users.js';
 import { webBuilderTools, handleWebBuilderTool } from './tools/webbuilder.js';
+import { appstoreTools, handleAppstoreTool } from './tools/appstore.js';
 
 // Import resources
 import { getResources, readResource } from './resources/index.js';
@@ -84,7 +85,8 @@ async function main() {
       ...contentTools,
       ...fileTools,
       ...userTools,
-      ...webBuilderTools
+      ...webBuilderTools,
+      ...appstoreTools
     ];
     
     return { tools: allTools };
@@ -108,6 +110,8 @@ async function main() {
         return await handleUserTool(name, args, context);
       } else if (name.startsWith('webbuilder_')) {
         return await handleWebBuilderTool(name, args, context);
+      } else if (name.startsWith('appstore_')) {
+        return await handleAppstoreTool(name, args, context);
       }
       
       return {

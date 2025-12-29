@@ -305,13 +305,25 @@ try {
         // LOCALIZATION MANAGEMENT
         // ============================================
         case 'app_localizations':
+        case 'localizations': // Alias
             $app_id = isset($_GET['app_id']) ? (int) $_GET['app_id'] : null;
             handleAppLocalizations($project_id, $app_id, $method);
+            break;
+
+        case 'localization': // Single app localization
+        case 'app_localization':
+            $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
+            handleSingleAppLocalization($project_id, $id, $method);
             break;
 
         case 'version_localizations':
             $version_id = isset($_GET['version_id']) ? (int) $_GET['version_id'] : null;
             handleVersionLocalizations($project_id, $version_id, $method);
+            break;
+
+        case 'version_localization': // Single version localization
+            $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
+            handleSingleVersionLocalization($project_id, $id, $method);
             break;
 
         // ============================================
@@ -908,6 +920,139 @@ function handleVersionLocalizations($project_id, $version_id, $method)
         echo json_encode([
             'success' => true,
             'message' => 'Version localization deleted successfully'
+        ]);
+    }
+}
+
+// Handle single version localization (GET, PUT, DELETE by id)
+function handleSingleVersionLocalization($project_id, $id, $method)
+{
+    global $con;
+
+    if (!$id) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Localization ID is required']);
+        return;
+    }
+
+    // Verify localization belongs to project
+    $result = query("
+        SELECT vl.*, v.version_string, a.name as app_name
+        FROM appstore_version_localizations vl
+        JOIN appstore_app_versions v ON vl.version_id = v.id
+        JOIN appstore_apps a ON v.app_id = a.id
+        WHERE vl.id = $id AND a.project_id = $project_id
+    ");
+    $localization = fetch_assoc($result);
+
+    if (!$localization) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Version localization not found']);
+        return;
+    }
+
+    if ($method === 'GET') {
+        echo json_encode([
+            'success' => true,
+            'localization' => $localization
+        ]);
+    } elseif ($method === 'PUT' || $method === 'PATCH') {
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        $updateParts = [];
+        $allowedFields = ['description', 'keywords', 'whats_new', 'marketing_url', 'support_url', 'promotional_text'];
+
+        foreach ($allowedFields as $field) {
+            if (isset($input[$field])) {
+                $value = escape_string($input[$field]);
+                $updateParts[] = "$field = '$value'";
+            }
+        }
+
+        if (empty($updateParts)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'No fields to update']);
+            return;
+        }
+
+        query("UPDATE appstore_version_localizations SET " . implode(', ', $updateParts) . ", updated_at = CURRENT_TIMESTAMP WHERE id = $id");
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Version localization updated successfully'
+        ]);
+    } elseif ($method === 'DELETE') {
+        query("DELETE FROM appstore_version_localizations WHERE id = $id");
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Version localization deleted successfully'
+        ]);
+    }
+}
+
+// Handle single app localization (GET, PUT, DELETE by id)
+function handleSingleAppLocalization($project_id, $id, $method)
+{
+    global $con;
+
+    if (!$id) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Localization ID is required']);
+        return;
+    }
+
+    // Verify localization belongs to project
+    $result = query("
+        SELECT al.*, a.name as app_name
+        FROM appstore_app_localizations al
+        JOIN appstore_apps a ON al.app_id = a.id
+        WHERE al.id = $id AND a.project_id = $project_id
+    ");
+    $localization = fetch_assoc($result);
+
+    if (!$localization) {
+        http_response_code(404);
+        echo json_encode(['error' => 'App localization not found']);
+        return;
+    }
+
+    if ($method === 'GET') {
+        echo json_encode([
+            'success' => true,
+            'localization' => $localization
+        ]);
+    } elseif ($method === 'PUT' || $method === 'PATCH') {
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        $updateParts = [];
+        $allowedFields = ['name', 'subtitle', 'privacy_policy_url', 'privacy_policy_text', 'privacy_choices_url'];
+
+        foreach ($allowedFields as $field) {
+            if (isset($input[$field])) {
+                $value = escape_string($input[$field]);
+                $updateParts[] = "$field = '$value'";
+            }
+        }
+
+        if (empty($updateParts)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'No fields to update']);
+            return;
+        }
+
+        query("UPDATE appstore_app_localizations SET " . implode(', ', $updateParts) . ", updated_at = CURRENT_TIMESTAMP WHERE id = $id");
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'App localization updated successfully'
+        ]);
+    } elseif ($method === 'DELETE') {
+        query("DELETE FROM appstore_app_localizations WHERE id = $id");
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'App localization deleted successfully'
         ]);
     }
 }

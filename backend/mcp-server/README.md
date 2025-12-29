@@ -232,6 +232,33 @@ Authorization: Bearer <jwt_token>
 | `webbuilder_domains_list` | Alle Domains auflisten |
 | `webbuilder_create_landing_page` | Landing Page mit Template erstellen |
 
+### App Store Metadata (NEU)
+
+Vollständige Kontrolle über App Store Connect Metadaten für AI-gesteuerte Lokalisierung.
+
+| Tool | Beschreibung |
+|------|-------------|
+| `appstore_list_apps` | Alle Apps eines Projekts auflisten |
+| `appstore_get_app` | App-Details mit allen Lokalisierungen |
+| `appstore_browse_apps` | Apps aus App Store Connect Account durchsuchen |
+| `appstore_connect_app` | Bestehende App Store App verbinden |
+| `appstore_list_versions` | Alle Versionen einer App |
+| `appstore_get_version` | Version mit Lokalisierungen und Screenshots |
+| `appstore_create_version` | Neue App-Version erstellen |
+| `appstore_list_app_localizations` | App-Level Lokalisierungen (Name, Subtitle) |
+| `appstore_create_app_localization` | Neue Sprache zur App hinzufügen |
+| `appstore_update_app_localization` | App-Lokalisierung aktualisieren |
+| `appstore_list_version_localizations` | Version-Lokalisierungen (Description, Keywords) |
+| `appstore_create_version_localization` | Neue Sprache zu Version hinzufügen |
+| `appstore_update_version_localization` | Version-Lokalisierung aktualisieren |
+| `appstore_bulk_update_localizations` | Mehrere Lokalisierungen auf einmal aktualisieren |
+| `appstore_sync_pull` | Metadaten von App Store Connect abrufen |
+| `appstore_sync_push` | Lokale Änderungen zu App Store Connect pushen |
+| `appstore_get_credentials` | API Credentials Status prüfen |
+| `appstore_set_credentials` | App Store Connect API Credentials setzen |
+| `appstore_list_locales` | Alle unterstützten Locales auflisten |
+| `appstore_dashboard` | Dashboard mit Übersicht |
+
 ## Beispiele
 
 ### Projekt erstellen
@@ -316,6 +343,78 @@ const response = await fetch('http://localhost:3001/mcp/tools/webbuilder_project
     description: 'Eine moderne Landingpage',
     ccProjectId: 'my-project-id'  // Control Center Projekt ID
   })
+});
+```
+
+### App Store Automatisierung (AI Agent Beispiel)
+
+```javascript
+// AI Agent kann App Store Metadaten vollautomatisch lokalisieren
+
+// 1. Apps aus Account abrufen
+const apps = await fetch('http://localhost:3001/mcp/tools/appstore_browse_apps', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${jwtToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ project: 'my-app-project' })
+});
+
+// 2. App verbinden
+await fetch('http://localhost:3001/mcp/tools/appstore_connect_app', {
+  method: 'POST',
+  headers: { 'Authorization': `Bearer ${jwtToken}`, 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    project: 'my-app-project',
+    appleAppId: '1234567890',
+    bundleId: 'com.company.myapp',
+    name: 'My Awesome App'
+  })
+});
+
+// 3. Metadaten von Apple pullen
+await fetch('http://localhost:3001/mcp/tools/appstore_sync_pull', {
+  method: 'POST',
+  headers: { 'Authorization': `Bearer ${jwtToken}`, 'Content-Type': 'application/json' },
+  body: JSON.stringify({ project: 'my-app-project', appId: 1 })
+});
+
+// 4. Lokalisierungen in mehreren Sprachen aktualisieren (Bulk)
+await fetch('http://localhost:3001/mcp/tools/appstore_bulk_update_localizations', {
+  method: 'POST',
+  headers: { 'Authorization': `Bearer ${jwtToken}`, 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    project: 'my-app-project',
+    versionId: 1,
+    localizations: [
+      {
+        locale: 'de-DE',
+        description: 'Die beste App für...',
+        keywords: 'produktivität,organisation,todo',
+        whatsNew: 'Neue Funktionen in Version 2.0'
+      },
+      {
+        locale: 'fr-FR',
+        description: 'La meilleure application pour...',
+        keywords: 'productivité,organisation,todo',
+        whatsNew: 'Nouvelles fonctionnalités dans la version 2.0'
+      },
+      {
+        locale: 'es-ES',
+        description: 'La mejor aplicación para...',
+        keywords: 'productividad,organización,todo',
+        whatsNew: 'Nuevas funciones en la versión 2.0'
+      }
+    ]
+  })
+});
+
+// 5. Änderungen zu Apple pushen
+await fetch('http://localhost:3001/mcp/tools/appstore_sync_push', {
+  method: 'POST',
+  headers: { 'Authorization': `Bearer ${jwtToken}`, 'Content-Type': 'application/json' },
+  body: JSON.stringify({ project: 'my-app-project', appId: 1 })
 });
 ```
 
