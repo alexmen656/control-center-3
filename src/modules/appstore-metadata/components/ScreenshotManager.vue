@@ -10,7 +10,8 @@
             </button>
             <div class="header-content">
               <h1>Screenshots verwalten</h1>
-              <p v-if="version">Version {{ version.version_string }} • <span class="status-badge" :class="version.status">{{ version.status }}</span></p>
+              <p v-if="version">Version {{ version.version_string }} • <span class="status-badge"
+                  :class="version.status">{{ version.status }}</span></p>
             </div>
           </div>
           <button class="action-btn primary" @click="triggerFileInput">
@@ -21,13 +22,8 @@
 
         <!-- Device Type Selector -->
         <div class="tab-navigation device-tabs">
-          <button 
-            v-for="device in deviceTypes" 
-            :key="device.type"
-            class="tab-btn"
-            :class="{ active: activeDevice === device.type }"
-            @click="activeDevice = device.type"
-          >
+          <button v-for="device in deviceTypes" :key="device.type" class="tab-btn"
+            :class="{ active: activeDevice === device.type }" @click="activeDevice = device.type">
             <ion-icon :name="device.icon"></ion-icon>
             {{ device.label }}
           </button>
@@ -35,13 +31,8 @@
 
         <!-- Locale Tabs -->
         <div class="tab-navigation locale-tabs">
-          <button
-            v-for="loc in localizations"
-            :key="loc.locale"
-            class="tab-btn"
-            :class="{ active: activeLocale === loc.locale }"
-            @click="activeLocale = loc.locale"
-          >
+          <button v-for="loc in localizations" :key="loc.locale" class="tab-btn"
+            :class="{ active: activeLocale === loc.locale }" @click="activeLocale = loc.locale">
             <span class="flag">{{ getLocaleFlag(loc.locale) }}</span>
             {{ loc.locale }}
           </button>
@@ -57,20 +48,10 @@
             <span class="badge">{{ currentScreenshots.length }}/10</span>
           </div>
 
-          <div class="screenshots-drop-zone" 
-               @dragover.prevent="isDragging = true" 
-               @dragleave="isDragging = false"
-               @drop.prevent="handleDrop"
-               :class="{ dragging: isDragging }"
-          >
-            <input 
-              ref="fileInput" 
-              type="file" 
-              accept="image/png,image/jpeg" 
-              multiple 
-              hidden 
-              @change="handleFileSelect"
-            />
+          <div class="screenshots-drop-zone" @dragover.prevent="isDragging = true" @dragleave="isDragging = false"
+            @drop.prevent="handleDrop" :class="{ dragging: isDragging }">
+            <input ref="fileInput" type="file" accept="image/png,image/jpeg" multiple hidden
+              @change="handleFileSelect" />
 
             <div v-if="currentScreenshots.length === 0" class="empty-state" @click="triggerFileInput">
               <div class="empty-icon">
@@ -81,33 +62,27 @@
               <span class="hint">PNG oder JPEG, max. 10 Screenshots</span>
             </div>
 
-            <draggable 
-              v-else
-              v-model="currentScreenshots" 
-              class="screenshots-grid"
-              @end="updateOrder"
-              item-key="id"
-            >
-              <template #item="{ element, index }">
-                <div class="screenshot-item">
-                  <div class="screenshot-preview">
-                    <img :src="element.screenshot_url" :alt="`Screenshot ${index + 1}`" />
-                    <div class="screenshot-overlay">
-                      <button class="overlay-btn" @click="viewScreenshot(element)">
-                        <ion-icon name="eye-outline"></ion-icon>
-                      </button>
-                      <button class="overlay-btn danger" @click="confirmDeleteScreenshot(element)">
-                        <ion-icon name="trash-outline"></ion-icon>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="screenshot-info">
-                    <span class="order-badge">{{ index + 1 }}</span>
-                    <span class="display-type">{{ element.display_type || 'Standard' }}</span>
+            <div v-else class="screenshots-grid">
+              <div v-for="(element, index) in currentScreenshots" :key="element.id" class="screenshot-item"
+                draggable="true" @dragstart="dragStart(index)" @dragover.prevent="dragOver(index)" @drop="drop(index)"
+                @dragend="dragEnd">
+                <div class="screenshot-preview">
+                  <img :src="screenshotUrl(element)" :alt="`Screenshot ${index + 1}`" />
+                  <div class="screenshot-overlay">
+                    <button class="overlay-btn" @click="viewScreenshot(element)">
+                      <ion-icon name="eye-outline"></ion-icon>
+                    </button>
+                    <button class="overlay-btn danger" @click="confirmDeleteScreenshot(element)">
+                      <ion-icon name="trash-outline"></ion-icon>
+                    </button>
                   </div>
                 </div>
-              </template>
-            </draggable>
+                <div class="screenshot-info">
+                  <span class="order-badge">{{ index + 1 }}</span>
+                  <span class="display-type">{{ element.display_type || 'Standard' }}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Guidelines -->
@@ -137,7 +112,7 @@
           <button class="close-preview" @click="previewScreenshot = null">
             <ion-icon name="close-outline"></ion-icon>
           </button>
-          <img :src="previewScreenshot.screenshot_url" :alt="'Preview'" />
+          <img :src="screenshotUrl(previewScreenshot)" :alt="'Preview'" />
         </div>
       </div>
 
@@ -196,13 +171,8 @@
 </template>
 
 <script>
-import draggable from 'vuedraggable';
-
 export default {
   name: 'ScreenshotManager',
-  components: {
-    draggable
-  },
   props: {
     appId: {
       type: [String, Number],
@@ -257,32 +227,45 @@ export default {
           'Standard': '1280 x 800 px',
           'Retina': '2560 x 1600 px'
         }
-      }
+      },
+      draggedIndex: null
     };
   },
-  
+
   computed: {
     projectId() {
       return this.$route.params.project;
     },
     currentScreenshots() {
       return this.screenshots.filter(
-        s => s.display_type === this.activeDevice && s.locale === this.activeLocale
-      ).sort((a, b) => a.display_order - b.display_order);
+        s => (s.display_type === this.activeDevice || s.display_type === '') && s.locale === this.activeLocale
+      ).sort((a, b) => (a.position || a.display_order || 0) - (b.position || b.display_order || 0));
+    },
+    screenshotUrl() {
+      /*return (screenshot) => {
+        if (!screenshot.file_path) return '';
+        // Remove leading ../ and prepend API base URL
+        const path = screenshot.file_path.replace(/^\.\.\//, '');
+        return `${this.$axios.defaults.baseURL || '/backend/'}${path}`;
+      };*/
+      return (screenshot) => {
+        console.log('screenshotUrl called', screenshot.file_path);
+        return screenshot.file_path;
+      };
     },
     availableLocales() {
       const usedLocales = [...new Set(this.screenshots.map(s => s.locale))];
       return this.allLocales.filter(l => !usedLocales.includes(l.code));
     }
   },
-  
+
   mounted() {
     this.loadVersion();
     this.loadScreenshots();
     this.loadLocales();
     this.loadLocalizations();
   },
-  
+
   methods: {
     async loadVersion() {
       try {
@@ -294,7 +277,7 @@ export default {
         console.error('Error loading version:', e);
       }
     },
-    
+
     async loadScreenshots() {
       try {
         const res = await this.$axios.get(`appstore_metadata.php?action=screenshots&version_id=${this.versionId}&project=${this.projectId}`);
@@ -309,7 +292,7 @@ export default {
         console.error('Error loading screenshots:', e);
       }
     },
-    
+
     async loadLocalizations() {
       try {
         const res = await this.$axios.get(`appstore_metadata.php?action=version_localizations&version_id=${this.versionId}&project=${this.projectId}`);
@@ -323,7 +306,7 @@ export default {
         console.error('Error loading localizations:', e);
       }
     },
-    
+
     async loadLocales() {
       try {
         const res = await this.$axios.get(`appstore_metadata.php?action=locales&project=${this.projectId}`);
@@ -334,16 +317,16 @@ export default {
         console.error('Error loading locales:', e);
       }
     },
-    
+
     triggerFileInput() {
       this.$refs.fileInput.click();
     },
-    
+
     handleFileSelect(event) {
       const files = Array.from(event.target.files);
       this.uploadFiles(files);
     },
-    
+
     handleDrop(event) {
       this.isDragging = false;
       const files = Array.from(event.dataTransfer.files).filter(
@@ -353,30 +336,30 @@ export default {
         this.uploadFiles(files);
       }
     },
-    
+
     async uploadFiles(files) {
       const maxScreenshots = 10 - this.currentScreenshots.length;
       const toUpload = files.slice(0, maxScreenshots);
-      
+
       if (toUpload.length === 0) {
         this.$toast?.warning('Maximale Anzahl an Screenshots erreicht');
         return;
       }
-      
+
       this.uploading = true;
       this.uploadProgress = 0;
-      
+
       for (let i = 0; i < toUpload.length; i++) {
         const file = toUpload[i];
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('version_id', this.versionId);
+        //formData.append('version_id', this.versionId);
         formData.append('locale', this.activeLocale);
         formData.append('display_type', this.activeDevice);
-        formData.append('display_order', this.currentScreenshots.length + i + 1);
-        
+        formData.append('position', this.currentScreenshots.length + i + 1);
+
         try {
-          await this.$axios.post(`appstore_metadata.php?action=screenshots&project=${this.projectId}`, formData, {
+          await this.$axios.post(`appstore_metadata.php?action=screenshots&project=${this.projectId}&version_id=${this.versionId}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
           this.uploadProgress = Math.round(((i + 1) / toUpload.length) * 100);
@@ -385,41 +368,81 @@ export default {
           this.$toast?.error(`Fehler beim Hochladen von ${file.name}`);
         }
       }
-      
+
       this.uploading = false;
       this.uploadProgress = 0;
       this.loadScreenshots();
       this.$toast?.success(`${toUpload.length} Screenshot(s) hochgeladen`);
     },
-    
+
+    dragStart(index) {
+      this.draggedIndex = index;
+    },
+
+    dragOver(index) {
+      if (this.draggedIndex === null || this.draggedIndex === index) return;
+
+      const items = [...this.screenshots];
+      const draggedItem = items.find((s, i) =>
+        (s.display_type === this.activeDevice || s.display_type === '') &&
+        s.locale === this.activeLocale &&
+        this.currentScreenshots[this.draggedIndex]?.id === s.id
+      );
+      const targetItem = items.find((s, i) =>
+        (s.display_type === this.activeDevice || s.display_type === '') &&
+        s.locale === this.activeLocale &&
+        this.currentScreenshots[index]?.id === s.id
+      );
+
+      if (!draggedItem || !targetItem) return;
+
+      const draggedItemIndex = items.indexOf(draggedItem);
+      const targetItemIndex = items.indexOf(targetItem);
+
+      items.splice(draggedItemIndex, 1);
+      items.splice(targetItemIndex, 0, draggedItem);
+
+      this.screenshots = items;
+      this.draggedIndex = index;
+    },
+
+    drop(index) {
+      this.draggedIndex = null;
+      this.updateOrder();
+    },
+
+    dragEnd() {
+      this.draggedIndex = null;
+    },
+
     async updateOrder() {
       const updates = this.currentScreenshots.map((s, index) => ({
         id: s.id,
-        display_order: index + 1
+        position: index + 1
       }));
-      
+
       try {
-        await this.$axios.put(`appstore_metadata.php?action=screenshots&project=${this.projectId}`, { 
-          order_updates: updates 
+        await this.$axios.put(`appstore_metadata.php?action=screenshots&project=${this.projectId}`, {
+          order_updates: updates
         });
       } catch (e) {
         console.error('Error updating order:', e);
         this.$toast?.error('Fehler beim Aktualisieren der Reihenfolge');
       }
     },
-    
+
     viewScreenshot(screenshot) {
       this.previewScreenshot = screenshot;
     },
-    
+
     confirmDeleteScreenshot(screenshot) {
       this.screenshotToDelete = screenshot;
       this.showDeleteModal = true;
     },
-    
+
     async deleteScreenshot() {
       if (!this.screenshotToDelete) return;
-      
+
       try {
         await this.$axios.delete(`appstore_metadata.php?action=screenshots&id=${this.screenshotToDelete.id}&project=${this.projectId}`);
         this.$toast?.success('Screenshot gelöscht');
@@ -431,21 +454,21 @@ export default {
         this.$toast?.error('Fehler beim Löschen');
       }
     },
-    
+
     async addLocale() {
       if (!this.newLocale) return;
-      
+
       // Add locale to localizations list
       this.localizations.push({ locale: this.newLocale });
       this.activeLocale = this.newLocale;
       this.showAddLocaleModal = false;
       this.newLocale = '';
     },
-    
+
     goBack() {
       this.$router.push(`/project/${this.projectId}/appstore-metadata/app/${this.appId}`);
     },
-    
+
     getLocaleFlag(locale) {
       const countryCode = locale.split('-')[1] || locale.toUpperCase();
       const codePoints = countryCode.split('').map(char => 127397 + char.charCodeAt(0));
@@ -568,10 +591,24 @@ ion-content.modern-content {
   text-transform: uppercase;
 }
 
-.status-badge.draft { background: rgba(100, 116, 139, 0.1); }
-.status-badge.in_review { background: rgba(217, 119, 6, 0.1); color: var(--warning-color); }
-.status-badge.approved { background: rgba(5, 150, 105, 0.1); color: var(--success-color); }
-.status-badge.released { background: rgba(37, 99, 235, 0.1); color: var(--primary-color); }
+.status-badge.draft {
+  background: rgba(100, 116, 139, 0.1);
+}
+
+.status-badge.in_review {
+  background: rgba(217, 119, 6, 0.1);
+  color: var(--warning-color);
+}
+
+.status-badge.approved {
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--success-color);
+}
+
+.status-badge.released {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary-color);
+}
 
 /* Tab Navigation */
 .tab-navigation {
@@ -712,7 +749,8 @@ ion-content.modern-content {
 }
 
 /* Screenshots Grid */
-.screenshots-grid {
+.screenshots-grid,
+.screenshots-grid-inner {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 20px;

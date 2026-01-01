@@ -1099,6 +1099,7 @@ function handleScreenshots($project_id, $version_id, $method)
         $result = query($sql);
         $screenshots = [];
         while ($row = fetch_assoc($result)) {
+            $row['file_path'] = str_replace('../', 'https://alex.polan.sk/', $row['file_path']);
             $screenshots[] = $row;
         }
 
@@ -1125,7 +1126,7 @@ function handleScreenshots($project_id, $version_id, $method)
             mkdir($uploadDir, 0755, true);
         }
 
-        $fileName = uniqid() . '_' . basename($file['name']);
+        $fileName = uniqid() . '.' . pathinfo($file['name'], PATHINFO_EXTENSION);
         $filePath = $uploadDir . $fileName;
 
         if (move_uploaded_file($file['tmp_name'], $filePath)) {
