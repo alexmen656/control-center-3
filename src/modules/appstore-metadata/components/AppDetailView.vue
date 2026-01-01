@@ -760,7 +760,9 @@ export default {
     async syncFromAppStore() {
       this.$toast?.info('Synchronisierung gestartet...');
       try {
-        await this.$axios.get(`appstore_metadata.php?action=sync_pull&app_id=${this.appId}&project=${this.projectId}`);
+        await this.$axios.get(`appstore_metadata.php?action=sync_pull&app_id=${this.appId}&project=${this.projectId}`, {
+          timeout: 300000 // 5 minutes timeout for sync
+        });
         this.$toast?.success('Synchronisierung abgeschlossen');
         this.loadApp();
       } catch (e) {
@@ -771,12 +773,21 @@ export default {
     async pushToAppStore() {
       this.$toast?.info('Push gestartet...');
       try {
-        const response = await this.$axios.get(`appstore_metadata.php?action=sync_push&app_id=${this.appId}&project=${this.projectId}`);
+        const response = await this.$axios.get(`appstore_metadata.php?action=sync_push&app_id=${this.appId}&project=${this.projectId}`, {
+          timeout: 60000 // 1 minute - now fast because we only push dirty entries
+        });
+        
+        // Check if no changes
+        if (response.data?.skipped_reason === 'no_changes') {
+          this.$toast?.info('✓ Keine Änderungen - alles bereits synchronisiert');
+          return;
+        }
         
         // Analyze results
         const results = response.data?.results || [];
-        const succeeded = results.filter(r => r.status === 'updated' || r.status === 'created');
+        const succeeded = results.filter(r => ['updated', 'created', 'recreated', 'synced_and_updated'].includes(r.status));
         const failed = results.filter(r => r.status === 'failed');
+        const stats = response.data?.stats || {};
         
         // Store results for modal
         this.pushResults = {
@@ -785,8 +796,10 @@ export default {
           hasErrors: failed.length > 0
         };
         
-        if (failed.length === 0) {
-          this.$toast?.success(`✓ Push erfolgreich! ${succeeded.length} Lokalisierungen aktualisiert.`);
+        if (failed.length === 0 && succeeded.length > 0) {
+          this.$toast?.success(`✓ Push erfolgreich! ${succeeded.length} Lokalisierung(en) aktualisiert.`);
+        } else if (failed.length === 0 && succeeded.length === 0) {
+          this.$toast?.info('✓ Keine Änderungen zu pushen');
         } else {
           // Show summary toast with click to open modal
           const summary = `${succeeded.length} erfolgreich, ${failed.length} fehlgeschlagen`;
