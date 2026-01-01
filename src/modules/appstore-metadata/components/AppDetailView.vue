@@ -1,8 +1,8 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="apps-outline" :title="app?.name || 'App Details'" bg="transparent"/>
-      
+      <SiteTitle icon="apps-outline" :title="app?.name || 'App Details'" bg="transparent" />
+
       <div class="page-container">
         <!-- Page Header -->
         <div class="page-header">
@@ -35,13 +35,8 @@
 
         <!-- Tabs -->
         <div class="tab-navigation" v-if="app && !loading">
-          <button 
-            v-for="tab in tabs" 
-            :key="tab.id"
-            class="tab-btn"
-            :class="{ active: activeTab === tab.id }"
-            @click="activeTab = tab.id"
-          >
+          <button v-for="tab in tabs" :key="tab.id" class="tab-btn" :class="{ active: activeTab === tab.id }"
+            @click="activeTab = tab.id">
             <ion-icon :name="tab.icon"></ion-icon>
             {{ tab.label }}
           </button>
@@ -52,7 +47,8 @@
           <div class="modal-content push-results-modal" @click.stop>
             <div class="modal-header">
               <h2>
-                <ion-icon :name="pushResults.hasErrors ? 'alert-circle-outline' : 'checkmark-circle-outline'"></ion-icon>
+                <ion-icon
+                  :name="pushResults.hasErrors ? 'alert-circle-outline' : 'checkmark-circle-outline'"></ion-icon>
                 Push Ergebnisse
               </h2>
               <button class="close-btn" @click="showPushResultsModal = false">
@@ -84,7 +80,8 @@
                 <div class="result-item error" v-for="(item, idx) in pushResults.failed" :key="'error-' + idx">
                   <div class="item-header">
                     <span class="locale-badge">{{ item.locale }}</span>
-                    <span class="type-badge">{{ item.type === 'app_localization' ? 'App' : 'Version ' + item.version }}</span>
+                    <span class="type-badge">{{ item.type === 'app_localization' ? 'App' : 'Version ' + item.version
+                      }}</span>
                   </div>
                   <div class="error-message">{{ item.error }}</div>
                 </div>
@@ -138,7 +135,7 @@
                     <input v-model="app.bundle_id" type="text" class="modern-input" readonly />
                   </div>
                 </div>
-                
+
                 <div class="form-grid">
                   <div class="form-group">
                     <label class="form-label">App Name</label>
@@ -198,15 +195,10 @@
             </div>
 
             <div class="localizations-grid">
-              <div 
-                v-for="loc in localizations" 
-                :key="loc.id" 
-                class="locale-card"
-                @click="editLocalization(loc)"
-              >
+              <div v-for="loc in localizations" :key="loc.id" class="locale-card" @click="editLocalization(loc)">
                 <div class="locale-header">
                   <span class="locale-flag">{{ getLocaleFlag(loc.locale) }}</span>
-                  <span class="locale-name">{{ loc.locale_name || loc.locale }}</span>
+                  <span class="locale-name">{{ getJustLocaleName(loc.locale_name || loc.locale) }}</span>
                   <span class="locale-code">{{ loc.locale }}</span>
                 </div>
                 <div class="locale-body">
@@ -248,11 +240,7 @@
             </div>
 
             <div class="versions-list">
-              <div 
-                v-for="version in versions" 
-                :key="version.id" 
-                class="version-card"
-              >
+              <div v-for="version in versions" :key="version.id" class="version-card">
                 <div class="version-header">
                   <div class="version-number">
                     <h4>v{{ version.version_string }}</h4>
@@ -262,7 +250,7 @@
                     {{ getStatusLabel(version.status) }}
                   </span>
                 </div>
-                
+
                 <div class="version-meta">
                   <div class="meta-item">
                     <ion-icon name="phone-portrait-outline"></ion-icon>
@@ -309,33 +297,39 @@
             <div class="data-card">
               <div class="card-header">
                 <h3>App Kategorien</h3>
+                <p class="card-subtitle">Wähle die Kategorien für deine App im App Store</p>
               </div>
               <div class="card-body">
-                <div class="form-group">
-                  <label>Primäre Kategorie</label>
-                  <select v-model="categoryForm.primary" class="form-select">
-                    <option value="">Kategorie wählen</option>
-                    <option v-for="cat in availableCategories" :key="cat.id" :value="cat.id">
-                      {{ cat.name }}
-                    </option>
-                  </select>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label class="form-label">Primäre Kategorie <span class="required">*</span></label>
+                    <select v-model="categoryForm.primary" class="modern-select">
+                      <option value="">Kategorie wählen</option>
+                      <option v-for="cat in availableCategories" :key="cat.id" :value="cat.id">
+                        {{ cat.name }}
+                      </option>
+                    </select>
+                    <span class="form-hint">Die Hauptkategorie, unter der deine App erscheint</span>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Sekundäre Kategorie</label>
+                    <select v-model="categoryForm.secondary" class="modern-select">
+                      <option value="">Keine</option>
+                      <option v-for="cat in availableCategories" :key="cat.id" :value="cat.id">
+                        {{ cat.name }}
+                      </option>
+                    </select>
+                    <span class="form-hint">Optional: Eine zusätzliche Kategorie</span>
+                  </div>
                 </div>
 
-                <div class="form-group">
-                  <label>Sekundäre Kategorie (optional)</label>
-                  <select v-model="categoryForm.secondary" class="form-select">
-                    <option value="">Keine</option>
-                    <option v-for="cat in availableCategories" :key="cat.id" :value="cat.id">
-                      {{ cat.name }}
-                    </option>
-                  </select>
+                <div class="form-actions">
+                  <button class="action-btn primary" @click="saveCategories">
+                    <ion-icon name="save-outline"></ion-icon>
+                    Kategorien speichern
+                  </button>
                 </div>
-              </div>
-              <div class="card-footer">
-                <button class="action-btn primary" @click="saveCategories">
-                  <ion-icon name="save-outline"></ion-icon>
-                  Kategorien speichern
-                </button>
               </div>
             </div>
           </div>
@@ -345,55 +339,59 @@
             <div class="data-card">
               <div class="card-header">
                 <h3>Altersfreigabe</h3>
+                <p class="card-subtitle">Beantworte diese Fragen, um die Altersfreigabe für deine App zu bestimmen</p>
               </div>
               <div class="card-body">
-                <p class="info-text">Beantworte diese Fragen, um die Altersfreigabe für deine App zu bestimmen.</p>
-
                 <div class="rating-questions">
                   <div class="rating-question" v-for="question in ageRatingQuestions" :key="question.key">
-                    <label>{{ question.label }}</label>
-                    <select v-model="ageRatingForm[question.key]" class="form-select">
+                    <label class="form-label">{{ question.label }}</label>
+                    <select v-model="ageRatingForm[question.key]" class="modern-select">
                       <option v-for="opt in question.options" :key="opt.value" :value="opt.value">
                         {{ opt.label }}
                       </option>
                     </select>
                   </div>
                 </div>
-              </div>
-              <div class="card-footer">
-                <button class="action-btn primary" @click="saveAgeRating">
-                  <ion-icon name="save-outline"></ion-icon>
-                  Altersfreigabe speichern
-                </button>
+
+                <div class="form-actions">
+                  <button class="action-btn primary" @click="saveAgeRating">
+                    <ion-icon name="save-outline"></ion-icon>
+                    Altersfreigabe speichern
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Add Locale Modal -->
-      <div v-if="showAddLocaleModal" class="custom-modal-overlay" @click.self="showAddLocaleModal = false">
+      <!-- Add/Edit Locale Modal -->
+      <div v-if="showAddLocaleModal" class="custom-modal-overlay" @click.self="closeLocaleModal">
         <div class="custom-modal-content" @click.stop>
           <div class="custom-modal-header">
-            <h3>Sprache hinzufügen</h3>
-            <button class="modal-close-btn" @click="showAddLocaleModal = false">
+            <h3>{{ newLocale.id ? 'Sprache bearbeiten' : 'Sprache hinzufügen' }}</h3>
+            <button class="modal-close-btn" @click="closeLocaleModal">
               <ion-icon name="close-outline"></ion-icon>
             </button>
           </div>
-          
+
           <div class="custom-modal-body">
-            <div class="form-group">
+            <div class="form-group" v-if="!newLocale.id">
               <label class="form-label">Sprache <span class="required">*</span></label>
               <select v-model="newLocale.locale" class="modern-select">
                 <option value="">Sprache wählen</option>
-                <option 
-                  v-for="locale in availableLocales" 
-                  :key="locale.code" 
-                  :value="locale.code"
-                >
+                <option v-for="locale in availableLocales" :key="locale.code" :value="locale.code">
                   {{ locale.name }} ({{ locale.code }})
                 </option>
               </select>
+            </div>
+
+            <div class="form-group" v-else>
+              <label class="form-label">Sprache</label>
+              <div class="locale-display">
+                <span class="locale-flag">{{ getLocaleFlag(newLocale.locale) }}</span>
+                <span class="locale-name">{{ getLocaleName(newLocale.locale) }}</span>
+              </div>
             </div>
 
             <div class="form-group">
@@ -403,7 +401,8 @@
 
             <div class="form-group">
               <label class="form-label">Untertitel</label>
-              <input v-model="newLocale.subtitle" type="text" class="modern-input" placeholder="Max. 30 Zeichen" maxlength="30" />
+              <input v-model="newLocale.subtitle" type="text" class="modern-input" placeholder="Max. 30 Zeichen"
+                maxlength="30" />
               <span class="char-count">{{ (newLocale.subtitle || '').length }}/30</span>
             </div>
 
@@ -411,9 +410,9 @@
               <label class="form-label">Datenschutzrichtlinie URL</label>
               <input v-model="newLocale.privacy_policy_url" type="url" class="modern-input" placeholder="https://..." />
             </div>
-            
+
             <div class="form-actions">
-              <button class="action-btn secondary" @click="showAddLocaleModal = false">Abbrechen</button>
+              <button class="action-btn secondary" @click="closeLocaleModal">Abbrechen</button>
               <button class="action-btn primary" @click="saveLocalization" :disabled="!newLocale.locale">
                 <ion-icon name="save-outline"></ion-icon>
                 Speichern
@@ -432,7 +431,7 @@
               <ion-icon name="close-outline"></ion-icon>
             </button>
           </div>
-          
+
           <div class="custom-modal-body">
             <div class="form-group">
               <label class="form-label">Versionsnummer <span class="required">*</span></label>
@@ -466,9 +465,10 @@
 
             <div class="form-group">
               <label class="form-label">Copyright</label>
-              <input v-model="newVersion.copyright" type="text" class="modern-input" placeholder="z.B. © 2024 Dein Unternehmen" />
+              <input v-model="newVersion.copyright" type="text" class="modern-input"
+                placeholder="z.B. © 2024 Dein Unternehmen" />
             </div>
-            
+
             <div class="form-actions">
               <button class="action-btn secondary" @click="showAddVersionModal = false">Abbrechen</button>
               <button class="action-btn primary" @click="createVersion" :disabled="!newVersion.version_string">
@@ -556,7 +556,7 @@ export default {
       }
     };
   },
-  
+
   computed: {
     projectId() {
       return this.$route.params.project;
@@ -566,13 +566,13 @@ export default {
       return this.locales.filter(l => !usedLocales.includes(l.code));
     }
   },
-  
+
   mounted() {
     this.loadApp();
     this.loadLocales();
     this.loadCategories();
   },
-  
+
   methods: {
     async loadApp() {
       this.loading = true;
@@ -584,15 +584,15 @@ export default {
           this.versions = res.data.versions || [];
           this.categories = res.data.categories || [];
           this.ageRating = res.data.age_rating;
-          
+
           this.editForm = { ...this.app };
-          
+
           // Set category form
           const primary = this.categories.find(c => c.category_type === 'primary');
           const secondary = this.categories.find(c => c.category_type === 'secondary');
           this.categoryForm.primary = primary?.category_id || '';
           this.categoryForm.secondary = secondary?.category_id || '';
-          
+
           // Set age rating form
           if (this.ageRating) {
             this.ageRatingForm = { ...this.ageRating };
@@ -605,7 +605,7 @@ export default {
         this.loading = false;
       }
     },
-    
+
     async loadLocales() {
       try {
         const res = await this.$axios.get(`appstore_metadata.php?action=locales&project=${this.projectId}`);
@@ -616,7 +616,7 @@ export default {
         console.error('Error loading locales:', e);
       }
     },
-    
+
     async loadCategories() {
       try {
         const res = await this.$axios.get(`appstore_metadata.php?action=categories&project=${this.projectId}`);
@@ -627,7 +627,7 @@ export default {
         console.error('Error loading categories:', e);
       }
     },
-    
+
     async saveAppDetails() {
       try {
         const res = await this.$axios.put(`appstore_metadata.php?action=app&app_id=${this.appId}&project=${this.projectId}`, this.editForm);
@@ -640,10 +640,10 @@ export default {
         this.$toast?.error('Fehler beim Speichern');
       }
     },
-    
+
     async saveLocalization() {
       if (!this.newLocale.locale) return;
-      
+
       try {
         const res = await this.$axios.post(`appstore_metadata.php?action=app_localizations&app_id=${this.appId}&project=${this.projectId}`, this.newLocale);
         if (res.data.success) {
@@ -657,15 +657,15 @@ export default {
         this.$toast?.error('Fehler beim Speichern');
       }
     },
-    
+
     editLocalization(loc) {
       this.newLocale = { ...loc };
       this.showAddLocaleModal = true;
     },
-    
+
     async deleteLocalization(loc) {
       if (!confirm(`Lokalisierung "${loc.locale}" wirklich löschen?`)) return;
-      
+
       try {
         const res = await this.$axios.delete(`appstore_metadata.php?action=app_localizations&app_id=${this.appId}&locale=${loc.locale}&project=${this.projectId}`);
         if (res.data.success) {
@@ -677,10 +677,10 @@ export default {
         this.$toast?.error('Fehler beim Löschen');
       }
     },
-    
+
     async createVersion() {
       if (!this.newVersion.version_string) return;
-      
+
       try {
         const res = await this.$axios.post(`appstore_metadata.php?action=versions&app_id=${this.appId}&project=${this.projectId}`, this.newVersion);
         if (res.data.success) {
@@ -694,10 +694,10 @@ export default {
         this.$toast?.error('Fehler beim Erstellen');
       }
     },
-    
+
     async deleteVersion(version) {
       if (!confirm(`Version ${version.version_string} wirklich löschen?`)) return;
-      
+
       try {
         const res = await this.$axios.delete(`appstore_metadata.php?action=version&version_id=${version.id}&project=${this.projectId}`);
         if (res.data.success) {
@@ -709,15 +709,15 @@ export default {
         this.$toast?.error('Fehler beim Löschen');
       }
     },
-    
+
     openVersionEditor(versionId) {
       this.$router.push(`/project/${this.projectId}/appstore-metadata/app/${this.appId}/version/${versionId}`);
     },
-    
+
     openScreenshotManager(versionId) {
       this.$router.push(`/project/${this.projectId}/appstore-metadata/app/${this.appId}/screenshots/${versionId}`);
     },
-    
+
     async saveCategories() {
       try {
         if (this.categoryForm.primary) {
@@ -728,7 +728,7 @@ export default {
             category_name: cat?.name || ''
           });
         }
-        
+
         if (this.categoryForm.secondary) {
           const cat = this.availableCategories.find(c => c.id === this.categoryForm.secondary);
           await this.$axios.post(`appstore_metadata.php?action=categories&app_id=${this.appId}&project=${this.projectId}`, {
@@ -737,14 +737,14 @@ export default {
             category_name: cat?.name || ''
           });
         }
-        
+
         this.$toast?.success('Kategorien gespeichert');
       } catch (e) {
         console.error('Error saving categories:', e);
         this.$toast?.error('Fehler beim Speichern');
       }
     },
-    
+
     async saveAgeRating() {
       try {
         const res = await this.$axios.post(`appstore_metadata.php?action=age_ratings&app_id=${this.appId}&project=${this.projectId}`, this.ageRatingForm);
@@ -756,7 +756,7 @@ export default {
         this.$toast?.error('Fehler beim Speichern');
       }
     },
-    
+
     async syncFromAppStore() {
       this.$toast?.info('Synchronisierung gestartet...');
       try {
@@ -769,33 +769,33 @@ export default {
         this.$toast?.error('Fehler bei der Synchronisierung');
       }
     },
-    
+
     async pushToAppStore() {
       this.$toast?.info('Push gestartet...');
       try {
         const response = await this.$axios.get(`appstore_metadata.php?action=sync_push&app_id=${this.appId}&project=${this.projectId}`, {
           timeout: 60000 // 1 minute - now fast because we only push dirty entries
         });
-        
+
         // Check if no changes
         if (response.data?.skipped_reason === 'no_changes') {
           this.$toast?.info('✓ Keine Änderungen - alles bereits synchronisiert');
           return;
         }
-        
+
         // Analyze results
         const results = response.data?.results || [];
         const succeeded = results.filter(r => ['updated', 'created', 'recreated', 'synced_and_updated'].includes(r.status));
         const failed = results.filter(r => r.status === 'failed');
         const stats = response.data?.stats || {};
-        
+
         // Store results for modal
         this.pushResults = {
           succeeded,
           failed,
           hasErrors: failed.length > 0
         };
-        
+
         if (failed.length === 0 && succeeded.length > 0) {
           this.$toast?.success(`✓ Push erfolgreich! ${succeeded.length} Lokalisierung(en) aktualisiert.`);
         } else if (failed.length === 0 && succeeded.length === 0) {
@@ -812,23 +812,38 @@ export default {
           // Auto-show modal for errors
           this.showPushResultsModal = true;
         }
-        
+
         // Reload app data to reflect changes
         await this.loadApp();
       } catch (e) {
         this.$toast?.error('Fehler beim Push: ' + (e.response?.data?.message || e.message));
       }
     },
-    
+
     getStatusLabel(status) {
       const found = APP_STATUSES.find(s => s.value === status);
       return found?.label || status;
     },
-    
+
     getLocaleFlag(locale) {
       return getLocaleFlag(locale);
     },
-    
+
+    getLocaleName(locale) {
+      const found = this.locales.find(l => l.code === locale);
+      return found ? `${found.name} (${locale})` : locale;
+    },
+
+    getJustLocaleName(locale) {
+      const found = this.locales.find(l => l.code === locale);
+      return found ? `${found.name}` : locale;
+    },
+
+    closeLocaleModal() {
+      this.showAddLocaleModal = false;
+      this.newLocale = { locale: '', name: '', subtitle: '', privacy_policy_url: '' };
+    },
+
     exportResultsAsJson() {
       const data = {
         timestamp: new Date().toISOString(),
@@ -844,7 +859,7 @@ export default {
           failed: this.pushResults.failed
         }
       };
-      
+
       const jsonStr = JSON.stringify(data, null, 2);
       const blob = new Blob([jsonStr], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -855,10 +870,10 @@ export default {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
+
       this.$toast?.success('JSON-Export heruntergeladen');
     },
-    
+
     exportResultsAsText() {
       const timestamp = new Date().toLocaleString('de-DE');
       let text = `App Store Push Ergebnisse\n`;
@@ -866,13 +881,13 @@ export default {
       text += `App: ${this.app?.name || 'N/A'}\n`;
       text += `App ID: ${this.appId}\n`;
       text += `Zeitpunkt: ${timestamp}\n\n`;
-      
+
       text += `Zusammenfassung:\n`;
       text += `---------------\n`;
       text += `Gesamt: ${this.pushResults.succeeded.length + this.pushResults.failed.length}\n`;
       text += `✓ Erfolgreich: ${this.pushResults.succeeded.length}\n`;
       text += `✗ Fehlgeschlagen: ${this.pushResults.failed.length}\n\n`;
-      
+
       if (this.pushResults.failed.length > 0) {
         text += `Fehlgeschlagene Lokalisierungen:\n`;
         text += `================================\n\n`;
@@ -881,7 +896,7 @@ export default {
           text += `   Fehler: ${item.error}\n\n`;
         });
       }
-      
+
       if (this.pushResults.succeeded.length > 0) {
         text += `Erfolgreich aktualisierte Lokalisierungen:\n`;
         text += `=========================================\n\n`;
@@ -889,7 +904,7 @@ export default {
           text += `${idx + 1}. ${item.locale} (${item.type === 'app_localization' ? 'App' : 'Version ' + (item.version || '')})\n`;
         });
       }
-      
+
       const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -899,7 +914,7 @@ export default {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
+
       this.$toast?.success('Text-Export heruntergeladen');
     }
   }
@@ -1121,8 +1136,13 @@ export default {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Data Card */
@@ -1176,6 +1196,25 @@ export default {
 
 .required {
   color: var(--danger-color);
+}
+
+.locale-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.locale-display .locale-flag {
+  font-size: 24px;
+}
+
+.locale-display .locale-name {
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
 .modern-input,
@@ -1399,11 +1438,31 @@ export default {
   font-weight: 500;
 }
 
-.version-status.draft { background: rgba(100, 116, 139, 0.1); color: var(--secondary-color); }
-.version-status.ready_for_submission { background: rgba(217, 119, 6, 0.1); color: var(--warning-color); }
-.version-status.in_review { background: rgba(8, 145, 178, 0.1); color: var(--info-color); }
-.version-status.approved, .version-status.ready_for_sale { background: rgba(5, 150, 105, 0.1); color: var(--success-color); }
-.version-status.rejected { background: rgba(220, 38, 38, 0.1); color: var(--danger-color); }
+.version-status.draft {
+  background: rgba(100, 116, 139, 0.1);
+  color: var(--secondary-color);
+}
+
+.version-status.ready_for_submission {
+  background: rgba(217, 119, 6, 0.1);
+  color: var(--warning-color);
+}
+
+.version-status.in_review {
+  background: rgba(8, 145, 178, 0.1);
+  color: var(--info-color);
+}
+
+.version-status.approved,
+.version-status.ready_for_sale {
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--success-color);
+}
+
+.version-status.rejected {
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--danger-color);
+}
 
 .version-meta {
   display: flex;
@@ -1427,19 +1486,44 @@ export default {
 
 /* Rating Questions */
 .rating-questions {
-  display: grid;
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .rating-question {
-  display: grid;
-  grid-template-columns: 1fr 200px;
-  align-items: center;
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: var(--background);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.rating-question:hover {
+  border-color: var(--primary-color);
+  background: var(--surface);
 }
 
 .rating-question label {
   color: var(--text-primary);
+  font-weight: 500;
+}
+
+.card-subtitle {
+  margin: 4px 0 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: normal;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 
 .info-text {
@@ -1807,8 +1891,13 @@ export default {
 
 /* Animations */
 @keyframes modalFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modalSlideIn {
@@ -1816,6 +1905,7 @@ export default {
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1839,11 +1929,6 @@ export default {
 
   .form-grid {
     grid-template-columns: 1fr;
-  }
-
-  .rating-question {
-    grid-template-columns: 1fr;
-    gap: 8px;
   }
 
   .version-actions {

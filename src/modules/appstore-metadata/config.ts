@@ -207,6 +207,7 @@ export const LOCALE_FLAGS: Record<string, string> = {
   'fil': '🇵🇭',
   'ta': '🇮🇳',
   'zh-Hans': '🇨🇳',
+  'zh-Hant': '🇨🇳',
   'bg': '🇧🇬',
 
 };

@@ -27,17 +27,12 @@
 
         <!-- Locale Tabs -->
         <div class="tab-navigation" v-if="version && !loading">
-          <button 
-            v-for="loc in localizations" 
-            :key="loc.locale"
-            class="tab-btn"
-            :class="{ active: activeLocale === loc.locale }"
-            @click="activeLocale = loc.locale"
-          >
+          <button v-for="loc in localizations" :key="loc.locale" class="tab-btn"
+            :class="{ active: activeLocale === loc.locale }" @click="activeLocale = loc.locale">
             <span class="flag">{{ getLocaleFlag(loc.locale) }}</span>
             <span>{{ loc.locale_name || loc.locale }}</span>
           </button>
-          
+
           <button class="tab-btn add-tab" @click="showAddLocaleModal = true">
             <ion-icon name="add-outline"></ion-icon>
             <span>Hinzufügen</span>
@@ -51,21 +46,17 @@
               <span class="flag-lg">{{ getLocaleFlag(activeLocalization.locale) }}</span>
               {{ activeLocalization.locale_name || activeLocalization.locale }}
             </h3>
-            <button class="icon-btn danger" @click="deleteLocalization" v-if="localizations.length > 1" title="Entfernen">
+            <button class="icon-btn danger" @click="deleteLocalization" v-if="localizations.length > 1"
+              title="Entfernen">
               <ion-icon name="trash-outline"></ion-icon>
             </button>
           </div>
-          
+
           <div class="card-body">
             <div class="form-group">
               <label class="form-label">Beschreibung <span class="required">*</span></label>
-              <textarea 
-                v-model="activeLocalization.description" 
-                class="modern-input"
-                rows="8"
-                placeholder="App Beschreibung (max. 4000 Zeichen)"
-                maxlength="4000"
-              ></textarea>
+              <textarea v-model="activeLocalization.description" class="modern-input" rows="8"
+                placeholder="App Beschreibung (max. 4000 Zeichen)" maxlength="4000"></textarea>
               <div class="char-count" :class="{ warning: (activeLocalization.description || '').length > 3800 }">
                 {{ (activeLocalization.description || '').length }}/4000
               </div>
@@ -73,38 +64,23 @@
 
             <div class="form-group">
               <label class="form-label">Keywords</label>
-              <input 
-                v-model="activeLocalization.keywords" 
-                type="text" 
-                class="modern-input"
-                placeholder="keyword1, keyword2, keyword3 (max. 100 Zeichen)"
-                maxlength="100"
-              />
+              <input v-model="activeLocalization.keywords" type="text" class="modern-input"
+                placeholder="keyword1, keyword2, keyword3 (max. 100 Zeichen)" maxlength="100" />
               <div class="char-count">{{ (activeLocalization.keywords || '').length }}/100</div>
               <span class="form-hint">Trenne Keywords mit Kommas</span>
             </div>
 
             <div class="form-group">
               <label class="form-label">Was ist neu (Release Notes)</label>
-              <textarea 
-                v-model="activeLocalization.whats_new" 
-                class="modern-input"
-                rows="5"
-                placeholder="Neue Funktionen und Verbesserungen..."
-                maxlength="4000"
-              ></textarea>
+              <textarea v-model="activeLocalization.whats_new" class="modern-input" rows="5"
+                placeholder="Neue Funktionen und Verbesserungen..." maxlength="4000"></textarea>
               <div class="char-count">{{ (activeLocalization.whats_new || '').length }}/4000</div>
             </div>
 
             <div class="form-group">
               <label class="form-label">Promotionstext</label>
-              <input 
-                v-model="activeLocalization.promotional_text" 
-                type="text" 
-                class="modern-input"
-                placeholder="Kurzer Promotionstext (max. 170 Zeichen)"
-                maxlength="170"
-              />
+              <input v-model="activeLocalization.promotional_text" type="text" class="modern-input"
+                placeholder="Kurzer Promotionstext (max. 170 Zeichen)" maxlength="170" />
               <div class="char-count">{{ (activeLocalization.promotional_text || '').length }}/170</div>
               <span class="form-hint">Wird über der Beschreibung angezeigt, kann jederzeit aktualisiert werden</span>
             </div>
@@ -112,22 +88,14 @@
             <div class="form-grid">
               <div class="form-group">
                 <label class="form-label">Marketing URL</label>
-                <input 
-                  v-model="activeLocalization.marketing_url" 
-                  type="url" 
-                  class="modern-input"
-                  placeholder="https://..."
-                />
+                <input v-model="activeLocalization.marketing_url" type="url" class="modern-input"
+                  placeholder="https://..." />
               </div>
-              
+
               <div class="form-group">
                 <label class="form-label">Support URL</label>
-                <input 
-                  v-model="activeLocalization.support_url" 
-                  type="url" 
-                  class="modern-input"
-                  placeholder="https://..."
-                />
+                <input v-model="activeLocalization.support_url" type="url" class="modern-input"
+                  placeholder="https://..." />
               </div>
             </div>
 
@@ -162,14 +130,14 @@
           <div class="card-header">
             <h3>Versions-Einstellungen</h3>
           </div>
-          
+
           <div class="card-body">
             <div class="form-grid">
               <div class="form-group">
                 <label class="form-label">Versionsnummer</label>
                 <input v-model="versionForm.version_string" type="text" class="modern-input" />
               </div>
-              
+
               <div class="form-group">
                 <label class="form-label">Build-Nummer</label>
                 <input v-model="versionForm.build_number" type="text" class="modern-input" />
@@ -185,7 +153,7 @@
                   <option value="scheduled">Geplante Veröffentlichung</option>
                 </select>
               </div>
-              
+
               <div class="form-group" v-if="versionForm.release_type === 'scheduled'">
                 <label class="form-label">Veröffentlichungsdatum</label>
                 <input v-model="versionForm.earliest_release_date" type="datetime-local" class="modern-input" />
@@ -194,17 +162,14 @@
 
             <div class="form-group">
               <label class="form-label">Copyright</label>
-              <input v-model="versionForm.copyright" type="text" class="modern-input" placeholder="© 2024 Dein Unternehmen" />
+              <input v-model="versionForm.copyright" type="text" class="modern-input"
+                placeholder="© 2024 Dein Unternehmen" />
             </div>
 
             <div class="form-group">
               <label class="form-label">Hinweise für App-Reviewer</label>
-              <textarea 
-                v-model="versionForm.review_notes" 
-                class="modern-input"
-                rows="4"
-                placeholder="Anmeldedaten, Test-Accounts, spezielle Anweisungen..."
-              ></textarea>
+              <textarea v-model="versionForm.review_notes" class="modern-input" rows="4"
+                placeholder="Anmeldedaten, Test-Accounts, spezielle Anweisungen..."></textarea>
               <span class="form-hint">Diese Informationen sind nur für das Review-Team sichtbar</span>
             </div>
 
@@ -227,17 +192,13 @@
               <ion-icon name="close-outline"></ion-icon>
             </button>
           </div>
-          
+
           <div class="custom-modal-body">
             <div class="form-group">
               <label class="form-label">Sprache <span class="required">*</span></label>
               <select v-model="newLocale" class="modern-select">
                 <option value="">Sprache wählen</option>
-                <option 
-                  v-for="locale in availableLocales" 
-                  :key="locale.code" 
-                  :value="locale.code"
-                >
+                <option v-for="locale in availableLocales" :key="locale.code" :value="locale.code">
                   {{ locale.name }} ({{ locale.code }})
                 </option>
               </select>
@@ -263,16 +224,12 @@
               <ion-icon name="close-outline"></ion-icon>
             </button>
           </div>
-          
+
           <div class="custom-modal-body">
             <p class="modal-description">Wähle die Sprache, von der du die Texte kopieren möchtest:</p>
             <div class="locale-list">
-              <button 
-                v-for="loc in otherLocalizations" 
-                :key="loc.locale"
-                class="locale-option"
-                @click="copyFromSelectedLocale(loc)"
-              >
+              <button v-for="loc in otherLocalizations" :key="loc.locale" class="locale-option"
+                @click="copyFromSelectedLocale(loc)">
                 <span class="flag">{{ getLocaleFlag(loc.locale) }}</span>
                 <span class="name">{{ loc.locale_name || loc.locale }}</span>
               </button>
@@ -313,7 +270,7 @@ export default {
       newLocale: ''
     };
   },
-  
+
   computed: {
     projectId() {
       return this.$route.params.project;
@@ -329,12 +286,12 @@ export default {
       return this.localizations.filter(l => l.locale !== this.activeLocale);
     }
   },
-  
+
   mounted() {
     this.loadVersion();
     this.loadLocales();
   },
-  
+
   methods: {
     async loadVersion() {
       this.loading = true;
@@ -344,7 +301,7 @@ export default {
           this.version = res.data.version;
           this.localizations = res.data.localizations || [];
           this.versionForm = { ...this.version };
-          
+
           if (this.localizations.length > 0) {
             this.activeLocale = this.localizations[0].locale;
           }
@@ -356,7 +313,7 @@ export default {
         this.loading = false;
       }
     },
-    
+
     async loadLocales() {
       try {
         const res = await this.$axios.get(`appstore_metadata.php?action=locales&project=${this.projectId}`);
@@ -367,10 +324,10 @@ export default {
         console.error('Error loading locales:', e);
       }
     },
-    
+
     async saveLocalization() {
       if (!this.activeLocalization) return;
-      
+
       try {
         const res = await this.$axios.post(`appstore_metadata.php?action=version_localizations&version_id=${this.versionId}&project=${this.projectId}`, this.activeLocalization);
         if (res.data.success) {
@@ -381,10 +338,10 @@ export default {
         this.$toast?.error('Fehler beim Speichern');
       }
     },
-    
+
     async addLocalization() {
       if (!this.newLocale) return;
-      
+
       try {
         const res = await this.$axios.post(`appstore_metadata.php?action=version_localizations&version_id=${this.versionId}&project=${this.projectId}`, {
           locale: this.newLocale
@@ -400,11 +357,11 @@ export default {
         this.$toast?.error('Fehler beim Hinzufügen');
       }
     },
-    
+
     async deleteLocalization() {
       if (!this.activeLocalization) return;
       if (!confirm(`Lokalisierung "${this.activeLocale}" wirklich löschen?`)) return;
-      
+
       try {
         const res = await this.$axios.delete(`appstore_metadata.php?action=version_localizations&version_id=${this.versionId}&locale=${this.activeLocale}&project=${this.projectId}`);
         if (res.data.success) {
@@ -416,7 +373,7 @@ export default {
         this.$toast?.error('Fehler beim Löschen');
       }
     },
-    
+
     async saveVersionSettings() {
       try {
         const res = await this.$axios.put(`appstore_metadata.php?action=version&version_id=${this.versionId}&project=${this.projectId}`, this.versionForm);
@@ -428,7 +385,7 @@ export default {
         this.$toast?.error('Fehler beim Speichern');
       }
     },
-    
+
     copyFromLocale() {
       if (this.otherLocalizations.length === 0) {
         this.$toast?.warning('Keine anderen Sprachen verfügbar');
@@ -436,7 +393,7 @@ export default {
       }
       this.showCopyModal = true;
     },
-    
+
     copyFromSelectedLocale(loc) {
       if (this.activeLocalization) {
         this.activeLocalization.description = loc.description;
@@ -449,16 +406,16 @@ export default {
       this.showCopyModal = false;
       this.$toast?.success(`Texte von ${loc.locale} kopiert`);
     },
-    
+
     goBack() {
       this.$router.push(`/project/${this.projectId}/appstore-metadata/app/${this.appId}`);
     },
-    
+
     getStatusLabel(status) {
       const found = APP_STATUSES.find(s => s.value === status);
       return found?.label || status;
     },
-    
+
     getLocaleFlag(locale) {
       return getLocaleFlag(locale);
     }
@@ -575,10 +532,25 @@ ion-content.modern-content {
   color: var(--text-secondary);
 }
 
-.status-badge.draft { background: rgba(100, 116, 139, 0.1); color: var(--secondary-color); }
-.status-badge.ready_for_submission { background: rgba(217, 119, 6, 0.1); color: var(--warning-color); }
-.status-badge.in_review { background: rgba(8, 145, 178, 0.1); color: var(--info-color); }
-.status-badge.approved { background: rgba(5, 150, 105, 0.1); color: var(--success-color); }
+.status-badge.draft {
+  background: rgba(100, 116, 139, 0.1);
+  color: var(--secondary-color);
+}
+
+.status-badge.ready_for_submission {
+  background: rgba(217, 119, 6, 0.1);
+  color: var(--warning-color);
+}
+
+.status-badge.in_review {
+  background: rgba(8, 145, 178, 0.1);
+  color: var(--info-color);
+}
+
+.status-badge.approved {
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--success-color);
+}
 
 /* Loading State */
 .loading-state {
@@ -597,7 +569,9 @@ ion-content.modern-content {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-state p {
@@ -612,6 +586,7 @@ ion-content.modern-content {
   margin-bottom: 24px;
   overflow-x: auto;
   padding-bottom: 8px;
+  scrollbar-width: none;
 }
 
 .tab-btn {
@@ -1002,7 +977,7 @@ textarea.modern-input {
   .form-actions {
     flex-direction: column;
   }
-  
+
   .form-actions .action-btn {
     width: 100%;
     justify-content: center;

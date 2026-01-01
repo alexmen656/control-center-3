@@ -2234,8 +2234,20 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
     $name = escape_string($attributes['name'] ?? '');
     $sku = escape_string($attributes['sku'] ?? '');
     $primary_locale = escape_string($attributes['primaryLocale'] ?? 'en-US');
-    $content_rights = escape_string($attributes['contentRightsDeclaration'] ?? '');
     $available_territories = isset($attributes['isAvailableInNewTerritories']) && $attributes['isAvailableInNewTerritories'] ? '1' : '0';
+    
+    // Fetch content rights from appInfo - it's not in the main app attributes
+    $content_rights = '';
+    try {
+        $appInfos = $api->getAppInfo($app_store_id);
+        if (!empty($appInfos)) {
+            $firstAppInfo = $appInfos[0];
+            $appInfoAttrs = $firstAppInfo['attributes'] ?? [];
+            $content_rights = escape_string($appInfoAttrs['contentRightsDeclaration'] ?? '');
+        }
+    } catch (Exception $e) {
+        error_log("Failed to fetch contentRightsDeclaration: " . $e->getMessage());
+    }
 
     if ($existingAppId) {
         // Update existing app
