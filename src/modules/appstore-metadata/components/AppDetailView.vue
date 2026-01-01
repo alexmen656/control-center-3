@@ -47,6 +47,76 @@
           </button>
         </div>
 
+        <!-- Push Results Modal -->
+        <div v-if="showPushResultsModal" class="modal-overlay" @click="showPushResultsModal = false">
+          <div class="modal-content push-results-modal" @click.stop>
+            <div class="modal-header">
+              <h2>
+                <ion-icon :name="pushResults.hasErrors ? 'alert-circle-outline' : 'checkmark-circle-outline'"></ion-icon>
+                Push Ergebnisse
+              </h2>
+              <button class="close-btn" @click="showPushResultsModal = false">
+                <ion-icon name="close-outline"></ion-icon>
+              </button>
+            </div>
+            <div class="modal-body">
+              <!-- Summary -->
+              <div class="results-summary">
+                <div class="summary-card success">
+                  <ion-icon name="checkmark-circle-outline"></ion-icon>
+                  <div>
+                    <div class="count">{{ pushResults.succeeded.length }}</div>
+                    <div class="label">Erfolgreich</div>
+                  </div>
+                </div>
+                <div class="summary-card error">
+                  <ion-icon name="close-circle-outline"></ion-icon>
+                  <div>
+                    <div class="count">{{ pushResults.failed.length }}</div>
+                    <div class="label">Fehlgeschlagen</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Failed Items -->
+              <div v-if="pushResults.failed.length > 0" class="results-section">
+                <h3>Fehlgeschlagene Lokalisierungen</h3>
+                <div class="result-item error" v-for="(item, idx) in pushResults.failed" :key="'error-' + idx">
+                  <div class="item-header">
+                    <span class="locale-badge">{{ item.locale }}</span>
+                    <span class="type-badge">{{ item.type === 'app_localization' ? 'App' : 'Version ' + item.version }}</span>
+                  </div>
+                  <div class="error-message">{{ item.error }}</div>
+                </div>
+              </div>
+
+              <!-- Successful Items -->
+              <div v-if="pushResults.succeeded.length > 0" class="results-section">
+                <h3>Erfolgreich aktualisiert</h3>
+                <div class="result-item-grid">
+                  <div class="result-item success" v-for="(item, idx) in pushResults.succeeded" :key="'success-' + idx">
+                    <span class="locale-badge">{{ item.locale }}</span>
+                    <span class="type-badge">{{ item.type === 'app_localization' ? 'App' : 'Version' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <div class="export-buttons">
+                <button class="btn-secondary" @click="exportResultsAsJson">
+                  <ion-icon name="code-outline"></ion-icon>
+                  Als JSON exportieren
+                </button>
+                <button class="btn-secondary" @click="exportResultsAsText">
+                  <ion-icon name="document-text-outline"></ion-icon>
+                  Als Text exportieren
+                </button>
+              </div>
+              <button class="btn-primary" @click="showPushResultsModal = false">Schließen</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Tab Content -->
         <div class="tab-content" v-if="app && !loading">
           <!-- General Info Tab -->
@@ -477,7 +547,13 @@ export default {
         { key: 'horror_fear_themes', label: 'Horror/Angst-Themen', options: AGE_RATING_OPTIONS },
         { key: 'mature_suggestive_themes', label: 'Anzügliche Themen für Erwachsene', options: AGE_RATING_OPTIONS },
         { key: 'gambling_simulated', label: 'Simuliertes Glücksspiel', options: AGE_RATING_OPTIONS }
-      ]
+      ],
+      showPushResultsModal: false,
+      pushResults: {
+        succeeded: [],
+        failed: [],
+        hasErrors: false
+      }
     };
   },
   
@@ -695,10 +771,39 @@ export default {
     async pushToAppStore() {
       this.$toast?.info('Push gestartet...');
       try {
-        await this.$axios.get(`appstore_metadata.php?action=sync_push&app_id=${this.appId}&project=${this.projectId}`);
-        this.$toast?.success('Push abgeschlossen');
+        const response = await this.$axios.get(`appstore_metadata.php?action=sync_push&app_id=${this.appId}&project=${this.projectId}`);
+        
+        // Analyze results
+        const results = response.data?.results || [];
+        const succeeded = results.filter(r => r.status === 'updated' || r.status === 'created');
+        const failed = results.filter(r => r.status === 'failed');
+        
+        // Store results for modal
+        this.pushResults = {
+          succeeded,
+          failed,
+          hasErrors: failed.length > 0
+        };
+        
+        if (failed.length === 0) {
+          this.$toast?.success(`✓ Push erfolgreich! ${succeeded.length} Lokalisierungen aktualisiert.`);
+        } else {
+          // Show summary toast with click to open modal
+          const summary = `${succeeded.length} erfolgreich, ${failed.length} fehlgeschlagen`;
+          this.$toast?.warning(`Push abgeschlossen: ${summary} - Details anzeigen`, {
+            duration: 5000,
+            onClick: () => {
+              this.showPushResultsModal = true;
+            }
+          });
+          // Auto-show modal for errors
+          this.showPushResultsModal = true;
+        }
+        
+        // Reload app data to reflect changes
+        await this.loadApp();
       } catch (e) {
-        this.$toast?.error('Fehler beim Push');
+        this.$toast?.error('Fehler beim Push: ' + (e.response?.data?.message || e.message));
       }
     },
     
@@ -709,6 +814,80 @@ export default {
     
     getLocaleFlag(locale) {
       return getLocaleFlag(locale);
+    },
+    
+    exportResultsAsJson() {
+      const data = {
+        timestamp: new Date().toISOString(),
+        appId: this.appId,
+        appName: this.app?.name,
+        summary: {
+          total: this.pushResults.succeeded.length + this.pushResults.failed.length,
+          succeeded: this.pushResults.succeeded.length,
+          failed: this.pushResults.failed.length
+        },
+        results: {
+          succeeded: this.pushResults.succeeded,
+          failed: this.pushResults.failed
+        }
+      };
+      
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `appstore-push-results-${this.appId}-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      this.$toast?.success('JSON-Export heruntergeladen');
+    },
+    
+    exportResultsAsText() {
+      const timestamp = new Date().toLocaleString('de-DE');
+      let text = `App Store Push Ergebnisse\n`;
+      text += `=================================\n`;
+      text += `App: ${this.app?.name || 'N/A'}\n`;
+      text += `App ID: ${this.appId}\n`;
+      text += `Zeitpunkt: ${timestamp}\n\n`;
+      
+      text += `Zusammenfassung:\n`;
+      text += `---------------\n`;
+      text += `Gesamt: ${this.pushResults.succeeded.length + this.pushResults.failed.length}\n`;
+      text += `✓ Erfolgreich: ${this.pushResults.succeeded.length}\n`;
+      text += `✗ Fehlgeschlagen: ${this.pushResults.failed.length}\n\n`;
+      
+      if (this.pushResults.failed.length > 0) {
+        text += `Fehlgeschlagene Lokalisierungen:\n`;
+        text += `================================\n\n`;
+        this.pushResults.failed.forEach((item, idx) => {
+          text += `${idx + 1}. ${item.locale} (${item.type === 'app_localization' ? 'App' : 'Version ' + item.version})\n`;
+          text += `   Fehler: ${item.error}\n\n`;
+        });
+      }
+      
+      if (this.pushResults.succeeded.length > 0) {
+        text += `Erfolgreich aktualisierte Lokalisierungen:\n`;
+        text += `=========================================\n\n`;
+        this.pushResults.succeeded.forEach((item, idx) => {
+          text += `${idx + 1}. ${item.locale} (${item.type === 'app_localization' ? 'App' : 'Version ' + (item.version || '')})\n`;
+        });
+      }
+      
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `appstore-push-results-${this.appId}-${Date.now()}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      this.$toast?.success('Text-Export heruntergeladen');
     }
   }
 };
@@ -1345,6 +1524,272 @@ export default {
   padding: 24px;
   overflow-y: auto;
   min-height: 0;
+}
+
+/* Push Results Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  animation: modalFadeIn 0.2s ease;
+}
+
+.modal-content {
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  animation: modalSlideIn 0.3s ease;
+  overflow: hidden;
+}
+
+.push-results-modal {
+  width: 800px;
+  max-width: 95vw;
+  max-height: 85vh;
+}
+
+.push-results-modal .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.push-results-modal .modal-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.push-results-modal .modal-header ion-icon {
+  font-size: 28px;
+}
+
+.close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+.push-results-modal .modal-body {
+  padding: 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.push-results-modal .modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.export-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.btn-secondary ion-icon {
+  font-size: 16px;
+}
+
+.results-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 2px solid var(--border);
+}
+
+.summary-card.success {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.summary-card.success ion-icon {
+  font-size: 40px;
+  color: #10b981;
+}
+
+.summary-card.error {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.summary-card.error ion-icon {
+  font-size: 40px;
+  color: #ef4444;
+}
+
+.summary-card .count {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.summary-card .label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.results-section {
+  margin-top: 32px;
+}
+
+.results-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+}
+
+.result-item {
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+
+.result-item.error {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.result-item.success {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.result-item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.result-item-grid .result-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  margin-bottom: 0;
+}
+
+.item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.locale-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--primary-color);
+  color: white;
+}
+
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--border);
+  color: var(--text-secondary);
+}
+
+.error-message {
+  font-size: 13px;
+  color: #dc2626;
+  line-height: 1.5;
+  font-family: 'SF Mono', Monaco, monospace;
+}
+
+.btn-primary {
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary-color);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
 }
 
 /* Animations */
