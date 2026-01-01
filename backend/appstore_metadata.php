@@ -810,14 +810,15 @@ function handleAppLocalizations($project_id, $app_id, $method)
 
         query("
             INSERT INTO appstore_app_localizations 
-            (app_id, locale, name, subtitle, privacy_policy_url, privacy_policy_text, privacy_choices_url)
-            VALUES ($app_id, '$locale', '$name', '$subtitle', '$privacy_policy_url', '$privacy_policy_text', '$privacy_choices_url')
+            (app_id, locale, name, subtitle, privacy_policy_url, privacy_policy_text, privacy_choices_url, is_dirty)
+            VALUES ($app_id, '$locale', '$name', '$subtitle', '$privacy_policy_url', '$privacy_policy_text', '$privacy_choices_url', 1)
             ON DUPLICATE KEY UPDATE
                 name = '$name',
                 subtitle = '$subtitle',
                 privacy_policy_url = '$privacy_policy_url',
                 privacy_policy_text = '$privacy_policy_text',
                 privacy_choices_url = '$privacy_choices_url',
+                is_dirty = 1,
                 updated_at = CURRENT_TIMESTAMP
         ");
 
@@ -901,8 +902,8 @@ function handleVersionLocalizations($project_id, $version_id, $method)
 
         query("
             INSERT INTO appstore_version_localizations 
-            (version_id, locale, description, keywords, whats_new, marketing_url, support_url, promotional_text)
-            VALUES ($version_id, '$locale', '$description', '$keywords', '$whats_new', '$marketing_url', '$support_url', '$promotional_text')
+            (version_id, locale, description, keywords, whats_new, marketing_url, support_url, promotional_text, is_dirty)
+            VALUES ($version_id, '$locale', '$description', '$keywords', '$whats_new', '$marketing_url', '$support_url', '$promotional_text', 1)
             ON DUPLICATE KEY UPDATE
                 description = '$description',
                 keywords = '$keywords',
@@ -910,6 +911,7 @@ function handleVersionLocalizations($project_id, $version_id, $method)
                 marketing_url = '$marketing_url',
                 support_url = '$support_url',
                 promotional_text = '$promotional_text',
+                is_dirty = 1,
                 updated_at = CURRENT_TIMESTAMP
         ");
 
@@ -985,7 +987,7 @@ function handleSingleVersionLocalization($project_id, $id, $method)
             return;
         }
 
-        query("UPDATE appstore_version_localizations SET " . implode(', ', $updateParts) . ", updated_at = CURRENT_TIMESTAMP WHERE id = $id");
+        query("UPDATE appstore_version_localizations SET " . implode(', ', $updateParts) . ", is_dirty = 1, updated_at = CURRENT_TIMESTAMP WHERE id = $id");
 
         echo json_encode([
             'success' => true,
@@ -1051,7 +1053,7 @@ function handleSingleAppLocalization($project_id, $id, $method)
             return;
         }
 
-        query("UPDATE appstore_app_localizations SET " . implode(', ', $updateParts) . ", updated_at = CURRENT_TIMESTAMP WHERE id = $id");
+        query("UPDATE appstore_app_localizations SET " . implode(', ', $updateParts) . ", is_dirty = 1, updated_at = CURRENT_TIMESTAMP WHERE id = $id");
 
         echo json_encode([
             'success' => true,
@@ -1538,61 +1540,160 @@ function handleSyncPush($project_id, $app_id)
 
         $pushResults = [];
 
-        // Get current appInfo ID from App Store (needed for creating new localizations)
-        $appInfoId = null;
-        try {
-            $appInfos = $api->getAppInfo($app['app_id']);
-            if (!empty($appInfos) && isset($appInfos[0]['id'])) {
-                $appInfoId = $appInfos[0]['id'];
-            }
-        } catch (Exception $e) {
-            // Continue without appInfoId - won't be able to create new localizations
+        // ========================================
+        // ONLY PUSH DIRTY (MODIFIED) LOCALIZATIONS
+        // ========================================
+        
+        // Count dirty entries first
+        $dirtyAppLocsResult = query("SELECT COUNT(*) as count FROM appstore_app_localizations WHERE app_id = $app_id AND is_dirty = 1");
+        $dirtyAppLocsCount = fetch_assoc($dirtyAppLocsResult)['count'] ?? 0;
+        
+        $dirtyVersionLocsResult = query("SELECT COUNT(*) as count FROM appstore_version_localizations vl 
+            INNER JOIN appstore_app_versions v ON vl.version_id = v.id 
+            WHERE v.app_id = $app_id AND vl.is_dirty = 1");
+        $dirtyVersionLocsCount = fetch_assoc($dirtyVersionLocsResult)['count'] ?? 0;
+        
+        // If nothing is dirty, return early
+        if ($dirtyAppLocsCount == 0 && $dirtyVersionLocsCount == 0) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Keine Änderungen zu pushen - alles ist bereits synchronisiert.',
+                'results' => [],
+                'skipped_reason' => 'no_changes'
+            ]);
+            return;
         }
 
-        // Push app-level localizations
-        $locResult = query("SELECT * FROM appstore_app_localizations WHERE app_id = $app_id");
+        // Get current appInfo ID from App Store (needed for creating new localizations)
+        $appInfoId = null;
+        $localeToIdMap = [];
+        
+        // Only fetch App Store data if we have dirty app localizations
+        if ($dirtyAppLocsCount > 0) {
+            try {
+                $appInfos = $api->getAppInfo($app['app_id']);
+                if (!empty($appInfos) && isset($appInfos[0]['id'])) {
+                    $appInfoId = $appInfos[0]['id'];
+                    
+                    // Fetch existing localizations to build ID map
+                    try {
+                        $existingAppLocalizations = $api->getAppInfoLocalizations($app['app_id']);
+                        foreach ($existingAppLocalizations as $existingLoc) {
+                            $locale = $existingLoc['attributes']['locale'] ?? null;
+                            $id = $existingLoc['id'] ?? null;
+                            if ($locale && $id) {
+                                $localeToIdMap[$locale] = $id;
+                            }
+                        }
+                    } catch (Exception $e) {
+                        // Continue without map
+                    }
+                }
+            } catch (Exception $e) {
+                // Continue without appInfoId
+            }
+        }
+
+        // Push ONLY dirty app-level localizations
+        $locResult = query("SELECT * FROM appstore_app_localizations WHERE app_id = $app_id AND is_dirty = 1");
         while ($loc = fetch_assoc($locResult)) {
+            $locId = (int)$loc['id'];
+            
+            // First, sync ID from our map if we don't have one
+            if (empty($loc['appstore_localization_id']) && isset($localeToIdMap[$loc['locale']])) {
+                $correctId = escape_string($localeToIdMap[$loc['locale']]);
+                query("UPDATE appstore_app_localizations SET appstore_localization_id = '$correctId' WHERE id = $locId");
+                $loc['appstore_localization_id'] = $correctId;
+            }
+            
             try {
                 if (!empty($loc['appstore_localization_id'])) {
                     // Update existing
-                    $api->updateAppInfoLocalization($loc['appstore_localization_id'], [
-                        'name' => $loc['name'],
-                        'subtitle' => $loc['subtitle'],
-                        'privacyPolicyUrl' => $loc['privacy_policy_url'],
-                        'privacyPolicyText' => $loc['privacy_policy_text'],
-                        'privacyChoicesUrl' => $loc['privacy_choices_url']
-                    ]);
-                    $pushResults[] = ['type' => 'app_localization', 'locale' => $loc['locale'], 'status' => 'updated'];
-                } elseif ($appInfoId) {
-                    // Create new localization in App Store
-                    $createResult = $api->createAppInfoLocalization($appInfoId, $loc['locale'], [
-                        'name' => $loc['name'],
-                        'subtitle' => $loc['subtitle'],
-                        'privacyPolicyUrl' => $loc['privacy_policy_url'],
-                        'privacyPolicyText' => $loc['privacy_policy_text'],
-                        'privacyChoicesUrl' => $loc['privacy_choices_url']
-                    ]);
-                    // Store the new appstore_localization_id
-                    if (!empty($createResult['data']['id'])) {
-                        $newLocId = escape_string($createResult['data']['id']);
-                        query("UPDATE appstore_app_localizations SET appstore_localization_id = '$newLocId' WHERE id = " . (int) $loc['id']);
+                    try {
+                        $api->updateAppInfoLocalization($loc['appstore_localization_id'], [
+                            'name' => $loc['name'],
+                            'subtitle' => $loc['subtitle'],
+                            'privacyPolicyUrl' => $loc['privacy_policy_url'],
+                            'privacyPolicyText' => $loc['privacy_policy_text'],
+                            'privacyChoicesUrl' => $loc['privacy_choices_url']
+                        ]);
+                        // Mark as synced
+                        query("UPDATE appstore_app_localizations SET is_dirty = 0, last_synced_at = NOW() WHERE id = $locId");
+                        $pushResults[] = ['type' => 'app_localization', 'locale' => $loc['locale'], 'status' => 'updated'];
+                    } catch (Exception $updateError) {
+                        if (strpos($updateError->getMessage(), 'There is no resource') !== false && $appInfoId) {
+                            // Resource doesn't exist - create it
+                            $createResult = $api->createAppInfoLocalization($appInfoId, $loc['locale'], [
+                                'name' => $loc['name'],
+                                'subtitle' => $loc['subtitle'],
+                                'privacyPolicyUrl' => $loc['privacy_policy_url'],
+                                'privacyPolicyText' => $loc['privacy_policy_text'],
+                                'privacyChoicesUrl' => $loc['privacy_choices_url']
+                            ]);
+                            if (!empty($createResult['data']['id'])) {
+                                $newLocId = escape_string($createResult['data']['id']);
+                                query("UPDATE appstore_app_localizations SET appstore_localization_id = '$newLocId', is_dirty = 0, last_synced_at = NOW() WHERE id = $locId");
+                            }
+                            $pushResults[] = ['type' => 'app_localization', 'locale' => $loc['locale'], 'status' => 'recreated'];
+                        } else {
+                            throw $updateError;
+                        }
                     }
-                    $pushResults[] = ['type' => 'app_localization', 'locale' => $loc['locale'], 'status' => 'created'];
+                } elseif ($appInfoId) {
+                    // Create new
+                    try {
+                        $createResult = $api->createAppInfoLocalization($appInfoId, $loc['locale'], [
+                            'name' => $loc['name'],
+                            'subtitle' => $loc['subtitle'],
+                            'privacyPolicyUrl' => $loc['privacy_policy_url'],
+                            'privacyPolicyText' => $loc['privacy_policy_text'],
+                            'privacyChoicesUrl' => $loc['privacy_choices_url']
+                        ]);
+                        if (!empty($createResult['data']['id'])) {
+                            $newLocId = escape_string($createResult['data']['id']);
+                            query("UPDATE appstore_app_localizations SET appstore_localization_id = '$newLocId', is_dirty = 0, last_synced_at = NOW() WHERE id = $locId");
+                        }
+                        $pushResults[] = ['type' => 'app_localization', 'locale' => $loc['locale'], 'status' => 'created'];
+                    } catch (Exception $createError) {
+                        if (strpos($createError->getMessage(), 'already exists') !== false) {
+                            // Already exists - fetch ID and update
+                            $allLocs = $api->getAppInfoLocalizations($app['app_id']);
+                            foreach ($allLocs as $existingLoc) {
+                                if (($existingLoc['attributes']['locale'] ?? null) === $loc['locale']) {
+                                    $existingId = escape_string($existingLoc['id']);
+                                    $api->updateAppInfoLocalization($existingId, [
+                                        'name' => $loc['name'],
+                                        'subtitle' => $loc['subtitle'],
+                                        'privacyPolicyUrl' => $loc['privacy_policy_url'],
+                                        'privacyPolicyText' => $loc['privacy_policy_text'],
+                                        'privacyChoicesUrl' => $loc['privacy_choices_url']
+                                    ]);
+                                    query("UPDATE appstore_app_localizations SET appstore_localization_id = '$existingId', is_dirty = 0, last_synced_at = NOW() WHERE id = $locId");
+                                    $pushResults[] = ['type' => 'app_localization', 'locale' => $loc['locale'], 'status' => 'synced_and_updated'];
+                                    break;
+                                }
+                            }
+                        } else {
+                            throw $createError;
+                        }
+                    }
                 } else {
-                    $pushResults[] = ['type' => 'app_localization', 'locale' => $loc['locale'], 'status' => 'skipped', 'reason' => 'No appstore_localization_id and could not get appInfoId'];
+                    $pushResults[] = ['type' => 'app_localization', 'locale' => $loc['locale'], 'status' => 'skipped', 'reason' => 'No appInfoId available'];
                 }
             } catch (Exception $e) {
                 $pushResults[] = ['type' => 'app_localization', 'locale' => $loc['locale'], 'status' => 'failed', 'error' => $e->getMessage()];
             }
         }
 
-        // Editable version states - only push to these
+        // Editable version states
         $editableStates = ['PREPARE_FOR_SUBMISSION', 'DEVELOPER_REJECTED', 'REJECTED', 'WAITING_FOR_REVIEW', 'DEVELOPER_REMOVED_FROM_SALE'];
 
-        // Push version localizations - only for editable versions
-        $verResult = query("SELECT * FROM appstore_app_versions WHERE app_id = $app_id");
+        // Push ONLY dirty version localizations
+        $verResult = query("SELECT v.*, 
+            (SELECT COUNT(*) FROM appstore_version_localizations vl WHERE vl.version_id = v.id AND vl.is_dirty = 1) as dirty_count 
+            FROM appstore_app_versions v WHERE v.app_id = $app_id HAVING dirty_count > 0");
+        
         while ($version = fetch_assoc($verResult)) {
-            // Check if version is editable
             $versionState = strtoupper($version['status'] ?? '');
             $isEditable = in_array($versionState, $editableStates) || empty($versionState) || $versionState === 'DRAFT';
 
@@ -1605,37 +1706,106 @@ function handleSyncPush($project_id, $app_id)
                 ];
                 continue;
             }
+            
+            // Build version locale ID map only if needed
+            $versionLocaleToIdMap = [];
+            if (!empty($version['appstore_version_id'])) {
+                try {
+                    $existingVersionLocs = $api->getAppStoreVersionLocalizations($version['appstore_version_id']);
+                    foreach ($existingVersionLocs as $existingVLoc) {
+                        $locale = $existingVLoc['attributes']['locale'] ?? null;
+                        $id = $existingVLoc['id'] ?? null;
+                        if ($locale && $id) {
+                            $versionLocaleToIdMap[$locale] = $id;
+                        }
+                    }
+                } catch (Exception $e) {
+                    // Continue
+                }
+            }
 
-            $vlocResult = query("SELECT * FROM appstore_version_localizations WHERE version_id = " . (int) $version['id']);
+            // Only get dirty version localizations
+            $vlocResult = query("SELECT * FROM appstore_version_localizations WHERE version_id = " . (int)$version['id'] . " AND is_dirty = 1");
             while ($vloc = fetch_assoc($vlocResult)) {
+                $vlocId = (int)$vloc['id'];
+                
+                // Sync ID from map if needed
+                if (empty($vloc['appstore_localization_id']) && isset($versionLocaleToIdMap[$vloc['locale']])) {
+                    $correctId = escape_string($versionLocaleToIdMap[$vloc['locale']]);
+                    query("UPDATE appstore_version_localizations SET appstore_localization_id = '$correctId' WHERE id = $vlocId");
+                    $vloc['appstore_localization_id'] = $correctId;
+                }
+                
                 try {
                     if (!empty($vloc['appstore_localization_id'])) {
-                        // Update existing
-                        $api->updateAppStoreVersionLocalization($vloc['appstore_localization_id'], [
-                            'description' => $vloc['description'],
-                            'keywords' => $vloc['keywords'],
-                            'whatsNew' => $vloc['whats_new'],
-                            'marketingUrl' => $vloc['marketing_url'],
-                            'supportUrl' => $vloc['support_url'],
-                            'promotionalText' => $vloc['promotional_text']
-                        ]);
-                        $pushResults[] = ['type' => 'version_localization', 'version' => $version['version_string'], 'locale' => $vloc['locale'], 'status' => 'updated'];
-                    } elseif (!empty($version['appstore_version_id'])) {
-                        // Create new localization for this version in App Store
-                        $createResult = $api->createAppStoreVersionLocalization($version['appstore_version_id'], $vloc['locale'], [
-                            'description' => $vloc['description'],
-                            'keywords' => $vloc['keywords'],
-                            'whatsNew' => $vloc['whats_new'],
-                            'marketingUrl' => $vloc['marketing_url'],
-                            'supportUrl' => $vloc['support_url'],
-                            'promotionalText' => $vloc['promotional_text']
-                        ]);
-                        // Store the new appstore_localization_id
-                        if (!empty($createResult['data']['id'])) {
-                            $newLocId = escape_string($createResult['data']['id']);
-                            query("UPDATE appstore_version_localizations SET appstore_localization_id = '$newLocId' WHERE id = " . (int) $vloc['id']);
+                        try {
+                            $api->updateAppStoreVersionLocalization($vloc['appstore_localization_id'], [
+                                'description' => $vloc['description'],
+                                'keywords' => $vloc['keywords'],
+                                'whatsNew' => $vloc['whats_new'],
+                                'marketingUrl' => $vloc['marketing_url'],
+                                'supportUrl' => $vloc['support_url'],
+                                'promotionalText' => $vloc['promotional_text']
+                            ]);
+                            query("UPDATE appstore_version_localizations SET is_dirty = 0, last_synced_at = NOW() WHERE id = $vlocId");
+                            $pushResults[] = ['type' => 'version_localization', 'version' => $version['version_string'], 'locale' => $vloc['locale'], 'status' => 'updated'];
+                        } catch (Exception $updateError) {
+                            if (strpos($updateError->getMessage(), 'There is no resource') !== false && !empty($version['appstore_version_id'])) {
+                                $createResult = $api->createAppStoreVersionLocalization($version['appstore_version_id'], $vloc['locale'], [
+                                    'description' => $vloc['description'],
+                                    'keywords' => $vloc['keywords'],
+                                    'whatsNew' => $vloc['whats_new'],
+                                    'marketingUrl' => $vloc['marketing_url'],
+                                    'supportUrl' => $vloc['support_url'],
+                                    'promotionalText' => $vloc['promotional_text']
+                                ]);
+                                if (!empty($createResult['data']['id'])) {
+                                    $newLocId = escape_string($createResult['data']['id']);
+                                    query("UPDATE appstore_version_localizations SET appstore_localization_id = '$newLocId', is_dirty = 0, last_synced_at = NOW() WHERE id = $vlocId");
+                                }
+                                $pushResults[] = ['type' => 'version_localization', 'version' => $version['version_string'], 'locale' => $vloc['locale'], 'status' => 'recreated'];
+                            } else {
+                                throw $updateError;
+                            }
                         }
-                        $pushResults[] = ['type' => 'version_localization', 'version' => $version['version_string'], 'locale' => $vloc['locale'], 'status' => 'created'];
+                    } elseif (!empty($version['appstore_version_id'])) {
+                        try {
+                            $createResult = $api->createAppStoreVersionLocalization($version['appstore_version_id'], $vloc['locale'], [
+                                'description' => $vloc['description'],
+                                'keywords' => $vloc['keywords'],
+                                'whatsNew' => $vloc['whats_new'],
+                                'marketingUrl' => $vloc['marketing_url'],
+                                'supportUrl' => $vloc['support_url'],
+                                'promotionalText' => $vloc['promotional_text']
+                            ]);
+                            if (!empty($createResult['data']['id'])) {
+                                $newLocId = escape_string($createResult['data']['id']);
+                                query("UPDATE appstore_version_localizations SET appstore_localization_id = '$newLocId', is_dirty = 0, last_synced_at = NOW() WHERE id = $vlocId");
+                            }
+                            $pushResults[] = ['type' => 'version_localization', 'version' => $version['version_string'], 'locale' => $vloc['locale'], 'status' => 'created'];
+                        } catch (Exception $createError) {
+                            if (strpos($createError->getMessage(), 'already exists') !== false) {
+                                $allVersionLocs = $api->getAppStoreVersionLocalizations($version['appstore_version_id']);
+                                foreach ($allVersionLocs as $existingVLoc) {
+                                    if (($existingVLoc['attributes']['locale'] ?? null) === $vloc['locale']) {
+                                        $existingId = escape_string($existingVLoc['id']);
+                                        $api->updateAppStoreVersionLocalization($existingId, [
+                                            'description' => $vloc['description'],
+                                            'keywords' => $vloc['keywords'],
+                                            'whatsNew' => $vloc['whats_new'],
+                                            'marketingUrl' => $vloc['marketing_url'],
+                                            'supportUrl' => $vloc['support_url'],
+                                            'promotionalText' => $vloc['promotional_text']
+                                        ]);
+                                        query("UPDATE appstore_version_localizations SET appstore_localization_id = '$existingId', is_dirty = 0, last_synced_at = NOW() WHERE id = $vlocId");
+                                        $pushResults[] = ['type' => 'version_localization', 'version' => $version['version_string'], 'locale' => $vloc['locale'], 'status' => 'synced_and_updated'];
+                                        break;
+                                    }
+                                }
+                            } else {
+                                throw $createError;
+                            }
+                        }
                     } else {
                         $pushResults[] = ['type' => 'version_localization', 'version' => $version['version_string'], 'locale' => $vloc['locale'], 'status' => 'skipped', 'reason' => 'No appstore IDs available'];
                     }
@@ -1653,7 +1823,11 @@ function handleSyncPush($project_id, $app_id)
         echo json_encode([
             'success' => true,
             'message' => 'Changes pushed to App Store Connect',
-            'results' => $pushResults
+            'results' => $pushResults,
+            'stats' => [
+                'dirty_app_localizations' => $dirtyAppLocsCount,
+                'dirty_version_localizations' => $dirtyVersionLocsCount
+            ]
         ]);
 
     } catch (Exception $e) {
