@@ -248,6 +248,152 @@ class AppStoreMetadataAPI
         $response = $this->makeRequest("/appStoreVersionLocalizations/$localizationId/appScreenshotSets");
         return $response['data'] ?? [];
     }
+
+    // Get app categories
+    public function getAppCategories($appId)
+    {
+        $appInfos = $this->getAppInfo($appId);
+        if (empty($appInfos)) {
+            return null;
+        }
+        
+        $appInfoId = $appInfos[0]['id'];
+        $response = $this->makeRequest("/appInfos/$appInfoId?include=primaryCategory,primarySubcategoryOne,primarySubcategoryTwo,secondaryCategory,secondarySubcategoryOne,secondarySubcategoryTwo");
+        
+        $data = $response['data'] ?? null;
+        $included = $response['included'] ?? [];
+        
+        if (!$data) {
+            return null;
+        }
+        
+        $result = [
+            'appInfoId' => $appInfoId,
+            'primaryCategoryId' => null,
+            'primaryCategoryName' => null,
+            'primarySubcategoryId' => null,
+            'primarySubcategoryName' => null,
+            'secondaryCategoryId' => null,
+            'secondaryCategoryName' => null,
+            'secondarySubcategoryId' => null,
+            'secondarySubcategoryName' => null
+        ];
+        
+        // Build ID to category map (id => name)
+        $categoryMap = [];
+        foreach ($included as $item) {
+            if ($item['type'] === 'appCategories') {
+                $categoryMap[$item['id']] = $item['attributes']['name'] ?? $item['id'];
+            }
+        }
+        
+        // Extract relationships
+        $relationships = $data['relationships'] ?? [];
+        
+        // Primary category
+        if (isset($relationships['primaryCategory']['data']['id'])) {
+            $catId = $relationships['primaryCategory']['data']['id'];
+            $result['primaryCategoryId'] = $catId;
+            $result['primaryCategoryName'] = $categoryMap[$catId] ?? $catId;
+        }
+        
+        // Primary subcategory (only first one)
+        if (isset($relationships['primarySubcategoryOne']['data']['id'])) {
+            $subId = $relationships['primarySubcategoryOne']['data']['id'];
+            $result['primarySubcategoryId'] = $subId;
+            $result['primarySubcategoryName'] = $categoryMap[$subId] ?? $subId;
+        }
+        
+        // Secondary category
+        if (isset($relationships['secondaryCategory']['data']['id'])) {
+            $catId = $relationships['secondaryCategory']['data']['id'];
+            $result['secondaryCategoryId'] = $catId;
+            $result['secondaryCategoryName'] = $categoryMap[$catId] ?? $catId;
+        }
+        
+        // Secondary subcategory (only first one)
+        if (isset($relationships['secondarySubcategoryOne']['data']['id'])) {
+            $subId = $relationships['secondarySubcategoryOne']['data']['id'];
+            $result['secondarySubcategoryId'] = $subId;
+            $result['secondarySubcategoryName'] = $categoryMap[$subId] ?? $subId;
+        }
+        
+        return $result;
+    }
+
+    // Update app categories
+    public function updateAppCategories($appInfoId, $categories)
+    {
+        $relationships = [];
+        
+        $categoryKeys = ['primaryCategory', 'primarySubcategoryOne', 'primarySubcategoryTwo',
+                         'secondaryCategory', 'secondarySubcategoryOne', 'secondarySubcategoryTwo'];
+        
+        foreach ($categoryKeys as $key) {
+            if (!empty($categories[$key])) {
+                $relationships[$key] = [
+                    'data' => [
+                        'type' => 'appCategories',
+                        'id' => $categories[$key]
+                    ]
+                ];
+            } else {
+                $relationships[$key] = ['data' => null];
+            }
+        }
+        
+        $payload = [
+            'data' => [
+                'type' => 'appInfos',
+                'id' => $appInfoId,
+                'relationships' => $relationships
+            ]
+        ];
+        
+        return $this->makeRequest("/appInfos/$appInfoId", 'PATCH', $payload);
+    }
+
+    // Get age rating declaration
+    public function getAgeRatingDeclaration($appId)
+    {
+        $appInfos = $this->getAppInfo($appId);
+        if (empty($appInfos)) {
+            return null;
+        }
+        
+        $appInfoId = $appInfos[0]['id'];
+        $response = $this->makeRequest("/appInfos/$appInfoId?include=ageRatingDeclaration");
+        
+        $included = $response['included'] ?? [];
+        foreach ($included as $item) {
+            if ($item['type'] === 'ageRatingDeclarations') {
+                return $item;
+            }
+        }
+        
+        return null;
+    }
+
+    // Update age rating declaration
+    public function updateAgeRatingDeclaration($ageRatingDeclarationId, $ratings)
+    {
+        $payload = [
+            'data' => [
+                'type' => 'ageRatingDeclarations',
+                'id' => $ageRatingDeclarationId,
+                'attributes' => $ratings
+            ]
+        ];
+        
+        return $this->makeRequest("/ageRatingDeclarations/$ageRatingDeclarationId", 'PATCH', $payload);
+    }
+
+    // Get available categories
+    public function getAvailableCategories()
+    {
+        $response = $this->makeRequest('/appCategories?limit=200');
+        return $response['data'] ?? [];
+    }
 }
 
 // Get project from query or session (projectLink is the project identifier)
@@ -1820,6 +1966,88 @@ function handleSyncPush($project_id, $app_id)
         // Update last_used_at for credentials
         query("UPDATE appstore_api_credentials SET last_used_at = NOW() WHERE project_id = $project_id");
 
+        // ========================================
+        // PUSH CATEGORIES
+        // ========================================
+        try {
+            // Get both primary and secondary categories
+            $catResult = query("SELECT * FROM appstore_app_categories WHERE app_id = $app_id");
+            $primaryCat = null;
+            $secondaryCat = null;
+            
+            while ($cat = fetch_assoc($catResult)) {
+                if ($cat['category_type'] === 'primary') {
+                    $primaryCat = $cat;
+                } elseif ($cat['category_type'] === 'secondary') {
+                    $secondaryCat = $cat;
+                }
+            }
+            
+            if ($primaryCat || $secondaryCat) {
+                // Get appInfoId from App Store
+                $appInfos = $api->getAppInfo($app['app_id']);
+                if (!empty($appInfos) && isset($appInfos[0]['id'])) {
+                    $appInfoId = $appInfos[0]['id'];
+                    
+                    $categoryData = [
+                        'primaryCategory' => $primaryCat['category_id'] ?? null,
+                        'primarySubcategoryOne' => $primaryCat['subcategory_id'] ?? null,
+                        'secondaryCategory' => $secondaryCat['category_id'] ?? null,
+                        'secondarySubcategoryOne' => $secondaryCat['subcategory_id'] ?? null
+                    ];
+                    
+                    $api->updateAppCategories($appInfoId, $categoryData);
+                    $pushResults[] = ['type' => 'categories', 'status' => 'updated'];
+                }
+            }
+        } catch (Exception $e) {
+            $pushResults[] = ['type' => 'categories', 'status' => 'failed', 'error' => $e->getMessage()];
+        }
+
+        // ========================================
+        // PUSH AGE RATING
+        // ========================================
+        try {
+            $ageResult = query("SELECT * FROM appstore_age_ratings WHERE app_id = $app_id");
+            $ageRating = fetch_assoc($ageResult);
+            
+            if ($ageRating) {
+                // Get age rating declaration from App Store
+                $ageRatingDeclaration = $api->getAgeRatingDeclaration($app['app_id']);
+                
+                if ($ageRatingDeclaration && isset($ageRatingDeclaration['id'])) {
+                    $ageRatingData = [
+                        'alcoholTobaccoOrDrugUseOrReferences' => $ageRating['alcohol_tobacco_or_drug_use_or_references'] ?? 'NONE',
+                        'contests' => $ageRating['contests'] ?? 'NONE',
+                        'gamblingSimulated' => $ageRating['gambling_simulated'] ?? 'NONE',
+                        'gambling' => $ageRating['gambling'] === '1' || $ageRating['gambling'] === true,
+                        'horrorOrFearThemes' => $ageRating['horror_fear_themes'] ?? 'NONE',
+                        'matureOrSuggestiveThemes' => $ageRating['mature_suggestive_themes'] ?? 'NONE',
+                        'medicalOrTreatmentInformation' => $ageRating['medical_treatment_info'] ?? 'NONE',
+                        'profanityOrCrudeHumor' => $ageRating['profanity_or_crude_humor'] ?? 'NONE',
+                        'sexualContentGraphicAndNudity' => $ageRating['sexual_content_graphic_nudity'] ?? 'NONE',
+                        'sexualContentOrNudity' => $ageRating['sexual_content_or_nudity'] ?? 'NONE',
+                        'violenceCartoonOrFantasy' => $ageRating['violence_cartoon_or_fantasy'] ?? 'NONE',
+                        'violenceRealistic' => $ageRating['violence_realistic'] ?? 'NONE',
+                        'violenceRealisticProlongedGraphicOrSadistic' => $ageRating['violence_realistic_prolonged_graphic'] ?? 'NONE',
+                        'kidsAgeBand' => $ageRating['kids_band'] !== 'NOT_MADE_FOR_KIDS' ? $ageRating['kids_band'] : null,
+                        'seventeenPlus' => $ageRating['seventeen_plus'] === '1' || $ageRating['seventeen_plus'] === true,
+                        'unrestrictedWebAccess' => $ageRating['unrestricted_web_access'] === '1' || $ageRating['unrestricted_web_access'] === true
+                    ];
+                    
+                    // Remove null values
+                    $ageRatingData = array_filter($ageRatingData, function($value) {
+                        return $value !== null;
+                    });
+                    
+                    $api->updateAgeRatingDeclaration($ageRatingDeclaration['id'], $ageRatingData);
+                    $pushResults[] = ['type' => 'age_rating', 'status' => 'updated'];
+                }
+            }
+        } catch (Exception $e) {
+            $pushResults[] = ['type' => 'age_rating', 'status' => 'failed', 'error' => $e->getMessage()];
+        }
+
         echo json_encode([
             'success' => true,
             'message' => 'Changes pushed to App Store Connect',
@@ -2157,6 +2385,109 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
         }
     } catch (Exception $e) {
         error_log("Failed to sync versions: " . $e->getMessage());
+    }
+
+    // Sync categories
+    try {
+        $categoryData = $api->getAppCategories($app_store_id);
+        if ($categoryData && $categoryData['appInfoId']) {
+            // Primary category
+            if (!empty($categoryData['primaryCategoryId'])) {
+                $primaryCatId = escape_string($categoryData['primaryCategoryId']);
+                $primaryCatName = escape_string($categoryData['primaryCategoryName'] ?? '');
+                $primarySubId = escape_string($categoryData['primarySubcategoryId'] ?? '');
+                $primarySubName = escape_string($categoryData['primarySubcategoryName'] ?? '');
+                
+                query("
+                    INSERT INTO appstore_app_categories 
+                    (app_id, category_type, category_id, category_name, subcategory_id, subcategory_name)
+                    VALUES ($localAppId, 'primary', '$primaryCatId', '$primaryCatName', '$primarySubId', '$primarySubName')
+                    ON DUPLICATE KEY UPDATE
+                        category_id = '$primaryCatId',
+                        category_name = '$primaryCatName',
+                        subcategory_id = '$primarySubId',
+                        subcategory_name = '$primarySubName'
+                ");
+            }
+            
+            // Secondary category
+            if (!empty($categoryData['secondaryCategoryId'])) {
+                $secondaryCatId = escape_string($categoryData['secondaryCategoryId']);
+                $secondaryCatName = escape_string($categoryData['secondaryCategoryName'] ?? '');
+                $secondarySubId = escape_string($categoryData['secondarySubcategoryId'] ?? '');
+                $secondarySubName = escape_string($categoryData['secondarySubcategoryName'] ?? '');
+                
+                query("
+                    INSERT INTO appstore_app_categories 
+                    (app_id, category_type, category_id, category_name, subcategory_id, subcategory_name)
+                    VALUES ($localAppId, 'secondary', '$secondaryCatId', '$secondaryCatName', '$secondarySubId', '$secondarySubName')
+                    ON DUPLICATE KEY UPDATE
+                        category_id = '$secondaryCatId',
+                        category_name = '$secondaryCatName',
+                        subcategory_id = '$secondarySubId',
+                        subcategory_name = '$secondarySubName'
+                ");
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Failed to sync categories: " . $e->getMessage());
+    }
+
+    // Sync age rating
+    try {
+        $ageRatingData = $api->getAgeRatingDeclaration($app_store_id);
+        if ($ageRatingData && isset($ageRatingData['attributes'])) {
+            $attrs = $ageRatingData['attributes'];
+            
+            $alcoholTobaccoDrugs = escape_string($attrs['alcoholTobaccoOrDrugUseOrReferences'] ?? 'NONE');
+            $contests = escape_string($attrs['contests'] ?? 'NONE');
+            $gamblingSimulated = escape_string($attrs['gamblingSimulated'] ?? 'NONE');
+            $gambling = isset($attrs['gambling']) && $attrs['gambling'] ? '1' : '0';
+            $horrorFear = escape_string($attrs['horrorOrFearThemes'] ?? 'NONE');
+            $matureSuggestive = escape_string($attrs['matureOrSuggestiveThemes'] ?? 'NONE');
+            $medicalTreatment = escape_string($attrs['medicalOrTreatmentInformation'] ?? 'NONE');
+            $profanityHumor = escape_string($attrs['profanityOrCrudeHumor'] ?? 'NONE');
+            $sexualContent = escape_string($attrs['sexualContentGraphicAndNudity'] ?? 'NONE');
+            $sexualContentNudity = escape_string($attrs['sexualContentOrNudity'] ?? 'NONE');
+            $violenceCartoon = escape_string($attrs['violenceCartoonOrFantasy'] ?? 'NONE');
+            $violenceRealistic = escape_string($attrs['violenceRealistic'] ?? 'NONE');
+            $violenceGraphic = escape_string($attrs['violenceRealisticProlongedGraphicOrSadistic'] ?? 'NONE');
+            $unrestrictedWeb = isset($attrs['unrestrictedWebAccess']) && $attrs['unrestrictedWebAccess'] ? '1' : '0';
+            $kidsBand = escape_string($attrs['kidsAgeBand'] ?? 'NOT_MADE_FOR_KIDS');
+            $seventeenPlus = isset($attrs['seventeenPlus']) && $attrs['seventeenPlus'] ? '1' : '0';
+            
+            query("
+                INSERT INTO appstore_age_ratings 
+                (app_id, alcohol_tobacco_or_drug_use_or_references, contests, gambling_simulated, gambling,
+                 horror_fear_themes, mature_suggestive_themes, medical_treatment_info, profanity_or_crude_humor,
+                 sexual_content_graphic_nudity, sexual_content_or_nudity, violence_cartoon_or_fantasy,
+                 violence_realistic, violence_realistic_prolonged_graphic, unrestricted_web_access, kids_band, seventeen_plus)
+                VALUES ($localAppId, '$alcoholTobaccoDrugs', '$contests', '$gamblingSimulated', '$gambling',
+                        '$horrorFear', '$matureSuggestive', '$medicalTreatment', '$profanityHumor',
+                        '$sexualContent', '$sexualContentNudity', '$violenceCartoon', '$violenceRealistic',
+                        '$violenceGraphic', '$unrestrictedWeb', '$kidsBand', '$seventeenPlus')
+                ON DUPLICATE KEY UPDATE
+                    alcohol_tobacco_or_drug_use_or_references = '$alcoholTobaccoDrugs',
+                    contests = '$contests',
+                    gambling_simulated = '$gamblingSimulated',
+                    gambling = '$gambling',
+                    horror_fear_themes = '$horrorFear',
+                    mature_suggestive_themes = '$matureSuggestive',
+                    medical_treatment_info = '$medicalTreatment',
+                    profanity_or_crude_humor = '$profanityHumor',
+                    sexual_content_graphic_nudity = '$sexualContent',
+                    sexual_content_or_nudity = '$sexualContentNudity',
+                    violence_cartoon_or_fantasy = '$violenceCartoon',
+                    violence_realistic = '$violenceRealistic',
+                    violence_realistic_prolonged_graphic = '$violenceGraphic',
+                    unrestricted_web_access = '$unrestrictedWeb',
+                    kids_band = '$kidsBand',
+                    seventeen_plus = '$seventeenPlus',
+                    updated_at = NOW()
+            ");
+        }
+    } catch (Exception $e) {
+        error_log("Failed to sync age rating: " . $e->getMessage());
     }
 
     return [
