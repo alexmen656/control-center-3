@@ -511,10 +511,20 @@ function handleSingleApp($project_id, $app_id, $method)
             $localizations[] = $row;
         }
 
-        // Get versions
+        // Get versions with counts
         $verResult = query("SELECT * FROM appstore_app_versions WHERE app_id = $app_id ORDER BY created_at DESC");
         $versions = [];
         while ($row = fetch_assoc($verResult)) {
+            // Get locale count for this version
+            $localeCountResult = query("SELECT COUNT(DISTINCT locale) as count FROM appstore_version_localizations WHERE version_id = {$row['id']}");
+            $localeCount = fetch_assoc($localeCountResult);
+            $row['locale_count'] = (int)$localeCount['count'];
+            
+            // Get screenshot count for this version
+            $screenshotCountResult = query("SELECT COUNT(*) as count FROM appstore_screenshots WHERE version_id = {$row['id']}");
+            $screenshotCount = fetch_assoc($screenshotCountResult);
+            $row['screenshot_count'] = (int)$screenshotCount['count'];
+            
             $versions[] = $row;
         }
 

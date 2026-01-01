@@ -171,6 +171,8 @@
 </template>
 
 <script>
+import { getLocaleFlag } from '../config';
+
 export default {
   name: 'ScreenshotManager',
   props: {
@@ -422,7 +424,7 @@ export default {
       }));
 
       try {
-        await this.$axios.put(`appstore_metadata.php?action=screenshots&project=${this.projectId}`, {
+        await this.$axios.put(`appstore_metadata.php?action=screenshots&project=${this.projectId}&version_id=${this.versionId}`, {
           order_updates: updates
         });
       } catch (e) {
@@ -444,7 +446,7 @@ export default {
       if (!this.screenshotToDelete) return;
 
       try {
-        await this.$axios.delete(`appstore_metadata.php?action=screenshots&id=${this.screenshotToDelete.id}&project=${this.projectId}`);
+        await this.$axios.delete(`appstore_metadata.php?action=screenshots&id=${this.screenshotToDelete.id}&project=${this.projectId}&version_id=${this.versionId}`);
         this.$toast?.success('Screenshot gelöscht');
         this.showDeleteModal = false;
         this.screenshotToDelete = null;
@@ -470,13 +472,7 @@ export default {
     },
 
     getLocaleFlag(locale) {
-      const countryCode = locale.split('-')[1] || locale.toUpperCase();
-      const codePoints = countryCode.split('').map(char => 127397 + char.charCodeAt(0));
-      try {
-        return String.fromCodePoint(...codePoints);
-      } catch {
-        return '🌍';
-      }
+      return getLocaleFlag(locale);
     }
   }
 };

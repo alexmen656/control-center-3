@@ -415,7 +415,7 @@
 
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
-import { APP_STATUSES, AGE_RATING_OPTIONS } from '../config';
+import { APP_STATUSES, AGE_RATING_OPTIONS, getLocaleFlag } from '../config';
 
 export default {
   name: 'AppDetailView',
@@ -708,13 +708,7 @@ export default {
     },
     
     getLocaleFlag(locale) {
-      const countryCode = locale.split('-')[1] || locale.toUpperCase();
-      const codePoints = countryCode.split('').map(char => 127397 + char.charCodeAt(0));
-      try {
-        return String.fromCodePoint(...codePoints);
-      } catch {
-        return '🌍';
-      }
+      return getLocaleFlag(locale);
     }
   }
 };

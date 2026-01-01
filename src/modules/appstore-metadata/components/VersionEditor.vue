@@ -285,7 +285,7 @@
 </template>
 
 <script>
-import { APP_STATUSES } from '../config';
+import { APP_STATUSES, getLocaleFlag } from '../config';
 
 export default {
   name: 'VersionEditor',
@@ -460,13 +460,7 @@ export default {
     },
     
     getLocaleFlag(locale) {
-      const countryCode = locale.split('-')[1] || locale.toUpperCase();
-      const codePoints = countryCode.split('').map(char => 127397 + char.charCodeAt(0));
-      try {
-        return String.fromCodePoint(...codePoints);
-      } catch {
-        return '🌍';
-      }
+      return getLocaleFlag(locale);
     }
   }
 };

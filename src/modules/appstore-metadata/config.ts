@@ -58,3 +58,162 @@ export const MAX_LENGTHS = {
   description: 4000,
   whats_new: 4000
 };
+
+/**
+ * Locale to Flag Emoji Mapping
+ * All App Store Connect supported locales with their correct flag emojis
+ */
+export const LOCALE_FLAGS: Record<string, string> = {
+  // Arabic
+  'ar-SA': '🇸🇦', // Saudi Arabia
+  'ar': '🇸🇦',
+  
+  // Chinese
+  'zh-CN': '🇨🇳', // China Simplified
+  'zh-TW': '🇹🇼', // Taiwan Traditional
+  'zh-HK': '🇭🇰', // Hong Kong Traditional
+  
+  // Danish
+  'da': '🇩🇰',
+  'da-DK': '🇩🇰',
+  
+  // Dutch
+  'nl-NL': '🇳🇱', // Netherlands
+  'nl-BE': '🇧🇪', // Belgium
+  'nl': '🇳🇱',
+  
+  // English
+  'en-US': '🇺🇸', // United States
+  'en-GB': '🇬🇧', // United Kingdom
+  'en-AU': '🇦🇺', // Australia
+  'en-CA': '🇨🇦', // Canada
+  'en': '🇺🇸',
+  
+  // Finnish
+  'fi': '🇫🇮',
+  'fi-FI': '🇫🇮',
+  
+  // French
+  'fr-FR': '🇫🇷', // France
+  'fr-CA': '🇨🇦', // Canada
+  'fr': '🇫🇷',
+  
+  // German
+  'de-DE': '🇩🇪', // Germany
+  'de-AT': '🇦🇹', // Austria
+  'de-CH': '🇨🇭', // Switzerland
+  'de': '🇩🇪',
+  
+  // Greek
+  'el': '🇬🇷',
+  'el-GR': '🇬🇷',
+  
+  // Hebrew
+  'he': '🇮🇱',
+  'he-IL': '🇮🇱',
+  
+  // Hindi
+  'hi': '🇮🇳',
+  'hi-IN': '🇮🇳',
+  
+  // Hungarian
+  'hu': '🇭🇺',
+  'hu-HU': '🇭🇺',
+  
+  // Indonesian
+  'id': '🇮🇩',
+  'id-ID': '🇮🇩',
+  
+  // Italian
+  'it': '🇮🇹',
+  'it-IT': '🇮🇹',
+  
+  // Japanese
+  'ja': '🇯🇵',
+  'ja-JP': '🇯🇵',
+  
+  // Korean
+  'ko': '🇰🇷',
+  'ko-KR': '🇰🇷',
+  
+  // Malay
+  'ms': '🇲🇾',
+  'ms-MY': '🇲🇾',
+  
+  // Norwegian
+  'no': '🇳🇴',
+  'nb': '🇳🇴',
+  'no-NO': '🇳🇴',
+  
+  // Polish
+  'pl': '🇵🇱',
+  'pl-PL': '🇵🇱',
+  
+  // Portuguese
+  'pt-PT': '🇵🇹', // Portugal
+  'pt-BR': '🇧🇷', // Brazil
+  'pt': '🇵🇹',
+  
+  // Romanian
+  'ro': '🇷🇴',
+  'ro-RO': '🇷🇴',
+  
+  // Russian
+  'ru': '🇷🇺',
+  'ru-RU': '🇷🇺',
+  
+  // Slovak
+  'sk': '🇸🇰',
+  'sk-SK': '🇸🇰',
+  
+  // Spanish
+  'es-ES': '🇪🇸', // Spain
+  'es-MX': '🇲🇽', // Mexico
+  'es-419': '🇲🇽', // Latin America
+  'es': '🇪🇸',
+  
+  // Swedish
+  'sv': '🇸🇪',
+  'sv-SE': '🇸🇪',
+  
+  // Thai
+  'th': '🇹🇭',
+  'th-TH': '🇹🇭',
+  
+  // Turkish
+  'tr': '🇹🇷',
+  'tr-TR': '🇹🇷',
+  
+  // Ukrainian
+  'uk': '🇺🇦',
+  'uk-UA': '🇺🇦',
+  
+  // Vietnamese
+  'vi': '🇻🇳',
+  'vi-VN': '🇻🇳',
+  
+  // Czech
+  'cs': '🇨🇿',
+  'cs-CZ': '🇨🇿',
+  
+  // Croatian
+  'hr': '🇭🇷',
+  'hr-HR': '🇭🇷',
+  
+  // Catalan
+  'ca': '🇪🇸',
+  'ca-ES': '🇪🇸',
+
+  'fil': '🇵🇭',
+  'ta': '🇮🇳',
+  'zh-Hans': '🇨🇳',
+  'bg': '🇧🇬',
+
+};
+
+/**
+ * Get flag emoji for a locale
+ */
+export function getLocaleFlag(locale: string): string {
+  return LOCALE_FLAGS[locale] || '🌍';
+}
