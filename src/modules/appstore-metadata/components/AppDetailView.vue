@@ -4,49 +4,37 @@
       <SiteTitle icon="apps-outline" :title="app?.name || 'App Details'" bg="transparent"/>
       
       <div class="page-container">
-        <!-- Back Button -->
-        <button class="back-btn" @click="$router.push(`/project/${this.projectId}/appstore-metadata`)">
-          <ion-icon name="arrow-back-outline"></ion-icon>
-          Zurück zum Dashboard
-        </button>
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="header-content">
+            <button class="back-btn" @click="$router.push(`/project/${this.projectId}/appstore-metadata`)">
+              <ion-icon name="arrow-back-outline"></ion-icon>
+              Zurück
+            </button>
+            <h1 v-if="app">{{ app.name }}</h1>
+            <p v-if="app" class="bundle-id">{{ app.bundle_id }}</p>
+          </div>
+          <div class="header-actions" v-if="app">
+            <span class="status-badge" :class="app.status">{{ getStatusLabel(app.status) }}</span>
+            <button class="action-btn secondary" @click="syncFromAppStore">
+              <ion-icon name="cloud-download-outline"></ion-icon>
+              Von App Store laden
+            </button>
+            <button class="action-btn primary" @click="pushToAppStore">
+              <ion-icon name="cloud-upload-outline"></ion-icon>
+              Zu App Store pushen
+            </button>
+          </div>
+        </div>
 
         <!-- Loading -->
         <div v-if="loading" class="loading-state">
-          <div class="loading-icon">
-            <ion-icon name="hourglass-outline"></ion-icon>
-          </div>
+          <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
           <p>Lade App Details...</p>
         </div>
 
-        <!-- App Header -->
-        <div v-else-if="app" class="app-header-card">
-          <div class="app-header-content">
-            <div class="app-icon-wrapper">
-              <ion-icon name="logo-apple-appstore"></ion-icon>
-            </div>
-            <div class="app-header-info">
-              <h1>{{ app.name }}</h1>
-              <p class="bundle-id">{{ app.bundle_id }}</p>
-              <div class="app-badges">
-                <span class="badge" :class="app.status">{{ getStatusLabel(app.status) }}</span>
-                <span class="badge secondary">{{ app.primary_locale }}</span>
-              </div>
-            </div>
-            <div class="app-header-actions">
-              <button class="action-btn" @click="syncFromAppStore">
-                <ion-icon name="cloud-download-outline"></ion-icon>
-                Von App Store laden
-              </button>
-              <button class="action-btn primary" @click="pushToAppStore">
-                <ion-icon name="cloud-upload-outline"></ion-icon>
-                Zu App Store pushen
-              </button>
-            </div>
-          </div>
-        </div>
-
         <!-- Tabs -->
-        <div class="tabs-container" v-if="app">
+        <div class="tab-navigation" v-if="app && !loading">
           <button 
             v-for="tab in tabs" 
             :key="tab.id"
@@ -60,48 +48,50 @@
         </div>
 
         <!-- Tab Content -->
-        <div class="tab-content" v-if="app">
+        <div class="tab-content" v-if="app && !loading">
           <!-- General Info Tab -->
           <div v-if="activeTab === 'general'" class="content-section">
             <div class="data-card">
               <div class="card-header">
-                <h3>Allgemeine Informationen</h3>
+                <div class="header-left">
+                  <h3>Allgemeine Informationen</h3>
+                </div>
               </div>
               <div class="card-body">
-                <div class="form-row">
+                <div class="form-grid">
                   <div class="form-group">
-                    <label>App ID</label>
-                    <input v-model="app.app_id" type="text" class="form-input" readonly />
+                    <label class="form-label">App ID</label>
+                    <input v-model="app.app_id" type="text" class="modern-input" readonly />
                   </div>
                   <div class="form-group">
-                    <label>Bundle ID</label>
-                    <input v-model="app.bundle_id" type="text" class="form-input" readonly />
+                    <label class="form-label">Bundle ID</label>
+                    <input v-model="app.bundle_id" type="text" class="modern-input" readonly />
                   </div>
                 </div>
                 
-                <div class="form-row">
+                <div class="form-grid">
                   <div class="form-group">
-                    <label>App Name</label>
-                    <input v-model="editForm.name" type="text" class="form-input" />
+                    <label class="form-label">App Name</label>
+                    <input v-model="editForm.name" type="text" class="modern-input" />
                   </div>
                   <div class="form-group">
-                    <label>SKU</label>
-                    <input v-model="editForm.sku" type="text" class="form-input" />
+                    <label class="form-label">SKU</label>
+                    <input v-model="editForm.sku" type="text" class="modern-input" />
                   </div>
                 </div>
 
-                <div class="form-row">
+                <div class="form-grid">
                   <div class="form-group">
-                    <label>Primäre Sprache</label>
-                    <select v-model="editForm.primary_locale" class="form-select">
+                    <label class="form-label">Primäre Sprache</label>
+                    <select v-model="editForm.primary_locale" class="modern-select">
                       <option v-for="locale in locales" :key="locale.code" :value="locale.code">
                         {{ locale.name }}
                       </option>
                     </select>
                   </div>
                   <div class="form-group">
-                    <label>Status</label>
-                    <select v-model="editForm.status" class="form-select">
+                    <label class="form-label">Status</label>
+                    <select v-model="editForm.status" class="modern-select">
                       <option v-for="status in statuses" :key="status.value" :value="status.value">
                         {{ status.label }}
                       </option>
@@ -110,15 +100,15 @@
                 </div>
 
                 <div class="form-group">
-                  <label>Inhaltsrechte</label>
-                  <select v-model="editForm.content_rights_declaration" class="form-select">
+                  <label class="form-label">Inhaltsrechte</label>
+                  <select v-model="editForm.content_rights_declaration" class="modern-select">
                     <option value="">Nicht angegeben</option>
                     <option value="doesNotUseThirdPartyContent">Verwendet keine Drittanbieter-Inhalte</option>
                     <option value="usesThirdPartyContent">Verwendet Drittanbieter-Inhalte</option>
                   </select>
                 </div>
               </div>
-              <div class="card-footer">
+              <div class="form-actions">
                 <button class="action-btn primary" @click="saveAppDetails">
                   <ion-icon name="save-outline"></ion-icon>
                   Änderungen speichern
@@ -312,19 +302,19 @@
       </div>
 
       <!-- Add Locale Modal -->
-      <div v-if="showAddLocaleModal" class="modal-overlay" @click.self="showAddLocaleModal = false">
-        <div class="modal-content">
-          <div class="modal-header">
+      <div v-if="showAddLocaleModal" class="custom-modal-overlay" @click.self="showAddLocaleModal = false">
+        <div class="custom-modal-content" @click.stop>
+          <div class="custom-modal-header">
             <h3>Sprache hinzufügen</h3>
-            <button class="close-btn" @click="showAddLocaleModal = false">
+            <button class="modal-close-btn" @click="showAddLocaleModal = false">
               <ion-icon name="close-outline"></ion-icon>
             </button>
           </div>
           
-          <div class="modal-body">
+          <div class="custom-modal-body">
             <div class="form-group">
-              <label>Sprache <span class="required">*</span></label>
-              <select v-model="newLocale.locale" class="form-select">
+              <label class="form-label">Sprache <span class="required">*</span></label>
+              <select v-model="newLocale.locale" class="modern-select">
                 <option value="">Sprache wählen</option>
                 <option 
                   v-for="locale in availableLocales" 
@@ -337,56 +327,56 @@
             </div>
 
             <div class="form-group">
-              <label>App Name</label>
-              <input v-model="newLocale.name" type="text" class="form-input" placeholder="Lokalisierter App Name" />
+              <label class="form-label">App Name</label>
+              <input v-model="newLocale.name" type="text" class="modern-input" placeholder="Lokalisierter App Name" />
             </div>
 
             <div class="form-group">
-              <label>Untertitel</label>
-              <input v-model="newLocale.subtitle" type="text" class="form-input" placeholder="Max. 30 Zeichen" maxlength="30" />
+              <label class="form-label">Untertitel</label>
+              <input v-model="newLocale.subtitle" type="text" class="modern-input" placeholder="Max. 30 Zeichen" maxlength="30" />
               <span class="char-count">{{ (newLocale.subtitle || '').length }}/30</span>
             </div>
 
             <div class="form-group">
-              <label>Datenschutzrichtlinie URL</label>
-              <input v-model="newLocale.privacy_policy_url" type="url" class="form-input" placeholder="https://..." />
+              <label class="form-label">Datenschutzrichtlinie URL</label>
+              <input v-model="newLocale.privacy_policy_url" type="url" class="modern-input" placeholder="https://..." />
             </div>
-          </div>
-          
-          <div class="modal-footer">
-            <button class="action-btn" @click="showAddLocaleModal = false">Abbrechen</button>
-            <button class="action-btn primary" @click="saveLocalization" :disabled="!newLocale.locale">
-              <ion-icon name="save-outline"></ion-icon>
-              Speichern
-            </button>
+            
+            <div class="form-actions">
+              <button class="action-btn secondary" @click="showAddLocaleModal = false">Abbrechen</button>
+              <button class="action-btn primary" @click="saveLocalization" :disabled="!newLocale.locale">
+                <ion-icon name="save-outline"></ion-icon>
+                Speichern
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Add Version Modal -->
-      <div v-if="showAddVersionModal" class="modal-overlay" @click.self="showAddVersionModal = false">
-        <div class="modal-content">
-          <div class="modal-header">
+      <div v-if="showAddVersionModal" class="custom-modal-overlay" @click.self="showAddVersionModal = false">
+        <div class="custom-modal-content" @click.stop>
+          <div class="custom-modal-header">
             <h3>Neue Version erstellen</h3>
-            <button class="close-btn" @click="showAddVersionModal = false">
+            <button class="modal-close-btn" @click="showAddVersionModal = false">
               <ion-icon name="close-outline"></ion-icon>
             </button>
           </div>
           
-          <div class="modal-body">
+          <div class="custom-modal-body">
             <div class="form-group">
-              <label>Versionsnummer <span class="required">*</span></label>
-              <input v-model="newVersion.version_string" type="text" class="form-input" placeholder="z.B. 1.0.0" />
+              <label class="form-label">Versionsnummer <span class="required">*</span></label>
+              <input v-model="newVersion.version_string" type="text" class="modern-input" placeholder="z.B. 1.0.0" />
             </div>
 
             <div class="form-group">
-              <label>Build-Nummer</label>
-              <input v-model="newVersion.build_number" type="text" class="form-input" placeholder="z.B. 1" />
+              <label class="form-label">Build-Nummer</label>
+              <input v-model="newVersion.build_number" type="text" class="modern-input" placeholder="z.B. 1" />
             </div>
 
             <div class="form-group">
-              <label>Plattform</label>
-              <select v-model="newVersion.platform" class="form-select">
+              <label class="form-label">Plattform</label>
+              <select v-model="newVersion.platform" class="modern-select">
                 <option value="iOS">iOS</option>
                 <option value="macOS">macOS</option>
                 <option value="tvOS">tvOS</option>
@@ -396,8 +386,8 @@
             </div>
 
             <div class="form-group">
-              <label>Veröffentlichungsart</label>
-              <select v-model="newVersion.release_type" class="form-select">
+              <label class="form-label">Veröffentlichungsart</label>
+              <select v-model="newVersion.release_type" class="modern-select">
                 <option value="manual">Manuell freigeben</option>
                 <option value="afterApproval">Automatisch nach Genehmigung</option>
                 <option value="scheduled">Geplante Veröffentlichung</option>
@@ -405,17 +395,17 @@
             </div>
 
             <div class="form-group">
-              <label>Copyright</label>
-              <input v-model="newVersion.copyright" type="text" class="form-input" placeholder="z.B. © 2024 Dein Unternehmen" />
+              <label class="form-label">Copyright</label>
+              <input v-model="newVersion.copyright" type="text" class="modern-input" placeholder="z.B. © 2024 Dein Unternehmen" />
             </div>
-          </div>
-          
-          <div class="modal-footer">
-            <button class="action-btn" @click="showAddVersionModal = false">Abbrechen</button>
-            <button class="action-btn primary" @click="createVersion" :disabled="!newVersion.version_string">
-              <ion-icon name="add-outline"></ion-icon>
-              Version erstellen
-            </button>
+            
+            <div class="form-actions">
+              <button class="action-btn secondary" @click="showAddVersionModal = false">Abbrechen</button>
+              <button class="action-btn primary" @click="createVersion" :disabled="!newVersion.version_string">
+                <ion-icon name="add-outline"></ion-icon>
+                Version erstellen
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -731,7 +721,7 @@ export default {
 </script>
 
 <style scoped>
-/* Modern Design System */
+/* Modern Design System - Same as ManageUsers */
 .modern-content {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
@@ -746,233 +736,264 @@ export default {
   --text-primary: #1e293b;
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --radius: 8px;
   --radius-lg: 12px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
-  }
-}
-
-ion-content.modern-content {
-  --background: var(--background);
 }
 
 .page-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  min-height: 100vh;
+  background: var(--background);
+}
+
+/* Page Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.header-content h1 {
+  margin: 8px 0;
+  color: var(--text-primary);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.bundle-id {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-family: monospace;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 /* Back Button */
 .back-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
   color: var(--text-secondary);
   font-size: 14px;
   cursor: pointer;
-  margin-bottom: 24px;
+  transition: color 0.2s ease;
 }
 
 .back-btn:hover {
   color: var(--primary-color);
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.live {
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--success-color);
+  border: 1px solid rgba(5, 150, 105, 0.2);
+}
+
+.status-badge.draft {
+  background: rgba(100, 116, 139, 0.1);
+  color: var(--secondary-color);
+  border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+.status-badge.in_review {
+  background: rgba(217, 119, 6, 0.1);
+  color: var(--warning-color);
+  border: 1px solid rgba(217, 119, 6, 0.2);
+}
+
+/* Action Buttons */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.action-btn.primary {
+  background: var(--primary-color);
+  color: white;
   border-color: var(--primary-color);
 }
 
-/* App Header */
-.app-header-card {
-  background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
-  border-radius: var(--radius-lg);
-  padding: 32px;
-  margin-bottom: 24px;
+.action-btn.primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.action-btn.secondary {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.action-btn.danger {
+  color: var(--danger-color);
+  border-color: var(--danger-color);
+}
+
+.action-btn.danger:hover {
+  background: var(--danger-color);
   color: white;
 }
 
-.app-header-content {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.app-icon-wrapper {
-  width: 80px;
-  height: 80px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.app-icon-wrapper ion-icon {
-  font-size: 48px;
-}
-
-.app-header-info {
-  flex: 1;
-  min-width: 200px;
-}
-
-.app-header-info h1 {
-  margin: 0 0 4px 0;
-  font-size: 28px;
-}
-
-.bundle-id {
-  margin: 0 0 12px 0;
-  opacity: 0.8;
-  font-family: monospace;
-}
-
-.app-badges {
-  display: flex;
-  gap: 8px;
-}
-
-.badge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.badge.live { background: var(--success-color); }
-.badge.draft { background: var(--secondary-color); }
-
-.app-header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-/* Tabs */
-.tabs-container {
+/* Tab Navigation */
+.tab-navigation {
   display: flex;
   gap: 8px;
   margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
   overflow-x: auto;
-  padding-bottom: 8px;
 }
 
 .tab-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 20px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
   color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius);
   font-size: 14px;
   font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .tab-btn:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+  background: var(--background);
+  color: var(--text-primary);
 }
 
 .tab-btn.active {
   background: var(--primary-color);
-  border-color: var(--primary-color);
   color: white;
 }
 
-/* Content Sections */
-.content-section {
-  animation: fadeIn 0.3s ease;
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+.loading-icon {
+  font-size: 32px;
+  color: var(--primary-color);
+  margin-bottom: 12px;
+  animation: spin 1s linear infinite;
 }
 
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.section-header h3 {
-  margin: 0;
-  color: var(--text-primary);
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* Data Card */
 .data-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
   border: 1px solid var(--border);
   overflow: hidden;
   margin-bottom: 24px;
 }
 
 .card-header {
-  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
   border-bottom: 1px solid var(--border);
 }
 
-.card-header h3 {
+.header-left h3 {
   margin: 0;
   color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 600;
 }
 
 .card-body {
   padding: 24px;
 }
 
-.card-footer {
-  padding: 16px 24px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-/* Form Elements */
-.form-row {
+/* Form Styles */
+.form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .form-group {
   margin-bottom: 20px;
 }
 
-.form-group label {
+.form-label {
   display: block;
   margin-bottom: 8px;
-  font-weight: 500;
   color: var(--text-primary);
+  font-weight: 500;
+  font-size: 14px;
 }
 
 .required {
   color: var(--danger-color);
 }
 
-.form-input,
-.form-select {
+.modern-input,
+.modern-select {
   width: 100%;
   padding: 12px 16px;
   border: 1px solid var(--border);
@@ -981,16 +1002,17 @@ ion-content.modern-content {
   background: var(--surface);
   color: var(--text-primary);
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
-.form-input:focus,
-.form-select:focus {
+.modern-input:focus,
+.modern-select:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
-.form-input[readonly] {
+.modern-input[readonly] {
   background: var(--background);
   color: var(--text-muted);
 }
@@ -1001,6 +1023,29 @@ ion-content.modern-content {
   font-size: 12px;
   color: var(--text-muted);
   text-align: right;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 20px 24px;
+  border-top: 1px solid var(--border);
+}
+
+/* Section Header */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
 }
 
 /* Localizations Grid */
@@ -1041,6 +1086,7 @@ ion-content.modern-content {
 
 .locale-card.add-card:hover {
   color: var(--primary-color);
+  border-color: var(--primary-color);
 }
 
 .locale-header {
@@ -1135,6 +1181,11 @@ ion-content.modern-content {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 20px;
+  transition: all 0.2s ease;
+}
+
+.version-card:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .version-header {
@@ -1230,158 +1281,138 @@ ion-content.modern-content {
   margin-bottom: 16px;
 }
 
-/* Loading State */
-.loading-state {
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.loading-icon ion-icon {
-  font-size: 48px;
-  color: var(--primary-color);
-  animation: spin 2s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Action Buttons */
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-}
-
-.action-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.action-btn.danger {
-  color: var(--danger-color);
-  border-color: var(--danger-color);
-}
-
-.action-btn.danger:hover {
-  background: var(--danger-color);
-  color: white;
-}
-
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Modal */
-.modal-overlay {
+/* Modal Styles */
+.custom-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: 20px;
+  z-index: 10000;
+  animation: modalFadeIn 0.2s ease;
 }
 
-.modal-content {
+.custom-modal-content {
   background: var(--surface);
   border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 500px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  max-width: 90vw;
   max-height: 90vh;
-  overflow: hidden;
+  width: 500px;
+  display: flex;
+  flex-direction: column;
+  animation: modalSlideIn 0.3s ease;
 }
 
-.modal-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border);
+.custom-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
-.modal-header h3 {
+.custom-modal-header h3 {
   margin: 0;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.modal-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+  background: var(--border);
   color: var(--text-primary);
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.modal-body {
+.custom-modal-body {
+  flex: 1;
   padding: 24px;
   overflow-y: auto;
-  max-height: 60vh;
+  min-height: 0;
 }
 
-.modal-footer {
-  padding: 16px 24px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+/* Animations */
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .app-header-content {
-    flex-direction: column;
-    text-align: center;
+  .page-container {
+    padding: 16px;
   }
-  
-  .app-header-actions {
+
+  .page-header {
     flex-direction: column;
-    width: 100%;
+    align-items: stretch;
   }
-  
-  .app-header-actions .action-btn {
-    width: 100%;
+
+  .header-actions {
     justify-content: center;
   }
-  
-  .tabs-container {
-    flex-wrap: nowrap;
+
+  .form-grid {
+    grid-template-columns: 1fr;
   }
-  
-  .tab-btn {
-    padding: 10px 16px;
-    font-size: 13px;
-  }
-  
+
   .rating-question {
     grid-template-columns: 1fr;
     gap: 8px;
   }
-  
+
   .version-actions {
     flex-direction: column;
+  }
+
+  .custom-modal-content {
+    width: 95vw;
+    max-width: none;
+    margin: 20px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .modern-content {
+    --background: #121212;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
+    --text-primary: #f1f5f9;
+    --text-secondary: #b0b0b0;
+    --text-muted: #707070;
   }
 }
 </style>

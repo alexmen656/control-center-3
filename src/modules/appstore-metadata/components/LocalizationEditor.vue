@@ -1,110 +1,109 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="language-outline" title="Lokalisierungen" bg="transparent"/>
-      
       <div class="page-container">
-        <!-- Back Button -->
-        <button class="back-btn" @click="goBack">
-          <ion-icon name="arrow-back-outline"></ion-icon>
-          Zurück zur App
-        </button>
-
-        <!-- Info -->
-        <div class="info-card">
-          <div class="info-icon">
-            <ion-icon name="globe-outline"></ion-icon>
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="header-left">
+            <button class="back-button" @click="goBack">
+              <ion-icon name="arrow-back-outline"></ion-icon>
+            </button>
+            <div class="header-content">
+              <h1>Lokalisierungen</h1>
+              <p>Mehrsprachige App-Metadaten verwalten</p>
+            </div>
           </div>
-          <div class="info-content">
-            <h3>Mehrsprachige App-Metadaten</h3>
-            <p>Verwalte hier die App-spezifischen Texte für verschiedene Sprachen. Diese Texte gelten für alle Versionen deiner App.</p>
-          </div>
+          <button class="action-btn primary" @click="showAddModal = true">
+            <ion-icon name="add-outline"></ion-icon>
+            Sprache hinzufügen
+          </button>
         </div>
 
         <!-- Localizations Table -->
         <div class="data-card">
           <div class="card-header">
             <h3>Verfügbare Sprachen</h3>
-            <button class="action-btn primary" @click="showAddModal = true">
-              <ion-icon name="add-outline"></ion-icon>
-              Sprache hinzufügen
-            </button>
+            <span class="badge">{{ localizations.length }} Sprachen</span>
           </div>
 
-          <div class="table-wrapper">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Sprache</th>
-                  <th>App Name</th>
-                  <th>Untertitel</th>
-                  <th>Datenschutz-URL</th>
-                  <th>Aktionen</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="loc in localizations" :key="loc.id">
-                  <td>
-                    <div class="locale-cell">
-                      <span class="flag">{{ getLocaleFlag(loc.locale) }}</span>
-                      <div class="locale-info">
-                        <span class="locale-name">{{ loc.locale_name || loc.locale }}</span>
-                        <span class="locale-code">{{ loc.locale }}</span>
-                      </div>
+          <div class="modern-table">
+            <!-- Table Header -->
+            <div class="table-header">
+              <div class="table-cell flex-2">Sprache</div>
+              <div class="table-cell flex-2">App Name</div>
+              <div class="table-cell flex-2">Untertitel</div>
+              <div class="table-cell flex-1">Datenschutz</div>
+              <div class="table-cell actions-cell">Aktionen</div>
+            </div>
+            
+            <!-- Table Body -->
+            <div class="table-body">
+              <div class="table-row" v-for="loc in localizations" :key="loc.id">
+                <div class="table-cell flex-2">
+                  <div class="locale-cell">
+                    <span class="flag">{{ getLocaleFlag(loc.locale) }}</span>
+                    <div class="locale-info">
+                      <span class="locale-name">{{ loc.locale_name || loc.locale }}</span>
+                      <span class="locale-code">{{ loc.locale }}</span>
                     </div>
-                  </td>
-                  <td>
-                    <span :class="{ 'text-muted': !loc.name }">{{ loc.name || 'Nicht gesetzt' }}</span>
-                  </td>
-                  <td>
-                    <span :class="{ 'text-muted': !loc.subtitle }">{{ loc.subtitle || 'Nicht gesetzt' }}</span>
-                  </td>
-                  <td>
-                    <a v-if="loc.privacy_policy_url" :href="loc.privacy_policy_url" target="_blank" class="url-link">
-                      <ion-icon name="link-outline"></ion-icon>
-                      Link
-                    </a>
-                    <span v-else class="text-muted">Nicht gesetzt</span>
-                  </td>
-                  <td>
-                    <div class="action-btns">
-                      <button class="icon-btn" @click="editLocale(loc)" title="Bearbeiten">
-                        <ion-icon name="create-outline"></ion-icon>
-                      </button>
-                      <button class="icon-btn danger" @click="confirmDelete(loc)" title="Löschen">
-                        <ion-icon name="trash-outline"></ion-icon>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-if="localizations.length === 0">
-                  <td colspan="5" class="empty-cell">
-                    <div class="empty-content">
-                      <ion-icon name="language-outline"></ion-icon>
-                      <p>Noch keine Lokalisierungen vorhanden</p>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  </div>
+                </div>
+                <div class="table-cell flex-2">
+                  <span :class="{ 'text-muted': !loc.name }">{{ loc.name || 'Nicht gesetzt' }}</span>
+                </div>
+                <div class="table-cell flex-2">
+                  <span :class="{ 'text-muted': !loc.subtitle }">{{ loc.subtitle || 'Nicht gesetzt' }}</span>
+                </div>
+                <div class="table-cell flex-1">
+                  <a v-if="loc.privacy_policy_url" :href="loc.privacy_policy_url" target="_blank" class="url-link">
+                    <ion-icon name="link-outline"></ion-icon>
+                    Link
+                  </a>
+                  <span v-else class="text-muted">—</span>
+                </div>
+                <div class="table-cell actions-cell">
+                  <div class="row-actions">
+                    <button class="icon-btn" @click="editLocale(loc)" title="Bearbeiten">
+                      <ion-icon name="create-outline"></ion-icon>
+                    </button>
+                    <button class="icon-btn danger" @click="confirmDelete(loc)" title="Löschen">
+                      <ion-icon name="trash-outline"></ion-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Empty State -->
+              <div v-if="localizations.length === 0" class="empty-state-row">
+                <div class="empty-icon">
+                  <ion-icon name="language-outline"></ion-icon>
+                </div>
+                <h4>Noch keine Lokalisierungen</h4>
+                <p>Füge deine erste Sprache hinzu, um loszulegen.</p>
+                <button class="action-btn primary" @click="showAddModal = true">
+                  <ion-icon name="add-outline"></ion-icon>
+                  Sprache hinzufügen
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Add/Edit Modal -->
-      <div v-if="showAddModal || showEditModal" class="modal-overlay" @click.self="closeModal">
-        <div class="modal-content modal-lg">
-          <div class="modal-header">
+      <div v-if="showAddModal || showEditModal" class="custom-modal-overlay" @click.self="closeModal">
+        <div class="custom-modal-content modal-lg">
+          <div class="custom-modal-header">
             <h3>{{ showEditModal ? 'Lokalisierung bearbeiten' : 'Sprache hinzufügen' }}</h3>
-            <button class="close-btn" @click="closeModal">
+            <button class="modal-close-btn" @click="closeModal">
               <ion-icon name="close-outline"></ion-icon>
             </button>
           </div>
           
-          <div class="modal-body">
+          <div class="custom-modal-body">
             <div class="form-group" v-if="!showEditModal">
-              <label>Sprache <span class="required">*</span></label>
-              <select v-model="form.locale" class="form-select">
+              <label class="form-label">Sprache <span class="required">*</span></label>
+              <select v-model="form.locale" class="modern-select">
                 <option value="">Sprache wählen</option>
                 <option 
                   v-for="locale in availableLocales" 
@@ -117,22 +116,22 @@
             </div>
 
             <div class="form-group">
-              <label>App Name</label>
+              <label class="form-label">App Name</label>
               <input 
                 v-model="form.name" 
                 type="text" 
-                class="form-input"
+                class="modern-input"
                 placeholder="Lokalisierter App Name"
               />
               <span class="form-hint">Leer lassen, um den Standardnamen zu verwenden</span>
             </div>
 
             <div class="form-group">
-              <label>Untertitel</label>
+              <label class="form-label">Untertitel</label>
               <input 
                 v-model="form.subtitle" 
                 type="text" 
-                class="form-input"
+                class="modern-input"
                 placeholder="Kurze Beschreibung (max. 30 Zeichen)"
                 maxlength="30"
               />
@@ -140,71 +139,71 @@
             </div>
 
             <div class="form-group">
-              <label>Datenschutzrichtlinie URL</label>
+              <label class="form-label">Datenschutzrichtlinie URL</label>
               <input 
                 v-model="form.privacy_policy_url" 
                 type="url" 
-                class="form-input"
+                class="modern-input"
                 placeholder="https://example.com/privacy"
               />
             </div>
 
             <div class="form-group">
-              <label>Datenschutzrichtlinie Text</label>
+              <label class="form-label">Datenschutzrichtlinie Text</label>
               <textarea 
                 v-model="form.privacy_policy_text" 
-                class="form-textarea"
+                class="modern-input"
                 rows="4"
                 placeholder="Optionaler Text zur Datenschutzrichtlinie..."
               ></textarea>
             </div>
 
             <div class="form-group">
-              <label>Privacy Choices URL</label>
+              <label class="form-label">Privacy Choices URL</label>
               <input 
                 v-model="form.privacy_choices_url" 
                 type="url" 
-                class="form-input"
+                class="modern-input"
                 placeholder="https://example.com/privacy-choices"
               />
               <span class="form-hint">Für Apps mit ATT (App Tracking Transparency)</span>
             </div>
-          </div>
-          
-          <div class="modal-footer">
-            <button class="action-btn" @click="closeModal">Abbrechen</button>
-            <button 
-              class="action-btn primary" 
-              @click="saveLocalization" 
-              :disabled="!showEditModal && !form.locale"
-            >
-              <ion-icon name="save-outline"></ion-icon>
-              Speichern
-            </button>
+
+            <div class="form-actions">
+              <button class="action-btn secondary" @click="closeModal">Abbrechen</button>
+              <button 
+                class="action-btn primary" 
+                @click="saveLocalization" 
+                :disabled="!showEditModal && !form.locale"
+              >
+                <ion-icon name="save-outline"></ion-icon>
+                Speichern
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Delete Confirmation Modal -->
-      <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
-        <div class="modal-content modal-sm">
-          <div class="modal-header danger">
+      <div v-if="showDeleteModal" class="custom-modal-overlay" @click.self="showDeleteModal = false">
+        <div class="custom-modal-content">
+          <div class="custom-modal-header danger">
             <h3>Sprache entfernen</h3>
-            <button class="close-btn" @click="showDeleteModal = false">
+            <button class="modal-close-btn" @click="showDeleteModal = false">
               <ion-icon name="close-outline"></ion-icon>
             </button>
           </div>
           
-          <div class="modal-body">
+          <div class="custom-modal-body">
             <p>Bist du sicher, dass du die Lokalisierung für <strong>{{ localeToDelete?.locale }}</strong> entfernen möchtest?</p>
-          </div>
-          
-          <div class="modal-footer">
-            <button class="action-btn" @click="showDeleteModal = false">Abbrechen</button>
-            <button class="action-btn danger" @click="deleteLocalization">
-              <ion-icon name="trash-outline"></ion-icon>
-              Entfernen
-            </button>
+            
+            <div class="form-actions">
+              <button class="action-btn secondary" @click="showDeleteModal = false">Abbrechen</button>
+              <button class="action-btn danger" @click="deleteLocalization">
+                <ion-icon name="trash-outline"></ion-icon>
+                Entfernen
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -213,13 +212,9 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
-
 export default {
   name: 'LocalizationEditor',
-  components: {
-    SiteTitle
-  },
+  components: {},
   props: {
     appId: {
       type: [String, Number],
@@ -358,7 +353,7 @@ export default {
 </script>
 
 <style scoped>
-/* Reuse styles from other components */
+/* Modern Design System - ManageUsers Pattern */
 .modern-content {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
@@ -374,15 +369,16 @@ export default {
   --text-muted: #94a3b8;
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
   --radius: 8px;
   --radius-lg: 12px;
 }
 
 @media (prefers-color-scheme: dark) {
   .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
+    --background: #121212;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
     --text-primary: #f1f5f9;
     --text-secondary: #cbd5e1;
     --text-muted: #64748b;
@@ -394,58 +390,65 @@ ion-content.modern-content {
 }
 
 .page-container {
-  max-width: 1000px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 24px;
 }
 
-.back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text-secondary);
-  font-size: 14px;
-  cursor: pointer;
+/* Page Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.back-btn:hover {
+.header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.back-button {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.back-button:hover {
   color: var(--primary-color);
   border-color: var(--primary-color);
 }
 
-/* Info Card */
-.info-card {
-  display: flex;
-  gap: 16px;
-  padding: 20px;
-  background: rgba(37, 99, 235, 0.05);
-  border: 1px solid rgba(37, 99, 235, 0.2);
-  border-radius: var(--radius-lg);
-  margin-bottom: 24px;
+.back-button ion-icon {
+  font-size: 20px;
 }
 
-.info-icon {
-  font-size: 32px;
-  color: var(--primary-color);
-}
-
-.info-content h3 {
-  margin: 0 0 8px 0;
+.header-content h1 {
+  margin: 0 0 4px 0;
+  font-size: 24px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
-.info-content p {
+.header-content p {
   margin: 0;
-  color: var(--text-secondary);
   font-size: 14px;
+  color: var(--text-secondary);
 }
 
-/* Data Card & Table */
+/* Data Card */
 .data-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
@@ -463,42 +466,86 @@ ion-content.modern-content {
 
 .card-header h3 {
   margin: 0;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
-.table-wrapper {
-  overflow-x: auto;
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: rgba(37, 99, 235, 0.1);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--primary-color);
 }
 
-.data-table {
+/* Modern Table */
+.modern-table {
   width: 100%;
-  border-collapse: collapse;
 }
 
-.data-table th,
-.data-table td {
-  padding: 16px 20px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-}
-
-.data-table th {
+.table-header {
+  display: flex;
   background: var(--background);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+}
+
+.table-header .table-cell {
   font-weight: 600;
-  color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  color: var(--text-secondary);
 }
 
-.data-table td {
-  color: var(--text-primary);
+.table-body {
+  min-height: 100px;
 }
 
-.data-table tr:last-child td {
+.table-row {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s ease;
+}
+
+.table-row:hover {
+  background: var(--background);
+}
+
+.table-row:last-child {
   border-bottom: none;
 }
 
+.table-cell {
+  padding: 0 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.table-cell:first-child {
+  padding-left: 0;
+}
+
+.table-cell:last-child {
+  padding-right: 0;
+}
+
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
+
+.actions-cell {
+  flex: 0 0 100px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Locale Cell */
 .locale-cell {
   display: flex;
   align-items: center;
@@ -522,12 +569,11 @@ ion-content.modern-content {
 .locale-code {
   font-size: 12px;
   color: var(--text-muted);
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
 }
 
 .text-muted {
   color: var(--text-muted);
-  font-style: italic;
 }
 
 .url-link {
@@ -536,27 +582,30 @@ ion-content.modern-content {
   gap: 4px;
   color: var(--primary-color);
   text-decoration: none;
+  font-size: 13px;
 }
 
 .url-link:hover {
   text-decoration: underline;
 }
 
-.action-btns {
+/* Row Actions */
+.row-actions {
   display: flex;
   gap: 8px;
 }
 
+/* Icon Button */
 .icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -571,41 +620,73 @@ ion-content.modern-content {
   border-color: var(--danger-color);
 }
 
-.empty-cell {
+/* Empty State */
+.empty-state-row {
+  padding: 60px 24px;
   text-align: center;
-  padding: 40px !important;
 }
 
-.empty-content {
-  color: var(--text-muted);
+.empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
 }
 
-.empty-content ion-icon {
-  font-size: 48px;
-  margin-bottom: 12px;
+.empty-icon ion-icon {
+  font-size: 32px;
+  color: white;
 }
 
-/* Action Button */
+.empty-state-row h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.empty-state-row p {
+  margin: 0 0 20px 0;
+  color: var(--text-secondary);
+}
+
+/* Action Buttons */
 .action-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
-  border: none;
+  padding: 10px 20px;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   font-weight: 500;
   font-size: 14px;
   cursor: pointer;
+  transition: all 0.2s ease;
   background: var(--surface);
   color: var(--text-primary);
-  border: 1px solid var(--border);
-  transition: all 0.2s ease;
+}
+
+.action-btn:hover:not(:disabled) {
+  box-shadow: var(--shadow-md);
 }
 
 .action-btn.primary {
   background: var(--primary-color);
   color: white;
   border-color: var(--primary-color);
+}
+
+.action-btn.primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.action-btn.secondary {
+  background: var(--surface);
+  color: var(--text-secondary);
 }
 
 .action-btn.danger {
@@ -619,8 +700,8 @@ ion-content.modern-content {
   cursor: not-allowed;
 }
 
-/* Modal */
-.modal-overlay {
+/* Custom Modal */
+.custom-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -632,62 +713,77 @@ ion-content.modern-content {
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  backdrop-filter: blur(4px);
 }
 
-.modal-content {
+.custom-modal-content {
   background: var(--surface);
   border-radius: var(--radius-lg);
   width: 100%;
-  max-width: 500px;
+  max-width: 480px;
   max-height: 90vh;
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.modal-content.modal-lg {
-  max-width: 600px;
+.custom-modal-content.modal-lg {
+  max-width: 560px;
 }
 
-.modal-content.modal-sm {
-  max-width: 400px;
-}
-
-.modal-header {
+.custom-modal-header {
   padding: 20px 24px;
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
-.modal-header.danger {
+.custom-modal-header.danger {
   background: rgba(220, 38, 38, 0.1);
 }
 
-.modal-header h3 {
+.custom-modal-header h3 {
   margin: 0;
+  font-size: 18px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
-.close-btn {
-  background: none;
+.modal-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
   border: none;
-  font-size: 24px;
+  background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
-.modal-body {
+.modal-close-btn:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+.modal-close-btn ion-icon {
+  font-size: 20px;
+}
+
+.custom-modal-body {
   padding: 24px;
   overflow-y: auto;
-  max-height: 60vh;
+  flex: 1;
 }
 
-.modal-footer {
-  padding: 16px 24px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+.custom-modal-body p {
+  margin: 0 0 16px 0;
+  color: var(--text-primary);
 }
 
 /* Form Elements */
@@ -699,10 +795,11 @@ ion-content.modern-content {
   margin-bottom: 0;
 }
 
-.form-group label {
+.form-label {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
+  font-size: 14px;
   color: var(--text-primary);
 }
 
@@ -710,9 +807,8 @@ ion-content.modern-content {
   color: var(--danger-color);
 }
 
-.form-input,
-.form-select,
-.form-textarea {
+.modern-input,
+.modern-select {
   width: 100%;
   padding: 12px 16px;
   border: 1px solid var(--border);
@@ -721,15 +817,16 @@ ion-content.modern-content {
   background: var(--surface);
   color: var(--text-primary);
   font-family: inherit;
+  transition: all 0.2s ease;
 }
 
-.form-textarea {
+textarea.modern-input {
   resize: vertical;
+  min-height: 100px;
 }
 
-.form-input:focus,
-.form-select:focus,
-.form-textarea:focus {
+.modern-input:focus,
+.modern-select:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
@@ -748,5 +845,63 @@ ion-content.modern-content {
   margin-top: 4px;
   font-size: 12px;
   color: var(--text-muted);
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-container {
+    padding: 16px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .table-header {
+    display: none;
+  }
+
+  .table-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .table-cell {
+    padding: 0;
+    width: 100%;
+  }
+
+  .actions-cell {
+    flex: none;
+    width: 100%;
+    justify-content: flex-start;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .header-content h1 {
+    font-size: 20px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .action-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 </style>

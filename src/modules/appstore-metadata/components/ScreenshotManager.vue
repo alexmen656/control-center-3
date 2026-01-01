@@ -1,29 +1,30 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="images-outline" title="Screenshots verwalten" bg="transparent"/>
-      
       <div class="page-container">
-        <!-- Back Button -->
-        <button class="back-btn" @click="goBack">
-          <ion-icon name="arrow-back-outline"></ion-icon>
-          Zurück zur App
-        </button>
-
-        <!-- Version Info -->
-        <div class="version-header" v-if="version">
-          <div class="version-info">
-            <h2>Version {{ version.version_string }}</h2>
-            <span class="version-status" :class="version.status">{{ version.status }}</span>
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="header-left">
+            <button class="back-button" @click="goBack">
+              <ion-icon name="arrow-back-outline"></ion-icon>
+            </button>
+            <div class="header-content">
+              <h1>Screenshots verwalten</h1>
+              <p v-if="version">Version {{ version.version_string }} • <span class="status-badge" :class="version.status">{{ version.status }}</span></p>
+            </div>
           </div>
+          <button class="action-btn primary" @click="triggerFileInput">
+            <ion-icon name="cloud-upload-outline"></ion-icon>
+            Hochladen
+          </button>
         </div>
 
         <!-- Device Type Selector -->
-        <div class="device-selector">
+        <div class="tab-navigation device-tabs">
           <button 
             v-for="device in deviceTypes" 
             :key="device.type"
-            class="device-btn"
+            class="tab-btn"
             :class="{ active: activeDevice === device.type }"
             @click="activeDevice = device.type"
           >
@@ -33,33 +34,27 @@
         </div>
 
         <!-- Locale Tabs -->
-        <div class="locale-tabs">
+        <div class="tab-navigation locale-tabs">
           <button
             v-for="loc in localizations"
             :key="loc.locale"
-            class="locale-tab"
+            class="tab-btn"
             :class="{ active: activeLocale === loc.locale }"
             @click="activeLocale = loc.locale"
           >
             <span class="flag">{{ getLocaleFlag(loc.locale) }}</span>
             {{ loc.locale }}
           </button>
-          <button class="locale-tab add" @click="showAddLocaleModal = true" v-if="availableLocales.length > 0">
+          <button class="tab-btn add-tab" @click="showAddLocaleModal = true" v-if="availableLocales.length > 0">
             <ion-icon name="add-outline"></ion-icon>
           </button>
         </div>
 
-        <!-- Screenshots Grid -->
-        <div class="screenshots-section">
-          <div class="section-header">
+        <!-- Screenshots Section -->
+        <div class="data-card">
+          <div class="card-header">
             <h3>Screenshots für {{ activeDevice }} - {{ activeLocale }}</h3>
-            <div class="header-actions">
-              <span class="screenshot-count">{{ currentScreenshots.length }}/10 Screenshots</span>
-              <button class="action-btn primary" @click="triggerFileInput">
-                <ion-icon name="cloud-upload-outline"></ion-icon>
-                Hochladen
-              </button>
-            </div>
+            <span class="badge">{{ currentScreenshots.length }}/10</span>
           </div>
 
           <div class="screenshots-drop-zone" 
@@ -77,8 +72,11 @@
               @change="handleFileSelect"
             />
 
-            <div v-if="currentScreenshots.length === 0" class="empty-state">
-              <ion-icon name="images-outline"></ion-icon>
+            <div v-if="currentScreenshots.length === 0" class="empty-state" @click="triggerFileInput">
+              <div class="empty-icon">
+                <ion-icon name="images-outline"></ion-icon>
+              </div>
+              <h4>Keine Screenshots</h4>
               <p>Ziehe Screenshots hierhin oder klicke zum Hochladen</p>
               <span class="hint">PNG oder JPEG, max. 10 Screenshots</span>
             </div>
@@ -134,7 +132,7 @@
       </div>
 
       <!-- Screenshot Preview Modal -->
-      <div v-if="previewScreenshot" class="modal-overlay" @click.self="previewScreenshot = null">
+      <div v-if="previewScreenshot" class="custom-modal-overlay" @click.self="previewScreenshot = null">
         <div class="preview-modal">
           <button class="close-preview" @click="previewScreenshot = null">
             <ion-icon name="close-outline"></ion-icon>
@@ -144,52 +142,52 @@
       </div>
 
       <!-- Delete Confirmation Modal -->
-      <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
-        <div class="modal-content modal-sm">
-          <div class="modal-header danger">
+      <div v-if="showDeleteModal" class="custom-modal-overlay" @click.self="showDeleteModal = false">
+        <div class="custom-modal-content">
+          <div class="custom-modal-header danger">
             <h3>Screenshot löschen</h3>
-            <button class="close-btn" @click="showDeleteModal = false">
+            <button class="modal-close-btn" @click="showDeleteModal = false">
               <ion-icon name="close-outline"></ion-icon>
             </button>
           </div>
-          <div class="modal-body">
+          <div class="custom-modal-body">
             <p>Bist du sicher, dass du diesen Screenshot löschen möchtest?</p>
-          </div>
-          <div class="modal-footer">
-            <button class="action-btn" @click="showDeleteModal = false">Abbrechen</button>
-            <button class="action-btn danger" @click="deleteScreenshot">
-              <ion-icon name="trash-outline"></ion-icon>
-              Löschen
-            </button>
+            <div class="form-actions">
+              <button class="action-btn secondary" @click="showDeleteModal = false">Abbrechen</button>
+              <button class="action-btn danger" @click="deleteScreenshot">
+                <ion-icon name="trash-outline"></ion-icon>
+                Löschen
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Add Locale Modal -->
-      <div v-if="showAddLocaleModal" class="modal-overlay" @click.self="showAddLocaleModal = false">
-        <div class="modal-content modal-sm">
-          <div class="modal-header">
+      <div v-if="showAddLocaleModal" class="custom-modal-overlay" @click.self="showAddLocaleModal = false">
+        <div class="custom-modal-content">
+          <div class="custom-modal-header">
             <h3>Sprache für Screenshots</h3>
-            <button class="close-btn" @click="showAddLocaleModal = false">
+            <button class="modal-close-btn" @click="showAddLocaleModal = false">
               <ion-icon name="close-outline"></ion-icon>
             </button>
           </div>
-          <div class="modal-body">
+          <div class="custom-modal-body">
             <div class="form-group">
-              <label>Sprache wählen</label>
-              <select v-model="newLocale" class="form-select">
+              <label class="form-label">Sprache wählen</label>
+              <select v-model="newLocale" class="modern-select">
                 <option value="">Wählen...</option>
                 <option v-for="loc in availableLocales" :key="loc.code" :value="loc.code">
                   {{ loc.name }} ({{ loc.code }})
                 </option>
               </select>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button class="action-btn" @click="showAddLocaleModal = false">Abbrechen</button>
-            <button class="action-btn primary" @click="addLocale" :disabled="!newLocale">
-              Hinzufügen
-            </button>
+            <div class="form-actions">
+              <button class="action-btn secondary" @click="showAddLocaleModal = false">Abbrechen</button>
+              <button class="action-btn primary" @click="addLocale" :disabled="!newLocale">
+                Hinzufügen
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -198,13 +196,11 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
 import draggable from 'vuedraggable';
 
 export default {
   name: 'ScreenshotManager',
   components: {
-    SiteTitle,
     draggable
   },
   props: {
@@ -464,6 +460,7 @@ export default {
 </script>
 
 <style scoped>
+/* Modern Design System - ManageUsers Pattern */
 .modern-content {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
@@ -479,15 +476,16 @@ export default {
   --text-muted: #94a3b8;
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
   --radius: 8px;
   --radius-lg: 12px;
 }
 
 @media (prefers-color-scheme: dark) {
   .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
+    --background: #121212;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
     --text-primary: #f1f5f9;
     --text-secondary: #cbd5e1;
     --text-muted: #64748b;
@@ -501,66 +499,93 @@ ion-content.modern-content {
 .page-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 24px;
 }
 
-.back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text-secondary);
-  font-size: 14px;
-  cursor: pointer;
+/* Page Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.back-btn:hover {
+.header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.back-button {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.back-button:hover {
   color: var(--primary-color);
   border-color: var(--primary-color);
 }
 
-/* Version Header */
-.version-header {
-  margin-bottom: 24px;
+.back-button ion-icon {
+  font-size: 20px;
 }
 
-.version-info {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.version-info h2 {
-  margin: 0;
+.header-content h1 {
+  margin: 0 0 4px 0;
+  font-size: 24px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
-.version-status {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
+.header-content p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 11px;
   font-weight: 500;
+  color: var(--text-secondary);
   text-transform: uppercase;
 }
 
-.version-status.draft { background: var(--border); color: var(--text-secondary); }
-.version-status.in_review { background: #fef3c7; color: #92400e; }
-.version-status.approved { background: #d1fae5; color: #065f46; }
-.version-status.released { background: #dbeafe; color: #1e40af; }
+.status-badge.draft { background: rgba(100, 116, 139, 0.1); }
+.status-badge.in_review { background: rgba(217, 119, 6, 0.1); color: var(--warning-color); }
+.status-badge.approved { background: rgba(5, 150, 105, 0.1); color: var(--success-color); }
+.status-badge.released { background: rgba(37, 99, 235, 0.1); color: var(--primary-color); }
 
-/* Device Selector */
-.device-selector {
+/* Tab Navigation */
+.tab-navigation {
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
-.device-btn {
+.tab-navigation.locale-tabs {
+  margin-bottom: 24px;
+}
+
+.tab-btn {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -569,94 +594,64 @@ ion-content.modern-content {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.device-btn:hover {
+.tab-btn:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.device-btn.active {
+.tab-btn.active {
   background: var(--primary-color);
   border-color: var(--primary-color);
   color: white;
 }
 
-/* Locale Tabs */
-.locale-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-}
-
-.locale-tab {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text-secondary);
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.locale-tab:hover {
-  border-color: var(--primary-color);
-}
-
-.locale-tab.active {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-  color: white;
-}
-
-.locale-tab.add {
-  background: transparent;
+.tab-btn.add-tab {
   border-style: dashed;
+  color: var(--text-muted);
 }
 
-.locale-tab .flag {
+.tab-btn .flag {
   font-size: 16px;
 }
 
-/* Screenshots Section */
-.screenshots-section {
+/* Data Card */
+.data-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   overflow: hidden;
 }
 
-.section-header {
+.card-header {
   padding: 20px 24px;
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
 }
 
-.section-header h3 {
+.card-header h3 {
   margin: 0;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
-.header-actions {
-  display: flex;
+.badge {
+  display: inline-flex;
   align-items: center;
-  gap: 16px;
-}
-
-.screenshot-count {
-  color: var(--text-muted);
-  font-size: 14px;
+  padding: 4px 10px;
+  background: rgba(37, 99, 235, 0.1);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--primary-color);
 }
 
 /* Drop Zone */
@@ -669,30 +664,51 @@ ion-content.modern-content {
 .screenshots-drop-zone.dragging {
   background: rgba(37, 99, 235, 0.05);
   border: 2px dashed var(--primary-color);
+  border-radius: 0;
 }
 
+/* Empty State */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  color: var(--text-muted);
   cursor: pointer;
 }
 
-.empty-state ion-icon {
-  font-size: 64px;
-  margin-bottom: 16px;
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.empty-icon ion-icon {
+  font-size: 40px;
+  color: white;
+}
+
+.empty-state h4 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .empty-state p {
-  font-size: 16px;
+  font-size: 14px;
+  color: var(--text-secondary);
   margin: 0 0 8px 0;
 }
 
 .empty-state .hint {
   font-size: 13px;
+  color: var(--text-muted);
 }
 
 /* Screenshots Grid */
@@ -708,6 +724,7 @@ ion-content.modern-content {
   overflow: hidden;
   cursor: grab;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid var(--border);
 }
 
 .screenshot-item:hover {
@@ -758,6 +775,11 @@ ion-content.modern-content {
   border-radius: 50%;
   color: var(--text-primary);
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.overlay-btn:hover {
+  transform: scale(1.1);
 }
 
 .overlay-btn.danger {
@@ -799,6 +821,7 @@ ion-content.modern-content {
 .guidelines h4 {
   margin: 0 0 12px 0;
   font-size: 14px;
+  font-weight: 600;
   color: var(--text-secondary);
 }
 
@@ -821,7 +844,7 @@ ion-content.modern-content {
 .size-value {
   font-size: 14px;
   color: var(--text-primary);
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
 }
 
 /* Upload Progress */
@@ -833,11 +856,12 @@ ion-content.modern-content {
   background: var(--surface);
   padding: 16px 24px;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
   display: flex;
   align-items: center;
   gap: 16px;
   z-index: 100;
+  border: 1px solid var(--border);
 }
 
 .progress-bar {
@@ -852,6 +876,128 @@ ion-content.modern-content {
   height: 100%;
   background: var(--primary-color);
   transition: width 0.2s ease;
+}
+
+/* Action Buttons */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.action-btn:hover:not(:disabled) {
+  box-shadow: var(--shadow-md);
+}
+
+.action-btn.primary {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.action-btn.primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.action-btn.secondary {
+  background: var(--surface);
+  color: var(--text-secondary);
+}
+
+.action-btn.danger {
+  background: var(--danger-color);
+  color: white;
+  border-color: var(--danger-color);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Custom Modal */
+.custom-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.custom-modal-content {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 400px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.custom-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.custom-modal-header.danger {
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.custom-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.modal-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+.modal-close-btn ion-icon {
+  font-size: 20px;
+}
+
+.custom-modal-body {
+  padding: 24px;
+}
+
+.custom-modal-body p {
+  margin: 0 0 16px 0;
+  color: var(--text-primary);
 }
 
 /* Preview Modal */
@@ -884,100 +1030,6 @@ ion-content.modern-content {
   box-shadow: var(--shadow-md);
 }
 
-/* Action Button */
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  transition: all 0.2s ease;
-}
-
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.action-btn.danger {
-  background: var(--danger-color);
-  color: white;
-  border-color: var(--danger-color);
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.modal-content {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow: hidden;
-}
-
-.modal-content.modal-sm {
-  max-width: 400px;
-}
-
-.modal-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-header.danger {
-  background: rgba(220, 38, 38, 0.1);
-}
-
-.modal-header h3 {
-  margin: 0;
-  color: var(--text-primary);
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.modal-body {
-  padding: 24px;
-}
-
-.modal-footer {
-  padding: 16px 24px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
 /* Form Elements */
 .form-group {
   margin-bottom: 16px;
@@ -987,14 +1039,15 @@ ion-content.modern-content {
   margin-bottom: 0;
 }
 
-.form-group label {
+.form-label {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
+  font-size: 14px;
   color: var(--text-primary);
 }
 
-.form-select {
+.modern-select {
   width: 100%;
   padding: 12px 16px;
   border: 1px solid var(--border);
@@ -1002,5 +1055,52 @@ ion-content.modern-content {
   font-size: 14px;
   background: var(--surface);
   color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.modern-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-container {
+    padding: 16px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .screenshots-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+  }
+
+  .header-content h1 {
+    font-size: 20px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .action-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 </style>

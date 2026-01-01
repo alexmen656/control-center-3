@@ -4,14 +4,14 @@
       <SiteTitle icon="apps-outline" title="App Store Metadata Manager" bg="transparent"/>
       
       <div class="page-container">
-        <!-- Action Bar -->
-        <div class="action-bar">
-          <div class="action-group-left">
-            <h2 class="page-subtitle">Verwalte deine App Store Metadaten</h2>
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="header-content">
+            <h1>App Store Metadata</h1>
+            <p>Verwalte deine App Store Metadaten</p>
           </div>
-          
-          <div class="action-group-right">
-            <button class="action-btn" @click="goToConfig">
+          <div class="header-actions">
+            <button class="action-btn secondary" @click="goToConfig">
               <ion-icon name="key-outline"></ion-icon>
               API Einstellungen
             </button>
@@ -25,119 +25,135 @@
         <!-- Stats Cards -->
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-icon primary">
+            <div class="stat-icon">
               <ion-icon name="apps-outline"></ion-icon>
             </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ stats.total_apps }}</div>
-              <div class="stat-label">Verwaltete Apps</div>
+            <div class="stat-content">
+              <h3>{{ stats.total_apps }}</h3>
+              <p>Verwaltete Apps</p>
             </div>
           </div>
 
           <div class="stat-card">
-            <div class="stat-icon success">
+            <div class="stat-icon">
               <ion-icon name="git-branch-outline"></ion-icon>
             </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ stats.total_versions }}</div>
-              <div class="stat-label">App Versionen</div>
+            <div class="stat-content">
+              <h3>{{ stats.total_versions }}</h3>
+              <p>App Versionen</p>
             </div>
           </div>
 
           <div class="stat-card">
-            <div class="stat-icon warning">
+            <div class="stat-icon">
               <ion-icon name="language-outline"></ion-icon>
             </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ stats.total_locales }}</div>
-              <div class="stat-label">Sprachen</div>
+            <div class="stat-content">
+              <h3>{{ stats.total_locales }}</h3>
+              <p>Sprachen</p>
             </div>
           </div>
 
           <div class="stat-card">
-            <div class="stat-icon" :class="stats.has_credentials ? 'success' : 'danger'">
+            <div class="stat-icon" :class="stats.has_credentials ? 'connected' : 'disconnected'">
               <ion-icon :name="stats.has_credentials ? 'cloud-done-outline' : 'cloud-offline-outline'"></ion-icon>
             </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ stats.has_credentials ? 'Verbunden' : 'Nicht verbunden' }}</div>
-              <div class="stat-label">API Status</div>
-              <div class="stat-subtitle" v-if="!stats.has_credentials">
-                <a href="#" @click.prevent="goToConfig">API einrichten</a>
-              </div>
+            <div class="stat-content">
+              <h3>{{ stats.has_credentials ? 'Verbunden' : 'Nicht verbunden' }}</h3>
+              <p>API Status</p>
+              <a v-if="!stats.has_credentials" href="#" @click.prevent="goToConfig" class="stat-link">API einrichten</a>
             </div>
           </div>
         </div>
 
         <!-- Loading State -->
         <div v-if="loading" class="loading-state">
-          <div class="loading-icon">
-            <ion-icon name="hourglass-outline"></ion-icon>
-          </div>
+          <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
           <p>Lade Apps...</p>
         </div>
 
         <!-- Empty State -->
-        <div v-else-if="apps.length === 0" class="empty-state">
-          <div class="empty-icon">
-            <ion-icon name="apps-outline"></ion-icon>
+        <div v-else-if="apps.length === 0" class="no-data-state">
+          <div class="no-data-content">
+            <ion-icon name="apps-outline" class="no-data-icon"></ion-icon>
+            <h4>Keine Apps verbunden</h4>
+            <p>Füge deine erste App hinzu, um die Metadaten zu verwalten.</p>
+            <button class="action-btn primary" @click="openAddAppModal">
+              <ion-icon name="add-outline"></ion-icon>
+              Erste App hinzufügen
+            </button>
           </div>
-          <h3>Keine Apps verbunden</h3>
-          <p>Füge deine erste App hinzu, um die Metadaten zu verwalten.</p>
-          <button class="action-btn primary" @click="openAddAppModal">
-            <ion-icon name="add-outline"></ion-icon>
-            Erste App hinzufügen
-          </button>
         </div>
 
-        <!-- Apps Grid -->
-        <div v-else class="apps-grid">
-          <div 
-            v-for="app in apps" 
-            :key="app.id" 
-            class="app-card"
-            @click="openApp(app.id)"
-          >
-            <div class="app-card-header">
-              <div class="app-icon-large">
-                <ion-icon name="logo-apple-appstore"></ion-icon>
-              </div>
-              <div class="app-status" :class="app.status">
-                {{ getStatusLabel(app.status) }}
-              </div>
+        <!-- Apps Table -->
+        <div v-else class="data-card">
+          <div class="card-header">
+            <div class="header-left">
+              <h3>Alle Apps</h3>
+              <span class="entry-count">{{ apps.length }} App{{ apps.length !== 1 ? 's' : '' }}</span>
             </div>
-            
-            <div class="app-card-body">
-              <h3 class="app-name">{{ app.name }}</h3>
-              <p class="app-bundle">{{ app.bundle_id }}</p>
-              
-              <div class="app-meta">
-                <div class="meta-item">
-                  <ion-icon name="git-branch-outline"></ion-icon>
-                  <span>{{ app.version_count || 0 }} Versionen</span>
-                </div>
-                <div class="meta-item">
-                  <ion-icon name="language-outline"></ion-icon>
-                  <span>{{ app.locale_count || 0 }} Sprachen</span>
+          </div>
+
+          <div class="table-wrapper">
+            <div class="modern-table">
+              <!-- Table Header -->
+              <div class="table-header">
+                <div class="header-cell">App</div>
+                <div class="header-cell">Bundle ID</div>
+                <div class="header-cell">Status</div>
+                <div class="header-cell">Versionen</div>
+                <div class="header-cell">Sprachen</div>
+                <div class="header-cell actions-header">Aktionen</div>
+              </div>
+
+              <!-- Table Body -->
+              <div class="table-body">
+                <div v-for="app in apps" :key="app.id" class="table-row" @click="openApp(app.id)">
+                  <div class="table-cell cell-app">
+                    <div class="app-info">
+                      <div class="app-icon">
+                        <ion-icon name="logo-apple-appstore"></ion-icon>
+                      </div>
+                      <div class="app-details">
+                        <span class="app-name">{{ app.name }}</span>
+                        <span class="app-version" v-if="app.latest_version">v{{ app.latest_version }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="table-cell cell-bundle">
+                    <code class="bundle-id">{{ app.bundle_id }}</code>
+                  </div>
+
+                  <div class="table-cell cell-status">
+                    <span class="status-badge" :class="app.status">
+                      {{ getStatusLabel(app.status) }}
+                    </span>
+                  </div>
+
+                  <div class="table-cell">
+                    <span class="meta-value">{{ app.version_count || 0 }}</span>
+                  </div>
+
+                  <div class="table-cell">
+                    <span class="meta-value">{{ app.locale_count || 0 }}</span>
+                  </div>
+
+                  <div class="table-cell actions-cell">
+                    <div class="action-buttons">
+                      <button class="icon-btn edit-btn" @click.stop="openApp(app.id)" title="Bearbeiten">
+                        <ion-icon name="create-outline"></ion-icon>
+                      </button>
+                      <button class="icon-btn assign-btn" @click.stop="syncApp(app.id)" title="Synchronisieren">
+                        <ion-icon name="sync-outline"></ion-icon>
+                      </button>
+                      <button class="icon-btn delete-btn" @click.stop="confirmDeleteApp(app)" title="Löschen">
+                        <ion-icon name="trash-outline"></ion-icon>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-              
-              <div class="app-version" v-if="app.latest_version">
-                <span class="version-badge">v{{ app.latest_version }}</span>
-              </div>
-            </div>
-            
-            <div class="app-card-footer">
-              <button class="card-action" @click.stop="openApp(app.id)">
-                <ion-icon name="create-outline"></ion-icon>
-                Bearbeiten
-              </button>
-              <button class="card-action" @click.stop="syncApp(app.id)">
-                <ion-icon name="sync-outline"></ion-icon>
-                Sync
-              </button>
-              <button class="card-action danger" @click.stop="confirmDeleteApp(app)">
-                <ion-icon name="trash-outline"></ion-icon>
-              </button>
             </div>
           </div>
         </div>
@@ -165,16 +181,16 @@
       </div>
 
       <!-- Add App Modal -->
-      <div v-if="showAddAppModal" class="modal-overlay" @click.self="showAddAppModal = false">
-        <div class="modal-content modal-lg">
-          <div class="modal-header">
+      <div v-if="showAddAppModal" class="custom-modal-overlay" @click.self="showAddAppModal = false">
+        <div class="custom-modal-content" @click.stop>
+          <div class="custom-modal-header">
             <h3>App hinzufügen</h3>
-            <button class="close-btn" @click="showAddAppModal = false">
+            <button class="modal-close-btn" @click="showAddAppModal = false">
               <ion-icon name="close-outline"></ion-icon>
             </button>
           </div>
           
-          <div class="modal-body">
+          <div class="custom-modal-body">
             <!-- Tab Navigation -->
             <div class="tab-navigation">
               <button 
@@ -313,9 +329,72 @@
                 />
               </div>
               
+                <div class="form-group">
+                  <label class="form-label">Sprache wählen</label>
+                  <select v-model="newLocale" class="modern-select">
+                    <option value="">Wählen...</option>
+                    <option v-for="loc in availableLocales" :key="loc.code" :value="loc.code">
+                      {{ loc.name }} ({{ loc.code }})
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Manual Input Tab -->
+            <div v-if="addAppTab === 'manual'" class="tab-content">
+              <div class="info-box info">
+                <ion-icon name="information-circle-outline"></ion-icon>
+                <div>
+                  <strong>Manuelle Eingabe</strong>
+                  <p>Erstelle einen lokalen Eintrag für deine App. Die Metadaten werden nicht automatisch mit App Store Connect synchronisiert.</p>
+                </div>
+              </div>
+              
               <div class="form-group">
-                <label>Primäre Sprache</label>
-                <select v-model="newApp.primary_locale" class="form-select">
+                <label class="form-label">App ID <span class="required">*</span></label>
+                <input 
+                  v-model="newApp.app_id" 
+                  type="text" 
+                  placeholder="z.B. 123456789"
+                  class="modern-input"
+                />
+                <span class="form-help">Die App Store ID aus App Store Connect (nur zur Referenz)</span>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Bundle ID <span class="required">*</span></label>
+                <input 
+                  v-model="newApp.bundle_id" 
+                  type="text" 
+                  placeholder="z.B. com.example.myapp"
+                  class="modern-input"
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">App Name <span class="required">*</span></label>
+                <input 
+                  v-model="newApp.name" 
+                  type="text" 
+                  placeholder="Meine App"
+                  class="modern-input"
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">SKU</label>
+                <input 
+                  v-model="newApp.sku" 
+                  type="text" 
+                  placeholder="Optional"
+                  class="modern-input"
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Primäre Sprache</label>
+                <select v-model="newApp.primary_locale" class="modern-select">
                   <option v-for="locale in locales" :key="locale.code" :value="locale.code">
                     {{ locale.name }} ({{ locale.code }})
                   </option>
@@ -324,8 +403,8 @@
             </div>
           </div>
           
-          <div class="modal-footer">
-            <button class="action-btn" @click="showAddAppModal = false">Abbrechen</button>
+          <div class="form-actions">
+            <button class="action-btn secondary" @click="showAddAppModal = false">Abbrechen</button>
             <button 
               v-if="addAppTab === 'browse'" 
               class="action-btn primary" 
@@ -346,29 +425,29 @@
             </button>
           </div>
         </div>
-      </div>
+      <!--</div>-->
 
       <!-- Delete Confirmation Modal -->
-      <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
-        <div class="modal-content modal-sm">
-          <div class="modal-header danger">
+      <div v-if="showDeleteModal" class="custom-modal-overlay" @click.self="showDeleteModal = false">
+        <div class="custom-modal-content modal-sm" @click.stop>
+          <div class="custom-modal-header danger">
             <h3>App löschen</h3>
-            <button class="close-btn" @click="showDeleteModal = false">
+            <button class="modal-close-btn" @click="showDeleteModal = false">
               <ion-icon name="close-outline"></ion-icon>
             </button>
           </div>
           
-          <div class="modal-body">
+          <div class="custom-modal-body">
             <p>Bist du sicher, dass du <strong>{{ appToDelete?.name }}</strong> löschen möchtest?</p>
             <p class="warning-text">Diese Aktion kann nicht rückgängig gemacht werden. Alle Versionen und Lokalisierungen werden ebenfalls gelöscht.</p>
-          </div>
-          
-          <div class="modal-footer">
-            <button class="action-btn" @click="showDeleteModal = false">Abbrechen</button>
-            <button class="action-btn danger" @click="deleteApp">
-              <ion-icon name="trash-outline"></ion-icon>
-              Endgültig löschen
-            </button>
+            
+            <div class="form-actions">
+              <button class="action-btn secondary" @click="showDeleteModal = false">Abbrechen</button>
+              <button class="action-btn danger" @click="deleteApp">
+                <ion-icon name="trash-outline"></ion-icon>
+                Endgültig löschen
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -640,7 +719,7 @@ export default {
 </script>
 
 <style scoped>
-/* Modern Design System */
+/* Modern Design System - Same as ManageUsers */
 .modern-content {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
@@ -648,7 +727,6 @@ export default {
   --success-color: #059669;
   --danger-color: #dc2626;
   --warning-color: #d97706;
-  --info-color: #0891b2;
   --background: #f8fafc;
   --surface: #ffffff;
   --border: #e2e8f0;
@@ -662,21 +740,6 @@ export default {
   --radius-lg: 12px;
 }
 
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
-  }
-}
-
-ion-content.modern-content {
-  --background: var(--background);
-}
-
 .page-container {
   max-width: 1400px;
   margin: 0 auto;
@@ -685,30 +748,112 @@ ion-content.modern-content {
   background: var(--background);
 }
 
-.page-subtitle {
-  color: var(--text-secondary);
-  font-size: 16px;
-  font-weight: 500;
-  margin: 0;
-}
-
-/* Action Bar */
-.action-bar {
+/* Page Header */
+.page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+  align-items: flex-start;
+  margin-bottom: 32px;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 20px;
 }
 
-.action-group-left,
-.action-group-right {
+.header-content h1 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.header-content p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.header-actions {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: white;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  flex-shrink: 0;
+}
+
+.stat-icon.connected {
+  background: linear-gradient(135deg, var(--success-color) 0%, #047857 100%);
+}
+
+.stat-icon.disconnected {
+  background: linear-gradient(135deg, var(--danger-color) 0%, #b91c1c 100%);
+}
+
+.stat-content h3 {
+  margin: 0 0 4px 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.stat-content p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.stat-link {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--primary-color);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.stat-link:hover {
+  text-decoration: underline;
+}
+
+/* Action Buttons */
 .action-btn {
   display: inline-flex;
   align-items: center;
@@ -739,6 +884,12 @@ ion-content.modern-content {
 
 .action-btn.primary:hover {
   background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.action-btn.secondary {
+  background: var(--surface);
+  color: var(--text-primary);
 }
 
 .action-btn.danger {
@@ -756,257 +907,9 @@ ion-content.modern-content {
   font-size: 16px;
 }
 
-/* Stats Grid */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
-  margin-bottom: 32px;
-}
-
-.stat-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-}
-
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.stat-icon ion-icon {
-  font-size: 28px;
-}
-
-.stat-icon.primary { background: rgba(37, 99, 235, 0.1); color: var(--primary-color); }
-.stat-icon.success { background: rgba(5, 150, 105, 0.1); color: var(--success-color); }
-.stat-icon.warning { background: rgba(217, 119, 6, 0.1); color: var(--warning-color); }
-.stat-icon.danger { background: rgba(220, 38, 38, 0.1); color: var(--danger-color); }
-.stat-icon.info { background: rgba(8, 145, 178, 0.1); color: var(--info-color); }
-
-.stat-info { flex: 1; }
-
-.stat-value {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-
-.stat-label {
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.stat-subtitle {
-  margin-top: 8px;
-  font-size: 13px;
-}
-
-.stat-subtitle a {
-  color: var(--primary-color);
-  text-decoration: none;
-}
-
-/* Loading & Empty States */
-.loading-state,
-.empty-state {
-  text-align: center;
-  padding: 80px 20px;
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-}
-
-.loading-icon,
-.empty-icon {
-  font-size: 64px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-}
-
-.loading-state p,
-.empty-state h3,
-.empty-state p {
-  color: var(--text-primary);
-  margin: 8px 0;
-}
-
-.empty-state h3 {
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.empty-state p {
-  color: var(--text-secondary);
-  margin-bottom: 24px;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.loading-icon ion-icon {
-  animation: spin 2s linear infinite;
-}
-
-/* Apps Grid */
-.apps-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
-}
-
-.app-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.app-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--primary-color);
-}
-
-.app-card-header {
-  padding: 20px;
-  background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.app-icon-large {
-  width: 56px;
-  height: 56px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.app-icon-large ion-icon {
-  font-size: 32px;
-  color: white;
-}
-
-.app-status {
-  padding: 4px 12px;
-  border-radius: 20px;
+.action-btn.small {
+  padding: 6px 12px;
   font-size: 12px;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-.app-status.live { background: var(--success-color); }
-.app-status.draft { background: var(--secondary-color); }
-.app-status.in_review { background: var(--info-color); }
-.app-status.rejected { background: var(--danger-color); }
-
-.app-card-body {
-  padding: 20px;
-}
-
-.app-name {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 4px 0;
-}
-
-.app-bundle {
-  font-size: 13px;
-  color: var(--text-secondary);
-  font-family: monospace;
-  margin: 0 0 16px 0;
-}
-
-.app-meta {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.meta-item ion-icon {
-  font-size: 16px;
-}
-
-.version-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  background: var(--background);
-  border-radius: var(--radius);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--primary-color);
-}
-
-.app-card-footer {
-  padding: 16px 20px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  gap: 8px;
-}
-
-.card-action {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: var(--background);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.card-action:hover {
-  background: var(--surface);
-  color: var(--primary-color);
-  border-color: var(--primary-color);
-}
-
-.card-action.danger:hover {
-  color: var(--danger-color);
-  border-color: var(--danger-color);
 }
 
 /* Data Card */
@@ -1016,19 +919,289 @@ ion-content.modern-content {
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
   overflow: hidden;
+  margin-bottom: 24px;
 }
 
 .card-header {
-  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
   border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-left h3 {
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.entry-count {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Modern Table */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.modern-table {
+  width: 100%;
+  min-width: 800px;
+}
+
+.table-header {
+  display: flex;
+  background: var(--background);
+  border-bottom: 2px solid var(--border);
+}
+
+.header-cell {
+  flex: 1;
+  min-width: 120px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.actions-header {
+  flex: 0 0 140px;
+  justify-content: center;
+}
+
+.table-body {
+  background: var(--surface);
+}
+
+.table-row {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.table-row:hover {
   background: var(--background);
 }
 
-.card-header h3 {
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.table-cell {
+  flex: 1;
+  min-width: 120px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.actions-cell {
+  flex: 0 0 140px;
+  justify-content: center;
+  padding: 12px 16px;
+}
+
+/* App Info in Table */
+.app-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.app-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.app-version {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.bundle-id {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--background);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.meta-value {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.live {
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--success-color);
+  border: 1px solid rgba(5, 150, 105, 0.2);
+}
+
+.status-badge.draft {
+  background: rgba(100, 116, 139, 0.1);
+  color: var(--secondary-color);
+  border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+.status-badge.in_review {
+  background: rgba(217, 119, 6, 0.1);
+  color: var(--warning-color);
+  border: 1px solid rgba(217, 119, 6, 0.2);
+}
+
+.status-badge.rejected {
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--danger-color);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+/* Action Buttons in Table */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.edit-btn {
+  background: #eff6ff;
+  color: var(--primary-color);
+}
+
+.edit-btn:hover {
+  background: #dbeafe;
+  transform: scale(1.05);
+}
+
+.assign-btn {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary-color);
+}
+
+.assign-btn:hover {
+  background: rgba(37, 99, 235, 0.2);
+  transform: scale(1.05);
+}
+
+.delete-btn {
+  background: #fef2f2;
+  color: var(--danger-color);
+}
+
+.delete-btn:hover {
+  background: #fee2e2;
+  transform: scale(1.05);
+}
+
+/* Loading & Empty States */
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+
+.loading-icon {
+  font-size: 32px;
+  color: var(--primary-color);
+  margin-bottom: 12px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-state p {
   margin: 0;
+  font-size: 14px;
+}
+
+.no-data-state {
+  padding: 60px 20px;
+  text-align: center;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+
+.no-data-content {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.no-data-icon {
+  font-size: 64px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.no-data-content h4 {
+  margin: 0 0 8px 0;
   color: var(--text-primary);
   font-size: 18px;
   font-weight: 600;
+}
+
+.no-data-content p {
+  margin: 0 0 24px 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 /* Activity List */
@@ -1062,9 +1235,7 @@ ion-content.modern-content {
 .activity-icon.failed { background: rgba(220, 38, 38, 0.1); color: var(--danger-color); }
 .activity-icon.started { background: rgba(217, 119, 6, 0.1); color: var(--warning-color); }
 
-.activity-info {
-  flex: 1;
-}
+.activity-info { flex: 1; }
 
 .activity-title {
   font-weight: 500;
@@ -1088,99 +1259,105 @@ ion-content.modern-content {
 .activity-status.failed { background: rgba(220, 38, 38, 0.1); color: var(--danger-color); }
 .activity-status.started { background: rgba(217, 119, 6, 0.1); color: var(--warning-color); }
 
-/* Modal */
-.modal-overlay {
+/* Modal Styles */
+.custom-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: 20px;
+  z-index: 10000;
+  animation: modalFadeIn 0.2s ease;
 }
 
-.modal-content {
+.custom-modal-content {
   background: var(--surface);
   border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow: hidden;
   box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 700px;
+  display: flex;
+  flex-direction: column;
+  animation: modalSlideIn 0.3s ease;
 }
 
-.modal-content.modal-sm {
-  max-width: 400px;
+.custom-modal-content.modal-sm {
+  width: 450px;
 }
 
-.modal-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border);
+.custom-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
-.modal-header.danger {
+.custom-modal-header.danger {
   background: rgba(220, 38, 38, 0.1);
 }
 
-.modal-header h3 {
+.custom-modal-header h3 {
   margin: 0;
-  font-size: 18px;
   color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
 }
 
-.close-btn {
-  background: none;
+.modal-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   border: none;
-  font-size: 24px;
+  border-radius: var(--radius);
+  background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 4px;
-  display: flex;
+  transition: all 0.2s ease;
 }
 
-.close-btn:hover {
+.modal-close-btn:hover {
+  background: var(--border);
   color: var(--text-primary);
 }
 
-.modal-body {
+.custom-modal-body {
+  flex: 1;
   padding: 24px;
   overflow-y: auto;
-  max-height: 60vh;
+  min-height: 0;
 }
 
-.modal-footer {
-  padding: 16px 24px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-/* Form Elements */
+/* Form Styles */
 .form-group {
   margin-bottom: 20px;
 }
 
-.form-group label {
+.form-label {
   display: block;
   margin-bottom: 8px;
-  font-weight: 500;
   color: var(--text-primary);
+  font-weight: 500;
+  font-size: 14px;
 }
 
-.form-group .required {
+.required {
   color: var(--danger-color);
 }
 
-.form-input,
-.form-select {
+.modern-input,
+.modern-select {
   width: 100%;
   padding: 12px 16px;
   border: 1px solid var(--border);
@@ -1189,55 +1366,36 @@ ion-content.modern-content {
   background: var(--surface);
   color: var(--text-primary);
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
-.form-input:focus,
-.form-select:focus {
+.modern-input:focus,
+.modern-select:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
-.form-hint {
-  display: block;
-  margin-top: 6px;
+.form-help {
+  margin-top: 8px;
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
 }
 
 .warning-text {
   color: var(--danger-color);
   font-size: 14px;
   margin-top: 12px;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .page-container {
-    padding: 16px;
-  }
-  
-  .action-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .action-group-left,
-  .action-group-right {
-    justify-content: center;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .apps-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .app-card-footer {
-    flex-wrap: wrap;
-  }
 }
 
 /* Tab Navigation */
@@ -1332,7 +1490,7 @@ ion-content.modern-content {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
   border-radius: 10px;
   color: white;
   font-size: 22px;
@@ -1360,26 +1518,6 @@ ion-content.modern-content {
 
 .browse-app-status {
   flex-shrink: 0;
-}
-
-.status-badge {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.status-badge.connected {
-  background: rgba(5, 150, 105, 0.1);
-  color: var(--success-color);
-}
-
-.status-badge.selected {
-  background: rgba(37, 99, 235, 0.1);
-  color: var(--primary-color);
 }
 
 /* Info Box */
@@ -1430,24 +1568,63 @@ ion-content.modern-content {
   font-size: 14px;
 }
 
-/* Small Variants */
-.loading-state.small,
-.empty-state.small {
-  padding: 40px 20px;
+/* Animations */
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.loading-state.small .loading-icon,
-.empty-state.small ion-icon {
-  font-size: 32px;
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-.action-btn.small {
-  padding: 6px 12px;
-  font-size: 12px;
+/* Responsive */
+@media (max-width: 768px) {
+  .page-container {
+    padding: 16px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    justify-content: center;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .custom-modal-content {
+    width: 95vw;
+    max-width: none;
+    margin: 20px;
+  }
 }
 
-/* Modal Large */
-.modal-content.modal-lg {
-  max-width: 700px;
+@media (prefers-color-scheme: dark) {
+  .modern-content {
+    --background: #121212;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
+    --text-primary: #f1f5f9;
+    --text-secondary: #b0b0b0;
+    --text-muted: #707070;
+  }
 }
 </style>

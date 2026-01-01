@@ -1,48 +1,44 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="create-outline" title="Version Metadaten" bg="transparent"/>
-      
       <div class="page-container">
-        <!-- Back Button -->
-        <button class="back-btn" @click="goBack">
-          <ion-icon name="arrow-back-outline"></ion-icon>
-          Zurück zur App
-        </button>
-
-        <!-- Loading -->
-        <div v-if="loading" class="loading-state">
-          <div class="loading-icon">
-            <ion-icon name="hourglass-outline"></ion-icon>
-          </div>
-          <p>Lade Version...</p>
-        </div>
-
-        <!-- Version Header -->
-        <div v-else-if="version" class="version-header-card">
-          <div class="version-info">
-            <h1>Version {{ version.version_string }}</h1>
-            <div class="version-meta">
-              <span class="badge">{{ version.platform }}</span>
-              <span class="badge" :class="version.status">{{ getStatusLabel(version.status) }}</span>
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="header-left">
+            <button class="back-button" @click="goBack">
+              <ion-icon name="arrow-back-outline"></ion-icon>
+            </button>
+            <div class="header-content">
+              <h1 v-if="version">Version {{ version.version_string }}</h1>
+              <h1 v-else>Version Metadaten</h1>
+              <p v-if="version">
+                <span class="status-badge">{{ version.platform }}</span>
+                <span class="status-badge" :class="version.status">{{ getStatusLabel(version.status) }}</span>
+              </p>
             </div>
           </div>
         </div>
 
+        <!-- Loading -->
+        <div v-if="loading" class="loading-state">
+          <div class="loading-spinner"></div>
+          <p>Lade Version...</p>
+        </div>
+
         <!-- Locale Tabs -->
-        <div class="locale-tabs" v-if="version">
+        <div class="tab-navigation" v-if="version && !loading">
           <button 
             v-for="loc in localizations" 
             :key="loc.locale"
-            class="locale-tab"
+            class="tab-btn"
             :class="{ active: activeLocale === loc.locale }"
             @click="activeLocale = loc.locale"
           >
             <span class="flag">{{ getLocaleFlag(loc.locale) }}</span>
-            <span class="name">{{ loc.locale_name || loc.locale }}</span>
+            <span>{{ loc.locale_name || loc.locale }}</span>
           </button>
           
-          <button class="locale-tab add" @click="showAddLocaleModal = true">
+          <button class="tab-btn add-tab" @click="showAddLocaleModal = true">
             <ion-icon name="add-outline"></ion-icon>
             <span>Hinzufügen</span>
           </button>
@@ -55,18 +51,17 @@
               <span class="flag-lg">{{ getLocaleFlag(activeLocalization.locale) }}</span>
               {{ activeLocalization.locale_name || activeLocalization.locale }}
             </h3>
-            <button class="action-btn danger" @click="deleteLocalization" v-if="localizations.length > 1">
+            <button class="icon-btn danger" @click="deleteLocalization" v-if="localizations.length > 1" title="Entfernen">
               <ion-icon name="trash-outline"></ion-icon>
-              Entfernen
             </button>
           </div>
           
           <div class="card-body">
             <div class="form-group">
-              <label>Beschreibung <span class="required">*</span></label>
+              <label class="form-label">Beschreibung <span class="required">*</span></label>
               <textarea 
                 v-model="activeLocalization.description" 
-                class="form-textarea"
+                class="modern-input"
                 rows="8"
                 placeholder="App Beschreibung (max. 4000 Zeichen)"
                 maxlength="4000"
@@ -77,11 +72,11 @@
             </div>
 
             <div class="form-group">
-              <label>Keywords</label>
+              <label class="form-label">Keywords</label>
               <input 
                 v-model="activeLocalization.keywords" 
                 type="text" 
-                class="form-input"
+                class="modern-input"
                 placeholder="keyword1, keyword2, keyword3 (max. 100 Zeichen)"
                 maxlength="100"
               />
@@ -90,10 +85,10 @@
             </div>
 
             <div class="form-group">
-              <label>Was ist neu (Release Notes)</label>
+              <label class="form-label">Was ist neu (Release Notes)</label>
               <textarea 
                 v-model="activeLocalization.whats_new" 
-                class="form-textarea"
+                class="modern-input"
                 rows="5"
                 placeholder="Neue Funktionen und Verbesserungen..."
                 maxlength="4000"
@@ -102,11 +97,11 @@
             </div>
 
             <div class="form-group">
-              <label>Promotionstext</label>
+              <label class="form-label">Promotionstext</label>
               <input 
                 v-model="activeLocalization.promotional_text" 
                 type="text" 
-                class="form-input"
+                class="modern-input"
                 placeholder="Kurzer Promotionstext (max. 170 Zeichen)"
                 maxlength="170"
               />
@@ -114,44 +109,46 @@
               <span class="form-hint">Wird über der Beschreibung angezeigt, kann jederzeit aktualisiert werden</span>
             </div>
 
-            <div class="form-row">
+            <div class="form-grid">
               <div class="form-group">
-                <label>Marketing URL</label>
+                <label class="form-label">Marketing URL</label>
                 <input 
                   v-model="activeLocalization.marketing_url" 
                   type="url" 
-                  class="form-input"
+                  class="modern-input"
                   placeholder="https://..."
                 />
               </div>
               
               <div class="form-group">
-                <label>Support URL</label>
+                <label class="form-label">Support URL</label>
                 <input 
                   v-model="activeLocalization.support_url" 
                   type="url" 
-                  class="form-input"
+                  class="modern-input"
                   placeholder="https://..."
                 />
               </div>
             </div>
-          </div>
-          
-          <div class="card-footer">
-            <button class="action-btn" @click="copyFromLocale">
-              <ion-icon name="copy-outline"></ion-icon>
-              Von anderer Sprache kopieren
-            </button>
-            <button class="action-btn primary" @click="saveLocalization">
-              <ion-icon name="save-outline"></ion-icon>
-              Speichern
-            </button>
+
+            <div class="form-actions">
+              <button class="action-btn secondary" @click="copyFromLocale">
+                <ion-icon name="copy-outline"></ion-icon>
+                Von anderer Sprache kopieren
+              </button>
+              <button class="action-btn primary" @click="saveLocalization">
+                <ion-icon name="save-outline"></ion-icon>
+                Speichern
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- No Localizations -->
         <div v-else-if="!loading && localizations.length === 0" class="empty-state">
-          <ion-icon name="language-outline"></ion-icon>
+          <div class="empty-icon">
+            <ion-icon name="language-outline"></ion-icon>
+          </div>
           <h3>Keine Lokalisierungen</h3>
           <p>Füge eine Sprache hinzu, um die Metadaten zu bearbeiten.</p>
           <button class="action-btn primary" @click="showAddLocaleModal = true">
@@ -161,28 +158,28 @@
         </div>
 
         <!-- Version Settings -->
-        <div v-if="version" class="data-card">
+        <div v-if="version && !loading" class="data-card">
           <div class="card-header">
             <h3>Versions-Einstellungen</h3>
           </div>
           
           <div class="card-body">
-            <div class="form-row">
+            <div class="form-grid">
               <div class="form-group">
-                <label>Versionsnummer</label>
-                <input v-model="versionForm.version_string" type="text" class="form-input" />
+                <label class="form-label">Versionsnummer</label>
+                <input v-model="versionForm.version_string" type="text" class="modern-input" />
               </div>
               
               <div class="form-group">
-                <label>Build-Nummer</label>
-                <input v-model="versionForm.build_number" type="text" class="form-input" />
+                <label class="form-label">Build-Nummer</label>
+                <input v-model="versionForm.build_number" type="text" class="modern-input" />
               </div>
             </div>
 
-            <div class="form-row">
+            <div class="form-grid">
               <div class="form-group">
-                <label>Veröffentlichungsart</label>
-                <select v-model="versionForm.release_type" class="form-select">
+                <label class="form-label">Veröffentlichungsart</label>
+                <select v-model="versionForm.release_type" class="modern-select">
                   <option value="manual">Manuell freigeben</option>
                   <option value="afterApproval">Automatisch nach Genehmigung</option>
                   <option value="scheduled">Geplante Veröffentlichung</option>
@@ -190,51 +187,51 @@
               </div>
               
               <div class="form-group" v-if="versionForm.release_type === 'scheduled'">
-                <label>Veröffentlichungsdatum</label>
-                <input v-model="versionForm.earliest_release_date" type="datetime-local" class="form-input" />
+                <label class="form-label">Veröffentlichungsdatum</label>
+                <input v-model="versionForm.earliest_release_date" type="datetime-local" class="modern-input" />
               </div>
             </div>
 
             <div class="form-group">
-              <label>Copyright</label>
-              <input v-model="versionForm.copyright" type="text" class="form-input" placeholder="© 2024 Dein Unternehmen" />
+              <label class="form-label">Copyright</label>
+              <input v-model="versionForm.copyright" type="text" class="modern-input" placeholder="© 2024 Dein Unternehmen" />
             </div>
 
             <div class="form-group">
-              <label>Hinweise für App-Reviewer</label>
+              <label class="form-label">Hinweise für App-Reviewer</label>
               <textarea 
                 v-model="versionForm.review_notes" 
-                class="form-textarea"
+                class="modern-input"
                 rows="4"
                 placeholder="Anmeldedaten, Test-Accounts, spezielle Anweisungen..."
               ></textarea>
               <span class="form-hint">Diese Informationen sind nur für das Review-Team sichtbar</span>
             </div>
-          </div>
-          
-          <div class="card-footer">
-            <button class="action-btn primary" @click="saveVersionSettings">
-              <ion-icon name="save-outline"></ion-icon>
-              Einstellungen speichern
-            </button>
+
+            <div class="form-actions">
+              <button class="action-btn primary" @click="saveVersionSettings">
+                <ion-icon name="save-outline"></ion-icon>
+                Einstellungen speichern
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Add Locale Modal -->
-      <div v-if="showAddLocaleModal" class="modal-overlay" @click.self="showAddLocaleModal = false">
-        <div class="modal-content">
-          <div class="modal-header">
+      <div v-if="showAddLocaleModal" class="custom-modal-overlay" @click.self="showAddLocaleModal = false">
+        <div class="custom-modal-content">
+          <div class="custom-modal-header">
             <h3>Sprache hinzufügen</h3>
-            <button class="close-btn" @click="showAddLocaleModal = false">
+            <button class="modal-close-btn" @click="showAddLocaleModal = false">
               <ion-icon name="close-outline"></ion-icon>
             </button>
           </div>
           
-          <div class="modal-body">
+          <div class="custom-modal-body">
             <div class="form-group">
-              <label>Sprache <span class="required">*</span></label>
-              <select v-model="newLocale" class="form-select">
+              <label class="form-label">Sprache <span class="required">*</span></label>
+              <select v-model="newLocale" class="modern-select">
                 <option value="">Sprache wählen</option>
                 <option 
                   v-for="locale in availableLocales" 
@@ -245,30 +242,30 @@
                 </option>
               </select>
             </div>
-          </div>
-          
-          <div class="modal-footer">
-            <button class="action-btn" @click="showAddLocaleModal = false">Abbrechen</button>
-            <button class="action-btn primary" @click="addLocalization" :disabled="!newLocale">
-              <ion-icon name="add-outline"></ion-icon>
-              Hinzufügen
-            </button>
+
+            <div class="form-actions">
+              <button class="action-btn secondary" @click="showAddLocaleModal = false">Abbrechen</button>
+              <button class="action-btn primary" @click="addLocalization" :disabled="!newLocale">
+                <ion-icon name="add-outline"></ion-icon>
+                Hinzufügen
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Copy From Locale Modal -->
-      <div v-if="showCopyModal" class="modal-overlay" @click.self="showCopyModal = false">
-        <div class="modal-content">
-          <div class="modal-header">
+      <div v-if="showCopyModal" class="custom-modal-overlay" @click.self="showCopyModal = false">
+        <div class="custom-modal-content">
+          <div class="custom-modal-header">
             <h3>Von Sprache kopieren</h3>
-            <button class="close-btn" @click="showCopyModal = false">
+            <button class="modal-close-btn" @click="showCopyModal = false">
               <ion-icon name="close-outline"></ion-icon>
             </button>
           </div>
           
-          <div class="modal-body">
-            <p>Wähle die Sprache, von der du die Texte kopieren möchtest:</p>
+          <div class="custom-modal-body">
+            <p class="modal-description">Wähle die Sprache, von der du die Texte kopieren möchtest:</p>
             <div class="locale-list">
               <button 
                 v-for="loc in otherLocalizations" 
@@ -288,14 +285,11 @@
 </template>
 
 <script>
-import SiteTitle from "@/components/SiteTitle.vue";
 import { APP_STATUSES } from '../config';
 
 export default {
   name: 'VersionEditor',
-  components: {
-    SiteTitle
-  },
+  components: {},
   props: {
     appId: {
       type: [String, Number],
@@ -479,7 +473,7 @@ export default {
 </script>
 
 <style scoped>
-/* Modern Design System */
+/* Modern Design System - ManageUsers Pattern */
 .modern-content {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
@@ -496,15 +490,16 @@ export default {
   --text-muted: #94a3b8;
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
   --radius: 8px;
   --radius-lg: 12px;
 }
 
 @media (prefers-color-scheme: dark) {
   .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
+    --background: #121212;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
     --text-primary: #f1f5f9;
     --text-secondary: #cbd5e1;
     --text-muted: #64748b;
@@ -518,61 +513,106 @@ ion-content.modern-content {
 .page-container {
   max-width: 900px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 24px;
 }
 
-/* Back Button */
-.back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text-secondary);
-  font-size: 14px;
-  cursor: pointer;
+/* Page Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 24px;
+  gap: 16px;
 }
 
-.back-btn:hover {
+.header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.back-button {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.back-button:hover {
   color: var(--primary-color);
   border-color: var(--primary-color);
 }
 
-/* Version Header */
-.version-header-card {
-  background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  margin-bottom: 24px;
-  color: white;
+.back-button ion-icon {
+  font-size: 20px;
 }
 
-.version-info h1 {
-  margin: 0 0 12px 0;
+.header-content h1 {
+  margin: 0 0 4px 0;
   font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-.version-meta {
+.header-content p {
+  margin: 0;
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
-.badge {
-  padding: 4px 12px;
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
-  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-secondary);
 }
 
-.badge.draft { background: var(--secondary-color); }
-.badge.ready_for_submission { background: var(--warning-color); }
+.status-badge.draft { background: rgba(100, 116, 139, 0.1); color: var(--secondary-color); }
+.status-badge.ready_for_submission { background: rgba(217, 119, 6, 0.1); color: var(--warning-color); }
+.status-badge.in_review { background: rgba(8, 145, 178, 0.1); color: var(--info-color); }
+.status-badge.approved { background: rgba(5, 150, 105, 0.1); color: var(--success-color); }
 
-/* Locale Tabs */
-.locale-tabs {
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-state p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Tab Navigation */
+.tab-navigation {
   display: flex;
   gap: 8px;
   margin-bottom: 24px;
@@ -580,7 +620,7 @@ ion-content.modern-content {
   padding-bottom: 8px;
 }
 
-.locale-tab {
+.tab-btn {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -588,37 +628,36 @@ ion-content.modern-content {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
 }
 
-.locale-tab:hover {
+.tab-btn:hover {
   border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
-.locale-tab.active {
+.tab-btn.active {
   background: var(--primary-color);
   border-color: var(--primary-color);
   color: white;
 }
 
-.locale-tab.add {
+.tab-btn.add-tab {
   border-style: dashed;
   color: var(--text-muted);
 }
 
-.locale-tab.add:hover {
+.tab-btn.add-tab:hover {
   color: var(--primary-color);
 }
 
-.locale-tab .flag {
-  font-size: 20px;
-}
-
-.locale-tab .name {
-  font-size: 14px;
-  font-weight: 500;
+.tab-btn .flag {
+  font-size: 18px;
 }
 
 /* Data Card */
@@ -640,6 +679,8 @@ ion-content.modern-content {
 
 .card-header h3 {
   margin: 0;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text-primary);
   display: flex;
   align-items: center;
@@ -654,19 +695,17 @@ ion-content.modern-content {
   padding: 24px;
 }
 
-.card-footer {
-  padding: 16px 24px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+/* Form Elements */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
 }
 
-/* Form Elements */
-.form-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
+@media (max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .form-group {
@@ -677,10 +716,11 @@ ion-content.modern-content {
   margin-bottom: 0;
 }
 
-.form-group label {
+.form-label {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
+  font-size: 14px;
   color: var(--text-primary);
 }
 
@@ -688,9 +728,8 @@ ion-content.modern-content {
   color: var(--danger-color);
 }
 
-.form-input,
-.form-select,
-.form-textarea {
+.modern-input,
+.modern-select {
   width: 100%;
   padding: 12px 16px;
   border: 1px solid var(--border);
@@ -702,14 +741,13 @@ ion-content.modern-content {
   font-family: inherit;
 }
 
-.form-textarea {
+textarea.modern-input {
   resize: vertical;
   min-height: 100px;
 }
 
-.form-input:focus,
-.form-select:focus,
-.form-textarea:focus {
+.modern-input:focus,
+.modern-select:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
@@ -734,46 +772,51 @@ ion-content.modern-content {
   color: var(--text-muted);
 }
 
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
 /* Empty State */
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 80px 20px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
 }
 
-.empty-state ion-icon {
-  font-size: 64px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.empty-icon ion-icon {
+  font-size: 40px;
+  color: white;
 }
 
 .empty-state h3 {
   margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
 .empty-state p {
   color: var(--text-secondary);
-  margin-bottom: 24px;
-}
-
-/* Loading State */
-.loading-state {
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.loading-icon ion-icon {
-  font-size: 48px;
-  color: var(--primary-color);
-  animation: spin 2s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  margin: 0 0 24px 0;
 }
 
 /* Action Buttons */
@@ -781,8 +824,8 @@ ion-content.modern-content {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
-  border: none;
+  padding: 10px 20px;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   font-weight: 500;
   font-size: 14px;
@@ -790,7 +833,6 @@ ion-content.modern-content {
   transition: all 0.2s ease;
   background: var(--surface);
   color: var(--text-primary);
-  border: 1px solid var(--border);
 }
 
 .action-btn:hover:not(:disabled) {
@@ -803,6 +845,15 @@ ion-content.modern-content {
   border-color: var(--primary-color);
 }
 
+.action-btn.primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.action-btn.secondary {
+  background: var(--surface);
+  color: var(--text-secondary);
+}
+
 .action-btn.danger {
   color: var(--danger-color);
   border-color: var(--danger-color);
@@ -813,8 +864,37 @@ ion-content.modern-content {
   cursor: not-allowed;
 }
 
-/* Modal */
-.modal-overlay {
+/* Icon Button */
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  box-shadow: var(--shadow);
+}
+
+.icon-btn.danger {
+  color: var(--danger-color);
+  border-color: var(--danger-color);
+}
+
+.icon-btn.danger:hover {
+  background: var(--danger-color);
+  color: white;
+}
+
+/* Custom Modal */
+.custom-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -826,17 +906,19 @@ ion-content.modern-content {
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  backdrop-filter: blur(4px);
 }
 
-.modal-content {
+.custom-modal-content {
   background: var(--surface);
   border-radius: var(--radius-lg);
   width: 100%;
-  max-width: 450px;
+  max-width: 480px;
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
 }
 
-.modal-header {
+.custom-modal-header {
   padding: 20px 24px;
   border-bottom: 1px solid var(--border);
   display: flex;
@@ -844,34 +926,44 @@ ion-content.modern-content {
   align-items: center;
 }
 
-.modal-header h3 {
+.custom-modal-header h3 {
   margin: 0;
+  font-size: 18px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
-.close-btn {
-  background: none;
+.modal-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
   border: none;
-  font-size: 24px;
+  background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
-.modal-body {
+.modal-close-btn:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+.modal-close-btn ion-icon {
+  font-size: 20px;
+}
+
+.custom-modal-body {
   padding: 24px;
 }
 
-.modal-body p {
+.modal-description {
   margin: 0 0 16px 0;
   color: var(--text-secondary);
-}
-
-.modal-footer {
-  padding: 16px 24px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+  font-size: 14px;
 }
 
 /* Locale List for Copy Modal */
@@ -909,13 +1001,21 @@ ion-content.modern-content {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .card-footer {
+  .page-container {
+    padding: 16px;
+  }
+
+  .form-actions {
     flex-direction: column;
   }
   
-  .card-footer .action-btn {
+  .form-actions .action-btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .header-content h1 {
+    font-size: 20px;
   }
 }
 </style>
