@@ -8,6 +8,30 @@
 import { cmsRequest, formatResponse, formatError } from '../utils/api.js';
 
 /**
+ * Supported App Store locales (as per Apple's official list)
+ */
+const SUPPORTED_LOCALES = [
+  'ar-SA', 'ca', 'cs', 'da', 'de-DE', 'el',
+  'en-AU', 'en-CA', 'en-GB', 'en-US',
+  'es-ES', 'es-MX', 'fi', 'fr-CA', 'fr-FR',
+  'he', 'hi', 'hr', 'hu', 'id', 'it', 'ja', 'ko',
+  'ms', 'nl-NL', 'no', 'pl', 'pt-BR', 'pt-PT',
+  'ro', 'ru', 'sk', 'sv', 'th', 'tr', 'uk', 'vi',
+  'zh-Hans', 'zh-Hant'
+];
+
+/**
+ * Validate locale code against supported locales
+ */
+function validateLocale(locale) {
+  if (!SUPPORTED_LOCALES.includes(locale)) {
+    throw new Error(
+      `Invalid locale code: "${locale}". Supported locales are: ${SUPPORTED_LOCALES.join(', ')}`
+    );
+  }
+}
+
+/**
  * Tool definitions for App Store Metadata
  */
 export const appstoreTools = [
@@ -623,6 +647,9 @@ export async function handleAppstoreTool(name, args, context) {
       }
 
       case 'appstore_create_app_localization': {
+        // Validate locale before making API request
+        validateLocale(args.locale);
+        
         const response = await cmsRequest(
           `appstore_metadata.php?action=localizations&app_id=${args.appId}&project=${project}`,
           { 
@@ -672,6 +699,9 @@ export async function handleAppstoreTool(name, args, context) {
       }
 
       case 'appstore_create_version_localization': {
+        // Validate locale before making API request
+        validateLocale(args.locale);
+        
         const response = await cmsRequest(
           `appstore_metadata.php?action=version_localizations&version_id=${args.versionId}&project=${project}`,
           { 
@@ -714,6 +744,19 @@ export async function handleAppstoreTool(name, args, context) {
       }
 
       case 'appstore_bulk_update_localizations': {
+        // Validate all locales first before processing
+        const invalidLocales = [];
+        for (const loc of args.localizations) {
+          if (!SUPPORTED_LOCALES.includes(loc.locale)) {
+            invalidLocales.push(loc.locale);
+          }
+        }
+        if (invalidLocales.length > 0) {
+          throw new Error(
+            `Invalid locale codes: "${invalidLocales.join('", "')}". Supported locales are: ${SUPPORTED_LOCALES.join(', ')}`
+          );
+        }
+        
         const results = [];
         
         // First get existing localizations
