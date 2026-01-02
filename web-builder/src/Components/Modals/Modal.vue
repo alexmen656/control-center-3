@@ -23,12 +23,18 @@ const props = defineProps({
     maxHeight: {
         type: String,
     },
+    preventAutoClose: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const emit = defineEmits(["close"]);
 
 const close = () => {
-    emit("close");
+    if (!props.preventAutoClose) {
+        emit("close");
+    }
 };
 
 const maxWidthClass = computed(() => {

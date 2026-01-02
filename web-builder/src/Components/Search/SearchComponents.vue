@@ -22,7 +22,7 @@ const props = defineProps({
     required: true,
   },
 });
-const emit = defineEmits(['firstModalButtonSearchComponentsFunction']);
+const emit = defineEmits(['firstModalButtonSearchComponentsFunction', 'openCCForms']);
 
 // first button function
 const firstButton = function () {
@@ -85,6 +85,11 @@ const handleAddHelperComponent = async function (helperComponentObject) {
 
   // Close modal
   firstButton();
+};
+
+// CC Forms Integration - emit event to parent (PageBuilder.vue handles the modal)
+const openCCFormsModal = function () {
+  emit('openCCForms');
 };
 
 const fetchComponents = function (page) {
@@ -163,6 +168,7 @@ onMounted(async () => {
             <button
               @click="handlecategorySelected({ name: 'Components', id: null })"
               class="myPrimaryTag font-medium"
+              :class="categorySelected.name === 'Components' ? 'bg-indigo-100 text-indigo-700' : ''"
             >
               Components
             </button>
@@ -171,8 +177,16 @@ onMounted(async () => {
                 handlecategorySelected({ name: 'HTML Elements', id: null })
               "
               class="myPrimaryTag font-medium"
+              :class="categorySelected.name === 'HTML Elements' ? 'bg-indigo-100 text-indigo-700' : ''"
             >
               HTML Elements
+            </button>
+            <button
+              @click="openCCFormsModal"
+              class="myPrimaryTag font-medium bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600"
+            >
+              <span class="material-symbols-outlined text-sm mr-1">deployed_code</span>
+              CC Forms
             </button>
           </div>
 

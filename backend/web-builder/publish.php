@@ -89,8 +89,8 @@ foreach ($pages as $page) {
         }
     }
     
-    // Generate HTML
-    $htmlContent = generatePageHtml($pageTitle, $pageMetaDescription, $components);
+    // Generate HTML (pass projectSlug for CC Forms integration)
+    $htmlContent = generatePageHtml($pageTitle, $pageMetaDescription, $components, $projectSlug);
     
     // Determine filename (index.html for home/first page)
     $filename = ($page['is_home'] || $page['id'] === $firstPage['id']) 
@@ -219,7 +219,7 @@ sendResponse($response);
 /**
  * Generate HTML page from components
  */
-function generatePageHtml($title, $metaDescription, $components) {
+function generatePageHtml($title, $metaDescription, $components, $projectSlug = '') {
     $componentsHtml = '';
     foreach ($components as $component) {
         $componentsHtml .= $component['html_code'] . "\n";
@@ -228,6 +228,10 @@ function generatePageHtml($title, $metaDescription, $components) {
     // Escape special characters for HTML
     $title = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
     $metaDescription = htmlspecialchars($metaDescription, ENT_QUOTES, 'UTF-8');
+    $projectSlugJs = htmlspecialchars($projectSlug, ENT_QUOTES, 'UTF-8');
+    
+    // CC Forms Integration Script
+    $ccFormsScript = getCCFormsScript($projectSlugJs);
     
     return <<<HTML
 <!DOCTYPE html>
@@ -257,13 +261,170 @@ function generatePageHtml($title, $metaDescription, $components) {
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
+        /* CC Forms Styles */
+        .cc-form-loading { opacity: 0.6; pointer-events: none; }
+        .cc-form-success { background: #10b981; color: white; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; }
+        .cc-form-error { background: #ef4444; color: white; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; }
     </style>
 </head>
 <body class="antialiased">
 {$componentsHtml}
+{$ccFormsScript}
 </body>
 </html>
 HTML;
+}
+
+/**
+ * Generate CC Forms JavaScript for form submissions
+ */
+function getCCFormsScript($projectSlug) {
+    return <<<SCRIPT
+<!-- CC Forms Integration -->
+<script>
+(function() {
+    'use strict';
+    
+    const CC_FORMS_API = 'https://alex.polan.sk/control-center/api/public_form_submit.php';
+    const CC_PROJECT = '{$projectSlug}';
+    
+    // Find all forms with data-cc-form attribute
+    function initCCForms() {
+        const forms = document.querySelectorAll('form[data-cc-form]');
+        forms.forEach(setupCCForm);
+        
+        // Also watch for dynamically added forms
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) {
+                        if (node.matches && node.matches('form[data-cc-form]')) {
+                            setupCCForm(node);
+                        }
+                        const nestedForms = node.querySelectorAll && node.querySelectorAll('form[data-cc-form]');
+                        if (nestedForms) nestedForms.forEach(setupCCForm);
+                    }
+                });
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+    
+    function setupCCForm(form) {
+        if (form.dataset.ccFormInitialized) return;
+        form.dataset.ccFormInitialized = 'true';
+        
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formName = form.dataset.ccForm;
+            const project = form.dataset.ccProject || CC_PROJECT;
+            const successMessage = form.dataset.ccSuccess || 'Erfolgreich gesendet!';
+            const errorMessage = form.dataset.ccError || 'Fehler beim Senden. Bitte versuchen Sie es erneut.';
+            
+            // Get submit button
+            const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+            const originalBtnText = submitBtn ? submitBtn.textContent || submitBtn.value : '';
+            
+            // Show loading state
+            form.classList.add('cc-form-loading');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                if (submitBtn.tagName === 'BUTTON') submitBtn.textContent = 'Wird gesendet...';
+                else submitBtn.value = 'Wird gesendet...';
+            }
+            
+            // Remove previous messages
+            const oldMsg = form.querySelector('.cc-form-message');
+            if (oldMsg) oldMsg.remove();
+            
+            // Collect form data
+            const formData = new FormData(form);
+            const data = {};
+            formData.forEach((value, key) => {
+                // Handle multiple values (checkboxes with same name)
+                if (data[key]) {
+                    if (Array.isArray(data[key])) data[key].push(value);
+                    else data[key] = [data[key], value];
+                } else {
+                    data[key] = value;
+                }
+            });
+            
+            try {
+                const response = await fetch(CC_FORMS_API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        project: project,
+                        form_name: formName,
+                        data: data,
+                        source: 'web-builder'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                // Create message element
+                const msgEl = document.createElement('div');
+                msgEl.className = 'cc-form-message';
+                
+                if (result.success) {
+                    msgEl.className += ' cc-form-success';
+                    msgEl.textContent = successMessage;
+                    form.reset();
+                    
+                    // Custom success callback
+                    if (typeof window.onCCFormSuccess === 'function') {
+                        window.onCCFormSuccess(formName, result, form);
+                    }
+                } else {
+                    msgEl.className += ' cc-form-error';
+                    msgEl.textContent = result.error || errorMessage;
+                    
+                    // Custom error callback
+                    if (typeof window.onCCFormError === 'function') {
+                        window.onCCFormError(formName, result, form);
+                    }
+                }
+                
+                form.appendChild(msgEl);
+                
+                // Remove message after 5 seconds
+                setTimeout(() => msgEl.remove(), 5000);
+                
+            } catch (error) {
+                console.error('CC Forms Error:', error);
+                
+                const msgEl = document.createElement('div');
+                msgEl.className = 'cc-form-message cc-form-error';
+                msgEl.textContent = errorMessage;
+                form.appendChild(msgEl);
+                
+                setTimeout(() => msgEl.remove(), 5000);
+            } finally {
+                // Reset loading state
+                form.classList.remove('cc-form-loading');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    if (submitBtn.tagName === 'BUTTON') submitBtn.textContent = originalBtnText;
+                    else submitBtn.value = originalBtnText;
+                }
+            }
+        });
+    }
+    
+    // Initialize on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCCForms);
+    } else {
+        initCCForms();
+    }
+})();
+</script>
+SCRIPT;
 }
 
 /**

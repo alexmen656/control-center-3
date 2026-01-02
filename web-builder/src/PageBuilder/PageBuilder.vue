@@ -6,6 +6,7 @@ import Preview from '@/PageBuilder/Preview.vue';
 import ComponentTopMenu from '@/Components/PageBuilder/EditorMenu/Editables/ComponentTopMenu.vue';
 import EditGetElement from '@/Components/PageBuilder/EditorMenu/Editables/EditGetElement.vue';
 import SearchComponents from '@/Components/Search/SearchComponents.vue';
+import CCFormsGenerator from '@/Components/Search/CCFormsGenerator.vue';
 import OptionsDropdown from '@/Components/PageBuilder/DropdownsPlusToggles/OptionsDropdown.vue';
 import PageSelectDropdown from '@/Components/PageBuilder/DropdownsPlusToggles/PageSelectDropdown.vue';
 import RightSidebarEditor from '@/Components/PageBuilder/EditorMenu/RightSidebarEditor.vue';
@@ -54,6 +55,42 @@ const showModalAddComponent = ref(false);
 const titleModalAddComponent = ref('');
 const firstButtonTextSearchComponents = ref('');
 const firstModalButtonSearchComponentsFunction = ref(null);
+
+// CC Forms Generator state
+const showCCFormsModal = ref(false);
+
+const openCCFormsFromSearch = function () {
+  // Close SearchComponents modal first
+  showModalAddComponent.value = false;
+  // Then open CCForms modal
+  setTimeout(() => {
+    showCCFormsModal.value = true;
+  }, 150);
+};
+
+const closeCCFormsModal = function () {
+  showCCFormsModal.value = false;
+};
+
+const handleInsertCCForm = async function (formComponent) {
+  showCCFormsModal.value = false;
+  
+  await nextTick();
+  const clonedComponent = pageBuilder.cloneCompObjForDOMInsertion({
+    html_code: formComponent.html_code,
+    id: formComponent.id,
+  });
+
+  await nextTick();
+
+  pageBuilderStateStore.setPushComponents({
+    component: clonedComponent,
+    componentArrayAddMethod: pageBuilderStateStore.getComponentArrayAddMethod,
+  });
+
+  await nextTick();
+  pageBuilder.setEventListenersForElements();
+};
 
 const handleAddComponent = function () {
   pageBuilderStateStore.setComponent(null);
@@ -245,7 +282,16 @@ onMounted(async () => {
     :firstButtonText="firstButtonTextSearchComponents" :title="titleModalAddComponent"
     @firstModalButtonSearchComponentsFunction="
       firstModalButtonSearchComponentsFunction
-    "></SearchComponents>
+    "
+    @openCCForms="openCCFormsFromSearch"
+  ></SearchComponents>
+  
+  <!-- CC Forms Generator Modal - separate from SearchComponents -->
+  <CCFormsGenerator
+    :show="showCCFormsModal"
+    @close="closeCCFormsModal"
+    @insertForm="handleInsertCCForm"
+  />
   <PageBuilderPreviewModal :show="openPageBuilderPreviewModal"
     @firstPageBuilderPreviewModalButton="firstPageBuilderPreviewModalButton">
     <Preview></Preview>
