@@ -188,7 +188,7 @@
           <div v-if="activeTab === 'localizations'" class="content-section">
             <div class="section-header">
               <h3>App Lokalisierungen</h3>
-              <button class="action-btn primary" @click="showAddLocaleModal = true">
+              <button :disabled="availableLocales.length === 0" class="action-btn primary" @click="showAddLocaleModal = true">
                 <ion-icon name="add-outline"></ion-icon>
                 Sprache hinzufügen
               </button>
@@ -222,7 +222,7 @@
                 </div>
               </div>
 
-              <div class="locale-card add-card" @click="showAddLocaleModal = true">
+              <div v-if="availableLocales.length > 0" class="locale-card add-card" @click="showAddLocaleModal = true">
                 <ion-icon name="add-circle-outline"></ion-icon>
                 <span>Neue Sprache</span>
               </div>
