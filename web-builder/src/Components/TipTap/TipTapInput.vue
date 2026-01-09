@@ -9,22 +9,19 @@ import DynamicModal from '@/Components/Modals/DynamicModal.vue';
 import DynamicContentInserter from '@/Components/PageBuilder/DynamicContent/DynamicContentInserter.vue';
 import { usePageBuilderStateStore } from '@/stores/page-builder-state';
 import { useMediaLibraryStore } from '@/stores/media-library';
-import tailwindColors from '@/utils/builder/tailwaind-colors'; // Importiere die tailwind-colors
-import { 
-  hasDynamicContent, 
+import tailwindColors from '@/utils/builder/tailwaind-colors';
+import {
+  hasDynamicContent,
   hasDynamicContentSyntax,
   hasDynamicContentBadges,
-  convertDynamicContentToBadges, 
+  convertDynamicContentToBadges,
   convertBadgesToDynamicContent,
-  getDynamicBadgeStyles 
 } from '@/utils/builder/dynamic-content-parser';
 
 const mediaLibraryStore = useMediaLibraryStore();
 const pageBuilderStateStore = usePageBuilderStateStore();
 const showModalUrl = ref(false);
 const showDynamicContentModal = ref(false);
-
-// use dynamic model
 const typeModal = ref('');
 const gridColumnModal = ref(Number(1));
 const titleModal = ref('');
@@ -32,60 +29,45 @@ const descriptionModal = ref('');
 const firstButtonModal = ref('');
 const secondButtonModal = ref(null);
 const thirdButtonModal = ref(null);
-// set dynamic modal handle functions
 const firstModalButtonFunction = ref(null);
 const secondModalButtonFunction = ref(null);
 const thirdModalButtonFunction = ref(null);
-
 const pageBuilder = new PageBuilder(pageBuilderStateStore, mediaLibraryStore);
 
 const getElement = computed(() => {
   return pageBuilderStateStore.getElement;
 });
 
-// Neu hinzugefügt: Holen des ausgewählten Text-Elements
 const getSelectedTextElement = computed(() => {
   return pageBuilderStateStore.getSelectedTextElement;
 });
 
-const textContentVueModel = ref('');
-
-// Initialer Inhalt für den Editor
 const initialContent = ref('');
-
-// Status für Link-Unterstreichung
 const linkUnderlineEnabled = ref(true);
 
-// Bereite den Inhalt für den Editor vor - diese Funktion wird vor der Editor-Initialisierung aufgerufen
 const prepareEditorContent = () => {
   let content = '';
   if (getSelectedTextElement.value) {
-    // Wenn ein individuelles Text-Element ausgewählt ist, dessen Inhalt verwenden
     content = getSelectedTextElement.value.innerHTML || '';
   } else if (getElement.value) {
-    // Fallback zum gesamten Element
     content = getElement.value.innerHTML || '';
   }
-  
-  // Konvertiere Dynamic Content Badges zurück zu {{syntax}} für Bearbeitung im Editor
-  // TipTap sollte die {{...}} Syntax direkt anzeigen, nicht die Badges
+
   if (content && hasDynamicContentBadges(content)) {
     content = convertBadgesToDynamicContent(content);
   }
-  
+
   initialContent.value = content;
   return initialContent.value;
 };
 
-// Prüfe, ob Links im Inhalt unterstrichen sind
 const checkLinkUnderlineStatus = () => {
   const element = getSelectedTextElement.value || getElement.value;
   if (!element) return;
-  
-  // Suche nach Links im Element
+
   const links = element.querySelectorAll('a');
   if (links.length > 0) {
-    // Prüfe, ob der erste Link unterstrichen ist
+
     const firstLink = links[0];
     const hasUnderlineClass = firstLink.classList.contains('underline');
     const hasTextDecorationStyle = window.getComputedStyle(firstLink).textDecoration.includes('underline');
@@ -93,7 +75,6 @@ const checkLinkUnderlineStatus = () => {
   }
 };
 
-// Rufe prepareEditorContent auf, um den initialContent zu setzen
 prepareEditorContent();
 
 const textContent = computed(() => {
@@ -115,14 +96,12 @@ watch(getElement, (newVal) => {
   }
 });
 
-// Erstelle einen benutzerdefinierten Link-Extension, bei dem wir die Klassen dynamisch ändern können
 const linkExtension = Link.configure({
   openOnClick: false,
   HTMLAttributes: {
-    // Die Klasse wird beim Erstellen eines Links gesetzt
     class: linkUnderlineEnabled.value ? 'text-indigo-600 underline cursor-pointer' : 'text-indigo-600 no-underline cursor-pointer',
   },
-  // Sorgt dafür, dass das Link-Element vollständig erhalten bleibt
+
   parseHTML() {
     return [
       {
@@ -138,13 +117,12 @@ const linkExtension = Link.configure({
   }
 });
 
-// Verbesserte Editor-Initialisierung mit dem vorbereiteten Inhalt
 const editor = useEditor({
   content: initialContent.value,
   extensions: [
     StarterKit,
     linkExtension,
-    Underline, // Füge die Underline Extension hinzu
+    Underline,
   ],
   editorProps: {
     attributes: {
@@ -153,19 +131,16 @@ const editor = useEditor({
   },
 });
 
-// Funktion zum Umschalten der Link-Unterstreichung
 const toggleLinkUnderline = () => {
   if (!editor.value) return;
-  
+
   linkUnderlineEnabled.value = !linkUnderlineEnabled.value;
-  
-  // Alle Links im aktuellen Editor-Inhalt finden
+
   const editorElement = document.querySelector('#page-builder-editor');
   if (!editorElement) return;
-  
+
   const links = editorElement.querySelectorAll('a');
-  
-  // Unterstreichung für alle Links ein- oder ausschalten
+
   links.forEach(link => {
     if (linkUnderlineEnabled.value) {
       link.classList.add('underline');
@@ -175,70 +150,58 @@ const toggleLinkUnderline = () => {
       link.classList.add('no-underline');
     }
   });
-  
-  // Aktualisiere die HTMLAttributes für zukünftige Links
+
   editor.value.extensionManager.extensions.forEach(extension => {
     if (extension.name === 'link') {
-      extension.options.HTMLAttributes.class = linkUnderlineEnabled.value 
-        ? 'text-indigo-600 underline cursor-pointer' 
+      extension.options.HTMLAttributes.class = linkUnderlineEnabled.value
+        ? 'text-indigo-600 underline cursor-pointer'
         : 'text-indigo-600 no-underline cursor-pointer';
     }
   });
 };
 
-// Neue Methode, die den Inhalt aus dem richtigen Element holt
 const getContentFromActiveElement = () => {
   let content = '';
+
   if (getSelectedTextElement.value) {
-    // Wenn ein individuelles Text-Element ausgewählt ist, dessen Inhalt verwenden
     content = getSelectedTextElement.value.innerHTML;
   } else if (getElement.value) {
-    // Fallback zum gesamten Element
     content = getElement.value.innerHTML;
   }
-  
-  // Konvertiere Dynamic Content Badges zurück zu {{syntax}} für Bearbeitung im Editor
-  // TipTap sollte die {{...}} Syntax direkt anzeigen, nicht die Badges
+
   if (content && hasDynamicContentBadges(content)) {
     content = convertBadgesToDynamicContent(content);
   }
-  
+
   return content;
 };
 
-// Setze die EditorContent initial und zukünftig ohne p-Tags für Link-Elemente
 const TipTapSetContent = function () {
   if (editor.value) {
     const contentToEdit = getContentFromActiveElement();
     if (contentToEdit) {
-      // Wenn wir ein a-Element bearbeiten, benötigen wir eine spezielle Behandlung
       const originalElement = getSelectedTextElement.value;
+
       if (originalElement && originalElement.tagName.toLowerCase() === 'a') {
-        // Direkte Bearbeitung des Link-Textes ohne umschließende Tags
         editor.value.commands.setContent(contentToEdit, false);
-        
-        // Stelle sicher, dass der Link im Editor erkannt wird
+
         if (originalElement.hasAttribute('href')) {
           const href = originalElement.getAttribute('href');
-          // Markiere den gesamten Text und mache ihn zum Link
           editor.value.chain().selectAll().setLink({ href }).run();
         }
       } else {
-        // Normale Inhaltsbearbeitung
         editor.value.commands.setContent(contentToEdit);
       }
     }
-    
-    // Nachdem der Inhalt geladen wurde, prüfe den Unterstreichungsstatus der Links
+
     nextTick(() => {
       checkLinkUnderlineStatus();
     });
   }
 };
 
-// TipTap mit Inhalt füllen, wenn sich das ausgewählte Element ändert
 watch([getElement, getSelectedTextElement], () => {
-  // Stellen sicher, dass der Editor initialisiert ist, bevor wir versuchen, den Inhalt zu setzen
+
   if (editor.value) {
     nextTick(() => {
       TipTapSetContent();
@@ -246,7 +209,6 @@ watch([getElement, getSelectedTextElement], () => {
   }
 });
 
-// Manage URL
 const urlEnteret = ref('');
 const newUpdatedExistingURL = ref('');
 const urlError = ref(null);
@@ -257,9 +219,8 @@ watch(urlEnteret, (newVal) => {
 
 const handleURL = function () {
   if (!editor.value) return;
-  
-  urlEnteret.value = editor.value.getAttributes('link').href;
 
+  urlEnteret.value = editor.value.getAttributes('link').href;
   showModalUrl.value = true;
   typeModal.value = 'success';
   gridColumnModal.value = 2;
@@ -269,13 +230,11 @@ const handleURL = function () {
   secondButtonModal.value = urlEnteret.value ? 'Remove url' : null;
   thirdButtonModal.value = 'Save';
 
-  // handle click
   firstModalButtonFunction.value = function () {
     showModalUrl.value = false;
     urlError.value = null;
   };
 
-  // handle click
   secondModalButtonFunction.value = function () {
     if (editor.value) {
       editor.value.chain().focus().extendMarkRange('link').unsetLink().run();
@@ -283,7 +242,6 @@ const handleURL = function () {
     showModalUrl.value = false;
   };
 
-  // handle click
   thirdModalButtonFunction.value = function () {
     const isNotValidated = validateURL();
     if (isNotValidated) {
@@ -294,21 +252,15 @@ const handleURL = function () {
     }
     showModalUrl.value = false;
   };
-  // end modal
+
 };
 
-//
-//
 const validateURL = function () {
-  // initial value
   urlError.value = null;
-
-  // url validation
   const urlRegex = /^https?:\/\//;
   const isValidURL = ref(true);
   isValidURL.value = urlRegex.test(newUpdatedExistingURL.value);
 
-  // cancelled
   if (isValidURL.value === false) {
     urlError.value =
       "The provided URL is invalid. Please ensure that it begins with 'https://' for proper formatting and security.";
@@ -319,13 +271,12 @@ const validateURL = function () {
 };
 
 const setEnteretURL = function () {
-  // update link
   if (editor.value) {
     editor.value
       .chain()
       .focus()
       .extendMarkRange('link')
-      .setLink({ 
+      .setLink({
         href: newUpdatedExistingURL.value,
         class: linkUnderlineEnabled.value ? 'text-indigo-600 underline cursor-pointer' : 'text-indigo-600 no-underline cursor-pointer'
       })
@@ -334,14 +285,12 @@ const setEnteretURL = function () {
 };
 
 onBeforeMount(() => {
-  // Verhindere das Zerstören eines nicht-initialisierten Editors
   if (editor.value) {
     editor.value?.destroy();
   }
 });
 
 onMounted(() => {
-  // Stellen sicher, dass der Editor initialisiert ist, bevor wir Operationen darauf ausführen
   if (editor.value) {
     nextTick(() => {
       TipTapSetContent();
@@ -349,57 +298,46 @@ onMounted(() => {
   }
 });
 
-// Sync element changes to component store
 const syncElementToComponent = (element) => {
   if (!element) return;
-  
-  // Find the parent section with data-componentid
+
   const section = element.closest('section[data-componentid]');
   if (!section) return;
-  
+
   const componentId = section.dataset.componentid;
   if (!componentId) return;
-  
-  // Update the component's html_code in the store
+
   const components = pageBuilderStateStore.getComponents;
   if (!components || !Array.isArray(components)) return;
-  
+
   const componentIndex = components.findIndex(c => c.id === componentId);
   if (componentIndex === -1) return;
-  
-  // Update the html_code with current DOM state
+
   components[componentIndex].html_code = section.outerHTML;
-  
-  // Trigger reactivity by setting components again
   pageBuilderStateStore.setComponents([...components]);
 };
 
-// Angepasste handleTextInput Funktion
 const handleTextSave = async () => {
   if (!editor.value) return;
-  
+
   let newContent = editor.value.getHTML();
-  
+
   try {
     if (getSelectedTextElement.value) {
       const element = getSelectedTextElement.value;
-      
-      // Speichere den ursprünglichen Tag-Namen
+
       const originalTagName = element.tagName.toLowerCase();
 
-      // Spezielle Behandlung für <a>-Tags
       if (originalTagName === 'a') {
-        // Für Links nur den Inhalt ändern, nicht die Struktur
+
         const tempContainer = document.createElement('div');
         tempContainer.innerHTML = newContent;
-        
-        // Wenn der Editor einen Link zurückgibt, diesen verwenden
+
         const editorLink = tempContainer.querySelector('a');
         if (editorLink) {
-          // Kopiere nur den Innentext und die Inline-Formatierungen, lasse Struktur unangetastet
+
           element.innerHTML = editorLink.innerHTML;
-          
-          // Falls im Editor neue href/target/rel gesetzt wurden, diese übernehmen
+
           if (editorLink.hasAttribute('href')) {
             element.setAttribute('href', editorLink.getAttribute('href'));
           }
@@ -409,22 +347,17 @@ const handleTextSave = async () => {
           if (editorLink.hasAttribute('rel')) {
             element.setAttribute('rel', editorLink.getAttribute('rel'));
           }
-          
-          // CSS-Klassen vom Editor-Link übernehmen (wichtig für die Unterstreichung)
+
           if (editorLink.hasAttribute('class')) {
-            // Erhalte bestehende Klassen, die beibehalten werden sollen
-            const existingClasses = element.className.split(' ').filter(cls => 
+
+            const existingClasses = element.className.split(' ').filter(cls =>
               !['underline', 'no-underline'].includes(cls)
             );
-            
-            // Füge die neuen Klassen vom Editor-Link hinzu
+
             const editorClasses = editorLink.className.split(' ');
-            
-            // Kombiniere und setze die Klassen
             element.className = [...existingClasses, ...editorClasses].join(' ');
           }
-          
-          // Stelle sicher, dass die Unterstreichungs-Einstellung korrekt angewendet wird
+
           if (!linkUnderlineEnabled.value) {
             element.classList.remove('underline');
             element.classList.add('no-underline');
@@ -432,149 +365,116 @@ const handleTextSave = async () => {
             element.classList.add('underline');
             element.classList.remove('no-underline');
           }
+
         } else {
-          // Fallback: Wenn kein Link gefunden wurde, nehme den gesamten Inhalt
-          // Entferne p-Tags falls vorhanden
           let content = tempContainer.innerHTML;
           const pStart = content.indexOf('<p>');
           const pEnd = content.lastIndexOf('</p>');
-          
+
           if (pStart === 0 && pEnd > 0) {
-            // Extrahiere den Inhalt zwischen p-Tags
             content = content.substring(3, pEnd);
           }
-          
-          // Konvertiere Dynamic Content {{syntax}} zurück zu Badges für die Anzeige im Page Builder
+
           if (hasDynamicContentSyntax(content)) {
-            const contentData = pageBuilderStateStore.contentTables ? 
+            const contentData = pageBuilderStateStore.contentTables ?
               pageBuilderStateStore.contentTables.reduce((acc, table) => {
                 acc[table.name] = { data: table.data || [], columns: table.columns || [] };
                 return acc;
               }, {}) : null;
             content = convertDynamicContentToBadges(content, contentData);
           }
-          
+
           element.innerHTML = content;
         }
-        
-        // Sync changes to component store
+
         syncElementToComponent(element);
-        
-        // Schließe den Modal-Dialog
+
         pageBuilderStateStore.setShowModalTipTap(false);
         return;
       }
-      
-      // Bereinige problematische verschachtelte Tags
-      // Erhalte den neuen Inhalt als DOM-Objekt zur einfacheren Manipulation
+
       const tempContainer = document.createElement('div');
       tempContainer.innerHTML = newContent;
-      
-      // Spezielle Prüfung für p-Tags, wenn das Originalelement selbst ein p-Tag ist
+
       if (originalTagName === 'p') {
-        // Prüfe auf verschachtelte p-Tags
         const nestedParagraphs = tempContainer.querySelectorAll('p p');
-        
+
         if (nestedParagraphs.length > 0 || tempContainer.querySelector(':scope > p')) {
-          // Wenn verschachtelte p-Tags gefunden wurden, extrahiere nur den Text- und Inline-Element-Inhalt
           let contentToKeep = '';
-          
-          // Wenn der Container ein einzelnes p-Tag enthält, nimm dessen Inhalt
           const firstLevelP = tempContainer.querySelector(':scope > p');
+
           if (firstLevelP) {
             contentToKeep = firstLevelP.innerHTML;
           } else {
-            // Andernfalls sammle allen Inhalt
             contentToKeep = tempContainer.innerHTML;
           }
-          
-          // Ersetze den gesamten Inhalt mit dem bereinigten Inhalt
+
           tempContainer.innerHTML = contentToKeep;
         }
       }
-      // Entferne unerwünschte p-Tags, wenn das Original-Element selbst ein Block-Element ist
+
       else if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div', 'span'].includes(originalTagName)) {
-        // Suche nach p-Tags im ersten Level
         const paragraphs = tempContainer.querySelectorAll(':scope > p');
-        
-        // Wenn p-Tags gefunden wurden und sie der einzige Inhalt sind
+
         if (paragraphs.length > 0) {
-          // Extrahiere den Inhalt aus den p-Tags und füge ihn direkt ein
+
           let extractedContent = '';
           paragraphs.forEach(p => {
             extractedContent += p.innerHTML;
           });
-          
-          // Setze den bereinigten Inhalt
+
           tempContainer.innerHTML = extractedContent;
         }
       }
-      
-      // Liste der strukturellen Tags, die problematisch sind, wenn sie verschachtelt werden
+
       const structuralTags = ['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'section', 'article'];
-      
-      // Prüfe, ob unerwünschte verschachtelte Tags vorhanden sind
       const hasNestedStructuralTags = structuralTags.some(tag => {
-        // Wenn das originale Element z.B. ein h2 ist, darf es kein p enthalten
+
         if (tag !== originalTagName) {
           return tempContainer.querySelector(`${originalTagName} ${tag}`) !== null;
         }
         return false;
       });
-      
+
       if (hasNestedStructuralTags) {
-        // Entferne unerwünschte verschachtelte Tags, ABER behalte deren Inhalt
         structuralTags.forEach(tag => {
-          // Überspringe, wenn es der Tag des Originalelements ist
           if (tag === originalTagName) return;
-          
           const nestedElements = tempContainer.querySelectorAll(tag);
           nestedElements.forEach(nestedEl => {
-            // Ersetze das problematische Element durch seinen Inhalt
             const fragment = document.createDocumentFragment();
-            
-            // Füge alle Kinder des verschachtelten Elements zum Fragment hinzu (erhält Links)
+
             while (nestedEl.firstChild) {
               fragment.appendChild(nestedEl.firstChild);
             }
-            
-            // Ersetze das verschachtelte Element durch das Fragment
+
             if (nestedEl.parentNode) {
               nestedEl.parentNode.replaceChild(fragment, nestedEl);
             }
           });
         });
       }
-      
-      // Aktualisiere den Inhalt mit der bereinigten Version
+
       newContent = tempContainer.innerHTML;
-      
-      // Konvertiere Dynamic Content {{syntax}} zurück zu Badges für die Anzeige im Page Builder
+
       if (hasDynamicContentSyntax(newContent)) {
-        const contentData = pageBuilderStateStore.contentTables ? 
+        const contentData = pageBuilderStateStore.contentTables ?
           pageBuilderStateStore.contentTables.reduce((acc, table) => {
             acc[table.name] = { data: table.data || [], columns: table.columns || [] };
             return acc;
           }, {}) : null;
         newContent = convertDynamicContentToBadges(newContent, contentData);
       }
-      
-      // Aktualisiere das Element mit dem bereinigten Inhalt
+
       element.innerHTML = newContent;
-      
-      // Sync changes to component store
+
       syncElementToComponent(element);
-      
-      // Schließe den Modal-Dialog
+
       pageBuilderStateStore.setShowModalTipTap(false);
     } else if (pageBuilder.selectedElementIsValidText()) {
-      // Fallback zur alten Methode für das gesamte Element
-      
-      // Bereinige auch hier die p-Tags
+
       const tempContainer = document.createElement('div');
       tempContainer.innerHTML = newContent;
-      
-      // Entferne p-Tags auf der ersten Ebene, falls vorhanden
+
       const paragraphs = tempContainer.querySelectorAll(':scope > p');
       if (paragraphs.length > 0) {
         let extractedContent = '';
@@ -583,17 +483,16 @@ const handleTextSave = async () => {
         });
         newContent = extractedContent;
       }
-      
-      // Konvertiere Dynamic Content {{syntax}} zurück zu Badges für die Anzeige im Page Builder
+
       if (hasDynamicContentSyntax(newContent)) {
-        const contentData = pageBuilderStateStore.contentTables ? 
+        const contentData = pageBuilderStateStore.contentTables ?
           pageBuilderStateStore.contentTables.reduce((acc, table) => {
             acc[table.name] = { data: table.data || [], columns: table.columns || [] };
             return acc;
           }, {}) : null;
         newContent = convertDynamicContentToBadges(newContent, contentData);
       }
-      
+
       pageBuilder.handleTextInput(newContent);
       pageBuilderStateStore.setShowModalTipTap(false);
     }
@@ -602,23 +501,19 @@ const handleTextSave = async () => {
   }
 };
 
-// Überwache das Schließen des Modals, um die Text-Auswahl zurückzusetzen
 watch(() => pageBuilderStateStore.getShowModalTipTap, (newValue, oldValue) => {
   if (oldValue === true && newValue === false) {
-    // Modal wurde geschlossen, setze die Textauswahl zurück
+
     pageBuilder.clearTextElementSelection();
   }
 });
 
-// Zeige das Text-Farben-Dropdown an oder verberge es
 const showTextColorDropdown = ref(false);
 
-// Halte die aktuell ausgewählte Textfarbe
 const selectedTextColor = ref('none');
 
-// Liste der verfügbaren Textfarben
 const textColorOptions = computed(() => {
-  // Begrenzte Auswahl an Textfarben für ein übersichtliches Dropdown
+
   return [
     { name: 'Schwarz', value: 'text-black' },
     { name: 'Weiß', value: 'text-white' },
@@ -648,11 +543,10 @@ const textColorOptions = computed(() => {
   ];
 });
 
-// Bestimme die aktuelle Textfarbe aus dem Element, wenn vorhanden
 const getCurrentTextColorFromElement = () => {
   if (getSelectedTextElement.value) {
     const element = getSelectedTextElement.value;
-    // Suche nach einer Textfarbklasse im Element
+
     for (const colorClass of tailwindColors.textColorVariables) {
       if (colorClass !== 'none' && element.classList.contains(colorClass)) {
         selectedTextColor.value = colorClass;
@@ -663,116 +557,60 @@ const getCurrentTextColorFromElement = () => {
   selectedTextColor.value = 'none';
 };
 
-// Wende eine neue Textfarbe auf das ausgewählte Element an
 const applyTextColor = (newColor) => {
   if (!getSelectedTextElement.value) return;
-  
+
   const element = getSelectedTextElement.value;
-  
-  // Entferne bestehende Textfarben
+
   tailwindColors.textColorVariables.forEach(colorClass => {
     if (colorClass !== 'none' && element.classList.contains(colorClass)) {
       element.classList.remove(colorClass);
     }
   });
-  
-  // Füge neue Textfarbe hinzu, außer wenn "none" ausgewählt wurde
+
   if (newColor !== 'none') {
     element.classList.add(newColor);
   }
-  
-  // Aktualisiere die ausgewählte Textfarbe
+
   selectedTextColor.value = newColor;
-  
-  // Verberge das Dropdown nach der Auswahl
+
   showTextColorDropdown.value = false;
 };
 
-// Initialisiere die aktuelle Textfarbe, wenn der Editor geöffnet wird
 watch(() => pageBuilderStateStore.getShowModalTipTap, (newValue) => {
   if (newValue === true) {
-    // Wenn der Modal geöffnet wird, bestimme die aktuelle Textfarbe
+
     nextTick(() => {
       getCurrentTextColorFromElement();
     });
   }
 });
 
-// ============================================
-// Dynamic Content Functions
-// ============================================
-
-// Open dynamic content inserter modal
 const openDynamicContentModal = () => {
   showDynamicContentModal.value = true;
 };
 
-// Close dynamic content inserter modal
 const closeDynamicContentModal = () => {
   showDynamicContentModal.value = false;
 };
 
-// Insert dynamic content syntax at cursor position
 const insertDynamicContent = (syntax) => {
-  if (!editor.value) return;
-  
-  // Insert the syntax at the current cursor position
+  if (!editor.value) return; Ï
   editor.value.chain().focus().insertContent(syntax).run();
-  
   closeDynamicContentModal();
-};
-
-// Convert dynamic content badges back to syntax before saving
-const processDynamicContentForSave = (html) => {
-  // Convert any badge elements back to {{syntax}}
-  return convertBadgesToDynamicContent(html);
-};
-
-// Convert dynamic content syntax to badges for display in editor
-const processDynamicContentForDisplay = (html) => {
-  if (!hasDynamicContent(html)) return html;
-  
-  // Get content data from store for validation
-  const contentData = pageBuilderStateStore.contentTables ? 
-    pageBuilderStateStore.contentTables.reduce((acc, table) => {
-      acc[table.name] = { data: table.data || [], columns: table.columns || [] };
-      return acc;
-    }, {}) : null;
-  
-  return convertDynamicContentToBadges(html, contentData);
 };
 </script>
 <template>
-  <DynamicModal
-    :show="showModalUrl"
-    :type="typeModal"
-    :gridColumnAmount="gridColumnModal"
-    :title="titleModal"
-    :description="descriptionModal"
-    :firstButtonText="firstButtonModal"
-    :secondButtonText="secondButtonModal"
-    :thirdButtonText="thirdButtonModal"
-    @firstModalButtonFunction="firstModalButtonFunction"
-    @secondModalButtonFunction="secondModalButtonFunction"
-    @thirdModalButtonFunction="thirdModalButtonFunction"
-  >
+  <DynamicModal :show="showModalUrl" :type="typeModal" :gridColumnAmount="gridColumnModal" :title="titleModal"
+    :description="descriptionModal" :firstButtonText="firstButtonModal" :secondButtonText="secondButtonModal"
+    :thirdButtonText="thirdButtonModal" @firstModalButtonFunction="firstModalButtonFunction"
+    @secondModalButtonFunction="secondModalButtonFunction" @thirdModalButtonFunction="thirdModalButtonFunction">
     <header></header>
     <main>
       <div class="myInputGroup">
-        <label
-          class="myPrimaryInputLabel"
-          for="roles"
-          ><span>Enter URL</span></label
-        ><input
-          v-model="urlEnteret"
-          class="myPrimaryInput mt-1"
-          type="url"
-          placeholder="url"
-        />
-        <div
-          v-if="urlError"
-          class="min-h-[2.5rem] flex items-center justify-start"
-        >
+        <label class="myPrimaryInputLabel" for="roles"><span>Enter URL</span></label><input v-model="urlEnteret"
+          class="myPrimaryInput mt-1" type="url" placeholder="url" />
+        <div v-if="urlError" class="min-h-[2.5rem] flex items-center justify-start">
           <p class="myPrimaryInputError mt-2 mb-0 py-0 self-start">
             {{ urlError }}
           </p>
@@ -785,84 +623,66 @@ const processDynamicContentForDisplay = (html) => {
     <div v-if="(pageBuilder.selectedElementIsValidText() || getSelectedTextElement) && editor">
       <div class="relative rounded-lg">
         <div
-          class="flex justify-between myPrimaryGap items-center divide-x divide-gray-200 py-4 px-4 overflow-x-auto border-b border-gray-20"
-        >
+          class="flex justify-between myPrimaryGap items-center divide-x divide-gray-200 py-4 px-4 overflow-x-auto border-b border-gray-20">
           <div class="flex items-center 0 divide-x divide-gray-200">
             <div class="px-2 flex items-center justify-start gap-2">
-              <button
-                @click="editor.chain().focus().setHardBreak().run()"
-                type="button"
-                class="text-[12.5px] gap-2 text-nowrap pl-2 pr-3 w-full h-10 cursor-pointer rounded-full flex items-center border-none justify-center bg-gray-50 hover:bg-myPrimaryLinkColor hover:text-white focus-visible:ring-0"
-              >
+              <button @click="editor.chain().focus().setHardBreak().run()" type="button"
+                class="text-[12.5px] gap-2 text-nowrap pl-2 pr-3 w-full h-10 cursor-pointer rounded-full flex items-center border-none justify-center bg-gray-50 hover:bg-myPrimaryLinkColor hover:text-white focus-visible:ring-0">
                 <span class="material-symbols-outlined"> keyboard_return </span>
                 <span>Line break</span>
               </button>
             </div>
 
             <div class="px-2 flex items-center justify-start gap-2">
-              <button
-                @click="editor.chain().focus().toggleBold().run()"
-                type="button"
+              <button @click="editor.chain().focus().toggleBold().run()" type="button"
                 class="text-[12.5px] gap-2 text-nowrap pl-2 pr-3 w-full h-10 cursor-pointer rounded-full flex items-center border-none justify-center bg-gray-50 hover:bg-myPrimaryLinkColor hover:text-white focus-visible:ring-0"
                 :class="{
                   'bg-myPrimaryLinkColor text-white': editor.isActive('bold'),
-                }"
-              >
+                }">
                 <span class="material-symbols-outlined"> format_bold </span>
                 <span>Bold</span>
               </button>
             </div>
-            
+
             <!-- Neue Schaltfläche für allgemeine Unterstreichung -->
             <div class="px-2 flex items-center justify-start gap-2">
-              <button
-                @click="editor.chain().focus().toggleUnderline().run()"
-                type="button"
+              <button @click="editor.chain().focus().toggleUnderline().run()" type="button"
                 class="text-[12.5px] gap-2 text-nowrap pl-2 pr-3 w-full h-10 cursor-pointer rounded-full flex items-center border-none justify-center bg-gray-50 hover:bg-myPrimaryLinkColor hover:text-white focus-visible:ring-0"
                 :class="{
                   'bg-myPrimaryLinkColor text-white': editor.isActive('underline'),
-                }"
-              >
+                }">
                 <span class="material-symbols-outlined"> format_underlined </span>
                 <span>Unterstreichen</span>
               </button>
             </div>
 
             <div class="px-2 flex items-center justify-start gap-2">
-              <button
-                @click="handleURL"
-                type="button"
+              <button @click="handleURL" type="button"
                 class="text-[12.5px] gap-2 text-nowrap pl-2 pr-3 w-full h-10 cursor-pointer rounded-full flex items-center border-none justify-center bg-gray-50 hover:bg-myPrimaryLinkColor hover:text-white focus-visible:ring-0"
                 :class="{
                   'bg-myPrimaryLinkColor text-white': editor.isActive('link'),
-                }"
-              >
+                }">
                 <span class="material-symbols-outlined"> link </span>
                 <span>Link</span>
               </button>
             </div>
-            
+
             <!-- Link-Unterstreichungs-Button nur anzeigen wenn ein Link aktiv ist -->
             <div class="px-2 flex items-center justify-start gap-2" v-if="editor.isActive('link')">
-              <button
-                @click="toggleLinkUnderline"
-                type="button"
+              <button @click="toggleLinkUnderline" type="button"
                 class="text-[12.5px] gap-2 text-nowrap pl-2 pr-3 w-full h-10 cursor-pointer rounded-full flex items-center border-none justify-center bg-gray-50 hover:bg-myPrimaryLinkColor hover:text-white focus-visible:ring-0"
                 :class="{
                   'bg-myPrimaryLinkColor text-white': linkUnderlineEnabled,
-                }"
-              >
+                }">
                 <span class="material-symbols-outlined"> format_underlined </span>
                 <span>Link unterstreichen</span>
               </button>
             </div>
 
             <div class="px-2 flex items-center justify-start gap-2">
-              <button
-                @click="
-                  editor.chain().focus().toggleHeading({ level: 2 }).run()
-                "
-                type="button"
+              <button @click="
+                editor.chain().focus().toggleHeading({ level: 2 }).run()
+                " type="button"
                 class="text-[12.5px] gap-2 text-nowrap pl-2 pr-3 w-full h-10 cursor-pointer rounded-full flex items-center border-none justify-center bg-gray-50 hover:bg-myPrimaryLinkColor hover:text-white focus-visible:ring-0"
                 :class="{
                   'bg-myPrimaryLinkColor text-white': editor.isActive(
@@ -871,19 +691,16 @@ const processDynamicContentForDisplay = (html) => {
                       level: 2,
                     }
                   ),
-                }"
-              >
+                }">
                 <span class="material-symbols-outlined"> titlecase </span>
                 <span>Header 2</span>
               </button>
             </div>
 
             <div class="px-2 flex items-center justify-start gap-2">
-              <button
-                @click="
-                  editor.chain().focus().toggleHeading({ level: 3 }).run()
-                "
-                type="button"
+              <button @click="
+                editor.chain().focus().toggleHeading({ level: 3 }).run()
+                " type="button"
                 class="text-[12.5px] gap-2 text-nowrap pl-2 pr-3 w-full h-10 cursor-pointer rounded-full flex items-center border-none justify-center bg-gray-50 hover:bg-myPrimaryLinkColor hover:text-white focus-visible:ring-0"
                 :class="{
                   'bg-myPrimaryLinkColor text-white': editor.isActive(
@@ -892,34 +709,27 @@ const processDynamicContentForDisplay = (html) => {
                       level: 3,
                     }
                   ),
-                }"
-              >
+                }">
                 <span class="material-symbols-outlined"> titlecase </span>
                 <span>Header 3</span>
               </button>
             </div>
 
             <div class="px-2 flex items-center justify-start gap-2">
-              <button
-                @click="editor.chain().focus().toggleBulletList().run()"
-                type="button"
+              <button @click="editor.chain().focus().toggleBulletList().run()" type="button"
                 class="text-[12.5px] gap-2 text-nowrap pl-2 pr-3 w-full h-10 cursor-pointer rounded-full flex items-center border-none justify-center bg-gray-50 hover:bg-myPrimaryLinkColor hover:text-white focus-visible:ring-0"
                 :class="{
                   'bg-myPrimaryLinkColor text-white':
                     editor.isActive('bulletList'),
-                }"
-              >
+                }">
                 <span class="material-symbols-outlined"> list </span>
                 <span>List</span>
               </button>
             </div>
 
             <div class="px-2 flex items-center justify-start gap-2">
-              <button
-                @click="showTextColorDropdown = !showTextColorDropdown"
-                type="button"
-                class="text-[12.5px] gap-2 text-nowrap pl-2 pr-3 w-full h-10 cursor-pointer rounded-full flex items-center border-none justify-center bg-gray-50 hover:bg-myPrimaryLinkColor hover:text-white focus-visible:ring-0"
-              >
+              <button @click="showTextColorDropdown = !showTextColorDropdown" type="button"
+                class="text-[12.5px] gap-2 text-nowrap pl-2 pr-3 w-full h-10 cursor-pointer rounded-full flex items-center border-none justify-center bg-gray-50 hover:bg-myPrimaryLinkColor hover:text-white focus-visible:ring-0">
                 <span class="material-symbols-outlined"> palette </span>
                 <span>Textfarbe</span>
               </button>
@@ -927,11 +737,8 @@ const processDynamicContentForDisplay = (html) => {
 
             <!-- Dynamic Content Button -->
             <div class="px-2 flex items-center justify-start gap-2">
-              <button
-                @click="openDynamicContentModal"
-                type="button"
-                class="text-[12.5px] gap-2 text-nowrap pl-2 pr-3 w-full h-10 cursor-pointer rounded-full flex items-center border-none justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 focus-visible:ring-0"
-              >
+              <button @click="openDynamicContentModal" type="button"
+                class="text-[12.5px] gap-2 text-nowrap pl-2 pr-3 w-full h-10 cursor-pointer rounded-full flex items-center border-none justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 focus-visible:ring-0">
                 <span class="material-symbols-outlined"> database </span>
                 <span>Dynamic Content</span>
               </button>
@@ -940,11 +747,8 @@ const processDynamicContentForDisplay = (html) => {
           <div>
             <div>
               <div class="px-2 flex items-center justify-start gap-2">
-                <button
-                  @click="handleTextSave"
-                  type="button"
-                  class="text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2"
-                >
+                <button @click="handleTextSave" type="button"
+                  class="text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">
                   Speichern und schließen
                 </button>
               </div>
@@ -952,34 +756,24 @@ const processDynamicContentForDisplay = (html) => {
           </div>
         </div>
 
-        <div v-if="showTextColorDropdown" class="absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg mt-2">
+        <div v-if="showTextColorDropdown"
+          class="absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg mt-2">
           <ul class="py-2">
-            <li
-              v-for="option in textColorOptions"
-              :key="option.value"
-              @click="applyTextColor(option.value)"
+            <li v-for="option in textColorOptions" :key="option.value" @click="applyTextColor(option.value)"
               class="px-4 py-2 cursor-pointer hover:bg-gray-100"
-              :class="{ 'font-bold': selectedTextColor === option.value }"
-            >
+              :class="{ 'font-bold': selectedTextColor === option.value }">
               {{ option.name }}
             </li>
           </ul>
         </div>
 
-        <editor-content
-          v-if="editor"
-          id="page-builder-editor"
-          :editor="editor"
-          class="px-4 pt-6 pb-12 bg-white rounded-lg lg:min-h-[20rem] lg:max-h-[30rem] md:min-h-[20rem] md:max-h-[20rem] min-h-[20rem] max-h-[20rem] overflow-y-auto"
-        />
+        <editor-content v-if="editor" id="page-builder-editor" :editor="editor"
+          class="px-4 pt-6 pb-12 bg-white rounded-lg lg:min-h-[20rem] lg:max-h-[30rem] md:min-h-[20rem] md:max-h-[20rem] min-h-[20rem] max-h-[20rem] overflow-y-auto" />
       </div>
     </div>
   </div>
 
   <!-- Dynamic Content Inserter Modal -->
-  <DynamicContentInserter
-    :show="showDynamicContentModal"
-    @close="closeDynamicContentModal"
-    @insert="insertDynamicContent"
-  />
+  <DynamicContentInserter :show="showDynamicContentModal" @close="closeDynamicContentModal"
+    @insert="insertDynamicContent" />
 </template>
