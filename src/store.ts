@@ -71,7 +71,7 @@ const mutations = {
 const actions = {
   async loadApis({ commit }, projectName: string) {
     try {
-      const token = localStorage.getItem('controlCenter_auth_token');
+      const token = localStorage.getItem('authToken');
       const response = await fetch('/backend/apis.php', {
         method: 'POST',
         headers: {
@@ -95,7 +95,7 @@ const actions = {
   
   async createApi({ commit }, payload: { project: string; api: ApiData }) {
     try {
-      const token = localStorage.getItem('controlCenter_auth_token');
+      const token = localStorage.getItem('authToken');
       const response = await fetch('/backend/apis.php', {
         method: 'POST',
         headers: {
@@ -129,7 +129,7 @@ const actions = {
   
   async deleteApi({ commit }, apiId: number) {
     try {
-      const token = localStorage.getItem('controlCenter_auth_token');
+      const token = localStorage.getItem('authToken');
       const response = await fetch('/backend/apis.php', {
         method: 'POST',
         headers: {

@@ -6,7 +6,7 @@ export const useUserStore = defineStore('user', () => {
   const currentUser = ref(null);
   const isLoading = ref(false);
   const error = ref(null);
-  const token = ref(localStorage.getItem('controlCenter_auth_token') || null);
+  const token = ref(localStorage.getItem('authToken') || null);
 
   // 2FA State
   const requires2FA = ref(false);
@@ -61,7 +61,7 @@ export const useUserStore = defineStore('user', () => {
       // Login successful, save token
       if (data.token) {
         token.value = data.token;
-        localStorage.setItem('controlCenter_auth_token', data.token);
+        localStorage.setItem('authToken', data.token);
 
         // Store user info
         currentUser.value = {
@@ -103,7 +103,7 @@ export const useUserStore = defineStore('user', () => {
 
       if (data.token) {
         token.value = data.token;
-        localStorage.setItem('controlCenter_auth_token', data.token);
+        localStorage.setItem('authToken', data.token);
 
         // Reset 2FA state
         requires2FA.value = false;
@@ -138,7 +138,7 @@ export const useUserStore = defineStore('user', () => {
     try {
       currentUser.value = null;
       token.value = null;
-      localStorage.removeItem('controlCenter_auth_token');
+      localStorage.removeItem('authToken');
       // Reset 2FA state
       requires2FA.value = false;
       verificationToken.value = null;

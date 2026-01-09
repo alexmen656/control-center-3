@@ -352,7 +352,7 @@ export default defineComponent({
 
     const saveKey = async () => {
       try {
-        const token = localStorage.getItem('controlCenter_auth_token');
+        const token = localStorage.getItem('authToken');
         
         if (isEditingKey.value) {
           // Update existing key

@@ -55,7 +55,7 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string; repo?: string }) => {
         try {
-          const token = localStorage.getItem('controlCenter_auth_token');
+          const token = localStorage.getItem('authToken');
           const response = await axios.get('github_api.php', {
             params: {
               action: 'getCommits',
@@ -90,7 +90,7 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const token = localStorage.getItem('controlCenter_auth_token');
+          const token = localStorage.getItem('authToken');
           const response = await axios.get('github_api.php', {
             params: {
               action: 'getPullRequests',
@@ -126,7 +126,7 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const token = localStorage.getItem('controlCenter_auth_token');
+          const token = localStorage.getItem('authToken');
           const response = await axios.get('github_api.php', {
             params: {
               action: 'getIssues',
@@ -163,7 +163,7 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string; period?: number }) => {
         try {
-          const token = localStorage.getItem('controlCenter_auth_token');
+          const token = localStorage.getItem('authToken');
           const response = await axios.get('github_api.php', {
             params: {
               action: 'getCommits',
@@ -219,7 +219,7 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string; limit?: number }) => {
         try {
-          const token = localStorage.getItem('controlCenter_auth_token');
+          const token = localStorage.getItem('authToken');
           const response = await axios.get('github_api.php', {
             params: {
               action: 'getCommits',
@@ -323,7 +323,7 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const token = localStorage.getItem('controlCenter_auth_token');
+          const token = localStorage.getItem('authToken');
           const response = await axios.get('github_api.php', {
             params: {
               action: 'getPullRequests',

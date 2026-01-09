@@ -6,13 +6,23 @@ import PageBuilder from '@/composables/PageBuilder';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import DynamicModal from '@/Components/Modals/DynamicModal.vue';
+import DynamicContentInserter from '@/Components/PageBuilder/DynamicContent/DynamicContentInserter.vue';
 import { usePageBuilderStateStore } from '@/stores/page-builder-state';
 import { useMediaLibraryStore } from '@/stores/media-library';
 import tailwindColors from '@/utils/builder/tailwaind-colors'; // Importiere die tailwind-colors
+import { 
+  hasDynamicContent, 
+  hasDynamicContentSyntax,
+  hasDynamicContentBadges,
+  convertDynamicContentToBadges, 
+  convertBadgesToDynamicContent,
+  getDynamicBadgeStyles 
+} from '@/utils/builder/dynamic-content-parser';
 
 const mediaLibraryStore = useMediaLibraryStore();
 const pageBuilderStateStore = usePageBuilderStateStore();
 const showModalUrl = ref(false);
+const showDynamicContentModal = ref(false);
 
 // use dynamic model
 const typeModal = ref('');
@@ -48,16 +58,22 @@ const linkUnderlineEnabled = ref(true);
 
 // Bereite den Inhalt für den Editor vor - diese Funktion wird vor der Editor-Initialisierung aufgerufen
 const prepareEditorContent = () => {
+  let content = '';
   if (getSelectedTextElement.value) {
     // Wenn ein individuelles Text-Element ausgewählt ist, dessen Inhalt verwenden
-    initialContent.value = getSelectedTextElement.value.innerHTML || '';
+    content = getSelectedTextElement.value.innerHTML || '';
   } else if (getElement.value) {
     // Fallback zum gesamten Element
-    initialContent.value = getElement.value.innerHTML || '';
-  } else {
-    // Leerer Fallback
-    initialContent.value = '';
+    content = getElement.value.innerHTML || '';
   }
+  
+  // Konvertiere Dynamic Content Badges zurück zu {{syntax}} für Bearbeitung im Editor
+  // TipTap sollte die {{...}} Syntax direkt anzeigen, nicht die Badges
+  if (content && hasDynamicContentBadges(content)) {
+    content = convertBadgesToDynamicContent(content);
+  }
+  
+  initialContent.value = content;
   return initialContent.value;
 };
 
@@ -172,14 +188,22 @@ const toggleLinkUnderline = () => {
 
 // Neue Methode, die den Inhalt aus dem richtigen Element holt
 const getContentFromActiveElement = () => {
+  let content = '';
   if (getSelectedTextElement.value) {
     // Wenn ein individuelles Text-Element ausgewählt ist, dessen Inhalt verwenden
-    return getSelectedTextElement.value.innerHTML;
+    content = getSelectedTextElement.value.innerHTML;
   } else if (getElement.value) {
     // Fallback zum gesamten Element
-    return getElement.value.innerHTML;
+    content = getElement.value.innerHTML;
   }
-  return '';
+  
+  // Konvertiere Dynamic Content Badges zurück zu {{syntax}} für Bearbeitung im Editor
+  // TipTap sollte die {{...}} Syntax direkt anzeigen, nicht die Badges
+  if (content && hasDynamicContentBadges(content)) {
+    content = convertBadgesToDynamicContent(content);
+  }
+  
+  return content;
 };
 
 // Setze die EditorContent initial und zukünftig ohne p-Tags für Link-Elemente
@@ -325,6 +349,31 @@ onMounted(() => {
   }
 });
 
+// Sync element changes to component store
+const syncElementToComponent = (element) => {
+  if (!element) return;
+  
+  // Find the parent section with data-componentid
+  const section = element.closest('section[data-componentid]');
+  if (!section) return;
+  
+  const componentId = section.dataset.componentid;
+  if (!componentId) return;
+  
+  // Update the component's html_code in the store
+  const components = pageBuilderStateStore.getComponents;
+  if (!components || !Array.isArray(components)) return;
+  
+  const componentIndex = components.findIndex(c => c.id === componentId);
+  if (componentIndex === -1) return;
+  
+  // Update the html_code with current DOM state
+  components[componentIndex].html_code = section.outerHTML;
+  
+  // Trigger reactivity by setting components again
+  pageBuilderStateStore.setComponents([...components]);
+};
+
 // Angepasste handleTextInput Funktion
 const handleTextSave = async () => {
   if (!editor.value) return;
@@ -386,17 +435,30 @@ const handleTextSave = async () => {
         } else {
           // Fallback: Wenn kein Link gefunden wurde, nehme den gesamten Inhalt
           // Entferne p-Tags falls vorhanden
-          const content = tempContainer.innerHTML;
+          let content = tempContainer.innerHTML;
           const pStart = content.indexOf('<p>');
           const pEnd = content.lastIndexOf('</p>');
           
           if (pStart === 0 && pEnd > 0) {
             // Extrahiere den Inhalt zwischen p-Tags
-            element.innerHTML = content.substring(3, pEnd);
-          } else {
-            element.innerHTML = content;
+            content = content.substring(3, pEnd);
           }
+          
+          // Konvertiere Dynamic Content {{syntax}} zurück zu Badges für die Anzeige im Page Builder
+          if (hasDynamicContentSyntax(content)) {
+            const contentData = pageBuilderStateStore.contentTables ? 
+              pageBuilderStateStore.contentTables.reduce((acc, table) => {
+                acc[table.name] = { data: table.data || [], columns: table.columns || [] };
+                return acc;
+              }, {}) : null;
+            content = convertDynamicContentToBadges(content, contentData);
+          }
+          
+          element.innerHTML = content;
         }
+        
+        // Sync changes to component store
+        syncElementToComponent(element);
         
         // Schließe den Modal-Dialog
         pageBuilderStateStore.setShowModalTipTap(false);
@@ -487,8 +549,21 @@ const handleTextSave = async () => {
       // Aktualisiere den Inhalt mit der bereinigten Version
       newContent = tempContainer.innerHTML;
       
+      // Konvertiere Dynamic Content {{syntax}} zurück zu Badges für die Anzeige im Page Builder
+      if (hasDynamicContentSyntax(newContent)) {
+        const contentData = pageBuilderStateStore.contentTables ? 
+          pageBuilderStateStore.contentTables.reduce((acc, table) => {
+            acc[table.name] = { data: table.data || [], columns: table.columns || [] };
+            return acc;
+          }, {}) : null;
+        newContent = convertDynamicContentToBadges(newContent, contentData);
+      }
+      
       // Aktualisiere das Element mit dem bereinigten Inhalt
       element.innerHTML = newContent;
+      
+      // Sync changes to component store
+      syncElementToComponent(element);
       
       // Schließe den Modal-Dialog
       pageBuilderStateStore.setShowModalTipTap(false);
@@ -507,6 +582,16 @@ const handleTextSave = async () => {
           extractedContent += p.innerHTML;
         });
         newContent = extractedContent;
+      }
+      
+      // Konvertiere Dynamic Content {{syntax}} zurück zu Badges für die Anzeige im Page Builder
+      if (hasDynamicContentSyntax(newContent)) {
+        const contentData = pageBuilderStateStore.contentTables ? 
+          pageBuilderStateStore.contentTables.reduce((acc, table) => {
+            acc[table.name] = { data: table.data || [], columns: table.columns || [] };
+            return acc;
+          }, {}) : null;
+        newContent = convertDynamicContentToBadges(newContent, contentData);
       }
       
       pageBuilder.handleTextInput(newContent);
@@ -612,6 +697,50 @@ watch(() => pageBuilderStateStore.getShowModalTipTap, (newValue) => {
     });
   }
 });
+
+// ============================================
+// Dynamic Content Functions
+// ============================================
+
+// Open dynamic content inserter modal
+const openDynamicContentModal = () => {
+  showDynamicContentModal.value = true;
+};
+
+// Close dynamic content inserter modal
+const closeDynamicContentModal = () => {
+  showDynamicContentModal.value = false;
+};
+
+// Insert dynamic content syntax at cursor position
+const insertDynamicContent = (syntax) => {
+  if (!editor.value) return;
+  
+  // Insert the syntax at the current cursor position
+  editor.value.chain().focus().insertContent(syntax).run();
+  
+  closeDynamicContentModal();
+};
+
+// Convert dynamic content badges back to syntax before saving
+const processDynamicContentForSave = (html) => {
+  // Convert any badge elements back to {{syntax}}
+  return convertBadgesToDynamicContent(html);
+};
+
+// Convert dynamic content syntax to badges for display in editor
+const processDynamicContentForDisplay = (html) => {
+  if (!hasDynamicContent(html)) return html;
+  
+  // Get content data from store for validation
+  const contentData = pageBuilderStateStore.contentTables ? 
+    pageBuilderStateStore.contentTables.reduce((acc, table) => {
+      acc[table.name] = { data: table.data || [], columns: table.columns || [] };
+      return acc;
+    }, {}) : null;
+  
+  return convertDynamicContentToBadges(html, contentData);
+};
 </script>
 <template>
   <DynamicModal
@@ -795,6 +924,18 @@ watch(() => pageBuilderStateStore.getShowModalTipTap, (newValue) => {
                 <span>Textfarbe</span>
               </button>
             </div>
+
+            <!-- Dynamic Content Button -->
+            <div class="px-2 flex items-center justify-start gap-2">
+              <button
+                @click="openDynamicContentModal"
+                type="button"
+                class="text-[12.5px] gap-2 text-nowrap pl-2 pr-3 w-full h-10 cursor-pointer rounded-full flex items-center border-none justify-center bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 focus-visible:ring-0"
+              >
+                <span class="material-symbols-outlined"> database </span>
+                <span>Dynamic Content</span>
+              </button>
+            </div>
           </div>
           <div>
             <div>
@@ -834,4 +975,11 @@ watch(() => pageBuilderStateStore.getShowModalTipTap, (newValue) => {
       </div>
     </div>
   </div>
+
+  <!-- Dynamic Content Inserter Modal -->
+  <DynamicContentInserter
+    :show="showDynamicContentModal"
+    @close="closeDynamicContentModal"
+    @insert="insertDynamicContent"
+  />
 </template>

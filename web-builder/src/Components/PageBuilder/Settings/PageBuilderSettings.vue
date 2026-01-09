@@ -73,7 +73,21 @@ const cleanHtmlForExport = function(html) {
     }
   });
   
-  // 2. Entferne alle Editor-spezifischen Attribute von allen Elementen
+  // 2. Entferne Dynamic Content Badges und behalte nur die Syntax
+  tempContainer.querySelectorAll('[data-cc-dynamic="true"]').forEach(badge => {
+    const tableName = badge.getAttribute('data-cc-table');
+    const columnName = badge.getAttribute('data-cc-column');
+    const index = badge.getAttribute('data-cc-index');
+    
+    if (tableName && columnName && index !== null) {
+      // Ersetze das Badge mit der Original-Syntax
+      const syntax = `{{${tableName}.${columnName}[${index}]}}`;
+      const textNode = document.createTextNode(syntax);
+      badge.parentNode.replaceChild(textNode, badge);
+    }
+  });
+  
+  // 3. Entferne alle Editor-spezifischen Attribute von allen Elementen
   // Statt [data-*] (ungültiger Selektor) verwenden wir alle Elemente und prüfen ihre Attribute
   const allElements = tempContainer.querySelectorAll('*');
   allElements.forEach(element => {
@@ -85,7 +99,11 @@ const cleanHtmlForExport = function(html) {
       'data-header-logo',
       'data-header-links',
       'data-header-actions',
-      'data-header-mobile'
+      'data-header-mobile',
+      'data-cc-dynamic',
+      'data-cc-table',
+      'data-cc-column',
+      'data-cc-index'
     ];
     
     // Entferne die spezifischen Editor-Attribute
@@ -107,6 +125,9 @@ const cleanHtmlForExport = function(html) {
     if (element.id === 'page-builder-editor-editable-area') {
       element.removeAttribute('id');
     }
+    
+    // Entferne Dynamic Badge CSS-Klassen
+    element.classList.remove('cc-dynamic-badge', 'cc-dynamic-badge-valid', 'cc-dynamic-badge-invalid');
   });
   
   // Gib den bereinigten HTML-Content zurück

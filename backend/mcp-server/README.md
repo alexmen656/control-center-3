@@ -556,7 +556,7 @@ Für HTTP-basierte MCP-Clients:
 ## JWT Token bekommen
 
 1. Login im Control Center
-2. Token aus localStorage: `localStorage.getItem('controlCenter_auth_token')`
+2. Token aus localStorage: `localStorage.getItem('authToken')`
 3. Oder über Login-API:
 
 ```javascript

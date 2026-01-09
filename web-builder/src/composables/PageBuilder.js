@@ -9,12 +9,13 @@ import { computed, ref, nextTick } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
 import { delay } from '@/composables/delay';
 import { useFetch } from '@/composables/vueFetch';
-import { 
-  markEditableTextElements, 
-  selectTextElementForEditing, 
-  updateTextElementContent, 
-  clearTextElementSelection 
+import {
+  markEditableTextElements,
+  selectTextElementForEditing,
+  updateTextElementContent,
+  clearTextElementSelection
 } from '@/utils/builder/text-element-selector.js';
+import { convertDynamicContentToBadges, convertBadgesToDynamicContent, hasDynamicContent } from '@/utils/builder/dynamic-content-parser.js';
 
 class PageBuilder {
   constructor(pageBuilderStateStore, mediaLibraryStore) {
@@ -39,10 +40,10 @@ class PageBuilder {
     this.timer = null;
     this.pageBuilderStateStore = pageBuilderStateStore;
     this.mediaLibraryStore = mediaLibraryStore;
-    
+
     // API client for backend communication
     this.api = useFetch();
-    
+
     // Current page ID for API calls (default to page ID 1 for now)
     this.currentPageId = ref(1);
 
@@ -175,7 +176,49 @@ class PageBuilder {
     this.pageBuilderStateStore[mutationName](elementClass);
     this.pageBuilderStateStore.setElement(this.getElement.value);
 
+    // Synchronize DOM changes to component store
+    this.#syncCurrentElementToComponent();
+
     return currentCSS;
+  }
+
+  /**
+   * Bereinigt HTML für das Speichern in der Datenbank
+   * Konvertiert Dynamic Content Badges zurück zu {{}} Syntax
+   * @param {string} html - Das zu bereinigende HTML
+   * @returns {string} - Bereinigtes HTML mit {{}} Syntax statt Badges
+   */
+  #cleanHtmlForStorage(html) {
+    if (!html) return html;
+
+    // Konvertiere Badges zurück zu {{}} Syntax für die Datenbank
+    return convertBadgesToDynamicContent(html);
+  }
+
+  // Sync current element's changes to the component in store
+  #syncCurrentElementToComponent() {
+    if (!this.getElement.value) return;
+
+    // Find the parent section with data-componentid
+    const section = this.getElement.value.closest('section[data-componentid]');
+    if (!section) return;
+
+    const componentId = section.dataset.componentid;
+    if (!componentId) return;
+
+    // Update the component's html_code in the store
+    const components = this.getComponents.value;
+    if (!components || !Array.isArray(components)) return;
+
+    const componentIndex = components.findIndex(c => c.id === componentId);
+    if (componentIndex === -1) return;
+
+    // Update the html_code with current DOM state
+    // Bereinige das HTML für die Datenbank (Badges → {{}})
+    components[componentIndex].html_code = this.#cleanHtmlForStorage(section.outerHTML);
+
+    // Trigger reactivity by setting components again
+    this.pageBuilderStateStore.setComponents([...components]);
   }
 
   #applyHelperCSSToElements(element) {
@@ -285,7 +328,12 @@ class PageBuilder {
     const pagebuilder = document.querySelector('#pagebuilder');
 
     if (!pagebuilder) return;
+    //Konvertiere Dynamic Content Syntax zu Badges in allen Komponenten
+    document.querySelectorAll('#page-builder-editor-editable-area').forEach(container => {
+      this.convertDynamicContentInContainer(container);
+    });
 
+    // 
     // Markiere bearbeitbare Text-Elemente in allen Komponenten
     document.querySelectorAll('#page-builder-editor-editable-area').forEach(container => {
       markEditableTextElements(container);
@@ -297,12 +345,12 @@ class PageBuilder {
       if (!link.hasAttribute('data-original-href') && link.hasAttribute('href')) {
         // Original-URL speichern
         link.setAttribute('data-original-href', link.getAttribute('href'));
-        
+
         // Speichere auch das target-Attribut, falls vorhanden
         if (link.hasAttribute('target')) {
           link.setAttribute('data-original-target', link.getAttribute('target'));
         }
-        
+
         // Temporäres href für den Editor
         link.setAttribute('href', 'javascript:void(0)');
         // Entferne target temporär im Editor, um Bildschirmwechsel zu verhindern
@@ -346,7 +394,7 @@ class PageBuilder {
     pagebuilder.querySelectorAll('[data-editable-text]').forEach(element => {
       if (!this.elementsWithListeners.has(element)) {
         this.elementsWithListeners.add(element);
-        element.addEventListener('dblclick', (e) => 
+        element.addEventListener('dblclick', (e) =>
           this.handleTextElementClick(e, element)
         );
       }
@@ -358,13 +406,13 @@ class PageBuilder {
    */
   initializeHeaderElements = () => {
     if (!this.headerUtils) return;
-    
+
     const pagebuilder = document.querySelector('#pagebuilder');
     if (!pagebuilder) return;
-    
+
     // Find all header components
     const headerElements = pagebuilder.querySelectorAll('section header');
-    
+
     // Initialize each header with interactive features
     headerElements.forEach(header => {
       if (!this.elementsWithListeners.has(header)) {
@@ -381,26 +429,26 @@ class PageBuilder {
    */
   customizeHeaderComponent = (headerElement, options = {}) => {
     if (!this.headerUtils || !headerElement) return;
-    
+
     // Add navigation links
     if (options.links && Array.isArray(options.links)) {
       options.links.forEach(link => {
         this.headerUtils.addNavigationLink(headerElement, link);
       });
     }
-    
+
     // Add dropdown menus
     if (options.dropdowns && Array.isArray(options.dropdowns)) {
       options.dropdowns.forEach(dropdown => {
         this.headerUtils.addDropdownMenu(headerElement, dropdown);
       });
     }
-    
+
     // Change logo
     if (options.logo) {
       this.headerUtils.changeLogo(headerElement, options.logo);
     }
-    
+
     // Add action buttons
     if (options.buttons && Array.isArray(options.buttons)) {
       options.buttons.forEach(button => {
@@ -417,7 +465,7 @@ class PageBuilder {
     if (this.showRunningMethodLogs) {
       console.log('synchronizeDOMAndComponents');
     }
-    
+
     if (!this.getComponents.value) {
       this.pageBuilderStateStore.setComponents([]);
     }
@@ -432,7 +480,8 @@ class PageBuilder {
       );
 
       if (section) {
-        component.html_code = section.outerHTML;
+        // Bereinige das HTML für die Datenbank (Badges → {{}})
+        component.html_code = this.#cleanHtmlForStorage(section.outerHTML);
       }
     });
 
@@ -453,7 +502,7 @@ class PageBuilder {
     await new Promise((resolve) => {
       resolve();
     });
-    
+
     // After DOM sync, update components in database
     await this.saveComponentsToBackend();
   }
@@ -526,7 +575,8 @@ class PageBuilder {
     clonedComponent.id = section.dataset.componentid;
 
     // Update the HTML content of the clonedComponent with the modified HTML
-    clonedComponent.html_code = doc.querySelector('section').outerHTML;
+    // Bereinige das HTML für die Datenbank (Badges → {{}}) - für den Fall, dass Templates bereits Badges enthalten
+    clonedComponent.html_code = this.#cleanHtmlForStorage(doc.querySelector('section').outerHTML);
 
     // return to the cloned element to be dropped
     return clonedComponent;
@@ -804,13 +854,13 @@ class PageBuilder {
 
     // Bestimme das korrekte Zielelement für die Textfarbe
     let targetElement = currentElement;
-    
+
     // Wenn das aktuelle Element ein div oder anderes Container-Element ist,
     // suche nach dem ersten Text-Element innerhalb dieses Containers
     if (this.structuringTags.includes(currentElement.tagName)) {
       // Liste der Heading- und Text-Elemente, auf die wir die Farbe anwenden möchten
       const textTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'SPAN', 'A'];
-      
+
       // Suche nach dem ersten direkten Kind, das ein Text-Element ist
       for (const child of currentElement.children) {
         if (textTags.includes(child.tagName)) {
@@ -848,7 +898,7 @@ class PageBuilder {
 
       // Aktualisiere den Store mit der neuen Farbklasse
       this.pageBuilderStateStore.setTextColor(elementClass);
-      
+
       // Aktualisiere das Element im Store, falls wir ein anderes Zielelement verwendet haben
       if (targetElement !== currentElement) {
         this.pageBuilderStateStore.setElement(targetElement);
@@ -1045,7 +1095,7 @@ class PageBuilder {
     }
 
     this.pageBuilderStateStore.setComponents([]);
-    
+
     // Delete all components from backend
     this.api.post('components.php', [], { page_id: this.getPageIdFromStore() })
       .catch(error => console.error('Failed to delete all components:', error));
@@ -1077,7 +1127,7 @@ class PageBuilder {
 
     this.pageBuilderStateStore.setComponent(null);
     this.pageBuilderStateStore.setElement(null);
-    
+
     // Delete the component from backend
     this.deleteComponentFromBackend(componentId)
       .catch(error => console.error('Failed to delete component:', error));
@@ -1170,6 +1220,9 @@ class PageBuilder {
       );
 
       this.getElement.value.innerHTML = textContentVueModel;
+
+      // Sync DOM changes to component store
+      this.#syncCurrentElementToComponent();
     }
 
     this.ensureTextAreaHasContent();
@@ -1231,14 +1284,14 @@ class PageBuilder {
       .forEach((section) => {
         // Zuerst eine Kopie des Abschnitts erstellen, um die Original-URLs zu bewahren
         const sectionClone = section.cloneNode(true);
-        
+
         // Links im geklonten Abschnitt wiederherstellen
         sectionClone.querySelectorAll('a').forEach(link => {
           // Original-URL wiederherstellen, falls gespeichert
           if (link.hasAttribute('data-original-href')) {
             link.href = link.getAttribute('data-original-href');
           }
-          
+
           // Original-Target wiederherstellen, falls gespeichert
           if (link.hasAttribute('data-original-target')) {
             link.target = link.getAttribute('data-original-target');
@@ -1291,7 +1344,7 @@ class PageBuilder {
     await this.nextTick;
     return this.saveComponentsToBackend();
   }
-  
+
   async removeItemComponentsLocalStorageUpdate() {
     if (this.showRunningMethodLogs) {
       console.log('removeItemComponentsLocalStorageUpdate');
@@ -1309,7 +1362,7 @@ class PageBuilder {
 
     return this.loadComponentsFromBackend();
   }
-  
+
   async areComponentsStoredInLocalStorageUpdate() {
     if (this.showRunningMethodLogs) {
       console.log('areComponentsStoredInLocalStorageUpdate -> loadComponentsFromBackend');
@@ -1322,62 +1375,81 @@ class PageBuilder {
     if (this.showRunningMethodLogs) {
       console.log('loadComponentsFromBackend');
     }
-    
+
     try {
       // Aktualisiere die currentPageId mit dem Wert aus dem Store
       const pageId = this.getPageIdFromStore();
       console.log('Loading components for page ID:', pageId);
-      
+
       // Stelle sicher, dass eine gültige Seiten-ID verwendet wird (keine 0 oder leere ID)
       if (!pageId || pageId === 0) {
         console.error('Ungültige Seiten-ID beim Laden von Komponenten:', pageId);
         return false;
       }
-      
+
       const components = await this.api.get('components.php', { page_id: pageId });
       console.log('Geladene Komponenten für Seite', pageId, ':', components);
-      
+
       if (components && Array.isArray(components)) {
         this.pageBuilderStateStore.setComponents(components);
         return true;
       }
-      
+
       return false;
     } catch (error) {
       console.error('Failed to load components from backend:', error);
       return false;
     }
   }
-  
+
   async saveComponentsToBackend() {
     if (this.showRunningMethodLogs) {
       console.log('saveComponentsToBackend');
     }
-    
+
     await this.nextTick;
-    
+
     try {
       // Aktualisiere die currentPageId mit dem Wert aus dem Store
       const pageId = this.getPageIdFromStore();
       console.log('Saving components for page ID:', pageId);
-      
+
       // Stelle sicher, dass eine gültige Seiten-ID verwendet wird (keine 0 oder leere ID)
       if (!pageId || pageId === 0) {
         console.error('Ungültige Seiten-ID beim Speichern von Komponenten:', pageId);
         return false;
       }
-      
-      // Hole die Komponenten aus dem Store
+
       const components = this.getComponents.value || [];
-      console.log('Speichere', components.length, 'Komponenten für Seite', pageId);
-      
-      // Gib eine Warnung aus, wenn keine Komponenten zu speichern sind
+
       if (components.length === 0) {
         console.warn('Keine Komponenten zum Speichern für Seite', pageId);
       }
-      
-      // Save all components
-      await this.api.post('components.php', components, { page_id: pageId });
+
+      if (components.length > 0) {
+        console.log('📋 First component structure:', components[0]);
+        console.log('📋 Component keys:', Object.keys(components[0]));
+      }
+
+      const componentsToSave = components.map((component, index) => {
+        console.log(`Processing component ${index}:`, {
+          hasHtmlCode: !!component.html_code,
+          htmlLength: component.html_code?.length || 0,
+          id: component.id
+        });
+
+        const componentCopy = { ...component };
+        if (componentCopy.html_code) {
+          const convertedHtml = convertBadgesToDynamicContent(componentCopy.html_code);
+          componentCopy.html_code = convertedHtml;
+        } else {
+          console.log(`⚠️  Component ${index}: No html_code property found`);
+        }
+        return componentCopy;
+      });
+
+      console.log('💾 Saving components to backend...');
+      await this.api.post('components.php', componentsToSave, { page_id: pageId });
       console.log('Komponenten erfolgreich für Seite', pageId, 'gespeichert');
       return true;
     } catch (error) {
@@ -1385,7 +1457,7 @@ class PageBuilder {
       return false;
     }
   }
-  
+
   // Verbesserte Methode zum Abrufen der Page-ID aus dem Store
   getPageIdFromStore() {
     // Versuche zuerst die pageBuilderStateStore.currentPageId direkt zu holen
@@ -1395,7 +1467,7 @@ class PageBuilder {
         return pageId;
       }
     }
-    
+
     // Falle zurück auf die dynamischen Getter wenn nötig
     if (this.pageBuilderStateStore && this.pageBuilderStateStore.getCurrentPageId) {
       const storePageId = this.pageBuilderStateStore.getCurrentPageId;
@@ -1408,7 +1480,7 @@ class PageBuilder {
         return parseInt(storePageId.value, 10) || this.currentPageId.value;
       }
     }
-    
+
     // Fallback auf die interne Variable
     return this.currentPageId.value;
   }
@@ -1417,11 +1489,11 @@ class PageBuilder {
     if (this.showRunningMethodLogs) {
       console.log('saveComponentToBackend');
     }
-    
+
     try {
       // Aktualisiere die currentPageId mit dem Wert aus dem Store
       const pageId = this.getPageIdFromStore();
-      
+
       await this.api.put('components.php', component, { page_id: pageId });
       return true;
     } catch (error) {
@@ -1429,19 +1501,19 @@ class PageBuilder {
       return false;
     }
   }
-  
+
   async deleteComponentFromBackend(componentId) {
     if (this.showRunningMethodLogs) {
       console.log('deleteComponentFromBackend');
     }
-    
+
     try {
       // Aktualisiere die currentPageId mit dem Wert aus dem Store
       const pageId = this.getPageIdFromStore();
-      
-      await this.api.del('components.php', { 
+
+      await this.api.del('components.php', {
         page_id: pageId,
-        component_id: componentId 
+        component_id: componentId
       });
       return true;
     } catch (error) {
@@ -1726,16 +1798,42 @@ class PageBuilder {
   }
 
   /**
+   * Konvertiert Dynamic Content Syntax in Badges innerhalb eines Containers
+   * @param {HTMLElement} container - Container-Element mit potenziellem Dynamic Content
+   */
+  convertDynamicContentInContainer(container) {
+    if (!container) return;
+
+    // Finde alle Text-Elemente, die Dynamic Content enthalten könnten
+    const textElements = container.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, li, a, strong, em, label, button');
+
+    textElements.forEach(element => {
+      // Prüfe, ob das Element Dynamic Content Syntax enthält
+      if (hasDynamicContent(element.innerHTML)) {
+        // Hole Content-Daten aus dem Store für Validierung
+        const contentData = this.pageBuilderStateStore.contentTables ?
+          this.pageBuilderStateStore.contentTables.reduce((acc, table) => {
+            acc[table.name] = { data: table.data || [], columns: table.columns || [] };
+            return acc;
+          }, {}) : null;
+
+        // Konvertiere die Syntax zu Badges
+        element.innerHTML = convertDynamicContentToBadges(element.innerHTML, contentData);
+      }
+    });
+  }
+
+  /**
    * Markiert alle einzeln bearbeitbaren Text-Elemente in einer Komponente
    * @param {HTMLElement} component - Die zu bearbeitende Komponente
    */
   markTextElementsInComponent(component) {
     if (!component) return;
-    
+
     // Finde das eigentliche Container-Element in der Komponente
     const container = component.querySelector('[id="page-builder-editor-editable-area"]');
     if (!container) return;
-    
+
     markEditableTextElements(container);
   }
 
@@ -1750,12 +1848,24 @@ class PageBuilder {
     }
 
     event.stopPropagation();
-    
+
+    // Verhindere die Auswahl von Dynamic Content Badges
+    if (element.classList.contains('cc-dynamic-badge') || element.hasAttribute('data-cc-dynamic')) {
+      console.log('Dynamic Content Badges können nicht direkt bearbeitet werden');
+      return;
+    }
+
+    // Prüfe, ob das Element ein Kind eines Dynamic Content Badges ist
+    if (element.closest('.cc-dynamic-badge, [data-cc-dynamic]')) {
+      console.log('Elemente innerhalb von Dynamic Content Badges können nicht bearbeitet werden');
+      return;
+    }
+
     // Sicherstellen, dass es sich um ein bearbeitbares Text-Element handelt
     if (!element.hasAttribute('data-editable-text')) return;
 
     selectTextElementForEditing(element, this.pageBuilderStateStore);
-    
+
     // Öffne den Text-Editor für dieses Element
     this.pageBuilderStateStore.setShowModalTipTap(true);
   };
@@ -1767,7 +1877,7 @@ class PageBuilder {
     if (this.showRunningMethodLogs) {
       console.log('clearTextElementSelection');
     }
-    
+
     clearTextElementSelection(this.pageBuilderStateStore);
   }
 
@@ -1782,18 +1892,18 @@ class PageBuilder {
     }
 
     const targetElement = element || this.pageBuilderStateStore.getSelectedTextElement;
-    
+
     if (!targetElement) return;
-    
+
     // Hole die ursprünglichen Tag-Informationen aus dem Store
     const originalTag = this.pageBuilderStateStore.getSelectedElementOriginalTag;
-    
+
     // Aktualisiere den Inhalt und behalte die Struktur bei
     const updatedElement = updateTextElementContent(targetElement, content, originalTag);
-    
+
     // Hebe die Auswahl auf
     this.clearTextElementSelection();
-    
+
     return updatedElement;
   }
 }

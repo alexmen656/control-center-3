@@ -104,10 +104,27 @@ function listForms($project)
             }
         }
 
+        // Generate table name (same logic as form.php)
+        $formTitle = $formData['title'] ?? $row['form_name'];
+        $tableName = str_replace(["-", " ", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "_", "a", "a", "u", "u", "o", "o"], strtolower($project . "_" . $formTitle));
+
+        // Get entry count from the form's data table
+        $entryCount = 0;
+        $tableExists = query("SHOW TABLES LIKE '$tableName'");
+        if ($tableExists && mysqli_num_rows($tableExists) > 0) {
+            $countResult = query("SELECT COUNT(*) as count FROM `$tableName`");
+            if ($countResult) {
+                $countRow = mysqli_fetch_assoc($countResult);
+                $entryCount = intval($countRow['count']);
+            }
+        }
+
         $forms[] = [
             'id' => $row['form_id'],
             'name' => $row['form_name'],
-            'title' => $formData['title'] ?? $row['form_name'],
+            'title' => $formTitle,
+            'table_name' => $tableName,
+            'entry_count' => $entryCount,
             'description' => $formData['description'] ?? '',
             'fields' => $fields,
             'fieldCount' => count($fields),

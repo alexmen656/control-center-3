@@ -34,7 +34,7 @@ export function useFetch(baseUrl = 'https://alex.polan.sk/control-center/web-bui
 
       // Füge Authorization-Header hinzu, wenn ein Token im localStorage vorhanden ist
       // oder wenn es als Parameter übergeben wurde
-      const token = options.token || localStorage.getItem('controlCenter_auth_token');
+      const token = options.token || localStorage.getItem('authToken');
       if (token) {
         options.headers.Authorization = token;
       }
@@ -196,7 +196,7 @@ const vueFetch = async (url, options = {}) => {
 
     // Füge Authorization-Header hinzu, wenn ein Token im localStorage vorhanden ist
     // oder wenn es als Parameter übergeben wurde
-    const token = options.token || localStorage.getItem('controlCenter_auth_token');
+    const token = options.token || localStorage.getItem('authToken');
     if (token) {
       options.headers.Authorization = token;
     }

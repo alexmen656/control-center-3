@@ -89,8 +89,8 @@ foreach ($pages as $page) {
         }
     }
     
-    // Generate HTML (pass projectSlug for CC Forms integration)
-    $htmlContent = generatePageHtml($pageTitle, $pageMetaDescription, $components, $projectSlug);
+    // Generate HTML (pass projectSlug for CC Forms integration and ccProjectId for dynamic content)
+    $htmlContent = generatePageHtml($pageTitle, $pageMetaDescription, $components, $projectSlug, $ccProjectId);
     
     // Determine filename (index.html for home/first page)
     $filename = ($page['is_home'] || $page['id'] === $firstPage['id']) 
@@ -217,13 +217,151 @@ sendResponse($response);
 // ============================================
 
 /**
+ * Process dynamic content syntax in HTML
+ * Replaces {{table_name.column_name[index]}} with actual content from CC Forms database tables
+ * 
+ * @param string $html - HTML content with dynamic content syntax
+ * @param int $ccProjectId - Control Center project ID for content lookup
+ * @return string - HTML with resolved dynamic content
+ */
+function processDynamicContent($html, $ccProjectId) {
+    // Pattern to match {{table_name.column_name[index]}}
+    $pattern = '/\{\{([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\[\s*(\d+)\s*\]\}\}/';
+    
+    // Find all matches first to batch database queries
+    preg_match_all($pattern, $html, $matches, PREG_SET_ORDER);
+    
+    if (empty($matches)) {
+        return $html;
+    }
+    
+    // Group by table name for efficient querying
+    $tableQueries = [];
+    foreach ($matches as $match) {
+        $tableName = $match[1];
+        $columnName = $match[2];
+        $index = intval($match[3]);
+        
+        if (!isset($tableQueries[$tableName])) {
+            $tableQueries[$tableName] = [];
+        }
+        $tableQueries[$tableName][] = [
+            'fullMatch' => $match[0],
+            'column' => $columnName,
+            'index' => $index
+        ];
+    }
+    
+    // Fetch content for each table (CC Forms tables)
+    $resolvedContent = [];
+    foreach ($tableQueries as $tableName => $columns) {
+        $tableData = getCCFormsTableData($tableName);
+        
+        foreach ($columns as $colInfo) {
+            $key = $colInfo['fullMatch'];
+            $value = getCCFormsColumnValue($tableData, $colInfo['column'], $colInfo['index']);
+            $resolvedContent[$key] = $value;
+        }
+    }
+    
+    // Replace all dynamic content in HTML
+    foreach ($resolvedContent as $syntax => $value) {
+        $html = str_replace($syntax, htmlspecialchars($value, ENT_QUOTES, 'UTF-8'), $html);
+    }
+    
+    return $html;
+}
+
+/**
+ * Get data from CC Forms table
+ * CC Forms creates tables with naming convention: {project}_{form_name}
+ * 
+ * @param string $tableName - The CC Forms table name (e.g., "myproject_kontaktformular")
+ * @return array - Array of rows from the table
+ */
+function getCCFormsTableData($tableName) {
+    $tableName = escape_string($tableName);
+    
+    // Check if table exists
+    $tableExists = query("SHOW TABLES LIKE '$tableName'");
+    if (!$tableExists || mysqli_num_rows($tableExists) === 0) {
+        return [];
+    }
+    
+    // Get all rows from the CC Forms data table
+    $result = query("SELECT * FROM `$tableName` ORDER BY id ASC");
+    
+    $data = [];
+    if ($result) {
+        while ($row = fetch_assoc($result)) {
+            $data[] = $row;
+        }
+    }
+    
+    return $data;
+}
+
+/**
+ * Get a specific value from CC Forms table data
+ * 
+ * @param array $tableData - Array of rows from getCCFormsTableData
+ * @param string $columnName - Column to get
+ * @param int $index - Row index (0-based)
+ * @return string - The value or empty string if not found
+ */
+function getCCFormsColumnValue($tableData, $columnName, $index) {
+    if (!is_array($tableData) || empty($tableData)) {
+        return '';
+    }
+    
+    if ($index < 0 || $index >= count($tableData)) {
+        return '';
+    }
+    
+    $row = $tableData[$index];
+    
+    if (!isset($row[$columnName])) {
+        return '';
+    }
+    
+    return (string) $row[$columnName];
+}
+
+/**
+ * Remove dynamic content badge HTML elements from output
+ * These badges are editor artifacts and should not appear in published HTML
+ * 
+ * @param string $html - HTML content
+ * @return string - HTML with badges removed
+ */
+function removeDynamicContentBadges($html) {
+    // Remove span elements with data-cc-dynamic attribute
+    // Pattern matches: <span class="cc-dynamic-badge..." data-cc-dynamic="true" ...>content</span>
+    $pattern = '/<span[^>]*data-cc-dynamic="true"[^>]*>[^<]*<\/span>/i';
+    $html = preg_replace($pattern, '', $html);
+    
+    // Also remove any badge style classes that might be left over
+    $html = preg_replace('/\s*class="cc-dynamic-badge[^"]*"/i', '', $html);
+    
+    return $html;
+}
+
+/**
  * Generate HTML page from components
  */
-function generatePageHtml($title, $metaDescription, $components, $projectSlug = '') {
+function generatePageHtml($title, $metaDescription, $components, $projectSlug = '', $ccProjectId = null) {
     $componentsHtml = '';
     foreach ($components as $component) {
         $componentsHtml .= $component['html_code'] . "\n";
     }
+    
+    // Process dynamic content if project ID is available
+    if ($ccProjectId) {
+        $componentsHtml = processDynamicContent($componentsHtml, $ccProjectId);
+    }
+    
+    // Remove any remaining dynamic content badges (editor artifacts)
+    $componentsHtml = removeDynamicContentBadges($componentsHtml);
     
     // Escape special characters for HTML
     $title = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');

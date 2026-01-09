@@ -527,7 +527,7 @@ export default defineComponent({
 
     const loadApiData = async () => {
       try {
-        const token = localStorage.getItem('controlCenter_auth_token');
+        const token = localStorage.getItem('authToken');
         const apiSlug = route.params.apiSlug as string;
         const project = route.params.project as string;
         
@@ -754,7 +754,7 @@ export default defineComponent({
 
     const performRegenerateKey = async () => {
       try {
-        const token = localStorage.getItem('controlCenter_auth_token');
+        const token = localStorage.getItem('authToken');
         
         const response = await fetch('/backend/apis.php', {
           method: 'POST',
@@ -813,7 +813,7 @@ export default defineComponent({
 
     const saveSettings = async () => {
       try {
-        const token = localStorage.getItem('controlCenter_auth_token');
+        const token = localStorage.getItem('authToken');
         
         const response = await fetch('/backend/apis.php', {
           method: 'POST',

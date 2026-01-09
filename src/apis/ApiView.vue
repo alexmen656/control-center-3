@@ -279,7 +279,7 @@ export default defineComponent({
 
     const loadApiData = async () => {
       try {
-        const token = localStorage.getItem('controlCenter_auth_token');
+        const token = localStorage.getItem('authToken');
         // For now, we'll load a mock API since we need the API ID
         // In real implementation, you'd get this from the route or make a separate call
         api.value = {
@@ -415,7 +415,7 @@ export default defineComponent({
 
     const saveEndpoint = async () => {
       try {
-        const token = localStorage.getItem('controlCenter_auth_token');
+        const token = localStorage.getItem('authToken');
         const payload = {
           addEndpoint: true,
           apiId: api.value.id,

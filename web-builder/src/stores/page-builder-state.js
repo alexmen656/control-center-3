@@ -27,6 +27,9 @@ export const usePageBuilderStateStore = defineStore('pageBuilderState', {
     ],
     currentPageId: '2', // Default page_id auf 2 gesetzt
     projectId: 1, // Default project_id
+    
+    // Content Tables for Dynamic Content
+    contentTables: [],
 
     componentArrayAddMethod: null,
     localStorageItemName: null,
@@ -82,6 +85,9 @@ export const usePageBuilderStateStore = defineStore('pageBuilderState', {
     },
     getCurrentPageId(state) {
       return state.currentPageId;
+    },
+    getContentTables(state) {
+      return state.contentTables;
     },
     getComponentArrayAddMethod(state) {
       return state.componentArrayAddMethod;
@@ -232,6 +238,7 @@ export const usePageBuilderStateStore = defineStore('pageBuilderState', {
     setPages(payload) {
       this.pages = payload;
     },
+    
     /**
      * Speichert die aktuelle Seiten-ID im localStorage
      */

@@ -18,6 +18,16 @@ export function markEditableTextElements(container) {
   
   // Jedem Element ein besonderes Attribut geben
   textElements.forEach((element, index) => {
+    // Dynamic Content Badges überspringen - diese sollen nicht bearbeitbar sein
+    if (element.classList.contains('cc-dynamic-badge') || element.hasAttribute('data-cc-dynamic')) {
+      return;
+    }
+    
+    // Dynamic Content Badges in den Elternteilen oder Kindern prüfen
+    if (element.closest('.cc-dynamic-badge, [data-cc-dynamic]')) {
+      return;
+    }
+    
     // Nur direkt bearbeitbare Elemente markieren (keine verschachtelten)
     if (!elementHasEditableParent(element, textElementSelectors)) {
       element.setAttribute('data-editable-text', `text-${Date.now()}-${index}`);
@@ -71,6 +81,18 @@ function captureElementState(element) {
  * @param {Object} pageBuilderStateStore - Store für den PageBuilder-Status
  */
 export function selectTextElementForEditing(element, pageBuilderStateStore) {
+  // Verhindere die Auswahl von Dynamic Content Badges
+  if (element.classList.contains('cc-dynamic-badge') || element.hasAttribute('data-cc-dynamic')) {
+    console.log('Dynamic Content Badges können nicht direkt bearbeitet werden');
+    return;
+  }
+  
+  // Prüfe, ob das Element ein Kind eines Dynamic Content Badges ist
+  if (element.closest('.cc-dynamic-badge, [data-cc-dynamic]')) {
+    console.log('Elemente innerhalb von Dynamic Content Badges können nicht bearbeitet werden');
+    return;
+  }
+  
   // Entferne bestehende Auswahl
   document.querySelectorAll('[text-selected]').forEach(el => {
     el.removeAttribute('text-selected');

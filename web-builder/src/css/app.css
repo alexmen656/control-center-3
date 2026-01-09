@@ -523,15 +523,44 @@ h3 {
   cursor: pointer;
 }
 
-#page-builder-editor-editable-area [text-selected] {
+/* #page-builder-editor-editable-area [text-selected] {
   outline: 2px solid #4f46e5 !important;
   background-color: rgba(79, 70, 229, 0.05);
-}
+}*/
 
 /* Sicherstellen, dass Links bei Auswahl die gleiche Hervorhebung wie andere Elemente bekommen */
 #page-builder-editor-editable-area a[text-selected] {
   outline: 2px solid #4f46e5 !important;
   background-color: rgba(79, 70, 229, 0.05);
+}
+
+/* Dynamic Content Badges sollen immer sichtbar sein und nicht durch text-selected verdeckt werden */
+#page-builder-editor-editable-area .cc-dynamic-badge,
+#page-builder-editor-editable-area [data-cc-dynamic] {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 100 !important;
+  position: relative !important;
+  /* Verhindere jegliche Outline/Hervorhebung auf Badges */
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Verhindere, dass Dynamic Content Badges als bearbeitbar markiert werden */
+#page-builder-editor-editable-area .cc-dynamic-badge[text-selected],
+#page-builder-editor-editable-area [data-cc-dynamic][text-selected],
+#page-builder-editor-editable-area .cc-dynamic-badge[data-editable-text],
+#page-builder-editor-editable-area [data-cc-dynamic][data-editable-text] {
+  outline: none !important;
+  background-color: transparent !important;
+}
+
+/* Verhindere Hover-Effekte auf Dynamic Content Badges */
+#page-builder-editor-editable-area .cc-dynamic-badge:hover,
+#page-builder-editor-editable-area [data-cc-dynamic]:hover {
+  outline: none !important;
+  cursor: default !important;
 }
 
 #page-builder-editor-editable-area [data-editable-text]::after {
@@ -655,5 +684,48 @@ h3 {
 /* CSS for Vue datepicker # end */
 .no-underline {
   text-decoration-line: none !important;
+}
+
+/* ============================================
+   Dynamic Content Badges for Web Builder
+   ============================================ */
+.cc-dynamic-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  line-height: 1.4;
+  white-space: nowrap;
+  user-select: none;
+  cursor: default;
+  margin: 0 2px;
+  vertical-align: middle;
+}
+
+.cc-dynamic-badge-valid {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.cc-dynamic-badge-invalid {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.cc-dynamic-badge::before {
+  content: "{{";
+  margin-right: 2px;
+  opacity: 0.6;
+}
+
+.cc-dynamic-badge::after {
+  content: "}}";
+  margin-left: 2px;
+  opacity: 0.6;
 }
 

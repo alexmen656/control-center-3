@@ -117,7 +117,7 @@ const saveOnly = async function() {
     await pageBuilder.saveComponentsToBackend();
     
     // Auth Token holen
-    const token = localStorage.getItem('controlCenter_auth_token');
+    const token = localStorage.getItem('authToken');
     
     // Dann das neue Publish-API aufrufen mit Deployment
     const response = await fetch(
