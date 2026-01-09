@@ -7,9 +7,9 @@ import ComponentTopMenu from '@/Components/PageBuilder/EditorMenu/Editables/Comp
 import EditGetElement from '@/Components/PageBuilder/EditorMenu/Editables/EditGetElement.vue';
 import SearchComponents from '@/Components/Search/SearchComponents.vue';
 import CCFormsGenerator from '@/Components/Search/CCFormsGenerator.vue';
-import OptionsDropdown from '@/Components/PageBuilder/DropdownsPlusToggles/OptionsDropdown.vue';
 import PageSelectDropdown from '@/Components/PageBuilder/DropdownsPlusToggles/PageSelectDropdown.vue';
 import RightSidebarEditor from '@/Components/PageBuilder/EditorMenu/RightSidebarEditor.vue';
+import DynamicModal from '@/Components/Modals/DynamicModal.vue';
 import SlideOverRight from '@/Components/PageBuilder/Slidebars/SlideOverRight.vue';
 import { usePageBuilderStateStore } from '@/stores/page-builder-state';
 import { useMediaLibraryStore } from '@/stores/media-library';
@@ -19,6 +19,16 @@ import PageBuilderSettings from '@/Components/PageBuilder/Settings/PageBuilderSe
 const showSettingsSlideOverRight = ref(false);
 const titleSettingsSlideOverRight = ref(null);
 const isLoadingComponents = ref(false); // Zustand für das Laden von Komponenten
+
+// Clear Page Modal State
+const showModalDeleteAllComponents = ref(false);
+const typeModal = ref('');
+const gridColumnModal = ref(Number(1));
+const titleModal = ref('');
+const descriptionModal = ref('');
+const firstButtonModal = ref('');
+const secondButtonModal = ref(null);
+const thirdButtonModal = ref(null);
 
 const mediaLibraryStore = useMediaLibraryStore();
 const pageBuilderStateStore = usePageBuilderStateStore();
@@ -169,6 +179,28 @@ const settingsSlideOverButton = function () {
   showSettingsSlideOverRight.value = false;
 };
 
+// Clear Page Function
+const deleteAllComponents = function () {
+  showModalDeleteAllComponents.value = true;
+  typeModal.value = 'delete';
+  gridColumnModal.value = 2;
+  titleModal.value = 'Remove all Components';
+  descriptionModal.value = 'Are you sure you want to remove all Components?';
+  firstButtonModal.value = 'Close';
+  secondButtonModal.value = null;
+  thirdButtonModal.value = 'Delete';
+};
+
+const closeDeleteModal = function () {
+  showModalDeleteAllComponents.value = false;
+};
+
+const confirmDeleteAllComponents = function () {
+  pageBuilder.deleteAllComponents();
+  pageBuilderStateStore.setComponents(null);
+  showModalDeleteAllComponents.value = false;
+};
+
 const draggableZone = ref(null);
 
 // Beobachte Änderungen am aktuellen Projekt und aktualisiere die Seite entsprechend
@@ -271,7 +303,15 @@ onMounted(async () => {
 </script>
 
 <template>
-    <SlideOverRight
+  <DynamicModal :show="showModalDeleteAllComponents" :type="typeModal" :gridColumnAmount="gridColumnModal"
+    :title="titleModal" :description="descriptionModal" :firstButtonText="firstButtonModal"
+    :secondButtonText="secondButtonModal" :thirdButtonText="thirdButtonModal"
+    @firstModalButtonFunction="closeDeleteModal" @secondModalButtonFunction="() => {}"
+    @thirdModalButtonFunction="confirmDeleteAllComponents">
+    <header></header>
+    <main></main>
+  </DynamicModal>
+  <SlideOverRight
     :open="showSettingsSlideOverRight"
     :title="titleSettingsSlideOverRight"
     @slideOverButton="settingsSlideOverButton"
@@ -319,6 +359,13 @@ onMounted(async () => {
           </div>
 
           <div class="flex gap-2 items-center justify-center">
+            <button type="button" @click="deleteAllComponents"
+              class="h-10 w-10 cursor-pointer rounded-full flex items-center border-none justify-center bg-gray-50 aspect-square hover:bg-myPrimaryErrorColor hover:text-white focus-visible:ring-0">
+              <span class="myMediumIcon material-symbols-outlined">delete</span>
+            </button>
+          </div>
+
+          <div class="flex gap-2 items-center justify-center">
             <button type="button" @click="handleSettingsSlideOver"
               class="h-10 w-10 cursor-pointer rounded-full flex items-center border-none justify-center bg-gray-50 aspect-square hover:bg-myPrimaryLinkColor hover:text-white focus-visible:ring-0">
               <span class="myMediumIcon material-symbols-outlined">settings</span>
@@ -335,7 +382,6 @@ onMounted(async () => {
               <span class="material-symbols-outlined text-base mr-1">folder</span>
               {{ currentProject.name }}
             </div>
-            <OptionsDropdown @previewCurrentDesign="previewCurrentDesign"></OptionsDropdown>
           </div>
 
           <div @click.self="pageBuilderStateStore.setComponent(null)" class="w-4/12 flex justify-center py-2">

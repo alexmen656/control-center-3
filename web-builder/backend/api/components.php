@@ -63,15 +63,15 @@ switch ($method) {
         $data = getJsonData();
         debug_log("POST data received", ["components_count" => is_array($data) ? count($data) : "single"]);
         
-        // Check if we're receiving a single component or an array
-        if (isset($data[0]) && is_array($data[0])) {
+        // Check if we're receiving an array of components (including empty array)
+        if (is_array($data) && (count($data) === 0 || isset($data[0]))) {
             // Array of components - replacing all components for the page
             
             // First, delete all existing components
             $deleteResult = $componentModel->deleteAllByPage($pageId);
             debug_log("Deleted all components", ["success" => $deleteResult, "page_id" => $pageId]);
             
-            // Insert each new component
+            // Insert each new component (if any)
             $insertResults = [];
             foreach ($data as $index => $component) {
                 validateRequiredFields($component, ['id', 'html_code']);

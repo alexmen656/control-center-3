@@ -92,15 +92,15 @@ function createComponents($pageId) {
     
     debug_log("POST data received", ["components_count" => is_array($data) ? count($data) : "single"]);
     
-    // Check if we're receiving an array of components or a single component
-    if (isset($data[0]) && is_array($data[0])) {
+    // Check if we're receiving an array of components (including empty array) or a single component
+    if (is_array($data) && (count($data) === 0 || isset($data[0]))) {
         // Array of components - replacing all components for the page
         
         // First, delete all existing components
         query("DELETE FROM control_center_modul_web_builder_components WHERE page_id = $pageId");
         debug_log("Deleted all components for page", ["page_id" => $pageId]);
         
-        // Insert each new component
+        // Insert each new component (if any)
         $insertResults = [];
         foreach ($data as $index => $component) {
             if (!isset($component['id']) || !isset($component['html_code'])) {

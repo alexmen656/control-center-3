@@ -1094,11 +1094,21 @@ class PageBuilder {
       console.log('deleteAllComponents');
     }
 
+    // Clear components in store
     this.pageBuilderStateStore.setComponents([]);
 
-    // Delete all components from backend
-    this.api.post('components.php', [], { page_id: this.getPageIdFromStore() })
-      .catch(error => console.error('Failed to delete all components:', error));
+    // Delete all components from backend by sending empty array
+    // The backend expects an array of components, so we send an empty array
+    // This will delete all existing components and insert none
+    return this.api.post('components.php', [], { page_id: this.getPageIdFromStore() })
+      .then(() => {
+        console.log('Successfully deleted all components');
+      })
+      .catch(error => {
+        console.error('Failed to delete all components:', error);
+        // Optionally re-throw the error if you want calling code to handle it
+        throw error;
+      });
   }
 
   deleteComponent() {
