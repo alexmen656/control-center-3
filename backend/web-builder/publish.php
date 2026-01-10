@@ -432,71 +432,95 @@ function processLoops($html, $ccProjectId)
  */
 function processConditions($html, $ccProjectId)
 {
-    // Pattern: {% if condition %} content {% endif %}
-    $pattern = '/\{%\s*if\s+(.*?)\s*%\}(.*?)\{%\s*endif\s*%\}/s';
+    // Regex for innermost IF blocks (ones that don't contain other IFs)
+    // Group 1: Condition
+    // Group 2: Content
+    // We iterate until no more IF blocks are found/resolved to handle nesting
+    $pattern = '/\{%\s*if\s+((?:(?!\{%\s*if\s).)*?)\s*%\}((?:(?!\{%\s*if\s).)*?)\{%\s*endif\s*%\}/s';
 
-    return preg_replace_callback($pattern, function ($matches) {
-        $condition = trim($matches[1]);
-        $content = $matches[2];
-        // Handle optional {% else %} block
-        $trueContent = $content;
-        $falseContent = '';
+    $maxIterations = 50; // Safety limit
 
-        $elseSplit = preg_split('/\{%\s*else\s*%\}/', $content, 2);
-        if (count($elseSplit) > 1) {
-            $trueContent = $elseSplit[0];
-            $falseContent = $elseSplit[1];
+    do {
+        $count = 0;
+        $newHtml = preg_replace_callback($pattern, function ($matches) {
+            $condition = trim($matches[1]);
+            $content = $matches[2];
+            // Handle optional {% else %} block
+            $trueContent = $content;
+            $falseContent = '';
+
+            $elseSplit = preg_split('/\{%\s*else\s*%\}/', $content, 2);
+            if (count($elseSplit) > 1) {
+                $trueContent = $elseSplit[0];
+                $falseContent = $elseSplit[1];
+            }
+            // Resolve variables in condition (table.col[i])
+            // Matches table_name.column_name[index]
+            $varPattern = '/([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\[(\d+)\]/';
+            $condition = preg_replace_callback($varPattern, function ($v) {
+                $table = $v[1];
+                $col = $v[2];
+                $idx = intval($v[3]);
+                $data = getCCFormsTableData($table);
+                $val = getCCFormsColumnValue($data, $col, $idx);
+                // Escape only double quotes and backslashes
+                $escaped = str_replace(['\\', '"'], ['\\\\', '\\"'], $val);
+                return '"' . $escaped . '"';
+            }, $condition);
+
+            // Evaluate condition
+            $isTrue = false;
+
+            // Helper regexes for quoted strings with correct backreferences for equality checks
+            // First string (Groups 1-2)
+            $strRegex1 = '(["\'])((?:(?!\1|\\\\).|\\\\.)*)\1';
+            // Second string (Groups 3-4)
+            $strRegex2 = '(["\'])((?:(?!\3|\\\\).|\\\\.)*)\3';
+
+            $matched = false;
+
+            // 1. Equality: "a" == "b"
+            if (preg_match('/^' . $strRegex1 . '\s*==\s*' . $strRegex2 . '$/s', $condition, $cMatches)) {
+                $isTrue = ($cMatches[2] == $cMatches[4]);
+                $matched = true;
+            }
+            // 2. Inequality: "a" != "b"
+            elseif (preg_match('/^' . $strRegex1 . '\s*!=\s*' . $strRegex2 . '$/s', $condition, $cMatches)) {
+                $isTrue = ($cMatches[2] != $cMatches[4]);
+                $matched = true;
+            }
+            // 3. Existence/Truthiness: "value" (checks if not empty)
+            elseif (preg_match('/^' . $strRegex1 . '$/s', $condition, $cMatches)) {
+                $val = $cMatches[2];
+                $isTrue = !empty($val) && $val !== 'false' && $val !== '0';
+                $matched = true;
+            }
+
+            // If condition unrecognized (e.g. contains loop variables not yet replaced), preserve it
+            // This is important because we might be in the first pass before processLoops
+            if (!$matched) {
+                return $matches[0];
+            }
+
+            return $isTrue ? $trueContent : $falseContent;
+        }, $html, -1, $count);
+
+        // Break if no matches found
+        if ($count === 0) {
+            break;
         }
-        // Resolve variables in condition (table.col[i])
-        // Matches table_name.column_name[index]
-        $varPattern = '/([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\[(\d+)\]/';
-        $condition = preg_replace_callback($varPattern, function ($v) {
-            $table = $v[1];
-            $col = $v[2];
-            $idx = intval($v[3]);
-            $data = getCCFormsTableData($table);
-            $val = getCCFormsColumnValue($data, $col, $idx);
-            // Escape only double quotes and backslashes
-            $escaped = str_replace(['\\', '"'], ['\\\\', '\\"'], $val);
-            return '"' . $escaped . '"';
-        }, $condition);
 
-        // Evaluate condition
-        $isTrue = false;
-
-        // Helper regexes for quoted strings with correct backreferences for equality checks
-        // First string (Groups 1-2)
-        // Uses negative lookahead (?!...) to ensure we match until the closing quote
-        $strRegex1 = '(["\'])((?:(?!\1|\\\\).|\\\\.)*)\1';
-        // Second string (Groups 3-4) - backreference \3 refers to the 3rd capturing group
-        $strRegex2 = '(["\'])((?:(?!\3|\\\\).|\\\\.)*)\3';
-
-        $matched = false;
-
-        // 1. Equality: "a" == "b"
-        if (preg_match('/^' . $strRegex1 . '\s*==\s*' . $strRegex2 . '$/s', $condition, $cMatches)) {
-            $isTrue = ($cMatches[2] == $cMatches[4]);
-            $matched = true;
-        }
-        // 2. Inequality: "a" != "b"
-        elseif (preg_match('/^' . $strRegex1 . '\s*!=\s*' . $strRegex2 . '$/s', $condition, $cMatches)) {
-            $isTrue = ($cMatches[2] != $cMatches[4]);
-            $matched = true;
-        }
-        // 3. Existence/Truthiness: "value" (checks if not empty)
-        elseif (preg_match('/^' . $strRegex1 . '$/s', $condition, $cMatches)) {
-            $val = $cMatches[2];
-            $isTrue = !empty($val) && $val !== 'false' && $val !== '0';
-            $matched = true;
+        // Break if HTML didn't change (avoid infinite loop if matches are not being resolved/replaced)
+        if ($newHtml === $html) {
+            break;
         }
 
-        // If condition unrecognized (e.g. contains loop variables not yet replaced), preserve it
-        if (!$matched) {
-            return $matches[0];
-        }
+        $html = $newHtml;
+        $maxIterations--;
 
-        return $isTrue ? $trueContent : $falseContent;
-    }, $html);
+    } while ($maxIterations > 0);
+
+    return $html;
 }
 
 /**
