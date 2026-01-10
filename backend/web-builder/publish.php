@@ -71,32 +71,32 @@ foreach ($pages as $page) {
     if ($firstPage === null) {
         $firstPage = $page;
     }
-    
+
     $pageId = $page['id'];
     $pageSlug = $page['slug'];
     $pageTitle = $page['title'] ?: $page['name'];
     $pageMetaDescription = $page['meta_description'] ?: '';
-    
+
     // Get components for this page
     $componentsResult = query("SELECT * FROM control_center_modul_web_builder_components 
                                WHERE page_id = $pageId 
                                ORDER BY position ASC");
-    
+
     $components = [];
     if ($componentsResult) {
         while ($comp = fetch_assoc($componentsResult)) {
             $components[] = $comp;
         }
     }
-    
+
     // Generate HTML (pass projectSlug for CC Forms integration and ccProjectId for dynamic content)
     $htmlContent = generatePageHtml($pageTitle, $pageMetaDescription, $components, $projectSlug, $ccProjectId);
-    
+
     // Determine filename (index.html for home/first page)
-    $filename = ($page['is_home'] || $page['id'] === $firstPage['id']) 
-        ? 'index.html' 
+    $filename = ($page['is_home'] || $page['id'] === $firstPage['id'])
+        ? 'index.html'
         : $pageSlug . '.html';
-    
+
     $generatedFiles[] = [
         'filename' => $filename,
         'content' => $htmlContent,
@@ -126,26 +126,26 @@ if ($deployToServer) {
                                   OR projectID = '" . escape_string($projectSlug) . "')
                            AND is_enabled = 1 
                            LIMIT 1");
-    
+
     if ($domainResult && mysqli_num_rows($domainResult) > 0) {
         $domainRow = fetch_assoc($domainResult);
         $domain = $domainRow['domain'];
-        
+
         // Prepare files for webhook (only filename and content)
-        $filesToDeploy = array_map(function($file) {
+        $filesToDeploy = array_map(function ($file) {
             return [
                 'filename' => $file['filename'],
                 'content' => $file['content']
             ];
         }, $generatedFiles);
-        
+
         // Send to webhook
         $webhookData = [
             'secret' => PUBLISH_WEBHOOK_SECRET,
             'project_slug' => $projectSlug,
             'files' => $filesToDeploy
         ];
-        
+
         $opts = [
             'http' => [
                 'method' => 'POST',
@@ -154,10 +154,10 @@ if ($deployToServer) {
                 'timeout' => 30
             ]
         ];
-        
+
         $context = stream_context_create($opts);
         $response = @file_get_contents(PUBLISH_WEBHOOK_URL, false, $context);
-        
+
         if ($response === false) {
             $deploymentResult = [
                 'success' => false,
@@ -184,7 +184,7 @@ $response = [
         'ccProjectSlug' => $projectSlug
     ],
     'generated' => [
-        'files' => array_map(function($f) {
+        'files' => array_map(function ($f) {
             return [
                 'filename' => $f['filename'],
                 'size' => strlen($f['content'])
@@ -224,24 +224,25 @@ sendResponse($response);
  * @param int $ccProjectId - Control Center project ID for content lookup
  * @return string - HTML with resolved dynamic content
  */
-function processDynamicContent($html, $ccProjectId) {
+function processDynamicContent($html, $ccProjectId)
+{
     // Pattern to match {{table_name.column_name[index]}}
     $pattern = '/\{\{([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\[\s*(\d+)\s*\]\}\}/';
-    
+
     // Find all matches first to batch database queries
     preg_match_all($pattern, $html, $matches, PREG_SET_ORDER);
-    
+
     if (empty($matches)) {
         return $html;
     }
-    
+
     // Group by table name for efficient querying
     $tableQueries = [];
     foreach ($matches as $match) {
         $tableName = $match[1];
         $columnName = $match[2];
         $index = intval($match[3]);
-        
+
         if (!isset($tableQueries[$tableName])) {
             $tableQueries[$tableName] = [];
         }
@@ -251,24 +252,24 @@ function processDynamicContent($html, $ccProjectId) {
             'index' => $index
         ];
     }
-    
+
     // Fetch content for each table (CC Forms tables)
     $resolvedContent = [];
     foreach ($tableQueries as $tableName => $columns) {
         $tableData = getCCFormsTableData($tableName);
-        
+
         foreach ($columns as $colInfo) {
             $key = $colInfo['fullMatch'];
             $value = getCCFormsColumnValue($tableData, $colInfo['column'], $colInfo['index']);
             $resolvedContent[$key] = $value;
         }
     }
-    
+
     // Replace all dynamic content in HTML
     foreach ($resolvedContent as $syntax => $value) {
         $html = str_replace($syntax, htmlspecialchars($value, ENT_QUOTES, 'UTF-8'), $html);
     }
-    
+
     return $html;
 }
 
@@ -280,64 +281,77 @@ function processDynamicContent($html, $ccProjectId) {
  * @param int $ccProjectId - Project ID (unused in current impl but kept for consistent signature)
  * @return string - HTML with loops processed
  */
-function processLoops($html, $ccProjectId) {
+function processLoops($html, $ccProjectId)
+{
     // Pattern to match {% for var in table [modifiers] %} ... {% endfor %}
     // Improved pattern to capture modifiers
     $pattern = '/\{%\s*for\s+([a-zA-Z0-9_]+)\s+in\s+([a-zA-Z0-9_]+)((?:\s*\|\s*[a-zA-Z0-9_=:"\'-]+)*)\s*%\}(.*?)\{%\s*endfor\s*%\}/s';
-    
-    return preg_replace_callback($pattern, function($matches) {
+
+    return preg_replace_callback($pattern, function ($matches) {
         $loopVar = $matches[1];
         $tableName = $matches[2];
         $modifiersStr = $matches[3];
         $template = $matches[4];
-        
+
         // Get data
         $tableData = getCCFormsTableData($tableName);
-        
+
         if (empty($tableData)) {
             return '';
         }
-        
+
         // Apply modifiers (filters, sort, limit)
         if (!empty($modifiersStr)) {
             $modifiers = explode('|', $modifiersStr);
             foreach ($modifiers as $mod) {
                 $mod = trim($mod);
-                if (empty($mod)) continue;
-                
+                if (empty($mod))
+                    continue;
+
                 // Filter: filter:key=value
                 if (strpos($mod, 'filter:') === 0) {
                     $parts = explode('=', substr($mod, 7));
-                    if (count($parts) == 2) {
-                        $key = trim($parts[0]);
-                        $val = trim($parts[1], " \"'");
-                        $tableData = array_filter($tableData, function($row) use ($key, $val) {
-                            return isset($row[$key]) && $row[$key] == $val;
+                    if (count($parts) >= 2) {
+                        $key = trim($parts[0], " \"'");
+                        $val = trim(substr($mod, 7 + strlen($parts[0]) + 1), " \"'");
+
+                        $tableData = array_filter($tableData, function ($row) use ($key, $val) {
+                            // Check both exact match and string representation
+                            if (!isset($row[$key]))
+                                return false;
+                            return (string) $row[$key] === (string) $val;
                         });
                     }
                 }
-                
-                // Sort: sort:key:order
+
+                // Sort: sort:key:order or sort:'key'
                 if (strpos($mod, 'sort:') === 0) {
-                    $parts = explode(':', substr($mod, 5));
-                    $key = trim($parts[0] ?? 'id');
+                    $args = substr($mod, 5);
+                    $parts = explode(':', $args);
+
+                    $key = trim($parts[0] ?? 'id', " \"'");
                     $order = strtolower(trim($parts[1] ?? 'asc'));
-                    
-                    usort($tableData, function($a, $b) use ($key, $order) {
+
+                    usort($tableData, function ($a, $b) use ($key, $order) {
                         $valA = $a[$key] ?? '';
                         $valB = $b[$key] ?? '';
-                        
+
                         // Try numeric comparison if both are numbers
                         if (is_numeric($valA) && is_numeric($valB)) {
                             $cmp = $valA - $valB;
                         } else {
                             $cmp = strcmp($valA, $valB);
                         }
-                        
+
                         return $order === 'desc' ? -$cmp : $cmp;
                     });
                 }
-                
+
+                // Reverse
+                if ($mod === 'reverse') {
+                    $tableData = array_reverse($tableData);
+                }
+
                 // Limit: limit:n
                 if (strpos($mod, 'limit:') === 0) {
                     $limit = intval(substr($mod, 6));
@@ -347,16 +361,16 @@ function processLoops($html, $ccProjectId) {
                 }
             }
         }
-        
+
         $output = '';
         foreach ($tableData as $row) {
             $rowHtml = $template;
-            
+
             // 1. Replace {{loopVar.column}} within the loop (visual output)
             // Updated to allow whitespace around dot: {{ member . name }}
             $variablePattern = '/\{\{\s*' . preg_quote($loopVar, '/') . '\s*\.\s*([a-zA-Z0-9_]+)\s*\}\}/';
-            
-            $rowHtml = preg_replace_callback($variablePattern, function($varMatches) use ($row) {
+
+            $rowHtml = preg_replace_callback($variablePattern, function ($varMatches) use ($row) {
                 $column = $varMatches[1];
                 return htmlspecialchars(getCCFormsColumnValue([$row], $column, 0), ENT_QUOTES, 'UTF-8');
             }, $rowHtml);
@@ -365,28 +379,28 @@ function processLoops($html, $ccProjectId) {
             // Find all {% if ... %} tags and replace all occurrences of loopVar.field inside them
             // Added 's' modifier to handle multiline tags
             // Note: We use a non-greedy regex inside to avoid replacing content inside strings
-            $rowHtml = preg_replace_callback('/\{%\s*if\s+(.+?)\s*%\}/s', function($match) use ($loopVar, $row) {
+            $rowHtml = preg_replace_callback('/\{%\s*if\s+(.+?)\s*%\}/s', function ($match) use ($loopVar, $row) {
                 $content = $match[1];
-                
+
                 // Replace loopVar.field -> "value" (multiple occurrences supported)
                 // Use slightly stricter regex to avoid matching inside typical string literals if possible,
                 // but perfect parsing is hard. This assumes variables are not inside quotes in the condition.
                 // We match loopVar.field NOT preceded by a quote.
                 // Updated to allow whitespace around the dot: member . field
-                $replacedContent = preg_replace_callback('/(?<![\'"])' . preg_quote($loopVar, '/') . '\s*\.\s*([a-zA-Z0-9_]+)(?![\'"])/', function($m) use ($row) {
+                $replacedContent = preg_replace_callback('/(?<![\'"])' . preg_quote($loopVar, '/') . '\s*\.\s*([a-zA-Z0-9_]+)(?![\'"])/', function ($m) use ($row) {
                     $val = getCCFormsColumnValue([$row], $m[1], 0);
                     // Escape only double quotes and backslashes for the double-quoted string wrapper
                     // This avoids over-escaping single quotes which causes comparison mismatches
                     $escaped = str_replace(['\\', '"'], ['\\\\', '\\"'], $val);
                     return '"' . $escaped . '"';
                 }, $content);
-                
+
                 return '{% if ' . $replacedContent . ' %}';
             }, $rowHtml);
-            
+
             $output .= $rowHtml;
         }
-        
+
         return $output;
     }, $html);
 }
@@ -399,26 +413,27 @@ function processLoops($html, $ccProjectId) {
  * @param int $ccProjectId
  * @return string
  */
-function processConditions($html, $ccProjectId) {
+function processConditions($html, $ccProjectId)
+{
     // Pattern: {% if condition %} content {% endif %}
     $pattern = '/\{%\s*if\s+(.*?)\s*%\}(.*?)\{%\s*endif\s*%\}/s';
-    
-    return preg_replace_callback($pattern, function($matches) {
+
+    return preg_replace_callback($pattern, function ($matches) {
         $condition = trim($matches[1]);
         $content = $matches[2];
-                // Handle optional {% else %} block
+        // Handle optional {% else %} block
         $trueContent = $content;
         $falseContent = '';
-        
+
         $elseSplit = preg_split('/\{%\s*else\s*%\}/', $content, 2);
         if (count($elseSplit) > 1) {
             $trueContent = $elseSplit[0];
             $falseContent = $elseSplit[1];
         }
-                // Resolve variables in condition (table.col[i])
+        // Resolve variables in condition (table.col[i])
         // Matches table_name.column_name[index]
         $varPattern = '/([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\[(\d+)\]/';
-        $condition = preg_replace_callback($varPattern, function($v) {
+        $condition = preg_replace_callback($varPattern, function ($v) {
             $table = $v[1];
             $col = $v[2];
             $idx = intval($v[3]);
@@ -428,19 +443,19 @@ function processConditions($html, $ccProjectId) {
             $escaped = str_replace(['\\', '"'], ['\\\\', '\\"'], $val);
             return '"' . $escaped . '"';
         }, $condition);
-        
+
         // Evaluate condition
         $isTrue = false;
-        
+
         // Helper regexes for quoted strings with correct backreferences for equality checks
         // First string (Groups 1-2)
         // Uses negative lookahead (?!...) to ensure we match until the closing quote
         $strRegex1 = '(["\'])((?:(?!\1|\\\\).|\\\\.)*)\1';
         // Second string (Groups 3-4) - backreference \3 refers to the 3rd capturing group
         $strRegex2 = '(["\'])((?:(?!\3|\\\\).|\\\\.)*)\3';
-        
+
         $matched = false;
-        
+
         // 1. Equality: "a" == "b"
         if (preg_match('/^' . $strRegex1 . '\s*==\s*' . $strRegex2 . '$/s', $condition, $cMatches)) {
             $isTrue = ($cMatches[2] == $cMatches[4]);
@@ -457,12 +472,12 @@ function processConditions($html, $ccProjectId) {
             $isTrue = !empty($val) && $val !== 'false' && $val !== '0';
             $matched = true;
         }
-        
+
         // If condition unrecognized (e.g. contains loop variables not yet replaced), preserve it
         if (!$matched) {
             return $matches[0];
         }
-        
+
         return $isTrue ? $trueContent : $falseContent;
     }, $html);
 }
@@ -474,25 +489,26 @@ function processConditions($html, $ccProjectId) {
  * @param string $tableName - The CC Forms table name (e.g., "myproject_kontaktformular")
  * @return array - Array of rows from the table
  */
-function getCCFormsTableData($tableName) {
+function getCCFormsTableData($tableName)
+{
     $tableName = escape_string($tableName);
-    
+
     // Check if table exists
     $tableExists = query("SHOW TABLES LIKE '$tableName'");
     if (!$tableExists || mysqli_num_rows($tableExists) === 0) {
         return [];
     }
-    
+
     // Get all rows from the CC Forms data table
     $result = query("SELECT * FROM `$tableName` ORDER BY id ASC");
-    
+
     $data = [];
     if ($result) {
         while ($row = fetch_assoc($result)) {
             $data[] = $row;
         }
     }
-    
+
     return $data;
 }
 
@@ -504,17 +520,18 @@ function getCCFormsTableData($tableName) {
  * @param int $index - Row index (0-based)
  * @return string - The value or empty string if not found
  */
-function getCCFormsColumnValue($tableData, $columnName, $index) {
+function getCCFormsColumnValue($tableData, $columnName, $index)
+{
     if (!is_array($tableData) || empty($tableData)) {
         return '';
     }
-    
+
     if ($index < 0 || $index >= count($tableData)) {
         return '';
     }
-    
+
     $row = $tableData[$index];
-    
+
     // Case-insensitive check
     if (!isset($row[$columnName])) {
         // Try searching case-insensitively
@@ -527,7 +544,7 @@ function getCCFormsColumnValue($tableData, $columnName, $index) {
         }
         return '';
     }
-    
+
     return (string) $row[$columnName];
 }
 
@@ -538,27 +555,37 @@ function getCCFormsColumnValue($tableData, $columnName, $index) {
  * @param string $html - HTML content
  * @return string - HTML with badges removed
  */
-function removeDynamicContentBadges($html) {
+function removeDynamicContentBadges($html)
+{
     // Remove span elements with data-cc-dynamic attribute
     // Pattern matches: <span class="cc-dynamic-badge..." data-cc-dynamic="true" ...>content</span>
     $pattern = '/<span[^>]*data-cc-dynamic="true"[^>]*>[^<]*<\/span>/i';
     $html = preg_replace($pattern, '', $html);
-    
+
     // Also remove any badge style classes that might be left over
     $html = preg_replace('/\s*class="cc-dynamic-badge[^"]*"/i', '', $html);
-    
+
     return $html;
 }
 
 /**
  * Generate HTML page from components
  */
-function generatePageHtml($title, $metaDescription, $components, $projectSlug = '', $ccProjectId = null) {
+function generatePageHtml($title, $metaDescription, $components, $projectSlug = '', $ccProjectId = null)
+{
     $componentsHtml = '';
     foreach ($components as $component) {
         $componentsHtml .= $component['html_code'] . "\n";
     }
-    
+
+    // Extract {% raw %}...{% endraw %} blocks to prevent processing inside them
+    $rawBlocks = [];
+    $componentsHtml = preg_replace_callback('/\{%\s*raw\s*%\}(.*?)\{%\s*endraw\s*%\}/s', function ($matches) use (&$rawBlocks) {
+        $placeholder = '<!--RAW_BLOCK_' . count($rawBlocks) . '-->';
+        $rawBlocks[] = $matches[1]; // Store content without the raw tags
+        return $placeholder;
+    }, $componentsHtml);
+
     // Process dynamic content if project ID is available
     if ($ccProjectId) {
         $componentsHtml = processConditions($componentsHtml, $ccProjectId);
@@ -567,18 +594,23 @@ function generatePageHtml($title, $metaDescription, $components, $projectSlug = 
         $componentsHtml = processConditions($componentsHtml, $ccProjectId);
         $componentsHtml = processDynamicContent($componentsHtml, $ccProjectId);
     }
-    
+
+    // Restore raw blocks
+    foreach ($rawBlocks as $index => $content) {
+        $componentsHtml = str_replace('<!--RAW_BLOCK_' . $index . '-->', $content, $componentsHtml);
+    }
+
     // Remove any remaining dynamic content badges (editor artifacts)
     $componentsHtml = removeDynamicContentBadges($componentsHtml);
-    
+
     // Escape special characters for HTML
     $title = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
     $metaDescription = htmlspecialchars($metaDescription, ENT_QUOTES, 'UTF-8');
     $projectSlugJs = htmlspecialchars($projectSlug, ENT_QUOTES, 'UTF-8');
-    
+
     // CC Forms Integration Script
     $ccFormsScript = getCCFormsScript($projectSlugJs);
-    
+
     return <<<HTML
 <!DOCTYPE html>
 <html lang="de">
@@ -624,7 +656,8 @@ HTML;
 /**
  * Generate CC Forms JavaScript for form submissions
  */
-function getCCFormsScript($projectSlug) {
+function getCCFormsScript($projectSlug)
+{
     return <<<SCRIPT
 <!-- CC Forms Integration -->
 <script>
@@ -776,20 +809,21 @@ SCRIPT;
 /**
  * Get Tailwind CSS styles
  */
-function getStylesCSS() {
+function getStylesCSS()
+{
     // Try to load from the web-builder assets on the server
     $possiblePaths = [
         '/www/paxar/control-center/web-builder/backend_cc/assets/styles.css',
         __DIR__ . '/../../web-builder/backend_cc/assets/styles.css',
         __DIR__ . '/../site-builder/assets/styles.css'
     ];
-    
+
     foreach ($possiblePaths as $path) {
         if (file_exists($path)) {
             return file_get_contents($path);
         }
     }
-    
+
     // Fallback: return minimal custom CSS (Tailwind is loaded via CDN in HTML)
     return <<<CSS
 /* Custom styles for Web Builder */
