@@ -234,7 +234,16 @@ export const webBuilderTools = [
   },
   {
     name: 'webbuilder_component_add',
-    description: 'Add a new HTML component to a page',
+    description: `Add a new HTML component to a page.
+
+CRITICAL HTML STRUCTURE REQUIREMENTS:
+- The root element MUST be a <section> tag with data-componentid attribute matching the componentId
+- Example: <section data-componentid="hero-section-1">...</section>
+- Images that should be editable MUST have data-image attribute
+- Example: <img data-image src="..." alt="...">
+- Text elements are automatically editable via the page builder
+
+This structure is REQUIRED for the page builder to track and save user edits properly.`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -244,11 +253,11 @@ export const webBuilderTools = [
         },
         componentId: {
           type: 'string',
-          description: 'Unique identifier for the component (e.g., "hero-section-1", "about-block")'
+          description: 'Unique identifier for the component (e.g., "hero-section-1", "about-block"). This MUST match the data-componentid attribute on the root <section> element.'
         },
         htmlCode: {
           type: 'string',
-          description: 'HTML code for the component'
+          description: 'HTML code for the component. MUST be wrapped in a <section data-componentid="YOUR_COMPONENT_ID"> tag. Images should have data-image attribute for editability.'
         }
       },
       required: ['pageId', 'componentId', 'htmlCode']
@@ -256,7 +265,16 @@ export const webBuilderTools = [
   },
   {
     name: 'webbuilder_component_update',
-    description: 'Update HTML code of an existing component',
+    description: `Update HTML code of an existing component.
+
+CRITICAL HTML STRUCTURE REQUIREMENTS:
+- The root element MUST be a <section> tag with data-componentid attribute matching the componentId
+- Example: <section data-componentid="hero-section-1">...</section>
+- Images that should be editable MUST have data-image attribute
+- Example: <img data-image src="..." alt="...">
+- Text elements are automatically editable via the page builder
+
+This structure is REQUIRED for the page builder to track and save user edits properly.`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -266,11 +284,11 @@ export const webBuilderTools = [
         },
         componentId: {
           type: 'string',
-          description: 'Component ID to update'
+          description: 'Component ID to update. This MUST match the data-componentid attribute on the root <section> element.'
         },
         htmlCode: {
           type: 'string',
-          description: 'New HTML code for the component'
+          description: 'New HTML code for the component. MUST be wrapped in a <section data-componentid="YOUR_COMPONENT_ID"> tag. Images should have data-image attribute for editability.'
         }
       },
       required: ['pageId', 'componentId', 'htmlCode']
@@ -296,7 +314,16 @@ export const webBuilderTools = [
   },
   {
     name: 'webbuilder_components_replace_all',
-    description: 'Replace all components on a page with a new set of components. Useful for complete page rebuilds.',
+    description: `Replace all components on a page with a new set of components. Useful for complete page rebuilds.
+
+CRITICAL HTML STRUCTURE REQUIREMENTS FOR EACH COMPONENT:
+- Each component's html_code MUST have a root <section> tag with data-componentid attribute matching its id
+- Example: <section data-componentid="hero-section-1">...</section>
+- Images that should be editable MUST have data-image attribute
+- Example: <img data-image src="..." alt="...">
+- Text elements are automatically editable via the page builder
+
+This structure is REQUIRED for the page builder to track and save user edits properly.`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -311,16 +338,16 @@ export const webBuilderTools = [
             properties: {
               id: {
                 type: 'string',
-                description: 'Component ID'
+                description: 'Component ID. This MUST match the data-componentid attribute on the root <section> element in html_code.'
               },
               html_code: {
                 type: 'string',
-                description: 'HTML code for the component'
+                description: 'HTML code for the component. MUST be wrapped in a <section data-componentid="COMPONENT_ID"> tag. Images should have data-image attribute.'
               }
             },
             required: ['id', 'html_code']
           },
-          description: 'Array of components with id and html_code'
+          description: 'Array of components with id and html_code. Each html_code MUST have <section data-componentid="ID"> as root element.'
         }
       },
       required: ['pageId', 'components']

@@ -353,7 +353,8 @@ function processLoops($html, $ccProjectId) {
             $rowHtml = $template;
             
             // 1. Replace {{loopVar.column}} within the loop (visual output)
-            $variablePattern = '/\{\{\s*' . preg_quote($loopVar, '/') . '\.([a-zA-Z0-9_]+)\s*\}\}/';
+            // Updated to allow whitespace around dot: {{ member . name }}
+            $variablePattern = '/\{\{\s*' . preg_quote($loopVar, '/') . '\s*\.\s*([a-zA-Z0-9_]+)\s*\}\}/';
             
             $rowHtml = preg_replace_callback($variablePattern, function($varMatches) use ($row) {
                 $column = $varMatches[1];
@@ -362,13 +363,22 @@ function processLoops($html, $ccProjectId) {
 
             // 2. Prepare variables for conditional logic inside the loop
             // Find all {% if ... %} tags and replace all occurrences of loopVar.field inside them
-            $rowHtml = preg_replace_callback('/\{%\s*if\s+(.+?)\s*%\}/', function($match) use ($loopVar, $row) {
+            // Added 's' modifier to handle multiline tags
+            // Note: We use a non-greedy regex inside to avoid replacing content inside strings
+            $rowHtml = preg_replace_callback('/\{%\s*if\s+(.+?)\s*%\}/s', function($match) use ($loopVar, $row) {
                 $content = $match[1];
                 
                 // Replace loopVar.field -> "value" (multiple occurrences supported)
-                $replacedContent = preg_replace_callback('/' . preg_quote($loopVar, '/') . '\.([a-zA-Z0-9_]+)/', function($m) use ($row) {
+                // Use slightly stricter regex to avoid matching inside typical string literals if possible,
+                // but perfect parsing is hard. This assumes variables are not inside quotes in the condition.
+                // We match loopVar.field NOT preceded by a quote.
+                // Updated to allow whitespace around the dot: member . field
+                $replacedContent = preg_replace_callback('/(?<![\'"])' . preg_quote($loopVar, '/') . '\s*\.\s*([a-zA-Z0-9_]+)(?![\'"])/', function($m) use ($row) {
                     $val = getCCFormsColumnValue([$row], $m[1], 0);
-                    return '"' . addslashes($val) . '"';
+                    // Escape only double quotes and backslashes for the double-quoted string wrapper
+                    // This avoids over-escaping single quotes which causes comparison mismatches
+                    $escaped = str_replace(['\\', '"'], ['\\\\', '\\"'], $val);
+                    return '"' . $escaped . '"';
                 }, $content);
                 
                 return '{% if ' . $replacedContent . ' %}';
@@ -414,24 +424,43 @@ function processConditions($html, $ccProjectId) {
             $idx = intval($v[3]);
             $data = getCCFormsTableData($table);
             $val = getCCFormsColumnValue($data, $col, $idx);
-            return '"' . addslashes($val) . '"';
+            // Escape only double quotes and backslashes
+            $escaped = str_replace(['\\', '"'], ['\\\\', '\\"'], $val);
+            return '"' . $escaped . '"';
         }, $condition);
         
         // Evaluate condition
         $isTrue = false;
         
+        // Helper regexes for quoted strings with correct backreferences for equality checks
+        // First string (Groups 1-2)
+        // Uses negative lookahead (?!...) to ensure we match until the closing quote
+        $strRegex1 = '(["\'])((?:(?!\1|\\\\).|\\\\.)*)\1';
+        // Second string (Groups 3-4) - backreference \3 refers to the 3rd capturing group
+        $strRegex2 = '(["\'])((?:(?!\3|\\\\).|\\\\.)*)\3';
+        
+        $matched = false;
+        
         // 1. Equality: "a" == "b"
-        if (preg_match('/^"([^"]*)"\s*==\s*"([^"]*)"$/', $condition, $cMatches)) {
-            $isTrue = ($cMatches[1] == $cMatches[2]);
+        if (preg_match('/^' . $strRegex1 . '\s*==\s*' . $strRegex2 . '$/s', $condition, $cMatches)) {
+            $isTrue = ($cMatches[2] == $cMatches[4]);
+            $matched = true;
         }
         // 2. Inequality: "a" != "b"
-        elseif (preg_match('/^"([^"]*)"\s*!=\s*"([^"]*)"$/', $condition, $cMatches)) {
-            $isTrue = ($cMatches[1] != $cMatches[2]);
+        elseif (preg_match('/^' . $strRegex1 . '\s*!=\s*' . $strRegex2 . '$/s', $condition, $cMatches)) {
+            $isTrue = ($cMatches[2] != $cMatches[4]);
+            $matched = true;
         }
         // 3. Existence/Truthiness: "value" (checks if not empty)
-        elseif (preg_match('/^"([^"]*)"$/', $condition, $cMatches)) {
-            $val = $cMatches[1];
+        elseif (preg_match('/^' . $strRegex1 . '$/s', $condition, $cMatches)) {
+            $val = $cMatches[2];
             $isTrue = !empty($val) && $val !== 'false' && $val !== '0';
+            $matched = true;
+        }
+        
+        // If condition unrecognized (e.g. contains loop variables not yet replaced), preserve it
+        if (!$matched) {
+            return $matches[0];
         }
         
         return $isTrue ? $trueContent : $falseContent;
@@ -486,7 +515,16 @@ function getCCFormsColumnValue($tableData, $columnName, $index) {
     
     $row = $tableData[$index];
     
+    // Case-insensitive check
     if (!isset($row[$columnName])) {
+        // Try searching case-insensitively
+        $lowerColumnName = strtolower($columnName);
+        foreach ($row as $key => $value) {
+            // Trim key to handle potential trailing spaces in DB column names
+            if (strtolower(trim($key)) === $lowerColumnName) {
+                return (string) $value;
+            }
+        }
         return '';
     }
     
