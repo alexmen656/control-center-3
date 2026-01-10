@@ -243,6 +243,13 @@ CRITICAL HTML STRUCTURE REQUIREMENTS:
 - Example: <img data-image src="..." alt="...">
 - Text elements are automatically editable via the page builder
 
+DYNAMIC CONTENT SYNTAX SUPPORTED:
+- Variables: {{ table.column[index] }} or {{ loopVar.column }}
+- Filters: {{ value | upper | lower | capitalize | truncate:50 | default:'Fallback' }}
+- Loops: {% for item in table | filter:col=val | sort:col:desc | limit:N | reverse %} ... {% endfor %}
+- Conditions: {% if var == "value" %} ... {% else %} ... {% endif %} (supports nested IFs)
+- Raw Blocks: {% raw %} content to ignore {% endraw %}
+
 This structure is REQUIRED for the page builder to track and save user edits properly.`,
     inputSchema: {
       type: 'object',
@@ -273,6 +280,13 @@ CRITICAL HTML STRUCTURE REQUIREMENTS:
 - Images that should be editable MUST have data-image attribute
 - Example: <img data-image src="..." alt="...">
 - Text elements are automatically editable via the page builder
+
+DYNAMIC CONTENT SYNTAX SUPPORTED:
+- Variables: {{ table.column[index] }} or {{ loopVar.column }}
+- Filters: {{ value | upper | lower | capitalize | truncate:50 | default:'Fallback' }}
+- Loops: {% for item in table | filter:col=val | sort:col:desc | limit:N | reverse %} ... {% endfor %}
+- Conditions: {% if var == "value" %} ... {% else %} ... {% endif %} (supports nested IFs)
+- Raw Blocks: {% raw %} content to ignore {% endraw %}
 
 This structure is REQUIRED for the page builder to track and save user edits properly.`,
     inputSchema: {
@@ -322,6 +336,13 @@ CRITICAL HTML STRUCTURE REQUIREMENTS FOR EACH COMPONENT:
 - Images that should be editable MUST have data-image attribute
 - Example: <img data-image src="..." alt="...">
 - Text elements are automatically editable via the page builder
+
+DYNAMIC CONTENT SYNTAX SUPPORTED:
+- Variables: {{ table.column[index] }} or {{ loopVar.column }}
+- Filters: {{ value | upper | lower | capitalize | truncate:50 | default:'Fallback' }}
+- Loops: {% for item in table | filter:col=val | sort:col:desc | limit:N | reverse %} ... {% endfor %}
+- Conditions: {% if var == "value" %} ... {% else %} ... {% endif %} (supports nested IFs)
+- Raw Blocks: {% raw %} content to ignore {% endraw %}
 
 This structure is REQUIRED for the page builder to track and save user edits properly.`,
     inputSchema: {
