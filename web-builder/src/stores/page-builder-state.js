@@ -235,6 +235,12 @@ export const usePageBuilderStateStore = defineStore('pageBuilderState', {
     },
   },
   actions: {
+    _initPageBuilder() {
+      if (pageBuilder && !pageBuilder.pageBuilderStateStore) {
+        pageBuilder.pageBuilderStateStore = this;
+      }
+    },
+
     setPages(payload) {
       this.pages = payload;
     },
@@ -405,6 +411,7 @@ export const usePageBuilderStateStore = defineStore('pageBuilderState', {
       if (!payload) {
         this.element = null;
         this.component = null;
+        this._initPageBuilder();
         pageBuilder.removeHoveredAndSelected(null);
         return;
       }
@@ -516,6 +523,9 @@ export const usePageBuilderStateStore = defineStore('pageBuilderState', {
           // Setze die aktuelle Seiten-ID
           this.setCurrentPageId(usePageId);
           
+          // Helper init
+          this._initPageBuilder();
+
           // Lade Komponenten für diese Seite
           await pageBuilder.loadComponentsFromBackend();
           this.components = pageBuilder.getComponents.value || [];
@@ -620,6 +630,7 @@ export const usePageBuilderStateStore = defineStore('pageBuilderState', {
       this.setCurrentPageId(id);
       
       try {
+        this._initPageBuilder();
         // Lade Komponenten der neuen Seite vom Backend
         await pageBuilder.loadComponentsFromBackend();
         
@@ -650,6 +661,7 @@ export const usePageBuilderStateStore = defineStore('pageBuilderState', {
     // Ersetze die alten localStorage-Methoden durch Backend-kompatible Methoden
     async saveToBackend() {
       // Speichere aktuelle Komponenten im Backend
+      this._initPageBuilder();
       await pageBuilder.saveComponentsToBackend();
       return true;
     },
@@ -663,11 +675,13 @@ export const usePageBuilderStateStore = defineStore('pageBuilderState', {
     // Add missing methods to bridge localStorage and backend API
     async areComponentsStoredInLocalStorage() {
       // Delegate to PageBuilder's method
+      this._initPageBuilder();
       return pageBuilder.areComponentsStoredInLocalStorage();
     },
 
     async areComponentsStoredInLocalStorageUpdate() {
       // Delegate to PageBuilder's method
+      this._initPageBuilder();
       return pageBuilder.areComponentsStoredInLocalStorageUpdate();
     },
     
