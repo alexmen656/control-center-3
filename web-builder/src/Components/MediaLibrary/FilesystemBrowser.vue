@@ -5,12 +5,10 @@ import { useMediaLibraryStore } from '@/stores/media-library';
 
 const mediaLibraryStore = useMediaLibraryStore();
 const { get } = useFetch();
-
 const fileSystemData = ref([]);
 const currentPath = ref([]);
 const loading = ref(false);
 const error = ref(null);
-
 const endpoint = '../filesystem.php';
 
 const fetchFileSystem = async () => {
@@ -77,7 +75,7 @@ onMounted(() => {
         <div class="flex items-center gap-2 p-3 border-b border-gray-200 overflow-x-auto bg-gray-50 rounded-t-lg">
             <button @click="navigateToBreadcrumb(-1)"
                 class="text-myPrimaryLinkColor hover:underline whitespace-nowrap text-sm font-medium flex items-center gap-1">
-                <span class="material-symbols-outlined text-lg">home</span> CC Filesystem
+                <span class="material-symbols-outlined text-lg">folder</span> Filesystem
             </button>
             <span v-if="currentPath.length > 0" class="text-gray-400">/</span>
             <template v-for="(folder, index) in currentPath" :key="folder.id">
@@ -88,7 +86,6 @@ onMounted(() => {
                 <span v-if="index < currentPath.length - 1" class="text-gray-400">/</span>
             </template>
         </div>
-
         <div class="flex-1 overflow-y-auto p-4 min-h-[300px]">
             <div v-if="loading" class="flex justify-center p-10">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>

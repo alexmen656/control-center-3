@@ -77,15 +77,11 @@ const tabs = ref([
     current: false,
   },
   {
-    name: 'Media library',
-    current: false,
-  },
-  {
     name: 'Unsplash',
     current: true,
   },
   {
-    name: 'CC Filesystem',
+    name: 'Filesystem',
     current: false,
   },
 ]);
@@ -174,9 +170,8 @@ const changeSelectedMenuTab = function (clicked) {
                           <select v-model="selected" id="tabs"
                             class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-myPrimaryLinkColor focus:border-myPrimaryLinkColor sm:text-sm rounded-md">
                             <option>Upload</option>
-                            <option>Media library</option>
                             <option>Unsplash</option>
-                            <option>CC Filesystem</option>
+                            <option>Filesystem</option>
                           </select>
                         </div>
                         <div class="hidden sm:block">
@@ -194,16 +189,12 @@ const changeSelectedMenuTab = function (clicked) {
                                 <span v-if="tab.name === 'Upload'" class="material-symbols-outlined">
                                   cloud_upload
                                 </span>
-                                <span v-if="tab.name === 'Media library'"
-                                  class="myMediumIcon material-symbols-outlined">
-                                  perm_media
-                                </span>
                                 <span v-if="tab.name === 'Unsplash'" class="myMediumIcon material-symbols-outlined">
                                   filter_hdr
                                 </span>
-                                <span v-if="tab.name === 'CC Filesystem'"
+                                <span v-if="tab.name === 'Filesystem'"
                                   class="myMediumIcon material-symbols-outlined">
-                                  folder_shared
+                                  folder
                                 </span>
                                 <span>
                                   {{ tab.name }}
@@ -251,26 +242,12 @@ const changeSelectedMenuTab = function (clicked) {
                           </div>
                         </div>
                       </template>
-                      <template v-if="selected === 'Media library'">
-                        <div class="w-full">
-                          <div
-                            class="overflow-y-scroll pr-1 border border-gray-200 rounded-lg md:min-h-[25rem] md:max-h-[25em] min-h-[20rem] max-h-[20rem]">
-                            <div class="myInputGroup p-4 mt-4">
-                              <div class="col-span-3 mb-4">
-                                <p class="myPrimaryParagraph my-0 py-0">
-                                  Media Library
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </template>
                       <template v-if="selected === 'Unsplash'">
                         <div class="w-full border border-gray-200 rounded-lg py-4 px-2">
                           <Unsplash></Unsplash>
                         </div>
                       </template>
-                      <template v-if="selected === 'CC Filesystem'">
+                      <template v-if="selected === 'Filesystem'">
                         <div
                           class="w-full border border-gray-200 rounded-lg overflow-hidden h-full max-h-[25rem] md:max-h-[25em] min-h-[20rem]">
                           <FilesystemBrowser />
@@ -292,19 +269,13 @@ const changeSelectedMenuTab = function (clicked) {
                         </template>
                       </div>
                     </aside>
-                    <aside v-if="selected === 'Media library'" aria-label="sidebar" class="md:w-72">
-                      <div
-                        class="pt-4 px-2 rounded-lg md:w-72 md:min-h-[42.5rem] md:max-h-[42.5rem] min-h-[15rem] max-h-[15rem] overflow-y-scroll bg-white border border-gray-200">
-                        No image has been selected.
-                      </div>
-                    </aside>
                     <aside v-if="selected === 'Unsplash'" aria-label="sidebar" class="md:w-72">
                       <div
                         class="pt-4 px-2 rounded-lg md:w-72 md:min-h-[42.5rem] md:max-h-[42.5rem] min-h-[15rem] max-h-[15rem] overflow-y-scroll bg-white border border-gray-200">
                         <SidebarUnsplash></SidebarUnsplash>
                       </div>
                     </aside>
-                    <aside v-if="selected === 'CC Filesystem'" aria-label="sidebar" class="md:w-72">
+                    <aside v-if="selected === 'Filesystem'" aria-label="sidebar" class="md:w-72">
                       <div
                         class="pt-4 px-2 rounded-lg md:w-72 md:min-h-[42.5rem] md:max-h-[42.5rem] min-h-[15rem] max-h-[15rem] overflow-y-scroll bg-white border border-gray-200">
                         <template v-if="getCurrentImage && getCurrentImage.type === 'filesystem'">
@@ -324,7 +295,7 @@ const changeSelectedMenuTab = function (clicked) {
                     </aside>
                   </div>
                   <template
-                    v-if="selected === 'Unsplash' || (selected === 'Upload' && uploadedImage) || (selected === 'CC Filesystem' && getCurrentImage && getCurrentImage.type === 'filesystem')">
+                    v-if="selected === 'Unsplash' || (selected === 'Upload' && uploadedImage) || (selected === 'Filesystem' && getCurrentImage && getCurrentImage.type === 'filesystem')">
                     <div v-if="getCurrentImage && getCurrentImage.file"
                       class="bg-slate-50 px-2 py-4 flex sm:justify-end justify-center">
                       <div
