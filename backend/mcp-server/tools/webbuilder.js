@@ -478,6 +478,69 @@ export const webBuilderTools = [
       },
       required: ['projectId', 'headline']
     }
+  },
+
+  // ============================================
+  // Forms & Dynamic Content
+  // ============================================
+  {
+    name: 'webbuilder_form_list',
+    description: 'List all CC Forms available in a project. Also returns dynamic variable syntax for each field.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        projectId: {
+          type: 'number',
+          description: 'Web Builder project ID'
+        }
+      },
+      required: ['projectId']
+    }
+  },
+  {
+    name: 'webbuilder_form_generate',
+    description: 'Generate HTML code for a CC Form component. The generated form is fully functional and handles validation/submission automatically - NO external scripts needed. You must have the form name and field names from webbuilder_form_list first.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        projectId: {
+          type: 'number',
+          description: 'Web Builder project ID'
+        },
+        formName: {
+          type: 'string',
+          description: 'Name of the form to generate (from form list)'
+        },
+        fields: {
+          type: 'array',
+          description: 'List of field names to include in the form',
+          items: { type: 'string' }
+        },
+        title: {
+          type: 'string',
+          description: 'Optional title for the form component'
+        },
+        style: {
+          type: 'string',
+          enum: ['modern', 'minimal', 'card'],
+          default: 'modern',
+          description: 'Visual style of the form'
+        },
+        submitText: {
+          type: 'string',
+          default: 'Send'
+        },
+        successMessage: {
+          type: 'string',
+          default: 'Successfully sent!'
+        },
+        errorMessage: {
+          type: 'string',
+          default: 'Error sending.'
+        }
+      },
+      required: ['projectId', 'formName', 'fields']
+    }
   }
 ];
 
@@ -566,6 +629,15 @@ export async function handleWebBuilderTool(name, args, context) {
     // ============================================
     case 'webbuilder_create_landing_page':
       return await createLandingPage(args, context);
+
+    // ============================================
+    // Forms & Dynamic Content
+    // ============================================
+    case 'webbuilder_form_list':
+      return await listForms(args, context);
+    
+    case 'webbuilder_form_generate':
+      return await generateForm(args, context);
     
     default:
       return formatError(`Unknown Web Builder tool: ${name}`);
@@ -1339,6 +1411,78 @@ async function createLandingPage(args, context) {
     });
   } catch (error) {
     return formatError(`Failed to create landing page: ${error.message}`);
+  }
+}
+
+// ============================================
+// Forms & Dynamic Content Implementation
+// ============================================
+
+async function listForms(args, context) {
+  try {
+    const response = await cmsRequest(`api/cc_forms.php?action=list&wb_project_id=${encodeURIComponent(args.projectId)}`, {
+      method: 'GET'
+    }, context);
+    
+    const data = typeof response === 'string' ? JSON.parse(response) : response;
+    
+    if (!data.success) {
+      return formatError(data.error || 'Failed to list forms');
+    }
+    
+    // Enhance form data with usage hint for dynamic variables
+    const forms = (data.forms || []).map(form => ({
+      ...form,
+      dynamicVariableUsage: form.fields.map(f => ({
+        field: f.name,
+        syntax: `{{${form.table_name || form.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.${f.name}[0]}}`,
+        description: `Use this syntax to display the ${f.label} from the first entry of this form`
+      }))
+    }));
+
+    return formatResponse({
+      success: true,
+      count: forms.length,
+      forms: forms,
+      hint: 'To insert a form into a page, use webbuilder_form_generate to get the HTML code, and then add it as a component. The generated HTML handles everything automatically.'
+    });
+  } catch (error) {
+    return formatError(`Failed to list forms: ${error.message}`);
+  }
+}
+
+async function generateForm(args, context) {
+  try {
+    const response = await cmsRequest(`api/cc_forms.php?action=generate&wb_project_id=${encodeURIComponent(args.projectId)}`, {
+      method: 'POST',
+      contentType: 'application/json',
+      body: {
+        wb_project_id: args.projectId,
+        form: args.formName,
+        fields: args.fields,
+        style: args.style || 'modern',
+        submitText: args.submitText || 'Send',
+        successMessage: args.successMessage || 'Successfully sent!',
+        errorMessage: args.errorMessage || 'Error sending.',
+        showTitle: args.showTitle !== false,
+        showDescription: args.showDescription !== false
+      }
+    }, context);
+    
+    const data = typeof response === 'string' ? JSON.parse(response) : response;
+    
+    if (!data.success) {
+      return formatError(data.error || 'Failed to generate form');
+    }
+    
+    return formatResponse({
+      success: true,
+      title: `CC Form: ${args.title || args.formName}`,
+      html_code: data.html,
+      message: 'Form HTML generated. You can now add this HTML as a component to a page. The form is fully functional and handles submissions automatically - NO extra scripts/JavaScript are needed.'
+    });
+  } catch (error) {
+    return formatError(`Failed to generate form: ${error.message}`);
   }
 }
 
