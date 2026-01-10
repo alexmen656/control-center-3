@@ -274,20 +274,22 @@ function processDynamicContent($html, $ccProjectId) {
 
 /**
  * Process loop syntax in HTML
- * Support for {% for item in table %} ... {{item.field}} ... {% endfor %}
+ * Support for {% for item in table | filter:key=val | sort:key:desc | limit:n %} ... {{item.field}} ... {% endfor %}
  * 
  * @param string $html - HTML content
  * @param int $ccProjectId - Project ID (unused in current impl but kept for consistent signature)
  * @return string - HTML with loops processed
  */
 function processLoops($html, $ccProjectId) {
-    // Pattern to match {% for var in table %} ... {% endfor %}
-    $pattern = '/\{%\s*for\s+([a-zA-Z0-9_]+)\s+in\s+([a-zA-Z0-9_]+)\s*%\}(.*?)\{%\s*endfor\s*%\}/s';
+    // Pattern to match {% for var in table [modifiers] %} ... {% endfor %}
+    // Improved pattern to capture modifiers
+    $pattern = '/\{%\s*for\s+([a-zA-Z0-9_]+)\s+in\s+([a-zA-Z0-9_]+)((?:\s*\|\s*[a-zA-Z0-9_=:"\'-]+)*)\s*%\}(.*?)\{%\s*endfor\s*%\}/s';
     
     return preg_replace_callback($pattern, function($matches) {
         $loopVar = $matches[1];
         $tableName = $matches[2];
-        $template = $matches[3];
+        $modifiersStr = $matches[3];
+        $template = $matches[4];
         
         // Get data
         $tableData = getCCFormsTableData($tableName);
@@ -296,22 +298,143 @@ function processLoops($html, $ccProjectId) {
             return '';
         }
         
+        // Apply modifiers (filters, sort, limit)
+        if (!empty($modifiersStr)) {
+            $modifiers = explode('|', $modifiersStr);
+            foreach ($modifiers as $mod) {
+                $mod = trim($mod);
+                if (empty($mod)) continue;
+                
+                // Filter: filter:key=value
+                if (strpos($mod, 'filter:') === 0) {
+                    $parts = explode('=', substr($mod, 7));
+                    if (count($parts) == 2) {
+                        $key = trim($parts[0]);
+                        $val = trim($parts[1], " \"'");
+                        $tableData = array_filter($tableData, function($row) use ($key, $val) {
+                            return isset($row[$key]) && $row[$key] == $val;
+                        });
+                    }
+                }
+                
+                // Sort: sort:key:order
+                if (strpos($mod, 'sort:') === 0) {
+                    $parts = explode(':', substr($mod, 5));
+                    $key = trim($parts[0] ?? 'id');
+                    $order = strtolower(trim($parts[1] ?? 'asc'));
+                    
+                    usort($tableData, function($a, $b) use ($key, $order) {
+                        $valA = $a[$key] ?? '';
+                        $valB = $b[$key] ?? '';
+                        
+                        // Try numeric comparison if both are numbers
+                        if (is_numeric($valA) && is_numeric($valB)) {
+                            $cmp = $valA - $valB;
+                        } else {
+                            $cmp = strcmp($valA, $valB);
+                        }
+                        
+                        return $order === 'desc' ? -$cmp : $cmp;
+                    });
+                }
+                
+                // Limit: limit:n
+                if (strpos($mod, 'limit:') === 0) {
+                    $limit = intval(substr($mod, 6));
+                    if ($limit > 0) {
+                        $tableData = array_slice($tableData, 0, $limit);
+                    }
+                }
+            }
+        }
+        
         $output = '';
         foreach ($tableData as $row) {
             $rowHtml = $template;
             
-            // Replace {{loopVar.column}} within the loop
+            // 1. Replace {{loopVar.column}} within the loop (visual output)
             $variablePattern = '/\{\{\s*' . preg_quote($loopVar, '/') . '\.([a-zA-Z0-9_]+)\s*\}\}/';
             
             $rowHtml = preg_replace_callback($variablePattern, function($varMatches) use ($row) {
                 $column = $varMatches[1];
-                return getCCFormsColumnValue([$row], $column, 0);
+                return htmlspecialchars(getCCFormsColumnValue([$row], $column, 0), ENT_QUOTES, 'UTF-8');
+            }, $rowHtml);
+
+            // 2. Prepare variables for conditional logic inside the loop
+            // Find all {% if ... %} tags and replace all occurrences of loopVar.field inside them
+            $rowHtml = preg_replace_callback('/\{%\s*if\s+(.+?)\s*%\}/', function($match) use ($loopVar, $row) {
+                $content = $match[1];
+                
+                // Replace loopVar.field -> "value" (multiple occurrences supported)
+                $replacedContent = preg_replace_callback('/' . preg_quote($loopVar, '/') . '\.([a-zA-Z0-9_]+)/', function($m) use ($row) {
+                    $val = getCCFormsColumnValue([$row], $m[1], 0);
+                    return '"' . addslashes($val) . '"';
+                }, $content);
+                
+                return '{% if ' . $replacedContent . ' %}';
             }, $rowHtml);
             
             $output .= $rowHtml;
         }
         
         return $output;
+    }, $html);
+}
+
+/**
+ * Process conditional logic (IF statements)
+ * Supports: {% if var %} or {% if var == "value" %} or {% if var != "value" %}
+ * 
+ * @param string $html
+ * @param int $ccProjectId
+ * @return string
+ */
+function processConditions($html, $ccProjectId) {
+    // Pattern: {% if condition %} content {% endif %}
+    $pattern = '/\{%\s*if\s+(.*?)\s*%\}(.*?)\{%\s*endif\s*%\}/s';
+    
+    return preg_replace_callback($pattern, function($matches) {
+        $condition = trim($matches[1]);
+        $content = $matches[2];
+                // Handle optional {% else %} block
+        $trueContent = $content;
+        $falseContent = '';
+        
+        $elseSplit = preg_split('/\{%\s*else\s*%\}/', $content, 2);
+        if (count($elseSplit) > 1) {
+            $trueContent = $elseSplit[0];
+            $falseContent = $elseSplit[1];
+        }
+                // Resolve variables in condition (table.col[i])
+        // Matches table_name.column_name[index]
+        $varPattern = '/([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\[(\d+)\]/';
+        $condition = preg_replace_callback($varPattern, function($v) {
+            $table = $v[1];
+            $col = $v[2];
+            $idx = intval($v[3]);
+            $data = getCCFormsTableData($table);
+            $val = getCCFormsColumnValue($data, $col, $idx);
+            return '"' . addslashes($val) . '"';
+        }, $condition);
+        
+        // Evaluate condition
+        $isTrue = false;
+        
+        // 1. Equality: "a" == "b"
+        if (preg_match('/^"([^"]*)"\s*==\s*"([^"]*)"$/', $condition, $cMatches)) {
+            $isTrue = ($cMatches[1] == $cMatches[2]);
+        }
+        // 2. Inequality: "a" != "b"
+        elseif (preg_match('/^"([^"]*)"\s*!=\s*"([^"]*)"$/', $condition, $cMatches)) {
+            $isTrue = ($cMatches[1] != $cMatches[2]);
+        }
+        // 3. Existence/Truthiness: "value" (checks if not empty)
+        elseif (preg_match('/^"([^"]*)"$/', $condition, $cMatches)) {
+            $val = $cMatches[1];
+            $isTrue = !empty($val) && $val !== 'false' && $val !== '0';
+        }
+        
+        return $isTrue ? $trueContent : $falseContent;
     }, $html);
 }
 
@@ -400,7 +523,10 @@ function generatePageHtml($title, $metaDescription, $components, $projectSlug = 
     
     // Process dynamic content if project ID is available
     if ($ccProjectId) {
+        $componentsHtml = processConditions($componentsHtml, $ccProjectId);
         $componentsHtml = processLoops($componentsHtml, $ccProjectId);
+        // Run conditions again after loops to handle conditions inside loops
+        $componentsHtml = processConditions($componentsHtml, $ccProjectId);
         $componentsHtml = processDynamicContent($componentsHtml, $ccProjectId);
     }
     

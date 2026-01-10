@@ -1438,14 +1438,15 @@ async function listForms(args, context) {
         syntax: `{{${form.table_name || form.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.${f.name}[0]}}`,
         description: `Use this syntax to display the ${f.label} from the first entry of this form`
       })),
-      loopSyntax: `{% for item in ${form.table_name} %} ... {{item.${form.fields[0]?.name || 'field_name'}}} ... {% endfor %}`
+      loopSyntax: `{% for item in ${form.table_name} | filter:field=value | sort:field:desc | limit:10 %} ... {{item.${form.fields[0]?.name || 'field_name'}}} ... {% endfor %}`,
+      conditionSyntax: `{% if ${form.table_name}.${form.fields[0]?.name || 'field'}[0] == "value" %} content {% else %} fallback {% endif %}`
     }));
 
     return formatResponse({
       success: true,
       count: forms.length,
       forms: forms,
-      hint: 'To insert a form into a page, use webbuilder_form_generate to get the HTML code. To display data, use {{table.field[0]}} for single values or {% for item in table %} ... {{item.field}} ... {% endfor %} for loops.'
+      hint: 'To insert a form into a page, use webbuilder_form_generate to get the HTML code. Data Display: {{table.field[0]}}. Loops: {% for item in table | filter:key=val | sort:key:asc | limit:5 %} ... {{item.field}} ... {% endfor %}. Conditions: {% if item.field == "value" %} ... {% else %} ... {% endif %}. Conditions work inside loops too.'
     });
   } catch (error) {
     return formatError(`Failed to list forms: ${error.message}`);
