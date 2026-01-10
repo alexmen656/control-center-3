@@ -21,9 +21,7 @@ const mediaLibraryStore = useMediaLibraryStore();
 const pageBuilderStateStore = usePageBuilderStateStore();
 const userStore = useUserStore();
 const projectStore = useProjectStore();
-
 const openPageBuilder = ref(false);
-
 const pageBuilderPrimaryHandler = ref(null);
 const pageBuilderSecondaryHandler = ref(null);
 const pageBuilder = new PageBuilder(pageBuilderStateStore, mediaLibraryStore);
@@ -45,16 +43,6 @@ const currentProject = computed(() => {
   return projectStore.getCurrentProject;
 });
 
-// Computed: Zeige Projektauswahl wenn kein Projekt geladen ist
-const showProjectSelection = computed(() => {
-  return isAuthenticated.value && !currentProject.value && route.name === 'home';
-});
-
-// Computed: Zeige PageBuilder wenn Projekt geladen ist
-const showPageBuilder = computed(() => {
-  return isAuthenticated.value && currentProject.value && route.name === 'project';
-});
-
 const pathPageBuilderStorageCreate = `page-builder-create-post`;
 const pathPageBuilderStorageUpdate = `page-builder-update-post-id-1`;
 
@@ -69,7 +57,6 @@ const handlePageBuilder = async function () {
     pageBuilder.areComponentsStoredInLocalStorage();
   }
 
-  // handle click
   pageBuilderPrimaryHandler.value = async function () {
     userStore.setIsLoading(true);
 
@@ -79,22 +66,19 @@ const handlePageBuilder = async function () {
     }
 
     openPageBuilder.value = false;
-    // Navigiere zurück zur Home-Seite (Projektauswahl)
     router.push({ name: 'home' });
     userStore.setIsLoading(false);
   };
 
-  // handle click
   pageBuilderSecondaryHandler.value = async function () {
     userStore.setIsLoading(true);
 
-    // save to local storage if new resource
     if (formType.value === 'create') {
       await nextTick();
       pageBuilder.saveComponentsLocalStorage();
       await nextTick();
     }
-    // save to local storage if update
+
     if (formType.value === 'update') {
       await nextTick();
       pageBuilder.synchronizeDOMAndComponents();
@@ -102,29 +86,11 @@ const handlePageBuilder = async function () {
     }
 
     openPageBuilder.value = false;
-    // Navigiere zurück zur Home-Seite (Projektauswahl)
     router.push({ name: 'home' });
-
     userStore.setIsLoading(false);
   };
 
   userStore.setIsLoading(false);
-
-  // end modal
-};
-
-// Builder # End
-const handleDraftForUpdate = async function () {
-  userStore.setIsLoading(true);
-
-  if (formType.value === 'update') {
-    await nextTick();
-    pageBuilder.areComponentsStoredInLocalStorageUpdate();
-    await nextTick();
-    pageBuilder.setEventListenersForElements();
-
-    userStore.setIsLoading(false);
-  }
 };
 
 const handleLogout = async () => {
@@ -136,25 +102,21 @@ const handleLogout = async () => {
   userStore.setIsLoading(false);
 };
 
-// Projekt-Handler
 const handleSelectProject = (project) => {
-  // Projekt wurde ausgewählt - navigiere zur Projekt-Route
   projectStore.setCurrentProject(project);
   router.push({ name: 'project', params: { id: project.id } });
 };
 
 const handleCreateNewProject = async () => {
   userStore.setIsLoading(true);
-  
+
   try {
-    // Erstelle ein neues Projekt mit Standardwerten
     const newProject = await projectStore.createProject({
       name: `Neues Projekt ${new Date().toLocaleDateString()}`,
       description: 'Ein neues Webseiten-Projekt',
       pages: []
     });
-    
-    // Navigiere zum neuen Projekt
+
     router.push({ name: 'project', params: { id: newProject.id } });
   } catch (error) {
     console.error('Fehler beim Erstellen eines neuen Projekts:', error);
@@ -163,23 +125,17 @@ const handleCreateNewProject = async () => {
   }
 };
 
-// Überprüfen des Authentifizierungsstatus beim Start der App
 onMounted(async () => {
   userStore.setIsLoading(true);
   await userStore.fetchCurrentUser();
   userStore.setIsLoading(false);
-  
-  // Lasse den Router automatisch zur richtigen Route navigieren
-  // basierend auf dem Authentifizierungsstatus und der aktuellen URL
 });
 
-// Watcher: Wenn ein Projekt geladen wird, öffne den PageBuilder
 watch(
   () => [currentProject.value, route.name],
   ([project, routeName]) => {
     if (project && routeName === 'project') {
       openPageBuilder.value = true;
-      // Setze die Projekt-ID im Page Builder State Store
       pageBuilderStateStore.setProjectId(project.id);
     } else {
       openPageBuilder.value = false;
@@ -189,10 +145,7 @@ watch(
 );
 
 onBeforeMount(() => {
-  // Define local storage key name before on mount
   pageBuilderStateStore.setLocalStorageItemName(pathPageBuilderStorageCreate);
-
-  // Define local storage key name before on mount
   pageBuilderStateStore.setLocalStorageItemNameUpdate(
     pathPageBuilderStorageUpdate
   );
@@ -203,34 +156,19 @@ onBeforeMount(() => {
   <teleport to="body">
     <FullScreenSpinner v-if="getIsLoading"></FullScreenSpinner>
   </teleport>
-
-  <!-- Router View für die verschiedenen Routen -->
   <router-view v-slot="{ Component }">
-    <!-- Login-Route -->
     <template v-if="route.name === 'login'">
       <LoginForm />
     </template>
-
-    <!-- Home-Route (Projektauswahl) -->
     <template v-else-if="route.name === 'home' && isAuthenticated">
-      <ProjectSelection 
-        @selectProject="handleSelectProject"
-        @createNewProject="handleCreateNewProject"
-      />
+      <ProjectSelection @selectProject="handleSelectProject" @createNewProject="handleCreateNewProject" />
     </template>
-
-    <!-- Projekt-Route (PageBuilder) -->
     <template v-else-if="route.name === 'project' && isAuthenticated && currentProject">
-      <PageBuilderModal
-        :show="openPageBuilder"
-        updateOrCreate="create"
+      <PageBuilderModal :show="openPageBuilder" updateOrCreate="create"
         @pageBuilderPrimaryHandler="pageBuilderPrimaryHandler"
-        @pageBuilderSecondaryHandler="pageBuilderSecondaryHandler"
-        @handleDraftForUpdate="handleDraftForUpdate"
-      >
+        @pageBuilderSecondaryHandler="pageBuilderSecondaryHandler">
         <PageBuilderView></PageBuilderView>
       </PageBuilderModal>
-
       <template v-if="!openPageBuilder">
         <Navbar @handleButton="handlePageBuilder" :user="currentUser" @logout="handleLogout"></Navbar>
         <HomeSection @handleButton="handlePageBuilder"></HomeSection>
