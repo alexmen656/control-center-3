@@ -7,18 +7,15 @@ export const useProjectStore = defineStore('project', () => {
   const currentProject = ref(null);
   const isLoading = ref(false);
   const error = ref(null);
-
-  // Getter
   const getProjects = computed(() => projects.value);
   const getCurrentProject = computed(() => currentProject.value);
   const getIsLoading = computed(() => isLoading.value);
   const getError = computed(() => error.value);
 
-  // Projekte vom Backend laden
   const loadProjects = async () => {
     isLoading.value = true;
     error.value = null;
-    
+
     try {
       const response = await vueFetch('https://alex.polan.sk/control-center/web-builder/projects.php', {
         method: 'GET',
@@ -40,42 +37,8 @@ export const useProjectStore = defineStore('project', () => {
     }
   };
 
-  // Neues Projekt erstellen
-  const createProject = async (projectData) => {
-    isLoading.value = true;
-    error.value = null;
-    
-    try {
-      const response = await vueFetch('https://alex.polan.sk/control-center/web-builder/projects.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(projectData)
-      });
-
-      if (response.status === 'success') {
-        // Füge das neue Projekt zur Liste hinzu
-        const newProject = response.data;
-        projects.value.push(newProject);
-        currentProject.value = newProject;
-        return newProject;
-      } else {
-        throw new Error(response.message || 'Fehler beim Erstellen des Projekts');
-      }
-    } catch (err) {
-      console.error('Fehler beim Erstellen des Projekts:', err);
-      error.value = err.message;
-      throw err;
-    } finally {
-      isLoading.value = false;
-    }
-  };
-
-  // Aktuelles Projekt setzen
   const setCurrentProject = (project) => {
     currentProject.value = project;
-    // Aktuellen Projektnamen im Session Storage speichern für Persistenz
     if (project) {
       sessionStorage.setItem('currentProjectId', project.id);
     } else {
@@ -83,11 +46,10 @@ export const useProjectStore = defineStore('project', () => {
     }
   };
 
-  // Projekt aktualisieren
   const updateProject = async (projectId, projectData) => {
     isLoading.value = true;
     error.value = null;
-    
+
     try {
       const response = await vueFetch(`https://alex.polan.sk/control-center/web-builder/projects.php?id=${projectId}`, {
         method: 'PUT',
@@ -98,12 +60,10 @@ export const useProjectStore = defineStore('project', () => {
       });
 
       if (response.status === 'success') {
-        // Aktualisiere das Projekt in der Liste
         const index = projects.value.findIndex(p => p.id === projectId);
         if (index !== -1) {
           projects.value[index] = { ...projects.value[index], ...projectData };
-          
-          // Aktualisiere auch das aktuelle Projekt, wenn es das gleiche ist
+
           if (currentProject.value?.id === projectId) {
             currentProject.value = projects.value[index];
           }
@@ -121,26 +81,23 @@ export const useProjectStore = defineStore('project', () => {
     }
   };
 
-  // Projekt löschen
   const deleteProject = async (projectId) => {
     isLoading.value = true;
     error.value = null;
-    
+
     try {
       const response = await vueFetch(`https://alex.polan.sk/control-center/web-builder/projects.php?id=${projectId}`, {
         method: 'DELETE'
       });
 
       if (response.status === 'success') {
-        // Entferne das Projekt aus der Liste
         projects.value = projects.value.filter(p => p.id !== projectId);
-        
-        // Wenn das gelöschte Projekt das aktuelle war, setze currentProject zurück
+
         if (currentProject.value?.id === projectId) {
           currentProject.value = null;
           sessionStorage.removeItem('currentProjectId');
         }
-        
+
         return true;
       } else {
         throw new Error(response.message || 'Fehler beim Löschen des Projekts');
@@ -154,28 +111,25 @@ export const useProjectStore = defineStore('project', () => {
     }
   };
 
-  // Projekt aus Session Storage wiederherstellen (für Persistenz zwischen Seiten-Refreshes)
   const restoreCurrentProject = async () => {
     const storedProjectId = sessionStorage.getItem('currentProjectId');
     if (storedProjectId && (!currentProject.value || currentProject.value.id !== parseInt(storedProjectId))) {
-      // Wenn Projekte noch nicht geladen sind, lade sie zuerst
       if (projects.value.length === 0) {
         await loadProjects();
       }
-      
-      // Finde das gespeicherte Projekt in der Liste
+
       const project = projects.value.find(p => p.id === parseInt(storedProjectId));
+
       if (project) {
         setCurrentProject(project);
       }
     }
   };
 
-  // Einzelnes Projekt anhand der ID laden
   const loadProjectById = async (projectId) => {
     isLoading.value = true;
     error.value = null;
-    
+
     try {
       const response = await vueFetch(`https://alex.polan.sk/control-center/web-builder/projects.php?id=${projectId}`, {
         method: 'GET',
@@ -184,26 +138,20 @@ export const useProjectStore = defineStore('project', () => {
         }
       });
 
-      // Backend gibt das Projekt direkt zurück (nicht mit status-Wrapper)
-      // oder es hat ein error-Property bei Fehlern
       if (response.error) {
         throw new Error(response.message || 'Projekt nicht gefunden');
       }
 
       const project = response;
-      
-      // Stelle sicher, dass die ID ein Integer ist für Vergleiche
       project.id = parseInt(project.id);
-      
-      // Aktualisiere das Projekt in der Liste oder füge es hinzu
+
       const index = projects.value.findIndex(p => parseInt(p.id) === project.id);
       if (index !== -1) {
         projects.value[index] = project;
       } else {
         projects.value.push(project);
       }
-      
-      // Setze als aktuelles Projekt
+
       setCurrentProject(project);
       return project;
     } catch (err) {
@@ -225,7 +173,6 @@ export const useProjectStore = defineStore('project', () => {
     getIsLoading,
     getError,
     loadProjects,
-    createProject,
     setCurrentProject,
     updateProject,
     deleteProject,

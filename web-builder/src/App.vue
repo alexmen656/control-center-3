@@ -107,24 +107,6 @@ const handleSelectProject = (project) => {
   router.push({ name: 'project', params: { id: project.id } });
 };
 
-const handleCreateNewProject = async () => {
-  userStore.setIsLoading(true);
-
-  try {
-    const newProject = await projectStore.createProject({
-      name: `Neues Projekt ${new Date().toLocaleDateString()}`,
-      description: 'Ein neues Webseiten-Projekt',
-      pages: []
-    });
-
-    router.push({ name: 'project', params: { id: newProject.id } });
-  } catch (error) {
-    console.error('Fehler beim Erstellen eines neuen Projekts:', error);
-  } finally {
-    userStore.setIsLoading(false);
-  }
-};
-
 onMounted(async () => {
   userStore.setIsLoading(true);
   await userStore.fetchCurrentUser();
@@ -161,7 +143,7 @@ onBeforeMount(() => {
       <LoginForm />
     </template>
     <template v-else-if="route.name === 'home' && isAuthenticated">
-      <ProjectSelection @selectProject="handleSelectProject" @createNewProject="handleCreateNewProject" />
+      <ProjectSelection @selectProject="handleSelectProject" />
     </template>
     <template v-else-if="route.name === 'project' && isAuthenticated && currentProject">
       <PageBuilderModal :show="openPageBuilder" updateOrCreate="create"
