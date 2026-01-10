@@ -226,8 +226,9 @@ sendResponse($response);
  */
 function processDynamicContent($html, $ccProjectId)
 {
-    // Pattern to match {{table_name.column_name[index]}}
-    $pattern = '/\{\{([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\[\s*(\d+)\s*\]\}\}/';
+    // Pattern to match {{table_name.column_name[index] | modifiers}}
+    // Allows for | filter:arg | ...
+    $pattern = '/\{\{([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\[\s*(\d+)\s*\]((?:\s*\|\s*[^\}]+)*)\}\}/';
 
     // Find all matches first to batch database queries
     preg_match_all($pattern, $html, $matches, PREG_SET_ORDER);
@@ -242,6 +243,7 @@ function processDynamicContent($html, $ccProjectId)
         $tableName = $match[1];
         $columnName = $match[2];
         $index = intval($match[3]);
+        $modifiers = $match[4] ?? '';
 
         if (!isset($tableQueries[$tableName])) {
             $tableQueries[$tableName] = [];
@@ -249,7 +251,8 @@ function processDynamicContent($html, $ccProjectId)
         $tableQueries[$tableName][] = [
             'fullMatch' => $match[0],
             'column' => $columnName,
-            'index' => $index
+            'index' => $index,
+            'modifiers' => $modifiers
         ];
     }
 
@@ -261,13 +264,19 @@ function processDynamicContent($html, $ccProjectId)
         foreach ($columns as $colInfo) {
             $key = $colInfo['fullMatch'];
             $value = getCCFormsColumnValue($tableData, $colInfo['column'], $colInfo['index']);
+
+            // Apply modifiers
+            if (!empty($colInfo['modifiers'])) {
+                $value = applyValueFilters($value, $colInfo['modifiers']);
+            }
+
             $resolvedContent[$key] = $value;
         }
     }
 
     // Replace all dynamic content in HTML
     foreach ($resolvedContent as $syntax => $value) {
-        $html = str_replace($syntax, htmlspecialchars($value, ENT_QUOTES, 'UTF-8'), $html);
+        $html = str_replace($syntax, htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'), $html);
     }
 
     return $html;
@@ -368,11 +377,19 @@ function processLoops($html, $ccProjectId)
 
             // 1. Replace {{loopVar.column}} within the loop (visual output)
             // Updated to allow whitespace around dot: {{ member . name }}
-            $variablePattern = '/\{\{\s*' . preg_quote($loopVar, '/') . '\s*\.\s*([a-zA-Z0-9_]+)\s*\}\}/';
+            // Also supports modifiers: {{ member.name | upper }}
+            $variablePattern = '/\{\{\s*' . preg_quote($loopVar, '/') . '\s*\.\s*([a-zA-Z0-9_]+)((?:\s*\|\s*[^\}]+)*)\s*\}\}/';
 
             $rowHtml = preg_replace_callback($variablePattern, function ($varMatches) use ($row) {
                 $column = $varMatches[1];
-                return htmlspecialchars(getCCFormsColumnValue([$row], $column, 0), ENT_QUOTES, 'UTF-8');
+                $modifiers = $varMatches[2] ?? '';
+                $val = getCCFormsColumnValue([$row], $column, 0);
+
+                if (!empty($modifiers)) {
+                    $val = applyValueFilters($val, $modifiers);
+                }
+
+                return htmlspecialchars((string) $val, ENT_QUOTES, 'UTF-8');
             }, $rowHtml);
 
             // 2. Prepare variables for conditional logic inside the loop
@@ -856,4 +873,93 @@ html {
     scrollbar-width: none;
 }
 CSS;
+}
+
+/**
+ * Apply filters to a value
+ * 
+ * @param string $value
+ * @param string $modifiersStr - String of modifiers (e.g. "| upper | truncate:50")
+ * @return string
+ */
+function applyValueFilters($value, $modifiersStr)
+{
+    if (empty($modifiersStr))
+        return $value;
+
+    // Split by pipe, but we need to respect quoted pipes if any (rare but possible in default:'..|..')
+    // For simplicity, we split by pipe. If robust parsing is needed for pipes in args, a regex split is better.
+    // Generally argument values shouldn't contain pipes.
+    $modifiers = explode('|', $modifiersStr);
+
+    foreach ($modifiers as $mod) {
+        $mod = trim($mod);
+        if (empty($mod))
+            continue;
+
+        // Parse modifier and arguments
+        // Name is until first colon
+        $parts = explode(':', $mod, 2);
+        $name = strtolower(trim($parts[0]));
+        $argsStr = isset($parts[1]) ? $parts[1] : '';
+
+        $args = [];
+        if ($argsStr !== '') {
+            // Smart split of arguments respecting quotes
+            // Regex to match quoted strings OR non-colon sequences
+            if (preg_match_all('/(?:[\'"]([^\'"]*)[\'"]|([^:]+))/', $argsStr, $argMatches)) {
+                foreach ($argMatches[0] as $fullMatch) {
+                    $args[] = trim($fullMatch, ": \"'");
+                }
+            }
+        }
+
+        switch ($name) {
+            case 'upper':
+            case 'uppercase':
+                $value = mb_strtoupper((string) $value, 'UTF-8');
+                break;
+            case 'lower':
+            case 'lowercase':
+                $value = mb_strtolower((string) $value, 'UTF-8');
+                break;
+            case 'capitalize':
+            case 'capfirst':
+                $val = (string) $value;
+                if (mb_strlen($val) > 0) {
+                    $first = mb_substr($val, 0, 1, 'UTF-8');
+                    $rest = mb_substr($val, 1, null, 'UTF-8');
+                    $value = mb_strtoupper($first, 'UTF-8') . $rest;
+                }
+                break;
+            case 'truncate':
+                $length = intval($args[0] ?? 50);
+                $append = isset($args[1]) ? $args[1] : '...';
+                if (mb_strlen((string) $value, 'UTF-8') > $length) {
+                    $value = mb_substr((string) $value, 0, $length, 'UTF-8') . $append;
+                }
+                break;
+            case 'default':
+                $val = (string) $value;
+                if (empty($val) || $val === '0' || $val === 'false') {
+                    // For default, we might want the raw remainder if parsing failed or was complicated
+                    $defaultVal = isset($args[0]) ? $args[0] : '';
+                    $value = $defaultVal;
+                }
+                break;
+            case 'slice':
+                $start = intval($args[0] ?? 0);
+                $length = isset($args[1]) ? intval($args[1]) : null;
+                $value = mb_substr((string) $value, $start, $length, 'UTF-8');
+                break;
+            case 'trim':
+                $value = trim((string) $value);
+                break;
+            case 'striptags':
+                $value = strip_tags((string) $value);
+                break;
+        }
+    }
+
+    return $value;
 }
