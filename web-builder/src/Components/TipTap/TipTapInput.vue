@@ -595,7 +595,7 @@ const closeDynamicContentModal = () => {
 };
 
 const insertDynamicContent = (syntax) => {
-  if (!editor.value) return; Ï
+  if (!editor.value) return;
   editor.value.chain().focus().insertContent(syntax).run();
   closeDynamicContentModal();
 };

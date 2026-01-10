@@ -1,10 +1,13 @@
 <script setup>
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ref, computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import DynamicModal from '@/Components/Modals/DynamicModal.vue';
 import { usePageBuilderStateStore } from '@/stores/page-builder-state';
 
 const pageBuilderStateStore = usePageBuilderStateStore();
+const router = useRouter();
+const route = useRoute();
 
 // Hole die Seiten und die aktuelle Seiten-ID aus dem Store
 const pages = computed(() => pageBuilderStateStore.pages);
@@ -41,7 +44,18 @@ const pageIdToEdit = ref(null);
 // Wechsel zu einer anderen Seite
 const switchPage = (pageId) => {
   if (pageId !== currentPageId.value) {
-    pageBuilderStateStore.switchToPage(pageId);
+    if (route.name === 'project') {
+      router.push({
+        name: 'project',
+        params: {
+          id: route.params.id,
+          pageId: pageId
+        }
+      });
+    } else {
+      // Fallback falls nicht in projekt route
+      pageBuilderStateStore.switchToPage(pageId);
+    }
   }
 };
 
@@ -65,7 +79,19 @@ const handleAddPage = () => {
   thirdModalButtonFunction.value = function() {
     if (newPageName.value.trim() !== '') {
       const newPageId = pageBuilderStateStore.addPage(newPageName.value);
-      pageBuilderStateStore.switchToPage(newPageId);
+      
+      if (route.name === 'project') {
+        router.push({
+          name: 'project',
+          params: {
+            id: route.params.id,
+            pageId: newPageId
+          }
+        });
+      } else {
+        pageBuilderStateStore.switchToPage(newPageId);
+      }
+      
       showAddPageModal.value = false;
     }
   };

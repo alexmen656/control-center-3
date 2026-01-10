@@ -9,7 +9,7 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/project/:id',
+    path: '/project/:id/:pageId?',
     name: 'project',
     meta: { requiresAuth: true },
     props: true

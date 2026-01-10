@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, computed, ref, watch, nextTick } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import PageBuilder from '@/composables/PageBuilder';
 import PageBuilderPreviewModal from '@/Components/Modals/PageBuilderPreviewModal.vue';
 import Preview from '@/PageBuilder/Preview.vue';
@@ -33,6 +34,8 @@ const thirdButtonModal = ref(null);
 const mediaLibraryStore = useMediaLibraryStore();
 const pageBuilderStateStore = usePageBuilderStateStore();
 const projectStore = useProjectStore();
+const route = useRoute();
+const router = useRouter();
 const emit = defineEmits(['previewCurrentDesign']);
 const pageBuilder = new PageBuilder(pageBuilderStateStore, mediaLibraryStore);
 
@@ -213,7 +216,29 @@ watch(currentProject, async (newProject) => {
     // Aktualisiere die Seiten basierend auf dem neuen Projekt
     if (newProject.pages && newProject.pages.length > 0) {
       pageBuilderStateStore.setPages(newProject.pages);
-      pageBuilderStateStore.setCurrentPageId(newProject.pages[0].id);
+      
+      // Prüfe, ob eine Seiten-ID in der Route angegeben ist
+      const routePageId = route.params.pageId;
+      const pageExists = routePageId ? newProject.pages.find(p => p.id === routePageId) : null;
+      
+      if (pageExists) {
+        pageBuilderStateStore.setCurrentPageId(routePageId);
+      } else {
+        // Standardmäßig erste Seite öffnen
+        const defaultPageId = newProject.pages[0].id;
+        pageBuilderStateStore.setCurrentPageId(defaultPageId);
+        
+        // URL aktualisieren, um die Standard-Seiten-ID anzuzeigen
+        if (route.name === 'project') {
+          router.replace({ 
+            name: 'project', 
+            params: { 
+              id: newProject.id, 
+              pageId: defaultPageId 
+            } 
+          });
+        }
+      }
     } else {
       // Wenn das Projekt keine Seiten hat, erstelle eine neue Standardseite
       const defaultPage = {
@@ -223,6 +248,28 @@ watch(currentProject, async (newProject) => {
       };
       pageBuilderStateStore.setPages([defaultPage]);
       pageBuilderStateStore.setCurrentPageId(defaultPage.id);
+    }
+  }
+});
+
+// Beobachte Änderungen der Route (Browser Back/Forward Tasten oder manuelle URL-Änderung)
+watch(() => route.params.pageId, (newPageId) => {
+  if (newPageId && newPageId !== pageBuilderStateStore.getCurrentPageId) {
+    // Prüfen ob Seiten geladen sind
+    if (pageBuilderStateStore.pages.length > 0) {
+      const pageExists = pageBuilderStateStore.pages.find(p => p.id === newPageId);
+      if (pageExists) {
+        pageBuilderStateStore.setCurrentPageId(newPageId);
+      } else {
+         // Seite existiert nicht, zurück zur aktuellen gültigen Seite
+         router.replace({
+            name: 'project',
+            params: {
+              id: route.params.id,
+              pageId: pageBuilderStateStore.getCurrentPageId || pageBuilderStateStore.pages[0].id
+            }
+         });
+      }
     }
   }
 });
@@ -261,7 +308,27 @@ onMounted(async () => {
     if (currentProj.pages && currentProj.pages.length > 0) {
       // Wenn Seiten vom Projekt vorhanden sind, verwende diese
       pageBuilderStateStore.setPages(currentProj.pages);
-      pageBuilderStateStore.setCurrentPageId(currentProj.pages[0].id);
+      
+      const routePageId = route.params.pageId;
+      const pageExists = routePageId ? currentProj.pages.find(p => p.id === routePageId) : null;
+      
+      if (pageExists) {
+        pageBuilderStateStore.setCurrentPageId(routePageId);
+      } else {
+        const defaultPageId = currentProj.pages[0].id;
+        pageBuilderStateStore.setCurrentPageId(defaultPageId);
+        
+        // URL Update for consistency
+         if (route.name === 'project') {
+          router.replace({ 
+            name: 'project', 
+            params: { 
+              id: currentProj.id, 
+              pageId: defaultPageId 
+            } 
+          });
+        }
+      }
     } else {
       // Erstelle eine neue Standardseite
       const defaultPage = {
