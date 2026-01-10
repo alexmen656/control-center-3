@@ -1437,14 +1437,15 @@ async function listForms(args, context) {
         field: f.name,
         syntax: `{{${form.table_name || form.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.${f.name}[0]}}`,
         description: `Use this syntax to display the ${f.label} from the first entry of this form`
-      }))
+      })),
+      loopSyntax: `{% for item in ${form.table_name} %} ... {{item.${form.fields[0]?.name || 'field_name'}}} ... {% endfor %}`
     }));
 
     return formatResponse({
       success: true,
       count: forms.length,
       forms: forms,
-      hint: 'To insert a form into a page, use webbuilder_form_generate to get the HTML code, and then add it as a component. The generated HTML handles everything automatically.'
+      hint: 'To insert a form into a page, use webbuilder_form_generate to get the HTML code. To display data, use {{table.field[0]}} for single values or {% for item in table %} ... {{item.field}} ... {% endfor %} for loops.'
     });
   } catch (error) {
     return formatError(`Failed to list forms: ${error.message}`);

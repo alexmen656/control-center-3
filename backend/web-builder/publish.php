@@ -273,6 +273,49 @@ function processDynamicContent($html, $ccProjectId) {
 }
 
 /**
+ * Process loop syntax in HTML
+ * Support for {% for item in table %} ... {{item.field}} ... {% endfor %}
+ * 
+ * @param string $html - HTML content
+ * @param int $ccProjectId - Project ID (unused in current impl but kept for consistent signature)
+ * @return string - HTML with loops processed
+ */
+function processLoops($html, $ccProjectId) {
+    // Pattern to match {% for var in table %} ... {% endfor %}
+    $pattern = '/\{%\s*for\s+([a-zA-Z0-9_]+)\s+in\s+([a-zA-Z0-9_]+)\s*%\}(.*?)\{%\s*endfor\s*%\}/s';
+    
+    return preg_replace_callback($pattern, function($matches) {
+        $loopVar = $matches[1];
+        $tableName = $matches[2];
+        $template = $matches[3];
+        
+        // Get data
+        $tableData = getCCFormsTableData($tableName);
+        
+        if (empty($tableData)) {
+            return '';
+        }
+        
+        $output = '';
+        foreach ($tableData as $row) {
+            $rowHtml = $template;
+            
+            // Replace {{loopVar.column}} within the loop
+            $variablePattern = '/\{\{\s*' . preg_quote($loopVar, '/') . '\.([a-zA-Z0-9_]+)\s*\}\}/';
+            
+            $rowHtml = preg_replace_callback($variablePattern, function($varMatches) use ($row) {
+                $column = $varMatches[1];
+                return getCCFormsColumnValue([$row], $column, 0);
+            }, $rowHtml);
+            
+            $output .= $rowHtml;
+        }
+        
+        return $output;
+    }, $html);
+}
+
+/**
  * Get data from CC Forms table
  * CC Forms creates tables with naming convention: {project}_{form_name}
  * 
@@ -357,6 +400,7 @@ function generatePageHtml($title, $metaDescription, $components, $projectSlug = 
     
     // Process dynamic content if project ID is available
     if ($ccProjectId) {
+        $componentsHtml = processLoops($componentsHtml, $ccProjectId);
         $componentsHtml = processDynamicContent($componentsHtml, $ccProjectId);
     }
     
