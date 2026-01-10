@@ -1,27 +1,10 @@
 <?php
-/**
- * Web Builder Publish API
- * 
- * Generates static HTML files from Web Builder project and
- * optionally deploys them to the publish server.
- * 
- * Usage:
- * GET /publish.php?project_id=X           - Generate HTML files
- * GET /publish.php?project_id=X&deploy=1  - Generate and deploy
- * 
- * Requires authentication via JWT token
- */
-
 require_once __DIR__ . '/api_base.php';
 
-// Webhook-Konfiguration für Deployment
 define('PUBLISH_WEBHOOK_URL', 'https://webhook.control-center.eu/publish_web_builder.php');
 define('PUBLISH_WEBHOOK_SECRET', 'cc_web_builder_publish_secret_2025');
 
-// Authenticate user
 $userId = authenticateUser();
-
-// Get project ID from request
 $projectId = isset($_GET['project_id']) ? intval($_GET['project_id']) : null;
 $deployToServer = isset($_GET['deploy']) && ($_GET['deploy'] === 'true' || $_GET['deploy'] === '1');
 
@@ -29,27 +12,26 @@ if (!$projectId) {
     sendError('Project ID is required', 400);
 }
 
-// Get Web Builder project
 $projectResult = query("SELECT * FROM control_center_modul_web_builder_projects WHERE id = $projectId");
+
 if (!$projectResult || mysqli_num_rows($projectResult) === 0) {
     sendError('Project not found', 404);
 }
-$project = fetch_assoc($projectResult);
 
-// Verify user has access to the linked Control Center project
+$project = fetch_assoc($projectResult);
 $ccProjectId = $project['project_id'];
+
 if (!userHasProjectAccess($userId, $ccProjectId)) {
     sendError('Access denied to this project', 403);
 }
 
-// Get Control Center project info (for slug)
 $ccProject = getControlCenterProject($ccProjectId);
+
 if (!$ccProject) {
     sendError('Linked Control Center project not found', 404);
 }
-$projectSlug = $ccProject['link'];
 
-// Get all pages for this project
+$projectSlug = $ccProject['link'];
 $pagesResult = query("SELECT * FROM control_center_modul_web_builder_pages 
                       WHERE project_id = $projectId 
                       ORDER BY is_home DESC, id ASC");
@@ -59,11 +41,11 @@ if (!$pagesResult || mysqli_num_rows($pagesResult) === 0) {
 }
 
 $pages = [];
+
 while ($row = fetch_assoc($pagesResult)) {
     $pages[] = $row;
 }
 
-// Generate HTML files
 $generatedFiles = [];
 $firstPage = null;
 
@@ -76,8 +58,6 @@ foreach ($pages as $page) {
     $pageSlug = $page['slug'];
     $pageTitle = $page['title'] ?: $page['name'];
     $pageMetaDescription = $page['meta_description'] ?: '';
-
-    // Get components for this page
     $componentsResult = query("SELECT * FROM control_center_modul_web_builder_components 
                                WHERE page_id = $pageId 
                                ORDER BY position ASC");
@@ -89,10 +69,7 @@ foreach ($pages as $page) {
         }
     }
 
-    // Generate HTML (pass projectSlug for CC Forms integration and ccProjectId for dynamic content)
     $htmlContent = generatePageHtml($pageTitle, $pageMetaDescription, $components, $projectSlug, $ccProjectId);
-
-    // Determine filename (index.html for home/first page)
     $filename = ($page['is_home'] || $page['id'] === $firstPage['id'])
         ? 'index.html'
         : $pageSlug . '.html';
@@ -105,7 +82,6 @@ foreach ($pages as $page) {
     ];
 }
 
-// Add CSS file
 $cssContent = getStylesCSS();
 if ($cssContent) {
     $generatedFiles[] = [
@@ -114,16 +90,12 @@ if ($cssContent) {
     ];
 }
 
-// Deployment
 $deploymentResult = null;
 $domain = null;
 
 if ($deployToServer) {
-    // Check if domain is configured
-    // Try both projectID and link since web_builder_domains might use either
     $domainResult = query("SELECT domain FROM web_builder_domains 
-                           WHERE (projectID = '" . escape_string($ccProjectId) . "' 
-                                  OR projectID = '" . escape_string($projectSlug) . "')
+                           WHERE projectID = '" . escape_string($projectSlug) . "' 
                            AND is_enabled = 1 
                            LIMIT 1");
 
@@ -131,7 +103,6 @@ if ($deployToServer) {
         $domainRow = fetch_assoc($domainResult);
         $domain = $domainRow['domain'];
 
-        // Prepare files for webhook (only filename and content)
         $filesToDeploy = array_map(function ($file) {
             return [
                 'filename' => $file['filename'],
@@ -139,7 +110,6 @@ if ($deployToServer) {
             ];
         }, $generatedFiles);
 
-        // Send to webhook
         $webhookData = [
             'secret' => PUBLISH_WEBHOOK_SECRET,
             'project_slug' => $projectSlug,
@@ -174,7 +144,6 @@ if ($deployToServer) {
     }
 }
 
-// Build response
 $response = [
     'success' => true,
     'project' => [
@@ -229,15 +198,12 @@ function processDynamicContent($html, $ccProjectId)
     // Pattern to match {{table_name.column_name[index] | modifiers}}
     // Allows for | filter:arg | ...
     $pattern = '/\{\{([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\[\s*(\d+)\s*\]((?:\s*\|\s*[^\}]+)*)\}\}/';
-
-    // Find all matches first to batch database queries
     preg_match_all($pattern, $html, $matches, PREG_SET_ORDER);
 
     if (empty($matches)) {
         return $html;
     }
 
-    // Group by table name for efficient querying
     $tableQueries = [];
     foreach ($matches as $match) {
         $tableName = $match[1];
@@ -256,7 +222,6 @@ function processDynamicContent($html, $ccProjectId)
         ];
     }
 
-    // Fetch content for each table (CC Forms tables)
     $resolvedContent = [];
     foreach ($tableQueries as $tableName => $columns) {
         $tableData = getCCFormsTableData($tableName);
@@ -265,7 +230,6 @@ function processDynamicContent($html, $ccProjectId)
             $key = $colInfo['fullMatch'];
             $value = getCCFormsColumnValue($tableData, $colInfo['column'], $colInfo['index']);
 
-            // Apply modifiers
             if (!empty($colInfo['modifiers'])) {
                 $value = applyValueFilters($value, $colInfo['modifiers']);
             }
@@ -274,7 +238,6 @@ function processDynamicContent($html, $ccProjectId)
         }
     }
 
-    // Replace all dynamic content in HTML
     foreach ($resolvedContent as $syntax => $value) {
         $html = str_replace($syntax, htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'), $html);
     }
@@ -293,7 +256,6 @@ function processDynamicContent($html, $ccProjectId)
 function processLoops($html, $ccProjectId)
 {
     // Pattern to match {% for var in table [modifiers] %} ... {% endfor %}
-    // Improved pattern to capture modifiers
     $pattern = '/\{%\s*for\s+([a-zA-Z0-9_]+)\s+in\s+([a-zA-Z0-9_]+)((?:\s*\|\s*[a-zA-Z0-9_=:"\'-]+)*)\s*%\}(.*?)\{%\s*endfor\s*%\}/s';
 
     return preg_replace_callback($pattern, function ($matches) {
@@ -301,15 +263,12 @@ function processLoops($html, $ccProjectId)
         $tableName = $matches[2];
         $modifiersStr = $matches[3];
         $template = $matches[4];
-
-        // Get data
         $tableData = getCCFormsTableData($tableName);
 
         if (empty($tableData)) {
             return '';
         }
 
-        // Apply modifiers (filters, sort, limit)
         if (!empty($modifiersStr)) {
             $modifiers = explode('|', $modifiersStr);
             foreach ($modifiers as $mod) {
@@ -317,7 +276,6 @@ function processLoops($html, $ccProjectId)
                 if (empty($mod))
                     continue;
 
-                // Filter: filter:key=value
                 if (strpos($mod, 'filter:') === 0) {
                     $parts = explode('=', substr($mod, 7));
                     if (count($parts) >= 2) {
@@ -325,7 +283,6 @@ function processLoops($html, $ccProjectId)
                         $val = trim(substr($mod, 7 + strlen($parts[0]) + 1), " \"'");
 
                         $tableData = array_filter($tableData, function ($row) use ($key, $val) {
-                            // Check both exact match and string representation
                             if (!isset($row[$key]))
                                 return false;
                             return (string) $row[$key] === (string) $val;
@@ -345,7 +302,6 @@ function processLoops($html, $ccProjectId)
                         $valA = $a[$key] ?? '';
                         $valB = $b[$key] ?? '';
 
-                        // Try numeric comparison if both are numbers
                         if (is_numeric($valA) && is_numeric($valB)) {
                             $cmp = $valA - $valB;
                         } else {
