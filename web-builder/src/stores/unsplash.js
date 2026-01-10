@@ -1,16 +1,36 @@
+import { ref } from 'vue';
 import { defineStore } from 'pinia';
-import { useFetch } from '@/composables/vueFetch';
 
-// get images
-const {
-  handleData: handleGetImages,
-  fetchedData: fetchedMedia,
-  isError: isErrorImages,
-  error: errorImages,
-  errors: errorsImages,
-  isLoading: isLoadingImages,
-  isSuccess: isSuccessImages,
-} = useFetch();
+const fetchedMedia = ref(null);
+const errorImages = ref(null);
+const errorsImages = ref(null);
+const isLoadingImages = ref(false);
+const isErrorImages = ref(false);
+const isSuccessImages = ref(false);
+
+const handleGetImages = async (url, options) => {
+  isLoadingImages.value = true;
+  isErrorImages.value = false;
+  isSuccessImages.value = false;
+  errorImages.value = null;
+  errorsImages.value = null;
+
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `API error: ${response.status}`);
+    }
+    const data = await response.json();
+    fetchedMedia.value = data;
+    isSuccessImages.value = true;
+  } catch (err) {
+    errorImages.value = err.message || err;
+    isErrorImages.value = true;
+  } finally {
+    isLoadingImages.value = false;
+  }
+};
 
 export const useUnsplashStore = defineStore('unsplash', {
   state: () => ({
@@ -40,8 +60,6 @@ export const useUnsplashStore = defineStore('unsplash', {
     setOrientationValue(payload) {
       this.orientationValue = payload;
     },
-
-    // Load Unsplash images
     async setLoadUnsplashImages(payload) {
       this.setUnsplashImages({
         fetchedMedia: null,
@@ -73,7 +91,6 @@ export const useUnsplashStore = defineStore('unsplash', {
         console.log(`Error: ${err}`);
       }
 
-      // Update state directly instead of committing mutations
       this.setUnsplashImages({
         fetchedMedia: fetchedMedia.value,
         isError: isErrorImages.value,
