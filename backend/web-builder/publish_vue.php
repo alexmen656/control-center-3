@@ -332,65 +332,151 @@ function generateIndexHtml($project, $pages, $projectSlug)
         // Store loop variable to table name mapping for nested variable resolution
         loopContext: {},
 
-        parseVariables(html, data) {
-            // Pattern: {{table_name.column_name[index] | filters}}
-            return html.replace(/\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\[\s*(\d+)\s*\]((?:\s*\|\s*[^\}]+)*)\s*\}\}/g,
+        // Helper to find balancing {% endfor %} accounting for nesting
+        findBalancedClose(html, startIndex) {
+            let depth = 1;
+            
+            // Simple scanner to find matching tags
+            let pos = startIndex;
+            while (pos < html.length) {
+                // Find next potential tag start
+                const openIdx = html.indexOf('{%', pos);
+                if (openIdx === -1) return -1;
+                
+                // Check if it's for or endfor
+                const tagStr = html.substring(openIdx, openIdx + 20); // Peek enough chars
+                
+                if (/^\{%\s*for\s/.test(tagStr)) {
+                    depth++;
+                    pos = openIdx + 2;
+                } else if (/^\{%\s*endfor\s*%\}/.test(html.substring(openIdx))) {
+                    depth--;
+                    if (depth === 0) return openIdx;
+                    pos = openIdx + 2;
+                } else {
+                    pos = openIdx + 2;
+                }
+            }
+            return -1;
+        },
+
+        parseVariables(html, data, routeParams = {}) {
+            let result = html;
+
+            // 1. Replace route params: {{ route.params.id }}
+            result = result.replace(/\{\{\s*route\.params\.([a-zA-Z0-9_]+)\s*\}\}/g, (match, param) => {
+                return routeParams[param] || '';
+            });
+
+            // 2. Pattern: {{table_name.column_name[index] | filters}} -> Indexed Access
+            result = result.replace(/\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\[\s*(\d+)\s*\]((?:\s*\|\s*[^\}]+)*)\s*\}\}/g,
                 (match, table, column, index, modifiers) => {
                     const tableData = data[table];
-                    if (!tableData || !tableData[index]) return '';
+                    if (!tableData || !Array.isArray(tableData) || !tableData[index]) return '';
                     let value = tableData[index][column] || '';
                     if (modifiers) value = this.applyFilters(value, modifiers);
                     return this.escapeHtml(value);
                 }
             );
+
+            // 3. Pattern: {{table_name.column_name | filters}} -> Singleton/Context Access
+            result = result.replace(/\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*([a-zA-Z_][a-zA-Z0-9_]*)(?!\w)(?![\[])((?:\s*\|\s*[^\}]+)*)\s*\}\}/g,
+                (match, table, column, modifiers) => {
+                    let contextObject = null;
+                    if (data[table + '_singleton']) {
+                         contextObject = data[table + '_singleton'];
+                    } else if (data[table] && !Array.isArray(data[table])) {
+                         contextObject = data[table];
+                    }
+
+                    if (contextObject) {
+                        let value = contextObject[column];
+                        if (value === undefined || value === null) value = '';
+                        if (modifiers) value = this.applyFilters(value, modifiers);
+                        return this.escapeHtml(value);
+                    }
+                    return '';
+                }
+            );
+
+            return result;
         },
 
         parseLoops(html, data) {
-            // Pattern: {% for loopVar in tableName | modifiers %} ... {% endfor %}
-            const loopPattern = /\{%\s*for\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+in\s+([a-zA-Z_][a-zA-Z0-9_]*)((?:\s*\|\s*[a-zA-Z0-9_=:\"'\-]+)*)\s*%\}([\s\S]*?)\{%\s*endfor\s*%\}/g;
+            // Find the first loop start
+            const startRegex = /\{%\s*for\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+in\s+([a-zA-Z_][a-zA-Z0-9_]*)((?:\s*\|\s*[a-zA-Z0-9_=:\"'\-]+)*)\s*%\}/;
+            const match = startRegex.exec(html);
 
-            return html.replace(loopPattern, (match, loopVar, tableName, modifiersStr, template) => {
-                let tableData = data[tableName];
-                if (!tableData || !Array.isArray(tableData)) {
-                    console.warn('No data found for table:', tableName);
-                    return '';
-                }
+            // If no loops found, we are done
+            if (!match) return html;
 
-                // Apply loop modifiers (sort, filter, limit, reverse)
+            const startPos = match.index;
+            const innerStartPos = startPos + match[0].length;
+
+            // Find valid balanced closing tag
+            const endPos = this.findBalancedClose(html, innerStartPos);
+            
+            if (endPos === -1) {
+                console.warn('Unbalanced loop detected, skipping interpretation');
+                // Return html as is (or remove the broken tag?) - safer to return to avoid infinite recursion if we don't fix it
+                // To avoid infinite recursion, we must ensure we don't match this tag again. 
+                // Replacing '{%' with safe chars temporarily? No.
+                // Best effort: process the REST of the string or just abort loop parsing.
+                return html; 
+            }
+
+            // Extract parts
+            const before = html.substring(0, startPos);
+            
+            const closeTagMatch = html.substring(endPos).match(/^\{%\s*endfor\s*%\}/);
+            const closeTagLen = closeTagMatch ? closeTagMatch[0].length : 0;
+            const after = html.substring(endPos + closeTagLen);
+
+            const loopBody = html.substring(innerStartPos, endPos);
+            const loopVar = match[1];
+            const tableName = match[2];
+            const modifiersStr = match[3];
+
+            let processed = '';
+            let tableData = data[tableName];
+
+            if (tableData && Array.isArray(tableData)) {
+                // Apply modifiers (filter, sort, etc)
                 tableData = this.applyLoopModifiers([...tableData], modifiersStr);
 
-                return tableData.map((row, rowIndex) => {
-                    let rowHtml = template;
+                processed = tableData.map(row => {
+                    let item = loopBody;
 
-                    // Replace {{ loopVar.column | filters }} with actual values
-                    // Support whitespace around dots and pipes
+                    // Resolve variables {{ loopVar.col }}
                     const varPattern = new RegExp(
                         '\\\\{\\\\{\\\\s*' + this.escapeRegex(loopVar) + '\\\\s*\\\\.\\\\s*([a-zA-Z_][a-zA-Z0-9_]*)((?:\\\\s*\\\\|\\\\s*.*?)?)\\\\s*\\\\}\\\\}',
                         'g'
                     );
 
-                    rowHtml = rowHtml.replace(varPattern, (m, column, mods) => {
-                        // Case-insensitive column lookup
-                        let value = '';
-                        const lowerColumn = column.toLowerCase();
-                        for (const key in row) {
-                            if (key.toLowerCase() === lowerColumn) {
-                                value = row[key];
-                                break;
-                            }
-                        }
-                        if (value === undefined || value === null) value = '';
-
-                        if (mods) value = this.applyFilters(String(value), mods);
-                        return this.escapeHtml(String(value));
+                    item = item.replace(varPattern, (m, col, mods) => {
+                         let val = '';
+                         const lowerCol = col.toLowerCase();
+                         for (const k in row) {
+                             if (k.toLowerCase() === lowerCol) { val = row[k]; break; }
+                         }
+                         if (val === undefined || val === null) val = '';
+                         if (mods) val = this.applyFilters(String(val), mods);
+                         return this.escapeHtml(String(val));
                     });
 
-                    // Handle conditions inside loops: {% if loopVar.column %} or {% if loopVar.column == "value" %}
-                    rowHtml = this.parseLoopConditions(rowHtml, loopVar, row);
-
-                    return rowHtml;
+                    // Resolve loop conditions {% if loopVar.col %}
+                    item = this.parseLoopConditions(item, loopVar, row);
+                    
+                    return item;
                 }).join('');
-            });
+            }
+
+            // Recursive call: 
+            // 1. We replaced ONE loop.
+            // 2. The result ('processed') might contain nested loops.
+            // 3. The 'after' part might contain sequential loops.
+            // So we parse the whole string again.
+            return this.parseLoops(before + processed + after, data);
         },
 
         parseLoopConditions(html, loopVar, row) {
@@ -609,7 +695,7 @@ function generateIndexHtml($project, $pages, $projectSlug)
             return str.replace(/[.*+?^\${}()|[\]\\x5c]/g, '\\\\\\\\$&');
         },
 
-        async parse(html) {
+        async parse(html, routeParams = {}) {
             // Extract table references from loops (the actual table names)
             const tables = new Set();
             let match;
@@ -620,9 +706,16 @@ function generateIndexHtml($project, $pages, $projectSlug)
                 tables.add(match[1]);
             }
 
-            // Find direct table references: {{TABLE_NAME.column[index]}}
+            // Find direct table references (indexed): {{TABLE_NAME.column[index]}}
             const directTablePattern = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*[a-zA-Z_][a-zA-Z0-9_]*\s*\[\s*\d+\s*\]/g;
             while ((match = directTablePattern.exec(html)) !== null) {
+                tables.add(match[1]);
+            }
+
+            // Find direct singleton references: {{TABLE_NAME.column}}
+            // If we have routeParams, these might be detail lookups
+            const singletonTablePattern = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*[a-zA-Z_][a-zA-Z0-9_]*(?!\w)(?![\[])/g;
+            while ((match = singletonTablePattern.exec(html)) !== null) {
                 tables.add(match[1]);
             }
 
@@ -633,6 +726,36 @@ function generateIndexHtml($project, $pages, $projectSlug)
                     const result = await api.getTableData(table);
                     if (result.success) {
                         data[table] = result.data;
+                        
+                        // Automatic Detail Resolution
+                        // If we have route params (id or slug), try to create a singleton for this table
+                        // e.g. products/:id -> data['products_singleton'] = filtered row
+                        if (Object.keys(routeParams).length > 0 && Array.isArray(result.data)) {
+                             let found = null;
+                             
+                             // 1. Try ID
+                             if (routeParams.id) {
+                                 found = result.data.find(r => String(r.id) === String(routeParams.id));
+                             }
+                             
+                             // 2. Try Slug (if no ID match or no ID param)
+                             if (!found && routeParams.slug) {
+                                 found = result.data.find(r => r.slug === routeParams.slug);
+                             }
+
+                             // 3. Try generic param matching table name (e.g. products/:product_id)
+                             // This is looser but might be helpful
+                             if (!found) {
+                                 const paramName = table.toLowerCase() + '_id'; // products_id
+                                 if (routeParams[paramName]) {
+                                      found = result.data.find(r => String(r.id) === String(routeParams[paramName]));
+                                 }
+                             }
+                             
+                             if (found) {
+                                 data[table + '_singleton'] = found;
+                             }
+                        }
                     } else {
                         console.warn('Failed to load table:', table, result.message);
                         data[table] = [];
@@ -646,14 +769,30 @@ function generateIndexHtml($project, $pages, $projectSlug)
             // Process template in correct order
             let result = html;
 
+            // 0. Pre-process route params and context variables globally
+            // This allows them to be used inside loop definitions (e.g. filter:slug={{slug}})
+            if (routeParams) {
+                // Replace {{ route.params.key }}
+                Object.keys(routeParams).forEach(key => {
+                    const val = routeParams[key];
+                    const safeVal = String(val).replace(/['"]/g, ''); // Simple sanitization for usage in attributes/filters
+                    
+                    // Specific: {{ route.params.key }}
+                    result = result.replace(new RegExp('\\{\\{\\s*route\\.params\\.' + key + '\\s*\\}\\}', 'g'), safeVal);
+                    
+                    // Shorthand: {{ key }}
+                    result = result.replace(new RegExp('\\{\\{\\s*' + key + '\\s*\\}\\}', 'g'), safeVal);
+                });
+            }
+
             // 1. First process loops (this replaces loop variables with actual values)
             result = this.parseLoops(result, data);
 
             // 2. Then process conditions (after loop variables are resolved)
             result = this.parseConditions(result, data);
 
-            // 3. Finally process any remaining direct variable references
-            result = this.parseVariables(result, data);
+            // 3. Finally process any remaining direct variable references (including singletons)
+            result = this.parseVariables(result, data, routeParams);
 
             // Clean up raw tags and dynamic badges
             result = result.replace(/\{%\s*raw\s*%\}|\{%\s*endraw\s*%\}/g, '');
@@ -671,16 +810,23 @@ function generateIndexHtml($project, $pages, $projectSlug)
             const loading = ref(true);
             const error = ref(null);
             const content = ref('');
+            const route = VueRouter.useRoute(); // Access current route for params
 
             const loadPage = async (slug) => {
                 loading.value = true;
                 error.value = null;
 
                 try {
+                    // If the path has dynamic segments, 'slug' prop might be just the matched part or params
+                    // But effectively we want the page configuration based on the route definition
+                    // The route definition stores the "page definition slug" in meta or name if we set it up that way.
+                    // But here, 'props.slug' comes from route config: props: { slug: 'xy' }
+                    
                     const result = await api.getPage(slug);
                     if (result.success) {
                         const rawHtml = result.data.components.map(c => c.html).join('\\n');
-                        content.value = await ContentParser.parse(rawHtml);
+                        // Pass route params to parser
+                        content.value = await ContentParser.parse(rawHtml, route.params);
                         document.title = result.data.title;
 
                         const metaDesc = document.querySelector('meta[name="description"]');
@@ -697,6 +843,8 @@ function generateIndexHtml($project, $pages, $projectSlug)
 
             onMounted(() => loadPage(props.slug));
             watch(() => props.slug, loadPage);
+            // Also watch params in case we stay on same route but params change (e.g. /prod/1 -> /prod/2)
+            watch(() => route.params, () => loadPage(props.slug));
 
             return { loading, error, content };
         },

@@ -119,7 +119,7 @@ export const webBuilderTools = [
   },
   {
     name: 'webbuilder_page_create',
-    description: 'Create a new page in a Web Builder project',
+    description: 'Create a new page in a Web Builder project. Supports static pages and DYNAMIC pages (for details views).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -129,11 +129,11 @@ export const webBuilderTools = [
         },
         name: {
           type: 'string',
-          description: 'Page name (e.g., "About Us", "Contact")'
+          description: 'Page name (e.g., "About Us", "Product Details")'
         },
         slug: {
           type: 'string',
-          description: 'URL slug for the page (e.g., "about-us"). Auto-generated from name if not provided'
+          description: 'URL slug for the page. Auto-generated from name if not provided. FOR DYNAMIC PAGES: Use :id or :slug placeholders (e.g., "products/:id", "blog/:slug"). This enables automatic data loading for the specific item.'
         },
         title: {
           type: 'string',
@@ -249,6 +249,8 @@ DYNAMIC CONTENT SYNTAX SUPPORTED:
 - Loops: {% for item in table | filter:col=val | sort:col:desc | limit:N | reverse %} ... {% endfor %}
 - Conditions: {% if var == "value" %} ... {% else %} ... {% endif %} (supports nested IFs)
 - Raw Blocks: {% raw %} content to ignore {% endraw %}
+- DYNAMIC PAGE FILTERS: Route parameters are pre-processed. You can use syntax like: {% for item in table | filter:slug={{slug}} %}
+- DETAIL PAGE AUTO-SELECTION: On dynamic pages (e.g. products/:id), use {{ products.title }} directly (no index needed) to show data for the resolved item.
 
 This structure is REQUIRED for the page builder to track and save user edits properly.`,
     inputSchema: {
@@ -287,6 +289,8 @@ DYNAMIC CONTENT SYNTAX SUPPORTED:
 - Loops: {% for item in table | filter:col=val | sort:col:desc | limit:N | reverse %} ... {% endfor %}
 - Conditions: {% if var == "value" %} ... {% else %} ... {% endif %} (supports nested IFs)
 - Raw Blocks: {% raw %} content to ignore {% endraw %}
+- DYNAMIC PAGE FILTERS: Route parameters are pre-processed. You can use syntax like: {% for item in table | filter:slug={{slug}} %}
+- DETAIL PAGE AUTO-SELECTION: On dynamic pages (e.g. products/:id), use {{ products.title }} directly (no index needed) to show data for the resolved item.
 
 This structure is REQUIRED for the page builder to track and save user edits properly.`,
     inputSchema: {
@@ -343,6 +347,8 @@ DYNAMIC CONTENT SYNTAX SUPPORTED:
 - Loops: {% for item in table | filter:col=val | sort:col:desc | limit:N | reverse %} ... {% endfor %}
 - Conditions: {% if var == "value" %} ... {% else %} ... {% endif %} (supports nested IFs)
 - Raw Blocks: {% raw %} content to ignore {% endraw %}
+- DYNAMIC PAGE FILTERS: Route parameters are pre-processed. You can use syntax like: {% for item in table | filter:slug={{slug}} %}
+- DETAIL PAGE AUTO-SELECTION: On dynamic pages (e.g. products/:id), use {{ products.title }} directly (no index needed) to show data for the resolved item.
 
 This structure is REQUIRED for the page builder to track and save user edits properly.`,
     inputSchema: {

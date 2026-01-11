@@ -1,6 +1,6 @@
 <script setup>
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import DynamicModal from '@/Components/Modals/DynamicModal.vue';
 import { usePageBuilderStateStore } from '@/stores/page-builder-state';
@@ -39,7 +39,21 @@ const thirdModalButtonFunction = ref(null);
 
 // Daten für die Seite
 const newPageName = ref('');
+const newPageSlug = ref('');
 const pageIdToEdit = ref(null);
+
+// Dynamic Page Logic
+const isDynamicPage = ref(false);
+const dynamicPrefix = ref('');
+const dynamicParam = ref(':id');
+
+watch([isDynamicPage, dynamicPrefix, dynamicParam], () => {
+  if (isDynamicPage.value) {
+    // Sanitize prefix
+    const prefix = dynamicPrefix.value.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    newPageSlug.value = prefix ? `${prefix}/${dynamicParam.value}` : dynamicParam.value;
+  }
+});
 
 // Wechsel zu einer anderen Seite
 const switchPage = (pageId) => {
@@ -63,6 +77,10 @@ const switchPage = (pageId) => {
 const handleAddPage = () => {
   showAddPageModal.value = true;
   newPageName.value = '';
+  newPageSlug.value = '';
+  isDynamicPage.value = false;
+  dynamicPrefix.value = '';
+  dynamicParam.value = ':id';
   
   typeModal.value = 'success';
   gridColumnModal.value = 2;
@@ -76,23 +94,25 @@ const handleAddPage = () => {
     showAddPageModal.value = false;
   };
   
-  thirdModalButtonFunction.value = function() {
+  thirdModalButtonFunction.value = async function() {
     if (newPageName.value.trim() !== '') {
-      const newPageId = pageBuilderStateStore.addPage(newPageName.value);
+      const newPageId = await pageBuilderStateStore.addPage(newPageName.value, newPageSlug.value);
       
-      if (route.name === 'project') {
-        router.push({
-          name: 'project',
-          params: {
-            id: route.params.id,
-            pageId: newPageId
-          }
-        });
-      } else {
-        pageBuilderStateStore.switchToPage(newPageId);
+      if (newPageId) {
+        if (route.name === 'project') {
+          router.push({
+            name: 'project',
+            params: {
+              id: route.params.id,
+              pageId: newPageId
+            }
+          });
+        } else {
+          pageBuilderStateStore.switchToPage(newPageId);
+        }
+        
+        showAddPageModal.value = false;
       }
-      
-      showAddPageModal.value = false;
     }
   };
 };
@@ -178,6 +198,52 @@ const handleDeletePage = (pageId, pageName) => {
               name="pagename"
               placeholder="z.B. Startseite, Über uns, Kontakt..."
             />
+          </div>
+        </div>
+      </div>
+      <div class="myInputGroup" style="margin-top: 15px;">
+        <div class="myPrimaryFormOrganizationHeaderDescriptionSection">
+           <label class="flex items-center space-x-2 cursor-pointer mb-2">
+            <input type="checkbox" v-model="isDynamicPage" class="form-checkbox h-4 w-4 text-indigo-600 rounded border-gray-300">
+            <span class="text-sm font-medium text-gray-700">Dynamische Seite / Detailansicht</span>
+          </label>
+
+          <div v-if="isDynamicPage" class="pl-4 border-l-2 border-gray-200 mt-2 space-y-3">
+             <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">URL Präfix (Tabelle/Bereich)</label>
+                <input
+                  v-model="dynamicPrefix"
+                  type="text"
+                  class="myPrimaryInput"
+                  placeholder="z.B. products"
+                />
+             </div>
+             <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Identifikator</label>
+                <select v-model="dynamicParam" class="myPrimaryInput">
+                  <option value=":id">ID (:id)</option>
+                  <option value=":slug">Slug (:slug)</option>
+                </select>
+             </div>
+             <div class="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                Vorschau: <span class="font-mono font-bold">{{ newPageSlug }}</span>
+             </div>
+          </div>
+
+          <div v-else>
+            <div class="myPrimaryFormOrganizationHeader">
+              <label
+                for="pageslug"
+                class="myPrimaryInputLabel"
+              >Pfad / Slug (Optional):</label>
+              <input
+                v-model="newPageSlug"
+                type="text"
+                class="myPrimaryInput"
+                name="pageslug"
+                placeholder="Automatisch generiert aus Name"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -267,6 +333,7 @@ const handleDeletePage = (pageId, pageName) => {
                    class="flex-1 text-sm hover:text-indigo-600"
                    :class="{'font-semibold text-indigo-600': page.id === currentPageId}">
                 {{ page.name }}
+                <span v-if="page.slug && page.slug.includes(':')" class="ml-1 text-xs text-gray-400 font-mono">({{ page.slug }})</span>
               </div>
               
               <!-- Aktionen (nur anzeigen, wenn die Seite aktiv oder hervorgehoben ist) -->
