@@ -245,7 +245,7 @@ CRITICAL HTML STRUCTURE REQUIREMENTS:
 
 DYNAMIC CONTENT SYNTAX SUPPORTED:
 - Variables: {{ table.column[index] }} or {{ loopVar.column }}
-- Filters: {{ value | upper | lower | capitalize | truncate:50 | default:'Fallback' }}
+- Filters: {{ value | upper | lower | capitalize | truncate:50 | default:'Fallback' | date:"d.m.Y" | timeago | replace:"old":"new" | length }}
 - Loops: {% for item in table | filter:col=val | sort:col:desc | limit:N | reverse %} ... {% endfor %}
 - Conditions: {% if var == "value" %} ... {% else %} ... {% endif %} (supports nested IFs)
 - Raw Blocks: {% raw %} content to ignore {% endraw %}
@@ -285,7 +285,7 @@ CRITICAL HTML STRUCTURE REQUIREMENTS:
 
 DYNAMIC CONTENT SYNTAX SUPPORTED:
 - Variables: {{ table.column[index] }} or {{ loopVar.column }}
-- Filters: {{ value | upper | lower | capitalize | truncate:50 | default:'Fallback' }}
+- Filters: {{ value | upper | lower | capitalize | truncate:50 | default:'Fallback' | date:"d.m.Y" | timeago | replace:"old":"new" | length }}
 - Loops: {% for item in table | filter:col=val | sort:col:desc | limit:N | reverse %} ... {% endfor %}
 - Conditions: {% if var == "value" %} ... {% else %} ... {% endif %} (supports nested IFs)
 - Raw Blocks: {% raw %} content to ignore {% endraw %}
@@ -343,7 +343,7 @@ CRITICAL HTML STRUCTURE REQUIREMENTS FOR EACH COMPONENT:
 
 DYNAMIC CONTENT SYNTAX SUPPORTED:
 - Variables: {{ table.column[index] }} or {{ loopVar.column }}
-- Filters: {{ value | upper | lower | capitalize | truncate:50 | default:'Fallback' }}
+- Filters: {{ value | upper | lower | capitalize | truncate:50 | default:'Fallback' | date:"d.m.Y" | timeago | replace:"old":"new" | length }}
 - Loops: {% for item in table | filter:col=val | sort:col:desc | limit:N | reverse %} ... {% endfor %}
 - Conditions: {% if var == "value" %} ... {% else %} ... {% endif %} (supports nested IFs)
 - Raw Blocks: {% raw %} content to ignore {% endraw %}

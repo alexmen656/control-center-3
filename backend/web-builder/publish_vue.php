@@ -650,9 +650,72 @@ function generateIndexHtml($project, $pages, $projectSlug)
                     case 'length':
                         result = String(result.length);
                         break;
+                    case 'date':
+                        result = this.formatDate(result, argsStr.replace(/['"]/g, ''));
+                        break;
+                    case 'timeago':
+                        result = this.timeAgo(result);
+                        break;
+                    case 'replace':
+                        // Extract quoted arguments: "old":"new"
+                        const args = argsStr.match(/(["'])(?:(?=(\\?))\2.)*?\1/g);
+                        if (args && args.length >= 2) {
+                            const search = args[0].slice(1, -1);
+                            const replacement = args[1].slice(1, -1);
+                            result = result.split(search).join(replacement);
+                        }
+                        break;
                 }
             });
             return result;
+        },
+
+        formatDate(dateStr, format) {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return dateStr;
+            
+            const pad = (n) => n.toString().padStart(2, '0');
+            const months = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+            
+            return format.replace(/[a-zA-Z]/g, (char) => {
+                switch(char) {
+                    case 'd': return pad(date.getDate()); // 01-31
+                    case 'j': return date.getDate(); // 1-31
+                    case 'm': return pad(date.getMonth() + 1); // 01-12
+                    case 'M': return months[date.getMonth()].substring(0, 3); // Jan
+                    case 'F': return months[date.getMonth()]; // Januar
+                    case 'Y': return date.getFullYear(); // 2026
+                    case 'y': return String(date.getFullYear()).slice(-2); // 26
+                    case 'H': return pad(date.getHours()); // 00-23
+                    case 'h': return pad(date.getHours() % 12 || 12); // 01-12
+                    case 'i': return pad(date.getMinutes()); // 00-59
+                    case 's': return pad(date.getSeconds()); // 00-59
+                    default: return char;
+                }
+            });
+        },
+
+        timeAgo(dateStr) {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return dateStr;
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            if (seconds < 60) return 'gerade eben';
+            
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return 'vor ' + minutes + ' Minute' + (minutes !== 1 ? 'n' : '');
+            
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return 'vor ' + hours + ' Stunde' + (hours !== 1 ? 'n' : '');
+            
+            const days = Math.floor(hours / 24);
+            if (days < 30) return 'vor ' + days + ' Tag' + (days !== 1 ? 'n' : '');
+            
+            const months = Math.floor(days / 30);
+            if (months < 12) return 'vor ' + months + ' Monat' + (months !== 1 ? 'en' : '');
+            
+            const years = Math.floor(days / 365);
+            return 'vor ' + years + ' Jahr' + (years !== 1 ? 'en' : '');
         },
 
         escapeHtml(str) {
