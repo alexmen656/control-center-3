@@ -1,14 +1,4 @@
 <?php
-/**
- * Vue-based Web Builder Publisher
- *
- * Generates a Vue 3 SPA with:
- * - Vue Router for client-side routing
- * - Dynamic data loading from CC API (remote)
- * - No rebuild needed for content updates
- * - Pure HTML/JS output - no PHP on target server
- */
-
 require_once __DIR__ . '/api_base.php';
 
 define('PUBLISH_WEBHOOK_URL', 'https://webhook.control-center.eu/publish_web_builder.php');
@@ -44,7 +34,6 @@ if (!$ccProject) {
 
 $projectSlug = $ccProject['link'];
 
-// Get all pages for routing
 $pagesResult = query("SELECT * FROM control_center_modul_web_builder_pages
                       WHERE project_id = $projectId
                       ORDER BY is_home DESC, id ASC");
@@ -58,24 +47,20 @@ while ($row = fetch_assoc($pagesResult)) {
     $pages[] = $row;
 }
 
-// Generate files
 $generatedFiles = [];
 
-// 1. Generate index.html (pure Vue SPA - no PHP on target server!)
 $indexHtml = generateIndexHtml($project, $pages, $projectSlug);
 $generatedFiles[] = [
     'filename' => 'index.html',
     'content' => $indexHtml
 ];
 
-// 2. Generate styles.css
 $cssContent = getStylesCSS();
 $generatedFiles[] = [
     'filename' => 'styles.css',
     'content' => $cssContent
 ];
 
-// Deploy if requested
 $deploymentResult = null;
 $domain = null;
 
@@ -170,17 +155,12 @@ sendResponse($response);
 // Generator Functions
 // ============================================
 
-/**
- * Generate the main index.html with Vue 3 SPA
- * Pure HTML/JS - API calls go to Control Center server
- */
 function generateIndexHtml($project, $pages, $projectSlug)
 {
     $projectName = htmlspecialchars($project['name'], ENT_QUOTES, 'UTF-8');
     $projectSlugJs = htmlspecialchars($projectSlug, ENT_QUOTES, 'UTF-8');
     $apiBase = CC_API_BASE;
 
-    // Build routes array for Vue Router
     $routes = [];
     $homePageTitle = $projectName;
     $homePageDesc = '';
@@ -200,7 +180,6 @@ function generateIndexHtml($project, $pages, $projectSlug)
         }
     }
 
-    // If no home page set, use first page
     if (empty($routes)) {
         $routes[] = ['path' => '/', 'slug' => 'home', 'name' => 'Home', 'title' => $projectName, 'meta_description' => ''];
     } elseif ($routes[0]['path'] !== '/') {
@@ -222,7 +201,7 @@ function generateIndexHtml($project, $pages, $projectSlug)
     <meta name="description" content="{$homePageDescEsc}">
     <title>{$homePageTitleEsc}</title>
 
-    <!-- Tailwind CSS via CDN -->
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -236,16 +215,14 @@ function generateIndexHtml($project, $pages, $projectSlug)
         }
     </script>
 
-    <!-- Custom Styles -->
+    <!-- Fonts & Custom Styles -->
     <link rel="stylesheet" href="styles.css">
-
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
 
-    <!-- Vue 3 + Vue Router via CDN -->
+    <!-- Vue 3 + Vue Router -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.prod.js"></script>
 
@@ -295,14 +272,12 @@ function generateIndexHtml($project, $pages, $projectSlug)
     const { createApp, ref, onMounted, watch, defineComponent } = Vue;
     const { createRouter, createWebHistory } = VueRouter;
 
-    // Configuration - API runs on Control Center server
     const CONFIG = {
         projectSlug: '{$projectSlugJs}',
         apiBase: '{$apiBase}',
         routes: {$routesJson}
     };
 
-    // API Helper - calls CC server remotely
     const api = {
         async get(endpoint, params = {}) {
             const url = new URL(CONFIG.apiBase + '/public_api.php');
@@ -314,6 +289,7 @@ function generateIndexHtml($project, $pages, $projectSlug)
                 method: 'GET',
                 headers: { 'Accept': 'application/json' }
             });
+
             if (!response.ok) throw new Error('API request failed');
             return response.json();
         },
@@ -327,24 +303,18 @@ function generateIndexHtml($project, $pages, $projectSlug)
         }
     };
 
-    // Dynamic Content Parser
     const ContentParser = {
-        // Store loop variable to table name mapping for nested variable resolution
         loopContext: {},
 
-        // Helper to find balancing {% endfor %} accounting for nesting
         findBalancedClose(html, startIndex) {
             let depth = 1;
-            
-            // Simple scanner to find matching tags
             let pos = startIndex;
+
             while (pos < html.length) {
-                // Find next potential tag start
                 const openIdx = html.indexOf('{%', pos);
                 if (openIdx === -1) return -1;
                 
-                // Check if it's for or endfor
-                const tagStr = html.substring(openIdx, openIdx + 20); // Peek enough chars
+                const tagStr = html.substring(openIdx, openIdx + 20);
                 
                 if (/^\{%\s*for\s/.test(tagStr)) {
                     depth++;
@@ -399,39 +369,44 @@ function generateIndexHtml($project, $pages, $projectSlug)
                 }
             );
 
+            // 4. Pattern: {{table_name | modifiers}} -> Aggregations (like length on a filtered table)
+            result = result.replace(/\{\{\s*([a-zA-Z_][a-zA-Z0-9_]+)\s*((?:\|\s*[a-zA-Z0-9_:\-=.']+\s*)+)\}\}/g, 
+                (match, table, modifiersStr) => {
+                    const tableData = data[table];
+                    if (!tableData || !Array.isArray(tableData)) return match;
+
+                    const filtered = this.applyLoopModifiers([...tableData], modifiersStr);
+                    const mods = modifiersStr.split('|').map(m => m.trim().toLowerCase());
+                    
+                    if (mods.includes('length')) {
+                         return String(filtered.length);
+                    }
+                    return match;
+                }
+            );
+
             return result;
         },
 
         parseLoops(html, data) {
-            // Find the first loop start
             const startRegex = /\{%\s*for\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+in\s+([a-zA-Z_][a-zA-Z0-9_]*)((?:\s*\|\s*[a-zA-Z0-9_=:\"'\-]+)*)\s*%\}/;
             const match = startRegex.exec(html);
 
-            // If no loops found, we are done
             if (!match) return html;
 
             const startPos = match.index;
             const innerStartPos = startPos + match[0].length;
-
-            // Find valid balanced closing tag
             const endPos = this.findBalancedClose(html, innerStartPos);
             
             if (endPos === -1) {
                 console.warn('Unbalanced loop detected, skipping interpretation');
-                // Return html as is (or remove the broken tag?) - safer to return to avoid infinite recursion if we don't fix it
-                // To avoid infinite recursion, we must ensure we don't match this tag again. 
-                // Replacing '{%' with safe chars temporarily? No.
-                // Best effort: process the REST of the string or just abort loop parsing.
                 return html; 
             }
 
-            // Extract parts
             const before = html.substring(0, startPos);
-            
             const closeTagMatch = html.substring(endPos).match(/^\{%\s*endfor\s*%\}/);
             const closeTagLen = closeTagMatch ? closeTagMatch[0].length : 0;
             const after = html.substring(endPos + closeTagLen);
-
             const loopBody = html.substring(innerStartPos, endPos);
             const loopVar = match[1];
             const tableName = match[2];
@@ -441,13 +416,11 @@ function generateIndexHtml($project, $pages, $projectSlug)
             let tableData = data[tableName];
 
             if (tableData && Array.isArray(tableData)) {
-                // Apply modifiers (filter, sort, etc)
                 tableData = this.applyLoopModifiers([...tableData], modifiersStr);
 
                 processed = tableData.map(row => {
                     let item = loopBody;
 
-                    // Resolve variables {{ loopVar.col }}
                     const varPattern = new RegExp(
                         '\\\\{\\\\{\\\\s*' + this.escapeRegex(loopVar) + '\\\\s*\\\\.\\\\s*([a-zA-Z_][a-zA-Z0-9_]*)((?:\\\\s*\\\\|\\\\s*.*?)?)\\\\s*\\\\}\\\\}',
                         'g'
@@ -464,27 +437,18 @@ function generateIndexHtml($project, $pages, $projectSlug)
                          return this.escapeHtml(String(val));
                     });
 
-                    // Resolve loop conditions {% if loopVar.col %}
                     item = this.parseLoopConditions(item, loopVar, row);
-                    
                     return item;
                 }).join('');
             }
 
-            // Recursive call: 
-            // 1. We replaced ONE loop.
-            // 2. The result ('processed') might contain nested loops.
-            // 3. The 'after' part might contain sequential loops.
-            // So we parse the whole string again.
             return this.parseLoops(before + processed + after, data);
         },
 
         parseLoopConditions(html, loopVar, row) {
-            // Replace loopVar.column references in {% if %} conditions with actual values
             const ifPattern = /\{%\s*if\s+(.+?)\s*%\}/g;
 
             html = html.replace(ifPattern, (match, condition) => {
-                // Replace loopVar.column with quoted value
                 const varRefPattern = new RegExp(
                     this.escapeRegex(loopVar) + '\\\\s*\\\\.\\\\s*([a-zA-Z_][a-zA-Z0-9_]*)',
                     'g'
@@ -493,14 +457,16 @@ function generateIndexHtml($project, $pages, $projectSlug)
                 const resolvedCondition = condition.replace(varRefPattern, (m, column) => {
                     const lowerColumn = column.toLowerCase();
                     let value = '';
+
                     for (const key in row) {
                         if (key.toLowerCase() === lowerColumn) {
                             value = row[key];
                             break;
                         }
                     }
+
                     if (value === undefined || value === null) value = '';
-                    // Escape for JSON string
+
                     const escaped = String(value).replace(/\\\\/g, '\\\\\\\\').replace(/"/g, '\\\\\\"');
                     return '"' + escaped + '"';
                 });
@@ -606,15 +572,16 @@ function generateIndexHtml($project, $pages, $projectSlug)
                             if (k.toLowerCase() === lowerKey) { valB = b[k] || ''; break; }
                         }
 
-                        // Numeric comparison if both are numbers
                         const numA = parseFloat(valA);
                         const numB = parseFloat(valB);
                         let cmp;
+
                         if (!isNaN(numA) && !isNaN(numB)) {
                             cmp = numA - numB;
                         } else {
                             cmp = String(valA).localeCompare(String(valB), undefined, { numeric: true });
                         }
+
                         return order === 'desc' ? -cmp : cmp;
                     });
                 }
@@ -680,6 +647,9 @@ function generateIndexHtml($project, $pages, $projectSlug)
                     case 'striptags':
                         result = result.replace(/<[^>]*>/g, '');
                         break;
+                    case 'length':
+                        result = String(result.length);
+                        break;
                 }
             });
             return result;
@@ -696,7 +666,6 @@ function generateIndexHtml($project, $pages, $projectSlug)
         },
 
         async parse(html, routeParams = {}) {
-            // Extract table references from loops (the actual table names)
             const tables = new Set();
             let match;
 
@@ -719,7 +688,12 @@ function generateIndexHtml($project, $pages, $projectSlug)
                 tables.add(match[1]);
             }
 
-            // Fetch table data from CC API
+            // Find direct table references with modifiers (aggregations): {{TABLE_NAME | modifiers}}
+            const aggrTablePattern = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\|/g;
+            while ((match = aggrTablePattern.exec(html)) !== null) {
+                tables.add(match[1]);
+            }
+
             const data = {};
             await Promise.all([...tables].map(async table => {
                 try {
@@ -746,7 +720,8 @@ function generateIndexHtml($project, $pages, $projectSlug)
                              // 3. Try generic param matching table name (e.g. products/:product_id)
                              // This is looser but might be helpful
                              if (!found) {
-                                 const paramName = table.toLowerCase() + '_id'; // products_id
+                                 const paramName = table.toLowerCase() + '_id';
+
                                  if (routeParams[paramName]) {
                                       found = result.data.find(r => String(r.id) === String(routeParams[paramName]));
                                  }
@@ -766,7 +741,6 @@ function generateIndexHtml($project, $pages, $projectSlug)
                 }
             }));
 
-            // Process template in correct order
             let result = html;
 
             // 0. Pre-process route params and context variables globally
@@ -802,7 +776,6 @@ function generateIndexHtml($project, $pages, $projectSlug)
         }
     };
 
-    // Page Component
     const PageComponent = defineComponent({
         name: 'PageView',
         props: ['slug'],
@@ -810,22 +783,17 @@ function generateIndexHtml($project, $pages, $projectSlug)
             const loading = ref(true);
             const error = ref(null);
             const content = ref('');
-            const route = VueRouter.useRoute(); // Access current route for params
+            const route = VueRouter.useRoute();
 
             const loadPage = async (slug) => {
                 loading.value = true;
                 error.value = null;
 
                 try {
-                    // If the path has dynamic segments, 'slug' prop might be just the matched part or params
-                    // But effectively we want the page configuration based on the route definition
-                    // The route definition stores the "page definition slug" in meta or name if we set it up that way.
-                    // But here, 'props.slug' comes from route config: props: { slug: 'xy' }
-                    
                     const result = await api.getPage(slug);
+
                     if (result.success) {
                         const rawHtml = result.data.components.map(c => c.html).join('\\n');
-                        // Pass route params to parser
                         content.value = await ContentParser.parse(rawHtml, route.params);
                         document.title = result.data.title;
 
@@ -843,7 +811,6 @@ function generateIndexHtml($project, $pages, $projectSlug)
 
             onMounted(() => loadPage(props.slug));
             watch(() => props.slug, loadPage);
-            // Also watch params in case we stay on same route but params change (e.g. /prod/1 -> /prod/2)
             watch(() => route.params, () => loadPage(props.slug));
 
             return { loading, error, content };
@@ -861,7 +828,6 @@ function generateIndexHtml($project, $pages, $projectSlug)
         `
     });
 
-    // Create routes
     const routes = CONFIG.routes.map(route => ({
         path: route.path,
         component: PageComponent,
@@ -869,7 +835,6 @@ function generateIndexHtml($project, $pages, $projectSlug)
         meta: { title: route.title, description: route.meta_description }
     }));
 
-    // 404 route
     routes.push({
         path: '/:pathMatch(.*)*',
         component: {
@@ -885,7 +850,6 @@ function generateIndexHtml($project, $pages, $projectSlug)
         }
     });
 
-    // Create router
     const router = createRouter({
         history: createWebHistory(),
         routes,
@@ -902,7 +866,6 @@ function generateIndexHtml($project, $pages, $projectSlug)
 
     createApp({}).use(router).mount('#app');
 
-    // CC Forms Integration
     (function() {
         const CC_FORMS_API = 'https://alex.polan.sk/control-center/api/public_form_submit.php';
         const CC_PROJECT = '{$projectSlugJs}';
@@ -982,9 +945,6 @@ function generateIndexHtml($project, $pages, $projectSlug)
 HTML;
 }
 
-/**
- * Get styles CSS
- */
 function getStylesCSS()
 {
     $possiblePaths = [
@@ -1000,7 +960,6 @@ function getStylesCSS()
     }
 
     return <<<CSS
-/* Custom styles for Web Builder Vue */
 
 html {
     scroll-behavior: smooth;
