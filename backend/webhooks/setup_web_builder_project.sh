@@ -127,50 +127,52 @@ else
 fi
 
 # 2. Nginx Konfiguration erstellen (HTTP first, Certbot adds SSL)
-log "Creating Nginx configuration"
+# Pure static/Vue SPA - no PHP needed (API runs on CC server)
+log "Creating Nginx configuration for Vue SPA"
 cat > "$NGINX_CONFIG" <<EOF
 server {
     listen 80;
     listen [::]:80;
     server_name $DOMAIN;
-    
+
     root $WEB_ROOT;
-    index index.html index.htm;
-    
+    index index.html;
+
     # Disable directory listing
     autoindex off;
-    
+
+    # Vue Router SPA - fallback to index.html for client-side routing
     location / {
         try_files \$uri \$uri/ /index.html;
     }
-    
+
     # ACME Challenge für Certbot
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
     }
-    
+
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
-    
+
     # Cache static assets
     location ~* \.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)$ {
         expires 1y;
         add_header Cache-Control "public, immutable";
     }
-    
+
     # Gzip compression
     gzip on;
     gzip_vary on;
     gzip_min_length 1024;
     gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json;
-    
+
     access_log /var/log/nginx/web-builder-$PROJECT_SLUG.access.log;
     error_log /var/log/nginx/web-builder-$PROJECT_SLUG.error.log;
 }
 EOF
-log "✓ Nginx config created"
+log "✓ Nginx config created for Vue SPA"
 
 # 3. Nginx Site aktivieren
 log "Enabling Nginx site"

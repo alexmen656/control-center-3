@@ -93,10 +93,10 @@ foreach ($files as $file) {
     $filename = basename($file['filename']); // Sicherheit: nur Dateiname, kein Pfad
     $content = $file['content'];
     
-    // Nur erlaubte Dateiendungen
+    // Nur erlaubte Dateiendungen (kein PHP - API laeuft auf CC Server)
     $allowedExtensions = ['html', 'htm', 'css', 'js', 'json', 'txt', 'xml', 'svg'];
     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-    
+
     if (!in_array($ext, $allowedExtensions)) {
         $errors[] = "Disallowed file type: $filename";
         logPublish("Skipped disallowed file type: $filename");

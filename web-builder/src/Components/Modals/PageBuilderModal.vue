@@ -99,8 +99,9 @@ const saveOnly = async function () {
     await pageBuilder.saveComponentsToBackend();
     const token = localStorage.getItem('authToken');
 
+    // Use new Vue-based publisher (publish_vue.php) for dynamic content
     const response = await fetch(
-      `https://alex.polan.sk/control-center/web-builder/publish.php?project_id=${currentProject.value.id}&deploy=true`,
+      `https://alex.polan.sk/control-center/web-builder/publish_vue.php?project_id=${currentProject.value.id}&deploy=true`,
       {
         method: 'GET',
         headers: {
