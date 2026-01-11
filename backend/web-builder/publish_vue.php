@@ -329,8 +329,12 @@ function generateIndexHtml($project, $pages, $projectSlug)
 
     // Dynamic Content Parser
     const ContentParser = {
+        // Store loop variable to table name mapping for nested variable resolution
+        loopContext: {},
+
         parseVariables(html, data) {
-            return html.replace(/\{\{([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\[\s*(\d+)\s*\]((?:\s*\|\s*[^\}]+)*)\}\}/g,
+            // Pattern: {{table_name.column_name[index] | filters}}
+            return html.replace(/\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\[\s*(\d+)\s*\]((?:\s*\|\s*[^\}]+)*)\s*\}\}/g,
                 (match, table, column, index, modifiers) => {
                     const tableData = data[table];
                     if (!tableData || !tableData[index]) return '';
@@ -342,35 +346,95 @@ function generateIndexHtml($project, $pages, $projectSlug)
         },
 
         parseLoops(html, data) {
-            const loopPattern = /\{%\s*for\s+([a-zA-Z0-9_]+)\s+in\s+([a-zA-Z0-9_]+)((?:\s*\|\s*[a-zA-Z0-9_=:\"'-]+)*)\s*%\}([\s\S]*?)\{%\s*endfor\s*%\}/g;
+            // Pattern: {% for loopVar in tableName | modifiers %} ... {% endfor %}
+            const loopPattern = /\{%\s*for\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+in\s+([a-zA-Z_][a-zA-Z0-9_]*)((?:\s*\|\s*[a-zA-Z0-9_=:\"'\-]+)*)\s*%\}([\s\S]*?)\{%\s*endfor\s*%\}/g;
 
             return html.replace(loopPattern, (match, loopVar, tableName, modifiersStr, template) => {
                 let tableData = data[tableName];
-                if (!tableData || !Array.isArray(tableData)) return '';
+                if (!tableData || !Array.isArray(tableData)) {
+                    console.warn('No data found for table:', tableName);
+                    return '';
+                }
 
+                // Apply loop modifiers (sort, filter, limit, reverse)
                 tableData = this.applyLoopModifiers([...tableData], modifiersStr);
 
-                return tableData.map(row => {
+                return tableData.map((row, rowIndex) => {
                     let rowHtml = template;
-                    const varPattern = new RegExp('\\{\\{\\s*' + loopVar + '\\s*\\.\\s*([a-zA-Z0-9_]+)((?:\\s*\\|\\s*[^\\}]+)*)\\s*\\}\\}', 'g');
+
+                    // Replace {{ loopVar.column | filters }} with actual values
+                    // Support whitespace around dots and pipes
+                    const varPattern = new RegExp(
+                        '\\\\{\\\\{\\\\s*' + this.escapeRegex(loopVar) + '\\\\s*\\\\.\\\\s*([a-zA-Z_][a-zA-Z0-9_]*)((?:\\\\s*\\\\|\\\\s*.*?)?)\\\\s*\\\\}\\\\}',
+                        'g'
+                    );
+
                     rowHtml = rowHtml.replace(varPattern, (m, column, mods) => {
-                        let value = row[column] || '';
-                        if (mods) value = this.applyFilters(value, mods);
-                        return this.escapeHtml(value);
+                        // Case-insensitive column lookup
+                        let value = '';
+                        const lowerColumn = column.toLowerCase();
+                        for (const key in row) {
+                            if (key.toLowerCase() === lowerColumn) {
+                                value = row[key];
+                                break;
+                            }
+                        }
+                        if (value === undefined || value === null) value = '';
+
+                        if (mods) value = this.applyFilters(String(value), mods);
+                        return this.escapeHtml(String(value));
                     });
+
+                    // Handle conditions inside loops: {% if loopVar.column %} or {% if loopVar.column == "value" %}
+                    rowHtml = this.parseLoopConditions(rowHtml, loopVar, row);
+
                     return rowHtml;
                 }).join('');
             });
         },
 
+        parseLoopConditions(html, loopVar, row) {
+            // Replace loopVar.column references in {% if %} conditions with actual values
+            const ifPattern = /\{%\s*if\s+(.+?)\s*%\}/g;
+
+            html = html.replace(ifPattern, (match, condition) => {
+                // Replace loopVar.column with quoted value
+                const varRefPattern = new RegExp(
+                    this.escapeRegex(loopVar) + '\\\\s*\\\\.\\\\s*([a-zA-Z_][a-zA-Z0-9_]*)',
+                    'g'
+                );
+
+                const resolvedCondition = condition.replace(varRefPattern, (m, column) => {
+                    const lowerColumn = column.toLowerCase();
+                    let value = '';
+                    for (const key in row) {
+                        if (key.toLowerCase() === lowerColumn) {
+                            value = row[key];
+                            break;
+                        }
+                    }
+                    if (value === undefined || value === null) value = '';
+                    // Escape for JSON string
+                    const escaped = String(value).replace(/\\\\/g, '\\\\\\\\').replace(/"/g, '\\\\\\"');
+                    return '"' + escaped + '"';
+                });
+
+                return '{% if ' + resolvedCondition + ' %}';
+            });
+
+            return html;
+        },
+
         parseConditions(html, data) {
+            // Pattern: {% if condition %} content {% else %} alt {% endif %}
             const condPattern = /\{%\s*if\s+(.+?)\s*%\}([\s\S]*?)(?:\{%\s*else\s*%\}([\s\S]*?))?\{%\s*endif\s*%\}/g;
             let result = html;
             let iterations = 0;
 
             while (iterations < 50) {
                 const newResult = result.replace(condPattern, (match, condition, trueContent, falseContent = '') => {
-                    return this.evaluateCondition(condition, data) ? trueContent : falseContent;
+                    const evaluated = this.evaluateCondition(condition, data);
+                    return evaluated ? trueContent : falseContent;
                 });
                 if (newResult === result) break;
                 result = newResult;
@@ -380,25 +444,40 @@ function generateIndexHtml($project, $pages, $projectSlug)
         },
 
         evaluateCondition(condition, data) {
-            const resolved = condition.replace(/([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\[(\d+)\]/g,
+            // First resolve any table.column[index] references
+            let resolved = condition.replace(
+                /([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\[\s*(\d+)\s*\]/g,
                 (match, table, column, index) => {
                     const tableData = data[table];
                     if (!tableData || !tableData[index]) return '""';
-                    return JSON.stringify(tableData[index][column] || '');
+                    let value = '';
+                    const lowerColumn = column.toLowerCase();
+                    for (const key in tableData[index]) {
+                        if (key.toLowerCase() === lowerColumn) {
+                            value = tableData[index][key];
+                            break;
+                        }
+                    }
+                    const escaped = String(value || '').replace(/\\\\/g, '\\\\\\\\').replace(/"/g, '\\\\\\"');
+                    return '"' + escaped + '"';
                 }
             );
 
+            // Equality check: "a" == "b"
             const eqMatch = resolved.match(/^"([^"]*)"\s*==\s*"([^"]*)"$/);
             if (eqMatch) return eqMatch[1] === eqMatch[2];
 
+            // Inequality check: "a" != "b"
             const neqMatch = resolved.match(/^"([^"]*)"\s*!=\s*"([^"]*)"$/);
             if (neqMatch) return neqMatch[1] !== neqMatch[2];
 
+            // Truthiness check: "value"
             const truthyMatch = resolved.match(/^"([^"]*)"$/);
             if (truthyMatch) {
                 const val = truthyMatch[1];
                 return val !== '' && val !== 'false' && val !== '0';
             }
+
             return false;
         },
 
@@ -407,21 +486,59 @@ function generateIndexHtml($project, $pages, $projectSlug)
             const modifiers = modifiersStr.split('|').map(m => m.trim()).filter(Boolean);
 
             modifiers.forEach(mod => {
+                // Filter: filter:key=value
                 if (mod.startsWith('filter:')) {
-                    const [key, val] = mod.substring(7).split('=').map(s => s.trim().replace(/['"]/g, ''));
-                    data = data.filter(row => String(row[key]) === val);
-                } else if (mod.startsWith('sort:')) {
+                    const filterPart = mod.substring(7);
+                    const eqIndex = filterPart.indexOf('=');
+                    if (eqIndex > 0) {
+                        const key = filterPart.substring(0, eqIndex).trim().replace(/['"]/g, '');
+                        const val = filterPart.substring(eqIndex + 1).trim().replace(/['"]/g, '');
+                        data = data.filter(row => {
+                            const lowerKey = key.toLowerCase();
+                            for (const k in row) {
+                                if (k.toLowerCase() === lowerKey) {
+                                    return String(row[k]) === val;
+                                }
+                            }
+                            return false;
+                        });
+                    }
+                }
+                // Sort: sort:key:order
+                else if (mod.startsWith('sort:')) {
                     const parts = mod.substring(5).split(':');
                     const key = parts[0].trim().replace(/['"]/g, '');
-                    const order = (parts[1] || 'asc').toLowerCase();
+                    const order = (parts[1] || 'asc').toLowerCase().trim();
+                    const lowerKey = key.toLowerCase();
+
                     data.sort((a, b) => {
-                        const cmp = String(a[key] || '').localeCompare(String(b[key] || ''), undefined, { numeric: true });
+                        let valA = '', valB = '';
+                        for (const k in a) {
+                            if (k.toLowerCase() === lowerKey) { valA = a[k] || ''; break; }
+                        }
+                        for (const k in b) {
+                            if (k.toLowerCase() === lowerKey) { valB = b[k] || ''; break; }
+                        }
+
+                        // Numeric comparison if both are numbers
+                        const numA = parseFloat(valA);
+                        const numB = parseFloat(valB);
+                        let cmp;
+                        if (!isNaN(numA) && !isNaN(numB)) {
+                            cmp = numA - numB;
+                        } else {
+                            cmp = String(valA).localeCompare(String(valB), undefined, { numeric: true });
+                        }
                         return order === 'desc' ? -cmp : cmp;
                     });
-                } else if (mod.startsWith('limit:')) {
+                }
+                // Limit: limit:n
+                else if (mod.startsWith('limit:')) {
                     const limit = parseInt(mod.substring(6));
                     if (limit > 0) data = data.slice(0, limit);
-                } else if (mod === 'reverse') {
+                }
+                // Reverse
+                else if (mod === 'reverse') {
                     data.reverse();
                 }
             });
@@ -433,19 +550,50 @@ function generateIndexHtml($project, $pages, $projectSlug)
             let result = String(value);
 
             modifiers.forEach(mod => {
-                const [name, ...args] = mod.split(':');
-                switch (name.toLowerCase()) {
-                    case 'upper': case 'uppercase': result = result.toUpperCase(); break;
-                    case 'lower': case 'lowercase': result = result.toLowerCase(); break;
-                    case 'capitalize': result = result.charAt(0).toUpperCase() + result.slice(1); break;
+                const colonIndex = mod.indexOf(':');
+                const name = colonIndex > 0 ? mod.substring(0, colonIndex).toLowerCase().trim() : mod.toLowerCase().trim();
+                const argsStr = colonIndex > 0 ? mod.substring(colonIndex + 1) : '';
+
+                switch (name) {
+                    case 'upper':
+                    case 'uppercase':
+                        result = result.toUpperCase();
+                        break;
+                    case 'lower':
+                    case 'lowercase':
+                        result = result.toLowerCase();
+                        break;
+                    case 'capitalize':
+                    case 'capfirst':
+                        if (result.length > 0) {
+                            result = result.charAt(0).toUpperCase() + result.slice(1);
+                        }
+                        break;
                     case 'truncate':
-                        const len = parseInt(args[0]) || 50;
-                        if (result.length > len) result = result.substring(0, len) + (args[1] || '...');
+                        const truncArgs = argsStr.split(':');
+                        const len = parseInt(truncArgs[0]) || 50;
+                        const suffix = truncArgs[1] ? truncArgs[1].replace(/['"]/g, '') : '...';
+                        if (result.length > len) {
+                            result = result.substring(0, len) + suffix;
+                        }
                         break;
                     case 'default':
-                        if (!result || result === '0' || result === 'false') result = args.join(':').replace(/['"]/g, '');
+                        if (!result || result === '0' || result === 'false' || result === 'null' || result === 'undefined') {
+                            result = argsStr.replace(/['"]/g, '');
+                        }
                         break;
-                    case 'trim': result = result.trim(); break;
+                    case 'trim':
+                        result = result.trim();
+                        break;
+                    case 'slice':
+                        const sliceArgs = argsStr.split(':');
+                        const start = parseInt(sliceArgs[0]) || 0;
+                        const end = sliceArgs[1] ? parseInt(sliceArgs[1]) : undefined;
+                        result = result.slice(start, end);
+                        break;
+                    case 'striptags':
+                        result = result.replace(/<[^>]*>/g, '');
+                        break;
                 }
             });
             return result;
@@ -457,33 +605,57 @@ function generateIndexHtml($project, $pages, $projectSlug)
             return div.innerHTML;
         },
 
+        escapeRegex(str) {
+            return str.replace(/[.*+?^\${}()|[\]\\x5c]/g, '\\\\\\\\$&');
+        },
+
         async parse(html) {
-            // Extract table references
+            // Extract table references from loops (the actual table names)
             const tables = new Set();
             let match;
-            const tablePattern = /\{\{([a-zA-Z_][a-zA-Z0-9_]*)\./g;
-            const loopPattern = /\{%\s*for\s+\w+\s+in\s+([a-zA-Z0-9_]+)/g;
 
-            while ((match = tablePattern.exec(html)) !== null) tables.add(match[1]);
-            while ((match = loopPattern.exec(html)) !== null) tables.add(match[1]);
+            // Find tables in for loops: {% for x in TABLE_NAME %}
+            const loopTablePattern = /\{%\s*for\s+[a-zA-Z_][a-zA-Z0-9_]*\s+in\s+([a-zA-Z_][a-zA-Z0-9_]*)/g;
+            while ((match = loopTablePattern.exec(html)) !== null) {
+                tables.add(match[1]);
+            }
+
+            // Find direct table references: {{TABLE_NAME.column[index]}}
+            const directTablePattern = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*[a-zA-Z_][a-zA-Z0-9_]*\s*\[\s*\d+\s*\]/g;
+            while ((match = directTablePattern.exec(html)) !== null) {
+                tables.add(match[1]);
+            }
 
             // Fetch table data from CC API
             const data = {};
             await Promise.all([...tables].map(async table => {
                 try {
                     const result = await api.getTableData(table);
-                    if (result.success) data[table] = result.data;
+                    if (result.success) {
+                        data[table] = result.data;
+                    } else {
+                        console.warn('Failed to load table:', table, result.message);
+                        data[table] = [];
+                    }
                 } catch (e) {
-                    console.warn('Failed to load table:', table, e);
+                    console.warn('Error loading table:', table, e);
                     data[table] = [];
                 }
             }));
 
-            // Process template
+            // Process template in correct order
             let result = html;
+
+            // 1. First process loops (this replaces loop variables with actual values)
             result = this.parseLoops(result, data);
+
+            // 2. Then process conditions (after loop variables are resolved)
             result = this.parseConditions(result, data);
+
+            // 3. Finally process any remaining direct variable references
             result = this.parseVariables(result, data);
+
+            // Clean up raw tags and dynamic badges
             result = result.replace(/\{%\s*raw\s*%\}|\{%\s*endraw\s*%\}/g, '');
             result = result.replace(/<span[^>]*data-cc-dynamic="true"[^>]*>[^<]*<\/span>/gi, '');
 
