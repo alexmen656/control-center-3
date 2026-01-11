@@ -523,7 +523,7 @@ function generateIndexHtml($project, $pages, $projectSlug)
 
                 // 2. Resolve loopVar directly (for primitives)
                 // Use word boundary to ensure we don't partial match loopVarSomething
-      const simpleVarPattern = new RegExp(
+                const simpleVarPattern = new RegExp(
                     '\\\\b' + this.escapeRegex(loopVar) + '\\\\b(?!\\\\s*\\\\.)', 
                     'g'
                 );

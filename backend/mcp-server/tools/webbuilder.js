@@ -246,7 +246,20 @@ CRITICAL HTML STRUCTURE REQUIREMENTS:
 DYNAMIC CONTENT SYNTAX SUPPORTED:
 - Variables: {{ table.column[index] }} or {{ loopVar.column }}
 - Filters: {{ value | upper | lower | capitalize | truncate:50 | default:'Fallback' | date:"d.m.Y" | timeago | replace:"old":"new" | length }}
-- Loops: {% for item in table | filter:col=val | sort:col:desc | limit:N | reverse %} ... {% endfor %}
+- Loops: {% for item in table | filter:col=val | sort:col:desc | limit:N | slice:start:end | paginate:10 | search:query | group_by:col | reverse %} ... {% endfor %}
+
+PAGINATION VARIABLES (Available after a loop with | paginate:N):
+- pagination.current_page (Number)
+- pagination.total_pages (Number)
+- pagination.total_items (Number)
+- pagination.per_page (Number)
+- pagination.has_prev (Boolean)
+- pagination.has_next (Boolean)
+- pagination.prev_page (Number)
+- pagination.next_page (Number)
+- pagination.start_index (Number)
+- pagination.end_index (Number)
+- pagination.pages (Array of numbers [1, 2, ...]) => Use {% for page_num in pagination.pages %} ... {% endfor %}
 - Conditions: {% if var == "value" %} ... {% else %} ... {% endif %} (supports nested IFs)
 - Raw Blocks: {% raw %} content to ignore {% endraw %}
 - DYNAMIC PAGE FILTERS: Route parameters are pre-processed. You can use syntax like: {% for item in table | filter:slug={{slug}} %}
@@ -286,7 +299,20 @@ CRITICAL HTML STRUCTURE REQUIREMENTS:
 DYNAMIC CONTENT SYNTAX SUPPORTED:
 - Variables: {{ table.column[index] }} or {{ loopVar.column }}
 - Filters: {{ value | upper | lower | capitalize | truncate:50 | default:'Fallback' | date:"d.m.Y" | timeago | replace:"old":"new" | length }}
-- Loops: {% for item in table | filter:col=val | sort:col:desc | limit:N | reverse %} ... {% endfor %}
+- Loops: {% for item in table | filter:col=val | sort:col:desc | limit:N | slice:start:end | paginate:10 | search:query | group_by:col | reverse %} ... {% endfor %}
+
+PAGINATION VARIABLES (Available after a loop with | paginate:N):
+- pagination.current_page (Number)
+- pagination.total_pages (Number)
+- pagination.total_items (Number)
+- pagination.per_page (Number)
+- pagination.has_prev (Boolean)
+- pagination.has_next (Boolean)
+- pagination.prev_page (Number)
+- pagination.next_page (Number)
+- pagination.start_index (Number)
+- pagination.end_index (Number)
+- pagination.pages (Array of numbers [1, 2, ...]) => Use {% for page_num in pagination.pages %} ... {% endfor %}
 - Conditions: {% if var == "value" %} ... {% else %} ... {% endif %} (supports nested IFs)
 - Raw Blocks: {% raw %} content to ignore {% endraw %}
 - DYNAMIC PAGE FILTERS: Route parameters are pre-processed. You can use syntax like: {% for item in table | filter:slug={{slug}} %}
@@ -344,7 +370,20 @@ CRITICAL HTML STRUCTURE REQUIREMENTS FOR EACH COMPONENT:
 DYNAMIC CONTENT SYNTAX SUPPORTED:
 - Variables: {{ table.column[index] }} or {{ loopVar.column }}
 - Filters: {{ value | upper | lower | capitalize | truncate:50 | default:'Fallback' | date:"d.m.Y" | timeago | replace:"old":"new" | length }}
-- Loops: {% for item in table | filter:col=val | sort:col:desc | limit:N | reverse %} ... {% endfor %}
+- Loops: {% for item in table | filter:col=val | sort:col:desc | limit:N | slice:start:end | paginate:10 | search:query | group_by:col | reverse %} ... {% endfor %}
+
+PAGINATION VARIABLES (Available after a loop with | paginate:N):
+- pagination.current_page (Number)
+- pagination.total_pages (Number)
+- pagination.total_items (Number)
+- pagination.per_page (Number)
+- pagination.has_prev (Boolean)
+- pagination.has_next (Boolean)
+- pagination.prev_page (Number)
+- pagination.next_page (Number)
+- pagination.start_index (Number)
+- pagination.end_index (Number)
+- pagination.pages (Array of numbers [1, 2, ...]) => Use {% for page_num in pagination.pages %} ... {% endfor %}
 - Conditions: {% if var == "value" %} ... {% else %} ... {% endif %} (supports nested IFs)
 - Raw Blocks: {% raw %} content to ignore {% endraw %}
 - DYNAMIC PAGE FILTERS: Route parameters are pre-processed. You can use syntax like: {% for item in table | filter:slug={{slug}} %}
