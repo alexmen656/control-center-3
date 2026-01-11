@@ -61,7 +61,7 @@ if (isset($_POST['getTables']) && $_POST['getTables']) {
 
 } elseif (isset($_POST['getTableByName']) && $_POST['getTableByName']) {
     $i = 0;
-    $tbName = escape_string($_POST['getTableByName']);
+    $tbName = strtolower(escape_string($_POST['getTableByName']));
     $columns = query("SHOW COLUMNS FROM `$tbName`");
     if ($columns) {
         while ($row = fetch_assoc($columns)) {
@@ -80,7 +80,7 @@ if (isset($_POST['getTables']) && $_POST['getTables']) {
     }
 
     $primary_key = fetch_assoc(query("SELECT `COLUMN_NAME` FROM `information_schema`.`COLUMNS` WHERE (`TABLE_SCHEMA` = 'alex01d01') AND (`TABLE_NAME` = '$tbName') AND (`COLUMN_KEY` = 'PRI')"))["COLUMN_NAME"];
-   
+
     if (
         $data = query("SELECT * FROM `$tbName` ORDER BY $primary_key" . $sql_limit)
     ) {
@@ -145,7 +145,7 @@ if (isset($_POST['getTables']) && $_POST['getTables']) {
     $tableName = escape_string($_POST['tableName']);
     $fieldName = escape_string($_POST['fieldName']);
     $newValue = escape_string($_POST['newValue']);
-    $rowIndex = (int)$_POST['rowIndex'];
+    $rowIndex = (int) $_POST['rowIndex'];
 
     $primaryKey = fetch_assoc(query("SELECT `COLUMN_NAME` FROM `information_schema`.`COLUMNS` WHERE (`TABLE_SCHEMA` = 'alex01d01') AND (`TABLE_NAME` = '$tableName') AND (`COLUMN_KEY` = 'PRI')"))["COLUMN_NAME"];
 
