@@ -1,79 +1,114 @@
 <template>
+  <!-- Overview Item (always at top) -->
   <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
-    <ion-reorder-group :disabled="false" @ionItemReorder="handleReorder($event)">
-      <ion-menu-toggle auto-hide="false">
-        <ion-item @click="this.selectedIndex = 0" lines="none" detail="false"
-          :router-link="'/project/' + $route.params.project + '/'" class="hydrated menu-item"
-          :class="{ selected: this.selectedIndex === 0, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
-          :data-tooltip="isCollapsed ? 'Overview' : ''">
-          <ion-icon slot="start" name="apps-outline" />
-          <ion-label v-if="!isCollapsed">Overview</ion-label>
-        </ion-item>
-      </ion-menu-toggle>
-
-      <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
-        <!-- {{ i }}-->
-        <ion-item @dblclick="
-          goToConfig(
-            '/project/' +
-            $route.params.project +
-            '/' +
-            p.name
-              .toLowerCase()
-              .replaceAll(' ', '-')
-              .replaceAll('ä', 'a')
-              .replaceAll('Ä', 'a')
-              .replaceAll('ö', 'o')
-              .replaceAll('Ö', 'o')
-              .replaceAll('Ü', 'u')
-              .replaceAll('ü', 'u') +
-            '/config'
-          )
-          " @click="this.selectedIndex = i + 1" lines="none" detail="false" :router-link="p.icon == 'bar-chart-outline'
-            ? '/project/' +
-            $route.params.project +
-            '/dashboard/' +
-            p.name
-              .toLowerCase()
-              .replaceAll(' ', '-')
-              .replaceAll('ä', 'a')
-              .replaceAll('Ä', 'a')
-              .replaceAll('ö', 'o')
-              .replaceAll('Ö', 'o')
-              .replaceAll('Ü', 'u')
-              .replaceAll('ü', 'u')
-            : '/project/' +
-            $route.params.project +
-            '/' +
-            p.name
-              .toLowerCase()
-              .replaceAll(' ', '-')
-              .replaceAll('ä', 'a')
-              .replaceAll('Ä', 'a')
-              .replaceAll('ö', 'o')
-              .replaceAll('Ö', 'o')
-              .replaceAll('Ü', 'u')
-              .replaceAll('ü', 'u')
-            " class="hydrated menu-item"
-          :class="{ selected: this.selectedIndex === i + 1, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
-          :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''">
-          <ion-icon slot="start" :name="p.icon" />
-          <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
-          <ion-reorder v-if="!isCollapsed" slot="end">
-            <ion-icon v-if="p.hasConfig == 1" style="cursor: pointer; z-index: 1000" name="cog-outline" />
-            <pre v-else></pre>
-          </ion-reorder>
-        </ion-item>
-      </ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false" style="margin-top: 1rem !important" v-if="!isCollapsed">
-        <ion-item lines="none" detail="false" class="new-tool"
-          :router-link="'/project/' + $route.params.project + '/new-tool/'">
-          <ion-icon slot="start" name="add" />
-          <ion-label>New Tool</ion-label>
-        </ion-item>
-      </ion-menu-toggle>
-    </ion-reorder-group>
+    <ion-menu-toggle auto-hide="false">
+      <ion-item @click="this.selectedIndex = 0" lines="none" detail="false"
+        :router-link="'/project/' + $route.params.project + '/'" class="hydrated menu-item"
+        :class="{ selected: this.selectedIndex === 0, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
+        :data-tooltip="isCollapsed ? 'Overview' : ''">
+        <ion-icon slot="start" name="apps-outline" />
+        <ion-label v-if="!isCollapsed">Overview</ion-label>
+      </ion-item>
+    </ion-menu-toggle>
   </ion-list>
+
+  <!-- Custom Sections with Tools -->
+  <template v-for="(section, sectionIndex) in sections" :key="`section-${section.id}`">
+    <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
+      <h4>{{ section.name }}</h4>
+      <div>
+        <router-link v-if="section.manage_route" :to="section.manage_route">
+          <ion-icon style="color: var(--ion-color-medium-shade)" name="ellipsis-horizontal-circle-outline" />
+        </router-link>
+        <router-link v-if="section.info_route" :to="section.info_route">
+          <ion-icon style="color: var(--ion-color-medium-shade)" name="information-circle-outline" />
+        </router-link>
+        <router-link v-if="section.show_add_button && section.add_button_route" :to="section.add_button_route">
+          <ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline" />
+        </router-link>
+      </div>
+    </ion-note>
+    <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
+      <ion-reorder-group :disabled="false" @ionItemReorder="handleSectionToolReorder($event, section.id)">
+        <ion-menu-toggle auto-hide="false" v-for="(tool, toolIndex) in section.tools" :key="`section-${section.id}-tool-${tool.id}`">
+          <ion-item 
+            @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(tool.name) + '/config')"
+            @click="selectTool(section.id, toolIndex)"
+            lines="none" 
+            detail="false"
+            :router-link="getToolRoute(tool)"
+            class="hydrated menu-item"
+            :class="{ 
+              selected: isToolSelected(section.id, toolIndex), 
+              collapsed: isCollapsed, 
+              hasToBeDarkmode: hasToBeDarkmode 
+            }"
+            :data-tooltip="isCollapsed ? capitalizeFirst(tool.name) : ''">
+            <ion-icon slot="start" :name="tool.icon" />
+            <ion-label v-if="!isCollapsed">{{ capitalizeFirst(tool.name) }}</ion-label>
+            <ion-reorder v-if="!isCollapsed" slot="end">
+              <ion-icon v-if="tool.hasConfig == 1" style="cursor: pointer; z-index: 1000" name="cog-outline" />
+              <pre v-else></pre>
+            </ion-reorder>
+          </ion-item>
+        </ion-menu-toggle>
+        <!-- Empty state for section -->
+        <ion-menu-toggle auto-hide="false" v-if="section.tools.length === 0 && !isCollapsed">
+          <ion-item lines="none" detail="false" class="empty-section-item">
+            <ion-icon slot="start" name="folder-open-outline" color="medium" />
+            <ion-label color="medium">No tools in this section</ion-label>
+          </ion-item>
+        </ion-menu-toggle>
+      </ion-reorder-group>
+    </ion-list>
+  </template>
+
+  <!-- Legacy Tools (uncategorized - for backwards compatibility) -->
+  <template v-if="tools.length > 0">
+    <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
+      <h4>Uncategorized Tools</h4>
+      <div>
+        <router-link :to="'/project/' + $route.params.project + '/new-tool/'">
+          <ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline" />
+        </router-link>
+      </div>
+    </ion-note>
+    <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
+      <ion-reorder-group :disabled="false" @ionItemReorder="handleReorder($event)">
+        <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
+          <ion-item @dblclick="
+            goToConfig(
+              '/project/' +
+              $route.params.project +
+              '/' +
+              formatToolLink(p.name) +
+              '/config'
+            )
+            " @click="this.selectedIndex = i + 1" lines="none" detail="false" :router-link="p.icon == 'bar-chart-outline'
+              ? '/project/' +
+              $route.params.project +
+              '/dashboard/' +
+              formatToolLink(p.name)
+              : '/project/' +
+              $route.params.project +
+              '/' +
+              formatToolLink(p.name)
+              " class="hydrated menu-item"
+            :class="{ selected: this.selectedIndex === i + 1, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
+            :data-tooltip="isCollapsed ? capitalizeFirst(p.name) : ''">
+            <ion-icon slot="start" :name="p.icon" />
+            <ion-label v-if="!isCollapsed">{{ capitalizeFirst(p.name) }}</ion-label>
+            <ion-reorder v-if="!isCollapsed" slot="end">
+              <ion-icon v-if="p.hasConfig == 1" style="cursor: pointer; z-index: 1000" name="cog-outline" />
+              <pre v-else></pre>
+            </ion-reorder>
+          </ion-item>
+        </ion-menu-toggle>
+      </ion-reorder-group>
+    </ion-list>
+  </template>
+
+
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
     <h4>Tables</h4>
     <div>
@@ -328,6 +363,30 @@ import { useRoute } from "vue-router";
 import { useIonRouter } from "@ionic/vue";
 import { layersOutline, gridOutline, documentsOutline } from 'ionicons/icons';
 
+interface SidebarTool {
+  id: number;
+  icon: string;
+  name: string;
+  hasConfig: number;
+  order: number;
+  section_id?: number;
+}
+
+interface SidebarSection {
+  id: number;
+  name: string;
+  slug: string;
+  icon: string;
+  order_index: number;
+  is_default: boolean;
+  is_collapsible: boolean;
+  show_add_button: boolean;
+  add_button_route: string | null;
+  info_route: string | null;
+  manage_route: string | null;
+  tools: SidebarTool[];
+}
+
 export default defineComponent({
   name: "ProjectSideBar",
   props: {
@@ -343,7 +402,10 @@ export default defineComponent({
   emits: ['sidebarToggled'],
   setup(props, { emit }) {
     const selectedIndex = ref(0);
-    const tools = ref<{ id: number; order: number }[]>([]);
+    const selectedSectionId = ref<number | null>(null);
+    const selectedToolIndex = ref<number | null>(null);
+    const tools = ref<SidebarTool[]>([]);
+    const sections = ref<SidebarSection[]>([]);
     const components = ref([]);
     const services = ref([]);
     const apis = ref([]);
@@ -360,14 +422,79 @@ export default defineComponent({
       emit('sidebarToggled', !props.isCollapsed);
     };
 
+    // Helper function to format tool link (handles special characters)
+    const formatToolLink = (name: string): string => {
+      return name
+        .toLowerCase()
+        .replaceAll(' ', '-')
+        .replaceAll('ä', 'a')
+        .replaceAll('Ä', 'a')
+        .replaceAll('ö', 'o')
+        .replaceAll('Ö', 'o')
+        .replaceAll('Ü', 'u')
+        .replaceAll('ü', 'u');
+    };
+
+    // Helper to capitalize first letter
+    const capitalizeFirst = (str: string): string => {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    };
+
+    // Get tool route based on icon type
+    const getToolRoute = (tool: SidebarTool): string => {
+      const projectPath = '/project/' + route.params.project;
+      const toolSlug = formatToolLink(tool.name);
+      
+      if (tool.icon === 'bar-chart-outline') {
+        return `${projectPath}/dashboard/${toolSlug}`;
+      }
+      return `${projectPath}/${toolSlug}`;
+    };
+
+    // Selection helpers
+    const selectTool = (sectionId: number, toolIndex: number) => {
+      selectedSectionId.value = sectionId;
+      selectedToolIndex.value = toolIndex;
+    };
+
+    const isToolSelected = (sectionId: number, toolIndex: number): boolean => {
+      return selectedSectionId.value === sectionId && selectedToolIndex.value === toolIndex;
+    };
+
     const handleFrontReorder = (event: CustomEvent) => {
       console.log(1);
       event.detail.complete();
     };
-    const handleReorder = (event: CustomEvent) => {
-      // The `from` and `to` properties contain the index of the item
-      // when the drag started and ended, respectively
 
+    const handleSectionToolReorder = async (event: CustomEvent, sectionId: number) => {
+      const from = event.detail.from;
+      const to = event.detail.to;
+      
+      // Find the section
+      const section = sections.value.find(s => s.id === sectionId);
+      if (section && section.tools) {
+        // Reorder tools in the section
+        const movedTool = section.tools.splice(from, 1)[0];
+        section.tools.splice(to, 0, movedTool);
+        
+        // Update order values and save to backend
+        const toolIds = section.tools.map(t => t.id);
+        try {
+          await axios.post("sidebar_sections.php", qs.stringify({
+            reorderToolsInSection: true,
+            project: route.params.project,
+            section_id: sectionId,
+            tool_order: JSON.stringify(toolIds)
+          }));
+        } catch (error) {
+          console.error("Error saving tool order:", error);
+        }
+      }
+      
+      event.detail.complete();
+    };
+
+    const handleReorder = (event: CustomEvent) => {
       const schluesselMitWertEins = Object.keys(list).find(function (
         schluessel
       ) {
@@ -376,83 +503,59 @@ export default defineComponent({
 
       if (schluesselMitWertEins) {
         if (Number(event.detail.to) < Number(event.detail.from)) {
-          console.log(
-            "Der Schlüssel mit dem Wert " +
-            event.detail.from +
-            " ist: " +
-            schluesselMitWertEins
-          );
           for (const [key, value] of Object.entries(list)) {
-            console.log(
-              `${key}: ${value}, From: ${event.detail.from}, To: ${event.detail.to}`
-            );
             if (value == event.detail.to) {
-              console.log(key);
               list[key] = (event.detail.to + 1).toString();
             } else if (
               (value as number) > event.detail.to &&
               (value as number) < event.detail.from
             ) {
-              console.log("yes");
               list[key] = (Number(value) + 1).toString();
             }
           }
           list[schluesselMitWertEins] = event.detail.to.toString();
-
-          console.log(list);
           axios.post("test.php", qs.stringify({ list: JSON.stringify(list) }));
         } else {
-          // console.log("Der Schlüssel mit dem Wert " + event.detail.from +" ist: " + schluesselMitWertEins);
           for (const [key, value] of Object.entries(list)) {
-            //console.log(`${key}: ${value}, From: ${event.detail.from}, To: ${event.detail.to}`);
             if (value == event.detail.to) {
-              //console.log(key);
               list[key] = (event.detail.to - 1).toString();
             } else if (
               (value as number) > event.detail.from &&
               (value as number) < event.detail.to
             ) {
-              //console.log("yes");
               list[key] = (Number(value) - 1).toString();
             }
           }
           list[schluesselMitWertEins] = event.detail.to.toString();
-
-          console.log(list);
           axios.post("test.php", qs.stringify({ list: JSON.stringify(list) }));
         }
-      } else {
-        console.log(
-          "Es gibt keinen Schlüssel mit dem Wert " + event.detail.from + "."
-        );
       }
-      console.log(
-        "Dragged from index",
-        event.detail.from,
-        "to",
-        event.detail.to
-      );
-
-      // Finish the reorder and position the item in the DOM based on
-      // where the gesture ended. This method can also be called directly
-      // by the reorder group
       event.detail.complete();
     };
 
-    axios
-      .get("sidebar.php?getSideBarByProjectName=" + route.params.project)
-      .then((response) => {
-        tools.value = response.data.tools;
-        components.value = response.data.components;
-        services.value = response.data.services || [];
-        apis.value = response.data.apis || [];
-        codespaces.value = response.data.codespaces || [];
-        forms.value = response.data.forms || [];
-        componentSubItems.value = response.data.componentSubItems || {};
-        tools.value.forEach((element) => {
-          list[element.id] = element.order;
+    // Load sidebar data
+    const loadSidebarData = () => {
+      axios
+        .get("sidebar.php?getSideBarByProjectName=" + route.params.project)
+        .then((response) => {
+          sections.value = response.data.sections || [];
+          tools.value = response.data.tools || [];
+          components.value = response.data.components || [];
+          services.value = response.data.services || [];
+          apis.value = response.data.apis || [];
+          codespaces.value = response.data.codespaces || [];
+          forms.value = response.data.forms || [];
+          componentSubItems.value = response.data.componentSubItems || {};
+          
+          // Build list for legacy tools
+          tools.value.forEach((element: any) => {
+            list[element.id] = element.order;
+          });
         });
-      });
+    };
+
+    // Initial load
+    loadSidebarData();
 
     function goToConfig(route: string) {
       ionRouter.push(route);
@@ -471,16 +574,20 @@ export default defineComponent({
     }
 
     return {
-      tools: tools,
+      tools,
+      sections,
       selectedIndex,
-      components: components,
-      services: services,
-      apis: apis,
-      codespaces: codespaces,
-      forms: forms,
+      selectedSectionId,
+      selectedToolIndex,
+      components,
+      services,
+      apis,
+      codespaces,
+      forms,
       goToConfig,
       handleReorder,
       handleFrontReorder,
+      handleSectionToolReorder,
       layersOutline,
       gridOutline,
       documentsOutline,
@@ -490,23 +597,17 @@ export default defineComponent({
       getSubComponents,
       isCollapsed: computed(() => props.isCollapsed),
       toggleSidebar,
+      formatToolLink,
+      capitalizeFirst,
+      getToolRoute,
+      selectTool,
+      isToolSelected,
+      loadSidebarData,
     };
   },
   created() {
     this.emitter.on("updateSidebar", () => {
-      axios
-        .get(
-          "sidebar.php?getSideBarByProjectName=" + this.$route.params.project
-        )
-        .then((response) => {
-          this.tools = response.data.tools;
-          this.components = response.data.components;
-          this.services = response.data.services || [];
-          this.apis = response.data.apis || [];
-          this.codespaces = response.data.codespaces || [];
-          this.forms = response.data.forms || [];
-          this.componentSubItems = response.data.componentSubItems || {};
-        });
+      this.loadSidebarData();
     });
   },
 });
@@ -536,6 +637,15 @@ ion-item.new-tool ion-label {
 
 ion-item.new-tool ion-icon {
   color: #fff;
+}
+
+/* Empty Section Item */
+.empty-section-item {
+  opacity: 0.6;
+}
+
+.empty-section-item ion-label {
+  font-style: italic;
 }
 
 .projects-headline {

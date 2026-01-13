@@ -44,7 +44,52 @@ if (isset($headers['Authorization'])) {
         $projectName = $_REQUEST['getSideBarByProjectName'];
         $projectData = fetch_assoc(query("SELECT * FROM projects WHERE link='$projectName'"));
         $projectID = $projectData['projectID'];
-        $tools = query("SELECT * FROM project_tools WHERE projectID='$projectID' ORDER BY `project_tools`.`order` ASC");
+        
+        // Get custom sections for this project
+        $sections = query("SELECT * FROM project_sidebar_sections WHERE projectID='$projectID' ORDER BY order_index ASC");
+        $json['sections'] = [];
+        
+        if (mysqli_num_rows($sections) > 0) {
+            $sectionIndex = 0;
+            foreach ($sections as $section) {
+                $sectionId = $section['id'];
+                $json['sections'][$sectionIndex] = [
+                    'id' => $sectionId,
+                    'name' => $section['name'],
+                    'slug' => $section['slug'],
+                    'icon' => $section['icon'],
+                    'order_index' => $section['order_index'],
+                    'is_default' => (bool)$section['is_default'],
+                    'is_collapsible' => (bool)$section['is_collapsible'],
+                    'show_add_button' => (bool)$section['show_add_button'],
+                    'add_button_route' => $section['add_button_route'],
+                    'info_route' => $section['info_route'],
+                    'manage_route' => $section['manage_route'],
+                    'tools' => []
+                ];
+                
+                // Get tools for this section
+                $sectionTools = query("SELECT * FROM project_tools WHERE projectID='$projectID' AND section_id='$sectionId' ORDER BY `order` ASC");
+                if (mysqli_num_rows($sectionTools) > 0) {
+                    $toolIndex = 0;
+                    foreach ($sectionTools as $t) {
+                        $json['sections'][$sectionIndex]['tools'][$toolIndex] = [
+                            'id' => $t['id'],
+                            'icon' => $t['icon'],
+                            'name' => $t['name'],
+                            'hasConfig' => $t['hasConfig'],
+                            'order' => $t['order'],
+                            'section_id' => $sectionId
+                        ];
+                        $toolIndex++;
+                    }
+                }
+                $sectionIndex++;
+            }
+        }
+        
+        // Also get tools without a section (legacy support / uncategorized)
+        $tools = query("SELECT * FROM project_tools WHERE projectID='$projectID' AND (section_id IS NULL OR section_id = 0) ORDER BY `project_tools`.`order` ASC");
         if (mysqli_num_rows($tools) == 0) {
             $json['tools'] = [];
         } else {

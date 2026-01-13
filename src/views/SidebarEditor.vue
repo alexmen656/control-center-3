@@ -3,32 +3,124 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button default-href="/"></ion-back-button>
+          <ion-back-button :default-href="'/project/' + $route.params.project + '/'"></ion-back-button>
         </ion-buttons>
         <ion-title>Sidebar Editor</ion-title>
-        <ion-buttons slot="end">
-            <ion-button @click="save">Save</ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
-      <ion-list>
-        <ion-item v-for="(tool, index) in tools" :key="index">
-            <ion-grid>
-                <ion-row class="ion-align-items-center">
-                    <ion-col size="auto">
-                        <ion-icon :name="tool.icon" style="font-size: 24px;"></ion-icon>
-                    </ion-col>
-                    <ion-col>
-                        <ion-input label="Name" label-placement="floating" v-model="tool.name" placeholder="Name"></ion-input>
-                    </ion-col>
-                    <ion-col>
-                        <ion-input label="Icon" label-placement="floating" v-model="tool.icon" placeholder="Icon"></ion-input>
-                    </ion-col>
-                </ion-row>
-            </ion-grid>
-        </ion-item>
-      </ion-list>
+      <ion-card v-if="loading">
+        <ion-card-content class="loading-state">
+          <ion-spinner></ion-spinner>
+          <ion-label>Loading...</ion-label>
+        </ion-card-content>
+      </ion-card>
+
+      <div v-else>
+        <!-- Sections Management -->
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Sections</ion-card-title>
+            <ion-card-subtitle>Organize your sidebar with custom sections</ion-card-subtitle>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-reorder-group :disabled="false" @ionItemReorder="handleSectionReorder($event)">
+              <ion-item v-for="section in sections" :key="section.id" class="section-item">
+                <ion-icon slot="start" :name="section.icon" color="primary"></ion-icon>
+                <ion-label>
+                  <h2>{{ section.name }}</h2>
+                  <p>{{ section.tools?.length || 0 }} tools</p>
+                </ion-label>
+                <ion-badge v-if="section.is_default" color="medium" slot="end">Default</ion-badge>
+                <ion-button fill="clear" slot="end" @click="editSection(section)">
+                  <ion-icon name="create-outline"></ion-icon>
+                </ion-button>
+                <ion-button fill="clear" slot="end" @click="deleteSection(section)" color="danger" :disabled="section.is_default">
+                  <ion-icon name="trash-outline"></ion-icon>
+                </ion-button>
+                <ion-reorder slot="end"></ion-reorder>
+              </ion-item>
+            </ion-reorder-group>
+
+            <div v-if="sections.length === 0" class="empty-state">
+              <ion-icon name="folder-open-outline" color="medium"></ion-icon>
+              <p>No sections yet</p>
+            </div>
+
+            <ion-button expand="block" fill="outline" @click="createSection" class="add-section-btn">
+              <ion-icon slot="start" name="add-outline"></ion-icon>
+              Add Section
+            </ion-button>
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Section Templates -->
+        <ion-card v-if="sectionTemplates.length > 0">
+          <ion-card-header>
+            <ion-card-title>Quick Add Templates</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <div class="template-grid">
+              <ion-chip v-for="template in sectionTemplates" :key="template.id" @click="createFromTemplate(template)" outline color="primary">
+                <ion-icon :name="template.icon"></ion-icon>
+                <ion-label>{{ template.name }}</ion-label>
+              </ion-chip>
+            </div>
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Tools per Section -->
+        <ion-card v-for="section in sections" :key="'tools-' + section.id">
+          <ion-card-header>
+            <ion-card-title>
+              <ion-icon :name="section.icon" style="margin-right: 8px;"></ion-icon>
+              {{ section.name }} - Tools
+            </ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-reorder-group :disabled="false" @ionItemReorder="handleToolReorder($event, section.id)">
+              <ion-item v-for="tool in section.tools" :key="tool.id">
+                <ion-icon slot="start" :name="tool.icon"></ion-icon>
+                <ion-label>
+                  <ion-input v-model="tool.name" placeholder="Tool Name" @ionBlur="updateTool(tool)"></ion-input>
+                </ion-label>
+                <ion-input slot="end" v-model="tool.icon" placeholder="Icon" style="max-width: 150px;" @ionBlur="updateTool(tool)"></ion-input>
+                <ion-button fill="clear" slot="end" @click="moveToolToSection(tool)">
+                  <ion-icon name="swap-horizontal-outline"></ion-icon>
+                </ion-button>
+                <ion-reorder slot="end"></ion-reorder>
+              </ion-item>
+            </ion-reorder-group>
+            <div v-if="!section.tools || section.tools.length === 0" class="empty-tools">
+              <ion-label color="medium">No tools in this section</ion-label>
+            </div>
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Uncategorized Tools -->
+        <ion-card v-if="uncategorizedTools.length > 0">
+          <ion-card-header>
+            <ion-card-title>
+              <ion-icon name="help-circle-outline" style="margin-right: 8px;"></ion-icon>
+              Uncategorized Tools
+            </ion-card-title>
+            <ion-card-subtitle>Assign these tools to a section</ion-card-subtitle>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-list>
+              <ion-item v-for="tool in uncategorizedTools" :key="tool.id">
+                <ion-icon slot="start" :name="tool.icon"></ion-icon>
+                <ion-label>{{ tool.name }}</ion-label>
+                <ion-select slot="end" placeholder="Move to..." @ionChange="assignToolToSection(tool.id, $event)">
+                  <ion-select-option v-for="section in sections" :key="section.id" :value="section.id">
+                    {{ section.name }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-list>
+          </ion-card-content>
+        </ion-card>
+      </div>
     </ion-content>
   </ion-page>
 </template>
@@ -44,18 +136,61 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardSubtitle,
+  IonCardContent,
   IonList,
   IonItem,
   IonInput,
+  IonLabel,
   IonIcon,
   IonButton,
   IonButtons,
   IonBackButton,
-  IonGrid,
-  IonRow,
-  IonCol,
+  IonSpinner,
+  IonBadge,
+  IonChip,
+  IonReorder,
+  IonReorderGroup,
+  IonSelect,
+  IonSelectOption,
+  alertController,
   toastController
 } from "@ionic/vue";
+
+interface Tool {
+  id: number;
+  name: string;
+  icon: string;
+  hasConfig: number;
+  order: number;
+  section_id?: number;
+}
+
+interface Section {
+  id: number;
+  name: string;
+  slug: string;
+  icon: string;
+  order_index: number;
+  is_default: boolean;
+  is_collapsible: boolean;
+  show_add_button: boolean;
+  add_button_route: string | null;
+  info_route: string | null;
+  manage_route: string | null;
+  tools: Tool[];
+}
+
+interface SectionTemplate {
+  id: number;
+  name: string;
+  slug: string;
+  icon: string;
+  description: string;
+}
 
 export default defineComponent({
   name: "SidebarEditor",
@@ -65,59 +200,284 @@ export default defineComponent({
     IonToolbar,
     IonTitle,
     IonContent,
+    IonCard,
+    IonCardHeader,
+    IonCardTitle,
+    IonCardSubtitle,
+    IonCardContent,
     IonList,
     IonItem,
     IonInput,
+    IonLabel,
     IonIcon,
     IonButton,
     IonButtons,
     IonBackButton,
-    IonGrid,
-    IonRow,
-    IonCol
+    IonSpinner,
+    IonBadge,
+    IonChip,
+    IonReorder,
+    IonReorderGroup,
+    IonSelect,
+    IonSelectOption
   },
   setup() {
     const route = useRoute();
-    const tools = ref<any[]>([]);
+    const loading = ref(true);
+    const sections = ref<Section[]>([]);
+    const sectionTemplates = ref<SectionTemplate[]>([]);
+    const uncategorizedTools = ref<Tool[]>([]);
 
-    const loadData = () => {
-      axios
-        .get("sidebar.php?getSideBarByProjectName=" + route.params.project)
-        .then((response) => {
-          if (response.data.tools) {
-            tools.value = response.data.tools;
-          }
-        })
-        .catch((error) => {
-            console.error("Error loading sidebar data:", error);
-        });
+    const loadData = async () => {
+      loading.value = true;
+      try {
+        // Load sidebar data with sections
+        const sidebarResponse = await axios.get(
+          `sidebar.php?getSideBarByProjectName=${route.params.project}`
+        );
+        sections.value = sidebarResponse.data.sections || [];
+        uncategorizedTools.value = sidebarResponse.data.tools || [];
+
+        // Load templates
+        const templatesResponse = await axios.get(
+          `sidebar_sections.php?templates=1`
+        );
+        sectionTemplates.value = templatesResponse.data.templates || [];
+      } catch (error) {
+        console.error("Error loading data:", error);
+      } finally {
+        loading.value = false;
+      }
     };
 
-    const save = async () => {
+    const createSection = async () => {
+      const alert = await alertController.create({
+        header: 'Create New Section',
+        inputs: [
+          { name: 'name', type: 'text', placeholder: 'Section Name' },
+          { name: 'icon', type: 'text', placeholder: 'Icon (e.g., folder-outline)', value: 'folder-outline' },
+          { name: 'add_button_route', type: 'text', placeholder: 'Add Button Route (optional)' }
+        ],
+        buttons: [
+          { text: 'Cancel', role: 'cancel' },
+          {
+            text: 'Create',
+            handler: async (data) => {
+              if (!data.name) {
+                showToast('Section name is required', 'danger');
+                return false;
+              }
+              try {
+                await axios.post("sidebar_sections.php", qs.stringify({
+                  createSection: true,
+                  project: route.params.project,
+                  name: data.name,
+                  icon: data.icon || 'folder-outline',
+                  add_button_route: data.add_button_route
+                }));
+                await loadData();
+                showToast('Section created', 'success');
+              } catch (error) {
+                console.error("Error creating section:", error);
+              }
+            }
+          }
+        ]
+      });
+      await alert.present();
+    };
+
+    const createFromTemplate = async (template: SectionTemplate) => {
       try {
-        await axios.post(
-            "update_sidebar.php", 
-            qs.stringify({
-                project: route.params.project,
-                tools: JSON.stringify(tools.value)
-            })
-        );
-        
-        const toast = await toastController.create({
-          message: 'Sidebar updated successfully',
-          duration: 2000,
-          color: 'success'
-        });
-        await toast.present();
+        await axios.post("sidebar_sections.php", qs.stringify({
+          createSection: true,
+          project: route.params.project,
+          name: template.name,
+          icon: template.icon,
+          slug: template.slug
+        }));
+        await loadData();
+        showToast(`Section "${template.name}" created`, 'success');
       } catch (error) {
-        console.error("Error saving sidebar:", error);
-        const toast = await toastController.create({
-          message: 'Error saving sidebar',
-          duration: 2000,
-          color: 'danger'
-        });
-        await toast.present();
+        console.error("Error creating from template:", error);
       }
+    };
+
+    const editSection = async (section: Section) => {
+      const alert = await alertController.create({
+        header: 'Edit Section',
+        inputs: [
+          { name: 'name', type: 'text', placeholder: 'Name', value: section.name },
+          { name: 'icon', type: 'text', placeholder: 'Icon', value: section.icon },
+          { name: 'add_button_route', type: 'text', placeholder: 'Add Button Route', value: section.add_button_route || '' },
+          { name: 'info_route', type: 'text', placeholder: 'Info Route', value: section.info_route || '' },
+          { name: 'manage_route', type: 'text', placeholder: 'Manage Route', value: section.manage_route || '' }
+        ],
+        buttons: [
+          { text: 'Cancel', role: 'cancel' },
+          {
+            text: 'Save',
+            handler: async (data) => {
+              try {
+                await axios.post("sidebar_sections.php", qs.stringify({
+                  updateSection: true,
+                  project: route.params.project,
+                  section_id: section.id,
+                  name: data.name,
+                  icon: data.icon,
+                  add_button_route: data.add_button_route,
+                  info_route: data.info_route,
+                  manage_route: data.manage_route
+                }));
+                await loadData();
+                showToast('Section updated', 'success');
+              } catch (error) {
+                console.error("Error updating section:", error);
+              }
+            }
+          }
+        ]
+      });
+      await alert.present();
+    };
+
+    const deleteSection = async (section: Section) => {
+      const alert = await alertController.create({
+        header: 'Delete Section?',
+        message: `Tools in "${section.name}" will become uncategorized.`,
+        buttons: [
+          { text: 'Cancel', role: 'cancel' },
+          {
+            text: 'Delete',
+            role: 'destructive',
+            handler: async () => {
+              try {
+                await axios.post("sidebar_sections.php", qs.stringify({
+                  deleteSection: true,
+                  project: route.params.project,
+                  section_id: section.id
+                }));
+                await loadData();
+                showToast('Section deleted', 'success');
+              } catch (error) {
+                console.error("Error deleting section:", error);
+              }
+            }
+          }
+        ]
+      });
+      await alert.present();
+    };
+
+    const handleSectionReorder = async (event: CustomEvent) => {
+      const from = event.detail.from;
+      const to = event.detail.to;
+      const movedSection = sections.value.splice(from, 1)[0];
+      sections.value.splice(to, 0, movedSection);
+      const order = sections.value.map(s => s.id);
+      try {
+        await axios.post("sidebar_sections.php", qs.stringify({
+          reorderSections: true,
+          project: route.params.project,
+          order: JSON.stringify(order)
+        }));
+      } catch (error) {
+        console.error("Error saving order:", error);
+      }
+      event.detail.complete();
+    };
+
+    const handleToolReorder = async (event: CustomEvent, sectionId: number) => {
+      const section = sections.value.find(s => s.id === sectionId);
+      if (section && section.tools) {
+        const from = event.detail.from;
+        const to = event.detail.to;
+        const movedTool = section.tools.splice(from, 1)[0];
+        section.tools.splice(to, 0, movedTool);
+        // Save tool order
+        try {
+          await axios.post("sidebar_sections.php", qs.stringify({
+            reorderToolsInSection: true,
+            project: route.params.project,
+            section_id: sectionId,
+            tool_order: JSON.stringify(section.tools.map(t => t.id))
+          }));
+        } catch (error) {
+          console.error("Error saving tool order:", error);
+        }
+      }
+      event.detail.complete();
+    };
+
+    const updateTool = async (tool: Tool) => {
+      try {
+        await axios.post("update_sidebar.php", qs.stringify({
+          project: route.params.project,
+          updateTool: true,
+          tool_id: tool.id,
+          name: tool.name,
+          icon: tool.icon
+        }));
+      } catch (error) {
+        console.error("Error updating tool:", error);
+      }
+    };
+
+    const moveToolToSection = async (tool: Tool) => {
+      const alert = await alertController.create({
+        header: 'Move Tool',
+        message: `Move "${tool.name}" to another section`,
+        inputs: sections.value.map(s => ({
+          type: 'radio' as const,
+          label: s.name,
+          value: s.id,
+          checked: s.id === tool.section_id
+        })),
+        buttons: [
+          { text: 'Cancel', role: 'cancel' },
+          {
+            text: 'Move',
+            handler: async (sectionId) => {
+              if (sectionId) {
+                try {
+                  await axios.post("sidebar_sections.php", qs.stringify({
+                    assignToolToSection: true,
+                    project: route.params.project,
+                    tool_id: tool.id,
+                    section_id: sectionId
+                  }));
+                  await loadData();
+                  showToast('Tool moved', 'success');
+                } catch (error) {
+                  console.error("Error moving tool:", error);
+                }
+              }
+            }
+          }
+        ]
+      });
+      await alert.present();
+    };
+
+    const assignToolToSection = async (toolId: number, event: CustomEvent) => {
+      const sectionId = event.detail.value;
+      try {
+        await axios.post("sidebar_sections.php", qs.stringify({
+          assignToolToSection: true,
+          project: route.params.project,
+          tool_id: toolId,
+          section_id: sectionId
+        }));
+        await loadData();
+        showToast('Tool assigned', 'success');
+      } catch (error) {
+        console.error("Error assigning tool:", error);
+      }
+    };
+
+    const showToast = async (message: string, color: string) => {
+      const toast = await toastController.create({ message, duration: 2000, color });
+      await toast.present();
     };
 
     onMounted(() => {
@@ -125,9 +485,74 @@ export default defineComponent({
     });
 
     return {
-      tools,
-      save,
+      loading,
+      sections,
+      sectionTemplates,
+      uncategorizedTools,
+      createSection,
+      createFromTemplate,
+      editSection,
+      deleteSection,
+      handleSectionReorder,
+      handleToolReorder,
+      updateTool,
+      moveToolToSection,
+      assignToolToSection
     };
-  },
+  }
 });
 </script>
+
+<style scoped>
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-item h2 {
+  font-weight: 600;
+}
+
+.section-item p {
+  font-size: 12px;
+  color: var(--ion-color-medium);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.empty-state ion-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  color: var(--ion-color-medium);
+  margin: 0;
+}
+
+.add-section-btn {
+  margin-top: 16px;
+}
+
+.template-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.template-grid ion-chip {
+  cursor: pointer;
+}
+
+.empty-tools {
+  padding: 16px;
+  text-align: center;
+}
+</style>
