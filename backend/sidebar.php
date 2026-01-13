@@ -77,6 +77,7 @@ if (isset($headers['Authorization'])) {
                             'id' => $t['id'],
                             'icon' => $t['icon'],
                             'name' => $t['name'],
+                            'link' => $t['link'],
                             'hasConfig' => $t['hasConfig'],
                             'order' => $t['order'],
                             'section_id' => $sectionId

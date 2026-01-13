@@ -30,20 +30,16 @@
     </ion-note>
     <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
       <ion-reorder-group :disabled="false" @ionItemReorder="handleSectionToolReorder($event, section.id)">
-        <ion-menu-toggle auto-hide="false" v-for="(tool, toolIndex) in section.tools" :key="`section-${section.id}-tool-${tool.id}`">
-          <ion-item 
+        <ion-menu-toggle auto-hide="false" v-for="(tool, toolIndex) in section.tools"
+          :key="`section-${section.id}-tool-${tool.id}`">
+          <ion-item
             @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(tool.name) + '/config')"
-            @click="selectTool(section.id, toolIndex)"
-            lines="none" 
-            detail="false"
-            :router-link="getToolRoute(tool)"
-            class="hydrated menu-item"
-            :class="{ 
-              selected: isToolSelected(section.id, toolIndex), 
-              collapsed: isCollapsed, 
-              hasToBeDarkmode: hasToBeDarkmode 
-            }"
-            :data-tooltip="isCollapsed ? capitalizeFirst(tool.name) : ''">
+            @click="selectTool(section.id, toolIndex)" lines="none" detail="false" :router-link="getToolRoute(tool)"
+            class="hydrated menu-item" :class="{
+              selected: isToolSelected(section.id, toolIndex),
+              collapsed: isCollapsed,
+              hasToBeDarkmode: hasToBeDarkmode
+            }" :data-tooltip="isCollapsed ? capitalizeFirst(tool.name) : ''">
             <ion-icon slot="start" :name="tool.icon" />
             <ion-label v-if="!isCollapsed">{{ capitalizeFirst(tool.name) }}</ion-label>
             <ion-reorder v-if="!isCollapsed" slot="end">
@@ -236,7 +232,7 @@
               }" :data-tooltip="isCollapsed ? component.name : ''">
             <ion-icon slot="start" name="cube-outline" />
             <ion-label v-if="!isCollapsed">{{ component.name[0].toUpperCase() }}{{ component.name.substring(1)
-            }}</ion-label>
+              }}</ion-label>
             <ion-icon v-if="!isCollapsed"
               :name="isComponentExpanded(component.id) ? 'chevron-down-outline' : 'chevron-forward-outline'"
               slot="end"></ion-icon>
@@ -367,6 +363,7 @@ interface SidebarTool {
   id: number;
   icon: string;
   name: string;
+  link: string;
   hasConfig: number;
   order: number;
   section_id?: number;
@@ -440,14 +437,13 @@ export default defineComponent({
       return str.charAt(0).toUpperCase() + str.slice(1);
     };
 
-    // Get tool route based on icon type
     const getToolRoute = (tool: SidebarTool): string => {
       const projectPath = '/project/' + route.params.project;
-      const toolSlug = formatToolLink(tool.name);
-      
-      if (tool.icon === 'bar-chart-outline') {
+      const toolSlug = formatToolLink(tool.link);
+
+      /*if (tool.icon === 'bar-chart-outline') {
         return `${projectPath}/dashboard/${toolSlug}`;
-      }
+      }*/
       return `${projectPath}/${toolSlug}`;
     };
 
@@ -469,14 +465,14 @@ export default defineComponent({
     const handleSectionToolReorder = async (event: CustomEvent, sectionId: number) => {
       const from = event.detail.from;
       const to = event.detail.to;
-      
+
       // Find the section
       const section = sections.value.find(s => s.id === sectionId);
       if (section && section.tools) {
         // Reorder tools in the section
         const movedTool = section.tools.splice(from, 1)[0];
         section.tools.splice(to, 0, movedTool);
-        
+
         // Update order values and save to backend
         const toolIds = section.tools.map(t => t.id);
         try {
@@ -490,7 +486,7 @@ export default defineComponent({
           console.error("Error saving tool order:", error);
         }
       }
-      
+
       event.detail.complete();
     };
 
@@ -546,7 +542,7 @@ export default defineComponent({
           codespaces.value = response.data.codespaces || [];
           forms.value = response.data.forms || [];
           componentSubItems.value = response.data.componentSubItems || {};
-          
+
           // Build list for legacy tools
           tools.value.forEach((element: any) => {
             list[element.id] = element.order;
