@@ -147,6 +147,11 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/ProjectInfo.vue"),
   },
   {
+    path: "/project/:project/info/sidebar-editor",
+    component: () => import("../views/SidebarEditor.vue"),
+    name: "sidebar-editor",
+  },
+  {
     path: "/project/:project/ai-dashboard-generator",
     component: () => import("../views/AIDashboardGenerator.vue"),
   },
@@ -340,7 +345,7 @@ for (const path in modules) {
     component: () => import(`@/views/ConfigView.vue`),
   };*/
 
-  routes.push(...transformedRoutes);//, configRoute
+  routes.push(...transformedRoutes); //, configRoute
 }
 
 const services = import.meta.glob("@/user_services/*/routes.ts", {

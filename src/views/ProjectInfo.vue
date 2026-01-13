@@ -45,11 +45,7 @@
             <div class="card-body">
               <div class="form-group">
                 <label class="form-label">Domain Type</label>
-                <select 
-                  v-model="customLogin.domain_type" 
-                  class="modern-select"
-                  :disabled="customLogin.id"
-                >
+                <select v-model="customLogin.domain_type" class="modern-select" :disabled="customLogin.id">
                   <option value="internal">Subdomain of control-center.eu (automatic)</option>
                   <option value="external">External Domain (manual setup)</option>
                 </select>
@@ -59,13 +55,8 @@
               <div v-if="customLogin.domain_type === 'internal'" class="form-group">
                 <label class="form-label">Subdomain</label>
                 <div class="domain-input-wrapper">
-                  <input
-                    v-model="customLogin.subdomain"
-                    placeholder="mycompany"
-                    class="modern-input subdomain-input"
-                    :disabled="loadingCustomLogin || customLogin.id"
-                    @input="updateInternalDomain"
-                  />
+                  <input v-model="customLogin.subdomain" placeholder="mycompany" class="modern-input subdomain-input"
+                    :disabled="loadingCustomLogin || customLogin.id" @input="updateInternalDomain" />
                   <span class="domain-suffix">.control-center.eu</span>
                 </div>
               </div>
@@ -73,12 +64,8 @@
               <!-- External Domain Input -->
               <div v-if="customLogin.domain_type === 'external'" class="form-group">
                 <label class="form-label">External Domain</label>
-                <input
-                  v-model="customLogin.domain"
-                  placeholder="login.mycompany.com"
-                  class="modern-input"
-                  :disabled="loadingCustomLogin || customLogin.id"
-                />
+                <input v-model="customLogin.domain" placeholder="login.mycompany.com" class="modern-input"
+                  :disabled="loadingCustomLogin || customLogin.id" />
               </div>
 
               <!-- Setup Instructions for External Domains -->
@@ -108,11 +95,8 @@
                 <div class="toggle-wrapper">
                   <label class="form-label">Enabled</label>
                   <label class="toggle-switch">
-                    <input
-                      type="checkbox"
-                      v-model="customLogin.is_enabled"
-                      :disabled="loadingCustomLogin || !customLogin.domain"
-                    />
+                    <input type="checkbox" v-model="customLogin.is_enabled"
+                      :disabled="loadingCustomLogin || !customLogin.domain" />
                     <span class="toggle-slider"></span>
                   </label>
                 </div>
@@ -120,46 +104,25 @@
 
               <div class="form-group">
                 <label class="form-label">Company Name</label>
-                <input
-                  v-model="customLogin.company_name"
-                  placeholder="e.g., My Company GmbH"
-                  class="modern-input"
-                />
+                <input v-model="customLogin.company_name" placeholder="e.g., My Company GmbH" class="modern-input" />
               </div>
 
               <div class="form-group">
                 <label class="form-label">Primary Color</label>
                 <div class="color-picker-wrapper">
-                  <input
-                    type="color"
-                    v-model="customLogin.primary_color"
-                    class="color-input"
-                  />
-                  <input
-                    type="text"
-                    v-model="customLogin.primary_color"
-                    class="modern-input"
-                    placeholder="#e53e3e"
-                  />
+                  <input type="color" v-model="customLogin.primary_color" class="color-input" />
+                  <input type="text" v-model="customLogin.primary_color" class="modern-input" placeholder="#e53e3e" />
                 </div>
               </div>
 
               <div class="form-group">
                 <label class="form-label">Logo URL</label>
-                <input
-                  v-model="customLogin.logo_url"
-                  placeholder="https://example.com/logo.png"
-                  class="modern-input"
-                />
+                <input v-model="customLogin.logo_url" placeholder="https://example.com/logo.png" class="modern-input" />
               </div>
 
               <div v-if="customLogin.logo_url" class="logo-preview">
                 <label class="form-label">Logo Preview</label>
-                <img
-                  :src="customLogin.logo_url"
-                  alt="Logo Preview"
-                  @error="customLogin.logo_url = ''"
-                />
+                <img :src="customLogin.logo_url" alt="Logo Preview" @error="customLogin.logo_url = ''" />
               </div>
 
               <div v-if="customLogin.ssl_status" class="form-group">
@@ -180,26 +143,35 @@
               </div>
 
               <div class="form-actions">
-                <button
-                  class="action-btn secondary"
-                  @click="deleteCustomLogin"
-                  :disabled="!customLogin.id || savingCustomLogin"
-                  v-if="customLogin.id"
-                >
+                <button class="action-btn secondary" @click="deleteCustomLogin"
+                  :disabled="!customLogin.id || savingCustomLogin" v-if="customLogin.id">
                   <ion-icon name="trash-outline"></ion-icon>
                   Delete
                 </button>
-                <button
-                  class="action-btn primary"
-                  @click="saveCustomLogin"
-                  :disabled="savingCustomLogin"
-                >
+                <button class="action-btn primary" @click="saveCustomLogin" :disabled="savingCustomLogin">
                   <ion-icon name="save-outline"></ion-icon>
                   {{ customLogin.id ? 'Update' : 'Save' }} Configuration
                 </button>
               </div>
             </div>
           </div>
+
+          <!-- Project sidebar-->
+
+          <div class="data-card">
+            <div class="card-header">
+              <div class="header-left">
+                <h3>Project Sidebar</h3>
+                <p class="card-subtitle">Personalize your project's sidebar</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <button class="action-btn primary" @click="openSidebarEditor">
+                Open Sidebar Editor
+              </button>
+            </div>
+          </div>
+
 
           <!-- Project Domain -->
           <div class="data-card">
@@ -224,19 +196,11 @@
                 <div v-else class="form-group">
                   <label class="form-label">Subdomain</label>
                   <div class="domain-input-wrapper">
-                    <input
-                      v-model="domainInput"
-                      placeholder="myproject"
-                      class="modern-input subdomain-input"
-                    />
+                    <input v-model="domainInput" placeholder="myproject" class="modern-input subdomain-input" />
                     <span class="domain-suffix">.sites.control-center.eu</span>
                   </div>
-                  <button
-                    class="action-btn primary"
-                    @click="connectDomain"
-                    :disabled="!domainInput || domainInput.length < 3"
-                    style="margin-top: 12px;"
-                  >
+                  <button class="action-btn primary" @click="connectDomain"
+                    :disabled="!domainInput || domainInput.length < 3" style="margin-top: 12px;">
                     Connect Domain
                   </button>
                 </div>
@@ -318,6 +282,9 @@ export default {
     };
   },
   methods: {
+    openSidebarEditor() {
+      this.$router.push({ name: 'sidebar-editor', params: { project: this.$route.params.project } });
+    },
     updateInternalDomain() {
       if (this.customLogin.domain_type === 'internal' && this.customLogin.subdomain) {
         this.customLogin.domain = this.customLogin.subdomain + '.control-center.eu';
@@ -334,7 +301,7 @@ export default {
         if (res.data.success && res.data.data) {
           const data = res.data.data;
           const isInternal = data.is_internal || data.domain?.endsWith('.control-center.eu');
-          
+
           this.customLogin = {
             id: data.id,
             domain: data.domain,
@@ -357,7 +324,7 @@ export default {
       this.savingCustomLogin = true;
       this.customLoginError = '';
       this.customLoginSuccess = '';
-      
+
       // Domain zusammensetzen für interne Domains
       if (this.customLogin.domain_type === 'internal') {
         if (!this.customLogin.subdomain) {
@@ -373,13 +340,13 @@ export default {
         }
         this.customLogin.domain = this.customLogin.subdomain + '.control-center.eu';
       }
-      
+
       if (!this.customLogin.domain) {
         this.customLoginError = 'Domain ist erforderlich';
         this.savingCustomLogin = false;
         return;
       }
-      
+
       try {
         const res = await this.$axios.post('custom_login_domains.php', this.$qs.stringify({
           action: 'save',
@@ -390,7 +357,7 @@ export default {
           logo_url: this.customLogin.logo_url,
           company_name: this.customLogin.company_name,
         }));
-        
+
         if (res.data.success) {
           let message = res.data.message || 'Erfolgreich gespeichert';
           if (res.data.is_internal === false) {
@@ -410,16 +377,16 @@ export default {
     },
     async deleteCustomLogin() {
       if (!confirm('Custom Login Domain wirklich löschen?')) return;
-      
+
       this.savingCustomLogin = true;
       this.customLoginError = '';
-      
+
       try {
         const res = await this.$axios.post('custom_login_domains.php', this.$qs.stringify({
           action: 'delete',
           project: this.$route.params.project,
         }));
-        
+
         if (res.data.success) {
           this.customLogin = {
             id: null,
@@ -855,15 +822,15 @@ export default {
   border-radius: 50%;
 }
 
-.toggle-switch input:checked + .toggle-slider {
+.toggle-switch input:checked+.toggle-slider {
   background-color: var(--primary-color);
 }
 
-.toggle-switch input:checked + .toggle-slider:before {
+.toggle-switch input:checked+.toggle-slider:before {
   transform: translateX(22px);
 }
 
-.toggle-switch input:disabled + .toggle-slider {
+.toggle-switch input:disabled+.toggle-slider {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -1100,6 +1067,7 @@ export default {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
