@@ -147,7 +147,8 @@ if (isset($headers['Authorization'])) {
                 $json['forms'][$f]["form_name"] = $form['form_name'];
                 $json['forms'][$f]["name"] = $form['form_name'];
                 $json['forms'][$f]["icon"] = $form['icon'] ?? "list-outline";
-                $json['forms'][$f]["section_id"] = $form['section_id'];
+                $sectionId = $form['section_id'];
+                $json['forms'][$f]["section_id"] = ($sectionId === null || $sectionId === '' || $sectionId === '0' || $sectionId === 0) ? null : (int)$sectionId;
                 $json['forms'][$f]["order_index"] = $form['order_index'] ?? 0;
                 $json['forms'][$f]["created_at"] = $form['created_at'];
                 $f++;

@@ -27,7 +27,17 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
     $formJSON = $_POST['form']; //escape_string();
     $formName = escape_string($_POST['name']);
     $project = escape_string($_POST['project']);
-    if (query("INSERT INTO form_settings (form_name, form_json, project) VALUES ('$formName', '$formJSON', '$project')")) {
+    
+    $projectID = getProjectID($project);
+    $tablesSectionId = null;
+    if ($projectID) {
+        $tablesSection = query("SELECT id FROM project_sidebar_sections WHERE projectID='$projectID' AND slug='tables' LIMIT 1");
+        if (mysqli_num_rows($tablesSection) > 0) {
+            $tablesSectionId = fetch_assoc($tablesSection)['id'];
+        }
+    }
+    
+    if (query("INSERT INTO form_settings (form_name, form_json, project, section_id, icon) VALUES ('$formName', '$formJSON', '$project', " . ($tablesSectionId ? "'$tablesSectionId'" : "NULL") . ", 'list-outline')")) {
 
         $data = json_decode($formJSON, true);
 

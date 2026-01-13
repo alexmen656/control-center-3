@@ -10,6 +10,23 @@
         <ion-label v-if="!isCollapsed">Overview</ion-label>
       </ion-item>
     </ion-menu-toggle>
+    <ion-reorder-group v-if="tools.length > 0" :disabled="false" @ionItemReorder="handleReorder($event)">
+      <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
+        <ion-item @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(p.name) + '/config')"
+          @click="this.selectedIndex = i + 1" lines="none" detail="false" :router-link="p.icon == 'bar-chart-outline'
+            ? '/project/' + $route.params.project + '/dashboard/' + formatToolLink(p.name)
+            : '/project/' + $route.params.project + '/' + formatToolLink(p.name)" class="hydrated menu-item"
+          :class="{ selected: this.selectedIndex === i + 1, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
+          :data-tooltip="isCollapsed ? capitalizeFirst(p.name) : ''">
+          <ion-icon slot="start" :name="p.icon" />
+          <ion-label v-if="!isCollapsed">{{ capitalizeFirst(p.name) }}</ion-label>
+          <ion-reorder v-if="!isCollapsed" slot="end">
+            <ion-icon v-if="p.hasConfig == 1" style="cursor: pointer; z-index: 1000" name="cog-outline" />
+            <pre v-else></pre>
+          </ion-reorder>
+        </ion-item>
+      </ion-menu-toggle>
+    </ion-reorder-group>
   </ion-list>
 
   <!-- Custom Sections with Items (Tools + Forms) -->
@@ -68,83 +85,6 @@
           <ion-item lines="none" detail="false" class="empty-section-item">
             <ion-icon slot="start" name="folder-open-outline" color="medium" />
             <ion-label color="medium">No items in this section</ion-label>
-          </ion-item>
-        </ion-menu-toggle>
-      </ion-reorder-group>
-    </ion-list>
-  </template>
-
-  <!-- Legacy Tools (uncategorized - for backwards compatibility) -->
-  <template v-if="tools.length > 0">
-    <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
-      <h4>Uncategorized Tools</h4>
-      <div>
-        <router-link :to="'/project/' + $route.params.project + '/new-tool/'">
-          <ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline" />
-        </router-link>
-      </div>
-    </ion-note>
-    <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
-      <ion-reorder-group :disabled="false" @ionItemReorder="handleReorder($event)">
-        <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
-          <ion-item @dblclick="
-            goToConfig(
-              '/project/' +
-              $route.params.project +
-              '/' +
-              formatToolLink(p.name) +
-              '/config'
-            )
-            " @click="this.selectedIndex = i + 1" lines="none" detail="false" :router-link="p.icon == 'bar-chart-outline'
-              ? '/project/' +
-              $route.params.project +
-              '/dashboard/' +
-              formatToolLink(p.name)
-              : '/project/' +
-              $route.params.project +
-              '/' +
-              formatToolLink(p.name)
-              " class="hydrated menu-item"
-            :class="{ selected: this.selectedIndex === i + 1, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
-            :data-tooltip="isCollapsed ? capitalizeFirst(p.name) : ''">
-            <ion-icon slot="start" :name="p.icon" />
-            <ion-label v-if="!isCollapsed">{{ capitalizeFirst(p.name) }}</ion-label>
-            <ion-reorder v-if="!isCollapsed" slot="end">
-              <ion-icon v-if="p.hasConfig == 1" style="cursor: pointer; z-index: 1000" name="cog-outline" />
-              <pre v-else></pre>
-            </ion-reorder>
-          </ion-item>
-        </ion-menu-toggle>
-      </ion-reorder-group>
-    </ion-list>
-  </template>
-
-  <!-- Uncategorized Tables (forms without section_id) -->
-  <template v-if="uncategorizedForms.length > 0">
-    <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
-      <h4>Uncategorized Tables</h4>
-      <div>
-        <router-link :to="'/project/' + $route.params.project + '/manage/forms'"><ion-icon
-            style="color: var(--ion-color-medium-shade)"
-            name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/forms/"><ion-icon
-            style="color: var(--ion-color-medium-shade)"
-            name="information-circle-outline"></ion-icon></router-link><router-link
-          :to="'/project/' + $route.params.project + '/new/form'"><ion-icon style="color: var(--ion-color-medium-shade)"
-            name="add-circle-outline"></ion-icon></router-link>
-      </div>
-    </ion-note>
-    <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
-      <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
-        <ion-menu-toggle auto-hide="false" v-for="(form, i) in uncategorizedForms" :key="`form-${i}`">
-          <ion-item @click="this.selectedIndex = Number(tools.length) + Number(i) + 1" lines="none" detail="false"
-            :router-link="'/project/' + $route.params.project + '/forms/' + form.name" class="hydrated menu-item"
-            :class="{
-              selected: this.selectedIndex === Number(tools.length) + Number(i) + 1,
-              collapsed: isCollapsed,
-              hasToBeDarkmode: hasToBeDarkmode
-            }" :data-tooltip="isCollapsed ? form.name : ''">
-            <ion-icon slot="start" :name="form.icon || 'list-outline'" />
-            <ion-label v-if="!isCollapsed">{{ form.name[0].toUpperCase() + form.name.substring(1) }}</ion-label>
           </ion-item>
         </ion-menu-toggle>
       </ion-reorder-group>
@@ -245,7 +185,7 @@
               }" :data-tooltip="isCollapsed ? component.name : ''">
             <ion-icon slot="start" name="cube-outline" />
             <ion-label v-if="!isCollapsed">{{ component.name[0].toUpperCase() }}{{ component.name.substring(1)
-            }}</ion-label>
+              }}</ion-label>
             <ion-icon v-if="!isCollapsed"
               :name="isComponentExpanded(component.id) ? 'chevron-down-outline' : 'chevron-forward-outline'"
               slot="end"></ion-icon>
@@ -450,11 +390,6 @@ export default defineComponent({
     const componentsExpanded = ref(true);
     const expandedComponents = ref<{ [key: string]: boolean }>({});
     const componentSubItems = ref<{ [key: string]: any[] }>({});
-
-    // Computed: forms that don't have a section assigned
-    const uncategorizedForms = computed(() => {
-      return forms.value.filter(form => !form.section_id);
-    });
 
     // Helper to get section items (tools + forms combined, already sorted from backend)
     const getSectionItems = (section: SidebarSection): SidebarItem[] => {
@@ -670,7 +605,6 @@ export default defineComponent({
       apis,
       codespaces,
       forms,
-      uncategorizedForms,
       goToConfig,
       handleReorder,
       handleFrontReorder,
