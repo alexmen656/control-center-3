@@ -82,7 +82,7 @@
           </ion-item>
 
         </ion-menu-toggle>
-        
+
         <!-- Empty state for section -->
         <ion-menu-toggle auto-hide="false" v-if="getSectionItems(section).length === 0 && !isCollapsed">
           <ion-item lines="none" detail="false" class="empty-section-item">
@@ -90,7 +90,7 @@
             <ion-label color="medium">No items in this section</ion-label>
           </ion-item>
         </ion-menu-toggle>
-        
+
       </ion-reorder-group>
     </ion-list>
   </template>
@@ -98,13 +98,9 @@
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
     <h4>Codespaces</h4>
     <div>
-      <router-link :to="'/project/' + $route.params.project + '/manage/codespaces'"><ion-icon
-          style="color: var(--ion-color-medium-shade)"
-          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/codespaces/"><ion-icon
-          style="color: var(--ion-color-medium-shade)"
-          name="information-circle-outline"></ion-icon></router-link><router-link
-        :to="'/project/' + $route.params.project + '/new/codespace'"><ion-icon
-          style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>
+      <router-link v-for="(action, idx) in codespaceActions" :key="idx" :to="action.to">
+        <ion-icon style="color: var(--ion-color-medium-shade)" :name="action.icon" />
+      </router-link>
     </div>
   </ion-note>
   <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
@@ -121,12 +117,8 @@
           }" :data-tooltip="isCollapsed ? codespace.name : ''">
           <ion-icon slot="start" :name="codespace.icon || 'code-outline'" />
           <ion-label v-if="!isCollapsed">{{ codespace.name }}</ion-label>
-          <!--<ion-badge v-if="!isCollapsed && codespace.language" color="primary" class="codespace-language-badge">{{ codespace.language }}</ion-badge>-->
           <span v-if="!isCollapsed" class="codespace-status-indicator"
             :class="{ 'status-active': codespace.status === 'active', 'status-inactive': codespace.status === 'inactive' }"></span>
-          <!--  <ion-reorder v-if="!isCollapsed" slot="end">
-            <ion-icon style="cursor: pointer; z-index: 1000" name="settings-outline" />
-          </ion-reorder>-->
         </ion-item>
       </ion-menu-toggle>
       <ion-menu-toggle auto-hide="false" v-if="codespaces.length === 0 && !isCollapsed">
@@ -140,14 +132,8 @@
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
     <h4 v-if="!isCollapsed">Web Builder</h4>
     <div v-if="!isCollapsed">
-      <router-link :to="'/project/' + $route.params.project + '/manage/pages'">
-        <ion-icon style="color: var(--ion-color-medium-shade)" name="ellipsis-horizontal-circle-outline" />
-      </router-link>
-      <router-link to="/info/pages/">
-        <ion-icon style="color: var(--ion-color-medium-shade)" name="information-circle-outline" />
-      </router-link>
-      <router-link :to="'/project/' + $route.params.project + '/new/wb'">
-        <ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline" />
+      <router-link v-for="(action, idx) in webBuilderActions" :key="idx" :to="action.to">
+        <ion-icon style="color: var(--ion-color-medium-shade)" :name="action.icon" />
       </router-link>
     </div>
   </ion-note>
@@ -173,8 +159,9 @@
                 hasToBeDarkmode: hasToBeDarkmode
               }" :data-tooltip="isCollapsed ? component.name : ''">
             <ion-icon slot="start" name="cube-outline" />
-            <ion-label v-if="!isCollapsed">{{ component.name[0].toUpperCase() }}{{ component.name.substring(1)
-            }}</ion-label>
+            <ion-label v-if="!isCollapsed">
+              {{ component.name[0].toUpperCase() }}{{ component.name.substring(1) }}
+            </ion-label>
             <ion-icon v-if="!isCollapsed"
               :name="isComponentExpanded(component.id) ? 'chevron-down-outline' : 'chevron-forward-outline'"
               slot="end"></ion-icon>
@@ -195,15 +182,6 @@
                 $route.params.project +
                 '/wb/' +
                 component.slug
-                /*component.name
-                  .toLowerCase()
-                  .replaceAll(' ', '-')
-                  .replaceAll('ä', 'a')
-                  .replaceAll('Ä', 'a')
-                  .replaceAll('ö', 'o')
-                  .replaceAll('Ö', 'o')
-                  .replaceAll('Ü', 'u')
-                  .replaceAll('ü', 'u')*/
                 + '/' +
                 subComp.slug
                   .toLowerCase()
@@ -221,14 +199,8 @@
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
     <h4 v-if="!isCollapsed">Services</h4>
     <div v-if="!isCollapsed">
-      <router-link :to="'/project/' + $route.params.project + '/manage/services'">
-        <ion-icon style="color: var(--ion-color-medium-shade)" name="ellipsis-horizontal-circle-outline" />
-      </router-link>
-      <router-link to="/info/services/">
-        <ion-icon style="color: var(--ion-color-medium-shade)" name="information-circle-outline" />
-      </router-link>
-      <router-link :to="'/project/' + $route.params.project + '/new/service'">
-        <ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline" />
+      <router-link v-for="(action, idx) in serviceActions" :key="idx" :to="action.to">
+        <ion-icon style="color: var(--ion-color-medium-shade)" :name="action.icon" />
       </router-link>
     </div>
   </ion-note>
@@ -253,14 +225,8 @@
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
     <h4>APIs</h4>
     <div>
-      <router-link :to="'/project/' + $route.params.project + '/manage/apis'">
-        <ion-icon style="color: var(--ion-color-medium-shade)" name="ellipsis-horizontal-circle-outline" />
-      </router-link>
-      <router-link to="/info/apis/">
-        <ion-icon style="color: var(--ion-color-medium-shade)" name="information-circle-outline" />
-      </router-link>
-      <router-link :to="'/project/' + $route.params.project + '/manage/apis'">
-        <ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline" />
+      <router-link v-for="(action, idx) in apiActions" :key="idx" :to="action.to">
+        <ion-icon style="color: var(--ion-color-medium-shade)" :name="action.icon" />
       </router-link>
     </div>
   </ion-note>
@@ -458,13 +424,9 @@ export default defineComponent({
       const link = (tool as SidebarTool).link || tool.name;
       const toolSlug = formatToolLink(link);
 
-      /*if (tool.icon === 'bar-chart-outline') {
-        return `${projectPath}/dashboard/${toolSlug}`;
-      }*/
       return `${projectPath}/${toolSlug}`;
     };
 
-    // Selection helpers
     const selectTool = (sectionId: number, toolIndex: number) => {
       selectedSectionId.value = sectionId;
       selectedToolIndex.value = toolIndex;
@@ -483,15 +445,13 @@ export default defineComponent({
       const from = event.detail.from;
       const to = event.detail.to;
 
-      // Find the section
       const section = sections.value.find(s => s.id === sectionId);
+
       if (section && section.tools) {
-        // Reorder tools in the section
         const movedTool = section.tools.splice(from, 1)[0];
         section.tools.splice(to, 0, movedTool);
-
-        // Update order values and save to backend
         const toolIds = section.tools.map(t => t.id);
+
         try {
           await axios.post("sidebar_sections.php", qs.stringify({
             reorderToolsInSection: true,
@@ -567,7 +527,6 @@ export default defineComponent({
         });
     };
 
-    // Initial load
     loadSidebarData();
 
     function goToConfig(route: string) {
@@ -585,6 +544,42 @@ export default defineComponent({
     function getSubComponents(componentId: number) {
       return componentSubItems.value[componentId] || [];
     }
+
+    const webBuilderActions = computed(() => {
+      const projectPath = '/project/' + route.params.project;
+      return [
+        { to: projectPath + '/manage/pages', icon: 'ellipsis-horizontal-circle-outline' },
+        { to: '/info/pages/', icon: 'information-circle-outline' },
+        { to: projectPath + '/new/wb', icon: 'add-circle-outline' }
+      ];
+    });
+
+    const codespaceActions = computed(() => {
+      const projectPath = '/project/' + route.params.project;
+      return [
+        { to: projectPath + '/manage/codespaces', icon: 'ellipsis-horizontal-circle-outline' },
+        { to: '/info/codespaces/', icon: 'information-circle-outline' },
+        { to: projectPath + '/new/codespace', icon: 'add-circle-outline' }
+      ];
+    });
+
+    const serviceActions = computed(() => {
+      const projectPath = '/project/' + route.params.project;
+      return [
+        { to: projectPath + '/manage/services', icon: 'ellipsis-horizontal-circle-outline' },
+        { to: '/info/services/', icon: 'information-circle-outline' },
+        { to: projectPath + '/new/service', icon: 'add-circle-outline' }
+      ];
+    });
+
+    const apiActions = computed(() => {
+      const projectPath = '/project/' + route.params.project;
+      return [
+        { to: projectPath + '/manage/apis', icon: 'ellipsis-horizontal-circle-outline' },
+        { to: '/info/apis/', icon: 'information-circle-outline' },
+        { to: projectPath + '/manage/apis', icon: 'add-circle-outline' }
+      ];
+    });
 
     return {
       tools,
@@ -621,6 +616,10 @@ export default defineComponent({
       selectSectionItem,
       isSectionItemSelected,
       loadSidebarData,
+      webBuilderActions,
+      codespaceActions,
+      serviceActions,
+      apiActions,
     };
   },
   created() {
@@ -638,7 +637,6 @@ export default defineComponent({
   ion-list,
   ion-reorder-group {
     --background: #eff3f6;
-    /*#f7fcff;*/
     background: #eff3f6;
   }
 }
@@ -657,7 +655,6 @@ ion-item.new-tool ion-icon {
   color: #fff;
 }
 
-/* Empty Section Item */
 .empty-section-item {
   opacity: 0.6;
 }
@@ -704,7 +701,6 @@ ion-item.new-tool ion-icon {
   background-color: red;
 }
 
-/* API Status Indicators */
 .api-status-indicator {
   width: 8px;
   height: 8px;
@@ -720,14 +716,12 @@ ion-item.new-tool ion-icon {
   background-color: var(--ion-color-medium);
 }
 
-/* API Category Badge */
 .api-category-badge {
   margin-left: 8px;
   font-size: 0.7em;
   padding: 2px 6px;
 }
 
-/* No APIs Item */
 .no-apis-item {
   opacity: 0.6;
 }
@@ -753,36 +747,30 @@ ion-item.new-tool ion-icon {
   width: 0;
   border-left: 1px dashed var(--ion-color-medium-shade);
   height: 83.6%;
-  /* Nur bis 85% der Höhe, nicht bis ganz zum Ende */
 }
 
 .sub-components-wrapper {
   position: relative;
 }
 
-/* Horizontale Verbindungslinien direkt an den Unterelementen */
 .sub-component-item {
   position: relative;
   font-size: 0.9em;
   --padding-start: 10px;
 }
 
-/* L-förmige Verbindung von der Hauptlinie zu jedem Unterelement */
 .sub-component-item::before {
   content: '';
   position: absolute;
   left: -16px;
-  /* Wichtig: weiter links, damit es an der vertikalen Linie beginnt */
   top: 50%;
   width: 16px;
-  /* Länger, um die gesamte Strecke abzudecken */
   height: 1px;
   background-color: var(--ion-color-medium-shade);
   border-top: 1px dashed var(--ion-color-medium-shade);
   z-index: 9999;
 }
 
-/* Entferne den letzten vertikalen Strich nach dem letzten Element */
 .sub-components .sub-item-container:last-child::after {
   content: '';
   position: absolute;
@@ -791,11 +779,9 @@ ion-item.new-tool ion-icon {
   bottom: -8px;
   width: 1px;
   background-color: var(--ion-background-color);
-  /* Gleiche Farbe wie der Hintergrund */
   z-index: 9998;
 }
 
-/* Entferne alte Styles die nicht benötigt werden */
 .tree-branch {
   display: none;
 }
@@ -897,14 +883,10 @@ ion-item.new-tool ion-icon {
   width: 100%;
 }
 
-/* Sidebar Toggle Button - REMOVED */
-
-/* Collapsed Sidebar Styles */
 .collapsed.projects-headline {
   display: none;
 }
 
-/* Section Dividers */
 .collapsed ion-list {
   padding: 0 !important;
   margin: 0 !important;
@@ -958,7 +940,6 @@ ion-item.new-tool ion-icon {
   overflow: hidden !important;
 }
 
-/* Ensure icons are centered in collapsed state */
 .collapsed ion-item {
   display: flex !important;
   justify-content: center !important;
@@ -977,7 +958,6 @@ ion-item.new-tool ion-icon {
   --background: var(--ion-color-step-100);
 }
 
-/* Force collapse the menu content */
 .ion-menu.collapsed-menu ion-content {
   width: 76px !important;
   max-width: 76px !important;
@@ -992,17 +972,14 @@ ion-item.new-tool ion-icon {
   padding: 20px 0 !important;
 }
 
-/* Hide version and other text elements when collapsed */
 .collapsed+div {
   display: none;
 }
 
-/* Hide version and other text elements when collapsed */
 .collapsed+div {
   display: none;
 }
 
-/* Add tooltip-like behavior on hover in collapsed state */
 .collapsed .menu-item:hover {
   position: relative;
   overflow: visible;
@@ -1045,17 +1022,13 @@ ion-item.new-tool ion-icon {
 }
 
 ion-list.hasToBeDarkmode {
-  background:
-    /*var(*/
-    #1e1e1e
-    /*, var(--ion-background-color, #fff));*/
+  background: #1e1e1e;
 }
 
 .menu-item.hasToBeDarkmode {
   --background: #1e1e1e !important;
 }
 
-/* Codespace specific styling */
 .codespace-language-badge {
   font-size: 10px;
   font-weight: 500;
@@ -1087,7 +1060,6 @@ ion-list.hasToBeDarkmode {
   color: var(--ion-color-medium) !important;
 }
 
-/* Forms/Tables specific styling */
 .no-forms-item {
   opacity: 0.6;
 }
