@@ -41,6 +41,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/ManageUsers.vue"),
   },
   {
+    path: "/access-log",
+    component: () => import("../views/AccessLog.vue"),
+  },
+  {
     path: "/databases",
     component: DatabasesView,
   },
