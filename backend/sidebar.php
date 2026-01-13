@@ -65,26 +65,56 @@ if (isset($headers['Authorization'])) {
                     'add_button_route' => $section['add_button_route'],
                     'info_route' => $section['info_route'],
                     'manage_route' => $section['manage_route'],
-                    'tools' => []
+                    'items' => [] // Combined tools and forms
                 ];
                 
                 // Get tools for this section
-                $sectionTools = query("SELECT * FROM project_tools WHERE projectID='$projectID' AND section_id='$sectionId' ORDER BY `order` ASC");
+                $sectionTools = query("SELECT *, 'tool' as item_type FROM project_tools WHERE projectID='$projectID' AND section_id='$sectionId' ORDER BY `order` ASC");
+                $items = [];
+                
                 if (mysqli_num_rows($sectionTools) > 0) {
-                    $toolIndex = 0;
                     foreach ($sectionTools as $t) {
-                        $json['sections'][$sectionIndex]['tools'][$toolIndex] = [
+                        $items[] = [
                             'id' => $t['id'],
+                            'item_type' => 'tool',
                             'icon' => $t['icon'],
                             'name' => $t['name'],
                             'link' => $t['link'],
                             'hasConfig' => $t['hasConfig'],
-                            'order' => $t['order'],
+                            'order' => (int)$t['order'],
                             'section_id' => $sectionId
                         ];
-                        $toolIndex++;
                     }
                 }
+                
+                // Get forms for this section
+                $sectionForms = query("SELECT * FROM form_settings WHERE project='$projectName' AND section_id='$sectionId' ORDER BY order_index ASC");
+                if (mysqli_num_rows($sectionForms) > 0) {
+                    foreach ($sectionForms as $form) {
+                        $items[] = [
+                            'id' => 'form_' . $form['form_id'],
+                            'form_id' => $form['form_id'],
+                            'item_type' => 'form',
+                            'icon' => $form['icon'] ?? 'list-outline',
+                            'name' => $form['form_name'],
+                            'link' => 'forms/' . $form['form_name'],
+                            'hasConfig' => 0,
+                            'order' => (int)($form['order_index'] ?? 999),
+                            'section_id' => $sectionId
+                        ];
+                    }
+                }
+                
+                // Sort items by order
+                usort($items, function($a, $b) {
+                    return $a['order'] - $b['order'];
+                });
+                
+                $json['sections'][$sectionIndex]['items'] = $items;
+                // Keep 'tools' for backwards compatibility
+                $json['sections'][$sectionIndex]['tools'] = array_filter($items, fn($item) => $item['item_type'] === 'tool');
+                $json['sections'][$sectionIndex]['tools'] = array_values($json['sections'][$sectionIndex]['tools']);
+                
                 $sectionIndex++;
             }
         }
@@ -106,16 +136,19 @@ if (isset($headers['Authorization'])) {
         }
 
         // Get forms for this project from form_settings table
-        $forms = query("SELECT * FROM form_settings WHERE project='$projectName' ORDER BY created_at DESC");
+        $forms = query("SELECT * FROM form_settings WHERE project='$projectName' ORDER BY order_index ASC, created_at DESC");
 
         if (mysqli_num_rows($forms) == 0) {
             $json['forms'] = [];
         } else {
             $f = 0;
             foreach ($forms as $form) {
-                $json['forms'][$f]["id"] = $form['form_id'];
+                $json['forms'][$f]["form_id"] = $form['form_id'];
+                $json['forms'][$f]["form_name"] = $form['form_name'];
                 $json['forms'][$f]["name"] = $form['form_name'];
-                $json['forms'][$f]["icon"] = "list-outline"; // Default icon for forms
+                $json['forms'][$f]["icon"] = $form['icon'] ?? "list-outline";
+                $json['forms'][$f]["section_id"] = $form['section_id'];
+                $json['forms'][$f]["order_index"] = $form['order_index'] ?? 0;
                 $json['forms'][$f]["created_at"] = $form['created_at'];
                 $f++;
             }

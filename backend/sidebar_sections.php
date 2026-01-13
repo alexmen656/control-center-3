@@ -277,6 +277,119 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assignToolToSection']
     exit;
 }
 
+// POST - Assign form to section
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assignFormToSection'])) {
+    $formId = intval($_POST['form_id'] ?? 0);
+    $sectionId = intval($_POST['section_id'] ?? 0); // 0 means uncategorized
+    $projectName = escape_string($_POST['project'] ?? '');
+    
+    if (!$formId || empty($projectName)) {
+        echo json_encode(['error' => 'Form ID and project are required']);
+        exit;
+    }
+    
+    $projectID = getProjectID($projectName);
+    if (!$projectID || !userHasProjectAccess($userID, $projectID)) {
+        header('HTTP/1.1 403 Forbidden');
+        echo json_encode(['error' => 'Access denied']);
+        exit;
+    }
+    
+    // Verify form belongs to this project
+    $form = query("SELECT form_id FROM form_settings WHERE form_id='$formId' AND project='$projectName'");
+    if (mysqli_num_rows($form) == 0) {
+        echo json_encode(['error' => 'Form not found in this project']);
+        exit;
+    }
+    
+    // If section_id is provided, verify it belongs to this project
+    if ($sectionId > 0) {
+        $section = query("SELECT id FROM project_sidebar_sections WHERE id='$sectionId' AND projectID='$projectID'");
+        if (mysqli_num_rows($section) == 0) {
+            echo json_encode(['error' => 'Section not found in this project']);
+            exit;
+        }
+    }
+    
+    $sectionValue = $sectionId > 0 ? "'$sectionId'" : "NULL";
+    $result = query("UPDATE form_settings SET section_id=$sectionValue WHERE form_id='$formId' AND project='$projectName'");
+    
+    echo json_encode(['success' => (bool)$result]);
+    exit;
+}
+
+// POST - Update form sidebar properties
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateFormSidebar'])) {
+    $formId = intval($_POST['form_id'] ?? 0);
+    $projectName = escape_string($_POST['project'] ?? '');
+    
+    if (!$formId || empty($projectName)) {
+        echo json_encode(['error' => 'Form ID and project are required']);
+        exit;
+    }
+    
+    $projectID = getProjectID($projectName);
+    if (!$projectID || !userHasProjectAccess($userID, $projectID)) {
+        header('HTTP/1.1 403 Forbidden');
+        echo json_encode(['error' => 'Access denied']);
+        exit;
+    }
+    
+    // Build update query dynamically
+    $updates = [];
+    if (isset($_POST['icon'])) $updates[] = "icon='" . escape_string($_POST['icon']) . "'";
+    if (isset($_POST['order_index'])) $updates[] = "order_index=" . intval($_POST['order_index']);
+    if (isset($_POST['section_id'])) {
+        $sectionId = intval($_POST['section_id']);
+        $updates[] = $sectionId > 0 ? "section_id='$sectionId'" : "section_id=NULL";
+    }
+    
+    if (empty($updates)) {
+        echo json_encode(['error' => 'No fields to update']);
+        exit;
+    }
+    
+    $updateStr = implode(', ', $updates);
+    $result = query("UPDATE form_settings SET $updateStr WHERE form_id='$formId' AND project='$projectName'");
+    
+    echo json_encode(['success' => (bool)$result]);
+    exit;
+}
+
+// POST - Reorder items within a section (tools + forms)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reorderSectionItems'])) {
+    $projectName = escape_string($_POST['project'] ?? '');
+    $sectionId = intval($_POST['section_id'] ?? 0);
+    $itemOrder = json_decode($_POST['item_order'] ?? '[]', true);
+    
+    if (empty($projectName) || !$sectionId || empty($itemOrder)) {
+        echo json_encode(['error' => 'Project, section_id, and item_order are required']);
+        exit;
+    }
+    
+    $projectID = getProjectID($projectName);
+    if (!$projectID || !userHasProjectAccess($userID, $projectID)) {
+        header('HTTP/1.1 403 Forbidden');
+        echo json_encode(['error' => 'Access denied']);
+        exit;
+    }
+    
+    foreach ($itemOrder as $item) {
+        $itemId = intval($item['id']);
+        $order = intval($item['order']);
+        $type = escape_string($item['type']);
+        
+        if ($type === 'tool') {
+            query("UPDATE project_tools SET `order`='$order' WHERE id='$itemId' AND projectID='$projectID'");
+        } else if ($type === 'form') {
+            query("UPDATE form_settings SET order_index='$order' WHERE form_id='$itemId' AND project='$projectName'");
+        }
+    }
+    
+    echo json_encode(['success' => true]);
+    exit;
+}
+
 // POST - Create default sections for a project (migration helper)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createDefaultSections'])) {
     $projectName = escape_string($_POST['project'] ?? '');

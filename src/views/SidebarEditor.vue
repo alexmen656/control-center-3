@@ -29,7 +29,7 @@
                 <ion-icon slot="start" :name="section.icon" color="primary"></ion-icon>
                 <ion-label>
                   <h2>{{ section.name }}</h2>
-                  <p>{{ section.tools?.length || 0 }} tools</p>
+                  <p>{{ getSectionItemCount(section) }} items</p>
                 </ion-label>
                 <ion-badge v-if="section.is_default" color="medium" slot="end">Default</ion-badge>
                 <ion-button fill="clear" slot="end" @click="editSection(section)">
@@ -69,30 +69,33 @@
           </ion-card-content>
         </ion-card>
 
-        <!-- Tools per Section -->
-        <ion-card v-for="section in sections" :key="'tools-' + section.id">
+        <!-- Items per Section (Tools + Forms) -->
+        <ion-card v-for="section in sections" :key="'items-' + section.id">
           <ion-card-header>
             <ion-card-title>
               <ion-icon :name="section.icon" style="margin-right: 8px;"></ion-icon>
-              {{ section.name }} - Tools
+              {{ section.name }} - Items
             </ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <ion-reorder-group :disabled="false" @ionItemReorder="handleToolReorder($event, section.id)">
-              <ion-item v-for="tool in section.tools" :key="tool.id">
-                <ion-icon slot="start" :name="tool.icon"></ion-icon>
+            <ion-reorder-group :disabled="false" @ionItemReorder="handleItemReorder($event, section.id)">
+              <ion-item v-for="item in getSectionItems(section)" :key="item.id">
+                <ion-icon slot="start" :name="item.icon || 'document-outline'"></ion-icon>
                 <ion-label>
-                  <ion-input v-model="tool.name" placeholder="Tool Name" @ionBlur="updateTool(tool)"></ion-input>
+                  <ion-input v-model="item.name" placeholder="Item Name" @ionBlur="updateItem(item)"></ion-input>
+                  <ion-badge :color="item.item_type === 'tool' ? 'primary' : 'success'" style="margin-left: 8px;">
+                    {{ item.item_type }}
+                  </ion-badge>
                 </ion-label>
-                <ion-input slot="end" v-model="tool.icon" placeholder="Icon" style="max-width: 150px;" @ionBlur="updateTool(tool)"></ion-input>
-                <ion-button fill="clear" slot="end" @click="moveToolToSection(tool)">
+                <ion-input slot="end" v-model="item.icon" placeholder="Icon" style="max-width: 150px;" @ionBlur="updateItem(item)"></ion-input>
+                <ion-button fill="clear" slot="end" @click="moveItemToSection(item)">
                   <ion-icon name="swap-horizontal-outline"></ion-icon>
                 </ion-button>
                 <ion-reorder slot="end"></ion-reorder>
               </ion-item>
             </ion-reorder-group>
-            <div v-if="!section.tools || section.tools.length === 0" class="empty-tools">
-              <ion-label color="medium">No tools in this section</ion-label>
+            <div v-if="getSectionItems(section).length === 0" class="empty-tools">
+              <ion-label color="medium">No items in this section</ion-label>
             </div>
           </ion-card-content>
         </ion-card>
@@ -112,6 +115,31 @@
                 <ion-icon slot="start" :name="tool.icon"></ion-icon>
                 <ion-label>{{ tool.name }}</ion-label>
                 <ion-select slot="end" placeholder="Move to..." @ionChange="assignToolToSection(tool.id, $event)">
+                  <ion-select-option v-for="section in sections" :key="section.id" :value="section.id">
+                    {{ section.name }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-list>
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Uncategorized Forms/Tables -->
+        <ion-card v-if="uncategorizedForms.length > 0">
+          <ion-card-header>
+            <ion-card-title>
+              <ion-icon name="list-outline" style="margin-right: 8px;"></ion-icon>
+              Uncategorized Tables
+            </ion-card-title>
+            <ion-card-subtitle>Assign these tables to a section</ion-card-subtitle>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-list>
+              <ion-item v-for="form in uncategorizedForms" :key="form.form_id">
+                <ion-icon slot="start" :name="form.icon || 'list-outline'"></ion-icon>
+                <ion-label>{{ form.form_name }}</ion-label>
+                <ion-input v-model="form.icon" placeholder="Icon" style="max-width: 120px;" @ionBlur="updateFormIcon(form)"></ion-input>
+                <ion-select slot="end" placeholder="Move to..." @ionChange="assignFormToSection(form.form_id, $event)">
                   <ion-select-option v-for="section in sections" :key="section.id" :value="section.id">
                     {{ section.name }}
                   </ion-select-option>
@@ -169,6 +197,14 @@ interface Tool {
   section_id?: number;
 }
 
+interface Form {
+  form_id: number;
+  form_name: string;
+  icon?: string;
+  section_id?: number;
+  order_index?: number;
+}
+
 interface Section {
   id: number;
   name: string;
@@ -182,6 +218,7 @@ interface Section {
   info_route: string | null;
   manage_route: string | null;
   tools: Tool[];
+  items?: any[];
 }
 
 interface SectionTemplate {
@@ -227,6 +264,7 @@ export default defineComponent({
     const sections = ref<Section[]>([]);
     const sectionTemplates = ref<SectionTemplate[]>([]);
     const uncategorizedTools = ref<Tool[]>([]);
+    const uncategorizedForms = ref<any[]>([]);
 
     const loadData = async () => {
       loading.value = true;
@@ -237,6 +275,10 @@ export default defineComponent({
         );
         sections.value = sidebarResponse.data.sections || [];
         uncategorizedTools.value = sidebarResponse.data.tools || [];
+        
+        // Filter uncategorized forms (forms without section_id)
+        const allForms = sidebarResponse.data.forms || [];
+        uncategorizedForms.value = allForms.filter((f: any) => !f.section_id);
 
         // Load templates
         const templatesResponse = await axios.get(
@@ -248,6 +290,19 @@ export default defineComponent({
       } finally {
         loading.value = false;
       }
+    };
+
+    // Get section items (tools + forms combined)
+    const getSectionItems = (section: Section): any[] => {
+      return section.items || section.tools || [];
+    };
+
+    // Get item count for a section
+    const getSectionItemCount = (section: Section): number => {
+      if (section.items) {
+        return section.items.length;
+      }
+      return section.tools?.length || 0;
     };
 
     const createSection = async () => {
@@ -475,6 +530,124 @@ export default defineComponent({
       }
     };
 
+    // Form management methods
+    const assignFormToSection = async (formId: number, event: CustomEvent) => {
+      const sectionId = event.detail.value;
+      try {
+        await axios.post("sidebar_sections.php", qs.stringify({
+          assignFormToSection: true,
+          project: route.params.project,
+          form_id: formId,
+          section_id: sectionId
+        }));
+        await loadData();
+        showToast('Table assigned to section', 'success');
+      } catch (error) {
+        console.error("Error assigning form:", error);
+      }
+    };
+
+    const updateFormIcon = async (form: any) => {
+      try {
+        await axios.post("sidebar_sections.php", qs.stringify({
+          updateFormSidebar: true,
+          project: route.params.project,
+          form_id: form.form_id,
+          icon: form.icon
+        }));
+        showToast('Icon updated', 'success');
+      } catch (error) {
+        console.error("Error updating form icon:", error);
+      }
+    };
+
+    // Update item (tool or form)
+    const updateItem = async (item: any) => {
+      if (item.item_type === 'tool') {
+        await updateTool(item);
+      } else if (item.item_type === 'form') {
+        await updateFormIcon(item);
+      }
+    };
+
+    // Move item to different section
+    const moveItemToSection = async (item: any) => {
+      const alert = await alertController.create({
+        header: 'Move Item',
+        message: `Move "${item.name}" to another section`,
+        inputs: [
+          ...sections.value.map(s => ({
+            type: 'radio' as const,
+            label: s.name,
+            value: s.id,
+            checked: s.id === item.section_id
+          })),
+          {
+            type: 'radio' as const,
+            label: 'Remove from section',
+            value: 0,
+            checked: !item.section_id
+          }
+        ],
+        buttons: [
+          { text: 'Cancel', role: 'cancel' },
+          {
+            text: 'Move',
+            handler: async (sectionId) => {
+              try {
+                const endpoint = item.item_type === 'tool' ? 'assignToolToSection' : 'assignFormToSection';
+                const idField = item.item_type === 'tool' ? 'tool_id' : 'form_id';
+                const itemId = item.item_type === 'tool' ? item.id : item.form_id;
+                
+                await axios.post("sidebar_sections.php", qs.stringify({
+                  [endpoint]: true,
+                  project: route.params.project,
+                  [idField]: itemId,
+                  section_id: sectionId || 0
+                }));
+                await loadData();
+                showToast('Item moved', 'success');
+              } catch (error) {
+                console.error("Error moving item:", error);
+              }
+            }
+          }
+        ]
+      });
+      await alert.present();
+    };
+
+    // Handle item reorder within section
+    const handleItemReorder = async (event: CustomEvent, sectionId: number) => {
+      const section = sections.value.find(s => s.id === sectionId);
+      if (section) {
+        const items = section.items || section.tools || [];
+        const from = event.detail.from;
+        const to = event.detail.to;
+        const movedItem = items.splice(from, 1)[0];
+        items.splice(to, 0, movedItem);
+        
+        // Build order data for backend
+        const itemOrder = items.map((item: any, index: number) => ({
+          id: item.item_type === 'tool' ? item.id : item.form_id,
+          type: item.item_type || 'tool',
+          order: index
+        }));
+
+        try {
+          await axios.post("sidebar_sections.php", qs.stringify({
+            reorderSectionItems: true,
+            project: route.params.project,
+            section_id: sectionId,
+            item_order: JSON.stringify(itemOrder)
+          }));
+        } catch (error) {
+          console.error("Error saving item order:", error);
+        }
+      }
+      event.detail.complete();
+    };
+
     const showToast = async (message: string, color: string) => {
       const toast = await toastController.create({ message, duration: 2000, color });
       await toast.present();
@@ -489,15 +662,23 @@ export default defineComponent({
       sections,
       sectionTemplates,
       uncategorizedTools,
+      uncategorizedForms,
       createSection,
       createFromTemplate,
       editSection,
       deleteSection,
       handleSectionReorder,
       handleToolReorder,
+      handleItemReorder,
       updateTool,
       moveToolToSection,
-      assignToolToSection
+      assignToolToSection,
+      assignFormToSection,
+      updateFormIcon,
+      updateItem,
+      moveItemToSection,
+      getSectionItems,
+      getSectionItemCount
     };
   }
 });
