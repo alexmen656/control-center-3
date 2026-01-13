@@ -12,10 +12,9 @@
     </ion-menu-toggle>
     <ion-reorder-group v-if="tools.length > 0" :disabled="false" @ionItemReorder="handleReorder($event)">
       <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
-        <ion-item @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(p.name) + '/config')"
-          @click="this.selectedIndex = i + 1" lines="none" detail="false" :router-link="p.icon == 'bar-chart-outline'
-            ? '/project/' + $route.params.project + '/dashboard/' + formatToolLink(p.name)
-            : '/project/' + $route.params.project + '/' + formatToolLink(p.name)" class="hydrated menu-item"
+        <ion-item @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(p.link) + '/config')"
+          @click="this.selectedIndex = i + 1" lines="none" detail="false" :router-link="formatToolLink(p.link)"
+          class="hydrated menu-item"
           :class="{ selected: this.selectedIndex === i + 1, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
           :data-tooltip="isCollapsed ? capitalizeFirst(p.name) : ''">
           <ion-icon slot="start" :name="p.icon" />
@@ -30,7 +29,7 @@
   </ion-list>
 
   <!-- Custom Sections with Items (Tools + Forms) -->
-  <template v-for="(section, sectionIndex) in sections" :key="`section-${section.id}`">
+  <template v-for="section in sections" :key="`section-${section.id}`">
     <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
       <h4>{{ section.name }}</h4>
       <div>
@@ -49,6 +48,7 @@
       <ion-reorder-group :disabled="false" @ionItemReorder="handleSectionItemReorder($event, section.id)">
         <ion-menu-toggle auto-hide="false" v-for="(item, itemIndex) in getSectionItems(section)"
           :key="`section-${section.id}-item-${item.id}`">
+
           <!-- Tool Item -->
           <ion-item v-if="item.item_type === 'tool'"
             @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(item.name) + '/config')"
@@ -65,6 +65,7 @@
               <pre v-else></pre>
             </ion-reorder>
           </ion-item>
+
           <!-- Form Item -->
           <ion-item v-else-if="item.item_type === 'form'" @click="selectSectionItem(section.id, itemIndex)" lines="none"
             detail="false" :router-link="'/project/' + $route.params.project + '/forms/' + item.name"
@@ -79,7 +80,9 @@
               <pre></pre>
             </ion-reorder>
           </ion-item>
+
         </ion-menu-toggle>
+        
         <!-- Empty state for section -->
         <ion-menu-toggle auto-hide="false" v-if="getSectionItems(section).length === 0 && !isCollapsed">
           <ion-item lines="none" detail="false" class="empty-section-item">
@@ -87,6 +90,7 @@
             <ion-label color="medium">No items in this section</ion-label>
           </ion-item>
         </ion-menu-toggle>
+        
       </ion-reorder-group>
     </ion-list>
   </template>
@@ -136,13 +140,15 @@
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
     <h4 v-if="!isCollapsed">Web Builder</h4>
     <div v-if="!isCollapsed">
-      <router-link :to="'/project/' + $route.params.project + '/manage/pages'"><ion-icon
-          style="color: var(--ion-color-medium-shade)"
-          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/pages/"><ion-icon
-          style="color: var(--ion-color-medium-shade)"
-          name="information-circle-outline"></ion-icon></router-link><router-link
-        :to="'/project/' + $route.params.project + '/new/wb'"><ion-icon style="color: var(--ion-color-medium-shade)"
-          name="add-circle-outline"></ion-icon></router-link>
+      <router-link :to="'/project/' + $route.params.project + '/manage/pages'">
+        <ion-icon style="color: var(--ion-color-medium-shade)" name="ellipsis-horizontal-circle-outline" />
+      </router-link>
+      <router-link to="/info/pages/">
+        <ion-icon style="color: var(--ion-color-medium-shade)" name="information-circle-outline" />
+      </router-link>
+      <router-link :to="'/project/' + $route.params.project + '/new/wb'">
+        <ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline" />
+      </router-link>
     </div>
   </ion-note>
   <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
@@ -154,30 +160,13 @@
               '/project/' +
               $route.params.project +
               '/wb/' +
-              component.name
-                .toLowerCase()
-                .replaceAll(' ', '-')
-                .replaceAll('ä', 'a')
-                .replaceAll('Ä', 'a')
-                .replaceAll('ö', 'o')
-                .replaceAll('Ö', 'o')
-                .replaceAll('Ü', 'u')
-                .replaceAll('ü', 'u') +
+              formatToolLink(component.name) +
               '/config'
             )
             " @click="toggleComponentExpanded(component.id)" lines="none" detail="false" :router-link="'/project/' +
               $route.params.project +
               '/wb/' +
               component.slug + '/overview'
-              /*component.name
-                .toLowerCase()
-                .replaceAll(' ', '-')
-                .replaceAll('ä', 'a')
-                .replaceAll('Ä', 'a')
-                .replaceAll('ö', 'o')
-                .replaceAll('Ö', 'o')
-                .replaceAll('Ü', 'u')
-                .replaceAll('ü', 'u')*/
               " class="hydrated menu-item parent-component" :class="{
                 selected: selectedIndex === Number(i) + Number(tools.length) + Number(forms.length) + 1,
                 collapsed: isCollapsed,
@@ -185,7 +174,7 @@
               }" :data-tooltip="isCollapsed ? component.name : ''">
             <ion-icon slot="start" name="cube-outline" />
             <ion-label v-if="!isCollapsed">{{ component.name[0].toUpperCase() }}{{ component.name.substring(1)
-              }}</ion-label>
+            }}</ion-label>
             <ion-icon v-if="!isCollapsed"
               :name="isComponentExpanded(component.id) ? 'chevron-down-outline' : 'chevron-forward-outline'"
               slot="end"></ion-icon>
@@ -232,13 +221,15 @@
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
     <h4 v-if="!isCollapsed">Services</h4>
     <div v-if="!isCollapsed">
-      <router-link :to="'/project/' + $route.params.project + '/manage/services'"><ion-icon
-          style="color: var(--ion-color-medium-shade)"
-          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/services/"><ion-icon
-          style="color: var(--ion-color-medium-shade)"
-          name="information-circle-outline"></ion-icon></router-link><router-link
-        :to="'/project/' + $route.params.project + '/new/service'"><ion-icon
-          style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>
+      <router-link :to="'/project/' + $route.params.project + '/manage/services'">
+        <ion-icon style="color: var(--ion-color-medium-shade)" name="ellipsis-horizontal-circle-outline" />
+      </router-link>
+      <router-link to="/info/services/">
+        <ion-icon style="color: var(--ion-color-medium-shade)" name="information-circle-outline" />
+      </router-link>
+      <router-link :to="'/project/' + $route.params.project + '/new/service'">
+        <ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline" />
+      </router-link>
     </div>
   </ion-note>
   <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
@@ -262,13 +253,15 @@
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
     <h4>APIs</h4>
     <div>
-      <router-link :to="'/project/' + $route.params.project + '/manage/apis'"><ion-icon
-          style="color: var(--ion-color-medium-shade)"
-          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/apis/"><ion-icon
-          style="color: var(--ion-color-medium-shade)"
-          name="information-circle-outline"></ion-icon></router-link><router-link
-        :to="'/project/' + $route.params.project + '/manage/apis'"><ion-icon
-          style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>
+      <router-link :to="'/project/' + $route.params.project + '/manage/apis'">
+        <ion-icon style="color: var(--ion-color-medium-shade)" name="ellipsis-horizontal-circle-outline" />
+      </router-link>
+      <router-link to="/info/apis/">
+        <ion-icon style="color: var(--ion-color-medium-shade)" name="information-circle-outline" />
+      </router-link>
+      <router-link :to="'/project/' + $route.params.project + '/manage/apis'">
+        <ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline" />
+      </router-link>
     </div>
   </ion-note>
   <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">

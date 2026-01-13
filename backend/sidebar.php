@@ -129,6 +129,7 @@ if (isset($headers['Authorization'])) {
                 $json['tools'][$i]["id"] = $t['id'];
                 $json['tools'][$i]["icon"] = $t['icon'];
                 $json['tools'][$i]["name"] = $t['name'];
+                $json['tools'][$i]["link"] = $t['link'];
                 $json['tools'][$i]["hasConfig"] = $t['hasConfig'];
                 $json['tools'][$i]["order"] = $t['order'];
                 $i++;
