@@ -30,7 +30,7 @@
                 <h2>Tools</h2>
               </div>
               <div class="section-actions">
-                <router-link :to="`/project/${$route.params.project}/new-tool/`" class="add-btn">
+                <router-link :to="`/project/${$route.params.project}/new/tool/`" class="add-btn">
                   <ion-icon name="add"></ion-icon>
                   <span>New Tool</span>
                 </router-link>
@@ -58,7 +58,7 @@
               <ion-icon name="construct-outline" class="empty-icon"></ion-icon>
               <h3>No Tools Yet</h3>
               <p>Start by creating your first tool module</p>
-              <router-link :to="`/project/${$route.params.project}/new-tool/`" class="empty-action-btn">
+              <router-link :to="`/project/${$route.params.project}/new/tool/`" class="empty-action-btn">
                 <ion-icon name="add"></ion-icon>
                 Create Tool
               </router-link>

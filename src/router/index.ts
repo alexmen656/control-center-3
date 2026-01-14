@@ -16,6 +16,10 @@ const routes: Array<RouteRecordRaw> = [
     path: "/",
     redirect: "/dashboard",
   },
+    {
+    path: "/home",
+    redirect: "/dashboard",
+  },
   {
     path: "/login",
     component: LogIn,
@@ -121,7 +125,7 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/ProjectView.vue'),
   },*/
   {
-    path: "/project/:project/new-tool/",
+    path: "/project/:project/new/tool/",
     component: () => import("../views/NewTool.vue"),
   },
   {

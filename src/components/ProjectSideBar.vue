@@ -13,7 +13,7 @@
     <ion-reorder-group v-if="tools.length > 0" :disabled="false" @ionItemReorder="handleReorder($event)">
       <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
         <ion-item @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(p.link) + '/config')"
-          @click="this.selectedIndex = i + 1" lines="none" detail="false" :router-link="formatToolLink(p.link)"
+          @click="this.selectedIndex = i + 1" lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/' + formatToolLink(p.link)"
           class="hydrated menu-item"
           :class="{ selected: this.selectedIndex === i + 1, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
           :data-tooltip="isCollapsed ? capitalizeFirst(p.name) : ''">

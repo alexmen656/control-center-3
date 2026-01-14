@@ -416,7 +416,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['createDefaultSections
     // Create default "Tools" section and assign existing tools to it
     $result = query("INSERT INTO project_sidebar_sections 
         (projectID, name, slug, icon, order_index, is_default, is_collapsible, show_add_button, add_button_route) 
-        VALUES ('$projectID', 'Tools', 'tools', 'construct-outline', 1, 1, 1, 1, '/project/$projectName/new-tool/')");
+        VALUES ('$projectID', 'Tools', 'tools', 'construct-outline', 1, 1, 1, 1, '/project/$projectName/new/tool/')");
     
     if ($result) {
         $toolsSectionId = mysqli_insert_id($GLOBALS['con']);

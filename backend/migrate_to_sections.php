@@ -81,7 +81,7 @@ foreach ($userProjects as $project) {
     
     if (!$dryRun) {
         // Create default "Tools" section
-        $addRoute = "/project/$projectLink/new-tool/";
+        $addRoute = "/project/$projectLink/new/tool/";
         $createSection = query("INSERT INTO project_sidebar_sections 
             (projectID, name, slug, icon, order_index, is_default, is_collapsible, show_add_button, add_button_route) 
             VALUES ('$projectID', 'Tools', 'tools', 'construct-outline', 1, 1, 1, 1, '$addRoute')");

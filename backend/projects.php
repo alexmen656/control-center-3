@@ -24,7 +24,7 @@ function handleCreateProject($userID)
 
     $endpoints = [
         ['', 'Project Dashboard', '', 'true'],
-        ['new-tool', 'Create new tool', '', 'true'],
+        ['new/tool', 'Create new tool', '', 'true'],
         ['manage/tools', 'Manage Tools', '', 'true'],
         ['manage/pages', 'Manage Pages', '', 'true'],
         ['new/wb', 'Create New Web Builder Project', '', 'true'],

@@ -163,7 +163,7 @@ function applyTemplate($templateId, $projectName, $projectIcon, $headers) {
                 'isVisible' => 'true'
             ],
             [
-                'path' => 'new-tool',
+                'path' => 'new/tool',
                 'title' => 'Create new tool',
                 'icon' => '',
                 'isVisible' => 'true'
