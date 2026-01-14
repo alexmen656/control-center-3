@@ -1,5 +1,4 @@
 <?php
-// vercel_oauth_callback.php
 require_once __DIR__ . '/config.php';
 
 $frontend_url_dev = 'http://localhost:5173/my-account/account-security';
@@ -11,14 +10,13 @@ if (!isset($_GET['code'])) {
 }
 
 $code = $_GET['code'];
-
-// Vercel OAuth Token Exchange
 $token_url = 'https://api.vercel.com/v2/oauth/access_token';
+
 $post_fields = [
-    'client_id' => $vercel_client_id, // in config.php definieren
-    'client_secret' => $vercel_client_secret, // in config.php definieren
+    'client_id' => $vercel_client_id,
+    'client_secret' => $vercel_client_secret,
     'code' => $code,
-    'redirect_uri' => $vercel_redirect_uri // in config.php definieren
+    'redirect_uri' => $vercel_redirect_uri
 ];
 
 $options = [
@@ -28,21 +26,21 @@ $options = [
         'content' => http_build_query($post_fields),
     ],
 ];
+
 $context = stream_context_create($options);
 $response = file_get_contents($token_url, false, $context);
-
 $data = json_decode($response, true);
 
 if (isset($data['access_token'])) {
     $access_token = $data['access_token'];
-    // User-ID aus state-Parameter extrahieren (z.B. state=user_12345)
     $userID = 0;
+
     if (isset($_GET['state']) && preg_match('/user_(\\d+)/', $_GET['state'], $matches)) {
         $userID = intval($matches[1]);
     }
+
     if ($userID > 0) {
         include_once 'jwt_helper.php';
-        include_once 'config.php';
 
         $origin_url = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'];
         $allowed_origins = ['alexsblog.de', 'localhost:8100', 'polan.sk', 'http://localhost:8100/login', 'http://localhost:8100', 'localhost'];

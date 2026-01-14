@@ -1,10 +1,5 @@
 <?php
-// project_repo.php
-// API für das Verbinden und Anzeigen von Projekten mit GitHub-Repos
-
-require_once 'config.php';
 require_once 'head.php';
-header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
@@ -17,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(['error' => 'Invalid repo data']);
             exit;
         }
-        $repo_id = (int)$repo['id'];
+        $repo_id = (int) $repo['id'];
         $repo_name = escape_string($repo['name']);
         $repo_full_name = escape_string($repo['full_name']);
         // Prüfe, ob schon verbunden
@@ -71,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $status = 0;
         foreach ($http_response_header as $header) {
             if (preg_match('#HTTP/\d+\.\d+\s+(\d+)#', $header, $m)) {
-                $status = (int)$m[1];
+                $status = (int) $m[1];
                 break;
             }
         }
@@ -82,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $repo = json_decode($result, true);
         // In DB verbinden
-        $repo_id = (int)$repo['id'];
+        $repo_id = (int) $repo['id'];
         $repo_name = escape_string($repo['name']);
         $repo_full_name = escape_string($repo['full_name']);
         $insert = query("INSERT INTO control_center_project_repos (project, repo_id, repo_name, repo_full_name, user_id) VALUES ('$project', '$repo_id', '$repo_name', '$repo_full_name', '$user_id')");
