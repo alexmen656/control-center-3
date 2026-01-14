@@ -38,8 +38,8 @@ if (isset($data['access_token'])) {
         $userID = intval($matches[1]);
     }
     if ($userID > 0) {
-        include_once 'jwt_helper.php';
-        include_once 'config.php';
+        require_once 'jwt_helper.php';
+        require_once 'config.php';
 
         $origin_url = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'];
         $allowed_origins = ['alexsblog.de', 'localhost:8100', 'polan.sk', 'http://localhost:8100/login', 'http://localhost:8100', 'localhost'];
@@ -58,9 +58,9 @@ if (isset($data['access_token'])) {
             exit;
         }
 
-        include "use_template_function.php";
-        include "db_connection.php";
-        include "functions.php";
+        require_once "use_template_function.php";
+        require_once "db_connection.php";
+        require_once "functions.php";
 
         $access_token_esc = escape_string($access_token);
         $userID_esc = escape_string($userID);

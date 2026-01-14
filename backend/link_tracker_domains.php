@@ -1,5 +1,5 @@
 <?php
-include "head.php";
+require_once "head.php";
 require_once 'vercel_helper.php';
 require_once __DIR__ . '/helpers/cloudflare.php';
 

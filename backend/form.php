@@ -1,5 +1,5 @@
 <?php
-include "triggers.php";
+require_once "triggers.php";
 
 function mapFieldType($type)
 {

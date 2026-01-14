@@ -1,6 +1,6 @@
 <?php
 // Script to add Marketing Campaigns module to the module store
-include "config.php";
+require_once "config.php";
 include '/www/paxar/components/php_head.php';
 
 $module = [

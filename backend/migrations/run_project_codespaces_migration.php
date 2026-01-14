@@ -4,7 +4,7 @@
  * Erstellt die neue Tabelle und migriert bestehende Monaco-Instanzen
  */
 
-include "head.php";
+require_once "head.php";
 
 function migrateProjectCodespaces() {
     // SQL-Datei ausführen

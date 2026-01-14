@@ -1,5 +1,5 @@
 <?php
-include "head.php";
+require_once "head.php";
 
 // Get data from POST request
 if(isset($_POST['name']) && isset($_POST['description'])){

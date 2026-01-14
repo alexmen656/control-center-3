@@ -163,8 +163,8 @@ if (file_exists($rateLimitFile)) {
 file_put_contents($rateLimitFile, json_encode($rateLimitData));
 
 try {
-    include_once '../jwt_helper.php';
-    include_once 'config.php';
+    require_once '../jwt_helper.php';
+    require_once 'config.php';
 
     $origin_url = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'];
     $allowed_origins = ['alexsblog.de', 'localhost:8100', 'polan.sk', 'http://localhost:8100/login', 'http://localhost:8100', 'localhost'];
@@ -173,9 +173,9 @@ try {
     ini_set('display_errors', true);
     session_start();
 
-    include "../use_template_function.php";
-    include "../db_connection.php";
-    include "../functions.php";
+    require_once "../use_template_function.php";
+    require_once "../db_connection.php";
+    require_once "../functions.php";
 
     $projectClean = mysqli_real_escape_string($GLOBALS['con'], $project);
     $formNameClean = mysqli_real_escape_string($GLOBALS['con'], $formName);

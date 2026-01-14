@@ -1,6 +1,6 @@
 <?php
-include "head.php";
-include "ai_config.php"; // AI API Keys laden
+require_once "head.php";
+require_once "ai_config.php"; // AI API Keys laden
 
 /**
  * ChatGPT-basierte Schema-Generierung

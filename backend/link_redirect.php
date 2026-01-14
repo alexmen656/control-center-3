@@ -3,7 +3,7 @@
 // This file should be placed in your project domain's web root
 // and configured to handle all requests to short links
 
-include "../backend/head.php";
+require_once "../backend/head.php";
 
 // Get the requested path
 $requestPath = $_SERVER['REQUEST_URI'] ?? '';

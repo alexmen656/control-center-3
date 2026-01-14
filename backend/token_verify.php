@@ -1,6 +1,6 @@
 <?php
-include_once 'jwt_helper.php';
-include_once 'config.php';
+require_once 'jwt_helper.php';
+require_once 'config.php';
 include '/www/paxar/components/php_head.php';
 
 header('Access-Control-Allow-Origin: *');

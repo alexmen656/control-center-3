@@ -1,5 +1,5 @@
 <?php
-include "head.php";
+require_once "head.php";
 
 if(isset($_POST['getPackages']) && isset($_POST['project'])){
     $projectName = escape_string($_POST['project']);

@@ -1,6 +1,6 @@
 <?php
-include "head.php";
-include "project_helper.php";
+require_once "head.php";
+require_once "project_helper.php";
 require_once __DIR__ . '/helpers/cloudflare.php';
 
 function ensureWebBuilderDomainsTable()

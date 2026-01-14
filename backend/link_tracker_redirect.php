@@ -1,8 +1,8 @@
 <?php
 // Link Tracker Redirect Handler - Updated for Vercel Node.js Integration
-include "config.php";
-include "db_connection.php";
-include "functions.php";
+require_once "config.php";
+require_once "db_connection.php";
+require_once "functions.php";
 
 // Enable CORS for Node.js requests
 header('Access-Control-Allow-Origin: *');

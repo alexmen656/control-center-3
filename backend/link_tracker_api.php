@@ -1,5 +1,5 @@
 <?php
-include "head.php";
+require_once "head.php";
 
 // Cloudflare IP detection (wie in login.php integriert)  
 function getClientIP() {

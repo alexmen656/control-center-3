@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 // Include database connection
 include_once __DIR__ . '/../config.php';
-include_once '/www/paxar/components/php_head.php';
+require_once '/www/paxar/components/php_head.php';
 
 $action = $_GET['action'] ?? '';
 $projectSlug = $_GET['project'] ?? '';

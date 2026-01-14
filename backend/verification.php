@@ -1,6 +1,6 @@
 <?php
-include_once 'jwt_helper.php';
-include_once 'config.php';
+require_once 'jwt_helper.php';
+require_once 'config.php';
 
 $origin_url = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'];
 $allowed_origins = ['alexsblog.de', 'localhost:8100', 'polan.sk', 'http://localhost:8100/login', 'http://localhost:8100', 'localhost']; // replace with query for domains.

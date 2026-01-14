@@ -2,7 +2,7 @@
 /**
  * Script to add Newsletter module to the module store
  */
-include "config.php";
+require_once "config.php";
 include '/www/paxar/components/php_head.php';
 
 $module = [

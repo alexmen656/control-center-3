@@ -1,7 +1,7 @@
 
 <?php
 // mini script: add 3 new modules to module_store_modules
-include "config.php";
+require_once "config.php";
 include '/www/paxar/components/php_head.php';
 
 $modules = [

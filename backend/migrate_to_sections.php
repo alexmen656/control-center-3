@@ -11,8 +11,8 @@
  */
 
 include 'head.php';
-include_once 'jwt_helper.php';
-include_once 'config.php';
+require_once 'jwt_helper.php';
+require_once 'config.php';
 
 header('Content-Type: application/json');
 

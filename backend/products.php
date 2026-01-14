@@ -1,5 +1,5 @@
 <?php
-include "head.php";
+require_once "head.php";
 
 if(isset($_POST['getProductByCode']) && isset($_POST['code'])){
     $code = escape_string($_POST['code']);

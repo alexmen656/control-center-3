@@ -4,8 +4,8 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-include_once 'config.php';
-include_once 'head.php';
+require_once 'config.php';
+require_once 'head.php';
 require 'ECSign.php';
 
 class AppStoreConnectAPI {

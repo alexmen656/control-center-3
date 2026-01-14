@@ -4,8 +4,8 @@
  * Verwaltet custom Login-Domains für Projekte
  */
 
-include "head.php";
-include "project_helper.php";
+require_once "head.php";
+require_once "project_helper.php";
 require_once __DIR__ . '/helpers/cloudflare.php';
 
 // Tabelle erstellen falls nicht existiert

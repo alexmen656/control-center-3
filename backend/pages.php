@@ -20,8 +20,8 @@ $host_domain = implode('.', array_slice(explode('.', $request_host), -2));
 //die('You are not allowed to access this.');     
 //}
 
-include_once 'jwt_helper.php';
-include_once 'config.php';
+require_once 'jwt_helper.php';
+require_once 'config.php';
 include '/www/paxar/components/php_head.php';
 
 // JWT prüfen

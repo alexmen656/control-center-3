@@ -1,5 +1,5 @@
 <?php
-include "head.php";
+require_once "head.php";
 /*
 if(isset($_REQUEST['function'])){
     $function = escape_string($_REQUEST['function']);

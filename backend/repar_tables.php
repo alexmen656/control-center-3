@@ -1,5 +1,5 @@
 <?php
-include "head.php";
+require_once "head.php";
 
 query("DROP TABLE IF EXISTS project_api_subscriptions");
 

@@ -5,9 +5,9 @@
  * Manages App Store Connect apps, versions, and localized metadata
  */
 
-include_once 'config.php';
-include_once 'head.php';
-include_once 'db_connection.php';
+require_once 'config.php';
+require_once 'head.php';
+require_once 'db_connection.php';
 
 // Get project from query or session (projectLink is the project identifier)
 $project = $_GET['project'] ?? $_POST['project'] ?? $_SESSION['project'] ?? null;

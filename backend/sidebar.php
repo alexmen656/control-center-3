@@ -14,8 +14,8 @@ header('Access-Control-Allow-Headers: *');
 header('Access-Control-Allow-Methods: *');
 header('Content-Type: application/json');
 include '/www/paxar/components/php_head.php';
-include_once 'jwt_helper.php';
-include_once 'config.php';
+require_once 'jwt_helper.php';
+require_once 'config.php';
 
 function randomNumber()
 {

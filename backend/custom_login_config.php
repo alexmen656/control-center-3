@@ -17,8 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-include "db_connection.php";
-include "functions.php";
+require_once "db_connection.php";
+require_once "functions.php";
 
 // Nur GET requests erlauben
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {

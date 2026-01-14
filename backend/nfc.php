@@ -1,5 +1,5 @@
 <?php
-include "head.php";
+require_once "head.php";
 //print_r($_POST);
 if(isset($_POST['hex']) && isset($_POST['entry']) && isset($_POST['form']) && isset($_POST['project'])){
 

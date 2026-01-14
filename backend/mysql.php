@@ -1,5 +1,5 @@
 <?php
-include "head.php";
+require_once "head.php";
 $json = [];
 
 if (isset($_POST['getTables']) && $_POST['getTables']) {

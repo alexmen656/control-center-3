@@ -6,7 +6,7 @@
  * for projectID instead of INT to support string-based project identifiers.
  */
 
-include_once 'head.php';
+require_once 'head.php';
 
 echo "=== Project API Subscriptions Migration ===\n";
 echo "Changing projectID from INT to VARCHAR(255)\n\n";

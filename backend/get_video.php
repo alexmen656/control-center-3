@@ -1,5 +1,5 @@
 <?php
-include "head.php";
+require_once "head.php";
 
 if (isset($_GET['action']) && $_GET['action'] === 'get_video' && isset($_GET['project_id']) && isset($_GET['video_id'])) {
     $projectId = escape_string($_GET['project_id']);

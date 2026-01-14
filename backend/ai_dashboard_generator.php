@@ -1,6 +1,6 @@
 <?php
-include "head.php";
-include "ai_config.php";
+require_once "head.php";
+require_once "ai_config.php";
 
 class AIDashboardGenerator
 {

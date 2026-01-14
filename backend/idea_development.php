@@ -1,6 +1,6 @@
 <?php
-include_once 'config.php';
-include_once 'head.php';
+require_once 'config.php';
+require_once 'head.php';
 
 class IdeaDevelopmentAPI {
     

@@ -1,5 +1,5 @@
 <?php
-include "head.php";
+require_once "head.php";
 
 if (isset($_POST['install']) && isset($_POST['moduleID']) && isset($_POST['project'])) {
     $project = escape_string($_POST['project']);

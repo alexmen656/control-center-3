@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Include Control Center dependencies
 include_once __DIR__ . '/../jwt_helper.php';
 include_once __DIR__ . '/../config.php';
-include_once '/www/paxar/components/php_head.php';
+require_once '/www/paxar/components/php_head.php';
 
 /**
  * Send JSON response
