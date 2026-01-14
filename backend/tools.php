@@ -108,4 +108,24 @@ if (isset($_POST['newTool']) && isset($_POST['projectName']) && isset($_POST['to
     } else {
         echo "error 2";
     }
+} elseif (isset($_POST['getProjectTools']) && isset($_POST['project'])) {
+    $projectName = escape_string($_POST['project']);
+    $projectID = query("SELECT * FROM projects WHERE link='$projectName'");
+
+    if (mysqli_num_rows($projectID) == 1) {
+        $projectID = fetch_assoc($projectID)['projectID'];
+        $tools = query("SELECT * FROM project_tools WHERE projectID='$projectID'");
+        $json = [];
+        foreach ($tools as $tool) {
+            $json[] = [
+                'id' => $tool['id'],
+                'icon' => $tool['icon'],
+                'name' => $tool['name'],
+                'link' => $tool['link']
+            ];
+        }
+        echo echoJSON($json);
+    } else {
+        echo echoJSON([]);
+    }
 }
