@@ -1,27 +1,8 @@
 <?php
-$origin_url = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'];
-$allowed_origins = ['alexsblog.de', 'localhost:8100', 'polan.sk', 'http://localhost:8100/login', 'http://localhost:8100', 'localhost']; // replace with query for domains.
-$request_host = parse_url($origin_url, PHP_URL_HOST);
-$host_domain = implode('.', array_slice(explode('.', $request_host), -2));
-//echo $host_domain;
-if (!in_array($host_domain, $allowed_origins, false)) {
-    header('HTTP/1.0 403 Forbidden');
-    die('You are not allowed to access this.');
-}
-session_start();
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Headers: *');
-
-header('Content-Type: application/json');
-include "use_template_function.php";
-include "db_connection.php";
-include "functions.php";
-
-// Fix: $json immer initialisieren
+include "head.php";
 $json = [];
 
 if (isset($_POST['getTables']) && $_POST['getTables']) {
-    //echo 12345678;
     $tables = query("SHOW TABLES");
     $i = 0;
     foreach ($tables as $t) {
@@ -33,8 +14,7 @@ if (isset($_POST['getTables']) && $_POST['getTables']) {
     $form_name = escape_string($_POST['form']);
     $id = escape_string($_POST['id']);
 
-    $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($form_name));
-
+    $tableName = createTableName($project . "_" . $form_name);
     $columns_query = "SHOW COLUMNS FROM $tableName";
     $columns_result = query($columns_query);
 
@@ -57,7 +37,6 @@ if (isset($_POST['getTables']) && $_POST['getTables']) {
     } else {
         echo "Keine Spalten gefunden.";
     }
-
 
 } elseif (isset($_POST['getTableByName']) && $_POST['getTableByName']) {
     $i = 0;
@@ -110,12 +89,14 @@ if (isset($_POST['getTables']) && $_POST['getTables']) {
     $new_limit = ($current_limit + 1) * 30;
     $offset = $current_limit * 30;
     $json['load_more_btn'] = false;
+
     if (mysqli_num_rows(query("SELECT * FROM `$tbName`")) > $new_limit) {
         $json['load_more_btn'] = true;
     }
 
     $i = 0;
     $columns = query("SHOW COLUMNS FROM `$tbName`");
+
     if ($columns) {
         while ($row = fetch_assoc($columns)) {
             $columnsArray[] = $row['Field'];
@@ -148,7 +129,6 @@ if (isset($_POST['getTables']) && $_POST['getTables']) {
     $rowIndex = (int) $_POST['rowIndex'];
 
     $primaryKey = fetch_assoc(query("SELECT `COLUMN_NAME` FROM `information_schema`.`COLUMNS` WHERE (`TABLE_SCHEMA` = 'alex01d01') AND (`TABLE_NAME` = '$tableName') AND (`COLUMN_KEY` = 'PRI')"))["COLUMN_NAME"];
-
     $primaryKeyValue = fetch_assoc(query("SELECT `$primaryKey` FROM `$tableName` LIMIT $rowIndex, 1"))[$primaryKey];
 
     if (query("UPDATE `$tableName` SET `$fieldName` = '$newValue' WHERE `$primaryKey` = '$primaryKeyValue'")) {
