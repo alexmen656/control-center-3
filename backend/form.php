@@ -318,7 +318,7 @@ if (isset($_POST['create_form']) && isset($_POST['form']) && isset($_POST['name'
         }
         
         // Get current table structure
-        $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($formName));
+        $tableName = createTableName($project . "_" . $formName);
         
         // Check if table exists
         $table_exists_query = query("SHOW TABLES LIKE '$tableName'");

@@ -198,7 +198,7 @@ if (isset($_POST['export_csv'])) {
     $project = escape_string($_POST['project']);
     $formName = escape_string($_POST['form_name']);
     
-    $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($formName));
+    $tableName = createTableName($project . "_" . $formName);
     
     // Get table structure
     $columns = query("SHOW COLUMNS FROM `$tableName`");

@@ -7,25 +7,28 @@ include "ai_config.php"; // AI API Keys laden
  * Nutzt OpenAI GPT mit structured outputs für zuverlässige Ergebnisse
  */
 
-class AISchemaGenerator {
-    
+class AISchemaGenerator
+{
+
     private $openaiApiKey;
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         // API Key aus Umgebungsvariablen oder Config
         $this->openaiApiKey = getenv('OPENAI_API_KEY') ?: '';
     }
-    
+
     /**
      * Generiert Schema mit OpenAI GPT mit Structured Output
      */
-    public function generateSchema($description, $context = '') {
+    public function generateSchema($description, $context = '')
+    {
         if (empty($this->openaiApiKey)) {
             return $this->generateSimpleSchema($description);
         }
-        
+
         $prompt = $this->buildPrompt($description, $context);
-        
+
         $data = [
             'model' => 'gpt-4o-mini',
             'messages' => [
@@ -96,17 +99,18 @@ class AISchemaGenerator {
             ],
             'temperature' => 0.3
         ];
-        
+
         $response = $this->makeOpenAIRequest($data);
-        
+
         if ($response) {
             return $this->parseResponse($response);
         }
-        
+
         return $this->generateSimpleSchema($description);
     }
-    
-    private function buildPrompt($description, $context) {
+
+    private function buildPrompt($description, $context)
+    {
         return "Analysiere diese Beschreibung und erstelle ein passendes Datenbankschema:
 
 BESCHREIBUNG: $description" . ($context ? "\n\nZUSÄTZLICHER KONTEXT: $context" : "") . "
@@ -127,8 +131,9 @@ BEISPIELE FÜR GUTE SCHEMAS:
 
 Erstelle ein Schema das praktisch und vollständig ist, aber nicht überladen.";
     }
-    
-    private function makeOpenAIRequest($data) {
+
+    private function makeOpenAIRequest($data)
+    {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, 'https://api.openai.com/v1/chat/completions');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -139,52 +144,57 @@ Erstelle ein Schema das praktisch und vollständig ist, aber nicht überladen.";
             'Authorization: Bearer ' . $this->openaiApiKey
         ]);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        
+
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
         curl_close($ch);
-        
+
         if ($httpCode === 200 && $response) {
             $decoded = json_decode($response, true);
-            
+
             if (isset($decoded['choices'][0]['message']['content'])) {
                 return $decoded['choices'][0]['message']['content'];
             }
-            
+
             // Structured output
             if (isset($decoded['choices'][0]['message']['parsed'])) {
                 return json_encode($decoded['choices'][0]['message']['parsed']);
             }
         }
-        
+
         error_log("OpenAI API Error: HTTP $httpCode, cURL: $error, Response: $response");
         return null;
     }
-    
-    private function parseResponse($response) {
+
+    private function parseResponse($response)
+    {
         $decoded = json_decode($response, true);
-        
+
         if ($decoded && isset($decoded['title']) && isset($decoded['inputs'])) {
             return $this->validateSchema($decoded);
         }
-        
+
         return null;
     }
-    
-    private function validateSchema($schema) {
+
+    private function validateSchema($schema)
+    {
         // Validiere und bereinige das Schema
-        if (!isset($schema['title'])) $schema['title'] = 'Neues Formular';
-        if (!isset($schema['description'])) $schema['description'] = 'ChatGPT-generiertes Formular';
+        if (!isset($schema['title']))
+            $schema['title'] = 'Neues Formular';
+        if (!isset($schema['description']))
+            $schema['description'] = 'ChatGPT-generiertes Formular';
         if (!isset($schema['inputs']) || !is_array($schema['inputs'])) {
             $schema['inputs'] = [];
         }
-        
+
         // Validiere jedes Input-Feld
         $validTypes = ['text', 'email', 'number', 'textarea', 'select', 'checkbox', 'date', 'time'];
-        
+
         foreach ($schema['inputs'] as &$input) {
-            if (!isset($input['name'])) continue;
+            if (!isset($input['name']))
+                continue;
             if (!isset($input['type']) || !in_array($input['type'], $validTypes)) {
                 $input['type'] = 'text';
             }
@@ -194,24 +204,25 @@ Erstelle ein Schema das praktisch und vollständig ist, aber nicht überladen.";
             if (!isset($input['required'])) {
                 $input['required'] = false;
             }
-            
+
             // Bereinige den Namen für Datenbank-Kompatibilität
             $input['name'] = preg_replace('/[^a-z0-9_]/', '_', strtolower($input['name']));
         }
-        
+
         return $schema;
     }
-    
+
     /**
      * Einfaches Fallback-Schema wenn kein API Key vorhanden
      */
-    private function generateSimpleSchema($description) {
+    private function generateSimpleSchema($description)
+    {
         $description = strtolower($description);
         $title = $this->extractTitle($description);
-        
+
         // Basis-Felder je nach erkannten Keywords
         $inputs = [];
-        
+
         if (strpos($description, 'produkt') !== false || strpos($description, 'artikel') !== false) {
             $inputs = [
                 ['name' => 'name', 'type' => 'text', 'label' => 'Name', 'required' => true],
@@ -241,21 +252,27 @@ Erstelle ein Schema das praktisch und vollständig ist, aber nicht überladen.";
                 ['name' => 'created_date', 'type' => 'date', 'label' => 'Datum', 'required' => false]
             ];
         }
-        
+
         return [
             'title' => $title,
             'description' => 'Schema für: ' . $description,
             'inputs' => $inputs
         ];
     }
-    
-    private function extractTitle($description) {
-        if (strpos($description, 'produkt') !== false) return 'Produktverwaltung';
-        if (strpos($description, 'kunde') !== false) return 'Kundenverwaltung';
-        if (strpos($description, 'mitarbeiter') !== false) return 'Mitarbeiterverwaltung';
-        if (strpos($description, 'veranstaltung') !== false) return 'Veranstaltungsverwaltung';
-        if (strpos($description, 'aufgabe') !== false) return 'Aufgabenverwaltung';
-        
+
+    private function extractTitle($description)
+    {
+        if (strpos($description, 'produkt') !== false)
+            return 'Produktverwaltung';
+        if (strpos($description, 'kunde') !== false)
+            return 'Kundenverwaltung';
+        if (strpos($description, 'mitarbeiter') !== false)
+            return 'Mitarbeiterverwaltung';
+        if (strpos($description, 'veranstaltung') !== false)
+            return 'Veranstaltungsverwaltung';
+        if (strpos($description, 'aufgabe') !== false)
+            return 'Aufgabenverwaltung';
+
         return 'Formularverwaltung';
     }
 }
@@ -264,7 +281,7 @@ Erstelle ein Schema das praktisch und vollständig ist, aber nicht überladen.";
 if (isset($_POST['generate_ai_schema'])) {
     $description = escape_string($_POST['description'] ?? '');
     $context = escape_string($_POST['context'] ?? '');
-    
+
     if (empty($description)) {
         echo json_encode([
             'success' => false,
@@ -272,10 +289,10 @@ if (isset($_POST['generate_ai_schema'])) {
         ]);
         exit;
     }
-    
+
     $generator = new AISchemaGenerator();
     $schema = $generator->generateSchema($description, $context);
-    
+
     if ($schema) {
         echo json_encode([
             'success' => true,
@@ -293,7 +310,7 @@ if (isset($_POST['create_ai_form']) && isset($_POST['schema']) && isset($_POST['
     $schema = json_decode($_POST['schema'], true);
     $formName = escape_string($_POST['name']);
     $project = escape_string($_POST['project']);
-    
+
     if (!$schema || !isset($schema['inputs'])) {
         echo json_encode([
             'success' => false,
@@ -301,23 +318,21 @@ if (isset($_POST['create_ai_form']) && isset($_POST['schema']) && isset($_POST['
         ]);
         exit;
     }
-    
+
     $formJSON = json_encode($schema);
-    
+
     // Create form in database
     if (query("INSERT INTO form_settings (form_name, form_json, project) VALUES ('$formName', '$formJSON', '$project')")) {
-        // Create database table
-        $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($formName));
-        
+        $tableName = createTableName($project . "_" . $formName);
         $sql = "CREATE TABLE $tableName (id INT AUTO_INCREMENT PRIMARY KEY";
-        
+
         foreach ($schema['inputs'] as $field) {
             $name = $field['name'];
             $type = mapFieldType($field['type']);
             $sql .= ", $name $type";
         }
         $sql .= ", created_at DATETIME DEFAULT CURRENT_TIMESTAMP);";
-        
+
         if (query($sql)) {
             echo json_encode([
                 'success' => true,
@@ -339,7 +354,8 @@ if (isset($_POST['create_ai_form']) && isset($_POST['schema']) && isset($_POST['
     }
 }
 
-function mapFieldType($type) {
+function mapFieldType($type)
+{
     switch ($type) {
         case 'text':
         case 'email':
