@@ -123,7 +123,7 @@ if (isset($_POST['getAvailableModules'])) {
             'name' => $module['name'],
             'display_name' => $module['display_name'],
             'description' => "test",//$module['description'],
-            'icon' => $module['icon'],// tool_
+            'icon' => $module['tool_icon'],// tool_
             'ref' => $module['ref']
         ];
     }

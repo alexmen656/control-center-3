@@ -7,7 +7,6 @@
         <div class="page-header">
           <div class="header-content">
             <h1>Module Store</h1>
-            <p>Browse and add modules to enhance your project</p>
           </div>
           <div class="header-actions">
             <button class="action-btn secondary" @click="loadModules">
@@ -53,7 +52,8 @@
           <div class="card-header">
             <div class="header-left">
               <h3>Available Modules</h3>
-              <span class="entry-count">{{ filteredModules.length }} module{{ filteredModules.length !== 1 ? 's' : '' }}</span>
+              <span class="entry-count">{{ filteredModules.length }} module{{ filteredModules.length !== 1 ? 's' : ''
+              }}</span>
             </div>
             <div class="search-box">
               <ion-icon name="search-outline"></ion-icon>
@@ -76,18 +76,19 @@
             </div>
 
             <div v-else class="modules-grid">
-              <div v-for="module in filteredModules" :key="module.ref" class="module-card" 
-                   :class="{ 'is-added': module.status === 'added', 'is-adding': module.status === 'adding' }">
-                <div class="module-icon-wrapper">
-                  <img v-if="module.icon" :src="module.icon" class="module-icon" alt="" />
-                  <ion-icon v-else name="cube-outline" class="module-icon"></ion-icon>
-                </div>
+              <div v-for="module in filteredModules" :key="module.ref" class="module-card"
+                :class="{ 'is-added': module.status === 'added', 'is-adding': module.status === 'adding' }">
+                <div class="module-header">
+                  <div class="module-icon-wrapper">
+                    <ion-icon v-if="module.icon" :name="module.icon" class="module-icon" alt="" />
+                    <ion-icon v-else name="cube-outline" class="module-icon"></ion-icon>
+                  </div>
 
-                <div class="module-info">
-                  <h4 class="module-title">{{ module.display_name || module.name }}</h4>
-                  <p class="module-desc">{{ module.description || 'No description available' }}</p>
+                  <div class="module-info">
+                    <h4 class="module-title">{{ module.display_name || module.name }}</h4>
+                    <p class="module-desc">{{ module.description || 'No description available' }}</p>
+                  </div>
                 </div>
-
                 <!-- Progress for adding -->
                 <div v-if="module.status === 'adding'" class="progress-wrapper">
                   <div class="progress-bar">
@@ -101,7 +102,8 @@
                     <ion-icon name="add-outline"></ion-icon>
                     Add Module
                   </button>
-                  <button v-else-if="module.status === 'added'" class="action-btn success" @click="removeModule(module)">
+                  <button v-else-if="module.status === 'added'" class="action-btn success"
+                    @click="removeModule(module)">
                     <ion-icon name="checkmark-outline"></ion-icon>
                     Added
                   </button>
@@ -328,7 +330,7 @@ export default {
 }
 
 .page-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 24px;
 }
@@ -344,10 +346,11 @@ export default {
 }
 
 .header-content h1 {
-  margin: 0 0 4px 0;
+  margin: 0 0 8px 0;
   color: var(--text-primary);
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .header-content p {
@@ -384,7 +387,7 @@ export default {
 .action-btn.primary:hover {
   background: #1d4ed8;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  /*box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);*/
 }
 
 .action-btn.secondary {
@@ -453,8 +456,8 @@ export default {
 .stat-content h3 {
   margin: 0 0 4px 0;
   color: var(--text-primary);
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 600;
 }
 
 .stat-content p {
@@ -489,9 +492,9 @@ export default {
 }
 
 .header-left h3 {
-  margin: 0;
+  margin: 0 0 4px 0;
   color: var(--text-primary);
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
 }
 
@@ -594,9 +597,8 @@ export default {
 }
 
 .module-card:hover {
-  border-color: var(--primary-color);
+  /*border-color: var(--primary-color);*/
   box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
 }
 
 .module-card.is-added {
@@ -614,7 +616,7 @@ export default {
   height: 64px;
   margin-bottom: 16px;
   border-radius: var(--radius);
-  background: linear-gradient(135deg, var(--primary-color) 0%, #8b5cf6 100%);
+  background: var(--background);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -768,5 +770,9 @@ export default {
   .modules-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+.module-header {
+  display: flex;
 }
 </style>
