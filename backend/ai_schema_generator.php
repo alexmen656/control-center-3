@@ -1,36 +1,30 @@
 <?php
 require_once "head.php";
-require_once "ai_config.php"; // AI API Keys laden
+require_once "ai_config.php";
 
-/**
- * ChatGPT-basierte Schema-Generierung
- * Nutzt OpenAI GPT mit structured outputs für zuverlässige Ergebnisse
- */
+class AISchemaGenerator
+{
 
-class AISchemaGenerator {
-    
     private $openaiApiKey;
-    
-    public function __construct() {
-        // API Key aus Umgebungsvariablen oder Config
+
+    public function __construct()
+    {
         $this->openaiApiKey = getenv('OPENAI_API_KEY') ?: '';
     }
-    
-    /**
-     * Generiert Schema mit OpenAI GPT mit Structured Output
-     */
-    public function generateSchema($description, $checkForms='false', $context = '', $project = '') {
+
+    public function generateSchema($description, $checkForms = 'false', $context = '', $project = '')
+    {
         if (empty($this->openaiApiKey)) {
             return $this->generateSimpleSchema($description);
         }
-        
+
         $existingForms = [];
         if ($checkForms === 'true' && !empty($project)) {
             $existingForms = $this->getExistingForms($project);
         }
-        
+
         $prompt = $this->buildPrompt($description, $context, $existingForms);
-        
+
         $data = [
             'model' => 'gpt-4o-mini',
             'messages' => [
@@ -101,19 +95,20 @@ class AISchemaGenerator {
             ],
             'temperature' => 0.3
         ];
-        
+
         $response = $this->makeOpenAIRequest($data);
-        
+
         if ($response) {
             return $this->parseResponse($response);
         }
-        
+
         return $this->generateSimpleSchema($description);
     }
-    
-    private function buildPrompt($description, $context, $existingForms = []) {
+
+    private function buildPrompt($description, $context, $existingForms = [])
+    {
         $formsContext = "";
-        
+
         if (!empty($existingForms)) {
             $formsContext = "\n\nBEREITS VORHANDENE FORMULARE/TABELLEN IN DIESEM PROJEKT:\n";
             foreach ($existingForms as $form) {
@@ -124,12 +119,14 @@ class AISchemaGenerator {
                 }
                 $formsContext = rtrim($formsContext, ', ') . "\n\n";
             }
-            
+
             $formsContext .= "WICHTIG: Nutze NUR existierende Tabellen und Felder für SELECT2!\n";
             $formsContext .= "- Verfügbare Tabellen für select2-Referenzen:\n";
             foreach ($existingForms as $form) {
                 $formsContext .= "    • " . $form['title'] . ": ";
-                $fieldNames = array_map(function($f) { return $f['name']; }, $form['inputs']);
+                $fieldNames = array_map(function ($f) {
+                    return $f['name'];
+                }, $form['inputs']);
                 $formsContext .= implode(', ', $fieldNames) . "\n";
             }
             $formsContext .= "- SELECT2 Format: \"tabellenname\" als einzige Option (String, nicht Object!)\n";
@@ -141,7 +138,7 @@ class AISchemaGenerator {
             $formsContext .= "- Nutze nur: text, email, number, textarea, select, checkbox, date, time\n\n";
         }
 
-return "Analysiere diese Beschreibung und erstelle ein VOLLSTÄNDIGES, PRAXISTAUGLICHES Datenbankschema:
+        return "Analysiere diese Beschreibung und erstelle ein VOLLSTÄNDIGES, PRAXISTAUGLICHES Datenbankschema:
 
 BESCHREIBUNG: $description" . ($context ? "\n\nZUSÄTZLICHER KONTEXT: $context" : "") . $formsContext . "
 
@@ -197,10 +194,11 @@ Feldtypen: text, email, number, textarea, select, select2, checkbox, date, time
 WICHTIG: Wenn bestehende Formulare vorhanden sind, verwende SELECT2 für Verknüpfungen!
 Beispiel: Lagerbestand braucht Produktreferenz → verwende select2 statt alle Produktdaten zu duplizieren";
     }
-    
-    private function makeOpenAIRequest($data) {
+
+    private function makeOpenAIRequest($data)
+    {
         $jsonData = json_encode($data);
-        
+
         $options = [
             'http' => [
                 'header' => [
@@ -219,10 +217,10 @@ Beispiel: Lagerbestand braucht Produktreferenz → verwende select2 statt alle P
                 'allow_self_signed' => true
             ]
         ];
-        
+
         $context = stream_context_create($options);
         $response = file_get_contents('https://api.openai.com/v1/chat/completions', false, $context);
-        
+
         // Debug Info
         if ($response === false) {
             $error = error_get_last();
@@ -231,55 +229,60 @@ Beispiel: Lagerbestand braucht Produktreferenz → verwende select2 statt alle P
             error_log("OpenAI API Debug: openssl_loaded=" . (extension_loaded('openssl') ? 'true' : 'false'));
             return null;
         }
-        
+
         $decoded = json_decode($response, true);
-        
+
         if (!$decoded) {
             error_log("OpenAI API Error: Invalid JSON response: " . substr($response, 0, 500));
             return null;
         }
-        
+
         if (isset($decoded['error'])) {
             error_log("OpenAI API Error: " . json_encode($decoded['error']));
             return null;
         }
-        
+
         if (isset($decoded['choices'][0]['message']['content'])) {
             return $decoded['choices'][0]['message']['content'];
         }
-        
+
         // Structured output
         if (isset($decoded['choices'][0]['message']['parsed'])) {
             return json_encode($decoded['choices'][0]['message']['parsed']);
         }
-        
+
         error_log("OpenAI API Error: Unexpected response format: " . json_encode($decoded));
         return null;
     }
-    
-    private function parseResponse($response) {
+
+    private function parseResponse($response)
+    {
         $decoded = json_decode($response, true);
-        
+
         if ($decoded && isset($decoded['title']) && isset($decoded['inputs'])) {
             return $this->validateSchema($decoded);
         }
-        
+
         return null;
     }
-    
-    private function validateSchema($schema) {
+
+    private function validateSchema($schema)
+    {
         // Validiere und bereinige das Schema
-        if (!isset($schema['title'])) $schema['title'] = 'Neues Formular';
-        if (!isset($schema['description'])) $schema['description'] = 'ChatGPT-generiertes Formular';
+        if (!isset($schema['title']))
+            $schema['title'] = 'Neues Formular';
+        if (!isset($schema['description']))
+            $schema['description'] = 'ChatGPT-generiertes Formular';
         if (!isset($schema['inputs']) || !is_array($schema['inputs'])) {
             $schema['inputs'] = [];
         }
-        
+
         // Validiere jedes Input-Feld
         $validTypes = ['text', 'email', 'number', 'textarea', 'select', 'select2', 'checkbox', 'date', 'time'];
-        
+
         foreach ($schema['inputs'] as &$input) {
-            if (!isset($input['name'])) continue;
+            if (!isset($input['name']))
+                continue;
             if (!isset($input['type']) || !in_array($input['type'], $validTypes)) {
                 $input['type'] = 'text';
             }
@@ -289,55 +292,49 @@ Beispiel: Lagerbestand braucht Produktreferenz → verwende select2 statt alle P
             if (!isset($input['required'])) {
                 $input['required'] = false;
             }
-            
-            // Validiere select2 spezifisch
+
             if ($input['type'] === 'select2') {
                 if (!isset($input['options']) || !is_array($input['options']) || count($input['options']) < 2) {
-                    // Kein options Array oder zu wenig Werte → konvertiere zu text
                     error_log("Schema Validation: select2 braucht [form, field] → konvertiert zu text");
                     $input['type'] = 'text';
                     $input['options'] = [];
                 } else {
-                    // AI liefert [form, field] - konvertiere zu optionList
                     $referenced_form = $input['options'][0] ?? '';
                     $referenced_field = $input['options'][1] ?? '';
-                    
+
                     if (!$this->formExists($referenced_form)) {
                         error_log("Schema Validation: select2 referenziert nicht-existierende Form '$referenced_form' → konvertiert zu text");
                         $input['type'] = 'text';
                         $input['options'] = [];
                     } else {
-                        // Konvertiere zu optionList Format für Frontend
                         $input['optionList'] = [
-                            ['value' => $referenced_form],     // Form name (von AI)
-                            ['value' => $referenced_field]     // Field name (von AI)
+                            ['value' => $referenced_form],
+                            ['value' => $referenced_field]
                         ];
                         // Entferne alte options property
                         unset($input['options']);
                     }
                 }
             }
-            
-            // Bereinige den Namen für Datenbank-Kompatibilität
+
             $input['name'] = preg_replace('/[^a-z0-9_]/', '_', strtolower($input['name']));
         }
-        
+
         return $schema;
     }
-    
-    private function formExists($formName) {
+
+    private function formExists($formName)
+    {
         // Implementiere Form-Existenz-Check
         // Für jetzt return true, kann später erweitert werden
         return true;
     }
-    
-    /**
-     * Lade bestehende Formulare des Projekts
-     */
-    private function getExistingForms($project) {
+
+    private function getExistingForms($project)
+    {
         $formsQuery = "SELECT * FROM form_settings WHERE project = '" . escape_string($project) . "'";
         $formsResult = query($formsQuery);
-        
+
         $existingForms = [];
         while ($row = fetch_assoc($formsResult)) {
             $formData = json_decode($row['form_json'], true);
@@ -345,20 +342,16 @@ Beispiel: Lagerbestand braucht Produktreferenz → verwende select2 statt alle P
                 $existingForms[] = $formData;
             }
         }
-        
+
         return $existingForms;
     }
-    
-    /**
-     * Einfaches Fallback-Schema wenn kein API Key vorhanden
-     */
-    private function generateSimpleSchema($description) {
+
+    private function generateSimpleSchema($description)
+    {
         $description = strtolower($description);
         $title = $this->extractTitle($description);
-        
-        // Basis-Felder je nach erkannten Keywords
         $inputs = [];
-        
+
         if (strpos($description, 'produkt') !== false || strpos($description, 'artikel') !== false) {
             $inputs = [
                 ['name' => 'name', 'type' => 'text', 'label' => 'Name', 'required' => true],
@@ -381,40 +374,44 @@ Beispiel: Lagerbestand braucht Produktreferenz → verwende select2 statt alle P
                 ['name' => 'start_date', 'type' => 'date', 'label' => 'Startdatum', 'required' => false]
             ];
         } else {
-            // Standard-Schema
             $inputs = [
                 ['name' => 'name', 'type' => 'text', 'label' => 'Name', 'required' => true],
                 ['name' => 'description', 'type' => 'textarea', 'label' => 'Beschreibung', 'required' => false],
                 ['name' => 'created_date', 'type' => 'date', 'label' => 'Datum', 'required' => false]
             ];
         }
-        
+
         return [
             'title' => $title,
             'description' => 'Schema für: ' . $description,
             'inputs' => $inputs
         ];
     }
-    
-    private function extractTitle($description) {
-        if (strpos($description, 'produkt') !== false) return 'Produktverwaltung';
-        if (strpos($description, 'kunde') !== false) return 'Kundenverwaltung';
-        if (strpos($description, 'mitarbeiter') !== false) return 'Mitarbeiterverwaltung';
-        if (strpos($description, 'veranstaltung') !== false) return 'Veranstaltungsverwaltung';
-        if (strpos($description, 'aufgabe') !== false) return 'Aufgabenverwaltung';
-        
+
+    private function extractTitle($description)
+    {
+        if (strpos($description, 'produkt') !== false)
+            return 'Produktverwaltung';
+        if (strpos($description, 'kunde') !== false)
+            return 'Kundenverwaltung';
+        if (strpos($description, 'mitarbeiter') !== false)
+            return 'Mitarbeiterverwaltung';
+        if (strpos($description, 'veranstaltung') !== false)
+            return 'Veranstaltungsverwaltung';
+        if (strpos($description, 'aufgabe') !== false)
+            return 'Aufgabenverwaltung';
+
         return 'Formularverwaltung';
     }
 }
 
-// API Endpoints
 if (isset($_POST['generate_ai_schema'])) {
     $description = escape_string($_POST['description'] ?? '');
     $context = escape_string($_POST['context'] ?? '');
     $checkForms = escape_string($_POST['checkForms'] ?? '');
     $project = escape_string($_POST['project'] ?? '');
 
-    
+
     if (empty($description)) {
         echo json_encode([
             'success' => false,
@@ -422,10 +419,10 @@ if (isset($_POST['generate_ai_schema'])) {
         ]);
         exit;
     }
-    
+
     $generator = new AISchemaGenerator();
     $schema = $generator->generateSchema($description, $checkForms, $context, $project);
-    
+
     if ($schema) {
         echo json_encode([
             'success' => true,
@@ -443,7 +440,7 @@ if (isset($_POST['create_ai_form']) && isset($_POST['schema']) && isset($_POST['
     $schema = json_decode($_POST['schema'], true);
     $formName = escape_string($_POST['name']);
     $project = escape_string($_POST['project']);
-    
+
     if (!$schema || !isset($schema['inputs'])) {
         echo json_encode([
             'success' => false,
@@ -451,23 +448,20 @@ if (isset($_POST['create_ai_form']) && isset($_POST['schema']) && isset($_POST['
         ]);
         exit;
     }
-    
+
     $formJSON = json_encode($schema);
-    
-    // Create form in database
+
     if (query("INSERT INTO form_settings (form_name, form_json, project) VALUES ('$formName', '$formJSON', '$project')")) {
-        // Create database table
         $tableName = createTableName($project . "_" . $formName);
-        
         $sql = "CREATE TABLE $tableName (id INT AUTO_INCREMENT PRIMARY KEY";
-        
+
         foreach ($schema['inputs'] as $field) {
             $name = $field['name'];
             $type = mapFieldType($field['type']);
             $sql .= ", $name $type";
         }
         $sql .= ", created_at DATETIME DEFAULT CURRENT_TIMESTAMP);";
-        
+
         if (query($sql)) {
             echo json_encode([
                 'success' => true,
@@ -489,7 +483,8 @@ if (isset($_POST['create_ai_form']) && isset($_POST['schema']) && isset($_POST['
     }
 }
 
-function mapFieldType($type) {
+function mapFieldType($type)
+{
     switch ($type) {
         case 'text':
         case 'email':

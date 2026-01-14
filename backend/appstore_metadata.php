@@ -1,19 +1,7 @@
 <?php
-/**
- * App Store Metadata Manager API
- * 
- * Manages App Store Connect apps, versions, and localized metadata
- */
-
-require_once 'config.php';
 require_once 'head.php';
-require_once 'db_connection.php';
-require_once 'functions.php';
 require_once 'ECSign.php';
 
-/**
- * App Store Connect API Client for Metadata Management
- */
 class AppStoreMetadataAPI
 {
     private $private_key;
@@ -256,17 +244,17 @@ class AppStoreMetadataAPI
         if (empty($appInfos)) {
             return null;
         }
-        
+
         $appInfoId = $appInfos[0]['id'];
         $response = $this->makeRequest("/appInfos/$appInfoId?include=primaryCategory,primarySubcategoryOne,primarySubcategoryTwo,secondaryCategory,secondarySubcategoryOne,secondarySubcategoryTwo");
-        
+
         $data = $response['data'] ?? null;
         $included = $response['included'] ?? [];
-        
+
         if (!$data) {
             return null;
         }
-        
+
         $result = [
             'appInfoId' => $appInfoId,
             'primaryCategoryId' => null,
@@ -278,7 +266,7 @@ class AppStoreMetadataAPI
             'secondarySubcategoryId' => null,
             'secondarySubcategoryName' => null
         ];
-        
+
         // Build ID to category map (id => name)
         $categoryMap = [];
         foreach ($included as $item) {
@@ -286,38 +274,38 @@ class AppStoreMetadataAPI
                 $categoryMap[$item['id']] = $item['attributes']['name'] ?? $item['id'];
             }
         }
-        
+
         // Extract relationships
         $relationships = $data['relationships'] ?? [];
-        
+
         // Primary category
         if (isset($relationships['primaryCategory']['data']['id'])) {
             $catId = $relationships['primaryCategory']['data']['id'];
             $result['primaryCategoryId'] = $catId;
             $result['primaryCategoryName'] = $categoryMap[$catId] ?? $catId;
         }
-        
+
         // Primary subcategory (only first one)
         if (isset($relationships['primarySubcategoryOne']['data']['id'])) {
             $subId = $relationships['primarySubcategoryOne']['data']['id'];
             $result['primarySubcategoryId'] = $subId;
             $result['primarySubcategoryName'] = $categoryMap[$subId] ?? $subId;
         }
-        
+
         // Secondary category
         if (isset($relationships['secondaryCategory']['data']['id'])) {
             $catId = $relationships['secondaryCategory']['data']['id'];
             $result['secondaryCategoryId'] = $catId;
             $result['secondaryCategoryName'] = $categoryMap[$catId] ?? $catId;
         }
-        
+
         // Secondary subcategory (only first one)
         if (isset($relationships['secondarySubcategoryOne']['data']['id'])) {
             $subId = $relationships['secondarySubcategoryOne']['data']['id'];
             $result['secondarySubcategoryId'] = $subId;
             $result['secondarySubcategoryName'] = $categoryMap[$subId] ?? $subId;
         }
-        
+
         return $result;
     }
 
@@ -325,10 +313,16 @@ class AppStoreMetadataAPI
     public function updateAppCategories($appInfoId, $categories)
     {
         $relationships = [];
-        
-        $categoryKeys = ['primaryCategory', 'primarySubcategoryOne', 'primarySubcategoryTwo',
-                         'secondaryCategory', 'secondarySubcategoryOne', 'secondarySubcategoryTwo'];
-        
+
+        $categoryKeys = [
+            'primaryCategory',
+            'primarySubcategoryOne',
+            'primarySubcategoryTwo',
+            'secondaryCategory',
+            'secondarySubcategoryOne',
+            'secondarySubcategoryTwo'
+        ];
+
         foreach ($categoryKeys as $key) {
             if (!empty($categories[$key])) {
                 $relationships[$key] = [
@@ -341,7 +335,7 @@ class AppStoreMetadataAPI
                 $relationships[$key] = ['data' => null];
             }
         }
-        
+
         $payload = [
             'data' => [
                 'type' => 'appInfos',
@@ -349,7 +343,7 @@ class AppStoreMetadataAPI
                 'relationships' => $relationships
             ]
         ];
-        
+
         return $this->makeRequest("/appInfos/$appInfoId", 'PATCH', $payload);
     }
 
@@ -360,17 +354,17 @@ class AppStoreMetadataAPI
         if (empty($appInfos)) {
             return null;
         }
-        
+
         $appInfoId = $appInfos[0]['id'];
         $response = $this->makeRequest("/appInfos/$appInfoId?include=ageRatingDeclaration");
-        
+
         $included = $response['included'] ?? [];
         foreach ($included as $item) {
             if ($item['type'] === 'ageRatingDeclarations') {
                 return $item;
             }
         }
-        
+
         return null;
     }
 
@@ -384,7 +378,7 @@ class AppStoreMetadataAPI
                 'attributes' => $ratings
             ]
         ];
-        
+
         return $this->makeRequest("/ageRatingDeclarations/$ageRatingDeclarationId", 'PATCH', $payload);
     }
 
@@ -664,13 +658,13 @@ function handleSingleApp($project_id, $app_id, $method)
             // Get locale count for this version
             $localeCountResult = query("SELECT COUNT(DISTINCT locale) as count FROM appstore_version_localizations WHERE version_id = {$row['id']}");
             $localeCount = fetch_assoc($localeCountResult);
-            $row['locale_count'] = (int)$localeCount['count'];
-            
+            $row['locale_count'] = (int) $localeCount['count'];
+
             // Get screenshot count for this version
             $screenshotCountResult = query("SELECT COUNT(*) as count FROM appstore_screenshots WHERE version_id = {$row['id']}");
             $screenshotCount = fetch_assoc($screenshotCountResult);
-            $row['screenshot_count'] = (int)$screenshotCount['count'];
-            
+            $row['screenshot_count'] = (int) $screenshotCount['count'];
+
             $versions[] = $row;
         }
 
@@ -1689,16 +1683,16 @@ function handleSyncPush($project_id, $app_id)
         // ========================================
         // ONLY PUSH DIRTY (MODIFIED) LOCALIZATIONS
         // ========================================
-        
+
         // Count dirty entries first
         $dirtyAppLocsResult = query("SELECT COUNT(*) as count FROM appstore_app_localizations WHERE app_id = $app_id AND is_dirty = 1");
         $dirtyAppLocsCount = fetch_assoc($dirtyAppLocsResult)['count'] ?? 0;
-        
+
         $dirtyVersionLocsResult = query("SELECT COUNT(*) as count FROM appstore_version_localizations vl 
             INNER JOIN appstore_app_versions v ON vl.version_id = v.id 
             WHERE v.app_id = $app_id AND vl.is_dirty = 1");
         $dirtyVersionLocsCount = fetch_assoc($dirtyVersionLocsResult)['count'] ?? 0;
-        
+
         // If nothing is dirty, return early
         if ($dirtyAppLocsCount == 0 && $dirtyVersionLocsCount == 0) {
             echo json_encode([
@@ -1713,14 +1707,14 @@ function handleSyncPush($project_id, $app_id)
         // Get current appInfo ID from App Store (needed for creating new localizations)
         $appInfoId = null;
         $localeToIdMap = [];
-        
+
         // Only fetch App Store data if we have dirty app localizations
         if ($dirtyAppLocsCount > 0) {
             try {
                 $appInfos = $api->getAppInfo($app['app_id']);
                 if (!empty($appInfos) && isset($appInfos[0]['id'])) {
                     $appInfoId = $appInfos[0]['id'];
-                    
+
                     // Fetch existing localizations to build ID map
                     try {
                         $existingAppLocalizations = $api->getAppInfoLocalizations($app['app_id']);
@@ -1743,15 +1737,15 @@ function handleSyncPush($project_id, $app_id)
         // Push ONLY dirty app-level localizations
         $locResult = query("SELECT * FROM appstore_app_localizations WHERE app_id = $app_id AND is_dirty = 1");
         while ($loc = fetch_assoc($locResult)) {
-            $locId = (int)$loc['id'];
-            
+            $locId = (int) $loc['id'];
+
             // First, sync ID from our map if we don't have one
             if (empty($loc['appstore_localization_id']) && isset($localeToIdMap[$loc['locale']])) {
                 $correctId = escape_string($localeToIdMap[$loc['locale']]);
                 query("UPDATE appstore_app_localizations SET appstore_localization_id = '$correctId' WHERE id = $locId");
                 $loc['appstore_localization_id'] = $correctId;
             }
-            
+
             try {
                 if (!empty($loc['appstore_localization_id'])) {
                     // Update existing
@@ -1838,7 +1832,7 @@ function handleSyncPush($project_id, $app_id)
         $verResult = query("SELECT v.*, 
             (SELECT COUNT(*) FROM appstore_version_localizations vl WHERE vl.version_id = v.id AND vl.is_dirty = 1) as dirty_count 
             FROM appstore_app_versions v WHERE v.app_id = $app_id HAVING dirty_count > 0");
-        
+
         while ($version = fetch_assoc($verResult)) {
             $versionState = strtoupper($version['status'] ?? '');
             $isEditable = in_array($versionState, $editableStates) || empty($versionState) || $versionState === 'DRAFT';
@@ -1852,7 +1846,7 @@ function handleSyncPush($project_id, $app_id)
                 ];
                 continue;
             }
-            
+
             // Build version locale ID map only if needed
             $versionLocaleToIdMap = [];
             if (!empty($version['appstore_version_id'])) {
@@ -1871,17 +1865,17 @@ function handleSyncPush($project_id, $app_id)
             }
 
             // Only get dirty version localizations
-            $vlocResult = query("SELECT * FROM appstore_version_localizations WHERE version_id = " . (int)$version['id'] . " AND is_dirty = 1");
+            $vlocResult = query("SELECT * FROM appstore_version_localizations WHERE version_id = " . (int) $version['id'] . " AND is_dirty = 1");
             while ($vloc = fetch_assoc($vlocResult)) {
-                $vlocId = (int)$vloc['id'];
-                
+                $vlocId = (int) $vloc['id'];
+
                 // Sync ID from map if needed
                 if (empty($vloc['appstore_localization_id']) && isset($versionLocaleToIdMap[$vloc['locale']])) {
                     $correctId = escape_string($versionLocaleToIdMap[$vloc['locale']]);
                     query("UPDATE appstore_version_localizations SET appstore_localization_id = '$correctId' WHERE id = $vlocId");
                     $vloc['appstore_localization_id'] = $correctId;
                 }
-                
+
                 try {
                     if (!empty($vloc['appstore_localization_id'])) {
                         try {
@@ -1974,7 +1968,7 @@ function handleSyncPush($project_id, $app_id)
             $catResult = query("SELECT * FROM appstore_app_categories WHERE app_id = $app_id");
             $primaryCat = null;
             $secondaryCat = null;
-            
+
             while ($cat = fetch_assoc($catResult)) {
                 if ($cat['category_type'] === 'primary') {
                     $primaryCat = $cat;
@@ -1982,20 +1976,20 @@ function handleSyncPush($project_id, $app_id)
                     $secondaryCat = $cat;
                 }
             }
-            
+
             if ($primaryCat || $secondaryCat) {
                 // Get appInfoId from App Store
                 $appInfos = $api->getAppInfo($app['app_id']);
                 if (!empty($appInfos) && isset($appInfos[0]['id'])) {
                     $appInfoId = $appInfos[0]['id'];
-                    
+
                     $categoryData = [
                         'primaryCategory' => $primaryCat['category_id'] ?? null,
                         'primarySubcategoryOne' => $primaryCat['subcategory_id'] ?? null,
                         'secondaryCategory' => $secondaryCat['category_id'] ?? null,
                         'secondarySubcategoryOne' => $secondaryCat['subcategory_id'] ?? null
                     ];
-                    
+
                     $api->updateAppCategories($appInfoId, $categoryData);
                     $pushResults[] = ['type' => 'categories', 'status' => 'updated'];
                 }
@@ -2010,11 +2004,11 @@ function handleSyncPush($project_id, $app_id)
         try {
             $ageResult = query("SELECT * FROM appstore_age_ratings WHERE app_id = $app_id");
             $ageRating = fetch_assoc($ageResult);
-            
+
             if ($ageRating) {
                 // Get age rating declaration from App Store
                 $ageRatingDeclaration = $api->getAgeRatingDeclaration($app['app_id']);
-                
+
                 if ($ageRatingDeclaration && isset($ageRatingDeclaration['id'])) {
                     $ageRatingData = [
                         'alcoholTobaccoOrDrugUseOrReferences' => $ageRating['alcohol_tobacco_or_drug_use_or_references'] ?? 'NONE',
@@ -2034,12 +2028,12 @@ function handleSyncPush($project_id, $app_id)
                         'seventeenPlus' => $ageRating['seventeen_plus'] === '1' || $ageRating['seventeen_plus'] === true,
                         'unrestrictedWebAccess' => $ageRating['unrestricted_web_access'] === '1' || $ageRating['unrestricted_web_access'] === true
                     ];
-                    
+
                     // Remove null values
-                    $ageRatingData = array_filter($ageRatingData, function($value) {
+                    $ageRatingData = array_filter($ageRatingData, function ($value) {
                         return $value !== null;
                     });
-                    
+
                     $api->updateAgeRatingDeclaration($ageRatingDeclaration['id'], $ageRatingData);
                     $pushResults[] = ['type' => 'age_rating', 'status' => 'updated'];
                 }
@@ -2235,7 +2229,7 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
     $sku = escape_string($attributes['sku'] ?? '');
     $primary_locale = escape_string($attributes['primaryLocale'] ?? 'en-US');
     $available_territories = isset($attributes['isAvailableInNewTerritories']) && $attributes['isAvailableInNewTerritories'] ? '1' : '0';
-    
+
     // Fetch content rights from appInfo - it's not in the main app attributes
     $content_rights = '';
     try {
@@ -2409,7 +2403,7 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
                 $primaryCatName = escape_string($categoryData['primaryCategoryName'] ?? '');
                 $primarySubId = escape_string($categoryData['primarySubcategoryId'] ?? '');
                 $primarySubName = escape_string($categoryData['primarySubcategoryName'] ?? '');
-                
+
                 query("
                     INSERT INTO appstore_app_categories 
                     (app_id, category_type, category_id, category_name, subcategory_id, subcategory_name)
@@ -2421,14 +2415,14 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
                         subcategory_name = '$primarySubName'
                 ");
             }
-            
+
             // Secondary category
             if (!empty($categoryData['secondaryCategoryId'])) {
                 $secondaryCatId = escape_string($categoryData['secondaryCategoryId']);
                 $secondaryCatName = escape_string($categoryData['secondaryCategoryName'] ?? '');
                 $secondarySubId = escape_string($categoryData['secondarySubcategoryId'] ?? '');
                 $secondarySubName = escape_string($categoryData['secondarySubcategoryName'] ?? '');
-                
+
                 query("
                     INSERT INTO appstore_app_categories 
                     (app_id, category_type, category_id, category_name, subcategory_id, subcategory_name)
@@ -2450,7 +2444,7 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
         $ageRatingData = $api->getAgeRatingDeclaration($app_store_id);
         if ($ageRatingData && isset($ageRatingData['attributes'])) {
             $attrs = $ageRatingData['attributes'];
-            
+
             $alcoholTobaccoDrugs = escape_string($attrs['alcoholTobaccoOrDrugUseOrReferences'] ?? 'NONE');
             $contests = escape_string($attrs['contests'] ?? 'NONE');
             $gamblingSimulated = escape_string($attrs['gamblingSimulated'] ?? 'NONE');
@@ -2467,7 +2461,7 @@ function syncAppDataToDatabase($appData, $project_id, $api, $existingAppId = nul
             $unrestrictedWeb = isset($attrs['unrestrictedWebAccess']) && $attrs['unrestrictedWebAccess'] ? '1' : '0';
             $kidsBand = escape_string($attrs['kidsAgeBand'] ?? 'NOT_MADE_FOR_KIDS');
             $seventeenPlus = isset($attrs['seventeenPlus']) && $attrs['seventeenPlus'] ? '1' : '0';
-            
+
             query("
                 INSERT INTO appstore_age_ratings 
                 (app_id, alcohol_tobacco_or_drug_use_or_references, contests, gambling_simulated, gambling,
