@@ -222,4 +222,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'expiring') {
     exit;
 }
 
+/**
+ * POST - Verfügbare Domains für Projekt-Verbindung (nur Super Admin)
+ */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'list_available') {
+    // Nur Super Admin (userID 152) darf Domains verbinden
+    if ($userID != 152) {
+        echo json_encode(['success' => false, 'error' => 'Keine Berechtigung']);
+        exit;
+    }
+
+    $result = query("SELECT * FROM domains WHERE user_id='$userID' AND cloudflare_zone_id IS NOT NULL ORDER BY domain ASC");
+    $domains = [];
+
+    while ($row = fetch_assoc($result)) {
+        $domains[] = [
+            'id' => $row['id'],
+            'domain' => $row['domain'],
+            'cloudflare_zone_id' => $row['cloudflare_zone_id']
+        ];
+    }
+
+    echo json_encode(['success' => true, 'domains' => $domains, 'is_super_admin' => true]);
+    exit;
+}
+
 echo json_encode(['success' => false, 'error' => 'Ungültige Aktion']);

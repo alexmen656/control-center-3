@@ -5,16 +5,85 @@ class CloudflareHelper
     private $api_token;
     private $base_url = 'https://api.cloudflare.com/client/v4';
 
-    public function __construct()
+    public function __construct($zone_id = null)
     {
         global $cloudflare_zone_id, $cloudflare_api_token;
-        $this->zone_id = $cloudflare_zone_id ?? '';
+        $this->zone_id = $zone_id ?? ($cloudflare_zone_id ?? '');
         $this->api_token = $cloudflare_api_token ?? '';
     }
 
     public function isConfigured(): bool
     {
         return !empty($this->zone_id) && !empty($this->api_token);
+    }
+
+    /**
+     * Holt alle verfügbaren Cloudflare Zones
+     */
+    public function getAllZones(): array
+    {
+        global $cloudflare_api_token;
+        if (empty($cloudflare_api_token)) {
+            return ['success' => false, 'message' => 'API Token nicht konfiguriert'];
+        }
+
+        $url = "{$this->base_url}/zones?per_page=100";
+        $headers = [
+            "Authorization: Bearer {$cloudflare_api_token}",
+            "Content-Type: application/json"
+        ];
+
+        $opts = [
+            'http' => [
+                'method' => 'GET',
+                'header' => implode("\r\n", $headers) . "\r\n",
+                'timeout' => 10,
+                'ignore_errors' => true
+            ]
+        ];
+
+        $context = stream_context_create($opts);
+        $response = @file_get_contents($url, false, $context);
+
+        if ($response === false) {
+            return ['success' => false, 'message' => 'API Request fehlgeschlagen'];
+        }
+
+        $result = json_decode($response, true);
+        if (!isset($result['success']) || !$result['success']) {
+            return ['success' => false, 'message' => 'Zone-Abruf fehlgeschlagen'];
+        }
+
+        return ['success' => true, 'data' => $result['result'] ?? []];
+    }
+
+    /**
+     * Findet die Zone-ID für eine gegebene Domain
+     */
+    public function findZoneIdForDomain(string $domain): ?string
+    {
+        $zonesResult = $this->getAllZones();
+        if (!$zonesResult['success']) {
+            return null;
+        }
+
+        $zones = $zonesResult['data'];
+        $domainParts = explode('.', $domain);
+        
+        // Versuche die längste passende Zone zu finden
+        usort($zones, function($a, $b) {
+            return strlen($b['name']) - strlen($a['name']);
+        });
+
+        foreach ($zones as $zone) {
+            $zoneName = $zone['name'];
+            // Prüfe ob Domain mit Zone endet oder Zone selbst ist
+            if ($domain === $zoneName || str_ends_with($domain, '.' . $zoneName)) {
+                return $zone['id'];
+            }
+        }
+
+        return null;
     }
 
     private function request(string $endpoint, string $method = 'GET', ?array $data = null): array
@@ -170,7 +239,7 @@ class CloudflareHelper
 // ============================================
 
 /**
- * Erstellt einen Cloudflare A-Record
+ * Erstellt einen Cloudflare A-Record mit automatischer Zone-Erkennung
  * 
  * @param string $domain Domain-Name
  * @param string $ip IP-Adresse
@@ -179,11 +248,18 @@ class CloudflareHelper
 function cloudflare_createARecord(string $domain, string $ip, bool $proxied = false): array
 {
     $cf = new CloudflareHelper();
+    $zoneId = $cf->findZoneIdForDomain($domain);
+    
+    if (!$zoneId) {
+        return ['success' => false, 'message' => "Keine passende Cloudflare Zone für Domain {$domain} gefunden"];
+    }
+    
+    $cf = new CloudflareHelper($zoneId);
     return $cf->createARecord($domain, $ip, $proxied);
 }
 
 /**
- * Erstellt einen Cloudflare CNAME-Record
+ * Erstellt einen Cloudflare CNAME-Record mit automatischer Zone-Erkennung
  * 
  * @param string $domain Domain-Name  
  * @param string $target CNAME-Ziel
@@ -192,32 +268,53 @@ function cloudflare_createARecord(string $domain, string $ip, bool $proxied = fa
 function cloudflare_createCNAMERecord(string $domain, string $target, bool $proxied = false): array
 {
     $cf = new CloudflareHelper();
+    $zoneId = $cf->findZoneIdForDomain($domain);
+    
+    if (!$zoneId) {
+        return ['success' => false, 'message' => "Keine passende Cloudflare Zone für Domain {$domain} gefunden"];
+    }
+    
+    $cf = new CloudflareHelper($zoneId);
     return $cf->createCNAMERecord($domain, $target, $proxied);
 }
 
 /**
  * Löscht einen Cloudflare DNS-Record anhand der ID
  */
-function cloudflare_deleteRecord(string $recordId): array
+function cloudflare_deleteRecord(string $recordId, ?string $zoneId = null): array
 {
-    $cf = new CloudflareHelper();
+    $cf = new CloudflareHelper($zoneId);
     return $cf->deleteRecord($recordId);
 }
 
 /**
- * Löscht einen Cloudflare DNS-Record anhand des Domain-Namens
+ * Löscht einen Cloudflare DNS-Record anhand des Domain-Namens mit automatischer Zone-Erkennung
  */
 function cloudflare_deleteRecordByDomain(string $domain, ?string $type = null): array
 {
     $cf = new CloudflareHelper();
+    $zoneId = $cf->findZoneIdForDomain($domain);
+    
+    if (!$zoneId) {
+        return ['success' => false, 'message' => "Keine passende Cloudflare Zone für Domain {$domain} gefunden"];
+    }
+    
+    $cf = new CloudflareHelper($zoneId);
     return $cf->deleteRecordByDomain($domain, $type);
 }
 
 /**
- * Findet Cloudflare DNS-Records anhand des Domain-Namens
+ * Findet Cloudflare DNS-Records anhand des Domain-Namens mit automatischer Zone-Erkennung
  */
 function cloudflare_findRecords(string $domain, ?string $type = null): array
 {
     $cf = new CloudflareHelper();
+    $zoneId = $cf->findZoneIdForDomain($domain);
+    
+    if (!$zoneId) {
+        return ['success' => false, 'message' => "Keine passende Cloudflare Zone für Domain {$domain} gefunden"];
+    }
+    
+    $cf = new CloudflareHelper($zoneId);
     return $cf->findRecords($domain, $type);
 }

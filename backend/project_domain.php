@@ -9,17 +9,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $project = escape_string($_POST['project'] ?? '');
     $user_id = escape_string($_POST['user_id'] ?? '');
     $domain = strtolower(trim($_POST['domain'] ?? ''));
+    $domain_type = $_POST['domain_type'] ?? 'subdomain'; // subdomain oder custom
 
 
 
 
-    if ($action === 'connect' && $project && $user_id && $domain) {
-        // Domain-Format prüfen
-        if (!preg_match('/^[a-z0-9-]+$/', $domain)) {
-            echo json_encode(['error' => 'Ungültiges Domain-Format. Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.']);
-            exit;
+    if ($action === 'connect' && $project && $user_id) {
+        $fullDomain = '';
+        $customBaseDomain = $_POST['custom_base_domain'] ?? '';
+        
+        // Super Admin Check für custom domains
+        $isSuperAdmin = ($userID == 152);
+        
+        if ($domain_type === 'custom' && $isSuperAdmin) {
+            // Custom Domain - subdomain + custom_base_domain
+            if (!$customBaseDomain) {
+                echo json_encode(['error' => 'Custom Base Domain fehlt.']);
+                exit;
+            }
+            
+            if ($domain && strlen($domain) > 0) {
+                // Mit Subdomain: subdomain.customdomain.com
+                $fullDomain = $domain . '.' . $customBaseDomain;
+            } else {
+                // Ohne Subdomain: customdomain.com
+                $fullDomain = $customBaseDomain;
+            }
+        } else {
+            // Regular Subdomain - nur für alle Benutzer
+            if (!$domain) {
+                echo json_encode(['error' => 'Domain ist erforderlich.']);
+                exit;
+            }
+            // Domain-Format prüfen
+            if (!preg_match('/^[a-z0-9-]+$/', $domain)) {
+                echo json_encode(['error' => 'Ungültiges Domain-Format. Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.']);
+                exit;
+            }
+            $fullDomain = $domain . '.sites.control-center.eu';
         }
-        $fullDomain = $domain . '.sites.control-center.eu';
         // Prüfen ob Domain schon vergeben
         $exists = query("SELECT id FROM control_center_project_domains WHERE domain='$fullDomain' LIMIT 1");
         if (mysqli_num_rows($exists) > 0) {

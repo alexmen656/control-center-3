@@ -178,7 +178,7 @@
             <div class="card-header">
               <div class="header-left">
                 <h3>Project Domain</h3>
-                <p class="card-subtitle">Configure your project's subdomain</p>
+                <p class="card-subtitle">Configure your project's domain</p>
               </div>
             </div>
             <div class="card-body">
@@ -193,14 +193,48 @@
                     <span>{{ connectedDomain }}</span>
                   </div>
                 </div>
-                <div v-else class="form-group">
-                  <label class="form-label">Subdomain</label>
-                  <div class="domain-input-wrapper">
-                    <input v-model="domainInput" placeholder="myproject" class="modern-input subdomain-input" />
-                    <span class="domain-suffix">.sites.control-center.eu</span>
+                <div v-else>
+                  <!-- Super Admin: Domain Selection -->
+                  <div v-if="isSuperAdmin && availableDomains.length > 0" class="form-group">
+                    <label class="form-label">Select Domain</label>
+                    <select v-model="selectedDomainType" class="modern-select" @change="domainInput = ''">
+                      <option value="subdomain">Subdomain (sites.control-center.eu)</option>
+                      <option value="custom">Custom Domain from Domain Management</option>
+                    </select>
                   </div>
+
+                  <!-- Subdomain Input -->
+                  <div v-if="!isSuperAdmin || selectedDomainType === 'subdomain'" class="form-group">
+                    <label class="form-label">Subdomain</label>
+                    <div class="domain-input-wrapper">
+                      <input v-model="domainInput" placeholder="myproject" class="modern-input subdomain-input" />
+                      <span class="domain-suffix">.sites.control-center.eu</span>
+                    </div>
+                  </div>
+
+                  <!-- Custom Domain Selection (Super Admin only) -->
+                  <div v-if="isSuperAdmin && selectedDomainType === 'custom'" class="form-group">
+                    <label class="form-label">Select Custom Domain</label>
+                    <select v-model="selectedCustomDomain" class="modern-select" @change="domainInput = ''">
+                      <option value="">-- Select a domain --</option>
+                      <option v-for="domain in availableDomains" :key="domain.id" :value="domain.domain">
+                        {{ domain.domain }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Subdomain Input for Custom Domain -->
+                  <div v-if="isSuperAdmin && selectedDomainType === 'custom' && selectedCustomDomain" class="form-group">
+                    <label class="form-label">Subdomain (optional)</label>
+                    <div class="domain-input-wrapper">
+                      <input v-model="domainInput" placeholder="blog" class="modern-input subdomain-input" />
+                      <span class="domain-suffix">.{{ selectedCustomDomain }}</span>
+                    </div>
+                    <small class="form-help">Leave empty to use the root domain</small>
+                  </div>
+
                   <button class="action-btn primary" @click="connectDomain"
-                    :disabled="!domainInput || domainInput.length < 3" style="margin-top: 12px;">
+                    :disabled="(selectedDomainType === 'custom' && !selectedCustomDomain) || (selectedDomainType === 'subdomain' && (!domainInput || domainInput.length < 3))" style="margin-top: 12px;">
                     Connect Domain
                   </button>
                 </div>
@@ -258,6 +292,10 @@ export default {
       connectedDomain: null,
       domainInput: '',
       domainError: '',
+      selectedDomainType: 'subdomain',
+      availableDomains: [],
+      isSuperAdmin: false,
+      selectedCustomDomain: '',
       loadingVercelProject: true,
       connectedVercelProject: null,
       openVercelModal: false,
@@ -526,6 +564,26 @@ export default {
       this.domainError = '';
       try {
         const user = getUserData();
+        
+        // Check if user is super admin (userID 152)
+        this.isSuperAdmin = user && user.userID == 152;
+        
+        // Fetch available domains if super admin
+        if (this.isSuperAdmin) {
+          try {
+            const domainsRes = await this.$axios.post('domains.php', JSON.stringify({
+              action: 'list_available'
+            }), {
+              headers: { 'Content-Type': 'application/json' }
+            });
+            if (domainsRes.data.success) {
+              this.availableDomains = domainsRes.data.domains;
+            }
+          } catch (e) {
+            console.error('Error fetching available domains:', e);
+          }
+        }
+        
         const res = await this.$axios.post('project_domain.php', this.$qs.stringify({
           action: 'get',
           project: this.$route.params.project,
@@ -544,20 +602,48 @@ export default {
         this.domainError = 'Kein User.';
         return;
       }
-      if (!/^[a-z0-9-]+$/.test(this.domainInput)) {
-        this.domainError = 'Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.';
-        return;
+      
+      let finalDomain = this.domainInput;
+      let customBaseDomain = '';
+      
+      if (this.isSuperAdmin && this.selectedDomainType === 'custom') {
+        if (!this.selectedCustomDomain) {
+          this.domainError = 'Bitte wähle eine Custom Domain.';
+          return;
+        }
+        customBaseDomain = this.selectedCustomDomain;
+        
+        // Validate subdomain if provided
+        if (this.domainInput) {
+          if (!/^[a-z0-9-]+$/.test(this.domainInput)) {
+            this.domainError = 'Subdomain: Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.';
+            return;
+          }
+          finalDomain = this.domainInput; // subdomain part only
+        } else {
+          finalDomain = ''; // use root domain
+        }
+      } else {
+        // For subdomain type, validate input
+        if (!/^[a-z0-9-]+$/.test(this.domainInput)) {
+          this.domainError = 'Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.';
+          return;
+        }
       }
+      
       try {
         const res = await this.$axios.post('project_domain.php', this.$qs.stringify({
           action: 'connect',
           project: this.$route.params.project,
           user_id: user.userID,
-          domain: this.domainInput,
+          domain: finalDomain,
+          domain_type: this.selectedDomainType,
+          custom_base_domain: customBaseDomain
         }));
         if (res.data && res.data.success) {
           this.connectedDomain = res.data.domain;
           this.domainInput = '';
+          this.selectedCustomDomain = '';
         } else {
           this.domainError = res.data && res.data.error ? res.data.error : 'Fehler beim Verbinden.';
         }
