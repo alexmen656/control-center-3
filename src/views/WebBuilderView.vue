@@ -562,20 +562,20 @@ export default defineComponent({
         return;
       }
 
-      if (!webBuilderDomain.value.subdomain) {
+      if (!webBuilderDomain.value.subdomain && !useMainDomain.value) {
         webBuilderDomainError.value = 'Subdomain ist erforderlich';
         savingWebBuilderDomain.value = false;
         return;
       }
 
       // Subdomain validieren
-      if (!/^[a-z0-9-]+$/.test(webBuilderDomain.value.subdomain)) {
+      if (!/^[a-z0-9-]+$/.test(webBuilderDomain.value.subdomain) && !useMainDomain.value) {
         webBuilderDomainError.value = 'Subdomain darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten';
         savingWebBuilderDomain.value = false;
         return;
       }
 
-      if (webBuilderDomain.value.subdomain.length < 3) {
+      if (webBuilderDomain.value.subdomain.length < 3 && !useMainDomain.value) {
         webBuilderDomainError.value = 'Subdomain muss mindestens 3 Zeichen lang sein';
         savingWebBuilderDomain.value = false;
         return;

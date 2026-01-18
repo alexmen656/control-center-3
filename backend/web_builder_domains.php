@@ -169,9 +169,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 
     // Prüfen ob Subdomain bereits existiert
-    $checkExisting = query("SELECT id, projectID FROM web_builder_domains WHERE subdomain='$subdomain'");
+    $checkExisting = query("SELECT id, projectID, main_domain FROM web_builder_domains WHERE subdomain='$subdomain'");
     if ($existingRow = fetch_assoc($checkExisting)) {
-        if ($existingRow['projectID'] !== $project) {
+        if ($existingRow['main_domain'] == $main_domain) {
             echo json_encode(['success' => false, 'error' => 'Diese Subdomain ist bereits vergeben']);
             exit;
         }
