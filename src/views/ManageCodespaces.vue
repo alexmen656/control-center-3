@@ -384,6 +384,7 @@
                             <small v-if="domainInfo.main_domain_taken" class="warning-text">
                               Verwendet von: {{ domainInfo.main_domain_codespace }}
                             </small>
+                            <small class="info-text">Die Main Domain kann nur von einem System (Codespace ODER Web Builder) gleichzeitig genutzt werden</small>
                           </span>
                         </label>
                       </div>

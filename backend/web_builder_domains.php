@@ -106,33 +106,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-/**
- * SAVE - Speichern einer neuen Subdomain
- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save') {
     $project = escape_string($_POST['project'] ?? '');
     $subdomain = strtolower(trim(escape_string($_POST['subdomain'] ?? '')));
     $main_domain = escape_string($_POST['main_domain'] ?? '');
     $is_enabled = isset($_POST['is_enabled']) && $_POST['is_enabled'] === 'true';
+    $use_main_domain = isset($_POST['use_main_domain']) && $_POST['use_main_domain'] === 'true';
 
-    if (!$project || !$subdomain || !$main_domain) {
+    if (!$project) {
+        echo json_encode(['success' => false, 'error' => 'Projekt ist erforderlich']);
+        exit;
+    }
+
+    $fullDomain = '';
+    $isMainDomain = false;
+    
+    // Main Domain verwenden (oberste Priorität)
+    if ($use_main_domain) {
+        $projectDomainResult = query("SELECT domain FROM control_center_project_domains WHERE project='$project' LIMIT 1");
+        if (!$projectDomainRow = fetch_assoc($projectDomainResult)) {
+            echo json_encode(['success' => false, 'error' => 'Projekt hat keine Main Domain konfiguriert. Bitte zuerst in Project Info einrichten.']);
+            exit;
+        }
+        
+        $fullDomain = $projectDomainRow['domain'];
+        $isMainDomain = true;
+        
+        // Prüfen ob die Main Domain bereits von einem Codespace verwendet wird
+        $projectIDResult = query("SELECT projectID FROM projects WHERE link='$project' LIMIT 1");
+        if ($projectIDRow = fetch_assoc($projectIDResult)) {
+            $projectID = $projectIDRow['projectID'];
+            $codespaceCheck = query("
+                SELECT cd.id FROM codespace_domains cd
+                JOIN project_codespaces pc ON cd.codespace_id = pc.id
+                WHERE pc.project_id = '$projectID' AND cd.is_main = 1
+            ");
+            
+            if (mysqli_num_rows($codespaceCheck) > 0) {
+                echo json_encode(['success' => false, 'error' => 'Die Main Domain wird bereits von einem Codespace verwendet. Bitte zuerst dort die Main Domain entfernen.']);
+                exit;
+            }
+        }
+        
+        $subdomain = ''; // Clear subdomain for main domain
+    } else if (!$subdomain || !$main_domain) {
         echo json_encode(['success' => false, 'error' => 'Projekt, Subdomain und Main Domain sind erforderlich']);
         exit;
-    }
+    } else {
+        // Subdomain validieren
+        if (!preg_match('/^[a-z0-9-]+$/', $subdomain)) {
+            echo json_encode(['success' => false, 'error' => 'Subdomain darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten']);
+            exit;
+        }
 
-    // Subdomain validieren
-    if (!preg_match('/^[a-z0-9-]+$/', $subdomain)) {
-        echo json_encode(['success' => false, 'error' => 'Subdomain darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten']);
-        exit;
+        if (strlen($subdomain) < 3) {
+            echo json_encode(['success' => false, 'error' => 'Subdomain muss mindestens 3 Zeichen lang sein']);
+            exit;
+        }
+        
+        // Vollständige Domain zusammenstellen: subdomain.main_domain
+        $fullDomain = $subdomain . '.' . $main_domain;
     }
-
-    if (strlen($subdomain) < 3) {
-        echo json_encode(['success' => false, 'error' => 'Subdomain muss mindestens 3 Zeichen lang sein']);
-        exit;
-    }
-
-    // Vollständige Domain zusammenstellen: subdomain.main_domain
-    $fullDomain = $subdomain . '.' . $main_domain;
 
     // Prüfen ob Subdomain bereits existiert
     $checkExisting = query("SELECT id, projectID FROM web_builder_domains WHERE subdomain='$subdomain'");

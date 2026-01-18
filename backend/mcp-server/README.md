@@ -232,6 +232,34 @@ Authorization: Bearer <jwt_token>
 | `webbuilder_domains_list` | Alle Domains auflisten |
 | `webbuilder_create_landing_page` | Landing Page mit Template erstellen |
 
+### Domain Management (NEU)
+
+Vollständiges Domain-Management mit Cloudflare-Integration und Super Admin Features.
+
+**Super Admin Features (userID 152):**
+- Kann JEDE Domain aus dem Domain Management für JEDES Projekt auswählen
+- Kann Subdomains von Custom Domains erstellen (z.B. `api.custom-domain.com`)
+- Hat Zugriff auf alle Domains in `domain_list_available`
+
+**Main Domain Exclusive Usage:**
+- Die Main Domain kann nur von EINEM System gleichzeitig genutzt werden
+- Entweder Web Builder ODER Codespace kann die Main Domain verwenden
+- Automatische Konflikt-Erkennung verhindert gleichzeitige Nutzung
+
+| Tool | Beschreibung |
+|------|-------------|
+| `domain_list` | Alle verwalteten Domains auflisten (Super Admin: alle, User: nur eigene) |
+| `domain_list_available` | Verfügbare Domains für Projekt-Konfiguration (Super Admin: alle, User: nur eigene) |
+| `domain_add` | Neue Domain zum Management hinzufügen |
+| `domain_update` | Domain-Informationen aktualisieren (Registrar, Daten, etc.) |
+| `domain_delete` | Domain aus Management entfernen |
+| `domain_fetch_cloudflare` | Alle Domains von Cloudflare importieren |
+| `domain_connect_to_project` | Domain mit Projekt verbinden (Super Admin: custom domains, User: subdomains) |
+| `domain_get_project` | Aktuelle Domain-Konfiguration eines Projekts abrufen |
+| `domain_webbuilder_configure` | Web Builder Domain konfigurieren (Subdomain oder Main Domain) |
+| `domain_webbuilder_get` | Web Builder Domain-Konfiguration abrufen |
+| `domain_codespace_connect` | Domain mit Codespace verbinden (Subdomain oder Main Domain) |
+
 ### App Store Metadata (NEU)
 
 Vollständige Kontrolle über App Store Connect Metadaten für AI-gesteuerte Lokalisierung.

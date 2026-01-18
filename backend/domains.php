@@ -222,9 +222,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'expiring') {
     exit;
 }
 
-/**
- * POST - Verfügbare Domains für Projekt-Verbindung (nur Super Admin)
- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'list_available') {
     // Nur Super Admin (userID 152) darf Domains verbinden
     if ($userID != 152) {
@@ -243,7 +240,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'list_available') {
         ];
     }
 
-    echo json_encode(['success' => true, 'domains' => $domains, 'is_super_admin' => true]);
+    echo json_encode([
+        'success' => true, 
+        'domains' => $domains, 
+        'is_super_admin' => true,
+        'features' => [
+            'custom_domains' => true,
+            'subdomains' => true,
+            'main_domain_usage' => true
+        ]
+    ]);
     exit;
 }
 

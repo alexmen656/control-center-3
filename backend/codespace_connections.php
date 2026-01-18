@@ -504,7 +504,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($is_main) {
             $full_domain = $base_domain; // Haupt-Domain verwenden
 
-            // Prüfen ob bereits eine Haupt-Domain für dieses Projekt existiert
+            // Prüfen ob bereits eine Haupt-Domain für dieses Projekt existiert (andere Codespaces)
             $existingMainResult = query("
                 SELECT cd.id FROM codespace_domains cd 
                 JOIN project_codespaces pc ON cd.codespace_id = pc.id 
@@ -512,6 +512,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
             if (mysqli_num_rows($existingMainResult) > 0) {
                 echo json_encode(['error' => 'Ein anderer Codespace verwendet bereits die Haupt-Domain. Bitte zuerst die Haupt-Domain des anderen Codespaces entfernen.']);
+                exit;
+            }
+            
+            // Prüfen ob die Main Domain bereits vom Web Builder verwendet wird
+            $webBuilderCheck = query("
+                SELECT id FROM web_builder_domains 
+                WHERE projectID = '$project_link' AND domain = '$base_domain'
+            ");
+            if (mysqli_num_rows($webBuilderCheck) > 0) {
+                echo json_encode(['error' => 'Die Main Domain wird bereits vom Web Builder verwendet. Bitte zuerst dort die Main Domain entfernen.']);
                 exit;
             }
         } else {

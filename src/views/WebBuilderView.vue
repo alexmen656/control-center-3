@@ -161,6 +161,20 @@
               </div>
 
               <div class="form-group">
+                <label class="form-label">Domain Option</label>
+                <div class="domain-type-selector">
+                  <label class="radio-option">
+                    <input type="radio" v-model="useMainDomain" :value="false" :disabled="savingWebBuilderDomain" />
+                    <span>Subdomain ({{ mainDomain }})</span>
+                  </label>
+                  <label class="radio-option">
+                    <input type="radio" v-model="useMainDomain" :value="true" :disabled="savingWebBuilderDomain" />
+                    <span>Main Domain verwenden</span>
+                  </label>
+                </div>
+              </div>
+
+              <div v-if="!useMainDomain" class="form-group">
                 <label class="form-label">Subdomain</label>
                 <div class="domain-input-wrapper">
                   <input v-model="webBuilderDomain.subdomain" placeholder="blog" class="modern-input subdomain-input"
@@ -170,26 +184,32 @@
                 <small class="form-help">Beispiel: blog.{{ mainDomain }}</small>
               </div>
 
+              <div v-else class="form-group">
+                <div class="info-message warning">
+                  <ion-icon name="warning-outline"></ion-icon>
+                  <div>
+                    <strong>Main Domain verwenden:</strong> {{ mainDomain }}
+                    <br>
+                    <small>Die Main Domain kann nur von einem System (Web Builder ODER Codespace) gleichzeitig genutzt werden</small>
+                  </div>
+                </div>
+              </div>
+
               <div class="form-group">
                 <div class="toggle-wrapper">
                   <label class="form-label">Aktiviert</label>
                   <label class="toggle-switch">
                     <input type="checkbox" v-model="webBuilderDomain.is_enabled"
-                      :disabled="savingWebBuilderDomain || !webBuilderDomain.subdomain" />
+                      :disabled="savingWebBuilderDomain || (!useMainDomain && !webBuilderDomain.subdomain)" />
                     <span class="toggle-slider"></span>
                   </label>
                 </div>
               </div>
-              <!--    <div v-if="webBuilderDomain.ssl_status" class="form-group">
-                <label class="form-label">SSL Status</label>
-                <span :class="['status-badge', sslStatusColor(webBuilderDomain.ssl_status)]">
-                  {{ webBuilderDomain.ssl_status }}
-                </span>
-              </div>-->
+              
               <div v-if="webBuilderDomain.id" class="info-message success">
                 <ion-icon name="checkmark-circle-outline"></ion-icon>
                 <div>
-                  <strong>Domain aktiv:</strong> {{ webBuilderDomain.subdomain }}.{{ mainDomain }}
+                  <strong>Domain aktiv:</strong> {{ useMainDomain ? mainDomain : webBuilderDomain.subdomain + '.' + mainDomain }}
                   <br>
                   <small>DNS und SSL werden automatisch konfiguriert</small>
                 </div>
@@ -212,7 +232,7 @@
                   Löschen
                 </button>
                 <button class="action-btn primary" @click="saveWebBuilderDomain"
-                  :disabled="savingWebBuilderDomain || !webBuilderDomain.subdomain">
+                  :disabled="savingWebBuilderDomain || (!useMainDomain && !webBuilderDomain.subdomain)">
                   <ion-icon name="save-outline"></ion-icon>
                   {{ webBuilderDomain.id ? 'Aktualisieren' : 'Speichern' }}
                 </button>
@@ -423,6 +443,7 @@ export default defineComponent({
     const webBuilderDomainError = ref('');
     const webBuilderDomainSuccess = ref('');
     const mainDomain = ref('');
+    const useMainDomain = ref(false);
     const webBuilderDomain = ref({
       id: null,
       subdomain: '',
@@ -520,6 +541,8 @@ export default defineComponent({
             is_enabled: data.is_enabled === true || data.is_enabled === 'true' || data.is_enabled === 1 || data.is_enabled === '1',
             ssl_status: data.ssl_status || ''
           };
+          // Check if using main domain
+          useMainDomain.value = data.domain === mainDomain.value;
         }
       } catch (error) {
         console.error('Fehler beim Laden der Web Builder Domain:', error);
@@ -566,7 +589,8 @@ export default defineComponent({
             project: projectName.value,
             subdomain: webBuilderDomain.value.subdomain,
             main_domain: mainDomain.value,
-            is_enabled: webBuilderDomain.value.is_enabled ? 'true' : 'false'
+            is_enabled: webBuilderDomain.value.is_enabled ? 'true' : 'false',
+            use_main_domain: useMainDomain.value ? 'true' : 'false'
           })
         );
 
@@ -782,6 +806,7 @@ export default defineComponent({
       webBuilderDomainError,
       webBuilderDomainSuccess,
       mainDomain,
+      useMainDomain,
       saveWebBuilderDomain,
       deleteWebBuilderDomain,
       sslStatusColor,
