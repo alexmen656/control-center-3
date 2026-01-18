@@ -122,10 +122,91 @@ if (isset($_POST['getAvailableModules'])) {
             'id' => $module['id'],
             'name' => $module['name'],
             'display_name' => $module['display_name'],
-            'description' => "test",//$module['description'],
-            'icon' => $module['tool_icon'],// tool_
-            'ref' => $module['ref']
+            'description' => $module['description'] ?? "test",
+            'icon' => $module['tool_icon'],
+            'ref' => $module['ref'],
+            'active' => isset($module['active']) ? (bool)$module['active'] : true
         ];
     }
     echo echoJSON($json);
+}
+
+// Create new module in store
+if (isset($_POST['createModule'])) {
+    $name = escape_string($_POST['name']);
+    $display_name = escape_string($_POST['display_name']);
+    $description = escape_string($_POST['description'] ?? '');
+    $icon = escape_string($_POST['icon'] ?? 'cube-outline');
+    $active = isset($_POST['active']) && $_POST['active'] === 'true' ? 1 : 0;
+    $ref = strtolower(str_replace([' ', 'Ä', 'ä', 'Ü', 'ü', 'Ö', 'ö'], ['-', 'a', 'a', 'u', 'u', 'o', 'o'], $name));
+
+    // Check if module already exists
+    $existing = query("SELECT * FROM module_store_modules WHERE name='$name' OR ref='$ref'");
+    if (mysqli_num_rows($existing) > 0) {
+        echo echoJSON(['success' => false, 'message' => 'Module with this name already exists']);
+    } else {
+        $query = query("INSERT INTO module_store_modules (name, display_name, tool_icon, ref) VALUES ('$name', '$display_name', '$icon', '$ref')");//, active,, '$active'
+        
+        if ($query) {
+            echo echoJSON(['success' => true, 'message' => 'Module created successfully']);
+        } else {
+            echo echoJSON(['success' => false, 'message' => 'Failed to create module']);
+        }
+    }
+}
+
+// Update existing module
+if (isset($_POST['updateModule']) && isset($_POST['moduleID'])) {
+    $moduleID = escape_string($_POST['moduleID']);
+    $name = escape_string($_POST['name']);
+    $display_name = escape_string($_POST['display_name']);
+    $description = escape_string($_POST['description'] ?? '');
+    $icon = escape_string($_POST['icon'] ?? 'cube-outline');
+    $active = isset($_POST['active']) && $_POST['active'] === 'true' ? 1 : 0;
+    $ref = strtolower(str_replace([' ', 'Ä', 'ä', 'Ü', 'ü', 'Ö', 'ö'], ['-', 'a', 'a', 'u', 'u', 'o', 'o'], $name));
+
+    // Check if module exists
+    $existing = query("SELECT * FROM module_store_modules WHERE id='$moduleID'");
+    if (mysqli_num_rows($existing) === 0) {
+        echo echoJSON(['success' => false, 'message' => 'Module not found']);
+    } else {
+        $query = query("UPDATE module_store_modules SET name='$name', display_name='$display_name', tool_icon='$icon', ref='$ref' WHERE id='$moduleID'");//active='$active' 
+        
+        if ($query) {
+            echo echoJSON(['success' => true, 'message' => 'Module updated successfully']);
+        } else {
+            echo echoJSON(['success' => false, 'message' => 'Failed to update module']);
+        }
+    }
+}
+
+// Delete module from store
+if (isset($_POST['deleteModule']) && isset($_POST['moduleID'])) {
+    $moduleID = escape_string($_POST['moduleID']);
+
+    // Check if module exists
+    $existing = query("SELECT * FROM module_store_modules WHERE id='$moduleID'");
+    if (mysqli_num_rows($existing) === 0) {
+        echo echoJSON(['success' => false, 'message' => 'Module not found']);
+    } else {
+        $module = fetch_assoc($existing);
+        $display_name = $module['display_name'];
+        
+        // Check if module is currently used in any project
+        $link = strtolower(str_replace(['Ä', 'ä', 'Ü', 'ü', 'Ö', 'ö', ' '], ['a', 'a', 'u', 'u', 'o', 'o', '-'], $display_name));
+        $inUse = query("SELECT COUNT(*) as count FROM project_tools WHERE name='$display_name' OR link='$link'");
+        $count = fetch_assoc($inUse)['count'];
+        
+        if ($count > 0) {
+            echo echoJSON(['success' => false, 'message' => "Module is currently used in $count project(s). Remove from projects first."]);
+        } else {
+            $query = query("DELETE FROM module_store_modules WHERE id='$moduleID'");
+            
+            if ($query) {
+                echo echoJSON(['success' => true, 'message' => 'Module deleted successfully']);
+            } else {
+                echo echoJSON(['success' => false, 'message' => 'Failed to delete module']);
+            }
+        }
+    }
 }

@@ -16,7 +16,7 @@ const routes: Array<RouteRecordRaw> = [
     path: "/",
     redirect: "/dashboard",
   },
-    {
+  {
     path: "/home",
     redirect: "/dashboard",
   },
@@ -107,6 +107,10 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/pages/",
     component: () => import("../views/ManagePages.vue"),
+  },
+  {
+    path: "/manage-store/",
+    component: () => import("../views/ManageStore.vue"),
   },
   {
     path: "/notepad/",
