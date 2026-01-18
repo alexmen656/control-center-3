@@ -168,48 +168,6 @@ export const domainTools = [
     }
   },
   {
-    name: 'domain_webbuilder_configure',
-    description: 'Configure domain for Web Builder. Can use either a subdomain of the project main domain OR the main domain itself (exclusive - only Web Builder OR Codespace can use main domain at a time). IMPORTANT: Check for main domain conflicts first.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        ccProject: {
-          type: 'string',
-          description: 'Control Center project link/slug'
-        },
-        subdomain: {
-          type: 'string',
-          description: 'Subdomain prefix (required when not using main domain). Min 3 characters, lowercase alphanumeric with hyphens.'
-        },
-        useMainDomain: {
-          type: 'boolean',
-          description: 'Use the project main domain directly (exclusive with Codespaces). Default: false',
-          default: false
-        },
-        enabled: {
-          type: 'boolean',
-          description: 'Enable or disable the domain',
-          default: true
-        }
-      },
-      required: ['ccProject']
-    }
-  },
-  {
-    name: 'domain_webbuilder_get',
-    description: 'Get the Web Builder domain configuration for a project',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        ccProject: {
-          type: 'string',
-          description: 'Control Center project link/slug'
-        }
-      },
-      required: ['ccProject']
-    }
-  },
-  {
     name: 'domain_codespace_connect',
     description: 'Connect domain to a codespace. Can use either a subdomain OR the main domain (exclusive - only Web Builder OR Codespace can use main domain at a time). IMPORTANT: Check for Web Builder main domain usage first.',
     inputSchema: {
@@ -259,10 +217,6 @@ export async function handleDomainTool(toolName, args, context) {
       return await connectToProject(args, context);
     case 'domain_get_project':
       return await getProjectDomain(args, context);
-    case 'domain_webbuilder_configure':
-      return await configureWebBuilderDomain(args, context);
-    case 'domain_webbuilder_get':
-      return await getWebBuilderDomain(args, context);
     case 'domain_codespace_connect':
       return await connectCodespaceDomain(args, context);
     default:
@@ -507,110 +461,6 @@ async function getProjectDomain(args, context) {
     });
   } catch (error) {
     return formatError(`Failed to get project domain: ${error.message}`);
-  }
-}
-
-async function configureWebBuilderDomain(args, context) {
-  try {
-    // First, check if main domain exists
-    const mainDomainParams = new URLSearchParams({
-      action: 'get',
-      project: args.ccProject
-    });
-    
-    const mainDomainResponse = await cmsRequest('project_domain.php', {
-      method: 'POST',
-      body: mainDomainParams
-    }, context);
-    
-    if (mainDomainResponse.error || !mainDomainResponse.domain) {
-      return formatError(
-        'No main domain configured for this project. Use domain_connect_to_project first.'
-      );
-    }
-    
-    const mainDomain = mainDomainResponse.domain;
-    
-    const params = new URLSearchParams({
-      action: 'save',
-      project: args.ccProject,
-      main_domain: mainDomain,
-      is_enabled: args.enabled !== false ? 'true' : 'false',
-      use_main_domain: args.useMainDomain ? 'true' : 'false'
-    });
-    
-    if (!args.useMainDomain) {
-      if (!args.subdomain) {
-        return formatError('subdomain is required when not using main domain');
-      }
-      
-      if (!/^[a-z0-9-]+$/.test(args.subdomain)) {
-        return formatError('Subdomain must contain only lowercase letters, numbers, and hyphens');
-      }
-      
-      if (args.subdomain.length < 3) {
-        return formatError('Subdomain must be at least 3 characters long');
-      }
-      
-      params.append('subdomain', args.subdomain.toLowerCase());
-    }
-    
-    const response = await cmsRequest('web_builder_domains.php', {
-      method: 'POST',
-      body: params
-    }, context);
-    
-    if (!response.success) {
-      return formatError(response.error || 'Failed to configure Web Builder domain');
-    }
-    
-    const fullDomain = args.useMainDomain 
-      ? mainDomain 
-      : `${args.subdomain.toLowerCase()}.${mainDomain}`;
-    
-    return formatResponse({
-      success: true,
-      message: response.message || 'Web Builder domain configured successfully',
-      subdomain: args.useMainDomain ? null : args.subdomain.toLowerCase(),
-      mainDomain: mainDomain,
-      fullDomain: fullDomain,
-      useMainDomain: args.useMainDomain || false,
-      note: args.useMainDomain 
-        ? 'Using main domain (exclusive - Codespaces cannot use main domain while Web Builder is using it)'
-        : 'Using subdomain of main domain'
-    });
-  } catch (error) {
-    return formatError(`Failed to configure Web Builder domain: ${error.message}`);
-  }
-}
-
-async function getWebBuilderDomain(args, context) {
-  try {
-    const params = new URLSearchParams({
-      action: 'get',
-      project: args.ccProject
-    });
-    
-    const response = await cmsRequest('web_builder_domains.php', {
-      method: 'POST',
-      body: params
-    }, context);
-    
-    if (!response.success) {
-      return formatResponse({
-        success: true,
-        configured: false,
-        domain: null
-      });
-    }
-    
-    return formatResponse({
-      success: true,
-      configured: true,
-      domain: response.data
-    });
-  } catch (error) {
-    return formatError(`Failed to get Web Builder domain: ${error.message}`);
   }
 }
 

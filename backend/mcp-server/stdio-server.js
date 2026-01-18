@@ -6,11 +6,11 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { 
-  CallToolRequestSchema, 
+import {
+  CallToolRequestSchema,
   ListToolsRequestSchema,
   ListResourcesRequestSchema,
-  ReadResourceRequestSchema 
+  ReadResourceRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 
 // Import tool handlers
@@ -22,6 +22,7 @@ import { fileTools, handleFileTool } from './tools/files.js';
 import { userTools, handleUserTool } from './tools/users.js';
 import { webBuilderTools, handleWebBuilderTool } from './tools/webbuilder.js';
 import { appstoreTools, handleAppstoreTool } from './tools/appstore.js';
+import { domainTools, handleDomainTool } from './tools/domains.js';
 
 // Import resources
 import { getResources, readResource } from './resources/index.js';
@@ -47,7 +48,7 @@ async function getUser() {
         'Content-Type': 'application/json'
       }
     });
-    
+
     const data = await response.json();
     if (!data.valid) {
       throw new Error('Invalid token');
@@ -62,7 +63,7 @@ async function getUser() {
 async function main() {
   const user = await getUser();
   const context = { user, token: JWT_TOKEN, backendUrl: CMS_BACKEND_URL };
-  
+
   const server = new Server(
     {
       name: 'control-center-cms',
@@ -86,15 +87,16 @@ async function main() {
       ...fileTools,
       ...userTools,
       ...webBuilderTools,
-      ...appstoreTools
+      ...appstoreTools,
+      ...domainTools
     ];
-    
+
     return { tools: allTools };
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
-    
+
     try {
       if (name.startsWith('project_')) {
         return await handleProjectTool(name, args, context);
@@ -112,8 +114,10 @@ async function main() {
         return await handleWebBuilderTool(name, args, context);
       } else if (name.startsWith('appstore_')) {
         return await handleAppstoreTool(name, args, context);
+      } else if (name.startsWith('domain_')) {
+        return await handleDomainTool(name, args, context);
       }
-      
+
       return {
         content: [{ type: 'text', text: `Unknown tool: ${name}` }],
         isError: true
@@ -139,7 +143,7 @@ async function main() {
   // Connect via STDIO
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  
+
   console.error('Control Center MCP Server connected via STDIO');
 }
 

@@ -224,13 +224,13 @@ Authorization: Bearer <jwt_token>
 | `webbuilder_component_update` | Komponente aktualisieren |
 | `webbuilder_component_delete` | Komponente löschen |
 | `webbuilder_components_replace_all` | Alle Komponenten ersetzen |
-| `webbuilder_main_domain_get` | Main Domain eines Projekts abrufen |
-| `webbuilder_main_domain_configure` | Main Domain konfigurieren (xxx.sites.control-center.eu) |
-| `webbuilder_domain_get` | Web Builder Subdomain abrufen |
-| `webbuilder_domain_configure` | Web Builder Subdomain konfigurieren |
+| `webbuilder_domain_get` | Web Builder Domain abrufen |
+| `webbuilder_domain_configure` | Web Builder Domain konfigurieren (Subdomain oder Main Domain) |
 | `webbuilder_domain_delete` | Domain löschen |
 | `webbuilder_domains_list` | Alle Domains auflisten |
 | `webbuilder_create_landing_page` | Landing Page mit Template erstellen |
+
+**Hinweis**: Für Project Main Domain Konfiguration verwende `domain_connect_to_project` aus dem Domain Management Bereich.
 
 ### Domain Management (NEU)
 
@@ -256,9 +256,9 @@ Vollständiges Domain-Management mit Cloudflare-Integration und Super Admin Feat
 | `domain_fetch_cloudflare` | Alle Domains von Cloudflare importieren |
 | `domain_connect_to_project` | Domain mit Projekt verbinden (Super Admin: custom domains, User: subdomains) |
 | `domain_get_project` | Aktuelle Domain-Konfiguration eines Projekts abrufen |
-| `domain_webbuilder_configure` | Web Builder Domain konfigurieren (Subdomain oder Main Domain) |
-| `domain_webbuilder_get` | Web Builder Domain-Konfiguration abrufen |
 | `domain_codespace_connect` | Domain mit Codespace verbinden (Subdomain oder Main Domain) |
+
+**Hinweis**: Für Web Builder Domain-Konfiguration verwende die `webbuilder_domain_*` Tools im Web Builder Bereich.
 
 ### App Store Metadata (NEU)
 
