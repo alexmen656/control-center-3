@@ -73,6 +73,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/ManageView.vue"),
   },
   {
+    path: "/manage/domains",
+    component: () => import("../views/ManageDomains.vue"),
+  },
+  {
     path: "/my-account/personal-information",
     component: () => import("../views/PersonalInformationView.vue"),
   },
