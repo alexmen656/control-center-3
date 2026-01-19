@@ -65,12 +65,10 @@ function getDirectoryStructure($parentId = 0)
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action']) && $_POST['action'] === 'move') {
-        // Handle file moving between folders
         $sourceFile = escape_string($_POST['sourceFile']);
         $targetFolder = escape_string($_POST['targetFolder']);
         
         try {
-            // Get source file info from database
             $sourceQuery = query("SELECT * FROM control_center_filesystem WHERE location = '$sourceFile'");
             $sourceData = $sourceQuery->fetch_assoc();
             
@@ -102,7 +100,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($updateQuery) {
                         echo json_encode(['success' => true, 'message' => 'File moved successfully']);
                     } else {
-                        // Rollback file move if database update fails
                         rename($newFilePath, $oldFilePath);
                         echo json_encode(['success' => false, 'message' => 'Database update failed']);
                     }
@@ -121,25 +118,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($_POST['project'])) {
             $project = escape_string($_POST['project']);
             $projectID = fetch_assoc(query("SELECT * FROM projects WHERE link='$project'"))['projectID'];
+
             if ($projectID == null) {
                 return [];
             }
 
-
-
-
-
-
-
-
-            $dir = '/data/project_filesystems/' . $projectID; // Verzeichnis festlegen
+            $dir = '/data/project_filesystems/' . $projectID;
             $name = escape_string($_POST['name']);
             $parentName = escape_string($_POST['directory']);
-
-            // Parent ID aus der Datenbank abfragen
             $parentQuery = query("SELECT id FROM project_filesystem WHERE name = '$parentName' AND projectID = '$projectID'");
             $parentId = $parentQuery ? $parentQuery->fetch_assoc()['id'] : 0;
-            // Überprüfen, ob es sich um eine Datei oder einen Ordner handelt
+
             if (isset($_FILES["files"])) {
                 foreach ($_FILES['files']['tmp_name'] as $key => $tmp_name) {
                     //$name2 = $_FILES['files']['name'][$key];
@@ -155,8 +144,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
             } else {
-                // Ordner erstellen
                 $folderPath = $dir . '/' . $parentName . '/' . $name;
+
                 if (!file_exists($folderPath)) {
                     mkdir($folderPath, 0777, true);
                     $folderLocation = $parentName . '/' . $name;
@@ -167,39 +156,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     echo "SUCCESS";
                 } else {
-                    echo "error 3"; // Ordner existiert bereits
+                    echo "error 3";
                 }
             }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         } else {
-            $dir = '/data/filesystem'; // Verzeichnis festlegen
+            $dir = '/data/filesystem';
             $name = escape_string($_POST['name']);
             $parentName = escape_string($_POST['directory']);
 
-            // Parent ID aus der Datenbank abfragen
             $parentQuery = query("SELECT id FROM control_center_filesystem WHERE name = '$parentName'");
             $parentId = $parentQuery ? $parentQuery->fetch_assoc()['id'] : 0;
 
