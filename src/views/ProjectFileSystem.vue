@@ -153,8 +153,8 @@
                   @dragstart="e => handleDragStart(e, item)">
                   <div class="file-card-content">
                     <!-- Image preview for image files -->
-                    <img v-if="item.type === 'file' && isImageFile(item.name)"
-                      :src="'https://alex.polan.sk/control-center/file_provider.php?path=' + item.location"
+                    <img v-if="item.type === 'file' && isImageFile(item.name) && getSignedImageUrl(item.location)"
+                      :src="getSignedImageUrl(item.location)"
                       class="file-preview-image" @error="onImageError" @load="onImageLoad" />
 
                     <!-- Icons for folders and non-image files -->
@@ -251,8 +251,8 @@
                   @dragstart="e => handleDragStart(e, item)">
                   <div class="file-card-content">
                     <!-- Image preview -->
-                    <img v-if="item.type === 'file' && isImageFile(item.name)"
-                      :src="'https://alex.polan.sk/control-center/file_provider.php?path=' + item.location"
+                    <img v-if="item.type === 'file' && isImageFile(item.name) && getSignedImageUrl(item.location)"
+                      :src="getSignedImageUrl(item.location)"
                       class="file-preview-image" />
 
                     <!-- Icons -->
@@ -317,6 +317,8 @@ export default defineComponent({
       fileSystem: [],
       newFolderName: "",
       imageStatus: {},
+      signedUrls: {}, // Cache for signed URLs
+      projectID: null, // Numeric project ID for signed URLs
       // UI state
       dropdownOpen: false,
       showUpload: false,
@@ -452,12 +454,12 @@ export default defineComponent({
       return imageExtensions.test(filename);
     },
 
+    // Legacy method - no longer needed with signed URLs
     async getImage(location) {
+      // This method is deprecated - now using signed URLs for security
       try {
-        const res = await axios.get(
-          "https://alex.polan.sk/control-center/file_provider.php?path=" + location
-        );
-        this.imageStatus[location] = res.status === 200;
+        const signedUrl = await this.generateSignedUrl(location);
+        this.imageStatus[location] = !!signedUrl;
       } catch (error) {
         this.imageStatus[location] = false;
       }
@@ -747,11 +749,76 @@ export default defineComponent({
       try {
         const response = await axios.get(`filesystem.php?project=${this.$route.params.project}`);
         console.log('Raw file system data:', response.data);
+        
+        // Extract projectID from the first file in the response if available
+        if (response.data && response.data.length > 0) {
+          const findProjectID = (items) => {
+            for (const item of items) {
+              if (item.projectID) return item.projectID;
+              if (item.children) {
+                const id = findProjectID(item.children);
+                if (id) return id;
+              }
+            }
+            return null;
+          };
+          this.projectID = findProjectID(response.data);
+          console.log('Extracted projectID:', this.projectID);
+        }
+        
         this.fileSystem = this.processFileSystemData(response.data);
         console.log('Processed file system data:', this.fileSystem);
+        
+        // Load signed URLs for all images with project context
+        await this.loadSignedUrlsForImages();
       } catch (error) {
         console.error("Error fetching file system data:", error);
       }
+    },
+
+    async loadSignedUrlsForImages() {
+      const imageFiles = [];
+      const projectID = this.projectID;
+      
+      // Collect all image files
+      const collectImages = (items) => {
+        items.forEach(item => {
+          if (item.type === 'file' && this.isImageFile(item.name)) {
+            imageFiles.push({
+              path: item.location,
+              location: item.location,
+              projectID: projectID
+            });
+          }
+          if (item.type === 'folder' && item.children) {
+            collectImages(item.children);
+          }
+        });
+      };
+      
+      collectImages(this.fileSystem);
+      
+      if (imageFiles.length === 0) return;
+      
+      // Request signed URLs in bulk
+      try {
+        const response = await axios.post('signed_url_generator.php', {
+          files: imageFiles,
+          validitySeconds: 3600
+        });
+        
+        if (response.data.success) {
+          response.data.urls.forEach(item => {
+            this.signedUrls[item.originalPath] = item.signedUrl;
+          });
+        }
+      } catch (error) {
+        console.error('Error loading signed URLs:', error);
+      }
+    },
+
+    getSignedImageUrl(location) {
+      return this.signedUrls[location] || '';
     },
 
     processFileSystemData(items) {
@@ -819,14 +886,45 @@ export default defineComponent({
       }
     },
 
+    // Signed URL generation
+    async generateSignedUrl(filePath) {
+      try {
+        const payload = {
+          path: filePath,
+          projectID: this.projectID,
+          validitySeconds: 3600 // 1 hour
+        };
+
+        const response = await axios.post('signed_url_generator.php', payload);
+        
+        if (response.data.success) {
+          return response.data.url;
+        } else {
+          console.error('Failed to generate signed URL:', response.data);
+          return null;
+        }
+      } catch (error) {
+        console.error('Error generating signed URL:', error);
+        return null;
+      }
+    },
+
     // Image preview methods
-    previewImage(file) {
+    async previewImage(file) {
       if (this.isImageFile(file.name)) {
-        this.previewImageUrl = `https://alex.polan.sk/control-center/file_provider.php?path=${file.location}`;
-        this.previewImageName = file.name;
         this.imagePreviewOpen = true;
+        this.previewImageName = file.name;
         this.imageLoaded = false;
         this.imageError = false;
+        this.previewImageUrl = '';
+        
+        // Generate signed URL for secure access
+        const signedUrl = await this.generateSignedUrl(file.location);
+        if (signedUrl) {
+          this.previewImageUrl = signedUrl;
+        } else {
+          this.imageError = true;
+        }
       }
     },
 

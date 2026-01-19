@@ -12,8 +12,12 @@ import Unsplash from '@/Components/MediaLibrary/Unsplash.vue';
 import FilesystemBrowser from '@/Components/MediaLibrary/FilesystemBrowser.vue';
 import SmallUniversalSpinner from '@/Components/Loaders/SmallUniversalSpinner.vue';
 import { useMediaLibraryStore } from '@/stores/media-library';
+import { useProjectStore } from '@/stores/project';
+import { useFetch } from '@/composables/vueFetch';
 
 const mediaLibraryStore = useMediaLibraryStore();
+const projectStore = useProjectStore();
+const { post } = useFetch();
 
 const getCurrentImage = computed(() => {
   return mediaLibraryStore.getCurrentImage;
@@ -24,7 +28,7 @@ const uploadedImage = ref(null);
 const uploadError = ref('');
 const isUploading = ref(false);
 
-const handleFileUpload = (event) => {
+const handleFileUpload = async (event) => {
   const files = event.target.files;
 
   if (!files || files.length === 0) {
@@ -47,28 +51,52 @@ const handleFileUpload = (event) => {
   uploadError.value = '';
   isUploading.value = true;
 
-  const reader = new FileReader();
+  try {
+    const currentProject = projectStore.getCurrentProject;
+    const projectLink = currentProject?.control_center_project?.link;
 
-  reader.onload = (e) => {
-    const imageData = e.target.result;
+    if (!projectLink) {
+      uploadError.value = 'Kein Projekt verbunden';
+      return;
+    }
 
-    uploadedImage.value = {
-      file: imageData,
-      filename: file.name,
-      type: 'upload'
-    };
+    const formData = new FormData();
+    formData.append('files[]', file);
+    formData.append('name', file.name);
+    formData.append('directory', '');
+    formData.append('project', projectLink);
 
-    mediaLibraryStore.setCurrentImage(uploadedImage.value);
+    const token = localStorage.getItem('authToken');
+    const response = await fetch('https://alex.polan.sk/control-center/filesystem.php', {
+      method: 'POST',
+      headers: {
+        'Authorization': token
+      },
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      const imageUrl = 'https://alex.polan.sk/control-center/filesystem.php?path=' + encodeURIComponent(file.name) + '&project=' + encodeURIComponent(projectLink);
+
+      uploadedImage.value = {
+        file: imageUrl,
+        filename: file.name,
+        type: 'upload'
+      };
+
+      mediaLibraryStore.setCurrentImage(uploadedImage.value);
+      selected.value = 'Upload';
+    } else {
+      uploadError.value = result.message || 'Upload fehlgeschlagen';
+    }
+  } catch (error) {
+    console.error('Upload error:', error);
+    uploadError.value = 'Fehler beim Hochladen der Datei.';
+  } finally {
     isUploading.value = false;
-    selected.value = 'Upload';
-  };
-
-  reader.onerror = () => {
-    uploadError.value = 'Fehler beim Lesen der Datei.';
-    isUploading.value = false;
-  };
-
-  reader.readAsDataURL(file);
+  }
 };
 
 const tabs = ref([
@@ -192,8 +220,7 @@ const changeSelectedMenuTab = function (clicked) {
                                 <span v-if="tab.name === 'Unsplash'" class="myMediumIcon material-symbols-outlined">
                                   filter_hdr
                                 </span>
-                                <span v-if="tab.name === 'Filesystem'"
-                                  class="myMediumIcon material-symbols-outlined">
+                                <span v-if="tab.name === 'Filesystem'" class="myMediumIcon material-symbols-outlined">
                                   folder
                                 </span>
                                 <span>

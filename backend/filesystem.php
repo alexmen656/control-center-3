@@ -5,14 +5,14 @@ class FilesystemManager
 {
     private const TYPE_FOLDER = 0;
     private const TYPE_FILE = 1;
-    
+
     private const BASE_PATH = '/data/filesystem';
     private const PROJECT_BASE_PATH = '/data/project_filesystems';
-    
+
     private $tableName;
     private $baseDir;
     private $projectID;
-    
+
     public function __construct($projectLink = null)
     {
         if ($projectLink) {
@@ -23,21 +23,21 @@ class FilesystemManager
             $this->projectID = null;
         }
     }
-    
+
     private function initializeProjectFilesystem($projectLink)
     {
         $projectLink = escape_string($projectLink);
         $projectData = fetch_assoc(query("SELECT projectID FROM projects WHERE link='$projectLink'"));
-        
+
         if (!$projectData || !isset($projectData['projectID'])) {
             throw new Exception('Project not found');
         }
-        
+
         $this->projectID = $projectData['projectID'];
         $this->tableName = 'project_filesystem';
         $this->baseDir = self::PROJECT_BASE_PATH . '/' . $this->projectID;
     }
-    
+
     public function getDirectoryStructure($parentId = 0)
     {
         if ($parentId === 0 && $this->projectID) {
@@ -46,26 +46,26 @@ class FilesystemManager
                 return [];
             }
         }
-        
+
         return $this->buildStructureRecursive($parentId);
     }
-    
+
     private function getRootParentId()
     {
         $sql = "SELECT id FROM {$this->tableName} WHERE name = '' AND projectID = '{$this->projectID}'";
         $result = fetch_assoc(query($sql));
         return $result ? $result['id'] : null;
     }
-    
+
     private function buildStructureRecursive($parentId)
     {
         $result = [];
         $sql = "SELECT * FROM {$this->tableName} WHERE parent = $parentId";
-        
+
         if ($this->projectID) {
             $sql .= " AND projectID = '{$this->projectID}'";
         }
-        
+
         $query = query($sql);
         while ($row = $query->fetch_assoc()) {
             $item = [
@@ -73,142 +73,147 @@ class FilesystemManager
                 'name' => $row['name'],
                 'type' => $row['type'] == self::TYPE_FOLDER ? 'folder' : 'file'
             ];
-            
+
+            // Include projectID if this is a project filesystem
+            if ($this->projectID) {
+                $item['projectID'] = $this->projectID;
+            }
+
             if ($row['type'] == self::TYPE_FOLDER) {
                 $item['children'] = $this->buildStructureRecursive($row['id']);
             } else {
                 $item['location'] = $row['location'];
             }
-            
+
             $result[] = $item;
         }
-        
+
         return $result;
     }
-    
+
     public function moveFile($sourceFile, $targetFolder)
     {
         $sourceFile = escape_string($sourceFile);
         $targetFolder = escape_string($targetFolder);
-        
+
         $sourceData = $this->getFileByLocation($sourceFile);
         if (!$sourceData) {
             throw new Exception('Source file not found');
         }
-        
+
         $targetData = $this->getFolderByName($targetFolder);
         if (!$targetData) {
             throw new Exception('Target folder not found');
         }
-        
+
         $oldFilePath = $this->baseDir . '/' . $sourceFile;
         $newLocation = $targetFolder . '/' . $sourceData['name'];
         $newFilePath = $this->baseDir . '/' . $newLocation;
-        
+
         if (!file_exists($oldFilePath)) {
             throw new Exception('Source file does not exist on filesystem');
         }
-        
+
         if (!rename($oldFilePath, $newFilePath)) {
             throw new Exception('Failed to move file');
         }
-        
+
         try {
             $this->updateFileLocation($sourceData['id'], $newLocation, $targetData['id']);
         } catch (Exception $e) {
             rename($newFilePath, $oldFilePath);
             throw new Exception('Database update failed: ' . $e->getMessage());
         }
-        
+
         return true;
     }
-    
+
     private function getFileByLocation($location)
     {
         $sql = "SELECT * FROM {$this->tableName} WHERE location = '$location'";
         $result = query($sql);
         return $result ? $result->fetch_assoc() : null;
     }
-    
+
     private function getFolderByName($name)
     {
         $sql = "SELECT * FROM {$this->tableName} WHERE name = '$name' AND type = " . self::TYPE_FOLDER;
         $result = query($sql);
         return $result ? $result->fetch_assoc() : null;
     }
-    
+
     private function updateFileLocation($fileId, $newLocation, $newParentId)
     {
         $sql = "UPDATE {$this->tableName} SET location = '$newLocation', parent = $newParentId WHERE id = $fileId";
         $result = query($sql);
-        
+
         if (!$result) {
             throw new Exception('Failed to update database');
         }
     }
-    
+
     public function createFolder($name, $parentName)
     {
         $name = escape_string($name);
         $parentName = escape_string($parentName);
-        
+
         $parentId = $this->getParentId($parentName);
         $folderPath = $this->baseDir . '/' . $parentName . '/' . $name;
-        
+
         if (file_exists($folderPath)) {
             throw new Exception('Folder already exists');
         }
-        
+
         if (!mkdir($folderPath, 0777, true)) {
             throw new Exception('Failed to create folder');
         }
-        
+
         $location = $parentName . '/' . $name;
         $this->insertFilesystemEntry($name, $location, $parentId, self::TYPE_FOLDER);
-        
+
         return true;
     }
-    
+
     public function uploadFile($tmpName, $fileName, $parentName)
     {
         $fileName = escape_string($fileName);
         $parentName = escape_string($parentName);
-        
+
         $parentId = $this->getParentId($parentName);
         $destination = $this->baseDir . '/' . $parentName . '/' . $fileName;
-        
+
         if (!move_uploaded_file($tmpName, $destination)) {
             throw new Exception('Failed to upload file');
         }
-        
+
         $location = $parentName . '/' . $fileName;
         $this->insertFilesystemEntry($fileName, $location, $parentId, self::TYPE_FILE);
-        
+
         return true;
     }
-    
+
     private function getParentId($parentName)
     {
         $sql = "SELECT id FROM {$this->tableName} WHERE name = '$parentName'";
-        
+
         if ($this->projectID) {
             $sql .= " AND projectID = '{$this->projectID}'";
         }
-        
+
         $result = query($sql);
         return $result && $result->num_rows > 0 ? $result->fetch_assoc()['id'] : 0;
     }
-    
+
     private function insertFilesystemEntry($name, $location, $parentId, $type)
     {
         $sql = "INSERT INTO {$this->tableName} (name, location, parent, type";
-        
+
         if ($this->projectID) {
             $sql .= ", projectID) VALUES ('$name', '$location', '$parentId', $type, '{$this->projectID}')";
         } else {
             $sql .= ") VALUES ('$name', '$location', '$parentId', $type)";
         }
-        
+
         $result = query($sql);
         if (!$result) {
             throw new Exception('Failed to insert into database');
@@ -220,7 +225,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $projectLink = isset($_POST['project']) ? $_POST['project'] : null;
         $fs = new FilesystemManager($projectLink);
-        
+
         if (isset($_POST['action']) && $_POST['action'] === 'move') {
             $fs->moveFile($_POST['sourceFile'], $_POST['targetFolder']);
             echo json_encode(['success' => true, 'message' => 'File moved successfully']);
@@ -238,7 +243,7 @@ try {
     } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $projectLink = isset($_GET['project']) ? $_GET['project'] : null;
         $fs = new FilesystemManager($projectLink);
-        
+
         header('Content-Type: application/json');
         echo json_encode($fs->getDirectoryStructure());
     }

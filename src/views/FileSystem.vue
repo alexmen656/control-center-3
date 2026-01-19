@@ -33,11 +33,8 @@
               >
                 <ion-card-header>
                   <img
-                    v-if="item.type === 'file' && isImageFile(item.name)"
-                    :src="
-                      'https://alex.polan.sk/control-center/file_provider.php?path=' +
-                      item.location
-                    "
+                    v-if="item.type === 'file' && isImageFile(item.name) && getSignedImageUrl(item.location)"
+                    :src="getSignedImageUrl(item.location)"
                     @error="imageStatus[item.location] = false"
                     @load="imageStatus[item.location] = true"
                   />
@@ -85,8 +82,8 @@
                         >
                           <ion-card-header>
                             <img
-                              v-if="subItem.type === 'file' && isImageFile(subItem.name)"
-                              :src="'https://alex.polan.sk/control-center/file_provider.php?path=' + subItem.location"
+                              v-if="subItem.type === 'file' && isImageFile(subItem.name) && getSignedImageUrl(subItem.location)"
+                              :src="getSignedImageUrl(subItem.location)"
                               @error="imageStatus[subItem.location] = false"
                               @load="imageStatus[subItem.location] = true"
                             />
@@ -206,8 +203,8 @@
                 >
                   <ion-card-header>
                     <img
-                      v-if="subItem.type === 'file' && isImageFile(subItem.name)"
-                      :src="'https://alex.polan.sk/control-center/file_provider.php?path=' + subItem.location"
+                      v-if="subItem.type === 'file' && isImageFile(subItem.name) && getSignedImageUrl(subItem.location)"
+                      :src="getSignedImageUrl(subItem.location)"
                       @error="imageStatus[subItem.location] = false"
                       @load="imageStatus[subItem.location] = true"
                     />
@@ -267,6 +264,7 @@ export default defineComponent({
       fileSystem: [],
       newFolderName: "", // Neuer Ordnername
       imageStatus: {}, // Status der Bilder
+      signedUrls: {}, // Cache for signed URLs
       // Image preview data
       imagePreviewOpen: false,
       previewImageUrl: "",
@@ -458,12 +456,58 @@ export default defineComponent({
         console.log('Raw file system data:', response.data); // Debug log
         this.fileSystem = this.processFileSystemData(response.data);
         console.log('Processed file system data:', this.fileSystem); // Debug log
+        
+        // Load signed URLs for all images
+        await this.loadSignedUrlsForImages();
       } catch (error) {
         console.error(
           "Es gab ein Problem beim Abrufen der Dateisystemdaten:",
           error
         );
       }
+    },
+
+    async loadSignedUrlsForImages() {
+      const imageFiles = [];
+      
+      // Collect all image files
+      const collectImages = (items) => {
+        items.forEach(item => {
+          if (item.type === 'file' && this.isImageFile(item.name)) {
+            imageFiles.push({
+              path: item.location,
+              location: item.location
+            });
+          }
+          if (item.type === 'folder' && item.children) {
+            collectImages(item.children);
+          }
+        });
+      };
+      
+      collectImages(this.fileSystem);
+      
+      if (imageFiles.length === 0) return;
+      
+      // Request signed URLs in bulk
+      try {
+        const response = await axios.post('signed_url_generator.php', {
+          files: imageFiles,
+          validitySeconds: 3600
+        });
+        
+        if (response.data.success) {
+          response.data.urls.forEach(item => {
+            this.signedUrls[item.originalPath] = item.signedUrl;
+          });
+        }
+      } catch (error) {
+        console.error('Error loading signed URLs:', error);
+      }
+    },
+
+    getSignedImageUrl(location) {
+      return this.signedUrls[location] || '';
     },
 
     processFileSystemData(items) {
@@ -561,19 +605,53 @@ export default defineComponent({
       }
     },
 
+    // Signed URL generation
+    async generateSignedUrl(filePath, projectID = null) {
+      try {
+        const payload = {
+          path: filePath,
+          validitySeconds: 3600 // 1 hour
+        };
+        
+        if (projectID) {
+          payload.projectID = projectID;
+        }
+
+        const response = await axios.post('signed_url_generator.php', payload);
+        
+        if (response.data.success) {
+          return response.data.url;
+        } else {
+          console.error('Failed to generate signed URL:', response.data);
+          return null;
+        }
+      } catch (error) {
+        console.error('Error generating signed URL:', error);
+        return null;
+      }
+    },
+
     // Image preview methods
     isImageFile(filename) {
       const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i;
       return imageExtensions.test(filename);
     },
 
-    previewImage(file) {
+    async previewImage(file) {
       if (this.isImageFile(file.name)) {
-        this.previewImageUrl = `https://alex.polan.sk/control-center/file_provider.php?path=${file.location}`;
-        this.previewImageName = file.name;
         this.imagePreviewOpen = true;
+        this.previewImageName = file.name;
         this.imageLoaded = false;
         this.imageError = false;
+        this.previewImageUrl = '';
+        
+        // Generate signed URL for secure access
+        const signedUrl = await this.generateSignedUrl(file.location);
+        if (signedUrl) {
+          this.previewImageUrl = signedUrl;
+        } else {
+          this.imageError = true;
+        }
       }
     },
 
@@ -906,6 +984,11 @@ ion-card-header > img {
   width: 75%;
   object-fit: cover;
   border-radius: 4px;
+}
+
+ion-card-header > img[src=""],
+ion-card-header > img:not([src]) {
+  display: none;
 }
 
 ion-card-header > ion-icon {
