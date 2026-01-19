@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+    echo json_encode(['success' => false, 'message' => 'Method not allowed'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -29,17 +29,21 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 include_once __DIR__ . '/../config.php';
 require_once '/www/paxar/components/php_head.php';
 
+if (isset($con)) {
+    mysqli_set_charset($con, "utf8mb4");
+}
+
 $action = $_GET['action'] ?? '';
 $projectSlug = $_GET['project'] ?? '';
 
 if (empty($projectSlug)) {
-    echo json_encode(['success' => false, 'message' => 'Project slug required']);
+    echo json_encode(['success' => false, 'message' => 'Project slug required'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 // Validate project slug
 if (!preg_match('/^[a-z0-9-]+$/', $projectSlug)) {
-    echo json_encode(['success' => false, 'message' => 'Invalid project slug']);
+    echo json_encode(['success' => false, 'message' => 'Invalid project slug'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -51,7 +55,7 @@ $projectResult = query("SELECT wb.id, wb.project_id, p.link
                         LIMIT 1");
 
 if (!$projectResult || mysqli_num_rows($projectResult) === 0) {
-    echo json_encode(['success' => false, 'message' => 'Project not found']);
+    echo json_encode(['success' => false, 'message' => 'Project not found'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -69,7 +73,7 @@ switch ($action) {
         handleGetTable();
         break;
     default:
-        echo json_encode(['success' => false, 'message' => 'Unknown action. Available: page, pages, table']);
+        echo json_encode(['success' => false, 'message' => 'Unknown action. Available: page, pages, table'], JSON_UNESCAPED_UNICODE);
 }
 
 /**
@@ -80,7 +84,7 @@ function handleGetPage($wbProjectId)
     $slug = $_GET['slug'] ?? '';
 
     if (empty($slug)) {
-        echo json_encode(['success' => false, 'message' => 'Slug required']);
+        echo json_encode(['success' => false, 'message' => 'Slug required'], JSON_UNESCAPED_UNICODE);
         return;
     }
 
@@ -105,7 +109,7 @@ function handleGetPage($wbProjectId)
     }
 
     if (!$pageResult || mysqli_num_rows($pageResult) === 0) {
-        echo json_encode(['success' => false, 'message' => 'Page not found']);
+        echo json_encode(['success' => false, 'message' => 'Page not found'], JSON_UNESCAPED_UNICODE);
         return;
     }
 
@@ -140,7 +144,7 @@ function handleGetPage($wbProjectId)
             'is_home' => (bool)$page['is_home'],
             'components' => $components
         ]
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 }
 
 /**
@@ -170,7 +174,7 @@ function handleGetPages($wbProjectId)
     echo json_encode([
         'success' => true,
         'data' => $pages
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 }
 
 /**
@@ -185,7 +189,7 @@ function handleGetTable()
     $limit = intval($_GET['limit'] ?? 0);
 
     if (empty($table)) {
-        echo json_encode(['success' => false, 'message' => 'Table name required']);
+        echo json_encode(['success' => false, 'message' => 'Table name required'], JSON_UNESCAPED_UNICODE);
         return;
     }
 
@@ -196,7 +200,7 @@ function handleGetTable()
     $tableExists = query("SHOW TABLES LIKE '$table'");
     if (!$tableExists || mysqli_num_rows($tableExists) === 0) {
         // Return empty array instead of error (table might not exist yet)
-        echo json_encode(['success' => true, 'data' => [], 'count' => 0]);
+        echo json_encode(['success' => true, 'data' => [], 'count' => 0], JSON_UNESCAPED_UNICODE);
         return;
     }
 
@@ -235,5 +239,5 @@ function handleGetTable()
         'success' => true,
         'data' => $data,
         'count' => count($data)
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 }

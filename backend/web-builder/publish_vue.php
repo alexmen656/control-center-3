@@ -88,8 +88,8 @@ if ($deployToServer) {
         $opts = [
             'http' => [
                 'method' => 'POST',
-                'header' => "Content-Type: application/json\r\n",
-                'content' => json_encode($webhookData),
+                'header' => "Content-Type: application/json; charset=utf-8\r\n",
+                'content' => json_encode($webhookData, JSON_UNESCAPED_UNICODE),
                 'timeout' => 30
             ]
         ];

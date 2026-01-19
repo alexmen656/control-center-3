@@ -22,7 +22,7 @@ function logPublish($message)
     error_log("[WebBuilderPublish] $message");
 }
 
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Headers: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Nur POST erlauben
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    die(json_encode(['error' => 'Method not allowed']));
+    die(json_encode(['error' => 'Method not allowed'], JSON_UNESCAPED_UNICODE));
 }
 
 // Request Data einlesen
@@ -49,13 +49,13 @@ logPublish("Publish webhook received: " . substr($json, 0, 500) . "...");
 if (!$data || !isset($data['secret']) || $data['secret'] !== WEBHOOK_SECRET) {
     http_response_code(403);
     logPublish("Invalid secret");
-    die(json_encode(['error' => 'Unauthorized']));
+    die(json_encode(['error' => 'Unauthorized'], JSON_UNESCAPED_UNICODE));
 }
 
 if (!isset($data['project_slug']) || !isset($data['files']) || !is_array($data['files'])) {
     http_response_code(400);
     logPublish("Missing required fields");
-    die(json_encode(['error' => 'Missing required fields: project_slug, files']));
+    die(json_encode(['error' => 'Missing required fields: project_slug, files'], JSON_UNESCAPED_UNICODE));
 }
 
 $projectSlug = $data['project_slug'];
@@ -65,7 +65,7 @@ $files = $data['files'];
 if (!preg_match('/^[a-z0-9-]+$/', $projectSlug)) {
     http_response_code(400);
     logPublish("Invalid project slug: $projectSlug");
-    die(json_encode(['error' => 'Invalid project slug']));
+    die(json_encode(['error' => 'Invalid project slug'], JSON_UNESCAPED_UNICODE));
 }
 
 // Zielverzeichnis
@@ -77,7 +77,7 @@ logPublish("Publishing to: $webRoot");
 if (!is_dir($webRoot)) {
     http_response_code(404);
     logPublish("Web root does not exist: $webRoot");
-    die(json_encode(['error' => 'Web root does not exist. Configure domain first.']));
+    die(json_encode(['error' => 'Web root does not exist. Configure domain first.'], JSON_UNESCAPED_UNICODE));
 }
 
 $publishedFiles = [];
@@ -110,7 +110,12 @@ foreach ($files as $file) {
         @chmod($filePath, 0664);
     }
     
-    if (file_put_contents($filePath, $content) !== false) {
+    // Sicherstelle dass content UTF-8 ist
+    if (!mb_check_encoding($content, 'UTF-8')) {
+        $content = mb_convert_encoding($content, 'UTF-8');
+    }
+    
+    if (file_put_contents($filePath, $content, FILE_TEXT) !== false) {
         // Permissions setzen (group-writable für zukünftige Updates)
         @chown($filePath, 'ftpuser');
         @chgrp($filePath, 'ftpuser');
@@ -144,4 +149,4 @@ $response = [
 logPublish("Publish complete: " . count($publishedFiles) . " files, " . count($errors) . " errors");
 
 http_response_code(count($errors) === 0 ? 200 : 207);
-echo json_encode($response);
+echo json_encode($response, JSON_UNESCAPED_UNICODE);
