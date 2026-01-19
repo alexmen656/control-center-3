@@ -111,11 +111,11 @@ foreach ($files as $file) {
     }
     
     // Sicherstelle dass content UTF-8 ist
-    if (!mb_check_encoding($content, 'UTF-8')) {
-        $content = mb_convert_encoding($content, 'UTF-8');
-    }
+    //if (!mb_check_encoding($content, 'UTF-8')) {
+      //  $content = mb_convert_encoding($content, 'UTF-8');
+    //}
     
-    if (file_put_contents($filePath, $content, FILE_TEXT) !== false) {
+    if (file_put_contents($filePath, $content) !== false) {//, FILE_TEXT
         // Permissions setzen (group-writable für zukünftige Updates)
         @chown($filePath, 'ftpuser');
         @chgrp($filePath, 'ftpuser');

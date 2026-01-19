@@ -96,7 +96,7 @@ if ($deployToServer) {
 
         $context = stream_context_create($opts);
         $response = @file_get_contents(PUBLISH_WEBHOOK_URL, false, $context);
-
+        //error_log("[WebBuilderPublish] Deployment response: " . ($response === false ? 'No response' : substr($response, 0, 500) . '...'));
         $deploymentResult = $response === false
             ? ['success' => false, 'error' => 'Could not reach publish server']
             : json_decode($response, true);
