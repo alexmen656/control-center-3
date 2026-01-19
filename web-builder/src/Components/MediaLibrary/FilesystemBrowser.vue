@@ -2,19 +2,28 @@
 import { ref, computed, onMounted } from 'vue';
 import { useFetch } from '@/composables/vueFetch';
 import { useMediaLibraryStore } from '@/stores/media-library';
+import { useProjectStore } from '@/stores/project';
 
 const mediaLibraryStore = useMediaLibraryStore();
+const projectStore = useProjectStore();
 const { get } = useFetch();
 const fileSystemData = ref([]);
 const currentPath = ref([]);
 const loading = ref(false);
 const error = ref(null);
-const endpoint = '../filesystem.php';
 
 const fetchFileSystem = async () => {
     loading.value = true;
     error.value = null;
     try {
+        const currentProject = projectStore.getCurrentProject;
+        const projectLink = currentProject?.control_center_project?.link;
+
+        let endpoint = '../filesystem.php';
+        if (projectLink) {
+            endpoint += '?project=' + encodeURIComponent(projectLink);
+        }
+
         const response = await get(endpoint);
         fileSystemData.value = response;
         currentPath.value = [];
@@ -52,7 +61,13 @@ const isImage = (filename) => {
 
 const selectFile = (file) => {
     if (isImage(file.name)) {
-        const imageUrl = 'https://alex.polan.sk/control-center/file_provider.php?path=' + file.location;
+        const currentProject = projectStore.getCurrentProject;
+        const projectLink = currentProject?.control_center_project?.link;
+
+        let imageUrl = 'https://alex.polan.sk/control-center/file_provider.php?path=' + file.location;
+        if (projectLink) {
+            imageUrl += '&project=' + encodeURIComponent(projectLink);
+        }
 
         const imageObject = {
             file: imageUrl,
@@ -112,7 +127,7 @@ onMounted(() => {
                             class="material-symbols-outlined text-5xl text-yellow-500 group-hover:scale-110 transition-transform">folder</span>
 
                         <img v-else-if="isImage(item.name)"
-                            :src="'https://alex.polan.sk/control-center/file_provider.php?path=' + item.location"
+                            :src="'https://alex.polan.sk/control-center/file_provider.php?path=' + item.location + (projectStore.getCurrentProject?.control_center_project?.link ? '&project=' + encodeURIComponent(projectStore.getCurrentProject.control_center_project.link) : '')"
                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             loading="lazy" />
 
