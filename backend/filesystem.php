@@ -148,7 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $file_destination = $dir . '/' . $parentName . '/' . $fileName;
                     move_uploaded_file($tmp_name, $file_destination);
                     $file_destination = $parentName . '/' . $fileName;
-                    $insert = query("INSERT INTO project_filesystem (name, location, parent, type, projectID) VALUES ('$fileName', '$file_destination', $parentId, 1, '$projectID')");
+                    $insert = query("INSERT INTO project_filesystem (name, location, parent, type, projectID) VALUES ('$fileName', '$file_destination', '$parentId', 1, '$projectID')");
                     if (!$insert) {
                         echo "error 1";
                         exit;
@@ -160,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!file_exists($folderPath)) {
                     mkdir($folderPath, 0777, true);
                     $folderLocation = $parentName . '/' . $name;
-                    $insert = query("INSERT INTO project_filesystem (name, location, parent, type, projectID) VALUES ('$name', '$folderLocation', $parentId, 0, '$projectID')");
+                    $insert = query("INSERT INTO project_filesystem (name, location, parent, type, projectID) VALUES ('$name', '$folderLocation', '$parentId', 0, '$projectID')");
                     if (!$insert) {
                         echo "error 2";
                         exit;
@@ -212,7 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $file_destination = $dir . '/' . $parentName . '/' . $fileName;
                     move_uploaded_file($tmp_name, $file_destination);
                     $file_destination = $parentName . '/' . $fileName;
-                    $insert = query("INSERT INTO control_center_filesystem (name, location, parent, type) VALUES ('$fileName', '$file_destination', $parentId, 1)");
+                    $insert = query("INSERT INTO control_center_filesystem (name, location, parent, type) VALUES ('$fileName', '$file_destination', '$parentId', 1)");
                     if (!$insert) {
                         echo "error 1";
                         exit;
@@ -224,7 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!file_exists($folderPath)) {
                     mkdir($folderPath, 0777, true);
                     $folderLocation = $parentName . '/' . $name;
-                    $insert = query("INSERT INTO control_center_filesystem (name, location, parent, type) VALUES ('$name', '$folderLocation', $parentId, 0)");
+                    $insert = query("INSERT INTO control_center_filesystem (name, location, parent, type) VALUES ('$name', '$folderLocation', '$parentId', 0)");
                     if (!$insert) {
                         echo "error 2";
                         exit;

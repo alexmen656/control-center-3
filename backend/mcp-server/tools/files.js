@@ -236,6 +236,61 @@ export const fileTools = [
       },
       required: ['project']
     }
+  },
+  {
+    name: 'file_upload_to_filesystem',
+    description: 'Upload a file to the Control Center filesystem or project filesystem',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: 'Name of the file to create'
+        },
+        content: {
+          type: 'string',
+          description: 'File content (base64 encoded for binary files)'
+        },
+        directory: {
+          type: 'string',
+          description: 'Directory path where to upload the file (e.g., "Documents", "Images")',
+          default: ''
+        },
+        project: {
+          type: 'string',
+          description: 'Optional: Project link/slug if uploading to project filesystem'
+        },
+        isBase64: {
+          type: 'boolean',
+          description: 'Whether the content is base64 encoded',
+          default: false
+        }
+      },
+      required: ['name', 'content']
+    }
+  },
+  {
+    name: 'file_create_folder_in_filesystem',
+    description: 'Create a new folder in the Control Center filesystem or project filesystem',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: 'Name of the folder to create'
+        },
+        directory: {
+          type: 'string',
+          description: 'Parent directory path (e.g., "Documents")',
+          default: ''
+        },
+        project: {
+          type: 'string',
+          description: 'Optional: Project link/slug if creating in project filesystem'
+        }
+      },
+      required: ['name']
+    }
   }
 ];
 
@@ -246,40 +301,46 @@ export async function handleFileTool(toolName, args, context) {
   switch (toolName) {
     case 'file_list':
       return await listFiles(args, context);
-      
+
     case 'file_read':
       return await readFile(args, context);
-      
+
     case 'file_create':
       return await createFile(args, context);
-      
+
     case 'file_update':
       return await updateFile(args, context);
-      
+
     case 'file_delete':
       return await deleteFile(args, context);
-      
+
     case 'file_rename':
       return await renameFile(args, context);
-      
+
     case 'file_mkdir':
       return await createDirectory(args, context);
-      
+
     case 'file_search':
       return await searchFiles(args, context);
-      
+
     case 'file_git_status':
       return await gitStatus(args, context);
-      
+
     case 'file_git_commit':
       return await gitCommit(args, context);
-      
+
     case 'file_git_push':
       return await gitPush(args, context);
-      
+
     case 'file_git_pull':
       return await gitPull(args, context);
-      
+
+    case 'file_upload_to_filesystem':
+      return await uploadToFilesystem(args, context);
+
+    case 'file_create_folder_in_filesystem':
+      return await createFolderInFilesystem(args, context);
+
     default:
       return formatError(`Unknown file tool: ${toolName}`);
   }
@@ -298,7 +359,7 @@ async function listFiles(args, context) {
       }
     );
     const data = await response.json();
-    
+
     return formatResponse({
       success: true,
       files: data.files || data
@@ -317,7 +378,7 @@ async function readFile(args, context) {
       }
     );
     const data = await response.json();
-    
+
     return formatResponse({
       success: true,
       content: data.content,
@@ -340,7 +401,7 @@ async function createFile(args, context) {
         content: args.content
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: 'File created successfully',
@@ -363,7 +424,7 @@ async function updateFile(args, context) {
         content: args.content
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: 'File updated successfully',
@@ -385,7 +446,7 @@ async function deleteFile(args, context) {
         path: args.path
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: 'File deleted successfully'
@@ -407,7 +468,7 @@ async function renameFile(args, context) {
         newPath: args.newPath
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: 'File renamed successfully'
@@ -428,7 +489,7 @@ async function createDirectory(args, context) {
         path: args.path
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: 'Directory created successfully'
@@ -450,7 +511,7 @@ async function searchFiles(args, context) {
         searchContent: args.searchContent || false
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       results: data.results || data
@@ -470,7 +531,7 @@ async function gitStatus(args, context) {
         project: args.project
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       status: data.status || data
@@ -492,7 +553,7 @@ async function gitCommit(args, context) {
         files: args.files || []
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: 'Changes committed successfully',
@@ -513,7 +574,7 @@ async function gitPush(args, context) {
         project: args.project
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: 'Changes pushed to remote'
@@ -533,12 +594,72 @@ async function gitPull(args, context) {
         project: args.project
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: 'Latest changes pulled'
     });
   } catch (error) {
     return formatError(error.message);
+  }
+}
+
+async function uploadToFilesystem(args, context) {
+  try {
+    const { name, content, directory = '', project, isBase64 = false } = args;
+
+    const data = await cmsRequest('filesystem_upload.php', {
+      method: 'POST',
+      contentType: 'application/json',
+      body: {
+        action: 'upload_file',
+        name,
+        content,
+        directory,
+        project,
+        isBase64
+      }
+    }, context);
+
+    if (data.success) {
+      return formatResponse({
+        success: true,
+        message: `File "${name}" uploaded successfully to ${project ? `project ${project}` : 'Control Center filesystem'}`,
+        path: data.path
+      });
+    } else {
+      throw new Error(data.message || 'Upload failed');
+    }
+  } catch (error) {
+    return formatError(`Failed to upload file: ${error.message}`);
+  }
+}
+
+async function createFolderInFilesystem(args, context) {
+  try {
+    const { name, directory = '', project } = args;
+
+    const data = await cmsRequest('filesystem_upload.php', {
+      method: 'POST',
+      contentType: 'application/json',
+      body: {
+        action: 'create_folder',
+        name,
+        directory,
+        project
+      }
+    }, context);
+
+    if (data.success) {
+      return formatResponse({
+        success: true,
+        message: `Folder "${name}" created successfully in ${project ? `project ${project}` : 'Control Center filesystem'}`,
+        path: data.path
+      });
+    } else {
+      throw new Error(data.message || 'Folder creation failed');
+    }
+  } catch (error) {
+    return formatError(`Failed to create folder: ${error.message}`);
   }
 }
