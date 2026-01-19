@@ -6,11 +6,13 @@ import { useProjectStore } from '@/stores/project';
 
 const mediaLibraryStore = useMediaLibraryStore();
 const projectStore = useProjectStore();
-const { get } = useFetch();
+const { get, post } = useFetch();
 const fileSystemData = ref([]);
 const currentPath = ref([]);
 const loading = ref(false);
 const error = ref(null);
+const signedUrls = ref({});
+const projectID = ref(null);
 
 const fetchFileSystem = async () => {
     loading.value = true;
@@ -27,12 +29,70 @@ const fetchFileSystem = async () => {
         const response = await get(endpoint);
         fileSystemData.value = response;
         currentPath.value = [];
+
+        if (response && response.length > 0) {
+            const findProjectID = (items) => {
+                for (const item of items) {
+                    if (item.projectID) return item.projectID;
+                    if (item.children) {
+                        const id = findProjectID(item.children);
+                        if (id) return id;
+                    }
+                }
+                return null;
+            };
+            projectID.value = findProjectID(response);
+        }
+
+        await loadSignedUrls();
     } catch (err) {
         console.error(err);
         error.value = 'Fehler beim Laden des Dateisystems.';
     } finally {
         loading.value = false;
     }
+};
+
+const loadSignedUrls = async () => {
+    const imageFiles = [];
+
+    const collectImages = (items) => {
+        items.forEach(item => {
+            if (item.type === 'file' && isImage(item.name)) {
+                imageFiles.push({
+                    path: item.location,
+                    location: item.location,
+                    projectID: projectID.value
+                });
+            }
+            if (item.type === 'folder' && item.children) {
+                collectImages(item.children);
+            }
+        });
+    };
+
+    collectImages(fileSystemData.value);
+
+    if (imageFiles.length === 0) return;
+
+    try {
+        const response = await post('../signed_url_generator.php', {
+            files: imageFiles,
+            validitySeconds: 3600
+        });
+
+        if (response.success) {
+            response.urls.forEach(item => {
+                signedUrls.value[item.originalPath] = item.signedUrl;
+            });
+        }
+    } catch (error) {
+        console.error('Error loading signed URLs:', error);
+    }
+};
+
+const getSignedImageUrl = (location) => {
+    return signedUrls.value[location] || '';
 };
 
 const currentFolderContents = computed(() => {
@@ -61,22 +121,19 @@ const isImage = (filename) => {
 
 const selectFile = (file) => {
     if (isImage(file.name)) {
-        const currentProject = projectStore.getCurrentProject;
-        const projectLink = currentProject?.control_center_project?.link;
+        const imageUrl = getSignedImageUrl(file.location);
 
-        let imageUrl = 'https://alex.polan.sk/control-center/file_provider.php?path=' + file.location;
-        if (projectLink) {
-            imageUrl += '&project=' + encodeURIComponent(projectLink);
+        if (imageUrl) {
+            const imageObject = {
+                file: imageUrl,
+                filename: file.name,
+                type: 'filesystem',
+                location: file.location
+            };
+
+            mediaLibraryStore.setCurrentImage(imageObject);
+            mediaLibraryStore.setCurrentPreviewImage(imageUrl);
         }
-
-        const imageObject = {
-            file: imageUrl,
-            filename: file.name,
-            type: 'filesystem'
-        };
-
-        mediaLibraryStore.setCurrentImage(imageObject);
-        mediaLibraryStore.setCurrentPreviewImage(imageUrl);
     }
 };
 
@@ -126,8 +183,8 @@ onMounted(() => {
                         <span v-if="item.type === 'folder'"
                             class="material-symbols-outlined text-5xl text-yellow-500 group-hover:scale-110 transition-transform">folder</span>
 
-                        <img v-else-if="isImage(item.name)"
-                            :src="'https://alex.polan.sk/control-center/file_provider.php?path=' + item.location + (projectStore.getCurrentProject?.control_center_project?.link ? '&project=' + encodeURIComponent(projectStore.getCurrentProject.control_center_project.link) : '')"
+                        <img v-else-if="isImage(item.name) && getSignedImageUrl(item.location)"
+                            :src="getSignedImageUrl(item.location)"
                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             loading="lazy" />
 
