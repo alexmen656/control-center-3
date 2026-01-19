@@ -1,14 +1,14 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle v-if="true" icon="folder-outline" title="File System"/>
+      <SiteTitle v-if="true" icon="folder-outline" title="File System" />
 
       <div class="page-container">
         <!-- Page Header -->
         <div class="page-header">
           <div class="header-content">
-            <h1>Project File System</h1>
-            <p>Browse and manage your project files and folders</p>
+            <h1><!--Project-->File System</h1>
+            <!--<p>Browse and manage your project files and folders</p>-->
           </div>
           <div class="header-actions">
             <button class="action-btn secondary" @click="refreshFiles">
@@ -61,14 +61,8 @@
         <div v-if="showSearchBox" class="search-container">
           <div class="search-box">
             <ion-icon name="search-outline"></ion-icon>
-            <input 
-              type="text" 
-              placeholder="Search files and folders..." 
-              v-model="searchTerm"
-              class="search-input"
-              autofocus
-              @input="handleSearch"
-            >
+            <input type="text" placeholder="Search files and folders..." v-model="searchTerm" class="search-input"
+              autofocus @input="handleSearch">
             <button v-if="searchTerm" @click="searchTerm = ''" class="clear-search">
               <ion-icon name="close-outline"></ion-icon>
             </button>
@@ -83,15 +77,9 @@
               <ion-icon name="close"></ion-icon>
             </button>
           </div>
-          
-          <div 
-            class="drop-zone" 
-            :class="{ 'drag-over': isRootDragOver }"
-            @dragover.prevent="handleRootDragOver"
-            @drop="handleRootDrop"
-            @dragenter.prevent="handleRootDragEnter"
-            @dragleave="handleRootDragLeave"
-          >
+
+          <div class="drop-zone" :class="{ 'drag-over': isRootDragOver }" @dragover.prevent="handleRootDragOver"
+            @drop="handleRootDrop" @dragenter.prevent="handleRootDragEnter" @dragleave="handleRootDragLeave">
             <form ref="fileform" style="display: none;"></form>
             <ion-icon name="cloud-upload-outline" class="upload-icon"></ion-icon>
             <p class="upload-text">Drop files here or click to select</p>
@@ -100,7 +88,7 @@
               Select Files
             </button>
           </div>
-          
+
           <!-- Upload Progress -->
           <div v-if="uploadPercentage > 0" class="upload-progress">
             <div class="progress-bar">
@@ -108,7 +96,7 @@
             </div>
             <span class="progress-text">{{ uploadPercentage }}%</span>
           </div>
-          
+
           <!-- File Preview List -->
           <div v-if="files.length > 0" class="file-preview-list">
             <h5>Selected Files:</h5>
@@ -127,17 +115,15 @@
           <div class="card-header">
             <div class="header-left">
               <h3>Project Files</h3>
-              <span class="entry-count">{{ filteredFileSystem.length }} item{{ filteredFileSystem.length !== 1 ? 's' : '' }}</span>
+              <span class="entry-count">{{ filteredFileSystem.length }} item{{ filteredFileSystem.length !== 1 ? 's' :
+                '' }}</span>
             </div>
           </div>
 
           <div class="files-wrapper">
-            <div class="files-grid" 
-                 @dragover.prevent="handleRootDragOver"
-                 @drop="handleRootDrop"
-                 @dragenter.prevent="handleRootDragEnter"
-                 @dragleave="handleRootDragLeave">
-              
+            <div class="files-grid" @dragover.prevent="handleRootDragOver" @drop="handleRootDrop"
+              @dragenter.prevent="handleRootDragEnter" @dragleave="handleRootDragLeave">
+
               <!-- No files state -->
               <div v-if="filteredFileSystem.length === 0" class="no-data-state">
                 <div class="no-data-content">
@@ -157,59 +143,41 @@
 
               <!-- File and folder cards -->
               <div v-for="item in filteredFileSystem" :key="item.name" class="file-card-container">
-              <div 
-                class="file-card" 
-                :class="{ 
+                <div class="file-card" :class="{
                   'is-folder': item.type === 'folder',
                   'is-image': item.type === 'file' && isImageFile(item.name),
-                  'drag-over': item.isDragOver 
-                }"
-                @click="handleItemClick(item)"
-                @dragover.prevent="handleDragOver"
-                @dragenter.prevent="e => handleDragEnter(e, item)"
-                @dragleave.prevent="handleDragLeave"
-                @drop="e => handleFolderDrop(e, item)"
-                :draggable="item.type === 'file'"
-                @dragstart="e => handleDragStart(e, item)"
-              >
-                <div class="file-card-content">
-                  <!-- Image preview for image files -->
-                  <img
-                    v-if="item.type === 'file' && isImageFile(item.name)"
-                    :src="'https://alex.polan.sk/control-center/file_provider.php?path=' + item.location"
-                    class="file-preview-image"
-                    @error="onImageError"
-                    @load="onImageLoad"
-                  />
-                  
-                  <!-- Icons for folders and non-image files -->
-                  <ion-icon
-                    v-else
-                    :name="getFileIcon(item)"
-                    class="file-icon"
-                  ></ion-icon>
-                  
-                  <div class="file-info">
-                    <span class="file-name">{{ shortenName(item.name) }}</span>
-                    <span v-if="item.type === 'folder' && item.children" class="file-meta">
-                      {{ item.children.length }} items
-                    </span>
-                    <span v-else-if="item.type === 'file'" class="file-meta">
-                      {{ getFileExtension(item.name) }}
-                    </span>
-                  </div>
-                </div>
+                  'drag-over': item.isDragOver
+                }" @click="handleItemClick(item)" @dragover.prevent="handleDragOver"
+                  @dragenter.prevent="e => handleDragEnter(e, item)" @dragleave.prevent="handleDragLeave"
+                  @drop="e => handleFolderDrop(e, item)" :draggable="item.type === 'file'"
+                  @dragstart="e => handleDragStart(e, item)">
+                  <div class="file-card-content">
+                    <!-- Image preview for image files -->
+                    <img v-if="item.type === 'file' && isImageFile(item.name)"
+                      :src="'https://alex.polan.sk/control-center/file_provider.php?path=' + item.location"
+                      class="file-preview-image" @error="onImageError" @load="onImageLoad" />
 
-                <!-- Folder indicator -->
-                <div v-if="item.type === 'folder'" class="folder-indicator">
-                  <ion-icon name="chevron-forward"></ion-icon>
+                    <!-- Icons for folders and non-image files -->
+                    <ion-icon v-else :name="getFileIcon(item)" class="file-icon"></ion-icon>
+
+                    <div class="file-info">
+                      <span class="file-name">{{ shortenName(item.name) }}</span>
+                      <span v-if="item.type === 'folder' && item.children" class="file-meta">
+                        {{ item.children.length }} items
+                      </span>
+                      <span v-else-if="item.type === 'file'" class="file-meta">
+                        {{ getFileExtension(item.name) }}
+                      </span>
+                    </div>
+                  </div>
+                  <div v-if="item.type === 'folder'" class="folder-indicator">
+                    <ion-icon name="chevron-forward"></ion-icon>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Folder Creation Card -->
         <div class="data-card">
           <div class="card-header">
             <div class="header-left">
@@ -217,139 +185,109 @@
               <span class="entry-count">Quick folder creation</span>
             </div>
           </div>
-          
           <div class="folder-creation">
-            <input 
-              type="text"
-              v-model="newFolderName"
-              placeholder="Enter folder name..."
-              class="folder-input"
-              @keyup.enter="createFolder"
-            />
+            <input type="text" v-model="newFolderName" placeholder="Enter folder name..." class="folder-input"
+              @keyup.enter="createFolder" />
             <button class="folder-button" @click="createFolder" :disabled="!newFolderName.trim()">
               <ion-icon name="folder-outline"></ion-icon>
               Create Folder
             </button>
           </div>
         </div>
-      </div>
-      
-      <!-- Image Preview Modal -->
-      <ion-modal :is-open="imagePreviewOpen" @did-dismiss="closeImagePreview" class="image-preview-modal">
-        <ion-header>
-          <ion-toolbar>
-            <ion-title>{{ previewImageName }}</ion-title>
-            <ion-buttons slot="end">
-              <ion-button @click="closeImagePreview">
-                <ion-icon name="close"></ion-icon>
-              </ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content class="image-preview-content">
-          <div class="image-container">
-            <div v-if="!imageLoaded && !imageError" class="loading-spinner">
-              <ion-spinner></ion-spinner>
-              <p>Loading image...</p>
-            </div>
-            
-            <div v-if="imageError" class="error-message">
-              <ion-icon name="image-outline"></ion-icon>
-              <p>Failed to load image</p>
-            </div>
-            
-            <img
-              v-if="previewImageUrl"
-              :src="previewImageUrl"
-              @load="onImageLoad"
-              @error="onImageError"
-              class="preview-image"
-              :style="{ display: imageLoaded ? 'block' : 'none' }"
-            />
-          </div>
-          <h3 class="preview-title">{{ previewImageName }}</h3>
-        </ion-content>
-      </ion-modal>
+        <ion-modal :is-open="imagePreviewOpen" @did-dismiss="closeImagePreview" class="image-preview-modal">
+          <ion-header>
+            <ion-toolbar>
+              <ion-title>{{ previewImageName }}</ion-title>
+              <ion-buttons slot="end">
+                <ion-button @click="closeImagePreview">
+                  <ion-icon name="close"></ion-icon>
+                </ion-button>
+              </ion-buttons>
+            </ion-toolbar>
+          </ion-header>
+          <ion-content class="image-preview-content">
+            <div class="image-container">
+              <div v-if="!imageLoaded && !imageError" class="loading-spinner">
+                <ion-spinner></ion-spinner>
+                <p>Loading image...</p>
+              </div>
 
-      <!-- Folder Content Modal -->
-      <ion-modal :is-open="folderModalOpen" @did-dismiss="closeFolderModal" class="folder-modal">
-        <ion-header>
-          <ion-toolbar>
-            <ion-title>{{ selectedFolder?.name }}</ion-title>
-            <ion-buttons slot="end">
-              <ion-button @click="closeFolderModal">
-                <ion-icon name="close"></ion-icon>
-              </ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content 
-          class="folder-modal-content"
-          @dragover.prevent="handleModalDragOver"
-          @dragenter.prevent="handleModalDragEnter"
-          @dragleave="handleModalDragLeave"
-          @drop="handleModalDrop"
-        >
-          <div v-if="selectedFolder && selectedFolder.children" class="modal-files-grid">
-            <div v-if="selectedFolder.children.length === 0" class="no-files-state">
-              <ion-icon name="folder-open-outline" class="no-files-icon"></ion-icon>
-              <h4>Empty folder</h4>
-              <p>Drag files here to add them to this folder</p>
+              <div v-if="imageError" class="error-message">
+                <ion-icon name="image-outline"></ion-icon>
+                <p>Failed to load image</p>
+              </div>
+
+              <img v-if="previewImageUrl" :src="previewImageUrl" @load="onImageLoad" @error="onImageError"
+                class="preview-image" :style="{ display: imageLoaded ? 'block' : 'none' }" />
             </div>
-            
-            <div v-for="item in selectedFolder.children" :key="item.name" class="modal-item-card">
-              <div 
-                class="file-card"
-                :class="{ 'is-image': item.type === 'file' && isImageFile(item.name) }"
-                @click="handleModalItemClick(item)"
-                :draggable="item.type === 'file'"
-                @dragstart="e => handleDragStart(e, item)"
-              >
-                <div class="file-card-content">
-                  <!-- Image preview -->
-                  <img
-                    v-if="item.type === 'file' && isImageFile(item.name)"
-                    :src="'https://alex.polan.sk/control-center/file_provider.php?path=' + item.location"
-                    class="file-preview-image"
-                  />
-                  
-                  <!-- Icons -->
-                  <ion-icon
-                    v-else
-                    :name="getFileIcon(item)"
-                    class="file-icon"
-                  ></ion-icon>
-                  
-                  <div class="file-info">
-                    <span class="file-name">{{ shortenName(item.name) }}</span>
-                    <span v-if="item.type === 'file'" class="file-meta">
-                      {{ getFileExtension(item.name) }}
-                    </span>
+            <h3 class="preview-title">{{ previewImageName }}</h3>
+          </ion-content>
+        </ion-modal>
+
+        <!-- Folder Content Modal -->
+        <ion-modal :is-open="folderModalOpen" @did-dismiss="closeFolderModal" class="folder-modal">
+          <ion-header>
+            <ion-toolbar>
+              <ion-title>{{ selectedFolder?.name }}</ion-title>
+              <ion-buttons slot="end">
+                <ion-button @click="closeFolderModal">
+                  <ion-icon name="close"></ion-icon>
+                </ion-button>
+              </ion-buttons>
+            </ion-toolbar>
+          </ion-header>
+          <ion-content class="folder-modal-content" @dragover.prevent="handleModalDragOver"
+            @dragenter.prevent="handleModalDragEnter" @dragleave="handleModalDragLeave" @drop="handleModalDrop">
+            <div v-if="selectedFolder && selectedFolder.children" class="modal-files-grid">
+              <div v-if="selectedFolder.children.length === 0" class="no-files-state">
+                <ion-icon name="folder-open-outline" class="no-files-icon"></ion-icon>
+                <h4>Empty folder</h4>
+                <p>Drag files here to add them to this folder</p>
+              </div>
+
+              <div v-for="item in selectedFolder.children" :key="item.name" class="modal-item-card">
+                <div class="file-card" :class="{ 'is-image': item.type === 'file' && isImageFile(item.name) }"
+                  @click="handleModalItemClick(item)" :draggable="item.type === 'file'"
+                  @dragstart="e => handleDragStart(e, item)">
+                  <div class="file-card-content">
+                    <!-- Image preview -->
+                    <img v-if="item.type === 'file' && isImageFile(item.name)"
+                      :src="'https://alex.polan.sk/control-center/file_provider.php?path=' + item.location"
+                      class="file-preview-image" />
+
+                    <!-- Icons -->
+                    <ion-icon v-else :name="getFileIcon(item)" class="file-icon"></ion-icon>
+
+                    <div class="file-info">
+                      <span class="file-name">{{ shortenName(item.name) }}</span>
+                      <span v-if="item.type === 'file'" class="file-meta">
+                        {{ getFileExtension(item.name) }}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </ion-content>
-      </ion-modal>
-    </div>
+          </ion-content>
+        </ion-modal>
+      </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script>
 import { defineComponent } from "vue";
-import { 
-  IonPage, 
-  IonContent, 
-  IonIcon, 
-  IonModal, 
-  IonHeader, 
-  IonToolbar, 
-  IonTitle, 
-  IonButtons, 
-  IonButton, 
-  IonSpinner 
+import {
+  IonPage,
+  IonContent,
+  IonIcon,
+  IonModal,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonButtons,
+  IonButton,
+  IonSpinner
 } from "@ionic/vue";
 import SiteTitle from "@/components/SiteTitle.vue";
 import axios from "axios";
@@ -409,9 +347,9 @@ export default defineComponent({
       if (!this.searchTerm.trim()) {
         return this.fileSystem;
       }
-      
+
       const searchLower = this.searchTerm.toLowerCase();
-      return this.fileSystem.filter(item => 
+      return this.fileSystem.filter(item =>
         item.name.toLowerCase().includes(searchLower)
       );
     }
@@ -482,7 +420,7 @@ export default defineComponent({
       if (item.type === 'folder') {
         return item.open ? 'folder-open' : 'folder';
       }
-      
+
       const ext = this.getFileExtension(item.name).toLowerCase();
       const iconMap = {
         'js': 'logo-javascript',
@@ -501,7 +439,7 @@ export default defineComponent({
         'mp3': 'musical-notes-outline',
         'wav': 'musical-notes-outline',
       };
-      
+
       return iconMap[ext] || 'document-outline';
     },
 
@@ -611,13 +549,13 @@ export default defineComponent({
     handleRootDrop(event) {
       event.preventDefault();
       this.isRootDragOver = false;
-      
+
       console.log('Root drop event triggered');
-      
+
       // Check if it's a file being dragged from within a folder (modal)
       const dragData = event.dataTransfer.getData('application/json');
       console.log('Drag data:', dragData);
-      
+
       if (dragData) {
         // Moving existing file from folder to root
         const data = JSON.parse(dragData);
@@ -627,7 +565,7 @@ export default defineComponent({
           return;
         }
       }
-      
+
       // Otherwise it's new files from computer
       console.log('Processing new files from computer, count:', event.dataTransfer.files.length);
       for (let i = 0; i < event.dataTransfer.files.length; i++) {
@@ -688,10 +626,10 @@ export default defineComponent({
       if (folder.type === 'folder') {
         folder.isDragOver = false;
       }
-      
+
       // Check if it's a file from computer or existing file
       const dragData = event.dataTransfer.getData('application/json');
-      
+
       if (dragData) {
         // Moving existing file between folders
         const data = JSON.parse(dragData);
@@ -747,11 +685,11 @@ export default defineComponent({
 
     globalDrop(event) {
       if (!this.folderModalOpen) return;
-      
+
       try {
         const dragData = event.dataTransfer.getData('application/json');
         console.log('Global drop event, drag data:', dragData);
-        
+
         if (dragData) {
           const data = JSON.parse(dragData);
           if (data.type === 'existing-file') {
@@ -761,7 +699,7 @@ export default defineComponent({
       } catch (error) {
         console.log('Global drop error (normal if dragging from outside):', error);
       }
-      
+
       this.isModalDragOver = false;
     },
 
@@ -819,7 +757,7 @@ export default defineComponent({
     processFileSystemData(items) {
       return items.map(item => {
         const processedItem = { ...item };
-        
+
         if (item.type === 'folder') {
           processedItem.open = false;
           processedItem.isDragOver = false;
@@ -827,7 +765,7 @@ export default defineComponent({
             processedItem.children = this.processFileSystemData(item.children);
           }
         }
-        
+
         return processedItem;
       });
     },
@@ -872,7 +810,7 @@ export default defineComponent({
 
     updateSelectedFolder() {
       if (this.selectedFolder && this.folderModalOpen) {
-        const updatedFolder = this.fileSystem.find(item => 
+        const updatedFolder = this.fileSystem.find(item =>
           item.name === this.selectedFolder.name && item.type === 'folder'
         );
         if (updatedFolder) {
@@ -918,9 +856,9 @@ export default defineComponent({
         formData.append('sourceFile', file.location);
         formData.append('targetFolder', targetFolder.name);
         formData.append('project', this.$route.params.project);
-        
+
         const response = await axios.post('filesystem.php', formData);
-        
+
         if (response.data.success) {
           this.fetchFileSystemData();
         } else {
@@ -939,11 +877,11 @@ export default defineComponent({
         formData.append('sourceFile', file.location);
         formData.append('targetFolder', '');
         formData.append('project', this.$route.params.project);
-        
+
         console.log('Sending move request to backend...');
         const response = await axios.post('filesystem.php', formData);
         console.log('Backend response:', response.data);
-        
+
         if (response.data.success) {
           this.fetchFileSystemData();
         } else {
@@ -1361,6 +1299,7 @@ export default defineComponent({
   justify-content: space-between;
   align-items: center;
   padding: 24px;
+  background: linear-gradient(135deg, var(--background), var(--surface));
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
   gap: 16px;
@@ -1614,7 +1553,8 @@ export default defineComponent({
   box-shadow: var(--shadow-md);
 }
 
-.loading-spinner, .error-message {
+.loading-spinner,
+.error-message {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1684,13 +1624,13 @@ export default defineComponent({
     --text-secondary: #b0b0b0;
     --text-muted: #707070;
   }
-  
+
   .search-box input,
   .folder-input {
     background: var(--surface);
     color: var(--text-primary);
   }
-  
+
   .drop-zone:hover,
   .drop-zone.drag-over {
     background: rgba(37, 99, 235, 0.1);
@@ -1702,62 +1642,62 @@ export default defineComponent({
   .page-container {
     padding: 16px;
   }
-  
+
   .action-bar {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .action-group-left,
   .action-group-right {
     flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   .action-group-left {
     flex-direction: column;
     align-items: center;
     text-align: center;
   }
-  
+
   .search-box input {
     min-width: 100%;
   }
-  
+
   .files-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 12px;
     padding: 16px;
   }
-  
+
   .file-card {
     height: 140px;
     padding: 12px;
   }
-  
+
   .file-preview-image {
     width: 60px;
     height: 60px;
   }
-  
+
   .file-icon {
     font-size: 36px;
   }
-  
+
   .folder-creation {
     flex-direction: column;
   }
-  
+
   .folder-input {
     width: 100%;
     margin-bottom: 8px;
   }
-  
+
   .folder-button {
     width: 100%;
     justify-content: center;
   }
-  
+
   .modal-files-grid {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
@@ -1767,12 +1707,12 @@ export default defineComponent({
   .files-grid {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
-  
+
   .file-card {
     height: 120px;
     padding: 8px;
   }
-  
+
   .header-content h1 {
     font-size: 24px;
   }
@@ -1784,6 +1724,7 @@ export default defineComponent({
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
