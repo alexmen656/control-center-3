@@ -1,8 +1,6 @@
 <?php
 include 'head.php';
 
-header('Content-Type: application/json');
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Only POST requests allowed']);
     exit;
@@ -18,7 +16,6 @@ if (!$input) {
 $action = $input['action'] ?? 'upload';
 
 if ($action === 'upload_file') {
-    // Upload file with base64 content
     $name = escape_string($input['name'] ?? '');
     $content = $input['content'] ?? '';
     $directory = escape_string($input['directory'] ?? '');
@@ -37,7 +34,6 @@ if ($action === 'upload_file') {
     
     try {
         if ($project) {
-            // Project filesystem
             $projectData = fetch_assoc(query("SELECT projectID FROM projects WHERE link='$project'"));
             if (!$projectData) {
                 echo json_encode(['success' => false, 'message' => 'Project not found']);
@@ -47,7 +43,6 @@ if ($action === 'upload_file') {
             
             $dir = '/data/project_filesystems/' . $projectID;
             
-            // Get parent ID
             $parentQuery = query("SELECT id FROM project_filesystem WHERE name = '$directory' AND projectID = '$projectID'");
             $parentId = $parentQuery ? $parentQuery->fetch_assoc()['id'] : 0;
             
@@ -56,20 +51,17 @@ if ($action === 'upload_file') {
                 exit;
             }
             
-            // Create file path
             $filePath = $dir . '/' . $directory;
             if (!empty($directory)) {
                 $filePath .= '/';
             }
             $filePath .= $name;
             
-            // Ensure directory exists
             $fileDir = dirname($filePath);
             if (!file_exists($fileDir)) {
                 mkdir($fileDir, 0777, true);
             }
             
-            // Decode and write file
             if ($isBase64) {
                 $fileContent = base64_decode($content);
             } else {
@@ -81,17 +73,16 @@ if ($action === 'upload_file') {
                 exit;
             }
             
-            // Update database
             $fileLocation = $directory;
             if (!empty($directory)) {
                 $fileLocation .= '/';
             }
+
             $fileLocation .= $name;
-            
             $insert = query("INSERT INTO project_filesystem (name, location, parent, type, projectID) VALUES ('$name', '$fileLocation', '$parentId', 1, '$projectID')");
             
             if (!$insert) {
-                unlink($filePath); // Rollback file creation
+                unlink($filePath);
                 echo json_encode(['success' => false, 'message' => 'Database insert failed']);
                 exit;
             }
@@ -103,10 +94,8 @@ if ($action === 'upload_file') {
             ]);
             
         } else {
-            // Control Center filesystem
             $dir = '/data/filesystem';
             
-            // Get parent ID
             $parentQuery = query("SELECT id FROM control_center_filesystem WHERE name = '$directory'");
             $parentId = $parentQuery ? $parentQuery->fetch_assoc()['id'] : 0;
             
@@ -115,20 +104,17 @@ if ($action === 'upload_file') {
                 exit;
             }
             
-            // Create file path
             $filePath = $dir . '/' . $directory;
             if (!empty($directory)) {
                 $filePath .= '/';
             }
             $filePath .= $name;
             
-            // Ensure directory exists
             $fileDir = dirname($filePath);
             if (!file_exists($fileDir)) {
                 mkdir($fileDir, 0777, true);
             }
             
-            // Decode and write file
             if ($isBase64) {
                 $fileContent = base64_decode($content);
             } else {
@@ -140,7 +126,6 @@ if ($action === 'upload_file') {
                 exit;
             }
             
-            // Update database
             $fileLocation = $directory;
             if (!empty($directory)) {
                 $fileLocation .= '/';
@@ -150,7 +135,7 @@ if ($action === 'upload_file') {
             $insert = query("INSERT INTO control_center_filesystem (name, location, parent, type) VALUES ('$name', '$fileLocation', '$parentId', 1)");
             
             if (!$insert) {
-                unlink($filePath); // Rollback file creation
+                unlink($filePath);
                 echo json_encode(['success' => false, 'message' => 'Database insert failed']);
                 exit;
             }
@@ -166,7 +151,6 @@ if ($action === 'upload_file') {
     }
     
 } elseif ($action === 'create_folder') {
-    // Create folder
     $name = escape_string($input['name'] ?? '');
     $directory = escape_string($input['directory'] ?? '');
     $project = isset($input['project']) ? escape_string($input['project']) : null;
@@ -178,7 +162,6 @@ if ($action === 'upload_file') {
     
     try {
         if ($project) {
-            // Project filesystem
             $projectData = fetch_assoc(query("SELECT projectID FROM projects WHERE link='$project'"));
             if (!$projectData) {
                 echo json_encode(['success' => false, 'message' => 'Project not found']);
@@ -188,11 +171,9 @@ if ($action === 'upload_file') {
             
             $dir = '/data/project_filesystems/' . $projectID;
             
-            // Get parent ID
             $parentQuery = query("SELECT id FROM project_filesystem WHERE name = '$directory' AND projectID = '$projectID'");
             $parentId = $parentQuery ? $parentQuery->fetch_assoc()['id'] : 0;
             
-            // Create folder path
             $folderPath = $dir . '/' . $directory;
             if (!empty($directory)) {
                 $folderPath .= '/';
@@ -209,7 +190,6 @@ if ($action === 'upload_file') {
                 exit;
             }
             
-            // Update database
             $folderLocation = $directory;
             if (!empty($directory)) {
                 $folderLocation .= '/';
@@ -219,7 +199,7 @@ if ($action === 'upload_file') {
             $insert = query("INSERT INTO project_filesystem (name, location, parent, type, projectID) VALUES ('$name', '$folderLocation', '$parentId', 0, '$projectID')");
             
             if (!$insert) {
-                rmdir($folderPath); // Rollback folder creation
+                rmdir($folderPath);
                 echo json_encode(['success' => false, 'message' => 'Database insert failed']);
                 exit;
             }
@@ -231,14 +211,11 @@ if ($action === 'upload_file') {
             ]);
             
         } else {
-            // Control Center filesystem
             $dir = '/data/filesystem';
             
-            // Get parent ID
             $parentQuery = query("SELECT id FROM control_center_filesystem WHERE name = '$directory'");
             $parentId = $parentQuery ? $parentQuery->fetch_assoc()['id'] : 0;
             
-            // Create folder path
             $folderPath = $dir . '/' . $directory;
             if (!empty($directory)) {
                 $folderPath .= '/';
@@ -255,17 +232,16 @@ if ($action === 'upload_file') {
                 exit;
             }
             
-            // Update database
             $folderLocation = $directory;
             if (!empty($directory)) {
                 $folderLocation .= '/';
             }
+
             $folderLocation .= $name;
-            
             $insert = query("INSERT INTO control_center_filesystem (name, location, parent, type) VALUES ('$name', '$folderLocation', '$parentId', 0)");
             
             if (!$insert) {
-                rmdir($folderPath); // Rollback folder creation
+                rmdir($folderPath);
                 echo json_encode(['success' => false, 'message' => 'Database insert failed']);
                 exit;
             }
