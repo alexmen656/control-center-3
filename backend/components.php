@@ -14,7 +14,7 @@ if (isset($_POST['getComponentsByProject']) && isset($_POST['project'])) {
     $json[$i]['code'] = $c['code'];
     $i++;
   }
-  echo echoJSON($json);
+  echo echoJson($json);
 } elseif (isset($_POST['getCoponent']) && isset($_POST['name']) && isset($_POST['project'])) {
 
   $projectName = escape_string($_POST['project']);
@@ -45,7 +45,7 @@ if (isset($_POST['getComponentsByProject']) && isset($_POST['project'])) {
   $json['name'] = $c['name'];
   $json['type'] = $c['type'];
   $json['content'] = $content;
-  echo echoJSON($json);
+  echo echoJson($json);
 } elseif (isset($_POST['deleteComponent']) && isset($_POST['name']) && isset($_POST['project'])) {
 
 

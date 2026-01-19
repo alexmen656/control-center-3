@@ -24,6 +24,10 @@ include_once __DIR__ . '/../jwt_helper.php';
 include_once __DIR__ . '/../config.php';
 require_once '/www/paxar/components/php_head.php';
 
+if (isset($con)) {
+    mysqli_set_charset($con, "utf8mb4");
+}
+
 /**
  * Send JSON response
  * 
@@ -33,7 +37,7 @@ require_once '/www/paxar/components/php_head.php';
  */
 function sendResponse($data, $statusCode = 200) {
     http_response_code($statusCode);
-    echo json_encode($data);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit();
 }
 
@@ -68,7 +72,7 @@ function sendJsonResponse($status, $message, $statusCode = 200, $data = null) {
     }
     
     http_response_code($statusCode);
-    echo json_encode($response);
+    echo json_encode($response, JSON_UNESCAPED_UNICODE);
     exit();
 }
 
@@ -251,7 +255,7 @@ function debug_log($message, $data = null) {
     $logMessage = "[$timestamp] $message";
     
     if ($data !== null) {
-        $logMessage .= ": " . json_encode($data);
+        $logMessage .= ": " . json_encode($data, JSON_UNESCAPED_UNICODE);
     }
     
     file_put_contents($logFile, $logMessage . PHP_EOL, FILE_APPEND);

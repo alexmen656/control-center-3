@@ -11,4 +11,7 @@ if(!$con = mysqli_connect($dbhost,$dbuser,$dbpass,$dbname))
 	die("failed to connect!");
 }
 
+// Set UTF-8 encoding for proper emoji support
+mysqli_set_charset($con, "utf8mb4");
+
 ?>

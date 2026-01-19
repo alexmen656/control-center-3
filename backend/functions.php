@@ -80,7 +80,7 @@ function randomNumber()
 
 function echoJson($json)
 {
-   return json_encode($json, JSON_PRETTY_PRINT);
+   return json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 }
 
 function getProjectID(string $projectLink): string
@@ -94,7 +94,7 @@ function getProjectID(string $projectLink): string
 
 function showJSON($json)
 {
-   echo json_encode($json, JSON_PRETTY_PRINT);
+   echo json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 }
 
 function checkUserProjectPermission($userID, $projectID)
