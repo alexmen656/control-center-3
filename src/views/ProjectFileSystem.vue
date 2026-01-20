@@ -234,7 +234,7 @@
               <ion-title>{{ previewImageName }}</ion-title>
               <ion-buttons slot="end">
                 <ion-button @click="closeImagePreview">
-                  <ion-icon name="close"></ion-icon>
+                  <ion-icon name="close" />
                 </ion-button>
               </ion-buttons>
             </ion-toolbar>
@@ -615,7 +615,7 @@ export default defineComponent({
     },
 
     handleDragEnter(event) {
-      event.preventDefault(); // allow drop
+      event.preventDefault();
       this.isDragOver = true;
     },
     handleDragLeave(event) {
@@ -625,7 +625,7 @@ export default defineComponent({
     handleDragOver(event) {
       event.preventDefault();
     },
-    handleDrop(event) { // Drop on main area
+    handleDrop(event) {
       event.preventDefault();
       this.isDragOver = false;
 
@@ -641,7 +641,6 @@ export default defineComponent({
       }
     },
 
-    // Item Drag Handlers (Dropping ONTO a folder)
     handleItemDragEnter(event, item) {
       if (item.type === 'folder') item.isDragOver = true;
     },
@@ -709,7 +708,6 @@ export default defineComponent({
       } catch (e) { console.error(e); }
     },
 
-    // ---- Image Preview ----
     async generateSignedUrl(filePath) {
       try {
         const payload = {
@@ -786,7 +784,7 @@ export default defineComponent({
 
 .header-content h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -797,7 +795,6 @@ export default defineComponent({
   gap: 10px;
 }
 
-/* Action Buttons */
 .action-btn {
   display: inline-flex;
   align-items: center;
@@ -993,7 +990,7 @@ export default defineComponent({
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  background: var(--surface);
+  background: var(--background);
   flex-wrap: wrap;
   gap: 16px;
 }
@@ -1014,7 +1011,7 @@ export default defineComponent({
 
 .header-title-row h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--text-primary);
 }
