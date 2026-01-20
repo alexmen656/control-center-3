@@ -190,6 +190,21 @@ Authorization: Bearer <jwt_token>
 | `file_git_commit` | Git Commit |
 | `file_git_push` | Git Push |
 | `file_git_pull` | Git Pull |
+| `file_upload_to_filesystem` | Datei ins Filesystem hochladen |
+| `file_create_folder_in_filesystem` | Ordner im Filesystem erstellen |
+| `file_get_signed_url` | Signierte URL für eine Datei generieren |
+| `file_get_bulk_signed_urls` | Signierte URLs für mehrere Dateien generieren |
+
+### Signed URLs für Filesystem-Bilder in Web Builder
+
+Mit Signed URLs können Bilder aus dem Control Center Filesystem sicher in Web Builder Komponenten verwendet werden.
+
+**Workflow:**
+1. Bild hochladen mit `file_upload_to_filesystem`
+2. Signierte URL generieren mit `file_get_signed_url`
+3. URL in Web Builder HTML verwenden: `<img data-image src="SIGNED_URL" alt="...">`
+
+**Wichtig:** Das `data-image` Attribut ist erforderlich, damit das Bild im Web Builder Page Editor bearbeitbar ist.
 
 ### User-Management
 
@@ -541,6 +556,103 @@ const response = await fetch('http://localhost:3001/mcp/tools/webbuilder_compone
   })
 });
 ```
+
+### Filesystem-Bilder in Web Builder verwenden (Signed URLs)
+
+```javascript
+// Vollständiger Workflow: Bild hochladen und in Web Builder verwenden
+
+// 1. Bild ins Filesystem hochladen (Base64-encoded)
+const uploadResponse = await fetch('http://localhost:3001/mcp/tools/file_upload_to_filesystem', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${jwtToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    name: 'hero-background.jpg',
+    content: 'BASE64_ENCODED_IMAGE_DATA',
+    directory: 'Images',
+    project: 'my-project',  // Optional: für Projekt-Filesystem
+    isBase64: true
+  })
+});
+// Ergebnis: { success: true, path: "Images/hero-background.jpg" }
+
+// 2. Signierte URL für das Bild generieren
+const signedUrlResponse = await fetch('http://localhost:3001/mcp/tools/file_get_signed_url', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${jwtToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    path: 'Images/hero-background.jpg',
+    project: 'my-project',  // Optional: für Projekt-Filesystem
+    validitySeconds: 3600   // 1 Stunde gültig (default)
+  })
+});
+// Ergebnis: {
+//   success: true,
+//   url: "https://domain.com/backend/secure_file_provider.php?path=Images/hero-background.jpg&expires=1234567890&signature=abc123...",
+//   expires: 1234567890,
+//   expiresIn: 3600
+// }
+
+// 3. Signierte URL in Web Builder Komponente verwenden
+const signedUrl = signedUrlResponse.url;
+const componentResponse = await fetch('http://localhost:3001/mcp/tools/webbuilder_component_add', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${jwtToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    pageId: 123,
+    componentId: 'hero-with-image',
+    htmlCode: `
+      <section data-componentid="hero-with-image" style="min-height: 60vh; background-image: url('${signedUrl}'); background-size: cover; display: flex; align-items: center; justify-content: center;">
+        <div style="background: rgba(0,0,0,0.5); padding: 40px; border-radius: 10px; text-align: center; color: white;">
+          <h1>Willkommen</h1>
+          <p>Mit Hintergrundbild aus dem Filesystem</p>
+        </div>
+      </section>
+    `
+  })
+});
+
+// Für mehrere Bilder gleichzeitig: Bulk Signed URLs
+const bulkResponse = await fetch('http://localhost:3001/mcp/tools/file_get_bulk_signed_urls', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${jwtToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    files: [
+      { path: 'Images/photo1.jpg', project: 'my-project' },
+      { path: 'Images/photo2.jpg', project: 'my-project' },
+      { path: 'Images/photo3.jpg' }  // Ohne project = globales Filesystem
+    ],
+    validitySeconds: 7200  // 2 Stunden gültig
+  })
+});
+// Ergebnis: {
+//   success: true,
+//   count: 3,
+//   urls: [
+//     { originalPath: 'Images/photo1.jpg', signedUrl: '...', project: 'my-project', expires: ... },
+//     { originalPath: 'Images/photo2.jpg', signedUrl: '...', project: 'my-project', expires: ... },
+//     { originalPath: 'Images/photo3.jpg', signedUrl: '...', project: null, expires: ... }
+//   ]
+// }
+```
+
+**Hinweis zu Signed URLs:**
+- URLs sind standardmäßig 1 Stunde gültig (max. 24 Stunden)
+- Die Rendering Engine von Web Builder cached die Bilder automatisch
+- Für editierbare Bilder im Page Builder das `data-image` Attribut verwenden: `<img data-image src="SIGNED_URL" alt="...">`
+- Unterstützte Dateitypen: JPEG, PNG, GIF, WebP, SVG, PDF, Text, CSV, JSON, MP4, WebM, MP3, WAV
 
 ## MCP Client Konfiguration
 

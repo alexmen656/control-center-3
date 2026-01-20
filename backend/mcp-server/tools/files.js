@@ -291,6 +291,81 @@ export const fileTools = [
       },
       required: ['name']
     }
+  },
+  {
+    name: 'file_get_signed_url',
+    description: `Generate a signed URL for a file in the Control Center filesystem or project filesystem.
+
+USE CASE: Use this when you need to display images or files from the filesystem in Web Builder components.
+The signed URL provides secure, time-limited access to the file.
+
+WORKFLOW FOR WEB BUILDER IMAGES:
+1. Upload image with file_upload_to_filesystem (returns path like "Images/photo.jpg")
+2. Generate signed URL with this tool
+3. Use the signed URL in your Web Builder component HTML: <img data-image src="SIGNED_URL" alt="...">
+
+The signed URLs are valid for 1 hour by default and can be used directly in <img> tags, CSS backgrounds, or any other HTML element.`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description: 'File path relative to the filesystem root (e.g., "Images/photo.jpg", "Documents/file.pdf")'
+        },
+        project: {
+          type: 'string',
+          description: 'Optional: Project link/slug if accessing project filesystem. Omit for global Control Center filesystem.'
+        },
+        validitySeconds: {
+          type: 'number',
+          description: 'URL validity in seconds (default: 3600 = 1 hour, max: 86400 = 24 hours)',
+          default: 3600
+        }
+      },
+      required: ['path']
+    }
+  },
+  {
+    name: 'file_get_bulk_signed_urls',
+    description: `Generate signed URLs for multiple files at once.
+
+USE CASE: When you need to display multiple filesystem images in a Web Builder component (e.g., image gallery, product images).
+
+WORKFLOW:
+1. List files with file_list to get paths
+2. Generate signed URLs for all needed files with this tool
+3. Use the signed URLs in your Web Builder components
+
+Returns an array of objects with originalPath and signedUrl for each file.`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        files: {
+          type: 'array',
+          description: 'Array of file objects with path and optional project',
+          items: {
+            type: 'object',
+            properties: {
+              path: {
+                type: 'string',
+                description: 'File path relative to filesystem root'
+              },
+              project: {
+                type: 'string',
+                description: 'Optional: Project link/slug for project filesystem'
+              }
+            },
+            required: ['path']
+          }
+        },
+        validitySeconds: {
+          type: 'number',
+          description: 'URL validity in seconds for all URLs (default: 3600)',
+          default: 3600
+        }
+      },
+      required: ['files']
+    }
   }
 ];
 
@@ -340,6 +415,12 @@ export async function handleFileTool(toolName, args, context) {
 
     case 'file_create_folder_in_filesystem':
       return await createFolderInFilesystem(args, context);
+
+    case 'file_get_signed_url':
+      return await getSignedUrl(args, context);
+
+    case 'file_get_bulk_signed_urls':
+      return await getBulkSignedUrls(args, context);
 
     default:
       return formatError(`Unknown file tool: ${toolName}`);
@@ -661,5 +742,80 @@ async function createFolderInFilesystem(args, context) {
     }
   } catch (error) {
     return formatError(`Failed to create folder: ${error.message}`);
+  }
+}
+
+async function getSignedUrl(args, context) {
+  try {
+    const { path, project, validitySeconds = 3600 } = args;
+
+    const body = {
+      path,
+      validitySeconds: Math.min(validitySeconds, 86400) // Max 24 hours
+    };
+
+    if (project) {
+      body.projectID = project;
+    }
+
+    const data = await cmsRequest('signed_url_generator.php', {
+      method: 'POST',
+      contentType: 'application/json',
+      body
+    }, context);
+
+    if (data.success) {
+      return formatResponse({
+        success: true,
+        url: data.url,
+        path: path,
+        project: project || null,
+        expires: data.expires,
+        expiresIn: data.expiresIn,
+        usage: `Use this URL directly in HTML: <img data-image src="${data.url}" alt="...">`
+      });
+    } else {
+      throw new Error(data.error || 'Failed to generate signed URL');
+    }
+  } catch (error) {
+    return formatError(`Failed to generate signed URL: ${error.message}`);
+  }
+}
+
+async function getBulkSignedUrls(args, context) {
+  try {
+    const { files, validitySeconds = 3600 } = args;
+
+    const body = {
+      files: files.map(f => ({
+        path: f.path,
+        projectID: f.project || null
+      })),
+      validitySeconds: Math.min(validitySeconds, 86400) // Max 24 hours
+    };
+
+    const data = await cmsRequest('signed_url_generator.php', {
+      method: 'POST',
+      contentType: 'application/json',
+      body
+    }, context);
+
+    if (data.success) {
+      return formatResponse({
+        success: true,
+        count: data.count,
+        urls: data.urls.map(u => ({
+          originalPath: u.originalPath,
+          signedUrl: u.signedUrl,
+          project: u.projectID || null,
+          expires: u.expires
+        })),
+        usage: 'Use these URLs directly in HTML img tags with data-image attribute for Web Builder editability'
+      });
+    } else {
+      throw new Error(data.error || 'Failed to generate signed URLs');
+    }
+  } catch (error) {
+    return formatError(`Failed to generate bulk signed URLs: ${error.message}`);
   }
 }
