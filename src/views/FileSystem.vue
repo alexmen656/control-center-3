@@ -1,130 +1,97 @@
 <template>
   <ion-page>
     <ion-content>
-      <div class="file-system-grid"
-           @dragover.prevent="handleRootDragOver"
-           @drop="handleRootDrop"
-           @dragenter.prevent="handleRootDragEnter"
-           @dragleave="handleRootDragLeave">
-        <ion-grid>
-          <ion-row>
-            <ion-col 
-              size="6" 
-              size-sm="4" 
-              size-md="3" 
-              size-lg="2" 
-              size-xl="2" 
-              v-for="item in fileSystem" 
-              :key="item.name"
-            >
-              <ion-card
-                @click="item.type === 'folder' ? openFolderModal(item) : null"
-                @dblclick="item.type === 'file' && isImageFile(item.name) && previewImage(item)"
-                @dragover.prevent="item.type === 'folder' && handleDragOver($event)"
-                @dragenter.prevent="item.type === 'folder' && handleDragEnter($event)"
-                @dragleave="item.type === 'folder' && handleDragLeave($event)"
-                @drop="item.type === 'folder' && handleFolderDrop($event, item)"
-                :draggable="item.type === 'file'"
-                @dragstart="item.type === 'file' && handleDragStart($event, item)"
-                :class="{ 
-                  'image-file': item.type === 'file' && isImageFile(item.name),
-                  'drag-over': item.type === 'folder' && item.isDragOver
-                }"
-              >
-                <ion-card-header>
-                  <img
-                    v-if="item.type === 'file' && isImageFile(item.name) && getSignedImageUrl(item.location)"
-                    :src="getSignedImageUrl(item.location)"
-                    @error="imageStatus[item.location] = false"
-                    @load="imageStatus[item.location] = true"
-                  />
-
-                  <ion-icon
-                    v-else
-                    :name="
-                      item.type === 'folder'
-                        ? item.open
-                          ? 'folder-open'
-                          : 'folder'
-                        : 'document'
-                    "
-                  ></ion-icon>
-                  {{ shortenName(item.name) }}
-                </ion-card-header>
-                <ion-card-content v-if="false" style="display: none;">
-                  <!-- Commented out for now - inline folder display -->
-                  <!-- Debug info -->
-                  <div style="font-size: 10px; color: red; padding: 5px;">
-                    DEBUG: open={{ item.open }}, type={{ item.type }}, children={{ item.children ? item.children.length : 'none' }}
-                  </div>
-                  
-                  <div v-if="!item.children || item.children.length === 0" style="padding: 20px; text-align: center; color: #666;">
-                    Ordner ist leer
-                  </div>
-                  <ion-grid v-else>
-                    <ion-row>
-                      <ion-col
-                        size="6"
-                        size-sm="4" 
-                        size-md="6"
-                        size-lg="4"
-                        v-for="subItem in item.children"
-                        :key="subItem.name"
-                      >
-                        <ion-card
-                          class="sub-item-card"
-                          @dblclick="subItem.type === 'file' && isImageFile(subItem.name) && previewImage(subItem)"
-                          :draggable="subItem.type === 'file'"
-                          @dragstart="subItem.type === 'file' && handleDragStart($event, subItem)"
-                          :class="{ 
-                            'image-file': subItem.type === 'file' && isImageFile(subItem.name)
-                          }"
-                        >
-                          <ion-card-header>
-                            <img
-                              v-if="subItem.type === 'file' && isImageFile(subItem.name) && getSignedImageUrl(subItem.location)"
-                              :src="getSignedImageUrl(subItem.location)"
-                              @error="imageStatus[subItem.location] = false"
-                              @load="imageStatus[subItem.location] = true"
-                            />
-                            <ion-icon
-                              v-else
-                              :name="subItem.type === 'folder' ? 'folder' : 'document'"
-                            ></ion-icon>
-                            {{ shortenName(subItem.name) }}
-                          </ion-card-header>
-                        </ion-card>
-                      </ion-col>
-                    </ion-row>
-                  </ion-grid>
-                </ion-card-content>
-              </ion-card>
-            </ion-col>
-          </ion-row>
-        </ion-grid>
-
-        <div id="file-drag-drop">
-          <form ref="fileform">
-            <span class="drop-files">Drop the files here!</span>
-          </form>
-          <progress max="100" :value.prop="uploadPercentage"></progress>
-          <div v-for="(file, key) in files" :key="key" class="file-listing">
-            <img class="preview" v-bind:ref="'preview' + parseInt(key)" />
-            {{ file.name }}
-            <div class="remove-container">
-              <a class="remove" v-on:click="removeFile(key)">Remove</a>
-            </div>
+      <div class="file-system-container">
+        <!-- Toolbar: Breadcrumbs + View Toggle -->
+        <div class="toolbar">
+          <div class="breadcrumbs">
+            <span class="breadcrumb-item" :class="{ active: currentFolderId === rootId }" @click="navigateToRoot">
+              <ion-icon name="home"></ion-icon>
+            </span>
+            <template v-for="(crumb, index) in breadcrumbs" :key="crumb.id">
+              <ion-icon name="chevron-forward" class="breadcrumb-separator"></ion-icon>
+              <span class="breadcrumb-item" :class="{ active: index === breadcrumbs.length - 1 }"
+                @click="navigateToFolder(crumb)">
+                {{ crumb.name }}
+              </span>
+            </template>
+          </div>
+          <div class="view-toggle">
+            <ion-icon name="grid" :class="{ active: viewMode === 'grid' }" @click="viewMode = 'grid'"></ion-icon>
+            <ion-icon name="list" :class="{ active: viewMode === 'table' }" @click="viewMode = 'table'"></ion-icon>
           </div>
         </div>
 
-        <div>
-          <div class="folder-creation">
-            <input v-model="newFolderName" placeholder="Neuer Ordnername" class="folder-input" />
-            <button @click="createFolder" class="folder-button">Ordner erstellen</button>
+        <!-- Grid View -->
+        <div v-if="viewMode === 'grid'" class="grid-view" @dragover.prevent="handleDragOver"
+          @drop="handleDrop($event, currentFolderId)">
+          <div v-for="item in currentItems" :key="item.id" class="grid-item" :class="{
+            'is-folder': item.type === 'folder',
+            'drag-over': item.type === 'folder' && dragOverId === item.id
+          }" :draggable="true" @dragstart="handleDragStart($event, item)"
+            @dragover.prevent="item.type === 'folder' && handleItemDragOver($event, item)"
+            @dragleave="handleItemDragLeave" @drop.stop="item.type === 'folder' && handleDrop($event, item.id)"
+            @click="handleItemClick(item)"
+            @dblclick="item.type === 'file' && isImageFile(item.name) && previewImage(item)">
+            <div class="item-preview">
+              <img v-if="item.type === 'file' && isImageFile(item.name) && getSignedImageUrl(item.location)"
+                :src="getSignedImageUrl(item.location)" @error="imageStatus[item.location] = false" />
+              <ion-icon v-else :name="item.type === 'folder' ? 'folder' : 'document'"></ion-icon>
+            </div>
+            <div class="item-name">{{ shortenName(item.name) }}</div>
           </div>
+        </div>
+
+        <!-- Table View -->
+        <div v-else class="table-view" @dragover.prevent="handleDragOver" @drop="handleDrop($event, currentFolderId)">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Typ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in currentItems" :key="item.id" :class="{
+                'is-folder': item.type === 'folder',
+                'drag-over': item.type === 'folder' && dragOverId === item.id
+              }" :draggable="true" @dragstart="handleDragStart($event, item)"
+                @dragover.prevent="item.type === 'folder' && handleItemDragOver($event, item)"
+                @dragleave="handleItemDragLeave" @drop.stop="item.type === 'folder' && handleDrop($event, item.id)"
+                @click="handleItemClick(item)"
+                @dblclick="item.type === 'file' && isImageFile(item.name) && previewImage(item)">
+                <td class="name-cell">
+                  <ion-icon :name="item.type === 'folder' ? 'folder' : 'document'"></ion-icon>
+                  {{ item.name }}
+                </td>
+                <td>{{ item.type === 'folder' ? 'Ordner' : 'Datei' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty State -->
+        <div v-if="currentItems.length === 0" class="empty-state">
+          <ion-icon name="folder-open"></ion-icon>
+          <p>Ordner ist leer</p>
+        </div>
+
+        <!-- Upload Area -->
+        <div class="upload-area">
+          <div class="drop-zone" @dragover.prevent @drop.prevent="handleFileDrop">
+            <ion-icon name="cloud-upload"></ion-icon>
+            <span>Dateien hier ablegen</span>
+          </div>
+          <progress v-if="uploadPercentage > 0" max="100" :value="uploadPercentage"></progress>
+        </div>
+
+        <!-- Folder Creation -->
+        <div class="folder-creation">
+          <input v-model="newFolderName" placeholder="Neuer Ordnername" @keyup.enter="createFolder" />
+          <button @click="createFolder">Ordner erstellen</button>
         </div>
       </div>
-      
+
       <!-- Image Preview Modal -->
       <ion-modal :is-open="imagePreviewOpen" @did-dismiss="closeImagePreview">
         <ion-header>
@@ -139,85 +106,8 @@
         </ion-header>
         <ion-content class="image-preview-content">
           <div class="image-container">
-            <img 
-              :src="previewImageUrl" 
-              :alt="previewImageName"
-              class="preview-image"
-              @load="imageLoaded = true"
-              @error="imageError = true"
-            />
-            <div v-if="!imageLoaded && !imageError" class="loading-spinner">
-              <ion-spinner></ion-spinner>
-              <p>Lade Bild...</p>
-            </div>
-            <div v-if="imageError" class="error-message">
-              <ion-icon name="alert-circle"></ion-icon>
-              <p>Fehler beim Laden des Bildes</p>
-            </div>
+            <img :src="previewImageUrl" :alt="previewImageName" class="preview-image" />
           </div>
-        </ion-content>
-      </ion-modal>
-
-      <!-- Folder Content Modal -->
-      <ion-modal :is-open="folderModalOpen" @did-dismiss="closeFolderModal">
-        <ion-header>
-          <ion-toolbar>
-            <ion-title>{{ selectedFolder ? selectedFolder.name : 'Ordner' }}</ion-title>
-            <ion-buttons slot="end">
-              <ion-button @click="closeFolderModal">
-                <ion-icon name="close"></ion-icon>
-              </ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content 
-          class="folder-modal-content"
-          @dragover.prevent="handleModalDragOver"
-          @dragenter.prevent="handleModalDragEnter"
-          @dragleave="handleModalDragLeave"
-          @drop="handleModalDrop"
-        >
-          <div v-if="selectedFolder && (!selectedFolder.children || selectedFolder.children.length === 0)" 
-               style="padding: 40px; text-align: center; color: #666;">
-            <ion-icon name="folder-open" style="font-size: 48px; margin-bottom: 16px;"></ion-icon>
-            <p>Ordner ist leer</p>
-          </div>
-          <ion-grid v-else-if="selectedFolder && selectedFolder.children">
-            <ion-row>
-              <ion-col
-                size="6"
-                size-sm="4" 
-                size-md="3"
-                size-lg="3"
-                v-for="subItem in selectedFolder.children"
-                :key="subItem.name"
-              >
-                <ion-card
-                  class="modal-item-card"
-                  @dblclick="subItem.type === 'file' && isImageFile(subItem.name) && previewImage(subItem)"
-                  :draggable="subItem.type === 'file'"
-                  @dragstart="subItem.type === 'file' && handleDragStart($event, subItem)"
-                  :class="{ 
-                    'image-file': subItem.type === 'file' && isImageFile(subItem.name)
-                  }"
-                >
-                  <ion-card-header>
-                    <img
-                      v-if="subItem.type === 'file' && isImageFile(subItem.name) && getSignedImageUrl(subItem.location)"
-                      :src="getSignedImageUrl(subItem.location)"
-                      @error="imageStatus[subItem.location] = false"
-                      @load="imageStatus[subItem.location] = true"
-                    />
-                    <ion-icon
-                      v-else
-                      :name="subItem.type === 'folder' ? 'folder' : 'document'"
-                    ></ion-icon>
-                    {{ shortenName(subItem.name) }}
-                  </ion-card-header>
-                </ion-card>
-              </ion-col>
-            </ion-row>
-          </ion-grid>
         </ion-content>
       </ion-modal>
     </ion-content>
@@ -226,17 +116,16 @@
 
 <script>
 import { defineComponent } from "vue";
-import { 
-  IonPage, 
-  IonContent, 
-  IonIcon, 
-  IonModal, 
-  IonHeader, 
-  IonToolbar, 
-  IonTitle, 
-  IonButtons, 
-  IonButton, 
-  IonSpinner 
+import {
+  IonPage,
+  IonContent,
+  IonIcon,
+  IonModal,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonButtons,
+  IonButton
 } from "@ionic/vue";
 import axios from "axios";
 
@@ -252,250 +141,250 @@ export default defineComponent({
     IonTitle,
     IonButtons,
     IonButton,
-    IonSpinner,
   },
   data() {
     return {
-      name: "",
-      code: "",
-      dragAndDropCapable: false,
-      files: [],
-      uploadPercentage: 0,
       fileSystem: [],
-      newFolderName: "", // Neuer Ordnername
-      imageStatus: {}, // Status der Bilder
-      signedUrls: {}, // Cache for signed URLs
-      // Image preview data
+      rootId: 0,
+      currentFolderId: 0,
+      breadcrumbs: [],
+      viewMode: 'grid',
+      newFolderName: "",
+      uploadPercentage: 0,
+      imageStatus: {},
+      signedUrls: {},
+      dragOverId: null,
+      draggedItem: null,
+      // Image preview
       imagePreviewOpen: false,
       previewImageUrl: "",
       previewImageName: "",
-      imageLoaded: false,
-      imageError: false,
-      // Folder modal data
-      folderModalOpen: false,
-      selectedFolder: null,
-      // Root drag state
-      isRootDragOver: false,
-      // Modal drag state
-      isModalDragOver: false,
     };
   },
-  mounted() {
-    this.dragAndDropCapable = this.determineDragAndDropCapable();
-
-    if (this.dragAndDropCapable) {
-      [
-        "drag",
-        "dragstart",
-        "dragend",
-        "dragover",
-        "dragenter",
-        "dragleave",
-        "drop",
-      ].forEach(
-        function (evt) {
-          this.$refs.fileform.addEventListener(
-            evt,
-            function (e) {
-              e.preventDefault();
-              e.stopPropagation();
-            }.bind(this),
-            false
-          );
-        }.bind(this)
-      );
-
-      this.$refs.fileform.addEventListener(
-        "drop",
-        function (e) {
-          for (let i = 0; i < e.dataTransfer.files.length; i++) {
-            this.files.push(e.dataTransfer.files[i]);
-            this.getImagePreviews();
-          }
-        }.bind(this)
-      );
-
-      // Add global drop listener for modal to root drag & drop
-      document.addEventListener('dragover', this.globalDragOver);
-      document.addEventListener('drop', this.globalDrop);
+  computed: {
+    currentItems() {
+      if (this.currentFolderId === this.rootId) {
+        return this.fileSystem;
+      }
+      return this.findFolderItems(this.fileSystem, this.currentFolderId);
     }
-
-    // Daten vom Server abrufen
+  },
+  mounted() {
     this.fetchFileSystemData();
   },
-
-  beforeUnmount() {
-    // Clean up global listeners
-    document.removeEventListener('dragover', this.globalDragOver);
-    document.removeEventListener('drop', this.globalDrop);
-  },
   methods: {
-    shortenName(name) {
-      if (name.length > 18) {
-        return name.slice(0, 8) + "..." + name.slice(-7);
+    async fetchFileSystemData() {
+      try {
+        const projectLink = this.getProjectLink();
+        const url = projectLink ? `filesystem.php?project=${projectLink}` : 'filesystem.php';
+        const response = await axios.get(url);
+
+        console.log('Backend response:', response.data);
+
+        // Ensure IDs are integers for proper comparison
+        this.rootId = parseInt(response.data.rootId) || 0;
+        this.fileSystem = response.data.items || [];
+
+        // Preserve current folder if valid, otherwise go to root
+        if (this.currentFolderId === 0 || !this.findFolderById(this.fileSystem, this.currentFolderId)) {
+          this.currentFolderId = this.rootId;
+        }
+
+        await this.loadSignedUrlsForImages();
+      } catch (error) {
+        console.error("Fehler beim Laden der Dateisystemdaten:", error);
       }
-      return name;
-    },
-    determineDragAndDropCapable() {
-      const div = document.createElement("div");
-      return (
-        ("draggable" in div || ("ondragstart" in div && "ondrop" in div)) &&
-        "FormData" in window &&
-        "FileReader" in window
-      );
     },
 
-    getImagePreviews() {
-      for (let i = 0; i < this.files.length; i++) {
-        if (/\.(jpe?g|png|gif)$/i.test(this.files[i].name)) {
-          const reader = new FileReader();
-
-          reader.addEventListener(
-            "load",
-            function () {
-              this.$refs["preview" + parseInt(i)][0].src = reader.result;
-            }.bind(this),
-            false
-          );
-
-          reader.readAsDataURL(this.files[i]);
-        } else {
-          this.$nextTick(function () {
-            this.$refs["preview" + parseInt(i)][0].src = "/images/file.png";
-          });
+    findFolderItems(items, folderId) {
+      const targetId = parseInt(folderId);
+      for (const item of items) {
+        if (parseInt(item.id) === targetId && item.type === 'folder') {
+          return item.children || [];
+        }
+        if (item.type === 'folder' && item.children) {
+          const found = this.findFolderItems(item.children, targetId);
+          if (found && found.length > 0) return found;
         }
       }
+      return [];
     },
 
-    handleDrop(event, folder) {
-      // Keep old method for backward compatibility
-      this.handleFolderDrop(event, folder);
-    },
-
-    handleRootDrop(event) {
-      event.preventDefault();
-      
-      console.log('Root drop event triggered');
-      
-      // Check if it's a file being dragged from within a folder (modal)
-      const dragData = event.dataTransfer.getData('application/json');
-      console.log('Drag data:', dragData);
-      
-      if (dragData) {
-        // Moving existing file from folder to root
-        const data = JSON.parse(dragData);
-        console.log('Parsed drag data:', data);
-        if (data.type === 'existing-file') {
-          console.log('Moving file to root:', data.file);
-          this.moveFileToRoot(data.file);
-          return;
+    findFolderById(items, folderId) {
+      const targetId = parseInt(folderId);
+      for (const item of items) {
+        if (parseInt(item.id) === targetId) {
+          return item;
+        }
+        if (item.type === 'folder' && item.children) {
+          const found = this.findFolderById(item.children, targetId);
+          if (found) return found;
         }
       }
-      
-      // Otherwise it's new files from computer
-      console.log('Processing new files from computer, count:', event.dataTransfer.files.length);
-      for (let i = 0; i < event.dataTransfer.files.length; i++) {
-        this.files.push(event.dataTransfer.files[i]);
-      }
-      this.submit("");
+      return null;
     },
 
-    handleRootDragOver(event) {
+    handleItemClick(item) {
+      if (item.type === 'folder') {
+        this.navigateToFolder(item);
+      }
+    },
+
+    navigateToFolder(folder) {
+      this.currentFolderId = parseInt(folder.id);
+      this.updateBreadcrumbs(folder);
+    },
+
+    navigateToRoot() {
+      this.currentFolderId = this.rootId;
+      this.breadcrumbs = [];
+    },
+
+    updateBreadcrumbs(folder) {
+      const existingIndex = this.breadcrumbs.findIndex(b => b.id === folder.id);
+      if (existingIndex >= 0) {
+        this.breadcrumbs = this.breadcrumbs.slice(0, existingIndex + 1);
+      } else {
+        this.breadcrumbs.push({ id: folder.id, name: folder.name });
+      }
+    },
+
+    // Drag and Drop
+    handleDragStart(event, item) {
+      this.draggedItem = item;
+      event.dataTransfer.setData('application/json', JSON.stringify(item));
+      event.dataTransfer.effectAllowed = 'move';
+    },
+
+    handleDragOver(event) {
       event.preventDefault();
       event.dataTransfer.dropEffect = 'move';
     },
 
-    handleRootDragEnter(event) {
+    handleItemDragOver(event, item) {
       event.preventDefault();
-      // No visual indicator needed for root drag
-    },
-
-    handleRootDragLeave(event) {
-      event.preventDefault();
-      // No visual state to reset
-    },
-
-    submit(dir) {
-      if (this.files.length > 0) {
-        const formData = new FormData();
-
-        for (let i = 0; i < this.files.length; i++) {
-          const file = this.files[i];
-          formData.append("files[" + i + "]", file);
-          formData.append("name", file.name); // Dateiname als name-Parameter
-        }
-
-        formData.append("directory", dir);
-
-        this.$axios
-          .post("filesystem.php", formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-            onUploadProgress: function (progressEvent) {
-              this.uploadPercentage = parseInt(
-                Math.round((progressEvent.loaded * 100) / progressEvent.total)
-              );
-            }.bind(this),
-          })
-          .then(() => {
-            console.log("SUCCESS!!");
-            this.fetchFileSystemData(); // Dateisystemdaten nach dem Hochladen erneut abrufen
-          })
-          .catch((err) => {
-            console.log("FAILURE!!", err);
-          });
-      } else {
-        console.log("No files to upload");
+      if (this.draggedItem && this.draggedItem.id !== item.id) {
+        this.dragOverId = item.id;
       }
     },
 
-    async fetchFileSystemData() {
+    handleItemDragLeave() {
+      this.dragOverId = null;
+    },
+
+    async handleDrop(event, targetFolderId) {
+      event.preventDefault();
+      this.dragOverId = null;
+
+      // Check for new files from computer
+      if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+        await this.uploadFiles(event.dataTransfer.files, targetFolderId);
+        return;
+      }
+
+      // Move existing item
+      if (this.draggedItem && this.draggedItem.id !== targetFolderId) {
+        await this.moveItem(this.draggedItem.id, targetFolderId);
+      }
+      this.draggedItem = null;
+    },
+
+    async handleFileDrop(event) {
+      if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+        await this.uploadFiles(event.dataTransfer.files, this.currentFolderId);
+      }
+    },
+
+    async moveItem(sourceId, targetFolderId) {
       try {
-        const response = await axios.get("filesystem.php");
-        console.log('Raw file system data:', response.data); // Debug log
-        this.fileSystem = this.processFileSystemData(response.data);
-        console.log('Processed file system data:', this.fileSystem); // Debug log
-        
-        // Load signed URLs for all images
-        await this.loadSignedUrlsForImages();
+        const formData = new FormData();
+        formData.append('action', 'move');
+        formData.append('sourceId', sourceId);
+        formData.append('targetFolderId', targetFolderId);
+        formData.append('project', this.getProjectLink());
+
+        const response = await axios.post('filesystem.php', formData);
+        if (response.data.success) {
+          await this.fetchFileSystemData();
+        } else {
+          console.error('Move failed:', response.data.message);
+        }
       } catch (error) {
-        console.error(
-          "Es gab ein Problem beim Abrufen der Dateisystemdaten:",
-          error
-        );
+        console.error('Error moving item:', error);
       }
     },
 
+    async uploadFiles(files, parentId) {
+      const formData = new FormData();
+
+      for (let i = 0; i < files.length; i++) {
+        formData.append('files[]', files[i]);
+      }
+      formData.append('parentId', parentId);
+      formData.append('name', files[0].name);
+      formData.append('project', this.getProjectLink());
+
+      try {
+        await axios.post('filesystem.php', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (progressEvent) => {
+            this.uploadPercentage = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          }
+        });
+        this.uploadPercentage = 0;
+        await this.fetchFileSystemData();
+      } catch (error) {
+        console.error('Upload failed:', error);
+        this.uploadPercentage = 0;
+      }
+    },
+
+    async createFolder() {
+      if (!this.newFolderName.trim()) return;
+
+      const formData = new FormData();
+      formData.append('name', this.newFolderName);
+      formData.append('parentId', this.currentFolderId);
+      formData.append('project', this.getProjectLink());
+
+      try {
+        await axios.post('filesystem.php', formData);
+        this.newFolderName = "";
+        await this.fetchFileSystemData();
+      } catch (error) {
+        console.error('Folder creation failed:', error);
+      }
+    },
+
+    getProjectLink() {
+      return this.$route?.params?.project || '';
+    },
+
+    // Image handling
     async loadSignedUrlsForImages() {
       const imageFiles = [];
-      
-      // Collect all image files
+
       const collectImages = (items) => {
         items.forEach(item => {
           if (item.type === 'file' && this.isImageFile(item.name)) {
-            imageFiles.push({
-              path: item.location,
-              location: item.location
-            });
+            imageFiles.push({ path: item.location, location: item.location });
           }
           if (item.type === 'folder' && item.children) {
             collectImages(item.children);
           }
         });
       };
-      
+
       collectImages(this.fileSystem);
-      
+
       if (imageFiles.length === 0) return;
-      
-      // Request signed URLs in bulk
+
       try {
         const response = await axios.post('signed_url_generator.php', {
           files: imageFiles,
           validitySeconds: 3600
         });
-        
+
         if (response.data.success) {
           response.data.urls.forEach(item => {
             this.signedUrls[item.originalPath] = item.signedUrl;
@@ -510,148 +399,25 @@ export default defineComponent({
       return this.signedUrls[location] || '';
     },
 
-    processFileSystemData(items) {
-      return items.map(item => {
-        const processedItem = { ...item };
-        
-        if (item.type === 'folder') {
-          // Initialize folder-specific properties
-          processedItem.open = false;
-          processedItem.isDragOver = false;
-          
-          // Recursively process children if they exist
-          if (item.children && Array.isArray(item.children) && item.children.length > 0) {
-            processedItem.children = this.processFileSystemData(item.children);
-          }
-        }
-        
-        return processedItem;
-      });
-    },
-
-    initializeFolderStates(items) {
-      items.forEach(item => {
-        if (item.type === 'folder') {
-          // Initialize 'open' property if it doesn't exist
-          if (!Object.prototype.hasOwnProperty.call(item, 'open')) {
-            item.open = false;
-          }
-          // Initialize 'isDragOver' property
-          if (!Object.prototype.hasOwnProperty.call(item, 'isDragOver')) {
-            item.isDragOver = false;
-          }
-          
-          // Recursively initialize children if they exist
-          if (item.children && item.children.length > 0) {
-            this.initializeFolderStates(item.children);
-          }
-        }
-      });
-    },
-
-    createFolder() {
-      if (this.newFolderName.trim() !== "") {
-        const formData = new FormData();
-        formData.append("name", this.newFolderName);
-        formData.append("directory", ""); // "/" Wurzelverzeichnis oder aktuelles Verzeichnis
-
-        axios
-          .post("filesystem.php", formData)
-          .then(() => {
-            console.log("Ordner erfolgreich erstellt!");
-            this.fetchFileSystemData(); // Dateisystemdaten nach dem Erstellen des Ordners erneut abrufen
-            this.newFolderName = ""; // Eingabefeld zurücksetzen
-          })
-          .catch((err) => {
-            console.log("Fehler beim Erstellen des Ordners:", err);
-          });
-      } else {
-        console.log("Ordnername darf nicht leer sein");
-      }
-    },
-
-    toggleFolder(folder) {
-      // Commented out for now - using modal instead
-      console.log('Toggling folder:', folder.name, 'current state:', folder.open);
-      folder.open = !folder.open;
-      console.log('New state:', folder.open);
-      
-      // Force Vue to update the DOM
-      this.$forceUpdate();
-    },
-
-    // New folder modal methods
-    openFolderModal(folder) {
-      console.log('Opening folder modal for:', folder.name, 'children:', folder.children);
-      this.selectedFolder = folder;
-      this.folderModalOpen = true;
-    },
-
-    closeFolderModal() {
-      this.folderModalOpen = false;
-      this.selectedFolder = null;
-    },
-
-    updateSelectedFolder() {
-      // Update the selected folder with fresh data from fileSystem
-      if (this.selectedFolder && this.folderModalOpen) {
-        const updatedFolder = this.fileSystem.find(item => 
-          item.type === 'folder' && item.name === this.selectedFolder.name
-        );
-        if (updatedFolder) {
-          this.selectedFolder = updatedFolder;
-          console.log('Updated selected folder with fresh data:', updatedFolder);
-        }
-      }
-    },
-
-    // Signed URL generation
-    async generateSignedUrl(filePath, projectID = null) {
-      try {
-        const payload = {
-          path: filePath,
-          validitySeconds: 3600 // 1 hour
-        };
-        
-        if (projectID) {
-          payload.projectID = projectID;
-        }
-
-        const response = await axios.post('signed_url_generator.php', payload);
-        
-        if (response.data.success) {
-          return response.data.url;
-        } else {
-          console.error('Failed to generate signed URL:', response.data);
-          return null;
-        }
-      } catch (error) {
-        console.error('Error generating signed URL:', error);
-        return null;
-      }
-    },
-
-    // Image preview methods
     isImageFile(filename) {
-      const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i;
-      return imageExtensions.test(filename);
+      return /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(filename);
     },
 
     async previewImage(file) {
-      if (this.isImageFile(file.name)) {
-        this.imagePreviewOpen = true;
-        this.previewImageName = file.name;
-        this.imageLoaded = false;
-        this.imageError = false;
-        this.previewImageUrl = '';
-        
-        // Generate signed URL for secure access
-        const signedUrl = await this.generateSignedUrl(file.location);
-        if (signedUrl) {
-          this.previewImageUrl = signedUrl;
-        } else {
-          this.imageError = true;
+      this.imagePreviewOpen = true;
+      this.previewImageName = file.name;
+
+      try {
+        const response = await axios.post('signed_url_generator.php', {
+          path: file.location,
+          validitySeconds: 3600
+        });
+
+        if (response.data.success) {
+          this.previewImageUrl = response.data.url;
         }
+      } catch (error) {
+        console.error('Error generating preview URL:', error);
       }
     },
 
@@ -659,603 +425,321 @@ export default defineComponent({
       this.imagePreviewOpen = false;
       this.previewImageUrl = '';
       this.previewImageName = '';
-      this.imageLoaded = false;
-      this.imageError = false;
     },
 
-    onImageLoad() {
-      this.imageLoaded = true;
-      this.imageError = false;
-    },
-
-    onImageError() {
-      this.imageError = true;
-      this.imageLoaded = false;
-    },
-
-    removeFile(index) {
-      this.files.splice(index, 1);
-      this.getImagePreviews();
-    },
-
-    // Enhanced drag and drop for moving files between folders
-    handleDragStart(event, file) {
-      console.log('Starting drag for file:', file.name, 'from location:', file.location);
-      event.dataTransfer.setData('application/json', JSON.stringify({
-        type: 'existing-file',
-        file: file
-      }));
-      event.dataTransfer.effectAllowed = 'move';
-    },
-
-    handleDragOver(event) {
-      event.preventDefault();
-      event.dataTransfer.dropEffect = 'move';
-    },
-
-    handleDragEnter(event, folder) {
-      event.preventDefault();
-      folder.isDragOver = true;
-    },
-
-    handleDragLeave(event) {
-      event.preventDefault();
-      // Find the folder and remove drag state
-      this.fileSystem.forEach(item => {
-        if (item.type === 'folder') {
-          item.isDragOver = false;
-        }
-      });
-    },
-
-    handleFolderDrop(event, folder) {
-      event.preventDefault();
-      folder.isDragOver = false;
-      
-      // Check if it's a file from computer or existing file
-      const dragData = event.dataTransfer.getData('application/json');
-      
-      if (dragData) {
-        // Moving existing file between folders
-        const data = JSON.parse(dragData);
-        if (data.type === 'existing-file') {
-          this.moveFileToFolder(data.file, folder);
-        }
-      } else if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
-        // Uploading new files from computer
-        for (let i = 0; i < event.dataTransfer.files.length; i++) {
-          this.files.push(event.dataTransfer.files[i]);
-        }
-        this.submit(folder.name);
+    shortenName(name) {
+      if (name.length > 20) {
+        return name.slice(0, 10) + "..." + name.slice(-7);
       }
-    },
-
-    async moveFileToFolder(file, targetFolder) {
-      try {
-        const formData = new FormData();
-        formData.append('action', 'move');
-        formData.append('sourceFile', file.location);
-        formData.append('targetFolder', targetFolder.name);
-        
-        const response = await axios.post('filesystem.php', formData);
-        
-        if (response.data.success) {
-          console.log('File moved successfully!');
-          this.fetchFileSystemData(); // Refresh the file system
-        } else {
-          console.error('Failed to move file:', response.data.message);
-        }
-      } catch (error) {
-        console.error('Error moving file:', error);
-      }
-    },
-
-    async moveFileToRoot(file) {
-      try {
-        console.log('moveFileToRoot called with:', file);
-        const formData = new FormData();
-        formData.append('action', 'move');
-        formData.append('sourceFile', file.location);
-        formData.append('targetFolder', ''); // Empty string for root directory
-        
-        console.log('Sending move request to backend...');
-        const response = await axios.post('filesystem.php', formData);
-        console.log('Backend response:', response.data);
-        
-        if (response.data.success) {
-          console.log('File moved to root successfully!');
-          await this.fetchFileSystemData(); // Refresh the file system
-          // Update the modal with refreshed folder data
-          this.updateSelectedFolder();
-          // Keep modal open so user can continue working with other files
-        } else {
-          console.error('Failed to move file to root:', response.data.message);
-        }
-      } catch (error) {
-        console.error('Error moving file to root:', error);
-      }
-    },
-
-    // Modal drag handlers
-    handleModalDragOver(event) {
-      event.preventDefault();
-      console.log('Modal drag over');
-    },
-
-    handleModalDragEnter(event) {
-      event.preventDefault();
-      console.log('Modal drag enter');
-      // Only set drag state if we're entering from outside
-      if (!this.isModalDragOver) {
-        this.isModalDragOver = true;
-      }
-    },
-
-    handleModalDragLeave(event) {
-      event.preventDefault();
-      console.log('Modal drag leave');
-      // Only reset drag state if we're really leaving the modal content area
-      if (!event.currentTarget.contains(event.relatedTarget)) {
-        this.isModalDragOver = false;
-      }
-    },
-
-    handleModalDrop(event) {
-      event.preventDefault();
-      console.log('Modal drop - preventing default behavior');
-      this.isModalDragOver = false;
-      // Do nothing - we want the file to be moved to root instead
-      // The actual move happens when dropped outside the modal
-    },
-
-    // Global drag handlers for modal to root functionality
-    globalDragOver(event) {
-      // Check if we're dragging a file from modal
-      const dragData = event.dataTransfer?.types?.includes('application/json');
-      if (dragData && this.folderModalOpen) {
-        event.preventDefault();
-        console.log('Global drag over detected');
-      }
-    },
-
-    globalDrop(event) {
-      // Only handle if modal is open and we have drag data
-      if (!this.folderModalOpen) return;
-      
-      try {
-        const dragData = event.dataTransfer.getData('application/json');
-        console.log('Global drop event, drag data:', dragData);
-        
-        if (dragData) {
-          event.preventDefault();
-          const data = JSON.parse(dragData);
-          if (data.type === 'existing-file') {
-            console.log('Moving file to root via global drop:', data.file);
-            this.moveFileToRoot(data.file);
-          }
-        }
-      } catch (error) {
-        console.log('Global drop error (normal if dragging from outside):', error);
-      }
-      
-      // Reset modal drag state
-      this.isModalDragOver = false;
-    },
-  },
+      return name;
+    }
+  }
 });
 </script>
 
 <style scoped>
-ion-icon {
-  margin-right: 8px;
+.file-system-container {
+  padding: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-form {
-  display: none; /* Verstecke das alte Drop-Formular */
-}
-
-div.file-listing {
-  width: 400px;
-  margin: auto;
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-div.file-listing img {
-  height: 100px;
-}
-
-div.remove-container {
-  text-align: center;
-}
-
-div.remove-container a {
-  color: red;
-  cursor: pointer;
-}
-
-a.submit-button {
-  display: block;
-  margin: auto;
-  text-align: center;
-  width: 200px;
-  padding: 10px;
-  text-transform: uppercase;
-  background-color: #ccc;
-  color: white;
-  font-weight: bold;
-  margin-top: 20px;
-}
-
-progress {
-  width: 400px;
-  margin: auto;
-  display: block;
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-ion-card {
-  cursor: pointer;
-  transition: transform 0.2s;
-  aspect-ratio: 1 / 1;
-  padding: 0;
-  text-align: center;
-  min-height: 120px; /* Ensure minimum height for mobile */
-}
-
-/* Mobile optimizations */
-@media (max-width: 768px) {
-  ion-card {
-    min-height: 100px;
-    margin-bottom: 8px;
-  }
-  
-  ion-card-header {
-    padding: 4px !important;
-    font-size: 0.85rem;
-  }
-  
-  ion-card-header > img {
-    max-height: 60%;
-  }
-  
-  ion-card-header > ion-icon {
-    height: 60%;
-    width: 60%;
-  }
-  
-  .file-system-grid {
-    padding: 8px;
-  }
-}
-
-/* Tablet optimizations */
-@media (min-width: 769px) and (max-width: 1024px) {
-  ion-card {
-    min-height: 110px;
-  }
-  
-  ion-card-header {
-    padding: 6px;
-    font-size: 0.9rem;
-  }
-}
-
-ion-row {
+/* Toolbar */
+.toolbar {
   display: flex;
-  display: -webkit-flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--ion-color-light);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
-ion-card:hover {
-  transform: scale(1.05);
+.breadcrumb-item {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--ion-color-medium);
+  transition: all 0.2s;
 }
 
-.drop-files {
-  font-size: 18px;
-  color: #333;
+.breadcrumb-item:hover {
+  background: var(--ion-color-light-shade);
+  color: var(--ion-color-dark);
 }
 
-.file-listing {
+.breadcrumb-item.active {
+  color: var(--ion-color-primary);
+  font-weight: 500;
+}
+
+.breadcrumb-separator {
+  color: var(--ion-color-medium);
+  font-size: 12px;
+}
+
+.view-toggle {
   display: flex;
+  gap: 8px;
+}
+
+.view-toggle ion-icon {
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  color: var(--ion-color-medium);
+  transition: all 0.2s;
+}
+
+.view-toggle ion-icon:hover {
+  background: var(--ion-color-light-shade);
+}
+
+.view-toggle ion-icon.active {
+  color: var(--ion-color-primary);
+  background: var(--ion-color-primary-tint);
+}
+
+/* Grid View */
+.grid-view {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 16px;
+  min-height: 200px;
+}
+
+.grid-item {
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  padding: 16px 8px;
+  background: var(--ion-color-light);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
 }
 
-.file-listing img.preview {
-  margin-right: 10px;
+.grid-item:hover {
+  background: var(--ion-color-light-shade);
+  transform: translateY(-2px);
 }
 
-.file-listing .remove-container {
-  margin-left: auto;
+.grid-item.drag-over {
+  border-color: var(--ion-color-primary);
+  background: var(--ion-color-primary-tint);
 }
 
-ion-card-header {
+.item-preview {
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
-  height: 100%;
-  padding: 8px;
+  margin-bottom: 8px;
 }
 
-ion-card-header > img {
-  height: 75%;
-  width: 75%;
+.item-preview img {
+  max-width: 100%;
+  max-height: 100%;
   object-fit: cover;
   border-radius: 4px;
 }
 
-ion-card-header > img[src=""],
-ion-card-header > img:not([src]) {
-  display: none;
+.item-preview ion-icon {
+  font-size: 48px;
+  color: var(--ion-color-medium);
 }
 
-ion-card-header > ion-icon {
-  height: 75%;
-  width: 75%;
+.grid-item.is-folder .item-preview ion-icon {
+  color: var(--ion-color-warning);
 }
 
-.image-preview-modal {
-  --width: 90%;
-  --max-width: 800px;
-  --height: auto;
-  --max-height: 90%;
+.item-name {
+  font-size: 12px;
+  text-align: center;
+  word-break: break-word;
+  color: var(--ion-color-dark);
 }
 
-.image-preview-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-}
-
-.image-container {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
+/* Table View */
+.table-view {
   min-height: 200px;
 }
 
-.preview-image {
-  max-width: 100%;
-  max-height: 70vh;
-  object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.table-view table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.loading-spinner, .error-message {
+.table-view th,
+.table-view td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--ion-color-light-shade);
+}
+
+.table-view th {
+  background: var(--ion-color-light);
+  font-weight: 600;
+  color: var(--ion-color-medium);
+}
+
+.table-view tr {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.table-view tbody tr:hover {
+  background: var(--ion-color-light);
+}
+
+.table-view tr.drag-over {
+  background: var(--ion-color-primary-tint);
+}
+
+.name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.name-cell ion-icon {
+  font-size: 24px;
+  color: var(--ion-color-medium);
+}
+
+.table-view tr.is-folder .name-cell ion-icon {
+  color: var(--ion-color-warning);
+}
+
+/* Empty State */
+.empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 20px;
+  padding: 60px 20px;
+  color: var(--ion-color-medium);
 }
 
-.loading-spinner ion-spinner {
-  margin-bottom: 10px;
+.empty-state ion-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
 }
 
-.error-message {
-  color: var(--ion-color-danger);
+/* Upload Area */
+.upload-area {
+  margin-top: 24px;
 }
 
-.error-message ion-icon {
-  font-size: 48px;
-  margin-bottom: 10px;
+.drop-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  border: 2px dashed var(--ion-color-medium);
+  border-radius: 8px;
+  color: var(--ion-color-medium);
+  transition: all 0.2s;
 }
 
-.preview-title {
-  margin-top: 16px;
-  text-align: center;
-  font-weight: 500;
-  color: var(--ion-color-dark);
-  word-break: break-all;
+.drop-zone:hover {
+  border-color: var(--ion-color-primary);
+  color: var(--ion-color-primary);
 }
 
-/* Enhanced hover effect for image files */
-ion-card.image-file:hover {
-  transform: scale(1.08);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+.drop-zone ion-icon {
+  font-size: 24px;
 }
 
-ion-card.image-file {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+progress {
+  width: 100%;
+  height: 8px;
+  margin-top: 12px;
+  border-radius: 4px;
 }
 
-/* Cursor pointer for clickable image files */
-ion-card.image-file {
-  cursor: pointer;
-}
-
-/* Drag and drop styling */
-ion-card[draggable="true"] {
-  cursor: grab;
-}
-
-ion-card[draggable="true"]:active {
-  cursor: grabbing;
-}
-
-ion-card.drag-over {
-  background-color: var(--ion-color-primary-tint);
-  border: 2px dashed var(--ion-color-primary);
-  transform: scale(1.02);
-}
-
-ion-card.drag-over ion-card-header {
-  opacity: 0.8;
-}
-
-/* Folder creation styling */
+/* Folder Creation */
 .folder-creation {
   display: flex;
-  gap: 10px;
-  margin: 16px;
-  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
 }
 
-.folder-input {
+.folder-creation input {
   flex: 1;
-  padding: 12px;
-  border: 2px solid var(--ion-color-light);
+  padding: 12px 16px;
+  border: 1px solid var(--ion-color-light-shade);
   border-radius: 8px;
-  font-size: 16px;
-  background: var(--ion-color-light-tint);
+  font-size: 14px;
 }
 
-.folder-input:focus {
-  border-color: var(--ion-color-primary);
+.folder-creation input:focus {
   outline: none;
+  border-color: var(--ion-color-primary);
 }
 
-.folder-button {
-  padding: 12px 20px;
+.folder-creation button {
+  padding: 12px 24px;
   background: var(--ion-color-primary);
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 16px;
   cursor: pointer;
+  font-size: 14px;
   white-space: nowrap;
 }
 
-.folder-button:hover {
+.folder-creation button:hover {
   background: var(--ion-color-primary-shade);
 }
 
-/* Progress bar mobile optimization */
-progress {
-  width: 100%;
-  max-width: 400px;
-  margin: auto;
-  display: block;
-  margin-top: 20px;
-  margin-bottom: 20px;
+/* Image Preview */
+.image-preview-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Mobile specific adjustments */
+.image-container {
+  padding: 20px;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* Mobile */
 @media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .grid-view {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+  }
+
   .folder-creation {
     flex-direction: column;
-    margin: 12px;
   }
-  
-  .folder-input {
+
+  .folder-creation button {
     width: 100%;
-    margin-bottom: 8px;
-  }
-  
-  .folder-button {
-    width: 100%;
-    padding: 14px;
-  }
-  
-  progress {
-    width: calc(100% - 32px);
-    margin: 16px;
-  }
-  
-  .drop-files {
-    font-size: 16px;
-    padding: 16px;
-  }
-  
-  #file-drag-drop {
-    margin: 16px;
-  }
-  
-  .sub-item-card {
-    min-height: 80px;
-  }
-  
-  .sub-item-card ion-card-header {
-    padding: 4px;
-    font-size: 0.75rem;
   }
 }
-
-/* Sub-item cards styling */
-.sub-item-card {
-  cursor: pointer;
-  transition: transform 0.2s;
-  aspect-ratio: 1 / 1;
-  padding: 0;
-  text-align: center;
-  min-height: 100px;
-  margin: 4px 0;
-  background: var(--ion-color-light-tint);
-  border: 1px solid var(--ion-color-light-shade);
-}
-
-.sub-item-card:hover {
-  transform: scale(1.03);
-  background: var(--ion-color-light);
-}
-
-.sub-item-card ion-card-header {
-  padding: 6px;
-  font-size: 0.8rem;
-}
-
-.sub-item-card ion-card-header > img {
-  height: 60%;
-  width: 60%;
-  object-fit: cover;
-  border-radius: 3px;
-}
-
-.sub-item-card ion-card-header > ion-icon {
-  height: 60%;
-  width: 60%;
-}
-
-/* Modal item cards styling */
-.modal-item-card {
-  cursor: pointer;
-  transition: transform 0.2s;
-  aspect-ratio: 1 / 1;
-  padding: 0;
-  text-align: center;
-  min-height: 120px;
-  margin: 8px 0;
-  background: var(--ion-color-light);
-  border: 1px solid var(--ion-color-medium);
-}
-
-.modal-item-card:hover {
-  transform: scale(1.05);
-  background: var(--ion-color-light-shade);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.modal-item-card ion-card-header {
-  padding: 8px;
-  font-size: 0.85rem;
-}
-
-.modal-item-card ion-card-header > img {
-  height: 70%;
-  width: 70%;
-  object-fit: cover;
-  border-radius: 4px;
-}
-
-.modal-item-card ion-card-header > ion-icon {
-  height: 70%;
-  width: 70%;
-}
-
-.folder-modal-content {
-  padding: 16px;
-}
-
-/* Root drag and drop styling */
-
-/* Modal drag styling removed - no longer needed */
 </style>

@@ -13,11 +13,14 @@ class FilesystemManager
     {
         return sprintf(
             '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
             mt_rand(0, 0xffff),
             mt_rand(0, 0x0fff) | 0x4000,
             mt_rand(0, 0x3fff) | 0x8000,
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff)
         );
     }
 
@@ -55,18 +58,24 @@ class FilesystemManager
         if ($parentId === 0 && $this->projectID) {
             $parentId = $this->getRootParentId();
             if (!$parentId) {
-                return [];
+                return ['rootId' => null, 'items' => []];
             }
         }
 
-        return $this->buildStructureRecursive($parentId);
+        return [
+            'rootId' => $this->projectID ? $this->getRootParentId() : 0,
+            'items' => $this->buildStructureRecursive($parentId)
+        ];
     }
 
-    private function getRootParentId()
+    public function getRootParentId()
     {
+        if (!$this->projectID) {
+            return 0;
+        }
         $sql = "SELECT id FROM {$this->tableName} WHERE name = '' AND projectID = '{$this->projectID}'";
         $result = fetch_assoc(query($sql));
-        return $result ? $result['id'] : null;
+        return $result ? intval($result['id']) : null;
     }
 
     private function buildStructureRecursive($parentId)
@@ -81,20 +90,19 @@ class FilesystemManager
         $query = query($sql);
         while ($row = $query->fetch_assoc()) {
             $item = [
-                'id' => $row['id'],
+                'id' => intval($row['id']),
                 'name' => $row['name'],
-                'type' => $row['type'] == self::TYPE_FOLDER ? 'folder' : 'file'
+                'type' => $row['type'] == self::TYPE_FOLDER ? 'folder' : 'file',
+                'parent' => intval($row['parent']),
+                'location' => $row['location']
             ];
 
-            // Include projectID if this is a project filesystem
             if ($this->projectID) {
                 $item['projectID'] = $this->projectID;
             }
 
             if ($row['type'] == self::TYPE_FOLDER) {
                 $item['children'] = $this->buildStructureRecursive($row['id']);
-            } else {
-                $item['location'] = $row['location'];
             }
 
             $result[] = $item;
@@ -103,37 +111,38 @@ class FilesystemManager
         return $result;
     }
 
-    public function moveFile($sourceFile, $targetFolder)
+    public function moveItem($sourceItemId, $targetFolderId)
     {
-        $sourceFile = escape_string($sourceFile);
-        $targetFolder = escape_string($targetFolder);
+        $sourceItemId = intval($sourceItemId);
+        $targetFolderId = intval($targetFolderId);
 
-        $sourceData = $this->getFileByLocation($sourceFile);
+        $sourceData = $this->getItemById($sourceItemId);
         if (!$sourceData) {
-            throw new Exception('Source file not found');
+            throw new Exception('Source item not found');
         }
 
-        $targetData = $this->getFolderByName($targetFolder);
-        if (!$targetData) {
-            throw new Exception('Target folder not found');
+        if ($targetFolderId !== 0) {
+            $targetData = $this->getItemById($targetFolderId);
+            if (!$targetData || $targetData['type'] != self::TYPE_FOLDER) {
+                throw new Exception('Target folder not found');
+            }
+        } elseif ($this->projectID) {
+            $targetFolderId = $this->getRootParentId();
+            if (!$targetFolderId) {
+                throw new Exception('Root folder not found');
+            }
         }
 
-        // Location bleibt UUID-basiert, nur parent wird geändert
-        $this->updateFileParent($sourceData['id'], $targetData['id']);
-
+        $this->updateFileParent($sourceItemId, $targetFolderId);
         return true;
     }
 
-    private function getFileByLocation($location)
+    private function getItemById($id)
     {
-        $sql = "SELECT * FROM {$this->tableName} WHERE location = '$location'";
-        $result = query($sql);
-        return $result ? $result->fetch_assoc() : null;
-    }
-
-    private function getFolderByName($name)
-    {
-        $sql = "SELECT * FROM {$this->tableName} WHERE name = '$name' AND type = " . self::TYPE_FOLDER;
+        $sql = "SELECT * FROM {$this->tableName} WHERE id = $id";
+        if ($this->projectID) {
+            $sql .= " AND projectID = '{$this->projectID}'";
+        }
         $result = query($sql);
         return $result ? $result->fetch_assoc() : null;
     }
@@ -148,64 +157,55 @@ class FilesystemManager
         }
     }
 
-    public function createFolder($name, $parentName)
+    public function createFolder($name, $parentId)
     {
         $name = escape_string($name);
-        $parentName = escape_string($parentName);
+        $parentId = intval($parentId);
 
-        $parentId = $this->getParentId($parentName);
-        $uuid = self::generateUUID();
-        $folderPath = $this->baseDir . '/' . $uuid;
-
-        if (!mkdir($folderPath, 0777, true)) {
-            throw new Exception('Failed to create folder');
+        if ($parentId === 0 && $this->projectID) {
+            $parentId = $this->getRootParentId();
         }
 
-        $this->insertFilesystemEntry($name, $uuid, $parentId, self::TYPE_FOLDER);//'/'.
-
+        $this->insertFilesystemEntry($name, null, $parentId, self::TYPE_FOLDER);
         return true;
     }
 
-    public function uploadFile($tmpName, $fileName, $parentName)
+    public function uploadFile($tmpName, $fileName, $parentId)
     {
         $fileName = escape_string($fileName);
-        $parentName = escape_string($parentName);
+        $parentId = intval($parentId);
 
-        $parentId = $this->getParentId($parentName);
+        if ($parentId === 0 && $this->projectID) {
+            $parentId = $this->getRootParentId();
+        }
+
         $uuid = self::generateUUID();
         $extension = pathinfo($fileName, PATHINFO_EXTENSION);
         $location = $extension ? $uuid . '.' . $extension : $uuid;
+
+        if (!is_dir($this->baseDir)) {
+            mkdir($this->baseDir, 0777, true);
+        }
+
         $destination = $this->baseDir . '/' . $location;
 
         if (!move_uploaded_file($tmpName, $destination)) {
             throw new Exception('Failed to upload file');
         }
 
-        $this->insertFilesystemEntry($fileName, $location, $parentId, self::TYPE_FILE);//'/'.
-
+        $this->insertFilesystemEntry($fileName, $location, $parentId, self::TYPE_FILE);
         return true;
-    }
-
-    private function getParentId($parentName)
-    {
-        $sql = "SELECT id FROM {$this->tableName} WHERE name = '$parentName'";
-
-        if ($this->projectID) {
-            $sql .= " AND projectID = '{$this->projectID}'";
-        }
-
-        $result = query($sql);
-        return $result && $result->num_rows > 0 ? $result->fetch_assoc()['id'] : 0;
     }
 
     private function insertFilesystemEntry($name, $location, $parentId, $type)
     {
+        $locationValue = $location === null ? 'NULL' : "'$location'";
         $sql = "INSERT INTO {$this->tableName} (name, location, parent, type";
 
         if ($this->projectID) {
-            $sql .= ", projectID) VALUES ('$name', '$location', '$parentId', $type, '{$this->projectID}')";
+            $sql .= ", projectID) VALUES ('$name', $locationValue, '$parentId', $type, '{$this->projectID}')";
         } else {
-            $sql .= ") VALUES ('$name', '$location', '$parentId', $type)";
+            $sql .= ") VALUES ('$name', $locationValue, '$parentId', $type)";
         }
 
         $result = query($sql);
@@ -221,16 +221,16 @@ try {
         $fs = new FilesystemManager($projectLink);
 
         if (isset($_POST['action']) && $_POST['action'] === 'move') {
-            $fs->moveFile($_POST['sourceFile'], $_POST['targetFolder']);
-            echo json_encode(['success' => true, 'message' => 'File moved successfully']);
-        } elseif (isset($_POST['directory']) && isset($_POST['name'])) {
+            $fs->moveItem($_POST['sourceId'], $_POST['targetFolderId']);
+            echo json_encode(['success' => true, 'message' => 'Item moved successfully']);
+        } elseif (isset($_POST['parentId']) && isset($_POST['name'])) {
             if (isset($_FILES["files"])) {
                 foreach ($_FILES['files']['tmp_name'] as $key => $tmpName) {
-                    $fs->uploadFile($tmpName, $_POST['name'], $_POST['directory']);
+                    $fs->uploadFile($tmpName, $_FILES['files']['name'][$key], $_POST['parentId']);
                 }
                 echo json_encode(['success' => true, 'message' => 'File(s) uploaded successfully']);
             } else {
-                $fs->createFolder($_POST['name'], $_POST['directory']);
+                $fs->createFolder($_POST['name'], $_POST['parentId']);
                 echo json_encode(['success' => true, 'message' => 'Folder created successfully']);
             }
         }
