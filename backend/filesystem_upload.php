@@ -1,6 +1,18 @@
 <?php
 include 'head.php';
 
+function generateUUID()
+{
+    return sprintf(
+        '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+        mt_rand(0, 0xffff),
+        mt_rand(0, 0x0fff) | 0x4000,
+        mt_rand(0, 0x3fff) | 0x8000,
+        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+    );
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Only POST requests allowed']);
     exit;
@@ -51,36 +63,29 @@ if ($action === 'upload_file') {
                 exit;
             }
             
-            $filePath = $dir . '/' . $directory;
-            if (!empty($directory)) {
-                $filePath .= '/';
-            }
-            $filePath .= $name;
-            
+            $uuid = generateUUID();
+            $extension = pathinfo($name, PATHINFO_EXTENSION);
+            $fileLocation = $extension ? $uuid . '.' . $extension : $uuid;
+            $filePath = $dir . '/' . $fileLocation;
+
             $fileDir = dirname($filePath);
             if (!file_exists($fileDir)) {
                 mkdir($fileDir, 0777, true);
             }
-            
+
             if ($isBase64) {
                 $fileContent = base64_decode($content);
             } else {
                 $fileContent = $content;
             }
-            
+
             if (file_put_contents($filePath, $fileContent) === false) {
                 echo json_encode(['success' => false, 'message' => 'Failed to write file']);
                 exit;
             }
-            
-            $fileLocation = $directory;
-            if (!empty($directory)) {
-                $fileLocation .= '/';
-            }
 
-            $fileLocation .= $name;
             $insert = query("INSERT INTO project_filesystem (name, location, parent, type, projectID) VALUES ('$name', '$fileLocation', '$parentId', 1, '$projectID')");
-            
+
             if (!$insert) {
                 unlink($filePath);
                 echo json_encode(['success' => false, 'message' => 'Database insert failed']);
@@ -95,43 +100,36 @@ if ($action === 'upload_file') {
             
         } else {
             $dir = '/data/filesystem';
-            
+
             $parentQuery = query("SELECT id FROM control_center_filesystem WHERE name = '$directory'");
             $parentId = $parentQuery ? $parentQuery->fetch_assoc()['id'] : 0;
-            
+
             if ($parentId == 0 && !empty($directory)) {
                 echo json_encode(['success' => false, 'message' => 'Parent directory not found']);
                 exit;
             }
-            
-            $filePath = $dir . '/' . $directory;
-            if (!empty($directory)) {
-                $filePath .= '/';
-            }
-            $filePath .= $name;
-            
+
+            $uuid = generateUUID();
+            $extension = pathinfo($name, PATHINFO_EXTENSION);
+            $fileLocation = $extension ? $uuid . '.' . $extension : $uuid;
+            $filePath = $dir . '/' . $fileLocation;
+
             $fileDir = dirname($filePath);
             if (!file_exists($fileDir)) {
                 mkdir($fileDir, 0777, true);
             }
-            
+
             if ($isBase64) {
                 $fileContent = base64_decode($content);
             } else {
                 $fileContent = $content;
             }
-            
+
             if (file_put_contents($filePath, $fileContent) === false) {
                 echo json_encode(['success' => false, 'message' => 'Failed to write file']);
                 exit;
             }
-            
-            $fileLocation = $directory;
-            if (!empty($directory)) {
-                $fileLocation .= '/';
-            }
-            $fileLocation .= $name;
-            
+
             $insert = query("INSERT INTO control_center_filesystem (name, location, parent, type) VALUES ('$name', '$fileLocation', '$parentId', 1)");
             
             if (!$insert) {
@@ -174,71 +172,15 @@ if ($action === 'upload_file') {
             $parentQuery = query("SELECT id FROM project_filesystem WHERE name = '$directory' AND projectID = '$projectID'");
             $parentId = $parentQuery ? $parentQuery->fetch_assoc()['id'] : 0;
             
-            $folderPath = $dir . '/' . $directory;
-            if (!empty($directory)) {
-                $folderPath .= '/';
-            }
-            $folderPath .= $name;
-            
-            if (file_exists($folderPath)) {
-                echo json_encode(['success' => false, 'message' => 'Folder already exists']);
-                exit;
-            }
-            
+            $uuid = generateUUID();
+            $folderPath = $dir . '/' . $uuid;
+
             if (!mkdir($folderPath, 0777, true)) {
                 echo json_encode(['success' => false, 'message' => 'Failed to create folder']);
                 exit;
-            }
-            
-            $folderLocation = $directory;
-            if (!empty($directory)) {
-                $folderLocation .= '/';
-            }
-            $folderLocation .= $name;
-            
-            $insert = query("INSERT INTO project_filesystem (name, location, parent, type, projectID) VALUES ('$name', '$folderLocation', '$parentId', 0, '$projectID')");
-            
-            if (!$insert) {
-                rmdir($folderPath);
-                echo json_encode(['success' => false, 'message' => 'Database insert failed']);
-                exit;
-            }
-            
-            echo json_encode([
-                'success' => true,
-                'message' => 'Folder created successfully',
-                'path' => $folderLocation
-            ]);
-            
-        } else {
-            $dir = '/data/filesystem';
-            
-            $parentQuery = query("SELECT id FROM control_center_filesystem WHERE name = '$directory'");
-            $parentId = $parentQuery ? $parentQuery->fetch_assoc()['id'] : 0;
-            
-            $folderPath = $dir . '/' . $directory;
-            if (!empty($directory)) {
-                $folderPath .= '/';
-            }
-            $folderPath .= $name;
-            
-            if (file_exists($folderPath)) {
-                echo json_encode(['success' => false, 'message' => 'Folder already exists']);
-                exit;
-            }
-            
-            if (!mkdir($folderPath, 0777, true)) {
-                echo json_encode(['success' => false, 'message' => 'Failed to create folder']);
-                exit;
-            }
-            
-            $folderLocation = $directory;
-            if (!empty($directory)) {
-                $folderLocation .= '/';
             }
 
-            $folderLocation .= $name;
-            $insert = query("INSERT INTO control_center_filesystem (name, location, parent, type) VALUES ('$name', '$folderLocation', '$parentId', 0)");
+            $insert = query("INSERT INTO project_filesystem (name, location, parent, type, projectID) VALUES ('$name', '/$uuid', '$parentId', 0, '$projectID')");
             
             if (!$insert) {
                 rmdir($folderPath);
@@ -249,7 +191,35 @@ if ($action === 'upload_file') {
             echo json_encode([
                 'success' => true,
                 'message' => 'Folder created successfully',
-                'path' => $folderLocation
+                'path' => $uuid
+            ]);
+
+        } else {
+            $dir = '/data/filesystem';
+
+            $parentQuery = query("SELECT id FROM control_center_filesystem WHERE name = '$directory'");
+            $parentId = $parentQuery ? $parentQuery->fetch_assoc()['id'] : 0;
+
+            $uuid = generateUUID();
+            $folderPath = $dir . '/' . $uuid;
+
+            if (!mkdir($folderPath, 0777, true)) {
+                echo json_encode(['success' => false, 'message' => 'Failed to create folder']);
+                exit;
+            }
+
+            $insert = query("INSERT INTO control_center_filesystem (name, location, parent, type) VALUES ('$name', '/$uuid', '$parentId', 0)");
+            
+            if (!$insert) {
+                rmdir($folderPath);
+                echo json_encode(['success' => false, 'message' => 'Database insert failed']);
+                exit;
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Folder created successfully',
+                'path' => $uuid
             ]);
         }
     } catch (Exception $e) {

@@ -9,6 +9,18 @@ class FilesystemManager
     private const BASE_PATH = '/data/filesystem';
     private const PROJECT_BASE_PATH = '/data/project_filesystems';
 
+    private static function generateUUID()
+    {
+        return sprintf(
+            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0x0fff) | 0x4000,
+            mt_rand(0, 0x3fff) | 0x8000,
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+        );
+    }
+
     private $tableName;
     private $baseDir;
     private $projectID;
@@ -106,24 +118,8 @@ class FilesystemManager
             throw new Exception('Target folder not found');
         }
 
-        $oldFilePath = $this->baseDir . '/' . $sourceFile;
-        $newLocation = $targetFolder . '/' . $sourceData['name'];
-        $newFilePath = $this->baseDir . '/' . $newLocation;
-
-        if (!file_exists($oldFilePath)) {
-            throw new Exception('Source file does not exist on filesystem');
-        }
-
-        if (!rename($oldFilePath, $newFilePath)) {
-            throw new Exception('Failed to move file');
-        }
-
-        try {
-            $this->updateFileLocation($sourceData['id'], $newLocation, $targetData['id']);
-        } catch (Exception $e) {
-            rename($newFilePath, $oldFilePath);
-            throw new Exception('Database update failed: ' . $e->getMessage());
-        }
+        // Location bleibt UUID-basiert, nur parent wird geändert
+        $this->updateFileParent($sourceData['id'], $targetData['id']);
 
         return true;
     }
@@ -142,9 +138,9 @@ class FilesystemManager
         return $result ? $result->fetch_assoc() : null;
     }
 
-    private function updateFileLocation($fileId, $newLocation, $newParentId)
+    private function updateFileParent($fileId, $newParentId)
     {
-        $sql = "UPDATE {$this->tableName} SET location = '$newLocation', parent = $newParentId WHERE id = $fileId";
+        $sql = "UPDATE {$this->tableName} SET parent = $newParentId WHERE id = $fileId";
         $result = query($sql);
 
         if (!$result) {
@@ -158,18 +154,14 @@ class FilesystemManager
         $parentName = escape_string($parentName);
 
         $parentId = $this->getParentId($parentName);
-        $folderPath = $this->baseDir . '/' . $parentName . '/' . $name;
-
-        if (file_exists($folderPath)) {
-            throw new Exception('Folder already exists');
-        }
+        $uuid = self::generateUUID();
+        $folderPath = $this->baseDir . '/' . $uuid;
 
         if (!mkdir($folderPath, 0777, true)) {
             throw new Exception('Failed to create folder');
         }
 
-        $location = $parentName . '/' . $name;
-        $this->insertFilesystemEntry($name, $location, $parentId, self::TYPE_FOLDER);
+        $this->insertFilesystemEntry($name, $uuid, $parentId, self::TYPE_FOLDER);//'/'.
 
         return true;
     }
@@ -180,14 +172,16 @@ class FilesystemManager
         $parentName = escape_string($parentName);
 
         $parentId = $this->getParentId($parentName);
-        $destination = $this->baseDir . '/' . $parentName . '/' . $fileName;
+        $uuid = self::generateUUID();
+        $extension = pathinfo($fileName, PATHINFO_EXTENSION);
+        $location = $extension ? $uuid . '.' . $extension : $uuid;
+        $destination = $this->baseDir . '/' . $location;
 
         if (!move_uploaded_file($tmpName, $destination)) {
             throw new Exception('Failed to upload file');
         }
 
-        $location = $parentName . '/' . $fileName;
-        $this->insertFilesystemEntry($fileName, $location, $parentId, self::TYPE_FILE);
+        $this->insertFilesystemEntry($fileName, $location, $parentId, self::TYPE_FILE);//'/'.
 
         return true;
     }

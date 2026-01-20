@@ -105,7 +105,7 @@ class SecureFileProvider
 
         // Check if file exists
         if (!file_exists($filePath)) {
-            $this->sendError(404, 'File not found');
+            $this->sendError(404, 'File not found ');//. $filePath)
             return;
         }
 

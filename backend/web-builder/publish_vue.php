@@ -49,7 +49,12 @@ while ($row = fetch_assoc($pagesResult)) {
 
 $generatedFiles = [];
 
-$indexHtml = generateIndexHtml($project, $pages, $projectSlug);
+$downloadedImages = downloadFilesystemImages($projectSlug, $pages);
+foreach ($downloadedImages as $imageFile) {
+  $generatedFiles[] = $imageFile;
+}
+
+$indexHtml = generateIndexHtml($project, $pages, $projectSlug, $downloadedImages);
 $generatedFiles[] = [
     'filename' => 'index.html',
     'content' => $indexHtml
@@ -74,10 +79,27 @@ if ($deployToServer) {
         $domainRow = fetch_assoc($domainResult);
         $domain = $domainRow['domain'];
 
-        $filesToDeploy = array_map(fn($file) => [
-            'filename' => $file['filename'],
-            'content' => $file['content']
-        ], $generatedFiles);
+        $filesToDeploy = array_map(function($file) {
+            $filename = $file['filename'];
+            $content = $file['content'];
+
+            // Bilder und andere Binärdateien als Base64 enkodieren
+            $binaryExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'ico', 'woff', 'woff2', 'ttf', 'eot'];
+            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+            if (in_array($ext, $binaryExtensions)) {
+                return [
+                    'filename' => $filename,
+                    'content' => base64_encode($content),
+                    'encoding' => 'base64'
+                ];
+            }
+
+            return [
+                'filename' => $filename,
+                'content' => $content
+            ];
+        }, $generatedFiles);
 
         $webhookData = [
             'secret' => PUBLISH_WEBHOOK_SECRET,
@@ -96,7 +118,7 @@ if ($deployToServer) {
 
         $context = stream_context_create($opts);
         $response = @file_get_contents(PUBLISH_WEBHOOK_URL, false, $context);
-        //error_log("[WebBuilderPublish] Deployment response: " . ($response === false ? 'No response' : substr($response, 0, 500) . '...'));
+        error_log("[WebBuilderPublish] Deployment response: " . ($response === false ? 'No response' : substr($response, 0, 500) . '...'));
         $deploymentResult = $response === false
             ? ['success' => false, 'error' => 'Could not reach publish server']
             : json_decode($response, true);
@@ -121,7 +143,8 @@ $response = [
             'filename' => $f['filename'],
             'size' => strlen($f['content'])
         ], $generatedFiles),
-        'totalFiles' => count($generatedFiles)
+        'totalFiles' => count($generatedFiles),
+        'downloadedImages' => count($downloadedImages)
     ],
     'features' => [
         'vueVersion' => '3.4',
@@ -155,8 +178,110 @@ sendResponse($response);
 // Generator Functions
 // ============================================
 
-function generateIndexHtml($project, $pages, $projectSlug)
+function downloadFilesystemImages($projectSlug, $pages)
 {
+    require_once __DIR__ . '/../signed_url_generator_for_publish.php';
+
+    $downloadedImages = [];
+    $pattern = '/https:\/\/alex\.polan\.sk\/control-center\/secure_file_provider\.php\?path=([^"\'&]+)(?:&(?:amp;)?expires=[^&"\']+)?(?:&(?:amp;)?signature=[^&"\']+)?(?:&(?:amp;)?project=([^"\'&\s]+))?/';
+    $imageUrls = [];
+
+    foreach ($pages as $page) {
+        $pageId = intval($page['id']);
+        $componentsResult = query("SELECT html_code FROM control_center_modul_web_builder_components 
+                                    WHERE page_id = $pageId 
+                                    ORDER BY position ASC");
+
+        if ($componentsResult) {
+            $pageContent = '';
+            while ($component = fetch_assoc($componentsResult)) {
+                $pageContent .= $component['html_code'] . "\n";
+            }
+
+            preg_match_all($pattern, $pageContent, $matches, PREG_SET_ORDER);
+
+            foreach ($matches as $match) {
+                $path = rawurldecode($match[1]);
+                $project = isset($match[2]) && !empty($match[2]) ? rawurldecode($match[2]) : null;
+
+                if (!isset($imageUrls[$path])) {
+                    $imageUrls[$path] = $project;
+                }
+            }
+        }
+    }
+
+    if (empty($imageUrls)) {
+        return $downloadedImages;
+    }
+
+    $generator = new SignedUrlGenerator();
+    $files = [];
+
+    foreach ($imageUrls as $path => $project) {
+        $files[] = [
+            'path' => $path,
+            'projectID' => $project
+        ];
+    }
+
+    $signedUrlResults = $generator->generateBulkSignedUrls($files, 3600);
+
+    foreach ($signedUrlResults as $result) {
+        $signedUrl = $result['signedUrl'];
+        $originalPath = $result['originalPath'];
+
+        $pathParts = explode('/', $originalPath);
+        $filename = end($pathParts);
+        $safeFilename = 'assets/images/' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename);
+        $imageData = @file_get_contents($signedUrl);
+
+        if ($imageData !== false) {
+            $downloadedImages[] = [
+                'filename' => $safeFilename,
+                'content' => $imageData,
+                'originalPath' => $originalPath
+            ];
+
+            //echo "Downloaded image: $originalPath as $safeFilename\n Signed URL: $signedUrl\n";
+        } //else {
+            //echo "Failed to download: $originalPath\n Signed URL: $signedUrl\n";
+        //}
+    }
+    //echo "Total downloaded images: " . count($downloadedImages) . "\n";
+    return $downloadedImages;
+}
+
+
+function getProjectIDFromLink($projectLink)
+{
+    $projectLink = escape_string($projectLink);
+    $result = query("SELECT projectID FROM projects WHERE link='$projectLink'");
+    if ($result && $row = fetch_assoc($result)) {
+        return $row['projectID'];
+    }
+    return null;
+}
+
+function generateIndexHtml($project, $pages, $projectSlug, $downloadedImages = [])
+{
+    $imageMappings = [];
+    foreach ($downloadedImages as $image) {
+        $path = $image['originalPath'];
+        $imageMappings[$path] = $image['filename'];
+    }
+    // JSON_FORCE_OBJECT ensures {} even when empty, not []
+    $imageMappingsJson = json_encode($imageMappings, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_FORCE_OBJECT);
+
+    // Fallback if json_encode fails
+    if ($imageMappingsJson === false) {
+        error_log("json_encode failed for imageMappings: " . json_last_error_msg());
+        $imageMappingsJson = '{}';
+    }
+
+    // DEBUG: Remove after testing
+    //error_log("imageMappingsJson FINAL: " . $imageMappingsJson);
+
     $projectName = htmlspecialchars($project['name'], ENT_QUOTES, 'UTF-8');
     $projectSlugJs = htmlspecialchars($projectSlug, ENT_QUOTES, 'UTF-8');
     $apiBase = CC_API_BASE;
@@ -275,7 +400,8 @@ function generateIndexHtml($project, $pages, $projectSlug)
     const CONFIG = {
         projectSlug: '{$projectSlugJs}',
         apiBase: '{$apiBase}',
-        routes: {$routesJson}
+        routes: {$routesJson},
+        imageMappings: $imageMappingsJson
     };
 
     const api = {
@@ -926,6 +1052,18 @@ function generateIndexHtml($project, $pages, $projectSlug)
         },
 
         async parse(html, routeParams = {}) {
+            if (CONFIG.imageMappings && Object.keys(CONFIG.imageMappings).length > 0) {
+                const pattern = /https:\/\/alex\.polan\.sk\/control-center\/secure_file_provider\.php\?path=([^"\'&]+)(?:&(?:amp;)?expires=[^&"\']+)?(?:&(?:amp;)?signature=[^&"\']+)?(?:&(?:amp;)?project=([^"\'&\s]+))?/;
+                
+                html = html.replace(pattern, (match, encodedPath) => {
+                    const path = decodeURIComponent(encodedPath);
+                    if (CONFIG.imageMappings[path]) {
+                        return CONFIG.imageMappings[path];
+                    }
+                    return match;
+                });
+            }
+            
             const tables = new Set();
             let match;
 

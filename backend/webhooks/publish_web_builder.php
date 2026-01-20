@@ -1,10 +1,5 @@
 <?php
-/**
- * Web Builder Publish Webhook Handler
- * 
- * Empfängt die generierten HTML-Dateien und deployed sie
- * auf dem Publish-Server ins richtige Verzeichnis
- * 
+/*
  * Erwartet POST mit:
  * - secret: Webhook Secret
  * - project_slug: CC Project Slug (z.B. "alex-fan-club")
@@ -13,7 +8,6 @@
 
 define('WEBHOOK_SECRET', 'cc_web_builder_publish_secret_2025');
 
-// Logging
 function logPublish($message)
 {
     $logFile = '/var/log/web_builder_publish.log';
@@ -27,25 +21,20 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Headers: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 
-// Handle preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// Nur POST erlauben
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     die(json_encode(['error' => 'Method not allowed'], JSON_UNESCAPED_UNICODE));
 }
 
-// Request Data einlesen
 $json = file_get_contents('php://input');
 $data = json_decode($json, true);
-
 logPublish("Publish webhook received: " . substr($json, 0, 500) . "...");
 
-// Validierung
 if (!$data || !isset($data['secret']) || $data['secret'] !== WEBHOOK_SECRET) {
     http_response_code(403);
     logPublish("Invalid secret");
@@ -61,19 +50,15 @@ if (!isset($data['project_slug']) || !isset($data['files']) || !is_array($data['
 $projectSlug = $data['project_slug'];
 $files = $data['files'];
 
-// Validiere Project Slug (Sicherheit)
 if (!preg_match('/^[a-z0-9-]+$/', $projectSlug)) {
     http_response_code(400);
     logPublish("Invalid project slug: $projectSlug");
     die(json_encode(['error' => 'Invalid project slug'], JSON_UNESCAPED_UNICODE));
 }
 
-// Zielverzeichnis
 $webRoot = "/home/ftpuser/$projectSlug/wb";
-
 logPublish("Publishing to: $webRoot");
 
-// Prüfe ob Verzeichnis existiert
 if (!is_dir($webRoot)) {
     http_response_code(404);
     logPublish("Web root does not exist: $webRoot");
@@ -83,18 +68,38 @@ if (!is_dir($webRoot)) {
 $publishedFiles = [];
 $errors = [];
 
-// Dateien schreiben
 foreach ($files as $file) {
     if (!isset($file['filename']) || !isset($file['content'])) {
         $errors[] = "Invalid file entry";
         continue;
     }
-    
-    $filename = basename($file['filename']); // Sicherheit: nur Dateiname, kein Pfad
+
+    $filename = $file['filename'];
     $content = $file['content'];
-    
-    // Nur erlaubte Dateiendungen (kein PHP - API laeuft auf CC Server)
-    $allowedExtensions = ['html', 'htm', 'css', 'js', 'json', 'txt', 'xml', 'svg'];
+
+    if (isset($file['encoding']) && $file['encoding'] === 'base64') {
+        $content = base64_decode($content);
+        if ($content === false) {
+            $errors[] = "Failed to decode base64: $filename";
+            logPublish("ERROR: Failed to decode base64 for $filename");
+            continue;
+        }
+    }
+
+    $filename = str_replace(['../', '..\\', '\\'], ['', '', '/'], $filename);
+    $filename = ltrim($filename, '/');
+
+    if (strpos($filename, '/') !== false) {
+        $dir = dirname($filename);
+        $allowedDirs = ['assets', 'assets/images', 'assets/css', 'assets/js'];
+        if (!in_array($dir, $allowedDirs)) {
+            $errors[] = "Disallowed directory: $filename";
+            logPublish("Skipped disallowed directory: $filename");
+            continue;
+        }
+    }
+
+    $allowedExtensions = ['html', 'htm', 'css', 'js', 'json', 'txt', 'xml', 'svg', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'ico', 'woff', 'woff2', 'ttf', 'eot'];
     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 
     if (!in_array($ext, $allowedExtensions)) {
@@ -102,25 +107,29 @@ foreach ($files as $file) {
         logPublish("Skipped disallowed file type: $filename");
         continue;
     }
-    
+
     $filePath = "$webRoot/$filename";
-    
-    // Wenn Datei existiert und nicht schreibbar ist, versuche Permissions zu ändern
+    $fileDir = dirname($filePath);
+
+    if (!is_dir($fileDir)) {
+        if (!mkdir($fileDir, 0755, true)) {
+            $errors[] = "Failed to create directory: $fileDir";
+            logPublish("ERROR: Failed to create directory $fileDir");
+            continue;
+        }
+        @chown($fileDir, 'ftpuser');
+        @chgrp($fileDir, 'ftpuser');
+    }
+
     if (file_exists($filePath) && !is_writable($filePath)) {
         @chmod($filePath, 0664);
     }
-    
-    // Sicherstelle dass content UTF-8 ist
-    //if (!mb_check_encoding($content, 'UTF-8')) {
-      //  $content = mb_convert_encoding($content, 'UTF-8');
-    //}
-    
-    if (file_put_contents($filePath, $content) !== false) {//, FILE_TEXT
-        // Permissions setzen (group-writable für zukünftige Updates)
+
+    if (file_put_contents($filePath, $content) !== false) {
         @chown($filePath, 'ftpuser');
         @chgrp($filePath, 'ftpuser');
         @chmod($filePath, 0664);
-        
+
         $publishedFiles[] = $filename;
         logPublish("Published: $filename (" . strlen($content) . " bytes)");
     } else {
@@ -129,7 +138,6 @@ foreach ($files as $file) {
     }
 }
 
-// Assets-Verzeichnis erstellen falls nötig
 $assetsDir = "$webRoot/assets";
 if (!is_dir($assetsDir)) {
     mkdir($assetsDir, 0755, true);
@@ -137,7 +145,6 @@ if (!is_dir($assetsDir)) {
     chgrp($assetsDir, 'ftpuser');
 }
 
-// Response
 $response = [
     'success' => count($errors) === 0,
     'published' => $publishedFiles,
@@ -147,6 +154,5 @@ $response = [
 ];
 
 logPublish("Publish complete: " . count($publishedFiles) . " files, " . count($errors) . " errors");
-
 http_response_code(count($errors) === 0 ? 200 : 207);
 echo json_encode($response, JSON_UNESCAPED_UNICODE);
