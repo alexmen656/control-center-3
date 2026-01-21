@@ -8,9 +8,9 @@
             <ion-icon name="grid-outline"></ion-icon>
             Dashboard
           </h1>
-          <p class="dashboard-subtitle">Overview of your system metrics and quick access to key features</p>
+          <!--<p class="dashboard-subtitle">Overview of your system metrics and quick access to key features</p>-->
         </div>
-        <div class="header-stats">
+       <!-- <div class="header-stats">
           <div class="stat-card">
             <span class="stat-number">{{ tableData.length }}</span>
             <span class="stat-label">Total Users</span>
@@ -19,7 +19,7 @@
             <span class="stat-number">{{ data.datasets[0].data.reduce((a, b) => a + b, 0) }}</span>
             <span class="stat-label">Total Sales</span>
           </div>
-        </div>
+        </div>-->
       </div>
     </div>
 
