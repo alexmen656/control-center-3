@@ -321,7 +321,7 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: "/project/:project/wb/:wb_project/:page",
-    component: () => import("../views/WebBuilderView.vue"),
+    component: () => import("../views/WebBuilderPageView.vue"),
   },
   {
     path: "/ai-website-generator",
