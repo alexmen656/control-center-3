@@ -193,6 +193,20 @@ export const domainTools = [
       },
       required: ['codespaceId', 'userId']
     }
+  },
+  {
+    name: 'domain_disconnect_from_project',
+    description: 'Disconnect the domain from a project. Useful when switching domains or removing an unwanted domain connection.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project: {
+          type: 'string',
+          description: 'Project link/slug'
+        }
+      },
+      required: ['project']
+    }
   }
 ];
 
@@ -219,6 +233,8 @@ export async function handleDomainTool(toolName, args, context) {
       return await getProjectDomain(args, context);
     case 'domain_codespace_connect':
       return await connectCodespaceDomain(args, context);
+    case 'domain_disconnect_from_project':
+      return await disconnectFromProject(args, context);
     default:
       return formatError(`Unknown domain tool: ${toolName}`);
   }
@@ -233,16 +249,16 @@ async function listDomains(args, context) {
     const params = new URLSearchParams({
       action: 'list'
     });
-    
+
     const response = await cmsRequest('domains.php', {
       method: 'POST',
       body: params
     }, context);
-    
+
     if (!response.success) {
       return formatError(response.error || 'Failed to list domains');
     }
-    
+
     return formatResponse({
       success: true,
       count: response.domains?.length || 0,
@@ -258,26 +274,26 @@ async function listAvailableDomains(args, context) {
     const params = new URLSearchParams({
       action: 'list_available'
     });
-    
+
     const response = await cmsRequest('domains.php', {
       method: 'POST',
       body: params
     }, context);
-    
+
     if (!response.success) {
       return formatError(response.error || 'Failed to list available domains');
     }
-    
+
     const isSuperAdmin = response.is_super_admin || false;
     const features = response.features || [];
-    
+
     return formatResponse({
       success: true,
       is_super_admin: isSuperAdmin,
       features: features,
       count: response.domains?.length || 0,
       domains: response.domains || [],
-      note: isSuperAdmin 
+      note: isSuperAdmin
         ? 'Super Admin: You can select ANY domain for ANY project and create subdomains from custom domains'
         : 'Normal User: Only subdomains from sites.control-center.eu available'
     });
@@ -297,16 +313,16 @@ async function addDomain(args, context) {
       auto_renew: args.autoRenew ? '1' : '0',
       notes: args.notes || ''
     });
-    
+
     const response = await cmsRequest('domains.php', {
       method: 'POST',
       body: params
     }, context);
-    
+
     if (!response.success) {
       return formatError(response.error || 'Failed to add domain');
     }
-    
+
     return formatResponse({
       success: true,
       message: 'Domain added successfully',
@@ -323,22 +339,22 @@ async function updateDomain(args, context) {
       action: 'update',
       id: args.domainId.toString()
     });
-    
+
     if (args.registrar) params.append('registrar', args.registrar);
     if (args.buyDate) params.append('buy_date', args.buyDate);
     if (args.expiryDate) params.append('expiry_date', args.expiryDate);
     if (args.autoRenew !== undefined) params.append('auto_renew', args.autoRenew ? '1' : '0');
     if (args.notes !== undefined) params.append('notes', args.notes);
-    
+
     const response = await cmsRequest('domains.php', {
       method: 'POST',
       body: params
     }, context);
-    
+
     if (!response.success) {
       return formatError(response.error || 'Failed to update domain');
     }
-    
+
     return formatResponse({
       success: true,
       message: 'Domain updated successfully'
@@ -354,16 +370,16 @@ async function deleteDomain(args, context) {
       action: 'delete',
       id: args.domainId.toString()
     });
-    
+
     const response = await cmsRequest('domains.php', {
       method: 'POST',
       body: params
     }, context);
-    
+
     if (!response.success) {
       return formatError(response.error || 'Failed to delete domain');
     }
-    
+
     return formatResponse({
       success: true,
       message: 'Domain deleted successfully'
@@ -378,16 +394,16 @@ async function fetchCloudflare(args, context) {
     const params = new URLSearchParams({
       action: 'fetch_cloudflare'
     });
-    
+
     const response = await cmsRequest('domains.php', {
       method: 'POST',
       body: params
     }, context);
-    
+
     if (!response.success) {
       return formatError(response.error || 'Failed to fetch Cloudflare domains');
     }
-    
+
     return formatResponse({
       success: true,
       message: 'Cloudflare domains fetched successfully',
@@ -408,25 +424,25 @@ async function connectToProject(args, context) {
       domain_type: args.domainType || 'subdomain',
       user_id: args.userId.toString()
     });
-    
+
     if (args.customBaseDomain) {
       params.append('custom_base_domain', args.customBaseDomain);
     }
-    
+
     if (args.subdomain) {
       params.append('domain', args.subdomain);
       params.append('subdomain', args.subdomain);
     }
-    
+
     const response = await cmsRequest('project_domain.php', {
       method: 'POST',
       body: params
     }, context);
-    
+
     if (response.error) {
       return formatError(response.error);
     }
-    
+
     return formatResponse({
       success: true,
       message: 'Domain connected to project successfully',
@@ -444,16 +460,16 @@ async function getProjectDomain(args, context) {
       action: 'get',
       project: args.project
     });
-    
+
     const response = await cmsRequest('project_domain.php', {
       method: 'POST',
       body: params
     }, context);
-    
+
     if (response.error) {
       return formatError(response.error);
     }
-    
+
     return formatResponse({
       success: true,
       domain: response.domain || null,
@@ -472,33 +488,58 @@ async function connectCodespaceDomain(args, context) {
       user_id: args.userId.toString(),
       is_main: args.isMain ? 'true' : 'false'
     });
-    
+
     if (!args.isMain) {
       if (!args.subdomain) {
         return formatError('subdomain is required when isMain is false');
       }
       params.append('subdomain', args.subdomain);
     }
-    
+
     const response = await cmsRequest('codespace_connections.php', {
       method: 'POST',
       body: params
     }, context);
-    
+
     if (!response.success) {
       return formatError(response.error || 'Failed to connect Codespace domain');
     }
-    
+
     return formatResponse({
       success: true,
       message: 'Codespace domain connected successfully',
       domain: response.domain,
       isMain: args.isMain || false,
-      note: args.isMain 
+      note: args.isMain
         ? 'Using main domain (exclusive - Web Builder cannot use main domain while Codespace is using it)'
         : 'Using subdomain of main domain'
     });
   } catch (error) {
     return formatError(`Failed to connect Codespace domain: ${error.message}`);
+  }
+}
+
+async function disconnectFromProject(args, context) {
+  try {
+    const params = new URLSearchParams({
+      action: 'delete',
+      project: args.project
+    });
+
+    const response = await cmsRequest('project_domain.php', {
+      method: 'POST',
+      body: params
+    }, context);
+
+    if (response.error) {
+      return formatError(response.error);
+    }
+
+    return formatResponse({
+      success: true,
+      message: 'Domain disconnected from project successfully'
+    });
+  } catch (error) {
+    return formatError(`Failed to disconnect domain: ${error.message}`);
   }
 }

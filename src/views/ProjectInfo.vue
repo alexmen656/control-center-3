@@ -191,6 +191,9 @@
                   <div class="connected-badge">
                     <ion-icon name="checkmark-circle-outline"></ion-icon>
                     <span>{{ connectedDomain }}</span>
+                    <button class="action-btn icon-only danger" @click="deleteDomain" title="Remove Domain">
+                      <ion-icon name="trash-outline"></ion-icon>
+                    </button>
                   </div>
                 </div>
                 <div v-else>
@@ -224,7 +227,8 @@
                   </div>
 
                   <!-- Subdomain Input for Custom Domain -->
-                  <div v-if="isSuperAdmin && selectedDomainType === 'custom' && selectedCustomDomain" class="form-group">
+                  <div v-if="isSuperAdmin && selectedDomainType === 'custom' && selectedCustomDomain"
+                    class="form-group">
                     <label class="form-label">Subdomain (optional)</label>
                     <div class="domain-input-wrapper">
                       <input v-model="domainInput" placeholder="blog" class="modern-input subdomain-input" />
@@ -234,7 +238,8 @@
                   </div>
 
                   <button class="action-btn primary" @click="connectDomain"
-                    :disabled="(selectedDomainType === 'custom' && !selectedCustomDomain) || (selectedDomainType === 'subdomain' && (!domainInput || domainInput.length < 3))" style="margin-top: 12px;">
+                    :disabled="(selectedDomainType === 'custom' && !selectedCustomDomain) || (selectedDomainType === 'subdomain' && (!domainInput || domainInput.length < 3))"
+                    style="margin-top: 12px;">
                     Connect Domain
                   </button>
                 </div>
@@ -564,10 +569,10 @@ export default {
       this.domainError = '';
       try {
         const user = getUserData();
-        
+
         // Check if user is super admin (userID 152)
         this.isSuperAdmin = user && user.userID == 152;
-        
+
         // Fetch available domains if super admin
         if (this.isSuperAdmin) {
           try {
@@ -583,7 +588,7 @@ export default {
             console.error('Error fetching available domains:', e);
           }
         }
-        
+
         const res = await this.$axios.post('project_domain.php', this.$qs.stringify({
           action: 'get',
           project: this.$route.params.project,
@@ -602,17 +607,17 @@ export default {
         this.domainError = 'Kein User.';
         return;
       }
-      
+
       let finalDomain = this.domainInput;
       let customBaseDomain = '';
-      
+
       if (this.isSuperAdmin && this.selectedDomainType === 'custom') {
         if (!this.selectedCustomDomain) {
           this.domainError = 'Bitte wähle eine Custom Domain.';
           return;
         }
         customBaseDomain = this.selectedCustomDomain;
-        
+
         // Validate subdomain if provided
         if (this.domainInput) {
           if (!/^[a-z0-9-]+$/.test(this.domainInput)) {
@@ -630,7 +635,7 @@ export default {
           return;
         }
       }
-      
+
       try {
         const res = await this.$axios.post('project_domain.php', this.$qs.stringify({
           action: 'connect',
@@ -649,6 +654,26 @@ export default {
         }
       } catch (e) {
         this.domainError = 'Fehler beim Verbinden.';
+      }
+    },
+    async deleteDomain() {
+      if (!confirm('Are you sure you want to remove the domain from this project?')) return;
+
+      this.domainError = '';
+      try {
+        const res = await this.$axios.post('project_domain.php', this.$qs.stringify({
+          action: 'delete',
+          project: this.$route.params.project
+        }));
+
+        if (res.data && res.data.success) {
+          this.connectedDomain = null;
+        } else {
+          this.domainError = res.data.error || 'Failed to remove domain';
+        }
+      } catch (e) {
+        this.domainError = 'Error removing domain';
+        console.error(e);
       }
     },
     /*async connectRepo(repo) {
@@ -1174,10 +1199,34 @@ export default {
   color: #059669;
   font-weight: 600;
   font-size: 16px;
+  width: 100%;
+  justify-content: space-between;
 }
 
 .connected-badge ion-icon {
   font-size: 24px;
+}
+
+.action-btn.icon-only {
+  padding: 8px;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
+.action-btn.icon-only.danger {
+  color: #dc2626;
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.action-btn.icon-only.danger:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
 }
 
 /* Responsive Design */
