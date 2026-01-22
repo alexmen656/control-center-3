@@ -10,11 +10,11 @@
 import express from 'express';
 import cors from 'cors';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { 
-  CallToolRequestSchema, 
+import {
+  CallToolRequestSchema,
   ListToolsRequestSchema,
   ListResourcesRequestSchema,
-  ReadResourceRequestSchema 
+  ReadResourceRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 
 // Import tool handlers
@@ -23,6 +23,7 @@ import { pageTools, handlePageTool } from './tools/pages.js';
 import { apiTools, handleApiTool } from './tools/apis.js';
 import { contentTools, handleContentTool } from './tools/content.js';
 import { fileTools, handleFileTool } from './tools/files.js';
+import { codespaceTools, handleCodespaceTool } from './tools/codespaces.js';
 import { userTools, handleUserTool } from './tools/users.js';
 import { webBuilderTools, handleWebBuilderTool } from './tools/webbuilder.js';
 import { appstoreTools, handleAppstoreTool } from './tools/appstore.js';
@@ -56,7 +57,7 @@ async function verifyToken(token) {
         'Content-Type': 'application/json'
       }
     });
-    
+
     const data = await response.json();
     return data.valid ? data.user : null;
   } catch (error) {
@@ -90,21 +91,22 @@ function createMcpServer(user) {
       ...apiTools,
       ...contentTools,
       ...fileTools,
+      ...codespaceTools,
       ...userTools,
       ...webBuilderTools,
       ...appstoreTools,
       ...domainTools
     ];
-    
+
     return { tools: allTools };
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
-    
+
     // Add user context to all tool calls
     const context = { user, backendUrl: CMS_BACKEND_URL };
-    
+
     try {
       // Route to appropriate tool handler
       if (name.startsWith('project_')) {
@@ -117,6 +119,8 @@ function createMcpServer(user) {
         return await handleContentTool(name, args, context);
       } else if (name.startsWith('file_')) {
         return await handleFileTool(name, args, context);
+      } else if (name.startsWith('codespace_')) {
+        return await handleCodespaceTool(name, args, context);
       } else if (name.startsWith('user_')) {
         return await handleUserTool(name, args, context);
       } else if (name.startsWith('webbuilder_')) {
@@ -126,7 +130,7 @@ function createMcpServer(user) {
       } else if (name.startsWith('domain_')) {
         return await handleDomainTool(name, args, context);
       }
-      
+
       return {
         content: [{ type: 'text', text: `Unknown tool: ${name}` }],
         isError: true
@@ -181,18 +185,18 @@ app.get('/mcp', (req, res) => {
  */
 async function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
-  
+
   if (!authHeader) {
     return res.status(401).json({ error: 'Authorization header required' });
   }
-  
+
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
   const user = await verifyToken(token);
-  
+
   if (!user) {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
-  
+
   req.user = user;
   req.token = token;
   next();
@@ -212,7 +216,7 @@ app.get('/mcp/tools', authMiddleware, async (req, res) => {
       ...userTools,
       ...webBuilderTools
     ];
-    
+
     res.json({ tools: allTools });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -225,15 +229,15 @@ app.get('/mcp/tools', authMiddleware, async (req, res) => {
 app.post('/mcp/tools/:toolName', authMiddleware, async (req, res) => {
   const { toolName } = req.params;
   const args = req.body;
-  const context = { 
-    user: req.user, 
+  const context = {
+    user: req.user,
     token: req.token,
-    backendUrl: CMS_BACKEND_URL 
+    backendUrl: CMS_BACKEND_URL
   };
-  
+
   try {
     let result;
-    
+
     if (toolName.startsWith('project_')) {
       result = await handleProjectTool(toolName, args, context);
     } else if (toolName.startsWith('page_')) {
@@ -251,12 +255,12 @@ app.post('/mcp/tools/:toolName', authMiddleware, async (req, res) => {
     } else {
       return res.status(404).json({ error: `Unknown tool: ${toolName}` });
     }
-    
+
     res.json(result);
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       content: [{ type: 'text', text: `Error: ${error.message}` }],
-      isError: true 
+      isError: true
     });
   }
 });
@@ -279,7 +283,7 @@ app.get('/mcp/resources', authMiddleware, async (req, res) => {
 app.get('/mcp/resources/:type', authMiddleware, async (req, res) => {
   const { type } = req.params;
   const uri = `cms://${type}`;
-  
+
   try {
     const resource = await readResource(uri, req.user, CMS_BACKEND_URL);
     res.json(resource);
@@ -291,7 +295,7 @@ app.get('/mcp/resources/:type', authMiddleware, async (req, res) => {
 app.get('/mcp/resources/:type/:id', authMiddleware, async (req, res) => {
   const { type, id } = req.params;
   const uri = `cms://${type}/${id}`;
-  
+
   try {
     const resource = await readResource(uri, req.user, CMS_BACKEND_URL);
     res.json(resource);
@@ -303,7 +307,7 @@ app.get('/mcp/resources/:type/:id', authMiddleware, async (req, res) => {
 app.get('/mcp/resources/:type/:id/:subResource', authMiddleware, async (req, res) => {
   const { type, id, subResource } = req.params;
   const uri = `cms://${type}/${id}/${subResource}`;
-  
+
   try {
     const resource = await readResource(uri, req.user, CMS_BACKEND_URL);
     res.json(resource);
@@ -317,19 +321,19 @@ app.get('/mcp/resources/:type/:id/:subResource', authMiddleware, async (req, res
  */
 app.post('/mcp/batch', authMiddleware, async (req, res) => {
   const { operations } = req.body;
-  const context = { 
-    user: req.user, 
+  const context = {
+    user: req.user,
     token: req.token,
-    backendUrl: CMS_BACKEND_URL 
+    backendUrl: CMS_BACKEND_URL
   };
-  
+
   const results = [];
-  
+
   for (const op of operations) {
     try {
       let result;
       const { tool, arguments: args } = op;
-      
+
       if (tool.startsWith('project_')) {
         result = await handleProjectTool(tool, args, context);
       } else if (tool.startsWith('page_')) {
@@ -347,13 +351,13 @@ app.post('/mcp/batch', authMiddleware, async (req, res) => {
       } else {
         result = { error: `Unknown tool: ${tool}` };
       }
-      
+
       results.push({ tool, success: true, result });
     } catch (error) {
       results.push({ tool: op.tool, success: false, error: error.message });
     }
   }
-  
+
   res.json({ results });
 });
 

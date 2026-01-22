@@ -23,6 +23,7 @@ import { userTools, handleUserTool } from './tools/users.js';
 import { webBuilderTools, handleWebBuilderTool } from './tools/webbuilder.js';
 import { appstoreTools, handleAppstoreTool } from './tools/appstore.js';
 import { domainTools, handleDomainTool } from './tools/domains.js';
+import { codespaceTools, handleCodespaceTool } from './tools/codespaces.js';
 
 // Import resources
 import { getResources, readResource } from './resources/index.js';
@@ -85,6 +86,7 @@ async function main() {
       ...apiTools,
       ...contentTools,
       ...fileTools,
+      ...codespaceTools,
       ...userTools,
       ...webBuilderTools,
       ...appstoreTools,
@@ -108,6 +110,8 @@ async function main() {
         return await handleContentTool(name, args, context);
       } else if (name.startsWith('file_')) {
         return await handleFileTool(name, args, context);
+      } else if (name.startsWith('codespace_')) {
+        return await handleCodespaceTool(name, args, context);
       } else if (name.startsWith('user_')) {
         return await handleUserTool(name, args, context);
       } else if (name.startsWith('webbuilder_')) {

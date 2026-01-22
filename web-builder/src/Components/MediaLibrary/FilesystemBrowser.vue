@@ -27,10 +27,16 @@ const fetchFileSystem = async () => {
         }
 
         const response = await get(endpoint);
-        fileSystemData.value = response;
+
+        if (response && response.items) {
+            fileSystemData.value = response.items;
+        } else {
+            fileSystemData.value = response || [];
+        }
+
         currentPath.value = [];
 
-        if (response && response.length > 0) {
+        if (fileSystemData.value && fileSystemData.value.length > 0) {
             const findProjectID = (items) => {
                 for (const item of items) {
                     if (item.projectID) return item.projectID;
@@ -41,7 +47,7 @@ const fetchFileSystem = async () => {
                 }
                 return null;
             };
-            projectID.value = findProjectID(response);
+            projectID.value = findProjectID(fileSystemData.value);
         }
 
         await loadSignedUrls();
@@ -62,7 +68,7 @@ const loadSignedUrls = async () => {
                 imageFiles.push({
                     path: item.location,
                     location: item.location,
-                    projectID: projectID.value
+                    projectID: item.projectID || projectID.value
                 });
             }
             if (item.type === 'folder' && item.children) {

@@ -1,240 +1,36 @@
 /**
  * File Management Tools
  * 
- * Tools for managing project files and codespaces
+ * Tools for managing project files in filesystem
  */
 
 import { cmsRequest, formatResponse, formatError } from '../utils/api.js';
 
-/**
- * Tool definitions for files
- */
 export const fileTools = [
   {
     name: 'file_list',
-    description: 'List files in a project directory',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        path: {
-          type: 'string',
-          description: 'Directory path (relative to project root)',
-          default: '/'
-        }
-      },
-      required: ['project']
-    }
-  },
+    description: `List files and folders in the Control Center filesystem or project filesystem.
+
+IMPORTANT: Returns "location" (UUID) and "projectID" for each file.
+- location: Use this for file_get_signed_url "path" argument.
+- projectID: Use this for file_get_signed_url "project" argument.
+
+Example Return:
+[
   {
-    name: 'file_read',
-    description: 'Read file contents',
+    "displayName": "photo.jpg",
+    "location": "17b95407-5ac0...jpg", // UUID
+    "projectID": "7xVcWgekyPFsdsfgeUJ9u"
+  }
+]`,
     inputSchema: {
       type: 'object',
       properties: {
         project: {
           type: 'string',
-          description: 'Project link/slug'
-        },
-        path: {
-          type: 'string',
-          description: 'File path (relative to project root)'
+          description: 'Optional: Project link/slug for project filesystem'
         }
-      },
-      required: ['project', 'path']
-    }
-  },
-  {
-    name: 'file_create',
-    description: 'Create a new file',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        path: {
-          type: 'string',
-          description: 'File path (relative to project root)'
-        },
-        content: {
-          type: 'string',
-          description: 'File content'
-        }
-      },
-      required: ['project', 'path', 'content']
-    }
-  },
-  {
-    name: 'file_update',
-    description: 'Update file contents',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        path: {
-          type: 'string',
-          description: 'File path'
-        },
-        content: {
-          type: 'string',
-          description: 'New file content'
-        }
-      },
-      required: ['project', 'path', 'content']
-    }
-  },
-  {
-    name: 'file_delete',
-    description: 'Delete a file',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        path: {
-          type: 'string',
-          description: 'File path to delete'
-        }
-      },
-      required: ['project', 'path']
-    }
-  },
-  {
-    name: 'file_rename',
-    description: 'Rename or move a file',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        oldPath: {
-          type: 'string',
-          description: 'Current file path'
-        },
-        newPath: {
-          type: 'string',
-          description: 'New file path'
-        }
-      },
-      required: ['project', 'oldPath', 'newPath']
-    }
-  },
-  {
-    name: 'file_mkdir',
-    description: 'Create a new directory',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        path: {
-          type: 'string',
-          description: 'Directory path to create'
-        }
-      },
-      required: ['project', 'path']
-    }
-  },
-  {
-    name: 'file_search',
-    description: 'Search for files by name or content',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        query: {
-          type: 'string',
-          description: 'Search query'
-        },
-        searchContent: {
-          type: 'boolean',
-          description: 'Search in file contents (not just names)',
-          default: false
-        }
-      },
-      required: ['project', 'query']
-    }
-  },
-  {
-    name: 'file_git_status',
-    description: 'Get git status of project files',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        }
-      },
-      required: ['project']
-    }
-  },
-  {
-    name: 'file_git_commit',
-    description: 'Commit changes to git',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        message: {
-          type: 'string',
-          description: 'Commit message'
-        },
-        files: {
-          type: 'array',
-          description: 'Files to commit (empty = all changes)',
-          items: { type: 'string' }
-        }
-      },
-      required: ['project', 'message']
-    }
-  },
-  {
-    name: 'file_git_push',
-    description: 'Push commits to remote',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        }
-      },
-      required: ['project']
-    }
-  },
-  {
-    name: 'file_git_pull',
-    description: 'Pull latest changes from remote',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        }
-      },
-      required: ['project']
+      }
     }
   },
   {
@@ -296,25 +92,25 @@ export const fileTools = [
     name: 'file_get_signed_url',
     description: `Generate a signed URL for a file in the Control Center filesystem or project filesystem.
 
+IMPORTANT: Use the "location" (UUID) and "projectID" from file_list!
+Do NOT use the display path or project slug.
+
 USE CASE: Use this when you need to display images or files from the filesystem in Web Builder components.
-The signed URL provides secure, time-limited access to the file.
 
-WORKFLOW FOR WEB BUILDER IMAGES:
-1. Upload image with file_upload_to_filesystem (returns path like "Images/photo.jpg")
-2. Generate signed URL with this tool
-3. Use the signed URL in your Web Builder component HTML: <img data-image src="SIGNED_URL" alt="...">
-
-The signed URLs are valid for 1 hour by default and can be used directly in <img> tags, CSS backgrounds, or any other HTML element.`,
+WORKFLOW:
+1. Call file_list -> Get files with "location" (UUID) and "projectID"
+2. Call this tool with path=location and project=projectID
+3. Use the signed URL in your HTML: <img data-image src="SIGNED_URL" alt="...">`,
     inputSchema: {
       type: 'object',
       properties: {
         path: {
           type: 'string',
-          description: 'File path relative to the filesystem root (e.g., "Images/photo.jpg", "Documents/file.pdf")'
+          description: 'File location (UUID) from file_list'
         },
         project: {
           type: 'string',
-          description: 'Optional: Project link/slug if accessing project filesystem. Omit for global Control Center filesystem.'
+          description: 'Project ID from file_list. Required for project files.'
         },
         validitySeconds: {
           type: 'number',
@@ -329,30 +125,30 @@ The signed URLs are valid for 1 hour by default and can be used directly in <img
     name: 'file_get_bulk_signed_urls',
     description: `Generate signed URLs for multiple files at once.
 
-USE CASE: When you need to display multiple filesystem images in a Web Builder component (e.g., image gallery, product images).
+IMPORTANT: Use "location" (UUID) and "projectID" from file_list!
 
 WORKFLOW:
-1. List files with file_list to get paths
-2. Generate signed URLs for all needed files with this tool
-3. Use the signed URLs in your Web Builder components
+1. List files with file_list
+2. Extract location and projectID for each file
+3. Pass to this tool to get valid URLs
 
-Returns an array of objects with originalPath and signedUrl for each file.`,
+Returns an array of objects with originalPath and signedUrl.`,
     inputSchema: {
       type: 'object',
       properties: {
         files: {
           type: 'array',
-          description: 'Array of file objects with path and optional project',
+          description: 'Array of file objects',
           items: {
             type: 'object',
             properties: {
               path: {
                 type: 'string',
-                description: 'File path relative to filesystem root'
+                description: 'File location (UUID)'
               },
               project: {
                 type: 'string',
-                description: 'Optional: Project link/slug for project filesystem'
+                description: 'Project ID'
               }
             },
             required: ['path']
@@ -377,39 +173,6 @@ export async function handleFileTool(toolName, args, context) {
     case 'file_list':
       return await listFiles(args, context);
 
-    case 'file_read':
-      return await readFile(args, context);
-
-    case 'file_create':
-      return await createFile(args, context);
-
-    case 'file_update':
-      return await updateFile(args, context);
-
-    case 'file_delete':
-      return await deleteFile(args, context);
-
-    case 'file_rename':
-      return await renameFile(args, context);
-
-    case 'file_mkdir':
-      return await createDirectory(args, context);
-
-    case 'file_search':
-      return await searchFiles(args, context);
-
-    case 'file_git_status':
-      return await gitStatus(args, context);
-
-    case 'file_git_commit':
-      return await gitCommit(args, context);
-
-    case 'file_git_push':
-      return await gitPush(args, context);
-
-    case 'file_git_pull':
-      return await gitPull(args, context);
-
     case 'file_upload_to_filesystem':
       return await uploadToFilesystem(args, context);
 
@@ -433,255 +196,56 @@ export async function handleFileTool(toolName, args, context) {
 
 async function listFiles(args, context) {
   try {
-    const response = await fetch(
-      `${context.backendUrl}/file_api.php?project=${encodeURIComponent(args.project)}&action=list&path=${encodeURIComponent(args.path || '/')}`,
-      {
-        headers: { 'Authorization': context.token }
-      }
-    );
-    const data = await response.json();
+    const { project } = args;
+    const queryString = project ? `?project=${encodeURIComponent(project)}` : '';
 
-    return formatResponse({
-      success: true,
-      files: data.files || data
-    });
-  } catch (error) {
-    return formatError(error.message);
-  }
-}
-
-async function readFile(args, context) {
-  try {
-    const response = await fetch(
-      `${context.backendUrl}/file_api.php?project=${encodeURIComponent(args.project)}&action=read&file=${encodeURIComponent(args.path)}`,
-      {
-        headers: { 'Authorization': context.token }
-      }
-    );
-    const data = await response.json();
-
-    return formatResponse({
-      success: true,
-      content: data.content,
-      path: args.path
-    });
-  } catch (error) {
-    return formatError(error.message);
-  }
-}
-
-async function createFile(args, context) {
-  try {
-    const data = await cmsRequest('file_api.php', {
-      method: 'POST',
-      contentType: 'application/json',
-      body: {
-        action: 'create_file',
-        project: args.project,
-        path: args.path,
-        content: args.content
-      }
+    const data = await cmsRequest(`filesystem.php${queryString}`, {
+      method: 'GET'
     }, context);
 
-    return formatResponse({
-      success: true,
-      message: 'File created successfully',
-      path: args.path
-    });
-  } catch (error) {
-    return formatError(error.message);
-  }
-}
+    const flattenTree = (items, parentPath = '') => {
+      let result = [];
+      if (!items) return result;
 
-async function updateFile(args, context) {
-  try {
-    const data = await cmsRequest('file_api.php', {
-      method: 'POST',
-      contentType: 'application/json',
-      body: {
-        action: 'save_file',
-        project: args.project,
-        path: args.path,
-        content: args.content
+      for (const item of items) {
+        const currentPath = parentPath ? `${parentPath}/${item.name}` : item.name;
+
+        if (item.type === 'folder') {
+          if (item.children) {
+            result = result.concat(flattenTree(item.children, currentPath));
+          }
+        } else {
+          result.push({
+            name: item.name,
+            path: currentPath,
+            type: 'file',
+            location: item.location,
+            projectID: item.projectID || null
+          });
+        }
       }
-    }, context);
+      return result;
+    };
+
+    const flatList = flattenTree(data.items);
+
+    const filesWithLocation = flatList.map(file => ({
+      displayName: file.name,
+      displayPath: file.path,
+      location: file.location,
+      type: file.type,
+      projectID: file.projectID || data.rootId || null
+    }));
 
     return formatResponse({
       success: true,
-      message: 'File updated successfully',
-      path: args.path
+      files: filesWithLocation,
+      tree: data.items,
+      rootId: data.rootId,
+      note: 'Use "location" and "projectID" when calling file_get_signed_url'
     });
   } catch (error) {
-    return formatError(error.message);
-  }
-}
-
-async function deleteFile(args, context) {
-  try {
-    const data = await cmsRequest('file_api.php', {
-      method: 'POST',
-      contentType: 'application/json',
-      body: {
-        action: 'delete',
-        project: args.project,
-        path: args.path
-      }
-    }, context);
-
-    return formatResponse({
-      success: true,
-      message: 'File deleted successfully'
-    });
-  } catch (error) {
-    return formatError(error.message);
-  }
-}
-
-async function renameFile(args, context) {
-  try {
-    const data = await cmsRequest('file_api.php', {
-      method: 'POST',
-      contentType: 'application/json',
-      body: {
-        action: 'rename',
-        project: args.project,
-        oldPath: args.oldPath,
-        newPath: args.newPath
-      }
-    }, context);
-
-    return formatResponse({
-      success: true,
-      message: 'File renamed successfully'
-    });
-  } catch (error) {
-    return formatError(error.message);
-  }
-}
-
-async function createDirectory(args, context) {
-  try {
-    const data = await cmsRequest('file_api.php', {
-      method: 'POST',
-      contentType: 'application/json',
-      body: {
-        action: 'create_folder',
-        project: args.project,
-        path: args.path
-      }
-    }, context);
-
-    return formatResponse({
-      success: true,
-      message: 'Directory created successfully'
-    });
-  } catch (error) {
-    return formatError(error.message);
-  }
-}
-
-async function searchFiles(args, context) {
-  try {
-    const data = await cmsRequest('file_api.php', {
-      method: 'POST',
-      contentType: 'application/json',
-      body: {
-        action: 'search',
-        project: args.project,
-        query: args.query,
-        searchContent: args.searchContent || false
-      }
-    }, context);
-
-    return formatResponse({
-      success: true,
-      results: data.results || data
-    });
-  } catch (error) {
-    return formatError(error.message);
-  }
-}
-
-async function gitStatus(args, context) {
-  try {
-    const data = await cmsRequest('monaco_git_api.php', {
-      method: 'POST',
-      contentType: 'application/json',
-      body: {
-        action: 'status',
-        project: args.project
-      }
-    }, context);
-
-    return formatResponse({
-      success: true,
-      status: data.status || data
-    });
-  } catch (error) {
-    return formatError(error.message);
-  }
-}
-
-async function gitCommit(args, context) {
-  try {
-    const data = await cmsRequest('monaco_git_api.php', {
-      method: 'POST',
-      contentType: 'application/json',
-      body: {
-        action: 'commit',
-        project: args.project,
-        message: args.message,
-        files: args.files || []
-      }
-    }, context);
-
-    return formatResponse({
-      success: true,
-      message: 'Changes committed successfully',
-      commit: data.commit
-    });
-  } catch (error) {
-    return formatError(error.message);
-  }
-}
-
-async function gitPush(args, context) {
-  try {
-    const data = await cmsRequest('monaco_git_api.php', {
-      method: 'POST',
-      contentType: 'application/json',
-      body: {
-        action: 'push',
-        project: args.project
-      }
-    }, context);
-
-    return formatResponse({
-      success: true,
-      message: 'Changes pushed to remote'
-    });
-  } catch (error) {
-    return formatError(error.message);
-  }
-}
-
-async function gitPull(args, context) {
-  try {
-    const data = await cmsRequest('monaco_git_api.php', {
-      method: 'POST',
-      contentType: 'application/json',
-      body: {
-        action: 'pull',
-        project: args.project
-      }
-    }, context);
-
-    return formatResponse({
-      success: true,
-      message: 'Latest changes pulled'
-    });
-  } catch (error) {
-    return formatError(error.message);
+    return formatError(`Failed to list files: ${error.message}`);
   }
 }
 
@@ -751,7 +315,7 @@ async function getSignedUrl(args, context) {
 
     const body = {
       path,
-      validitySeconds: Math.min(validitySeconds, 86400) // Max 24 hours
+      validitySeconds: Math.min(validitySeconds, 86400)
     };
 
     if (project) {
@@ -791,7 +355,7 @@ async function getBulkSignedUrls(args, context) {
         path: f.path,
         projectID: f.project || null
       })),
-      validitySeconds: Math.min(validitySeconds, 86400) // Max 24 hours
+      validitySeconds: Math.min(validitySeconds, 86400)
     };
 
     const data = await cmsRequest('signed_url_generator.php', {
