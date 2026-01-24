@@ -40,3 +40,5 @@ npm-debug.log*
 /copilot_yap
 /backend/ai_config.php
 /backend/config.php
+/READMES/node_modules/*
+/READMES/*

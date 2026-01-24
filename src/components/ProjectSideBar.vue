@@ -1,5 +1,4 @@
 <template>
-  <!-- Overview Item (always at top) -->
   <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
     <ion-menu-toggle auto-hide="false">
       <ion-item @click="this.selectedIndex = 0" lines="none" detail="false"
@@ -13,8 +12,8 @@
     <ion-reorder-group v-if="tools.length > 0" :disabled="false" @ionItemReorder="handleReorder($event)">
       <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
         <ion-item @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(p.link) + '/config')"
-          @click="this.selectedIndex = i + 1" lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/' + formatToolLink(p.link)"
-          class="hydrated menu-item"
+          @click="this.selectedIndex = i + 1" lines="none" detail="false"
+          :router-link="'/project/' + $route.params.project + '/' + formatToolLink(p.link)" class="hydrated menu-item"
           :class="{ selected: this.selectedIndex === i + 1, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
           :data-tooltip="isCollapsed ? capitalizeFirst(p.name) : ''">
           <ion-icon slot="start" :name="p.icon" />
@@ -27,8 +26,6 @@
       </ion-menu-toggle>
     </ion-reorder-group>
   </ion-list>
-
-  <!-- Custom Sections with Items (Tools + Forms) -->
   <template v-for="section in sections" :key="`section-${section.id}`">
     <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
       <h4>{{ section.name }}</h4>
@@ -48,8 +45,6 @@
       <ion-reorder-group :disabled="false" @ionItemReorder="handleSectionItemReorder($event, section.id)">
         <ion-menu-toggle auto-hide="false" v-for="(item, itemIndex) in getSectionItems(section)"
           :key="`section-${section.id}-item-${item.id}`">
-
-          <!-- Tool Item -->
           <ion-item v-if="item.item_type === 'tool'"
             @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(item.name) + '/config')"
             @click="selectSectionItem(section.id, itemIndex)" lines="none" detail="false"
@@ -65,8 +60,6 @@
               <pre v-else></pre>
             </ion-reorder>
           </ion-item>
-
-          <!-- Form Item -->
           <ion-item v-else-if="item.item_type === 'form'" @click="selectSectionItem(section.id, itemIndex)" lines="none"
             detail="false" :router-link="'/project/' + $route.params.project + '/forms/' + item.name"
             class="hydrated menu-item" :class="{
@@ -80,22 +73,17 @@
               <pre></pre>
             </ion-reorder>
           </ion-item>
-
         </ion-menu-toggle>
-
-        <!-- Empty state for section -->
         <ion-menu-toggle auto-hide="false" v-if="getSectionItems(section).length === 0 && !isCollapsed">
           <ion-item lines="none" detail="false" class="empty-section-item">
             <ion-icon slot="start" name="folder-open-outline" color="medium" />
             <ion-label color="medium">No items in this section</ion-label>
           </ion-item>
         </ion-menu-toggle>
-
       </ion-reorder-group>
     </ion-list>
   </template>
-
-  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
+  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed && isAdminOrOwner">
     <h4>Codespaces</h4>
     <div>
       <router-link v-for="(action, idx) in codespaceActions" :key="idx" :to="action.to">
@@ -103,9 +91,9 @@
       </router-link>
     </div>
   </ion-note>
-  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
+  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }" v-if="isAdminOrOwner">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
-      <ion-menu-toggle auto-hide="false" v-for="(codespace, i) in codespaces" :key="`codespace-${i}`">
+      <ion-menu-toggle auto-hide="false" v-for="(codespace, i) in filteredCodespaces" :key="`codespace-${i}`">
         <ion-item
           @click="this.selectedIndex = Number(tools.length) + Number(forms.length) + Number(components.length) + Number(services.length) + Number(i) + 1"
           lines="none" detail="false"
@@ -121,7 +109,7 @@
             :class="{ 'status-active': codespace.status === 'active', 'status-inactive': codespace.status === 'inactive' }"></span>
         </ion-item>
       </ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false" v-if="codespaces.length === 0 && !isCollapsed">
+      <ion-menu-toggle auto-hide="false" v-if="filteredCodespaces.length === 0 && !isCollapsed && isAdminOrOwner">
         <ion-item lines="none" detail="false" class="no-codespaces-item">
           <ion-icon slot="start" name="code-slash-outline" color="medium" />
           <ion-label color="medium">No Codespaces yet</ion-label>
@@ -129,7 +117,7 @@
       </ion-menu-toggle>
     </ion-reorder-group>
   </ion-list>
-  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
+  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed && isAdminOrOwner">
     <h4 v-if="!isCollapsed">Web Builder</h4>
     <div v-if="!isCollapsed">
       <router-link v-for="(action, idx) in webBuilderActions" :key="idx" :to="action.to">
@@ -137,9 +125,9 @@
       </router-link>
     </div>
   </ion-note>
-  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
+  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }" v-if="isAdminOrOwner">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
-      <template v-for="(component, i) in components" :key="i">
+      <template v-for="(component, i) in filteredComponents" :key="i">
         <ion-menu-toggle auto-hide="false">
           <ion-item @dblclick="
             goToConfig(
@@ -196,7 +184,7 @@
       </template>
     </ion-reorder-group>
   </ion-list>
-  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
+  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed && isAdminOrOwner">
     <h4 v-if="!isCollapsed">Services</h4>
     <div v-if="!isCollapsed">
       <router-link v-for="(action, idx) in serviceActions" :key="idx" :to="action.to">
@@ -204,9 +192,9 @@
       </router-link>
     </div>
   </ion-note>
-  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
+  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }" v-if="isAdminOrOwner">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
-      <ion-menu-toggle auto-hide="false" v-for="(p, i) in services" :key="i">
+      <ion-menu-toggle auto-hide="false" v-for="(p, i) in filteredServices" :key="i">
         <ion-item @click="this.selectedIndex = Number(i) + Number(tools.length) + Number(components.length) + 1"
           lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/services/' + p.link"
           class="hydrated menu-item" :class="{
@@ -222,7 +210,7 @@
       </ion-menu-toggle>
     </ion-reorder-group>
   </ion-list>
-  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
+  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed && isAdminOrOwner">
     <h4>APIs</h4>
     <div>
       <router-link v-for="(action, idx) in apiActions" :key="idx" :to="action.to">
@@ -230,9 +218,9 @@
       </router-link>
     </div>
   </ion-note>
-  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
+  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }" v-if="isAdminOrOwner">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
-      <ion-menu-toggle auto-hide="false" v-for="(api, i) in apis" :key="`api-${i}`">
+      <ion-menu-toggle auto-hide="false" v-for="(api, i) in filteredApis" :key="`api-${i}`">
         <ion-item
           @click="this.selectedIndex = Number(tools.length) + Number(components.length) + Number(services.length) + Number(i) + 1"
           lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/apis/' + api.slug"
@@ -252,7 +240,7 @@
           </ion-reorder>-->
         </ion-item>
       </ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false" v-if="apis.length === 0 && !isCollapsed">
+      <ion-menu-toggle auto-hide="false" v-if="filteredApis.length === 0 && !isCollapsed && isAdminOrOwner">
         <ion-item lines="none" detail="false" class="no-apis-item">
           <ion-icon slot="start" name="code-slash-outline" color="medium" />
           <ion-label color="medium">No APIs subscribed</ion-label>
@@ -349,13 +337,67 @@ export default defineComponent({
     const componentsExpanded = ref(true);
     const expandedComponents = ref<{ [key: string]: boolean }>({});
     const componentSubItems = ref<{ [key: string]: any[] }>({});
+    const userPermissions = ref<any>(null);
+    const userRole = ref<any>(null);
 
-    // Helper to get section items (tools + forms combined, already sorted from backend)
+    const loadUserPermissions = async () => {
+      try {
+        const response = await axios.post(
+          'roles.php',
+          qs.stringify({
+            getUserRole: 'getUserRole',
+            project: route.params.project
+          })
+        );
+
+        if (response.data.role) {//response.data.success &&
+          userRole.value = response.data.role;
+          userPermissions.value = response.data.role.permissions;
+        }
+      } catch (error) {
+        console.error('Failed to load user permissions:', error);
+      }
+    };
+
+    const isAdminOrOwner = computed(() => {
+      console.log('role ' + userRole.value);
+      if (!userRole.value) return false;
+      //console.log(1);
+      //console.log(userRole.value.slug);
+      return ['admin', 'owner'].includes(userRole.value.slug);
+    });
+
+    const filteredApis = computed(() => {
+      if (isAdminOrOwner.value) return apis.value;
+      return [];
+    });
+
+    const filteredServices = computed(() => {
+      if (isAdminOrOwner.value) return services.value;
+      return [];
+    });
+
+    const filteredCodespaces = computed(() => {
+      if (isAdminOrOwner.value) return codespaces.value;
+      return [];
+    });
+
+    const filteredComponents = computed(() => {
+      if (isAdminOrOwner.value) return components.value;
+      return [];
+    });
+
+    const shouldShowSection = (sectionName: string) => {
+      if (isAdminOrOwner.value) return true;
+
+      const adminOnlySections = ['APIs', 'Services', 'Codespaces', 'Web Builder'];
+      return !adminOnlySections.includes(sectionName);
+    };
+
     const getSectionItems = (section: SidebarSection): SidebarItem[] => {
       return section.items || [];
     };
 
-    // Selection helpers for section items
     const selectSectionItem = (sectionId: number, itemIndex: number) => {
       selectedSectionId.value = sectionId;
       selectedItemIndex.value = itemIndex;
@@ -365,7 +407,6 @@ export default defineComponent({
       return selectedSectionId.value === sectionId && selectedItemIndex.value === itemIndex;
     };
 
-    // Handle reorder for section items (mixed tools and forms)
     const handleSectionItemReorder = async (event: CustomEvent, sectionId: number) => {
       const from = event.detail.from;
       const to = event.detail.to;
@@ -528,6 +569,7 @@ export default defineComponent({
     };
 
     loadSidebarData();
+    loadUserPermissions();
 
     function goToConfig(route: string) {
       ionRouter.push(route);
@@ -620,6 +662,14 @@ export default defineComponent({
       codespaceActions,
       serviceActions,
       apiActions,
+      userPermissions,
+      userRole,
+      isAdminOrOwner,
+      filteredApis,
+      filteredServices,
+      filteredCodespaces,
+      filteredComponents,
+      shouldShowSection,
     };
   },
   created() {

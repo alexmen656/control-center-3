@@ -53,10 +53,23 @@ function getUsersByProjectID($projectID)
             $userData = fetch_assoc(query("SELECT * FROM control_center_users WHERE userID='$userID'"));
 
             if ($userData) {
+                $role = null;
+                if (isset($user['role_id']) && $user['role_id']) {
+                    $roleData = fetch_assoc(query("SELECT * FROM project_roles WHERE id={$user['role_id']}"));
+                    if ($roleData) {
+                        $role = [
+                            'id' => $roleData['id'],
+                            'name' => $roleData['name'],
+                            'slug' => $roleData['slug']
+                        ];
+                    }
+                }
+
                 $result[] = [
                     'id' => $userData['userID'],
                     'name' => $userData['firstname'] . " " . $userData['lastname'],
-                    'email' => $userData['email']
+                    'email' => $userData['email'],
+                    'role' => $role
                 ];
             }
         }
@@ -138,14 +151,23 @@ function projectExists($name)
     return mysqli_num_rows($check) > 0;
 }
 
-function addUserToProject($userID, $projectID)
+function addUserToProject($userID, $projectID, $roleId = null)
 {
     $userID = (int) $userID;
     $projectID = escape_string($projectID);
+
+    if ($roleId === null) {
+        $ownerRole = query("SELECT id FROM project_roles WHERE slug='owner' LIMIT 1");
+        if ($ownerRole && mysqli_num_rows($ownerRole) == 1) {
+            $roleId = fetch_assoc($ownerRole)['id'];
+        }
+    }
+
     $check = query("SELECT * FROM control_center_user_projects WHERE userID=$userID AND projectID='$projectID'");
 
     if (mysqli_num_rows($check) == 0) {
-        return (bool) query("INSERT INTO control_center_user_projects VALUES (0, $userID, '$projectID', 1)");
+        $roleIdValue = $roleId ? (int) $roleId : 'NULL';
+        return (bool) query("INSERT INTO control_center_user_projects VALUES (0, $userID, '$projectID', 1, $roleIdValue)");
     }
 
     return true;

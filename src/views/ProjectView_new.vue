@@ -2,7 +2,6 @@
   <div class="ion-page">
     <ion-content>
       <div class="modern-project-view" :class="{ 'dark-mode': isDarkMode }">
-        <!-- Project Header -->
         <div class="project-header">
           <div class="header-content">
             <div class="project-info">
@@ -19,10 +18,7 @@
             </div>
           </div>
         </div>
-
-        <!-- Main Content -->
         <div class="main-content">
-          <!-- Tools Section -->
           <div class="content-section">
             <div class="section-header">
               <div class="section-title">
@@ -36,7 +32,6 @@
                 </router-link>
               </div>
             </div>
-
             <div class="cards-grid" v-if="tools.length > 0">
               <div v-for="tool in tools" :key="tool.id" class="tool-card" @click="goToTool(tool.name)">
                 <div class="card-icon">
@@ -53,7 +48,6 @@
                 </div>
               </div>
             </div>
-
             <div v-else class="empty-state">
               <ion-icon name="construct-outline" class="empty-icon"></ion-icon>
               <h3>No Tools Yet</h3>
@@ -64,8 +58,6 @@
               </router-link>
             </div>
           </div>
-
-          <!-- Components Section -->
           <div class="content-section">
             <div class="section-header">
               <div class="section-title">
@@ -137,11 +129,12 @@
                 </div>
                 <div class="user-info">
                   <h3 class="user-name">{{ user.name.charAt(0).toUpperCase() + user.name.slice(1) }}</h3>
-                  <p class="user-role">Read, Edit & Write</p>
+                  <p class="user-role" v-if="user.role">{{ user.role.name }}</p>
+                  <p class="user-role" v-else>No role assigned</p>
                 </div>
                 <div class="user-actions">
-                  <button class="card-action-btn" @click="manageUser(user)" title="Manage">
-                    <ion-icon name="ellipsis-horizontal"></ion-icon>
+                  <button v-if="canManageUsers" class="card-action-btn" @click="editUserRole(user)" title="Edit Role">
+                    <ion-icon name="create-outline"></ion-icon>
                   </button>
                 </div>
               </div>
@@ -157,6 +150,8 @@
             </div>
           </div>
         </div>
+        
+        <!-- Invite User Modal -->
         <div v-if="isOpen" class="modal-overlay" @click="setOpen(false)">
           <div class="modern-modal" @click.stop>
             <div class="modal-header">
@@ -175,19 +170,63 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Permission Level</label>
-                <select class="form-select" v-model="selectedPermission">
-                  <option value="read">Read Only</option>
-                  <option value="write">Read & Write</option>
-                  <option value="admin">Administrator</option>
+                <label class="form-label">Role</label>
+                <select class="form-select" v-model="selectedRoleId">
+                  <option v-for="role in availableRoles" :key="role.id" :value="role.id">
+                    {{ role.name }}
+                  </option>
                 </select>
+                <p v-if="selectedRoleDescription" class="form-hint">
+                  {{ selectedRoleDescription }}
+                </p>
               </div>
             </div>
             <div class="modal-actions">
               <button class="btn-secondary" @click="setOpen(false)">Cancel</button>
-              <button class="btn-primary" @click="confirm" :disabled="!email">
+              <button class="btn-primary" @click="confirm" :disabled="!email || !selectedRoleId">
                 <ion-icon name="paper-plane-outline"></ion-icon>
                 Send Invitation
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Edit User Role Modal -->
+        <div v-if="isEditModalOpen" class="modal-overlay" @click="setEditModalOpen(false)">
+          <div class="modern-modal" @click.stop>
+            <div class="modal-header">
+              <h3>Edit User Role</h3>
+              <button class="close-btn" @click="setEditModalOpen(false)">
+                <ion-icon name="close"></ion-icon>
+              </button>
+            </div>
+            <div class="modal-content" v-if="editingUser">
+              <div class="user-info-box">
+                <div class="user-avatar-large">
+                  <ion-icon name="person"></ion-icon>
+                </div>
+                <div>
+                  <h4>{{ editingUser.name }}</h4>
+                  <p class="text-muted">{{ editingUser.email }}</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Change Role</label>
+                <select class="form-select" v-model="editingRoleId">
+                  <option v-for="role in availableRoles" :key="role.id" :value="role.id">
+                    {{ role.name }}
+                  </option>
+                </select>
+                <p v-if="editingRoleDescription" class="form-hint">
+                  {{ editingRoleDescription }}
+                </p>
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button class="btn-secondary" @click="setEditModalOpen(false)">Cancel</button>
+              <button class="btn-primary" @click="confirmEditRole" :disabled="!editingRoleId">
+                <ion-icon name="checkmark-outline"></ion-icon>
+                Update Role
               </button>
             </div>
           </div>
@@ -211,34 +250,155 @@ export default {
       email: "",
       selectedPermission: "write",
       isDarkMode: false,
+      availableRoles: [],
+      selectedRoleId: null,
+      editingUser: null,
+      editingRoleId: null,
+      userPermissions: null,
     };
   },
   setup() {
     const isOpen = ref(false);
+    const isEditModalOpen = ref(false);
+    
     const setOpen = (open) => {
       isOpen.value = open;
+    };
+    
+    const setEditModalOpen = (open) => {
+      isEditModalOpen.value = open;
     };
 
     return {
       isOpen,
+      isEditModalOpen,
       setOpen,
+      setEditModalOpen,
     };
   },
   created() {
     this.loadData();
     this.checkDarkMode();
+    this.loadRoles();
+    this.loadUserPermissions();
+  },
+  computed: {
+    selectedRoleDescription() {
+      if (!this.selectedRoleId) return null;
+      const role = this.availableRoles.find(r => r.id === this.selectedRoleId);
+      return role ? role.description : null;
+    },
+    editingRoleDescription() {
+      if (!this.editingRoleId) return null;
+      const role = this.availableRoles.find(r => r.id === this.editingRoleId);
+      return role ? role.description : null;
+    },
+    canManageUsers() {
+      return this.userPermissions?.project?.manage_users === true;
+    }
   },
   methods: {
+    async loadRoles() {
+      try {
+        const response = await this.$axios.post(
+          "roles.php",
+          this.$qs.stringify({
+            getAllRoles: "getAllRoles"
+          })
+        );
+        console.log('Roles response:', response.data);
+        
+        // Backend gibt { roles: [...] } zurück via echoJson
+        if (response.data && response.data.roles) {
+          this.availableRoles = response.data.roles;
+        } else if (Array.isArray(response.data)) {
+          this.availableRoles = response.data;
+        }
+        
+        console.log('Available roles:', this.availableRoles);
+        
+        // Setze Editor als Standard wenn verfügbar
+        if (this.availableRoles.length > 0) {
+          const editorRole = this.availableRoles.find(r => r.slug === 'editor');
+          if (editorRole) {
+            this.selectedRoleId = editorRole.id;
+          } else {
+            this.selectedRoleId = this.availableRoles[0].id;
+          }
+          console.log('Selected role ID:', this.selectedRoleId);
+        }
+      } catch (error) {
+        console.error("Failed to load roles:", error);
+        console.error("Error response:", error.response);
+      }
+    },
+    
+    async loadUserPermissions() {
+      try {
+        const response = await this.$axios.post(
+          "roles.php",
+          this.$qs.stringify({
+            getUserRole: "getUserRole",
+            project: this.$route.params.project
+          })
+        );
+        if (response.data.success && response.data.role) {
+          this.userPermissions = response.data.role.permissions;
+        }
+      } catch (error) {
+        console.error("Failed to load user permissions:", error);
+      }
+    },
+    
+    editUserRole(user) {
+      this.editingUser = user;
+      this.editingRoleId = user.role ? user.role.id : null;
+      this.setEditModalOpen(true);
+    },
+    
+    async confirmEditRole() {
+      if (!this.editingUser || !this.editingRoleId) {
+        alert("Please select a role");
+        return;
+      }
+
+      try {
+        const response = await this.$axios.post(
+          "roles.php",
+          this.$qs.stringify({
+            assignRole: "assignRole",
+            project: this.$route.params.project,
+            targetUserId: this.editingUser.id,
+            roleId: this.editingRoleId
+          })
+        );
+
+        if (response.data.success) {
+          alert("Role updated successfully");
+          this.loadData();
+          this.setEditModalOpen(false);
+          this.editingUser = null;
+          this.editingRoleId = null;
+        } else {
+          alert("Failed to update role: " + response.data.message);
+        }
+      } catch (error) {
+        console.error("Failed to update role:", error);
+        alert("Failed to update role");
+      }
+    },
+    
     loadData() {
-      // Load sidebar data
       this.$axios
         .get("sidebar.php?getSideBarByProjectName=" + this.$route.params.project)
         .then((response) => {
-          this.tools = response.data.tools;
-          this.components = response.data.components;
+          this.tools = response.data.tools || [];
+          this.components = response.data.components || [];
+        })
+        .catch(error => {
+          console.error("Failed to load sidebar:", error);
         });
 
-      // Load project users
       this.$axios
         .post(
           "projects.php",
@@ -248,7 +408,22 @@ export default {
           })
         )
         .then((response2) => {
-          this.users = response2.data;
+          console.log('Users response:', response2.data);
+          // jsonResponse gibt { success: true, users: [...] } zurück
+          if (response2.data.success && response2.data.users) {
+            this.users = response2.data.users;
+          } else if (response2.data.users) {
+            this.users = response2.data.users;
+          } else if (Array.isArray(response2.data)) {
+            this.users = response2.data;
+          } else {
+            this.users = [];
+          }
+          console.log('Users set to:', this.users);
+        })
+        .catch(error => {
+          console.error("Failed to load users:", error);
+          console.error("Error response:", error.response);
         });
     },
 
@@ -307,7 +482,6 @@ export default {
     },
 
     manageUser(user) {
-      // Implement user management
       console.log('Manage user:', user);
     },
 
@@ -325,26 +499,30 @@ export default {
     },
 
     async confirm() {
-      if (!this.email) return;
+      if (!this.email || !this.selectedRoleId) {
+        alert("Please enter an email and select a role");
+        return;
+      }
 
       try {
-        await this.$axios.post(
+        const response = await this.$axios.post(
           "projects.php",
           this.$qs.stringify({
             addUserToProject: "addUserToProject",
             project: this.$route.params.project,
             email: this.email,
-            permission: this.selectedPermission,
+            roleId: this.selectedRoleId,
           })
         );
 
-        this.setOpen(false);
-        this.email = "";
-        this.selectedPermission = "write";
-        this.loadData(); // Refresh user list
-
-        // Show success notification (you can implement a proper notification system)
-        alert("User invitation sent successfully!");
+        if (response.data.success) {
+          this.setOpen(false);
+          this.email = "";
+          this.loadData();
+          alert("User invited successfully!");
+        } else {
+          alert("Failed to invite user: " + response.data.message);
+        }
       } catch (error) {
         console.error("Error inviting user:", error);
         alert("Error sending invitation. Please try again.");
@@ -355,7 +533,6 @@ export default {
 </script>
 
 <style scoped>
-/* Modern Project View Design - Aligned with ManageUsers */
 .modern-project-view {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
@@ -916,6 +1093,47 @@ export default {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+}
+
+.form-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.user-info-box {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--background);
+  border-radius: var(--radius);
+}
+
+.user-avatar-large {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  border-radius: 50%;
+  color: white;
+  font-size: 28px;
+}
+
+.user-info-box h4 {
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.text-muted {
+  color: var(--text-muted);
+  font-size: 13px;
 }
 
 .modal-actions {

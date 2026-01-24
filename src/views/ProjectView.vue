@@ -34,38 +34,24 @@
             <ion-card>
               <h2 class="info-card-heading">
                 Components
-                <div
-                  style="
+                <div style="
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                  "
-                >
+                  ">
                   <ion-icon @click="openWebBuilder()" name="globe-outline" style="margin-right: 8px;" />
                   <ion-icon @click="exportWeb()" name="download-outline" />
                   <ion-icon @click="viewWWW()" name="earth-outline" />
                 </div>
               </h2>
 
-              <a
-                v-if="downloadLink"
-                :href="
-                  'https://alex.polan.sk/control-center/website_builder/exports/' +
-                  downloadLink
-                "
-                download
-                >{{ downloadLink }}</a
-              >
+              <a v-if="downloadLink" :href="'https://alex.polan.sk/control-center/website_builder/exports/' +
+                downloadLink
+                " download>{{ downloadLink }}</a>
               <ion-list v-if="components && components.length > 0">
                 <ion-item v-for="component in components" :key="component.id">
-                  <ion-icon
-                    v-if="component.type == 'script'"
-                    name="code-slash-outline"
-                  ></ion-icon>
-                  <ion-icon
-                    v-if="component.type == 'image'"
-                    name="image-outline"
-                  ></ion-icon>
+                  <ion-icon v-if="component.type == 'script'" name="code-slash-outline"></ion-icon>
+                  <ion-icon v-if="component.type == 'image'" name="image-outline"></ion-icon>
                   <ion-label>
                     <h2>
                       {{
@@ -93,13 +79,11 @@
             <ion-card>
               <h2 class="info-card-heading">
                 Users
-                <div
-                  style="
+                <div style="
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                  "
-                >
+                  ">
                   <ion-icon @click="setOpen(true)" name="add" />
                 </div>
               </h2>
@@ -112,8 +96,21 @@
                         user.name.charAt(0).toUpperCase() + user.name.slice(1)
                       }}
                     </h2>
-                    <p>Permissions: Read, Edit & Write</p>
+                    <p v-if="user.role">
+                      Role: {{ user.role.name }}
+                    </p>
+                    <p v-else>
+                      Role: Not assigned
+                    </p>
                   </ion-label>
+                  <ion-button 
+                    slot="end" 
+                    fill="clear" 
+                    @click="editUserRole(user)"
+                    v-if="canManageUsers"
+                  >
+                    <ion-icon name="create-outline" />
+                  </ion-button>
                 </ion-item>
               </ion-list>
               <ion-item v-else>
@@ -135,7 +132,7 @@
           </ion-item>
         </ion-list>-->
 
-      <!-- Modal -->
+      <!-- Modal: Invite User -->
       <ion-modal :is-open="isOpen" ref="modal">
         <ion-header>
           <ion-toolbar>
@@ -144,20 +141,95 @@
             </ion-buttons>
             <ion-title style="text-align: center">Invite User</ion-title>
             <ion-buttons slot="end">
-              <ion-button color="primary" :strong="true" @click="confirm()"
-                >Confirm</ion-button
-              >
+              <ion-button color="primary" :strong="true" @click="confirm()">Confirm</ion-button>
             </ion-buttons>
           </ion-toolbar>
         </ion-header>
         <ion-content class="ion-padding">
-          <FloatingInput
-            defaultVal=""
-            label="Email"
-            placeholder="john.due@control-center.eu"
+          <FloatingInput 
+            defaultVal="" 
+            label="Email" 
+            placeholder="john.doe@control-center.eu" 
             type="email"
-            v-model="email"
+            v-model="email" 
           />
+          
+          <div style="margin-top: 20px;">
+            <ion-label style="display: block; margin-bottom: 8px; font-weight: 600;">
+              Select Role
+            </ion-label>
+            <ion-select 
+              v-model="selectedRoleId" 
+              placeholder="Choose a role"
+              interface="action-sheet"
+            >
+              <ion-select-option 
+                v-for="role in availableRoles" 
+                :key="role.id" 
+                :value="role.id"
+              >
+                {{ role.name }}
+              </ion-select-option>
+            </ion-select>
+            
+            <div 
+              v-if="selectedRoleDescription" 
+              style="margin-top: 12px; padding: 12px; background: rgba(128,128,128,0.1); border-radius: 8px;"
+            >
+              <p style="margin: 0; font-size: 0.9em; color: var(--ion-color-medium);">
+                {{ selectedRoleDescription }}
+              </p>
+            </div>
+          </div>
+        </ion-content>
+      </ion-modal>
+
+      <!-- Modal: Edit User Role -->
+      <ion-modal :is-open="isEditModalOpen" ref="editModal">
+        <ion-header>
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button color="primary" @click="cancelEdit()">Cancel</ion-button>
+            </ion-buttons>
+            <ion-title style="text-align: center">Edit User Role</ion-title>
+            <ion-buttons slot="end">
+              <ion-button color="primary" :strong="true" @click="confirmEdit()">Confirm</ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding" v-if="editingUser">
+          <div style="margin-bottom: 20px;">
+            <h3>{{ editingUser.name }}</h3>
+            <p style="color: var(--ion-color-medium);">{{ editingUser.email }}</p>
+          </div>
+
+          <div>
+            <ion-label style="display: block; margin-bottom: 8px; font-weight: 600;">
+              Change Role
+            </ion-label>
+            <ion-select 
+              v-model="editingRoleId" 
+              placeholder="Choose a role"
+              interface="action-sheet"
+            >
+              <ion-select-option 
+                v-for="role in availableRoles" 
+                :key="role.id" 
+                :value="role.id"
+              >
+                {{ role.name }}
+              </ion-select-option>
+            </ion-select>
+            
+            <div 
+              v-if="editingRoleDescription" 
+              style="margin-top: 12px; padding: 12px; background: rgba(128,128,128,0.1); border-radius: 8px;"
+            >
+              <p style="margin: 0; font-size: 0.9em; color: var(--ion-color-medium);">
+                {{ editingRoleDescription }}
+              </p>
+            </div>
+          </div>
         </ion-content>
       </ion-modal>
     </ion-content>
@@ -175,32 +247,45 @@ export default {
   },
   data() {
     return {
-      /*  users: [
-        { name: "Benutzer 1", access: "Lesezugriff" },
-        { name: "Benutzer 2", access: "Schreibzugriff" },
-        { name: "Benutzer 3", access: "Adminzugriff" },
-        // Füge hier weitere Benutzer mit ihren Zugriffsrechten hinzu
-      ],*/
       tools: [],
       components: [],
       users: [],
       downloadLink: "",
       email: "",
+      availableRoles: [],
+      selectedRoleId: null,
+      editingUser: null,
+      editingRoleId: null,
+      userPermissions: null,
     };
   },
   setup() {
     const isOpen = ref(false);
+    const isEditModalOpen = ref(false);
+    
     const setOpen = (open) => {
       isOpen.value = open;
       console.log(1);
     };
 
+    const setEditModalOpen = (open) => {
+      isEditModalOpen.value = open;
+    };
+
     return {
       isOpen,
+      isEditModalOpen,
       setOpen,
+      setEditModalOpen,
     };
   },
   created() {
+    // Lade verfügbare Rollen
+    this.loadRoles();
+    
+    // Lade Benutzer-Berechtigungen
+    this.loadUserPermissions();
+    
     this.$axios
       .get("sidebar.php?getSideBarByProjectName=" + this.$route.params.project)
       .then((response) => {
@@ -219,20 +304,120 @@ export default {
         this.users = response2.data;
       });
   },
+  computed: {
+    selectedRoleDescription() {
+      if (!this.selectedRoleId) return null;
+      const role = this.availableRoles.find(r => r.id === this.selectedRoleId);
+      return role ? role.description : null;
+    },
+    editingRoleDescription() {
+      if (!this.editingRoleId) return null;
+      const role = this.availableRoles.find(r => r.id === this.editingRoleId);
+      return role ? role.description : null;
+    },
+    canManageUsers() {
+      return this.userPermissions?.project?.manage_users === true;
+    }
+  },
   methods: {
+    async loadRoles() {
+      try {
+        const response = await this.$axios.post(
+          "roles.php",
+          this.$qs.stringify({
+            getAllRoles: "getAllRoles"
+          })
+        );
+        if (response.data.success) {
+          this.availableRoles = response.data.roles;
+          // Setze Standardrolle auf "Editor" falls vorhanden
+          const editorRole = this.availableRoles.find(r => r.slug === 'editor');
+          if (editorRole) {
+            this.selectedRoleId = editorRole.id;
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load roles:", error);
+      }
+    },
+    async loadUserPermissions() {
+      try {
+        const response = await this.$axios.post(
+          "roles.php",
+          this.$qs.stringify({
+            getUserRole: "getUserRole",
+            project: this.$route.params.project
+          })
+        );
+        if (response.data.success && response.data.role) {
+          this.userPermissions = response.data.role.permissions;
+        }
+      } catch (error) {
+        console.error("Failed to load user permissions:", error);
+      }
+    },
+    editUserRole(user) {
+      this.editingUser = user;
+      this.editingRoleId = user.role ? user.role.id : null;
+      this.setEditModalOpen(true);
+    },
+    cancelEdit() {
+      this.editingUser = null;
+      this.editingRoleId = null;
+      this.setEditModalOpen(false);
+    },
+    async confirmEdit() {
+      if (!this.editingUser || !this.editingRoleId) {
+        alert("Please select a role");
+        return;
+      }
+
+      try {
+        const response = await this.$axios.post(
+          "roles.php",
+          this.$qs.stringify({
+            assignRole: "assignRole",
+            project: this.$route.params.project,
+            targetUserId: this.editingUser.id,
+            roleId: this.editingRoleId
+          })
+        );
+
+        if (response.data.success) {
+          alert("Role updated successfully");
+          // Reload users
+          this.loadUsers();
+          this.cancelEdit();
+        } else {
+          alert("Failed to update role: " + response.data.message);
+        }
+      } catch (error) {
+        console.error("Failed to update role:", error);
+        alert("Failed to update role");
+      }
+    },
+    async loadUsers() {
+      try {
+        const response = await this.$axios.post(
+          "projects.php",
+          this.$qs.stringify({
+            getProjectUsers: "getProjectUsers",
+            project: this.$route.params.project,
+          })
+        );
+        this.users = response.data;
+      } catch (error) {
+        console.error("Failed to load users:", error);
+      }
+    },
     viewWWW() {
       window
         .open("https://alex.polan.sk/" + this.$route.params.project, "_blank")
         .focus();
     },
     openWebBuilder() {
-      // Öffne den Web Builder für das aktuelle Projekt
       const project = this.$route.params.project;
-      
-      // Konstruiere URL für den Web Builder
       const url = `https://web-builder.control-center.eu/project/${project}`;
-      
-      // Öffne in einem neuen Tab
       window.open(url, '_blank').focus();
     },
     exportWeb() {
@@ -242,37 +427,61 @@ export default {
     },
     cancel() {
       this.setOpen(false);
+      this.email = "";
+      this.selectedRoleId = null;
     },
     async confirm() {
+      if (!this.email) {
+        alert("Please enter an email");
+        return;
+      }
+      
+      if (!this.selectedRoleId) {
+        alert("Please select a role");
+        return;
+      }
+
       this.setOpen(false);
-      this.$axios
-        .post(
+
+      try {
+        const response = await this.$axios.post(
           "projects.php",
           this.$qs.stringify({
             addUserToProject: "addUserToProject",
             project: this.$route.params.project,
             email: this.email,
+            roleId: this.selectedRoleId,
           })
-        )
-        .then(() => {
-          alert("User Invite Success");
-        });
+        );
+
+        if (response.data.success) {
+          alert("User invited successfully!");
+          // Reload users
+          this.loadUsers();
+          this.email = "";
+          this.selectedRoleId = null;
+        } else {
+          alert("Failed to invite user: " + response.data.message);
+        }
+      } catch (error) {
+        console.error("Failed to invite user:", error);
+        alert("Failed to invite user");
+      }
     },
     goToTool(tool) {
-      //alert("/project/"+this.$route.params.project+"/"+tool.toLowerCase().replaceAll(" ", "-"));
       if (tool.toLowerCase().includes("dashboard-")) {
         this.$router.push(
           "/project/" +
-            this.$route.params.project +
-            "/dashboard/" +
-            tool.toLowerCase().replaceAll(" ", "-")
+          this.$route.params.project +
+          "/dashboard/" +
+          tool.toLowerCase().replaceAll(" ", "-")
         );
-      }else{
+      } else {
         this.$router.push(
           "/project/" +
-            this.$route.params.project +
-            "/" +
-            tool.toLowerCase().replaceAll(" ", "-")
+          this.$route.params.project +
+          "/" +
+          tool.toLowerCase().replaceAll(" ", "-")
         );
       }
     },
@@ -283,6 +492,7 @@ export default {
 ion-card {
   border-radius: 28px;
 }
+
 ion-icon {
   margin-right: 0.75rem;
 }
@@ -293,17 +503,18 @@ ion-card:nth-of-type(2) {
 }
 
 @media (prefers-color-scheme: dark) {
+
   ion-list,
   ion-item {
     background: #1a1a1a;
     --background: #1a1a1a;
   }
-  
+
   ion-card {
     background: #2a2a2a;
     border-color: #3a3a3a;
   }
-  
+
   ion-content {
     --background: #0a0a0a;
   }

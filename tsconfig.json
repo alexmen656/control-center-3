@@ -36,6 +36,6 @@
     "tests/**/*.tsx"
 , "src/store.ts"  ],
   "exclude": [
-    "node_modules"
+    "READMES/node_modules"
   ]
 }

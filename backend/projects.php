@@ -221,7 +221,19 @@ function handleAddUserToProject()
     }
 
     $newUserID = fetch_assoc($user)['userID'];
-    echo addUserToProject($newUserID, $project['projectID'])
+
+    $roleId = null;
+    if (isset($_POST['roleId']) && !empty($_POST['roleId'])) {
+        $roleId = (int) $_POST['roleId'];
+    } elseif (isset($_POST['role'])) {
+        $roleSlug = escape_string($_POST['role']);
+        $roleQuery = query("SELECT id FROM project_roles WHERE slug='$roleSlug' LIMIT 1");
+        if ($roleQuery && mysqli_num_rows($roleQuery) == 1) {
+            $roleId = fetch_assoc($roleQuery)['id'];
+        }
+    }
+
+    echo addUserToProject($newUserID, $project['projectID'], $roleId)
         ? jsonResponse("User added to project successfully")
         : jsonResponse("Failed to add user to project", false);
 }
