@@ -10,10 +10,10 @@
             </div>
             <div class="header-actions">
               <button class="action-btn" @click="refreshData" title="Refresh">
-                <ion-icon name="refresh-outline"></ion-icon>
+                <ion-icon name="refresh-outline" />
               </button>
               <button class="action-btn" @click="openSettings" title="Settings">
-                <ion-icon name="settings-outline"></ion-icon>
+                <ion-icon name="settings-outline" />
               </button>
             </div>
           </div>
@@ -22,12 +22,12 @@
           <div class="content-section">
             <div class="section-header">
               <div class="section-title">
-                <ion-icon name="build-outline" class="section-icon"></ion-icon>
+                <ion-icon name="build-outline" class="section-icon" />
                 <h2>Tools</h2>
               </div>
               <div class="section-actions">
-                <router-link :to="`/project/${$route.params.project}/new/tool/`" class="add-btn">
-                  <ion-icon name="add"></ion-icon>
+                <router-link :to="`/project/${$route.params.project}/module-store /`" class="add-btn">
+                  <ion-icon name="add" />
                   <span>New Tool</span>
                 </router-link>
               </div>
@@ -35,25 +35,25 @@
             <div class="cards-grid" v-if="tools.length > 0">
               <div v-for="tool in tools" :key="tool.id" class="tool-card" @click="goToTool(tool.name)">
                 <div class="card-icon">
-                  <ion-icon :name="tool.icon || 'construct-outline'"></ion-icon>
+                  <ion-icon :name="tool.icon || 'construct-outline'" />
                 </div>
                 <div class="card-content">
                   <h3 class="card-title">{{ tool.name.charAt(0).toUpperCase() + tool.name.slice(1) }}</h3>
-                  <p class="card-description">Tool Module</p>
+                  <!-- <p class="card-description">Tool Module</p>-->
                 </div>
                 <div class="card-actions">
                   <button class="card-action-btn" @click.stop="configureTool(tool)" title="Configure">
-                    <ion-icon name="cog-outline"></ion-icon>
+                    <ion-icon name="cog-outline" />
                   </button>
                 </div>
               </div>
             </div>
             <div v-else class="empty-state">
-              <ion-icon name="construct-outline" class="empty-icon"></ion-icon>
+              <ion-icon name="construct-outline" class="empty-icon" />
               <h3>No Tools Yet</h3>
               <p>Start by creating your first tool module</p>
               <router-link :to="`/project/${$route.params.project}/new/tool/`" class="empty-action-btn">
-                <ion-icon name="add"></ion-icon>
+                <ion-icon name="add" />
                 Create Tool
               </router-link>
             </div>
@@ -61,32 +61,32 @@
           <div class="content-section">
             <div class="section-header">
               <div class="section-title">
-                <ion-icon name="cube-outline" class="section-icon"></ion-icon>
+                <ion-icon name="cube-outline" class="section-icon" />
                 <h2>Web Builder</h2>
               </div>
               <div class="section-actions">
                 <button class="icon-btn" @click="openWebBuilder()" title="Web Builder">
-                  <ion-icon name="globe-outline"></ion-icon>
+                  <ion-icon name="globe-outline" />
                 </button>
                 <button class="icon-btn" @click="exportWeb()" title="Export">
-                  <ion-icon name="download-outline"></ion-icon>
+                  <ion-icon name="download-outline" />
                 </button>
                 <button class="icon-btn" @click="viewWWW()" title="Preview">
-                  <ion-icon name="earth-outline"></ion-icon>
+                  <ion-icon name="earth-outline" />
                 </button>
               </div>
             </div>
             <div v-if="downloadLink" class="download-section">
               <a :href="'https://alex.polan.sk/control-center/website_builder/exports/' + downloadLink" download
                 class="download-link">
-                <ion-icon name="download-outline"></ion-icon>
+                <ion-icon name="download-outline" />
                 {{ downloadLink }}
               </a>
             </div>
             <div class="cards-grid" v-if="components && components.length > 0">
               <div v-for="component in components" :key="component.id" class="component-card">
                 <div class="card-icon" :class="`type-${component.type}`">
-                  <ion-icon :name="getComponentIcon(component.type)"></ion-icon>
+                  <ion-icon :name="getComponentIcon(component.type)" />
                 </div>
                 <div class="card-content">
                   <h3 class="card-title">{{ component.name.charAt(0).toUpperCase() + component.name.slice(1) }}</h3>
@@ -94,17 +94,17 @@
                 </div>
                 <div class="card-actions">
                   <button class="card-action-btn" @click="editComponent(component)" title="Edit">
-                    <ion-icon name="create-outline"></ion-icon>
+                    <ion-icon name="create-outline" />
                   </button>
                 </div>
               </div>
             </div>
             <div v-else class="empty-state">
-              <ion-icon name="cube-outline" class="empty-icon"></ion-icon>
+              <ion-icon name="cube-outline" class="empty-icon" />
               <h3>No Components Yet</h3>
               <p>Create your first UI component</p>
               <button class="empty-action-btn" @click="openWebBuilder()">
-                <ion-icon name="add"></ion-icon>
+                <ion-icon name="add" />
                 Create Component
               </button>
             </div>
@@ -112,12 +112,12 @@
           <div class="content-section">
             <div class="section-header">
               <div class="section-title">
-                <ion-icon name="people-outline" class="section-icon"></ion-icon>
+                <ion-icon name="people-outline" class="section-icon" />
                 <h2>Team Members</h2>
               </div>
-              <div class="section-actions">
+              <div class="section-actions" v-if="canManageTeam">
                 <button class="add-btn" @click="setOpen(true)">
-                  <ion-icon name="person-add"></ion-icon>
+                  <ion-icon name="person-add" />
                   <span>Invite User</span>
                 </button>
               </div>
@@ -125,39 +125,40 @@
             <div class="users-grid" v-if="users.length > 0">
               <div v-for="user in users" :key="user.id" class="user-card">
                 <div class="user-avatar">
-                  <ion-icon name="person"></ion-icon>
+                  <ion-icon name="person" />
                 </div>
                 <div class="user-info">
                   <h3 class="user-name">{{ user.name.charAt(0).toUpperCase() + user.name.slice(1) }}</h3>
                   <p class="user-role" v-if="user.role">{{ user.role.name }}</p>
                   <p class="user-role" v-else>No role assigned</p>
                 </div>
-                <div class="user-actions">
-                  <button v-if="canManageUsers" class="card-action-btn" @click="editUserRole(user)" title="Edit Role">
-                    <ion-icon name="create-outline"></ion-icon>
+                <div class="user-actions" v-if="canManageTeam">
+                  <button class="card-action-btn" @click="editUserRole(user)" title="Edit Role">
+                    <ion-icon name="create-outline" />
                   </button>
                 </div>
               </div>
             </div>
             <div v-else class="empty-state">
-              <ion-icon name="people-outline" class="empty-icon"></ion-icon>
+              <ion-icon name="people-outline" class="empty-icon" />
               <h3>No Team Members</h3>
-              <p>Invite collaborators to your project</p>
-              <button class="empty-action-btn" @click="setOpen(true)">
-                <ion-icon name="person-add"></ion-icon>
+              <p v-if="canManageTeam">Invite collaborators to your project</p>
+              <p v-else>No team members have been added yet</p>
+              <button v-if="canManageTeam" class="empty-action-btn" @click="setOpen(true)">
+                <ion-icon name="person-add" />
                 Invite User
               </button>
             </div>
           </div>
         </div>
-        
+
         <!-- Invite User Modal -->
         <div v-if="isOpen" class="modal-overlay" @click="setOpen(false)">
           <div class="modern-modal" @click.stop>
             <div class="modal-header">
               <h3>Invite Team Member</h3>
               <button class="close-btn" @click="setOpen(false)">
-                <ion-icon name="close"></ion-icon>
+                <ion-icon name="close" />
               </button>
             </div>
             <div class="modal-content">
@@ -166,7 +167,7 @@
                 <div class="input-container">
                   <input type="email" v-model="email" placeholder="john.doe@control-center.eu" class="form-input"
                     @keyup.enter="confirm" />
-                  <ion-icon name="mail-outline" class="input-icon"></ion-icon>
+                  <ion-icon name="mail-outline" class="input-icon" />
                 </div>
               </div>
               <div class="form-group">
@@ -184,7 +185,7 @@
             <div class="modal-actions">
               <button class="btn-secondary" @click="setOpen(false)">Cancel</button>
               <button class="btn-primary" @click="confirm" :disabled="!email || !selectedRoleId">
-                <ion-icon name="paper-plane-outline"></ion-icon>
+                <ion-icon name="paper-plane-outline" />
                 Send Invitation
               </button>
             </div>
@@ -197,13 +198,13 @@
             <div class="modal-header">
               <h3>Edit User Role</h3>
               <button class="close-btn" @click="setEditModalOpen(false)">
-                <ion-icon name="close"></ion-icon>
+                <ion-icon name="close" />
               </button>
             </div>
             <div class="modal-content" v-if="editingUser">
               <div class="user-info-box">
                 <div class="user-avatar-large">
-                  <ion-icon name="person"></ion-icon>
+                  <ion-icon name="person" />
                 </div>
                 <div>
                   <h4>{{ editingUser.name }}</h4>
@@ -225,7 +226,7 @@
             <div class="modal-actions">
               <button class="btn-secondary" @click="setEditModalOpen(false)">Cancel</button>
               <button class="btn-primary" @click="confirmEditRole" :disabled="!editingRoleId">
-                <ion-icon name="checkmark-outline"></ion-icon>
+                <ion-icon name="checkmark-outline" />
                 Update Role
               </button>
             </div>
@@ -237,7 +238,8 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref, computed } from "vue";
+import { usePermissions } from '@/composables/usePermissions';
 
 export default {
   name: "ProjectView",
@@ -254,33 +256,46 @@ export default {
       selectedRoleId: null,
       editingUser: null,
       editingRoleId: null,
-      userPermissions: null,
     };
   },
   setup() {
     const isOpen = ref(false);
     const isEditModalOpen = ref(false);
-    
+    const projectName = ref(null);
+
     const setOpen = (open) => {
       isOpen.value = open;
     };
-    
+
     const setEditModalOpen = (open) => {
       isEditModalOpen.value = open;
     };
+
+    const {
+      canManageUsers,
+      isAdmin,
+      isOwner,
+      loadPermissions
+    } = usePermissions(projectName);
 
     return {
       isOpen,
       isEditModalOpen,
       setOpen,
       setEditModalOpen,
+      canManageUsers,
+      isAdmin,
+      isOwner,
+      loadPermissions,
+      projectName
     };
   },
   created() {
+    this.projectName = this.$route.params.project;
     this.loadData();
     this.checkDarkMode();
     this.loadRoles();
-    this.loadUserPermissions();
+    this.loadPermissions();
   },
   computed: {
     selectedRoleDescription() {
@@ -293,8 +308,8 @@ export default {
       const role = this.availableRoles.find(r => r.id === this.editingRoleId);
       return role ? role.description : null;
     },
-    canManageUsers() {
-      return this.userPermissions?.project?.manage_users === true;
+    canManageTeam() {
+      return this.isAdmin || this.isOwner;
     }
   },
   methods: {
@@ -307,16 +322,16 @@ export default {
           })
         );
         console.log('Roles response:', response.data);
-        
+
         // Backend gibt { roles: [...] } zurück via echoJson
         if (response.data && response.data.roles) {
           this.availableRoles = response.data.roles;
         } else if (Array.isArray(response.data)) {
           this.availableRoles = response.data;
         }
-        
+
         console.log('Available roles:', this.availableRoles);
-        
+
         // Setze Editor als Standard wenn verfügbar
         if (this.availableRoles.length > 0) {
           const editorRole = this.availableRoles.find(r => r.slug === 'editor');
@@ -332,30 +347,13 @@ export default {
         console.error("Error response:", error.response);
       }
     },
-    
-    async loadUserPermissions() {
-      try {
-        const response = await this.$axios.post(
-          "roles.php",
-          this.$qs.stringify({
-            getUserRole: "getUserRole",
-            project: this.$route.params.project
-          })
-        );
-        if (response.data.success && response.data.role) {
-          this.userPermissions = response.data.role.permissions;
-        }
-      } catch (error) {
-        console.error("Failed to load user permissions:", error);
-      }
-    },
-    
+
     editUserRole(user) {
       this.editingUser = user;
       this.editingRoleId = user.role ? user.role.id : null;
       this.setEditModalOpen(true);
     },
-    
+
     async confirmEditRole() {
       if (!this.editingUser || !this.editingRoleId) {
         alert("Please select a role");
@@ -387,7 +385,7 @@ export default {
         alert("Failed to update role");
       }
     },
-    
+
     loadData() {
       this.$axios
         .get("sidebar.php?getSideBarByProjectName=" + this.$route.params.project)

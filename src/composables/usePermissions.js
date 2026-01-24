@@ -19,7 +19,7 @@ export function usePermissions(project) {
                     project: project.value || project
                 })
             );
-            if (response.data.success && response.data.role) {
+            if (response.data.role) {//response.data.success && 
                 userRole.value = response.data.role;
                 userPermissions.value = response.data.role.permissions;
             }
