@@ -26,14 +26,14 @@
                 <h2>Tools</h2>
               </div>
               <div class="section-actions">
-                <router-link :to="`/project/${$route.params.project}/module-store /`" class="add-btn">
+                <router-link :to="`/project/${$route.params.project}/module-store/`" class="add-btn">
                   <ion-icon name="add" />
                   <span>New Tool</span>
                 </router-link>
               </div>
             </div>
             <div class="cards-grid" v-if="tools.length > 0">
-              <div v-for="tool in tools" :key="tool.id" class="tool-card" @click="goToTool(tool.name)">
+              <div v-for="tool in tools" :key="tool.id" class="tool-card" @click="goToTool(tool.link)">
                 <div class="card-icon">
                   <ion-icon :name="tool.icon || 'construct-outline'" />
                 </div>
@@ -65,47 +65,67 @@
                 <h2>Web Builder</h2>
               </div>
               <div class="section-actions">
-                <button class="icon-btn" @click="openWebBuilder()" title="Web Builder">
-                  <ion-icon name="globe-outline" />
-                </button>
-                <button class="icon-btn" @click="exportWeb()" title="Export">
-                  <ion-icon name="download-outline" />
-                </button>
-                <button class="icon-btn" @click="viewWWW()" title="Preview">
-                  <ion-icon name="earth-outline" />
+                <button class="add-btn" @click="openWebBuilder()">
+                  <ion-icon name="add" />
+                  <span>New Project</span>
                 </button>
               </div>
             </div>
-            <div v-if="downloadLink" class="download-section">
-              <a :href="'https://alex.polan.sk/control-center/website_builder/exports/' + downloadLink" download
-                class="download-link">
-                <ion-icon name="download-outline" />
-                {{ downloadLink }}
-              </a>
-            </div>
-            <div class="cards-grid" v-if="components && components.length > 0">
-              <div v-for="component in components" :key="component.id" class="component-card">
-                <div class="card-icon" :class="`type-${component.type}`">
-                  <ion-icon :name="getComponentIcon(component.type)" />
+            <div class="web-builder-content" v-if="webBuilderProjects && webBuilderProjects.length > 0">
+              <div v-for="project in webBuilderProjects" :key="project.id" class="wb-project-section">
+                <div class="wb-project-header">
+                  <div class="wb-project-info">
+                    <h3 class="wb-project-title">{{ project.name }}</h3>
+                    <p class="wb-project-description" v-if="project.description">{{ project.description }}</p>
+                  </div>
+                  <div class="wb-project-actions">
+                    <button class="icon-btn" @click="openWebBuilderProject(project.id)" title="Edit in Web Builder">
+                      <ion-icon name="create-outline" />
+                    </button>
+                    <button class="icon-btn" @click="viewWebBuilderProject(project)" title="Preview Website"
+                      v-if="webBuilderDomain">
+                      <ion-icon name="eye-outline" />
+                    </button>
+                  </div>
                 </div>
-                <div class="card-content">
-                  <h3 class="card-title">{{ component.name.charAt(0).toUpperCase() + component.name.slice(1) }}</h3>
-                  <p class="card-description">{{ component.type.charAt(0).toUpperCase() + component.type.slice(1) }}</p>
+                <div class="pages-list" v-if="project.pages && project.pages.length > 0">
+                  <div v-for="page in project.pages" :key="page.id" class="page-item">
+                    <div class="page-icon">
+                      <ion-icon name="document-outline" />
+                    </div>
+                    <div class="page-info">
+                      <span class="page-name">{{ page.name }}</span>
+                      <span class="page-slug">/{{ page.slug }}</span>
+                      <span v-if="page.is_home" class="page-badge">Home</span>
+                    </div>
+                    <div class="page-actions">
+                      <button class="page-action-btn" @click="editWebBuilderPage(project.id, page.id)"
+                        title="Edit Page">
+                        <ion-icon name="create-outline" />
+                      </button>
+                      <button class="page-action-btn" @click="viewWebBuilderPage(page)" title="Preview Page"
+                        v-if="webBuilderDomain">
+                        <ion-icon name="eye-outline" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div class="card-actions">
-                  <button class="card-action-btn" @click="editComponent(component)" title="Edit">
-                    <ion-icon name="create-outline" />
+                <div v-else class="no-pages">
+                  <span>No pages yet</span>
+                  <button class="text-btn" @click="openWebBuilderProject(project.id)">
+                    <ion-icon name="add" />
+                    Add Page
                   </button>
                 </div>
               </div>
             </div>
             <div v-else class="empty-state">
               <ion-icon name="cube-outline" class="empty-icon" />
-              <h3>No Components Yet</h3>
-              <p>Create your first UI component</p>
+              <h3>No Web Builder Projects</h3>
+              <p>Create your first website with the Web Builder</p>
               <button class="empty-action-btn" @click="openWebBuilder()">
                 <ion-icon name="add" />
-                Create Component
+                Create Project
               </button>
             </div>
           </div>
@@ -238,7 +258,7 @@
 </template>
 
 <script>
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import { usePermissions } from '@/composables/usePermissions';
 
 export default {
@@ -248,7 +268,8 @@ export default {
       tools: [],
       components: [],
       users: [],
-      downloadLink: "",
+      webBuilderProjects: [],
+      webBuilderDomain: null,
       email: "",
       selectedPermission: "write",
       isDarkMode: false,
@@ -321,18 +342,13 @@ export default {
             getAllRoles: "getAllRoles"
           })
         );
-        console.log('Roles response:', response.data);
 
-        // Backend gibt { roles: [...] } zurück via echoJson
         if (response.data && response.data.roles) {
           this.availableRoles = response.data.roles;
         } else if (Array.isArray(response.data)) {
           this.availableRoles = response.data;
         }
 
-        console.log('Available roles:', this.availableRoles);
-
-        // Setze Editor als Standard wenn verfügbar
         if (this.availableRoles.length > 0) {
           const editorRole = this.availableRoles.find(r => r.slug === 'editor');
           if (editorRole) {
@@ -340,7 +356,6 @@ export default {
           } else {
             this.selectedRoleId = this.availableRoles[0].id;
           }
-          console.log('Selected role ID:', this.selectedRoleId);
         }
       } catch (error) {
         console.error("Failed to load roles:", error);
@@ -407,7 +422,6 @@ export default {
         )
         .then((response2) => {
           console.log('Users response:', response2.data);
-          // jsonResponse gibt { success: true, users: [...] } zurück
           if (response2.data.success && response2.data.users) {
             this.users = response2.data.users;
           } else if (response2.data.users) {
@@ -423,6 +437,50 @@ export default {
           console.error("Failed to load users:", error);
           console.error("Error response:", error.response);
         });
+
+      this.loadWebBuilderProjects();
+      this.loadWebBuilderDomain();
+    },
+
+    async loadWebBuilderProjects() {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await this.$axios.get(
+          "web-builder/projects.php",
+          {
+            headers: {
+              Authorization: token
+            }
+          }
+        );
+
+        if (response.data && Array.isArray(response.data.data)) {
+          this.webBuilderProjects = response.data.data.filter(p =>
+            p.control_center_project.link === this.$route.params.project
+          );
+        }
+      } catch (error) {
+        console.error("Failed to load web builder projects:", error);
+        this.webBuilderProjects = [];
+      }
+    },
+
+    async loadWebBuilderDomain() {
+      try {
+        const response = await this.$axios.post(
+          "web_builder_domains.php",
+          this.$qs.stringify({
+            action: "get",
+            project: this.$route.params.project
+          })
+        );
+
+        if (response.data.success && response.data.data) {
+          this.webBuilderDomain = response.data.data;
+        }
+      } catch (error) {
+        console.error("Failed to load web builder domain:", error);
+      }
     },
 
     refreshData() {
@@ -433,20 +491,40 @@ export default {
       this.isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     },
 
-    viewWWW() {
-      window.open("https://alex.polan.sk/" + this.$route.params.project, "_blank").focus();
-    },
+    /*viewWWW() {
+      if (this.webBuilderDomain && this.webBuilderDomain.domain) {
+        window.open(`https://${this.webBuilderDomain.domain}`, "_blank").focus();
+      } else {
+        alert("No domain configured for this project.");
+      }
+    },*/
 
     openWebBuilder() {
       const project = this.$route.params.project;
-      const url = `https://web-builder.control-center.eu/project/${project}`;
+      this.$router.push(`/project/${project}/new/wb`);
+    },
+
+    openWebBuilderProject(projectId) {
+      const url = `https://web-builder.control-center.eu/projects/${projectId}`;
       window.open(url, '_blank').focus();
     },
 
-    exportWeb() {
-      this.$axios.post("website_builder/export.php").then((response) => {
-        this.downloadLink = response.data;
-      });
+    viewWebBuilderProject(project) {
+      if (this.webBuilderDomain && this.webBuilderDomain.domain) {
+        window.open(`https://${this.webBuilderDomain.domain}`, "_blank").focus();
+      }
+    },
+
+    editWebBuilderPage(projectId, pageId) {
+      const url = `https://web-builder.control-center.eu/projects/${projectId}/pages/${pageId}`;
+      window.open(url, '_blank').focus();
+    },
+
+    viewWebBuilderPage(page) {
+      if (this.webBuilderDomain && this.webBuilderDomain.domain) {
+        const pageUrl = page.is_home ? '' : page.slug;
+        window.open(`https://${this.webBuilderDomain.domain}/${pageUrl}`, "_blank").focus();
+      }
     },
 
     openSettings() {
@@ -454,46 +532,13 @@ export default {
     },
 
     goToTool(tool) {
-      if (tool.toLowerCase().includes("dashboard-")) {
-        this.$router.push(
-          "/project/" +
-          this.$route.params.project +
-          "/dashboard/" +
-          tool.toLowerCase().replaceAll(" ", "-")
-        );
-      } else {
-        this.$router.push(
-          "/project/" +
-          this.$route.params.project +
-          "/" +
-          tool.toLowerCase().replaceAll(" ", "-")
-        );
-      }
+      this.$router.push(
+        `/project/${this.$route.params.project}/${tool}`
+      );
     },
 
     configureTool(tool) {
-      this.$router.push(`/project/${this.$route.params.project}/${tool.name.toLowerCase()}/config`);
-    },
-
-    editComponent(component) {
-      this.$router.push(`/project/${this.$route.params.project}/component/${component.id}`);
-    },
-
-    manageUser(user) {
-      console.log('Manage user:', user);
-    },
-
-    getComponentIcon(type) {
-      switch (type) {
-        case 'script':
-          return 'code-slash-outline';
-        case 'image':
-          return 'image-outline';
-        case 'menu':
-          return 'menu-outline';
-        default:
-          return 'cube-outline';
-      }
+      this.$router.push(`/project/${this.$route.params.project}/${tool.link}/config`);
     },
 
     async confirm() {
@@ -871,33 +916,6 @@ export default {
   flex-shrink: 0;
 }
 
-/* Download Section */
-.download-section {
-  margin-bottom: 20px;
-}
-
-.download-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: var(--success-color);
-  color: white;
-  border-radius: var(--radius);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 13px;
-  transition: all 0.2s ease;
-}
-
-.download-link:hover {
-  background: #047857;
-  transform: translateY(-1px);
-  color: white;
-  box-shadow: var(--shadow-md);
-}
-
-/* Empty States */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -1196,6 +1214,180 @@ export default {
   --text-muted: #707070;
 }
 
+/* Web Builder Styles */
+.web-builder-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.wb-project-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+
+.wb-project-section:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-color);
+}
+
+.wb-project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.wb-project-info {
+  flex: 1;
+}
+
+.wb-project-title {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.wb-project-description {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.wb-project-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.page-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+}
+
+.page-item:hover {
+  background: var(--surface);
+  border-color: var(--primary-color);
+}
+
+.page-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  border-radius: var(--radius);
+  flex-shrink: 0;
+}
+
+.page-icon ion-icon {
+  font-size: 16px;
+  color: white;
+}
+
+.page-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.page-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.page-slug {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+.page-badge {
+  padding: 2px 8px;
+  background: var(--success-color);
+  color: white;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.page-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.page-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-action-btn:hover {
+  background: var(--primary-color);
+  color: white;
+  transform: scale(1.05);
+}
+
+.no-pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.text-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--primary-color);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.text-btn:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .project-header {
@@ -1206,6 +1398,24 @@ export default {
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
+  }
+
+  .wb-project-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .wb-project-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .page-item {
+    flex-wrap: wrap;
+  }
+
+  .page-info {
+    width: 100%;
   }
 
   .main-content {
