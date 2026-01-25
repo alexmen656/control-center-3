@@ -4,7 +4,7 @@
 -- Create sidebar sections table
 CREATE TABLE IF NOT EXISTS `project_sidebar_sections` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `projectID` INT NOT NULL,
+    `projectID` VARCHAR(255) NOT NULL,
     `name` VARCHAR(255) NOT NULL,
     `slug` VARCHAR(255) NOT NULL,
     `icon` VARCHAR(100) DEFAULT 'folder-outline',

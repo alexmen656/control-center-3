@@ -213,6 +213,90 @@ class FilesystemManager
             throw new Exception('Failed to insert into database');
         }
     }
+
+    public function deleteFile($name, $directory = '')
+    {
+        $name = escape_string($name);
+        $directory = escape_string($directory);
+
+        $parentId = 0;
+        if (!empty($directory)) {
+            $sql = "SELECT id FROM {$this->tableName} WHERE name = '$directory' AND type = 0";
+            if ($this->projectID) {
+                $sql .= " AND projectID = '{$this->projectID}'";
+            }
+            $parentResult = query($sql);
+            if (!$parentResult || mysqli_num_rows($parentResult) == 0) {
+                throw new Exception('Directory not found');
+            }
+            $parentId = fetch_assoc($parentResult)['id'];
+        } elseif ($this->projectID) {
+            $parentId = $this->getRootParentId();
+        }
+
+        $sql = "SELECT id, location FROM {$this->tableName} WHERE name = '$name' AND parent = '$parentId' AND type = 1";
+        if ($this->projectID) {
+            $sql .= " AND projectID = '{$this->projectID}'";
+        }
+
+        $result = query($sql);
+        if (!$result || mysqli_num_rows($result) == 0) {
+            throw new Exception('File not found');
+        }
+
+        $fileData = fetch_assoc($result);
+        $fileId = $fileData['id'];
+        $location = $fileData['location'];
+
+        if ($location) {
+            $filePath = $this->baseDir . '/' . $location;
+            if (file_exists($filePath)) {
+                if (!unlink($filePath)) {
+                    throw new Exception('Failed to delete physical file');
+                }
+            }
+        }
+
+        $deleteSql = "DELETE FROM {$this->tableName} WHERE id = $fileId";
+        if (!query($deleteSql)) {
+            throw new Exception('Failed to delete from database');
+        }
+
+        return true;
+    }
+
+    public function getFile($name, $directory = '')
+    {
+        $name = escape_string($name);
+        $directory = escape_string($directory);
+
+        $parentId = 0;
+        if (!empty($directory)) {
+            $sql = "SELECT id FROM {$this->tableName} WHERE name = '$directory' AND type = 0";
+            if ($this->projectID) {
+                $sql .= " AND projectID = '{$this->projectID}'";
+            }
+            $parentResult = query($sql);
+            if (!$parentResult || mysqli_num_rows($parentResult) == 0) {
+                throw new Exception('Directory not found');
+            }
+            $parentId = fetch_assoc($parentResult)['id'];
+        } elseif ($this->projectID) {
+            $parentId = $this->getRootParentId();
+        }
+
+        $sql = "SELECT * FROM {$this->tableName} WHERE name = '$name' AND parent = '$parentId' AND type = 1";
+        if ($this->projectID) {
+            $sql .= " AND projectID = '{$this->projectID}'";
+        }
+        
+        $result = query($sql);
+        if (!$result || mysqli_num_rows($result) == 0) {
+            throw new Exception('File not found');
+        }
+
+        return fetch_assoc($result);
+    }
 }
 
 try {
@@ -223,6 +307,16 @@ try {
         if (isset($_POST['action']) && $_POST['action'] === 'move') {
             $fs->moveItem($_POST['sourceId'], $_POST['targetFolderId']);
             echo json_encode(['success' => true, 'message' => 'Item moved successfully']);
+        } elseif (isset($_POST['action']) && $_POST['action'] === 'delete') {
+            $name = $_POST['name'] ?? '';
+            $directory = $_POST['directory'] ?? '';
+            $fs->deleteFile($name, $directory);
+            echo json_encode(['success' => true, 'message' => 'File deleted successfully']);
+        } elseif (isset($_POST['action']) && $_POST['action'] === 'getFile') {
+            $name = $_POST['name'] ?? '';
+            $directory = $_POST['directory'] ?? '';
+            $file = $fs->getFile($name, $directory);
+            echo json_encode(['success' => true, 'file' => $file]);
         } elseif (isset($_POST['parentId']) && isset($_POST['name'])) {
             if (isset($_FILES["files"])) {
                 foreach ($_FILES['files']['tmp_name'] as $key => $tmpName) {

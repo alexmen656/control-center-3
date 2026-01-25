@@ -2,7 +2,9 @@
   <div class="ion-page">
     <ion-content>
       <div class="modern-project-view" :class="{ 'dark-mode': isDarkMode }">
-        <div class="project-header">
+        <div class="project-header" :style="projectBanner ? `background-image: url('${projectBanner}')` : ''"
+          :class="{ 'has-banner': projectBanner }">
+          <div class="header-overlay" v-if="projectBanner"></div>
           <div class="header-content">
             <div class="project-info">
               <h1 class="project-title">{{ $route.params.project }}</h1>
@@ -270,6 +272,7 @@ export default {
       users: [],
       webBuilderProjects: [],
       webBuilderDomain: null,
+      projectBanner: null,
       email: "",
       selectedPermission: "write",
       isDarkMode: false,
@@ -440,6 +443,7 @@ export default {
 
       this.loadWebBuilderProjects();
       this.loadWebBuilderDomain();
+      this.loadProjectBanner();
     },
 
     async loadWebBuilderProjects() {
@@ -480,6 +484,60 @@ export default {
         }
       } catch (error) {
         console.error("Failed to load web builder domain:", error);
+      }
+    },
+
+    async loadProjectBanner() {
+      try {
+        const projectResponse = await this.$axios.post(
+          "projects.php",
+          this.$qs.stringify({
+            getProjectInfo: "getProjectInfo",
+            project: this.$route.params.project
+          })
+        );
+
+        if (!projectResponse.data || !projectResponse.data.projectID) {
+          return;
+        }
+
+        const projectID = projectResponse.data.projectID;
+
+        const fileQuery = await this.$axios.post(
+          "filesystem.php",
+          this.$qs.stringify({
+            action: "getFile",
+            project: this.$route.params.project,
+            name: "banner.jpg",
+            directory: ".dev"
+          })
+        );
+
+        if (!fileQuery.data.success || !fileQuery.data.file || !fileQuery.data.file.location) {
+          return;
+        }
+
+        const fileLocation = fileQuery.data.file.location;
+
+        const signedResponse = await this.$axios.post(
+          "signed_url_generator.php",
+          JSON.stringify({
+            path: fileLocation,
+            projectID: projectID,
+            validitySeconds: 3600
+          }),
+          {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        if (signedResponse.data && signedResponse.data.url) {
+          this.projectBanner = signedResponse.data.url;
+        }
+      } catch (error) {
+        console.error("Failed to load project banner:", error);
       }
     },
 
@@ -603,7 +661,6 @@ export default {
   overflow-x: hidden;
 }
 
-/* Project Header */
 .project-header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -611,6 +668,27 @@ export default {
   margin-bottom: 32px;
   box-shadow: var(--shadow);
   z-index: 10;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.project-header.has-banner {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 48px 32px;
+  /*min-height: 200px;*/
+}
+
+.header-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.4));
+  backdrop-filter: blur(2px);
+  z-index: 1;
 }
 
 .header-content {
@@ -619,6 +697,9 @@ export default {
   align-items: center;
   max-width: 1400px;
   margin: 0 auto;
+  position: relative;
+  z-index: 2;
+  padding: 0 20px 0 20px;
 }
 
 .project-info {
@@ -627,11 +708,18 @@ export default {
 
 .project-title {
   margin: 0 0 8px 0;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
   color: var(--text-primary);
   text-transform: capitalize;
   letter-spacing: -0.5px;
+  transition: all 0.3s ease;
+}
+
+.has-banner .project-title {
+  color: white;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  font-size: 36px;
 }
 
 .project-subtitle {
@@ -639,6 +727,13 @@ export default {
   color: var(--text-secondary);
   font-size: 14px;
   font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.has-banner .project-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  font-size: 16px;
 }
 
 .header-actions {
@@ -668,14 +763,23 @@ export default {
   border-color: var(--primary-color);
 }
 
-/* Main Content */
+/*.has-banner .action-btn {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.has-banner .action-btn:hover {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}*/
+
 .main-content {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 32px 32px;
+  padding: 0 20px 20px;
 }
 
-/* Content Sections */
 .content-section {
   margin-bottom: 48px;
 }
@@ -695,14 +799,14 @@ export default {
 
 .section-title h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: -0.3px;
 }
 
 .section-icon {
-  font-size: 24px;
+  font-size: 26px;
   color: var(--primary-color);
 }
 
@@ -717,13 +821,13 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 8px 14px;
   background: var(--primary-color);
   color: white !important;
   border: none;
   border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 15px;
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
@@ -825,8 +929,8 @@ export default {
 
 .card-title {
   margin: 0 0 4px 0;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 500;
   color: var(--text-primary);
 }
 

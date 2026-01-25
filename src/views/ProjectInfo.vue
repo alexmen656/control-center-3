@@ -172,6 +172,44 @@
             </div>
           </div>
 
+          <!-- Project Banner -->
+          <div class="data-card">
+            <div class="card-header">
+              <div class="header-left">
+                <h3>Project Banner</h3>
+                <p class="card-subtitle">Upload a custom banner for your project header</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div v-if="projectBanner" class="banner-preview">
+                <label class="form-label">Current Banner</label>
+                <div class="banner-preview-container">
+                  <img :src="projectBanner" alt="Project Banner" />
+                  <button class="action-btn danger" @click="deleteBanner" :disabled="uploadingBanner">
+                    <ion-icon name="trash-outline"></ion-icon>
+                    Remove Banner
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Upload New Banner</label>
+                <p class="form-hint">Recommended size: 1920x400px (JPG, PNG, max 5MB)</p>
+                <input type="file" ref="bannerInput" @change="handleBannerUpload" accept="image/*" class="file-input"
+                  :disabled="uploadingBanner" />
+              </div>
+
+              <div v-if="bannerError" class="alert alert-error">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                {{ bannerError }}
+              </div>
+
+              <div v-if="bannerSuccess" class="alert alert-success">
+                <ion-icon name="checkmark-circle-outline"></ion-icon>
+                {{ bannerSuccess }}
+              </div>
+            </div>
+          </div>
 
           <!-- Project Domain -->
           <div class="data-card">
@@ -321,7 +359,12 @@ export default {
         logo_url: '',
         company_name: '',
         ssl_status: ''
-      }
+      },
+      // Banner
+      projectBanner: null,
+      uploadingBanner: false,
+      bannerError: '',
+      bannerSuccess: ''
     };
   },
   methods: {
@@ -676,30 +719,168 @@ export default {
         console.error(e);
       }
     },
-    /*async connectRepo(repo) {
-      this.repoError = '';
+    async loadProjectBanner() {
       try {
-        const user = getUserData();
-        if (!user || !user.userID) {
-          this.repoError = 'Kein User.';
+        // Get project ID first
+        const projectResponse = await this.$axios.post(
+          "projects.php",
+          this.$qs.stringify({
+            getProjectInfo: "getProjectInfo",
+            project: this.$route.params.project
+          })
+        );
+
+        if (!projectResponse.data || !projectResponse.data.projectID) {
           return;
         }
-        const res = await this.$axios.post('project_repo.php', this.$qs.stringify({
-          action: 'connect',
-          project: this.$route.params.project,
-          user_id: user.userID,
-          repo: JSON.stringify(repo),
-        }));
-        if (res.data && res.data.success) {
-          this.openRepoModal = false;
-          this.fetchConnectedRepo();
-        } else {
-          this.repoError = res.data && res.data.error ? res.data.error : 'Fehler beim Verbinden.';
+
+        const projectID = projectResponse.data.projectID;
+
+        const fileQuery = await this.$axios.post(
+          "filesystem.php",
+          this.$qs.stringify({
+            action: "getFile",
+            project: this.$route.params.project,
+            name: "banner.jpg",
+            directory: ".dev"
+          })
+        );
+
+        if (!fileQuery.data.success || !fileQuery.data.file || !fileQuery.data.file.location) {
+          return;
         }
-      } catch (e) {
-        this.repoError = 'Fehler beim Verbinden.';
+
+        const fileLocation = fileQuery.data.file.location;
+
+        const signedResponse = await this.$axios.post(
+          "signed_url_generator.php",
+          JSON.stringify({
+            path: fileLocation,
+            projectID: projectID,
+            validitySeconds: 3600
+          }),
+          {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        if (signedResponse.data && signedResponse.data.url) {
+          this.projectBanner = signedResponse.data.url + '&t=' + Date.now();
+        }
+      } catch (error) {
+        console.error("Failed to load project banner:", error);
       }
-    },*/
+    },
+    async handleBannerUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        this.bannerError = 'Please select an image file';
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        this.bannerError = 'File size must be less than 5MB';
+        return;
+      }
+
+      this.uploadingBanner = true;
+      this.bannerError = '';
+      this.bannerSuccess = '';
+
+      try {
+        const reader = new FileReader();
+
+        reader.onload = async (e) => {
+          try {
+            const base64Content = e.target.result.split(',')[1];
+
+            const response = await this.$axios.post(
+              'filesystem_upload.php',
+              JSON.stringify({
+                action: 'upload_file',
+                project: this.$route.params.project,
+                name: 'banner.jpg',
+                directory: '.dev',
+                content: base64Content,
+                isBase64: true
+              }),
+              {
+                headers: {
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+
+            if (response.data.success) {
+              this.bannerSuccess = 'Banner uploaded successfully!';
+              await this.loadProjectBanner();
+              this.$refs.bannerInput.value = '';
+
+              setTimeout(() => {
+                this.bannerSuccess = '';
+              }, 3000);
+            } else {
+              this.bannerError = response.data.message || 'Failed to upload banner';
+            }
+          } catch (error) {
+            console.error("Failed to upload banner:", error);
+            this.bannerError = error.response?.data?.message || 'Failed to upload banner. Please try again.';
+          } finally {
+            this.uploadingBanner = false;
+          }
+        };
+
+        reader.onerror = () => {
+          this.bannerError = 'Failed to read file';
+          this.uploadingBanner = false;
+        };
+
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error("Failed to process file:", error);
+        this.bannerError = 'Failed to process file. Please try again.';
+        this.uploadingBanner = false;
+      }
+    },
+    async deleteBanner() {
+      if (!confirm('Are you sure you want to delete the project banner?')) return;
+
+      this.uploadingBanner = true;
+      this.bannerError = '';
+      this.bannerSuccess = '';
+
+      try {
+        const response = await this.$axios.post(
+          "filesystem.php",
+          this.$qs.stringify({
+            action: "delete",
+            project: this.$route.params.project,
+            name: "banner.jpg",
+            directory: ".dev"
+          })
+        );
+
+        if (response.data.success) {
+          this.projectBanner = null;
+          this.bannerSuccess = 'Banner deleted successfully!';
+
+          setTimeout(() => {
+            this.bannerSuccess = '';
+          }, 3000);
+        } else {
+          this.bannerError = response.data.message || 'Failed to delete banner';
+        }
+      } catch (error) {
+        console.error("Failed to delete banner:", error);
+        this.bannerError = error.response?.data?.message || 'Failed to delete banner. Please try again.';
+      } finally {
+        this.uploadingBanner = false;
+      }
+    },
   },
   async created() {
     this.$axios
@@ -717,10 +898,10 @@ export default {
           .replaceAll("/", ".");
         this.loading = false;
       });
-    //this.fetchConnectedRepo();
+
     this.fetchConnectedDomain();
     this.fetchCustomLogin();
-    //this.fetchConnectedVercelProject();
+    this.loadProjectBanner();
   },
 };
 </script>
@@ -748,7 +929,6 @@ export default {
   padding: 24px;
 }
 
-/* Page Header */
 .page-header {
   margin-bottom: 32px;
 }
@@ -766,7 +946,6 @@ export default {
   font-size: 16px;
 }
 
-/* Data Card */
 .data-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
@@ -797,7 +976,6 @@ export default {
   padding: 24px;
 }
 
-/* Info Grid */
 .info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -827,7 +1005,6 @@ export default {
   font-weight: 600;
 }
 
-/* Form Elements */
 .form-group {
   margin-bottom: 24px;
 }
@@ -872,7 +1049,6 @@ export default {
   opacity: 0.6;
 }
 
-/* Domain Input */
 .domain-input-wrapper {
   display: flex;
   align-items: center;
@@ -889,7 +1065,6 @@ export default {
   white-space: nowrap;
 }
 
-/* Toggle Switch */
 .toggle-wrapper {
   display: flex;
   justify-content: space-between;
@@ -946,7 +1121,6 @@ export default {
   cursor: not-allowed;
 }
 
-/* Color Picker */
 .color-picker-wrapper {
   display: flex;
   gap: 12px;
@@ -966,7 +1140,6 @@ export default {
   max-width: 150px;
 }
 
-/* Logo Preview */
 .logo-preview {
   padding: 16px;
   background: var(--background);
@@ -982,7 +1155,48 @@ export default {
   margin-top: 12px;
 }
 
-/* Setup Instructions */
+.banner-preview {
+  margin-bottom: 20px;
+}
+
+.banner-preview-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--background);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.banner-preview-container img {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.file-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.file-input:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  background: var(--surface);
+}
+
+.file-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .setup-instructions {
   background: #fffbeb;
   border: 1px solid #fbbf24;

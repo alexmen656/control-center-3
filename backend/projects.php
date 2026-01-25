@@ -166,7 +166,7 @@ function handleGetProjectInfo()
 
     $project = getProjectByLink(escape_string($_POST['project']));
     echo $project
-        ? jsonResponse(['icon' => $project['icon'], 'name' => $project['name'], 'createdOn' => $project['createdOn']])
+        ? jsonResponse(['icon' => $project['icon'], 'name' => $project['name'], 'projectID' => $project['projectID'], 'createdOn' => $project['createdOn']])
         : jsonResponse("No project found", false);
 }
 

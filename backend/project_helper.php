@@ -16,6 +16,18 @@ function createFileSystem($projectID)
         return false;
     }
 
+    $rootQuery = query("SELECT id FROM project_filesystem WHERE name = '' AND projectID = '$projectID' ORDER BY id DESC LIMIT 1");
+
+    if (!$rootQuery || mysqli_num_rows($rootQuery) == 0) {
+        return false;
+    }
+
+    $rootId = fetch_assoc($rootQuery)['id'];
+
+    if (!query("INSERT INTO project_filesystem VALUES (0, '.dev', NULL, '$rootId', 0, '$projectID')")) {
+        return false;
+    }
+
     return createFileSystemMainDir($projectID);
 }
 function getProjectByLink($link)
