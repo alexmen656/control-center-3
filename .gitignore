@@ -42,3 +42,5 @@ npm-debug.log*
 /backend/config.php
 /READMES/node_modules/*
 /READMES/*
+/backend/creds.php
+/backend/vendor/*

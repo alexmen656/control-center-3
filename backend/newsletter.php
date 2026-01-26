@@ -134,24 +134,37 @@ if ($action === 'send') {
     
     if ($stmt->execute()) {
         $newsletterId = $stmt->insert_id;
-        
-        // TODO: Implement actual email sending using PHPMailer or similar
-        // For now, we'll just log the attempt
-        
+
         // Create tracking entries
         $trackingTable = $prefix . "newsletter_tracking";
         $trackingStmt = $con->prepare("INSERT INTO `{$trackingTable}` (newsletter_id, recipient_email) VALUES (?, ?)");
-        
+
         foreach ($recipientList as $email) {
             $trackingStmt->bind_param("is", $newsletterId, $email);
             $trackingStmt->execute();
         }
-        
-        echo json_encode([
-            'success' => true,
-            'message' => $testMode ? 'Test-Newsletter gesendet' : "Newsletter erfolgreich an {$recipientCount} Empfänger gesendet",
-            'newsletter_id' => $newsletterId
-        ]);
+
+        // Send emails via AWS SES
+        $mailResult = sendBulkMail($recipientList, $subject, $emailContent);
+
+        if ($mailResult['success']) {
+            echo json_encode([
+                'success' => true,
+                'message' => $testMode ? 'Test-Newsletter gesendet' : "Newsletter erfolgreich an {$mailResult['sent']} Empfänger gesendet",
+                'newsletter_id' => $newsletterId,
+                'sent' => $mailResult['sent'],
+                'failed' => $mailResult['failed']
+            ]);
+        } else {
+            echo json_encode([
+                'success' => true,
+                'message' => "Newsletter teilweise gesendet: {$mailResult['sent']} erfolgreich, {$mailResult['failed']} fehlgeschlagen",
+                'newsletter_id' => $newsletterId,
+                'sent' => $mailResult['sent'],
+                'failed' => $mailResult['failed'],
+                'errors' => $mailResult['errors']
+            ]);
+        }
     } else {
         echo json_encode([
             'success' => false,

@@ -16,6 +16,7 @@ header('Content-Type: application/json');
 include '/www/paxar/components/php_head.php';
 require_once 'jwt_helper.php';
 require_once 'config.php';
+require_once 'functions.php';
 $headers = getRequestHeaders();
 
 function randomNumber(){
@@ -73,7 +74,6 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 $userID = $data['userID'];
                 $code = rand(100000, 999999);
                 $insert = query("INSERT INTO control_center_login_log VALUES ('0','$ip','$email','$userID','processing','$verificationToken', $code ,NOW(),'')");
-                $headers = 'From: Control Center<ems@alex.polan.sk>' . "\r\n" . 'Reply-To: Control Center<ems@alex.polan.sk>';
                 $mailBody = "<html><body style='font-family: Arial, sans-serif; background: #f6f6f6; padding: 0; margin: 0;'>"
                     . "<div style='max-width: 480px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 32px 24px;'>"
                     . "<div style='text-align:center; margin-bottom: 24px;'><img src='https://alex.polan.sk/control-center/assets/logo_inline_large.png' alt='Control Center Logo' style='max-width: 120px;'></div>"
@@ -84,11 +84,10 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                     . "<p style='font-size: 15px; color: #888; text-align:center;'>Dieser Code ist nur für dich bestimmt und <b>gilt nur für kurze Zeit</b>.<br>Teile ihn niemals mit anderen Personen.</p>"
                     . "<div style='margin-top: 32px; text-align:center;'><small style='color:#bbb;'>Wenn du diese E-Mail nicht angefordert hast, kannst du sie ignorieren.<br>Mit freundlichen Grüßen,<br>Dein Control Center Team</small></div>"
                     . "</div></body></html>";
-                mail(
-                    $data['firstname'] . " " . $data['lastname'] . "<" . $data['email'] . ">",
+                sendMail(
+                    $data['firstname'] . " " . $data['lastname'] . " <" . $data['email'] . ">",
                     "Dein Control Center Einmal-Code",
-                    $mailBody,
-                    $headers . "\r\nContent-type: text/html; charset=UTF-8"
+                    $mailBody
                 );
             }
         } else {
@@ -140,7 +139,6 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 $userID = $data['userID'];
                 $code = rand(100000, 999999);
                 $insert = query("INSERT INTO control_center_login_log VALUES ('0','$ip','$email','$userID','processing','$verificationToken', $code ,NOW(),'')");
-                $headers = 'From: Control Center<ems@alex.polan.sk>' . "\r\n" . 'Reply-To: Control Center<ems@alex.polan.sk>';
                 $mailBody = "<html><body style='font-family: Arial, sans-serif; background: #f6f6f6; padding: 0; margin: 0;'>"
                     . "<div style='max-width: 480px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 32px 24px;'>"
                     . "<div style='text-align:center; margin-bottom: 24px;'><img src='https://alex.polan.sk/control-center/assets/logo_inline_large.png' alt='Control Center Logo' style='max-width: 120px;'></div>"
@@ -151,11 +149,10 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                     . "<p style='font-size: 15px; color: #888; text-align:center;'>Dieser Code ist nur für dich bestimmt und <b>gilt nur für kurze Zeit</b>.<br>Teile ihn niemals mit anderen Personen.</p>"
                     . "<div style='margin-top: 32px; text-align:center;'><small style='color:#bbb;'>Wenn du diese E-Mail nicht angefordert hast, kannst du sie ignorieren.<br>Mit freundlichen Grüßen,<br>Dein Control Center Team</small></div>"
                     . "</div></body></html>";
-                mail(
-                    $data['firstname'] . " " . $data['lastname'] . "<" . $data['email'] . ">",
+                sendMail(
+                    $data['firstname'] . " " . $data['lastname'] . " <" . $data['email'] . ">",
                     "Dein Control Center Einmal-Code",
-                    $mailBody,
-                    $headers . "\r\nContent-type: text/html; charset=UTF-8"
+                    $mailBody
                 );
             }
         } else {
@@ -207,7 +204,6 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 $userID = $data['userID'];
                 $code = rand(100000, 999999);
                 $insert = query("INSERT INTO control_center_login_log VALUES ('0','$ip','$email','$userID','processing','$verificationToken', $code ,NOW(),'')");
-                $headers = 'From: Control Center<ems@alex.polan.sk>' . "\r\n" . 'Reply-To: Control Center<ems@alex.polan.sk>';
                 $mailBody = "<html><body style='font-family: Arial, sans-serif; background: #f6f6f6; padding: 0; margin: 0;'>"
                     . "<div style='max-width: 480px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 32px 24px;'>"
                     . "<div style='text-align:center; margin-bottom: 24px;'><img src='https://alex.polan.sk/control-center/assets/logo_inline_large.png' alt='Control Center Logo' style='max-width: 120px;'></div>"
@@ -218,11 +214,10 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                     . "<p style='font-size: 15px; color: #888; text-align:center;'>Dieser Code ist nur für dich bestimmt und <b>gilt nur für kurze Zeit</b>.<br>Teile ihn niemals mit anderen Personen.</p>"
                     . "<div style='margin-top: 32px; text-align:center;'><small style='color:#bbb;'>Wenn du diese E-Mail nicht angefordert hast, kannst du sie ignorieren.<br>Mit freundlichen Grüßen,<br>Dein Control Center Team</small></div>"
                     . "</div></body></html>";
-                mail(
-                    $data['firstname'] . " " . $data['lastname'] . "<" . $data['email'] . ">",
+                sendMail(
+                    $data['firstname'] . " " . $data['lastname'] . " <" . $data['email'] . ">",
                     "Dein Control Center Einmal-Code",
-                    $mailBody,
-                    $headers . "\r\nContent-type: text/html; charset=UTF-8"
+                    $mailBody
                 );
             }
         } else {

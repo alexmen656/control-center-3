@@ -1,0 +1,13 @@
+{
+    "name": "control-center/backend",
+    "description": "Control Center Backend",
+    "require": {
+        "php": ">=7.4",
+        "aws/aws-sdk-php": "^3.300"
+    },
+    "autoload": {
+        "psr-4": {
+            "ControlCenter\\": "services/"
+        }
+    }
+}

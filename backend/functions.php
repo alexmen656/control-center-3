@@ -380,3 +380,52 @@ function createTableName($string_to_replace)
 {
    return strtolower(str_replace("-", "_", createLink($string_to_replace)));
 }
+
+/**
+ * Sende eine E-Mail über AWS SES
+ *
+ * @param string $to Empfänger (z.B. "Max Mustermann <max@example.com>" oder "max@example.com")
+ * @param string $subject Betreff
+ * @param string $htmlBody HTML-Inhalt der E-Mail
+ * @param array $options Zusätzliche Optionen:
+ *   - from: Absender-E-Mail
+ *   - from_name: Absender-Name
+ *   - text_body: Plain-Text Alternative
+ *   - reply_to: Reply-To Adresse
+ *   - cc: CC Empfänger
+ *   - bcc: BCC Empfänger
+ * @return array ['success' => bool, 'message_id' => string|null, 'error' => string|null]
+ */
+function sendMail(string $to, string $subject, string $htmlBody, array $options = []): array
+{
+   static $mailer = null;
+
+   // Lazy-load the mailer
+   if ($mailer === null) {
+      require_once __DIR__ . '/vendor/autoload.php';
+      $mailer = new \ControlCenter\AwsSesMailer();
+   }
+
+   return $mailer->send($to, $subject, $htmlBody, $options);
+}
+
+/**
+ * Sende eine E-Mail an mehrere Empfänger (Bulk)
+ *
+ * @param array $recipients Array von E-Mail-Adressen
+ * @param string $subject Betreff
+ * @param string $htmlBody HTML-Inhalt
+ * @param array $options Zusätzliche Optionen wie bei sendMail()
+ * @return array ['success' => bool, 'sent' => int, 'failed' => int, 'errors' => array]
+ */
+function sendBulkMail(array $recipients, string $subject, string $htmlBody, array $options = []): array
+{
+   static $mailer = null;
+
+   if ($mailer === null) {
+      require_once __DIR__ . '/vendor/autoload.php';
+      $mailer = new \ControlCenter\AwsSesMailer();
+   }
+
+   return $mailer->sendBulk($recipients, $subject, $htmlBody, $options);
+}

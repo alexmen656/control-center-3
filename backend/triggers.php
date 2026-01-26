@@ -112,10 +112,8 @@ class FormTriggers {
     
     private function sendEmail($email, $message) {
         $subject = "Form Trigger Notification";
-        $headers = "From: noreply@" . $_SERVER['HTTP_HOST'] . "\r\n";
-        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-        
-        return mail($email, $subject, $message, $headers);
+        $result = sendMail($email, $subject, $message);
+        return $result['success'];
     }
     
     private function sendSMS($phoneNumber, $message) {
