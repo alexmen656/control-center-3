@@ -15,7 +15,7 @@ export async function getConfig(tool: string, project: string) {
   if (navigator.onLine) {
     try {
       const response = await axios.post<UserData>(
-        "https://alex.polan.sk/control-center/tools.php", qs.stringify({getToolConfig: "getToolConfig", tool: tool, project: project})
+        "https://api.fringelo.com/tools.php", qs.stringify({getToolConfig: "getToolConfig", tool: tool, project: project})
       );
       data.value = response.data;
     /*  store.commit("updateUser", {

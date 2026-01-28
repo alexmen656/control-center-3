@@ -49,7 +49,7 @@ getAccessToken()
     async function loadPushMessages() {
       try {
         const response = await axios.get(
-          "https://alex.polan.sk/control-center/push_messages.php"
+          "https://api.fringelo.com/push_messages.php"
         );
         const data = response.data.notifications;
         const currentTime = new Date();

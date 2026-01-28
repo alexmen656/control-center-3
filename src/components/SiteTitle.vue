@@ -66,7 +66,7 @@ export default {
       () => {
         this.$axios
           .post(
-            "https://alex.polan.sk/control-center/bookmarks.php?" +
+            "https://api.fringelo.com/bookmarks.php?" +
             this.$qs.stringify({
               location: this.siteLocation,
               checkBookmark: "checkBookmark",
@@ -79,7 +79,7 @@ export default {
     );
     this.$axios
       .post(
-        "https://alex.polan.sk/control-center/bookmarks.php?" +
+        "https://api.fringelo.com/bookmarks.php?" +
         this.$qs.stringify({
           location: this.siteLocation,
           checkBookmark: "checkBookmark",
@@ -116,7 +116,7 @@ export default {
         this.isBookmark = false;
         this.$axios
           .post(
-            "https://alex.polan.sk/control-center/bookmarks.php?deleteBookmark=deleteBookmark&location=" +
+            "https://api.fringelo.com/bookmarks.php?deleteBookmark=deleteBookmark&location=" +
             this.siteLocation
           )
           .then(() => {//response
@@ -126,7 +126,7 @@ export default {
         this.isBookmark = true;
         this.$axios
           .post(
-            "https://alex.polan.sk/control-center/bookmarks.php?newBookmark=newBookmark&icon=" +
+            "https://api.fringelo.com/bookmarks.php?newBookmark=newBookmark&icon=" +
             this.icon +
             "&title=" +
             this.title +

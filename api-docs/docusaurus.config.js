@@ -171,7 +171,7 @@ const config = {
             items: [
               {
                 label: 'CMS Platform',
-                href: 'https://alex.polan.sk/control-center',
+                href: 'https://api.fringelo.com',
               },
               {
                 label: 'Support',

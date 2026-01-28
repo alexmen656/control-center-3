@@ -94,6 +94,6 @@ class SignedUrlGenerator
         $scriptPath = dirname($_SERVER['SCRIPT_NAME']);
         
         //return $protocol . '://' . $host . $scriptPath;
-        return "https://alex.polan.sk/control-center";
+        return "https://api.fringelo.com";
     }
 }

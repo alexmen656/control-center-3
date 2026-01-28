@@ -1,7 +1,7 @@
 // CMS Database API SDK
 class DatabaseAPI {
   constructor() {
-    this.baseUrl = 'https://alex.polan.sk/control-center/api/v1/database.php';
+    this.baseUrl = 'https://api.fringelo.com/api/v1/database.php';
     this.apiKey = process.env.[{[apiKey]}] || 'cms_demo_api_key';
   }
 

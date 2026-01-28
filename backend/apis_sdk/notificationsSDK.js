@@ -1,7 +1,7 @@
 // CMS Notifications API SDK
 class NotificationsAPI {
   constructor() {
-    this.baseUrl = 'https://alex.polan.sk/control-center/backend/api/v1/notifications';
+    this.baseUrl = 'https://api.fringelo.com/backend/api/v1/notifications';
     this.apiKey = 'demo-api-key-123';
   }
 

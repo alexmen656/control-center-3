@@ -29,7 +29,7 @@ import { codespaceTools, handleCodespaceTool } from './tools/codespaces.js';
 import { getResources, readResource } from './resources/index.js';
 
 // Configuration from environment
-const CMS_BACKEND_URL = process.env.CMS_BACKEND_URL || 'https://alex.polan.sk/control-center';
+const CMS_BACKEND_URL = process.env.CMS_BACKEND_URL || 'https://api.fringelo.com';
 const JWT_TOKEN = process.env.CMS_JWT_TOKEN;
 
 if (!JWT_TOKEN) {

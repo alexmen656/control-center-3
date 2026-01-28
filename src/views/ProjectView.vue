@@ -45,7 +45,7 @@
                 </div>
               </h2>
 
-              <a v-if="downloadLink" :href="'https://alex.polan.sk/control-center/website_builder/exports/' +
+              <a v-if="downloadLink" :href="'https://api.fringelo.com/website_builder/exports/' +
                 downloadLink
                 " download>{{ downloadLink }}</a>
               <ion-list v-if="components && components.length > 0">

@@ -1009,7 +1009,7 @@ export default {
               }
             };
 
-            xhr.open('POST', 'https://alex.polan.sk/control-center/video_uploads.php', true);
+            xhr.open('POST', 'https://api.fringelo.com/video_uploads.php', true);
             const token = localStorage.getItem('token');
 
             if (token) {

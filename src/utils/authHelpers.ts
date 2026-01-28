@@ -48,7 +48,7 @@ export async function checkProjectAccess() {
     const userID = userInfo.sub;
     
     // Make API call to check project assignment
-    const response = await fetch('https://alex.polan.sk/control-center/users.php', {
+    const response = await fetch('https://api.fringelo.com/users.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

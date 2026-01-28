@@ -1,15 +1,15 @@
 <?php
 // Script to add Video Uploads module to the module store
 require_once "config.php";
-include '/www/paxar/components/php_head.php';
-
+include 'db_connection.php';
+include 'functions.php';
 $module = [
     "name" => "Video Uploads",
     "tool_icon" => "videocam-outline",
     "url" => "video-uploads",
     "display_name" => "Video Uploads",
     "ref" => "videouploads",
-    "icon" => "https://alex.polan.sk/control-center/images/appIcons/videouploads.png",
+    "icon" => "https://api.fringelo.com/images/appIcons/videouploads.png",
     "price" => "0"
 ];
 

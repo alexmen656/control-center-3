@@ -9,24 +9,17 @@ $host_domain = implode('.', array_slice(explode('.', $request_host), -2));
 //  die('You are not allowed to access this.');     
 //}
 session_start();
+ini_set('display_errors', true);
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Headers: *');
 header('Access-Control-Allow-Methods: *');
 header('Content-Type: application/json');
-include '/www/paxar/components/php_head.php';
+require_once 'db_connection.php';
 require_once 'jwt_helper.php';
 require_once 'config.php';
 require_once 'functions.php';
 $headers = getRequestHeaders();
 
-function randomNumber(){
-    $rand = rand(100000, 999999);
-    return $rand;
-}
-
-function echoJson($json){
-    return json_encode($json, JSON_PRETTY_PRINT);
-}
 
 if (isset($_POST['email']) && isset($_POST['password'])) {
 
@@ -51,12 +44,12 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                     'email' => $data['email'],
                     'firstname' => $data['firstname'],
                     'iat' => time(),
-                    'exp' => time() + 60*60*24*7 // 7 Tage gültig
+                    'exp' => time() + 60 * 60 * 24 * 7 // 7 Tage gültig
                 ];
                 $jwt = SimpleJWT::encode($payload, $jwt_secret);
                 $json['token'] = $jwt;
                 $json['firstname'] = $data['firstname'];
-                
+
                 // Check for project assignment
                 $assignmentQuery = query("SELECT project_link FROM user_project_assignments WHERE user_id='{$data['userID']}'");
                 if ($assignmentQuery && mysqli_num_rows($assignmentQuery) > 0) {
@@ -76,7 +69,7 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 $insert = query("INSERT INTO control_center_login_log VALUES ('0','$ip','$email','$userID','processing','$verificationToken', $code ,NOW(),'')");
                 $mailBody = "<html><body style='font-family: Arial, sans-serif; background: #f6f6f6; padding: 0; margin: 0;'>"
                     . "<div style='max-width: 480px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 32px 24px;'>"
-                    . "<div style='text-align:center; margin-bottom: 24px;'><img src='https://alex.polan.sk/control-center/assets/logo_inline_large.png' alt='Control Center Logo' style='max-width: 120px;'></div>"
+                    . "<div style='text-align:center; margin-bottom: 24px;'><img src='https://api.fringelo.com/assets/logo_inline_large.png' alt='Control Center Logo' style='max-width: 120px;'></div>"
                     . "<h2 style='color: #222; text-align:center; margin-bottom: 12px;'>Dein Einmal-Code</h2>"
                     . "<p style='font-size: 16px; color: #444; text-align:center;'>Hallo <b>" . htmlspecialchars($data['firstname']) . "</b>,<br><br>"
                     . "um dich sicher einzuloggen, gib bitte folgenden Code ein:</p>"
@@ -116,12 +109,12 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                     'email' => $data['email'],
                     'firstname' => $data['firstname'],
                     'iat' => time(),
-                    'exp' => time() + 60*60*24*7
+                    'exp' => time() + 60 * 60 * 24 * 7
                 ];
                 $jwt = SimpleJWT::encode($payload, $jwt_secret);
                 $json['token'] = $jwt;
                 $json['firstname'] = $data['firstname'];
-                
+
                 // Check for project assignment
                 $assignmentQuery = query("SELECT project_link FROM user_project_assignments WHERE user_id='{$data['userID']}'");
                 if ($assignmentQuery && mysqli_num_rows($assignmentQuery) > 0) {
@@ -141,7 +134,7 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 $insert = query("INSERT INTO control_center_login_log VALUES ('0','$ip','$email','$userID','processing','$verificationToken', $code ,NOW(),'')");
                 $mailBody = "<html><body style='font-family: Arial, sans-serif; background: #f6f6f6; padding: 0; margin: 0;'>"
                     . "<div style='max-width: 480px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 32px 24px;'>"
-                    . "<div style='text-align:center; margin-bottom: 24px;'><img src='https://alex.polan.sk/control-center/assets/logo_inline_large.png' alt='Control Center Logo' style='max-width: 120px;'></div>"
+                    . "<div style='text-align:center; margin-bottom: 24px;'><img src='https://api.fringelo.com/assets/logo_inline_large.png' alt='Control Center Logo' style='max-width: 120px;'></div>"
                     . "<h2 style='color: #222; text-align:center; margin-bottom: 12px;'>Dein Einmal-Code</h2>"
                     . "<p style='font-size: 16px; color: #444; text-align:center;'>Hallo <b>" . htmlspecialchars($data['firstname']) . "</b>,<br><br>"
                     . "um dich sicher einzuloggen, gib bitte folgenden Code ein:</p>"
@@ -181,12 +174,12 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                     'email' => $data['email'],
                     'firstname' => $data['firstname'],
                     'iat' => time(),
-                    'exp' => time() + 60*60*24*7
+                    'exp' => time() + 60 * 60 * 24 * 7
                 ];
                 $jwt = SimpleJWT::encode($payload, $jwt_secret);
                 $json['token'] = $jwt;
                 $json['firstname'] = $data['firstname'];
-                
+
                 // Check for project assignment
                 $assignmentQuery = query("SELECT project_link FROM user_project_assignments WHERE user_id='{$data['userID']}'");
                 if ($assignmentQuery && mysqli_num_rows($assignmentQuery) > 0) {
@@ -206,7 +199,7 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 $insert = query("INSERT INTO control_center_login_log VALUES ('0','$ip','$email','$userID','processing','$verificationToken', $code ,NOW(),'')");
                 $mailBody = "<html><body style='font-family: Arial, sans-serif; background: #f6f6f6; padding: 0; margin: 0;'>"
                     . "<div style='max-width: 480px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 32px 24px;'>"
-                    . "<div style='text-align:center; margin-bottom: 24px;'><img src='https://alex.polan.sk/control-center/assets/logo_inline_large.png' alt='Control Center Logo' style='max-width: 120px;'></div>"
+                    . "<div style='text-align:center; margin-bottom: 24px;'><img src='https://api.fringelo.com/assets/logo_inline_large.png' alt='Control Center Logo' style='max-width: 120px;'></div>"
                     . "<h2 style='color: #222; text-align:center; margin-bottom: 12px;'>Dein Einmal-Code</h2>"
                     . "<p style='font-size: 16px; color: #444; text-align:center;'>Hallo <b>" . htmlspecialchars($data['firstname']) . "</b>,<br><br>"
                     . "um dich sicher einzuloggen, gib bitte folgenden Code ein:</p>"

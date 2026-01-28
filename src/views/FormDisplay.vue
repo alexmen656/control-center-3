@@ -464,7 +464,7 @@ export default defineComponent({
     exportCSV() {
       const form = document.createElement('form');
       form.method = 'POST';
-      form.action = 'https://alex.polan.sk/control-center/triggers.php'; // Fixed path
+      form.action = 'https://api.fringelo.com/triggers.php'; // Fixed path
       form.target = '_blank';
 
       const exportField = document.createElement('input');

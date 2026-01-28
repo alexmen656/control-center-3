@@ -26,7 +26,7 @@ npm install
 MCP_PORT=3001
 
 # CMS Backend URL
-CMS_BACKEND_URL=https://alex.polan.sk/control-center/backend
+CMS_BACKEND_URL=https://api.fringelo.com/backend
 
 # Für STDIO: JWT Token
 CMS_JWT_TOKEN=your_jwt_token_here
@@ -668,7 +668,7 @@ Füge folgendes zu deiner MCP-Konfiguration hinzu:
       "args": ["/path/to/backend/mcp-server/stdio-server.js"],
       "env": {
         "CMS_JWT_TOKEN": "your_jwt_token",
-        "CMS_BACKEND_URL": "https://alex.polan.sk/control-center/backend"
+        "CMS_BACKEND_URL": "https://api.fringelo.com/backend"
       }
     }
   }

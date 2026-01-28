@@ -34,7 +34,7 @@ import { getResources, readResource } from './resources/index.js';
 
 // Configuration
 const PORT = process.env.MCP_PORT || 3001;
-const CMS_BACKEND_URL = process.env.CMS_BACKEND_URL || 'https://alex.polan.sk/control-center';
+const CMS_BACKEND_URL = process.env.CMS_BACKEND_URL || 'https://api.fringelo.com';
 
 const app = express();
 

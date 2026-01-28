@@ -1,7 +1,7 @@
 // CMS Analytics API SDK
 class AnalyticsAPI {
   constructor() {
-    this.baseUrl = 'https://alex.polan.sk/control-center/backend/api/v1/analytics';
+    this.baseUrl = 'https://api.fringelo.com/backend/api/v1/analytics';
     this.apiKey = 'demo-api-key-123';
   }
 

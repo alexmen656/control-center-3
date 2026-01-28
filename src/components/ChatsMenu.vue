@@ -13,7 +13,7 @@
       >
         {{ initials(chat.users[0].firstname, chat.users[0].lastname) }}
       </div>
-      <img v-else :src="(chat.type == '2' ?'https://alex.polan.sk/control-center/' : '') + chat.image" />
+      <img v-else :src="(chat.type == '2' ?'https://api.fringelo.com/' : '') + chat.image" />
    
     </ion-avatar>
       <router-link class="avatar" to="/messages/new/group"><ion-icon class="add" name="add-circle-outline" /></router-link>
@@ -49,7 +49,7 @@ export default defineComponent({
       const userId = 79;
       if (isOnline.value) {
         await fetch(
-          `https://alex.polan.sk/control-center/chats.php?userId=${userId}`
+          `https://api.fringelo.com/chats.php?userId=${userId}`
         )
           .then((response) => response.json())
           .then((data) => {

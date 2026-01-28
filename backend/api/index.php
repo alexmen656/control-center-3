@@ -3,8 +3,8 @@ session_start();
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Headers: *');
 header('Content-Type: application/json');
-include '/www/paxar/components/php_head.php';
-include 'helper.php';
+include 'db_connection.php';
+include 'functions.php';include 'helper.php';
 
 if (isset($_POST['getDataById']) && isset($_POST['id']) && isset($_POST['project']) && isset($_POST['form'])) {
     $project = escape_string($_POST['project']);

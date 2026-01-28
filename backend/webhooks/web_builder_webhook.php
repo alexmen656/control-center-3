@@ -123,7 +123,7 @@ if ($action === 'setup') {
  */
 function notifyBackend($domain, $project, $status)
 {
-    $backendUrl = 'https://alex.polan.sk/control-center/web_builder_domains.php';
+    $backendUrl = 'https://api.fringelo.com/web_builder_domains.php';
 
     $postData = http_build_query([
         'action' => 'update_ssl_status',

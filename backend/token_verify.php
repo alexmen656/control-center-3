@@ -1,7 +1,8 @@
 <?php
 require_once 'jwt_helper.php';
 require_once 'config.php';
-include '/www/paxar/components/php_head.php';
+include 'db_connection.php';
+include 'functions.php';
 
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Headers: *');

@@ -1,7 +1,7 @@
 // CMS Files API SDK
 class FilesAPI {
   constructor() {
-    this.baseUrl = 'https://alex.polan.sk/control-center/backend/api/v1/files';
+    this.baseUrl = 'https://api.fringelo.com/backend/api/v1/files';
     this.apiKey = 'demo-api-key-123'; // Wird später durch echte API-Keys ersetzt
   }
 

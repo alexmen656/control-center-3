@@ -1,15 +1,15 @@
 <?php
 // Script to add Marketing Campaigns module to the module store
 require_once "config.php";
-include '/www/paxar/components/php_head.php';
-
+include 'db_connection.php';
+include 'functions.php';
 $module = [
     "name" => "Marketing Campaigns",
     "tool_icon" => "megaphone-outline",
     "url" => "marketing-campaigns",
     "display_name" => "Marketing Campaigns",
     "ref" => "marketingcampaigns",
-    "icon" => "https://alex.polan.sk/control-center/images/appIcons/marketingcampaigns.png",
+    "icon" => "https://api.fringelo.com/images/appIcons/marketingcampaigns.png",
     "price" => "0"
 ];
 

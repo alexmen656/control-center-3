@@ -67,7 +67,7 @@ const handleFileUpload = async (event) => {
     formData.append('project', projectLink);
 
     const token = localStorage.getItem('authToken');
-    const response = await fetch('https://alex.polan.sk/control-center/filesystem.php', {
+    const response = await fetch('https://api.fringelo.com/filesystem.php', {
       method: 'POST',
       headers: {
         'Authorization': token
@@ -78,7 +78,7 @@ const handleFileUpload = async (event) => {
     const result = await response.json();
 
     if (result.success) {
-      const imageUrl = 'https://alex.polan.sk/control-center/filesystem.php?path=' + encodeURIComponent(file.name) + '&project=' + encodeURIComponent(projectLink);
+      const imageUrl = 'https://api.fringelo.com/filesystem.php?path=' + encodeURIComponent(file.name) + '&project=' + encodeURIComponent(projectLink);
 
       uploadedImage.value = {
         file: imageUrl,

@@ -152,7 +152,7 @@ if (empty($appId) || empty($appSecret)) {
 
 // Exchange authorization code for access token
 $tokenUrl = 'https://graph.facebook.com/v18.0/oauth/access_token';
-$redirectUri = "https://alex.polan.sk/control-center/instagram_callback.php";
+$redirectUri = "https://api.fringelo.com/instagram_callback.php";
 
 $postData = [
     'client_id' => $appId,

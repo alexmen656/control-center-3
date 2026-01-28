@@ -6,7 +6,7 @@
         label="Url"
         placeholder="url"
         type="text"
-        defaultVal="https://alex.polan.sk/control-center/api/chat-app/"
+        defaultVal="https://api.fringelo.com/api/chat-app/"
         disabled="true"
       />
       <FloatingInput

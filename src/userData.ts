@@ -26,7 +26,7 @@ export async function loadUserData() {
   if (navigator.onLine) {
     try {
       const response = await axios.post<UserData>(
-        "https://alex.polan.sk/control-center/user.php"
+        "https://api.fringelo.com/user.php"
       );
       data.value = response.data;
       store.commit("updateUser", {

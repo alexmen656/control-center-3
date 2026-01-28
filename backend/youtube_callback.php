@@ -154,7 +154,7 @@ if (empty($clientId) || empty($clientSecret)) {
 
 // Exchange authorization code for access token
 $tokenUrl = 'https://oauth2.googleapis.com/token';
-$redirectUri = "https://alex.polan.sk/control-center/youtube_callback.php";
+$redirectUri = "https://api.fringelo.com/youtube_callback.php";
 
 $postData = [
     'client_id' => $clientId,

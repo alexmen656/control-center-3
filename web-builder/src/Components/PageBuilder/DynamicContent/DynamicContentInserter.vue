@@ -24,7 +24,7 @@ const pageBuilderStateStore = usePageBuilderStateStore();
 const projectStore = useProjectStore();
 
 // CC Forms API URL
-const CC_FORMS_API = 'https://alex.polan.sk/control-center/api/cc_forms.php';
+const CC_FORMS_API = 'https://api.fringelo.com/api/cc_forms.php';
 
 // Loading state
 const isLoading = ref(false);

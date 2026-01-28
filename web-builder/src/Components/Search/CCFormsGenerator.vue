@@ -59,7 +59,7 @@ const ccProjectName = computed(() => {
 });
 
 // CC Forms API URL
-const CC_FORMS_API = 'https://alex.polan.sk/control-center/api/cc_forms.php';
+const CC_FORMS_API = 'https://api.fringelo.com/api/cc_forms.php';
 
 // Load forms when modal opens
 watch(() => props.show, async (newVal) => {

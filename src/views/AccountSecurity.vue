@@ -220,7 +220,7 @@ export default defineComponent({
       if (event.detail.checked) {
         // OAuth2-URL für GitHub (Client-ID und Redirect-URL anpassen!)
         const clientId = 'Ov23liwAe9al1YhVcwrK';
-        const redirectUri = encodeURIComponent('https://alex.polan.sk/control-center/github_oauth_callback.php');//control-center.eu
+        const redirectUri = encodeURIComponent('https://api.fringelo.com/github_oauth_callback.php');//control-center.eu
         const scope = 'repo user';
         // User-ID für state-Parameter
         const userId = this.user && this.user.userID ? this.user.userID : '';
@@ -242,7 +242,7 @@ export default defineComponent({
       if (event.detail.checked) {
         // OAuth2-URL für GitHub (Client-ID und Redirect-URL anpassen!)
         const clientId = 'Ov23liwAe9al1YhVcwrK';
-        const redirectUri = encodeURIComponent('https://alex.polan.sk/control-center/github_oauth_callback.php');//control-center.eu
+        const redirectUri = encodeURIComponent('https://api.fringelo.com/github_oauth_callback.php');//control-center.eu
         const scope = 'repo user';
         // User-ID für state-Parameter
         const userId = this.user && this.user.userID ? this.user.userID : '';

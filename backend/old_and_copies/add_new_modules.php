@@ -2,8 +2,8 @@
 <?php
 // mini script: add 3 new modules to module_store_modules
 require_once "config.php";
-include '/www/paxar/components/php_head.php';
-
+include 'db_connection.php';
+include 'functions.php';
 $modules = [
     [
         "name" => "App Store Connect Dashboard",
@@ -11,7 +11,7 @@ $modules = [
         "url" => "appstore-connect",
         "display_name" => "App Store Connect Dashboard",
         "ref" => "appstoreconnect",
-        "icon" => "https://alex.polan.sk/control-center/images/appIcons/appstoreconnect.png",
+        "icon" => "https://api.fringelo.com/images/appIcons/appstoreconnect.png",
         "price" => "0"
     ],
     [
@@ -20,7 +20,7 @@ $modules = [
         "url" => "app-user-management",
         "display_name" => "App User Management",
         "ref" => "appusermanagement",
-        "icon" => "https://alex.polan.sk/control-center/images/appIcons/appusermanagement.png",
+        "icon" => "https://api.fringelo.com/images/appIcons/appusermanagement.png",
         "price" => "0"
     ],
     [
@@ -29,7 +29,7 @@ $modules = [
         "url" => "https://monaco-editor.example.com",
         "display_name" => "Monaco Editor",
         "ref" => "monacoeditor",
-        "icon" => "https://alex.polan.sk/control-center/images/appIcons/monacoeditor.png",
+        "icon" => "https://api.fringelo.com/images/appIcons/monacoeditor.png",
         "price" => "0"
     ]
 ];

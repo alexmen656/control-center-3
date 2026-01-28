@@ -3,7 +3,7 @@ require_once __DIR__ . '/api_base.php';
 
 define('PUBLISH_WEBHOOK_URL', 'https://webhook.control-center.eu/publish_web_builder.php');
 define('PUBLISH_WEBHOOK_SECRET', 'cc_web_builder_publish_secret_2025');
-define('CC_API_BASE', 'https://alex.polan.sk/control-center/web-builder');
+define('CC_API_BASE', 'https://api.fringelo.com/web-builder');
 
 $userId = authenticateUser();
 $projectId = isset($_GET['project_id']) ? intval($_GET['project_id']) : null;
@@ -1127,7 +1127,7 @@ function generateIndexHtml($project, $pages, $projectSlug)
     createApp({}).use(router).mount('#app');
 
     (function() {
-        const CC_FORMS_API = 'https://alex.polan.sk/control-center/api/public_form_submit.php';
+        const CC_FORMS_API = 'https://api.fringelo.com/api/public_form_submit.php';
         const CC_PROJECT = '{$projectSlugJs}';
 
         function initCCForms() {

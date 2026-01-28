@@ -22,8 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
-include '/www/paxar/components/php_head.php';
-
+include 'db_connection.php';
+include 'functions.php';
 function randomNumber(){
     $rand = rand(100000, 999999);
     return $rand;

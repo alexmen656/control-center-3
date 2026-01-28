@@ -7,7 +7,7 @@
     >
       <ion-avatar slot="start">
         <Avatar
-          :profileImg="'https://alex.polan.sk/control-center/'+chat.image"
+          :profileImg="'https://api.fringelo.com/'+chat.image"
           :firstName="chat.users[0].firstname"
           :lastName="chat.users[0].lastname"
           avatarColor="blue"
@@ -76,7 +76,7 @@ export default defineComponent({
       const userId = 79;
       if (isOnline.value) {
         await fetch(
-          `https://alex.polan.sk/control-center/chats.php?userId=${userId}`
+          `https://api.fringelo.com/chats.php?userId=${userId}`
         )
           .then((response) => response.json())
           .then((data) => {

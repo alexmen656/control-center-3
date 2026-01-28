@@ -661,7 +661,7 @@ function getCCFormsScript($projectSlug)
 (function() {
     'use strict';
     
-    const CC_FORMS_API = 'https://alex.polan.sk/control-center/api/public_form_submit.php';
+    const CC_FORMS_API = 'https://api.fringelo.com/api/public_form_submit.php';
     const CC_PROJECT = '{$projectSlug}';
     
     // Find all forms with data-cc-form attribute

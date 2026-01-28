@@ -151,7 +151,7 @@ if (empty($clientKey) || empty($clientSecret)) {
 
 // Exchange authorization code for access token
 $tokenUrl = 'https://open.tiktokapis.com/v2/oauth/token/';
-$redirectUri = "https://alex.polan.sk/control-center/tiktok_callback.php";
+$redirectUri = "https://api.fringelo.com/tiktok_callback.php";
 
 $postData = [
     'client_key' => $clientKey,

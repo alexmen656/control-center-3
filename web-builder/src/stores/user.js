@@ -35,7 +35,7 @@ export const useUserStore = defineStore('user', () => {
       formData.append('email', credentials.email);
       formData.append('password', credentials.password);
 
-      const response = await fetch('https://alex.polan.sk/control-center/login.php', {
+      const response = await fetch('https://api.fringelo.com/login.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
@@ -91,7 +91,7 @@ export const useUserStore = defineStore('user', () => {
       formData.append('verificationToken', verificationToken.value);
       formData.append('verificationCode', code);
 
-      const response = await fetch('https://alex.polan.sk/control-center/verification.php', {
+      const response = await fetch('https://api.fringelo.com/verification.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
@@ -160,7 +160,7 @@ export const useUserStore = defineStore('user', () => {
     error.value = null;
 
     try {
-      const response = await fetch('https://alex.polan.sk/control-center/sidebar.php', {
+      const response = await fetch('https://api.fringelo.com/sidebar.php', {
         method: 'GET',
         headers: {
           'Authorization': token.value,

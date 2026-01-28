@@ -461,7 +461,7 @@ export default {
       youtube: {
         clientId: '',
         clientSecret: '',
-        redirectUri: 'https://alex.polan.sk/control-center/youtube_callback.php'
+        redirectUri: 'https://api.fringelo.com/youtube_callback.php'
       },
       instagram: {
         appId: '',

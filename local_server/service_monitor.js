@@ -36,8 +36,8 @@ try {
 }
 
 // Configuration
-const API_URL = 'https://alex.polan.sk/control-center/api/service_downtime_alert.php';
-const NOTIFICATION_HISTORY_URL = 'https://alex.polan.sk/control-center/api/notification_history.php';
+const API_URL = 'https://api.fringelo.com/api/service_downtime_alert.php';
+const NOTIFICATION_HISTORY_URL = 'https://api.fringelo.com/api/notification_history.php';
 const CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
 const NOTIFICATION_COOLDOWN = 30 * 60 * 1000; // 30 minutes in milliseconds
 const AUTH_USERNAME = 'service_monitor';
@@ -198,7 +198,7 @@ async function checkServiceStatus() {
             
             // Get all registered push notification tokens
             try {
-              const tokensResponse = await api.get('https://alex.polan.sk/control-center/api/push_tokens.php');
+              const tokensResponse = await api.get('https://api.fringelo.com/api/push_tokens.php');
               
               if (tokensResponse.data && tokensResponse.data.tokens && tokensResponse.data.tokens.length > 0) {
                 const tokens = tokensResponse.data.tokens;

@@ -21,7 +21,7 @@ export async function getUsers() {
   if (navigator.onLine) {
     try {
       const users = await axios.post(
-        "https://alex.polan.sk/control-center/users.php",
+        "https://api.fringelo.com/users.php",
         qs.stringify({ getAllUsers: "getAllUsers"})
       );
       return users.data;

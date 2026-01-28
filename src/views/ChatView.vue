@@ -4,7 +4,7 @@
       <ion-toolbar>
         <Avatar
           slot="start"
-          :profileImg="'https://alex.polan.sk/control-center/' + chat.image"
+          :profileImg="'https://api.fringelo.com/' + chat.image"
           avatarColor="blue"
         />
         <ion-title slot="start">{{ chat.name }}</ion-title>

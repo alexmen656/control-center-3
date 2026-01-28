@@ -99,7 +99,7 @@ export default defineComponent({
   methods: {
     async onDecode(text) {
       const audio = new Audio(
-        "https://alex.polan.sk/control-center/scanner.mp3"
+        "https://api.fringelo.com/scanner.mp3"
       );
       const found = await this.data.find(
         ({ id }) => Number(id) == Number(text)

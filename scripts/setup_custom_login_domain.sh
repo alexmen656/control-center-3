@@ -8,7 +8,7 @@
 NGINX_SITES_AVAILABLE="/etc/nginx/sites-available"
 NGINX_SITES_ENABLED="/etc/nginx/sites-enabled"
 WEBROOT="/home/ftpuser/control-center-app"  # Pfad zum Frontend Build
-BACKEND_URL="https://alex.polan.sk/control-center"
+BACKEND_URL="https://api.fringelo.com"
 LOG_FILE="/var/log/custom-login-setup.log"
 
 # Logging Funktion
@@ -77,7 +77,7 @@ server {
     
     # Backend Proxy (für API Calls)
     location /backend/ {
-        proxy_pass https://alex.polan.sk/control-center/backend/;
+        proxy_pass https://api.fringelo.com/backend/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';

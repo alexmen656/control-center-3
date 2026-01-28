@@ -2,8 +2,8 @@
 <?php
 // mini script: add 3 new modules to module_store_modules
 require_once "config.php";
-include '/www/paxar/components/php_head.php';
-
+include 'db_connection.php';
+include 'functions.php';
 $modules = [
     [
         "name" => "Telegram Bot",
@@ -11,7 +11,7 @@ $modules = [
         "url" => "telegram-bot",
         "display_name" => "Telegram Bot",
         "ref" => "telegrambot",
-        "icon" => "https://alex.polan.sk/control-center/images/appIcons/telegrambot.png",
+        "icon" => "https://api.fringelo.com/images/appIcons/telegrambot.png",
         "price" => "0"
     ],
     [
@@ -20,7 +20,7 @@ $modules = [
         "url" => "my-tasks",
         "display_name" => "My Tasks",
         "ref" => "mytasks",
-        "icon" => "https://alex.polan.sk/control-center/images/appIcons/mytasks.png",
+        "icon" => "https://api.fringelo.com/images/appIcons/mytasks.png",
         "price" => "0"
     ],
 ];

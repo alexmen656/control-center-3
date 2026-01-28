@@ -222,7 +222,7 @@ class VideoUploadsConfigAPI
         $this->savePlatformConfig($platform, $project, 'oauth_state', $state);
         $this->savePlatformConfig($platform, $project, 'oauth_status', 'pending');
 
-        $redirectUri = "https://alex.polan.sk/control-center/{$platform}_callback.php";
+        $redirectUri = "https://api.fringelo.com/{$platform}_callback.php";
 
         switch ($platform) {
             case 'youtube':

@@ -1,7 +1,7 @@
 // CMS Users API SDK
 class UsersAPI {
   constructor() {
-    this.baseUrl = 'https://alex.polan.sk/control-center/backend/api/v1/users';
+    this.baseUrl = 'https://api.fringelo.com/backend/api/v1/users';
     this.apiKey = 'demo-api-key-123'; // Will be set from project settings
   }
 

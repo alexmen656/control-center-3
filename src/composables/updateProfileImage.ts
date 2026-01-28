@@ -88,7 +88,7 @@ export function usePhotoGallery(){
 
 
 
-        axios.post("https://alex.polan.sk/control-center/user.php", bodyFormData,  {
+        axios.post("https://api.fringelo.com/user.php", bodyFormData,  {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }

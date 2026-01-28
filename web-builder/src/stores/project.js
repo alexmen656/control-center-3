@@ -17,7 +17,7 @@ export const useProjectStore = defineStore('project', () => {
     error.value = null;
 
     try {
-      const response = await vueFetch('https://alex.polan.sk/control-center/web-builder/projects.php', {
+      const response = await vueFetch('https://api.fringelo.com/web-builder/projects.php', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -51,7 +51,7 @@ export const useProjectStore = defineStore('project', () => {
     error.value = null;
 
     try {
-      const response = await vueFetch(`https://alex.polan.sk/control-center/web-builder/projects.php?id=${projectId}`, {
+      const response = await vueFetch(`https://api.fringelo.com/web-builder/projects.php?id=${projectId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -86,7 +86,7 @@ export const useProjectStore = defineStore('project', () => {
     error.value = null;
 
     try {
-      const response = await vueFetch(`https://alex.polan.sk/control-center/web-builder/projects.php?id=${projectId}`, {
+      const response = await vueFetch(`https://api.fringelo.com/web-builder/projects.php?id=${projectId}`, {
         method: 'DELETE'
       });
 
@@ -131,7 +131,7 @@ export const useProjectStore = defineStore('project', () => {
     error.value = null;
 
     try {
-      const response = await vueFetch(`https://alex.polan.sk/control-center/web-builder/projects.php?id=${projectId}`, {
+      const response = await vueFetch(`https://api.fringelo.com/web-builder/projects.php?id=${projectId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
