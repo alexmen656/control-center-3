@@ -381,47 +381,38 @@ function createTableName($string_to_replace)
    return strtolower(str_replace("-", "_", createLink($string_to_replace)));
 }
 
-/**
- * Sende eine E-Mail über Resend (offizielles PHP SDK)
- *
- * @param string $to Empfänger (z.B. "Max Mustermann <max@example.com>" oder "max@example.com")
- * @param string $subject Betreff
- * @param string $htmlBody HTML-Inhalt der E-Mail
- * @param array $options Zusätzliche Optionen:
- *   - from: Absender-E-Mail
- *   - from_name: Absender-Name
- *   - text_body: Plain-Text Alternative
- *   - reply_to: Reply-To Adresse
- *   - cc: CC Empfänger
- *   - bcc: BCC Empfänger
- * @return array ['success' => bool, 'email_id' => string|null, 'error' => string|null]
- */
 function sendMail(string $to, string $subject, string $htmlBody, array $options = []): array
 {
    $mailer = getResendMailer();
    return $mailer->send($to, $subject, $htmlBody, $options);
 }
 
-/**
- * Get shared Resend mailer instance (lazy-loaded)
- */
 function getResendMailer(): \ControlCenter\ResendMailer
 {
    require_once __DIR__ . '/services/MailerBootstrap.php';
    return \ControlCenter\MailerBootstrap::getMailer();
 }
 
-/**
- * Sende eine E-Mail an mehrere Empfänger (Bulk)
- *
- * @param array $recipients Array von E-Mail-Adressen
- * @param string $subject Betreff
- * @param string $htmlBody HTML-Inhalt
- * @param array $options Zusätzliche Optionen wie bei sendMail()
- * @return array ['success' => bool, 'sent' => int, 'failed' => int, 'errors' => array]
- */
 function sendBulkMail(array $recipients, string $subject, string $htmlBody, array $options = []): array
 {
    $mailer = getResendMailer();
    return $mailer->sendBulk($recipients, $subject, $htmlBody, $options);
+}
+
+function sendPush(string $title, string $message, ?int $userID = null): array
+{
+   if ($userID === null) {
+      global $userID;
+   }
+   if (!$userID) {
+      return ['success' => false, 'sent' => 0, 'failed' => 0, 'errors' => ['No userID available']];
+   }
+   $service = getPushService();
+   return $service->send((int) $userID, $title, $message);
+}
+
+function getPushService(): \ControlCenter\PushService
+{
+   require_once __DIR__ . '/services/PushBootstrap.php';
+   return \ControlCenter\PushBootstrap::getService();
 }
