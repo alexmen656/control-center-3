@@ -2,7 +2,6 @@
   <ion-page>
     <ion-content class="modern-content">
       <SiteTitle icon="people-outline" title="User Management" />
-
       <div class="page-container">
         <div class="page-header">
           <div class="header-content">
@@ -58,14 +57,12 @@
             </div>
           </div>
         </div>
-
-        <!-- Users Table -->
         <div class="data-card">
           <div class="card-header">
             <div class="header-left">
               <h3>All Users</h3>
               <span class="entry-count">{{ filteredUsers.length }} user{{ filteredUsers.length !== 1 ? 's' : ''
-                }}</span>
+              }}</span>
             </div>
             <div class="search-box">
               <ion-icon name="search-outline"></ion-icon>
@@ -88,7 +85,6 @@
             </div>
 
             <div v-else class="modern-table">
-              <!-- Table Header -->
               <div class="table-header">
                 <div v-for="(label, index) in tableLabels" :key="label" class="header-cell" @click="sortBy(index)">
                   <span class="header-text">{{ label }}</span>
@@ -102,34 +98,26 @@
                 </div>
                 <div class="header-cell actions-header">Actions</div>
               </div>
-
-              <!-- Table Body -->
               <div class="table-body">
                 <div v-for="user in sortedUsers" :key="user[0]" class="table-row">
-                  <!-- User ID (hidden on mobile) -->
                   <div class="table-cell cell-id">
                     <span class="cell-content">{{ user[0] }}</span>
                   </div>
-
-                  <!-- Profile Image -->
                   <div class="table-cell cell-avatar">
-                    <div class="user-avatar" :class="{ 'avatar-initials': user[1] === 'avatar' }" 
-                         :style="user[1] === 'avatar' ? { backgroundColor: getAvatarColor(user[0]) } : {}">
-                      <img v-if="user[1] && user[1] !== 'null' && user[1] !== 'avatar' && user[1] !== 'google'" :src="user[1]" alt="Profile" />
+                    <div class="user-avatar" :class="{ 'avatar-initials': user[1] === 'avatar' }"
+                      :style="user[1] === 'avatar' ? { backgroundColor: getAvatarColor(user[0]) } : {}">
+                      <img v-if="user[1] && user[1] !== 'null' && user[1] !== 'avatar' && user[1] !== 'google'"
+                        :src="user[1]" alt="Profile" />
                       <span v-else-if="user[1] === 'avatar'" class="initials">{{ getInitials(user[2], user[3]) }}</span>
                       <ion-icon v-else name="person-outline"></ion-icon>
                     </div>
                   </div>
-
-                  <!-- Name -->
                   <div class="table-cell cell-name">
                     <div class="user-info">
                       <span class="user-name">{{ user[2] }} {{ user[3] }}</span>
                       <span class="user-email">{{ user[4] }}</span>
                     </div>
                   </div>
-
-                  <!-- Status -->
                   <div class="table-cell cell-status">
                     <span class="status-badge" :class="{
                       'status-active': user[7] === 'active',
@@ -139,16 +127,12 @@
                       {{ user[7] }}
                     </span>
                   </div>
-
-                  <!-- Project Assignment -->
                   <div class="table-cell cell-project">
                     <span v-if="user.assignedProject" class="project-badge">
                       {{ user.assignedProject }}
                     </span>
                     <span v-else class="no-project">No Project</span>
                   </div>
-
-                  <!-- Actions -->
                   <div class="table-cell actions-cell">
                     <div class="action-buttons">
                       <button v-if="user[7] === 'pending_verification'" class="icon-btn approve-btn"
@@ -171,8 +155,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Pending Verification Section (if any) -->
         <div v-if="pendingVerificationEntries.length > 0" class="data-card">
           <div class="card-header">
             <div class="header-left">
@@ -181,13 +163,13 @@
                 !== 1 ? 's' : '' }} waiting</span>
             </div>
           </div>
-
           <div class="pending-users">
             <div v-for="user in pendingVerificationEntries" :key="user[0]" class="pending-user-card">
               <div class="pending-user-info">
                 <div class="user-avatar" :class="{ 'avatar-initials': user[1] === 'avatar' }"
-                     :style="user[1] === 'avatar' ? { backgroundColor: getAvatarColor(user[0]) } : {}">
-                  <img v-if="user[1] && user[1] !== 'null' && user[1] !== 'avatar' && user[1] !== 'google'" :src="user[1]" alt="Profile" />
+                  :style="user[1] === 'avatar' ? { backgroundColor: getAvatarColor(user[0]) } : {}">
+                  <img v-if="user[1] && user[1] !== 'null' && user[1] !== 'avatar' && user[1] !== 'google'"
+                    :src="user[1]" alt="Profile" />
                   <span v-else-if="user[1] === 'avatar'" class="initials">{{ getInitials(user[2], user[3]) }}</span>
                   <ion-icon v-else name="person-outline"></ion-icon>
                 </div>
@@ -204,8 +186,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Create User Modal -->
       <div v-if="showCreateModal" class="custom-modal-overlay" @click="showCreateModal = false">
         <div class="custom-modal-content" @click.stop>
           <div class="custom-modal-header">
@@ -254,8 +234,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Assign Project Modal -->
       <div v-if="showAssignModal" class="custom-modal-overlay" @click="showAssignModal = false">
         <div class="custom-modal-content" @click.stop>
           <div class="custom-modal-header">
@@ -267,10 +245,12 @@
           <div class="custom-modal-body">
             <div class="assign-user-info">
               <div class="user-avatar" :class="{ 'avatar-initials': selectedUser?.image === 'avatar' }"
-                   :style="selectedUser?.image === 'avatar' ? { backgroundColor: getAvatarColor(selectedUser.id) } : {}">
-                <img v-if="selectedUser?.image && selectedUser?.image !== 'null' && selectedUser?.image !== 'avatar' && selectedUser?.image !== 'google'" :src="selectedUser.image"
-                  alt="Profile" />
-                <span v-else-if="selectedUser?.image === 'avatar'" class="initials">{{ getInitialsFromName(selectedUser.name) }}</span>
+                :style="selectedUser?.image === 'avatar' ? { backgroundColor: getAvatarColor(selectedUser.id) } : {}">
+                <img
+                  v-if="selectedUser?.image && selectedUser?.image !== 'null' && selectedUser?.image !== 'avatar' && selectedUser?.image !== 'google'"
+                  :src="selectedUser.image" alt="Profile" />
+                <span v-else-if="selectedUser?.image === 'avatar'" class="initials">{{
+                  getInitialsFromName(selectedUser.name) }}</span>
                 <ion-icon v-else name="person-outline"></ion-icon>
               </div>
               <div class="user-details">
@@ -278,7 +258,6 @@
                 <p>{{ selectedUser?.email }}</p>
               </div>
             </div>
-
             <div class="form-group">
               <label class="form-label">Select Project</label>
               <select v-model="assignmentData.project" class="modern-select">
@@ -290,7 +269,6 @@
               <p class="form-help">Users assigned to a project will be automatically redirected to that project upon
                 login</p>
             </div>
-
             <div class="form-actions">
               <button class="action-btn secondary" @click="showAssignModal = false">
                 Cancel
@@ -302,8 +280,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Edit User Modal -->
       <div v-if="showEditModal" class="custom-modal-overlay" @click="showEditModal = false">
         <div class="custom-modal-content" @click.stop>
           <div class="custom-modal-header">
@@ -315,10 +291,12 @@
           <div class="custom-modal-body">
             <div class="assign-user-info">
               <div class="user-avatar" :class="{ 'avatar-initials': editUserData.image === 'avatar' }"
-                   :style="editUserData.image === 'avatar' ? { backgroundColor: getAvatarColor(editUserData.id) } : {}">
-                <img v-if="editUserData.image && editUserData.image !== 'null' && editUserData.image !== 'avatar' && editUserData.image !== 'google'" :src="editUserData.image"
-                  alt="Profile" />
-                <span v-else-if="editUserData.image === 'avatar'" class="initials">{{ getInitials(editUserData.first_name, editUserData.last_name) }}</span>
+                :style="editUserData.image === 'avatar' ? { backgroundColor: getAvatarColor(editUserData.id) } : {}">
+                <img
+                  v-if="editUserData.image && editUserData.image !== 'null' && editUserData.image !== 'avatar' && editUserData.image !== 'google'"
+                  :src="editUserData.image" alt="Profile" />
+                <span v-else-if="editUserData.image === 'avatar'" class="initials">{{
+                  getInitials(editUserData.first_name, editUserData.last_name) }}</span>
                 <ion-icon v-else name="person-outline"></ion-icon>
               </div>
               <div class="user-details">
@@ -371,8 +349,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Success Message -->
       <div v-if="successMessage" class="success-toast">
         <ion-icon name="checkmark-circle-outline"></ion-icon>
         {{ successMessage }}
@@ -403,9 +379,8 @@ export default defineComponent({
 
     const loadUsers = async function () {
       try {
-        const response = await axios.post(
-          "users.php",
-          qs.stringify({ getAllUsers: true }),
+        const response = await axios.get(
+          "v2/users",
           {
             headers: {
               "Authorization": localStorage.getItem("token")
@@ -423,7 +398,6 @@ export default defineComponent({
           (entry) => entry[accountStatusIndex] === "pending_verification"
         );
 
-        // Load user project assignments
         await loadUserAssignments();
       } catch (error) {
         console.error('Error loading users:', error);
@@ -432,9 +406,8 @@ export default defineComponent({
 
     const loadUserAssignments = async function () {
       try {
-        const response = await axios.post(
-          "users.php",
-          qs.stringify({ getUserAssignments: true }),
+        const response = await axios.get(
+          "v2/users/assignments",
           {
             headers: {
               "Authorization": localStorage.getItem("token")
@@ -443,7 +416,6 @@ export default defineComponent({
         );
 
         if (response.data.success) {
-          // Add assignment data to users
           data.value.forEach(user => {
             const assignment = response.data.assignments.find(a => a.user_id == user[0]);
             if (assignment) {
@@ -552,13 +524,11 @@ export default defineComponent({
         let aVal = a[this.sortColumn];
         let bVal = b[this.sortColumn];
 
-        // Special handling for name column (combine first + last)
         if (this.sortColumn === 2) {
           aVal = `${a[2]} ${a[3]}`;
           bVal = `${b[2]} ${b[3]}`;
         }
 
-        // Check if values are numbers
         const aNum = parseFloat(aVal);
         const bNum = parseFloat(bVal);
 
@@ -608,9 +578,8 @@ export default defineComponent({
 
       try {
         const response = await this.$axios.post(
-          "users.php",
+          "v2/users",
           this.$qs.stringify({
-            new_user: "new_user",
             first_name: this.newUser.first_name,
             last_name: this.newUser.last_name,
             email_adress: this.newUser.email_adress,
@@ -639,11 +608,9 @@ export default defineComponent({
     },
     async approve(userID) {
       try {
-        await this.$axios.post(
-          "users.php",
+        await this.$axios.put(
+          `v2/users/${userID}/status`,
           this.$qs.stringify({
-            updateAccountStatus: "updateAccountStatus",
-            userID: userID,
             newStatus: "active",
           }),
           {
@@ -673,10 +640,8 @@ export default defineComponent({
     async assignProject() {
       try {
         const response = await this.$axios.post(
-          "users.php",
+          `v2/users/${this.selectedUser.id}/project`,
           this.$qs.stringify({
-            assignUserProject: "assignUserProject",
-            userID: this.selectedUser.id,
             project: this.assignmentData.project
           }),
           {
@@ -728,13 +693,12 @@ export default defineComponent({
           account_status: this.editUserData.status
         };
 
-        // Only include password if it's provided
         if (this.editUserData.password.trim()) {
           updateData.password = this.editUserData.password;
         }
 
-        const response = await this.$axios.post(
-          "users.php",
+        const response = await this.$axios.put(
+          `v2/users/${this.editUserData.id}`,
           this.$qs.stringify(updateData),
           {
             headers: {
@@ -763,12 +727,8 @@ export default defineComponent({
       }
 
       try {
-        const response = await this.$axios.post(
-          "users.php",
-          this.$qs.stringify({
-            deleteUser: "deleteUser",
-            userID: userID
-          }),
+        const response = await this.$axios.delete(
+          `v2/users/${userID}`,
           {
             headers: {
               "Authorization": localStorage.getItem("token")
@@ -816,7 +776,6 @@ export default defineComponent({
       return fullName.charAt(0).toUpperCase();
     },
     getAvatarColor(userId) {
-      // Generate consistent colors based on user ID
       const colors = [
         '#667eea', '#764ba2', '#f093fb', '#f5576c',
         '#4facfe', '#00f2fe', '#43e97b', '#38f9d7',
@@ -829,7 +788,6 @@ export default defineComponent({
 });
 </script>
 <style scoped>
-/* Modern Design System - Same as FormDisplay */
 .modern-content {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
@@ -858,7 +816,6 @@ export default defineComponent({
   background: var(--background);
 }
 
-/* Page Header */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -890,7 +847,6 @@ export default defineComponent({
   flex-wrap: wrap;
 }
 
-/* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -943,7 +899,6 @@ export default defineComponent({
   font-weight: 500;
 }
 
-/* Action Bar */
 .action-bar {
   display: flex;
   justify-content: space-between;
@@ -1011,7 +966,6 @@ export default defineComponent({
   font-size: 16px;
 }
 
-/* Search Box */
 .search-box {
   position: relative;
   display: flex;
@@ -1043,7 +997,6 @@ export default defineComponent({
   box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
-/* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -1105,7 +1058,6 @@ export default defineComponent({
   margin: 0;
 }
 
-/* Data Card */
 .data-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
@@ -1137,12 +1089,10 @@ export default defineComponent({
   font-size: 14px;
 }
 
-/* Modern Table */
 .table-wrapper {
   overflow-x: auto;
 }
 
-/* Loading State */
 .loading-state {
   text-align: center;
   padding: 60px 20px;
@@ -1171,7 +1121,6 @@ export default defineComponent({
   font-size: 14px;
 }
 
-/* No Data State */
 .no-data-state {
   padding: 60px 20px;
   text-align: center;
@@ -1273,7 +1222,6 @@ export default defineComponent({
   opacity: 0.6;
 }
 
-/* Table Body */
 .table-body {
   background: var(--surface);
 }
@@ -1315,7 +1263,6 @@ export default defineComponent({
   max-width: 200px;
 }
 
-/* User Avatar */
 .user-avatar {
   width: 40px;
   height: 40px;
@@ -1351,7 +1298,6 @@ export default defineComponent({
   user-select: none;
 }
 
-/* User Info */
 .user-info {
   display: flex;
   flex-direction: column;
@@ -1369,7 +1315,6 @@ export default defineComponent({
   font-size: 12px;
 }
 
-/* Status Badge */
 .status-badge {
   display: inline-block;
   padding: 4px 12px;
@@ -1398,7 +1343,6 @@ export default defineComponent({
   border: 1px solid rgba(220, 38, 38, 0.2);
 }
 
-/* Project Badge */
 .project-badge {
   display: inline-block;
   padding: 6px 12px;
@@ -1416,7 +1360,6 @@ export default defineComponent({
   font-size: 12px;
 }
 
-/* Action Buttons */
 .action-buttons {
   display: flex;
   gap: 8px;
@@ -1475,7 +1418,6 @@ export default defineComponent({
   transform: scale(1.05);
 }
 
-/* Pending Users */
 .pending-users {
   padding: 24px;
 }
@@ -1517,7 +1459,6 @@ export default defineComponent({
   font-size: 14px;
 }
 
-/* Modal Styles */
 .custom-modal-overlay {
   position: fixed;
   top: 0;
@@ -1589,7 +1530,6 @@ export default defineComponent({
   min-height: 0;
 }
 
-/* Form Styles */
 .modern-edit-form {
   width: 100%;
 }
@@ -1672,7 +1612,6 @@ export default defineComponent({
   border-top: 1px solid var(--border);
 }
 
-/* Success Toast */
 .success-toast {
   position: fixed;
   bottom: 24px;
@@ -1691,7 +1630,6 @@ export default defineComponent({
   animation: slideInRight 0.3s ease;
 }
 
-/* Animations */
 @keyframes modalFadeIn {
   from {
     opacity: 0;
@@ -1726,7 +1664,6 @@ export default defineComponent({
   }
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
