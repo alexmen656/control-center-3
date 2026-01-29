@@ -34,8 +34,8 @@ class AwsSesMailer
         //$secret = $config['secret'] ?? getenv('AWS_SES_SECRET') ?: getenv('AWS_SECRET_ACCESS_KEY');
 
 
-        $this->defaultFromEmail = $config['from_email'] ?? getenv('AWS_SES_FROM_EMAIL') ?: 'noreply@control-center.eu';
-        $this->defaultFromName = $config['from_name'] ?? getenv('AWS_SES_FROM_NAME') ?: 'Control Center';
+        $this->defaultFromEmail = $config['from_email'] ?? getenv('AWS_SES_FROM_EMAIL') ?: 'noreply@fringelo.com';
+        $this->defaultFromName = $config['from_name'] ?? getenv('AWS_SES_FROM_NAME') ?: 'Fringelo';
         $this->sandboxMode = $config['sandbox'] ?? (getenv('AWS_SES_SANDBOX') === 'true');
 
         $clientConfig = [

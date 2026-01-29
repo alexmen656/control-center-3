@@ -19,6 +19,7 @@ require_once 'jwt_helper.php';
 require_once 'config.php';
 require_once 'functions.php';
 $headers = getRequestHeaders();
+ini_set('display_errors', true);
 
 
 if (isset($_POST['email']) && isset($_POST['password'])) {

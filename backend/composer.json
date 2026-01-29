@@ -3,7 +3,8 @@
     "description": "Control Center Backend",
     "require": {
         "php": ">=7.4",
-        "aws/aws-sdk-php": "^3.300"
+        "aws/aws-sdk-php": "^3.300",
+        "resend/resend-php": "^0.13"
     },
     "autoload": {
         "psr-4": {

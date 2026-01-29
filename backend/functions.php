@@ -382,7 +382,7 @@ function createTableName($string_to_replace)
 }
 
 /**
- * Sende eine E-Mail über AWS SES
+ * Sende eine E-Mail über Resend (offizielles PHP SDK)
  *
  * @param string $to Empfänger (z.B. "Max Mustermann <max@example.com>" oder "max@example.com")
  * @param string $subject Betreff
@@ -394,19 +394,21 @@ function createTableName($string_to_replace)
  *   - reply_to: Reply-To Adresse
  *   - cc: CC Empfänger
  *   - bcc: BCC Empfänger
- * @return array ['success' => bool, 'message_id' => string|null, 'error' => string|null]
+ * @return array ['success' => bool, 'email_id' => string|null, 'error' => string|null]
  */
 function sendMail(string $to, string $subject, string $htmlBody, array $options = []): array
 {
-   static $mailer = null;
-
-   // Lazy-load the mailer
-   if ($mailer === null) {
-      require_once __DIR__ . '/vendor/autoload.php';
-      $mailer = new \ControlCenter\AwsSesMailer();
-   }
-
+   $mailer = getResendMailer();
    return $mailer->send($to, $subject, $htmlBody, $options);
+}
+
+/**
+ * Get shared Resend mailer instance (lazy-loaded)
+ */
+function getResendMailer(): \ControlCenter\ResendMailer
+{
+   require_once __DIR__ . '/services/MailerBootstrap.php';
+   return \ControlCenter\MailerBootstrap::getMailer();
 }
 
 /**
@@ -420,12 +422,6 @@ function sendMail(string $to, string $subject, string $htmlBody, array $options 
  */
 function sendBulkMail(array $recipients, string $subject, string $htmlBody, array $options = []): array
 {
-   static $mailer = null;
-
-   if ($mailer === null) {
-      require_once __DIR__ . '/vendor/autoload.php';
-      $mailer = new \ControlCenter\AwsSesMailer();
-   }
-
+   $mailer = getResendMailer();
    return $mailer->sendBulk($recipients, $subject, $htmlBody, $options);
 }
