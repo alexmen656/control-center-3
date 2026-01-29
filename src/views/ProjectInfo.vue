@@ -721,13 +721,8 @@ export default {
     },
     async loadProjectBanner() {
       try {
-        // Get project ID first
-        const projectResponse = await this.$axios.post(
-          "projects.php",
-          this.$qs.stringify({
-            getProjectInfo: "getProjectInfo",
-            project: this.$route.params.project
-          })
+        const projectResponse = await this.$axios.get(
+          `v2/projects/${this.$route.params.project}/info`
         );
 
         if (!projectResponse.data || !projectResponse.data.projectID) {
@@ -884,12 +879,8 @@ export default {
   },
   async created() {
     this.$axios
-      .post(
-        "projects.php",
-        this.$qs.stringify({
-          getProjectInfo: "getProjectInfo",
-          project: this.$route.params.project,
-        })
+      .get(
+        `v2/projects/${this.$route.params.project}/info`
       )
       .then((res) => {
         this.projectName = res.data.name;

@@ -416,12 +416,8 @@ export default {
         });
 
       this.$axios
-        .post(
-          "projects.php",
-          this.$qs.stringify({
-            getProjectUsers: "getProjectUsers",
-            project: this.$route.params.project,
-          })
+        .get(
+          `v2/projects/${this.$route.params.project}/users`
         )
         .then((response2) => {
           console.log('Users response:', response2.data);
@@ -489,12 +485,8 @@ export default {
 
     async loadProjectBanner() {
       try {
-        const projectResponse = await this.$axios.post(
-          "projects.php",
-          this.$qs.stringify({
-            getProjectInfo: "getProjectInfo",
-            project: this.$route.params.project
-          })
+        const projectResponse = await this.$axios.get(
+          `v2/projects/${this.$route.params.project}/info`
         );
 
         if (!projectResponse.data || !projectResponse.data.projectID) {
@@ -607,10 +599,8 @@ export default {
 
       try {
         const response = await this.$axios.post(
-          "projects.php",
+          `v2/projects/${this.$route.params.project}/users`,
           this.$qs.stringify({
-            addUserToProject: "addUserToProject",
-            project: this.$route.params.project,
             email: this.email,
             roleId: this.selectedRoleId,
           })

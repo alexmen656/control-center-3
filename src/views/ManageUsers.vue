@@ -62,7 +62,7 @@
             <div class="header-left">
               <h3>All Users</h3>
               <span class="entry-count">{{ filteredUsers.length }} user{{ filteredUsers.length !== 1 ? 's' : ''
-              }}</span>
+                }}</span>
             </div>
             <div class="search-box">
               <ion-icon name="search-outline"></ion-icon>
@@ -434,9 +434,8 @@ export default defineComponent({
 
     const loadProjects = async function () {
       try {
-        const response = await axios.post(
-          "projects.php",
-          qs.stringify({ getAllProjects: true }),
+        const response = await axios.get(
+          "v2/projects",
           {
             headers: {
               "Authorization": localStorage.getItem("token")

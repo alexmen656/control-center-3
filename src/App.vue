@@ -53,7 +53,7 @@
         <!-- TouchBar for mobile devices -->
         <TouchBar v-if="showTouchBar" />
 
-        
+
       </ion-content>
       <!--<div class="offline" v-if="!isOnline"><h6>You are offline!</h6></div>-->
       <ion-footer v-if="!isOnline" class="offline" collapse="fade">
@@ -341,13 +341,10 @@ export default defineComponent({
 
     const checkUserPermissions = async (project) => {
       try {
-        const res = await axios.post(
-          "projects.php",
-          qs.stringify({
-            checkUserPermissions: "checkUserPermissions",
-            project: project.replace("ü", "ue"),
-          })
+        const res = await axios.get(
+          `v2/projects/${project}/permissions`
         );
+
         if (!res.data.success) {
           ionRouter.push("/no-permission");
         }
@@ -485,7 +482,7 @@ export default defineComponent({
 
     try {
       await SplashScreen.hide();
-      
+
       // Configure iOS Status Bar
       if (isPlatform('ios')) {
         // Use Dark style (black text) for light mode header (#eff3f6)
@@ -593,9 +590,10 @@ ion-content.hasToBeDarkmode {
   right: 0;
   bottom: 0;
   background: radial-gradient(circle at 20% 50%, rgba(234, 14, 43, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(234, 14, 43, 0.08) 0%, transparent 50%);
+    radial-gradient(circle at 80% 80%, rgba(234, 14, 43, 0.08) 0%, transparent 50%);
   pointer-events: none;
 }
+
 .glitch {
   font-size: 120px;
   font-weight: 900;
@@ -608,7 +606,9 @@ ion-content.hasToBeDarkmode {
   animation: glitch 500ms infinite;
   margin: 0;
   line-height: 1;
-}glitch {
+}
+
+glitch {
   font-size: 120px;
   font-weight: 900;
   color: #fff;
@@ -651,29 +651,35 @@ ion-content.hasToBeDarkmode {
       -0.05em -0.025em 0 rgba(0, 255, 0, 0.75),
       -0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
   }
+
   14% {
     text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
       -0.05em -0.025em 0 rgba(0, 255, 0, 0.75),
       -0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
   }
+
   15% {
     text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
       0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
       -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
   }
+
   49% {
     text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
       0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
       -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
   }
+
   50% {
     text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
       0.05em 0 0 rgba(0, 255, 0, 0.75), 0 -0.05em 0 rgba(0, 0, 255, 0.75);
   }
+
   99% {
     text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
       0.05em 0 0 rgba(0, 255, 0, 0.75), 0 -0.05em 0 rgba(0, 0, 255, 0.75);
   }
+
   100% {
     text-shadow: -0.025em 0 0 rgba(255, 0, 0, 0.75),
       -0.025em -0.025em 0 rgba(0, 255, 0, 0.75),
@@ -685,63 +691,83 @@ ion-content.hasToBeDarkmode {
   0% {
     clip: rect(61px, 9999px, 78px, 0);
   }
+
   5% {
     clip: rect(33px, 9999px, 144px, 0);
   }
+
   10% {
     clip: rect(17px, 9999px, 99px, 0);
   }
+
   15% {
     clip: rect(85px, 9999px, 85px, 0);
   }
+
   20% {
     clip: rect(2px, 9999px, 125px, 0);
   }
+
   25% {
     clip: rect(120px, 9999px, 38px, 0);
   }
+
   30% {
     clip: rect(44px, 9999px, 134px, 0);
   }
+
   35% {
     clip: rect(96px, 9999px, 71px, 0);
   }
+
   40% {
     clip: rect(23px, 9999px, 108px, 0);
   }
+
   45% {
     clip: rect(55px, 9999px, 15px, 0);
   }
+
   50% {
     clip: rect(89px, 9999px, 133px, 0);
   }
+
   55% {
     clip: rect(77px, 9999px, 92px, 0);
   }
+
   60% {
     clip: rect(140px, 9999px, 19px, 0);
   }
+
   65% {
     clip: rect(11px, 9999px, 66px, 0);
   }
+
   70% {
     clip: rect(105px, 9999px, 49px, 0);
   }
+
   75% {
     clip: rect(31px, 9999px, 117px, 0);
   }
+
   80% {
     clip: rect(68px, 9999px, 82px, 0);
   }
+
   85% {
     clip: rect(128px, 9999px, 5px, 0);
   }
+
   90% {
     clip: rect(42px, 9999px, 101px, 0);
   }
+
   95% {
     clip: rect(14px, 9999px, 146px, 0);
   }
+
   100% {
     clip: rect(73px, 9999px, 27px, 0);
   }
@@ -751,63 +777,83 @@ ion-content.hasToBeDarkmode {
   0% {
     clip: rect(129px, 9999px, 36px, 0);
   }
+
   5% {
     clip: rect(36px, 9999px, 4px, 0);
   }
+
   10% {
     clip: rect(85px, 9999px, 66px, 0);
   }
+
   15% {
     clip: rect(91px, 9999px, 91px, 0);
   }
+
   20% {
     clip: rect(148px, 9999px, 138px, 0);
   }
+
   25% {
     clip: rect(38px, 9999px, 122px, 0);
   }
+
   30% {
     clip: rect(69px, 9999px, 54px, 0);
   }
+
   35% {
     clip: rect(98px, 9999px, 71px, 0);
   }
+
   40% {
     clip: rect(146px, 9999px, 34px, 0);
   }
+
   45% {
     clip: rect(134px, 9999px, 43px, 0);
   }
+
   50% {
     clip: rect(102px, 9999px, 80px, 0);
   }
+
   55% {
     clip: rect(119px, 9999px, 44px, 0);
   }
+
   60% {
     clip: rect(106px, 9999px, 99px, 0);
   }
+
   65% {
     clip: rect(141px, 9999px, 74px, 0);
   }
+
   70% {
     clip: rect(20px, 9999px, 78px, 0);
   }
+
   75% {
     clip: rect(133px, 9999px, 79px, 0);
   }
+
   80% {
     clip: rect(78px, 9999px, 52px, 0);
   }
+
   85% {
     clip: rect(35px, 9999px, 39px, 0);
   }
+
   90% {
     clip: rect(67px, 9999px, 70px, 0);
   }
+
   95% {
     clip: rect(71px, 9999px, 103px, 0);
   }
+
   100% {
     clip: rect(83px, 9999px, 40px, 0);
   }
@@ -876,10 +922,12 @@ ion-content.hasToBeDarkmode {
 }
 
 @keyframes float {
+
   0%,
   100% {
     transform: translateY(0) rotate(0deg);
   }
+
   50% {
     transform: translateY(-20px) rotate(180deg);
   }
@@ -890,19 +938,19 @@ ion-content.hasToBeDarkmode {
   .glitch {
     font-size: 80px;
   }
-  
+
   .error404-subtitle {
     font-size: 20px;
   }
-  
+
   .error404-text {
     font-size: 16px;
   }
-  
+
   .error404-actions {
     flex-direction: column;
   }
-  
+
   .error404-actions ion-button {
     width: 100%;
   }
@@ -912,11 +960,11 @@ ion-content.hasToBeDarkmode {
   .glitch {
     font-size: 60px;
   }
-  
+
   .error404-subtitle {
     font-size: 18px;
   }
-  
+
   .error404-text {
     font-size: 14px;
   }

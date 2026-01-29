@@ -359,12 +359,8 @@ export default defineComponent({
         });
       });
     this.$axios
-      .post(
-        "projects.php",
-        this.$qs.stringify({
-          getProjectViews: "getProjectViews",
-          project: this.$route.params.project,
-        })
+      .get(
+        `v2/projects/${this.$route.params.project}/views`
       )
       .then((res) => {
         this.views = res.data;
@@ -375,7 +371,6 @@ export default defineComponent({
           });
         });
       });
-    // Immer Charts laden, nicht nur wenn localStorage existiert
     this.loadCharts();
   },
   setup() {
