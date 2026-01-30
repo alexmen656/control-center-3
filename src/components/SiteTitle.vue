@@ -65,11 +65,10 @@ export default {
       () => this.$route.params,
       () => {
         this.$axios
-          .post(
-            "https://api.fringelo.com/bookmarks.php?" +
+          .get(
+            "v2/bookmarks/check?" +
             this.$qs.stringify({
               location: this.siteLocation,
-              checkBookmark: "checkBookmark",
             })
           )
           .then((response) => {
@@ -78,11 +77,10 @@ export default {
       }
     );
     this.$axios
-      .post(
-        "https://api.fringelo.com/bookmarks.php?" +
+      .get(
+        "v2/bookmarks/check?" +
         this.$qs.stringify({
           location: this.siteLocation,
-          checkBookmark: "checkBookmark",
         })
       )
       .then((response) => {
@@ -115,25 +113,25 @@ export default {
       if (this.isBookmark) {
         this.isBookmark = false;
         this.$axios
-          .post(
-            "https://api.fringelo.com/bookmarks.php?deleteBookmark=deleteBookmark&location=" +
+          .delete(
+            "v2/bookmarks?location=" +
             this.siteLocation
           )
-          .then(() => {//response
+          .then(() => {
             this.$emit("updateSidebar");
           });
       } else {
         this.isBookmark = true;
         this.$axios
           .post(
-            "https://api.fringelo.com/bookmarks.php?newBookmark=newBookmark&icon=" +
+            "v2/bookmarks?icon=" +
             this.icon +
             "&title=" +
             this.title +
             "&location=" +
             this.siteLocation
           )
-          .then(() => {//response
+          .then(() => {
             this.$emit("updateSidebar");
           });
       }
@@ -159,7 +157,7 @@ export default {
 
   background: var(--background);
   padding: 16px 20px 0px 20px;
- /* margin-bottom: 24px;*/
+  /* margin-bottom: 24px;*/
 }
 
 .tree-container {
@@ -301,7 +299,7 @@ export default {
 @media (max-width: 768px) {
   .navigation-tree {
     padding: 12px 16px;
-   /* margin-bottom: 16px;*/
+    /* margin-bottom: 16px;*/
   }
 
   .title-section {

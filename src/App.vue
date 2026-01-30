@@ -266,7 +266,7 @@ export default defineComponent({
 
           Promise.all([
             axios.get("sidebar.php"),
-            axios.get("bookmarks.php?getBookmarks=getBookmarks"),
+            axios.get("v2/bookmarks"),
           ])
             .then(([sidebarResponse, bookmarksResponse]) => {
               tools.value = sidebarResponse.data.tools;
@@ -553,7 +553,7 @@ export default defineComponent({
       store.setItem();
     },
     async updateSidebar() {
-      const res = await axios.get("bookmarks.php?getBookmarks=getBookmarks");
+      const res = await axios.get("v2/bookmarks");
       this.bookmarks = res.data;
       localStorage.setItem("bookmarks", this.bookmarks);
       const res2 = await axios.get("sidebar.php");

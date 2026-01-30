@@ -315,7 +315,7 @@ export default defineComponent({
     async loadBookmarks() {
       this.loading = true;
       try {
-        const response = await this.$axios.get("bookmarks.php?getBookmarks=true");
+        const response = await this.$axios.get("v2/bookmarks");
         this.bookmarks = Array.isArray(response.data) ? response.data : [];
       } catch (error) {
         console.error('Error loading bookmarks:', error);
@@ -335,9 +335,8 @@ export default defineComponent({
 
       try {
         await this.$axios.post(
-          "bookmarks.php",
+          "v2/bookmarks",
           this.$qs.stringify({
-            newBookmark: "true",
             title: this.newBookmark.title,
             location: this.newBookmark.location,
             icon: this.newBookmark.icon || 'bookmark-outline'
@@ -364,20 +363,16 @@ export default defineComponent({
     },
     async updateBookmark() {
       try {
-        // First delete the old bookmark
-        await this.$axios.post(
-          "bookmarks.php",
+        await this.$axios.delete(
+          "v2/bookmarks",
           this.$qs.stringify({
-            deleteBookmark: "true",
             location: this.editingBookmark.location
           })
         );
 
-        // Then create the updated one
         await this.$axios.post(
-          "bookmarks.php",
+          "v2/bookmarks",
           this.$qs.stringify({
-            newBookmark: "true",
             title: this.editingBookmark.title,
             location: this.editingBookmark.location,
             icon: this.editingBookmark.icon || 'bookmark-outline'
@@ -400,10 +395,9 @@ export default defineComponent({
       if (!this.deleteModal.bookmark) return;
 
       try {
-        await this.$axios.post(
-          "bookmarks.php",
+        await this.$axios.delete(
+          "v2/bookmarks",
           this.$qs.stringify({
-            deleteBookmark: "true",
             location: this.deleteModal.bookmark.location
           })
         );

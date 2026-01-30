@@ -332,7 +332,6 @@ import {
   alertController, toastController
 } from '@ionic/vue';
 import axios from 'axios';
-import qs from 'qs';
 
 
 interface CmsApi {
@@ -452,13 +451,11 @@ export default defineComponent({
       const total = usageStats.value.reduce((sum, stat) => sum + stat.avg_response_time, 0);
       return Math.round(total / usageStats.value.length);
     });
-
+ 
     const loadAvailableApis = async () => {
       try {
 
-        const response = await axios.post('apis.php', qs.stringify({
-          getAvailableApis: true
-        }));
+        const response = await axios.get('v2/apis/available');
 
         if (response.data && !response.data.error) {
           availableApis.value = response.data;
@@ -472,10 +469,7 @@ export default defineComponent({
     const loadSubscribedApis = async () => {
       try {
 
-        const response = await axios.post('apis.php', qs.stringify({
-          getProjectApis: true,
-          project: route.params.project
-        }));
+        const response = await axios.get(`v2/apis/project?project=${route.params.project}`);
 
         if (response.data && !response.data.error) {
           subscribedApis.value = response.data;
@@ -493,11 +487,10 @@ export default defineComponent({
     const subscribeToApi = async (api: CmsApi) => {
       try {
 
-        const response = await axios.post('apis.php', qs.stringify({
-          subscribeToApi: true,
+        const response = await axios.post('v2/apis/subscribe', {
           project: route.params.project,
           apiId: api.id
-        }));
+        });
 
         if (response.data && response.data.success) {
           showToast(`Successfully subscribed to ${api.name}`, 'success');
@@ -526,10 +519,7 @@ export default defineComponent({
             handler: async () => {
               try {
 
-                const response = await axios.post('apis.php', qs.stringify({
-                  unsubscribeFromApi: true,
-                  subscriptionId: api.subscription_id
-                }));
+                const response = await axios.delete(`v2/apis/subscriptions/${api.subscription_id}`);
 
                 if (response.data && response.data.success) {
                   showToast(`Unsubscribed from ${api.name}`, 'success');
@@ -550,10 +540,7 @@ export default defineComponent({
 
     const viewApiDetails = async (api: CmsApi) => {
       try {
-        const response = await axios.post('apis.php', qs.stringify({
-          getApiDetails: true,
-          apiId: api.id
-        }));
+        const response = await axios.get(`v2/apis/by-id/${api.id}`);
 
         if (response.data && !response.data.error) {
           selectedApi.value = response.data;
@@ -594,10 +581,7 @@ export default defineComponent({
             handler: async () => {
               try {
 
-                const response = await axios.post('apis.php', qs.stringify({
-                  regenerateApiKey: true,
-                  subscriptionId: api.subscription_id
-                }));
+                const response = await axios.post(`v2/apis/subscriptions/${api.subscription_id}/regenerate-key`);
 
                 if (response.data && response.data.success) {
                   showToast('API key regenerated successfully', 'success');
@@ -683,9 +667,9 @@ export default defineComponent({
     // New codespace-related methods
     const loadProjectCodespaces = async () => {
       try {
-        const response = await axios.post('project_codespaces.php', qs.stringify({
-          getCodespaces: true,
-          project: route.params.project
+        const response = await axios.post('project_codespaces.php', new URLSearchParams({
+          getCodespaces: 'true',
+          project: route.params.project as string
         }));
         
         if (response.data && response.data.success && response.data.codespaces) {
