@@ -257,9 +257,10 @@ export default defineComponent({
         if (route.path !== "/login" && route.path !== "/login/verification" && route.path !== "/login/verification/" && route.path !== "/signup" && route.path !== "/signup/") {
 
 
-          axios.post("pages.php").then((res) => {
-            const foundPage = res.data.find((p) => p["url"] === paramUrl);
-            page.value = foundPage || page.value;
+          axios.get("v2/pages/check", { params: { url: paramUrl } }).then((res) => {
+            if (res.data.exists && res.data.page) {
+              page.value = res.data.page;
+            }
             updateDocumentTitle(page.value.title);
             loading.value = false;
           });
