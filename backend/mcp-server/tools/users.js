@@ -162,31 +162,31 @@ export async function handleUserTool(toolName, args, context) {
   switch (toolName) {
     case 'user_profile':
       return await getUserProfile(context);
-      
+
     case 'user_update_profile':
       return await updateProfile(args, context);
-      
+
     case 'user_list_by_project':
       return await listUsersByProject(args, context);
-      
+
     case 'user_remove_from_project':
       return await removeUserFromProject(args, context);
-      
+
     case 'user_get_notifications':
       return await getNotifications(args, context);
-      
+
     case 'user_mark_notification_read':
       return await markNotificationRead(args, context);
-      
+
     case 'user_get_bookmarks':
       return await getBookmarks(context);
-      
+
     case 'user_add_bookmark':
       return await addBookmark(args, context);
-      
+
     case 'user_delete_bookmark':
       return await deleteBookmark(args, context);
-      
+
     default:
       return formatError(`Unknown user tool: ${toolName}`);
   }
@@ -201,7 +201,7 @@ async function getUserProfile(context) {
     const data = await cmsRequest('user.php', {
       body: { getProfile: 'true' }
     }, context);
-    
+
     return formatResponse({
       success: true,
       user: {
@@ -220,13 +220,13 @@ async function getUserProfile(context) {
 async function updateProfile(args, context) {
   try {
     const body = { updateProfile: 'true' };
-    
+
     if (args.firstName) body.firstname = args.firstName;
     if (args.lastName) body.lastname = args.lastName;
     if (args.email) body.email = args.email;
-    
+
     const data = await cmsRequest('user.php', { body }, context);
-    
+
     return formatResponse({
       success: true,
       message: 'Profile updated successfully'
@@ -244,7 +244,7 @@ async function listUsersByProject(args, context) {
         project: args.project
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       users: data.users || data
@@ -263,7 +263,7 @@ async function removeUserFromProject(args, context) {
         userId: args.userId
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: 'User removed from project'
@@ -282,7 +282,7 @@ async function getNotifications(args, context) {
         unreadOnly: args.unreadOnly ? '1' : '0'
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       notifications: data.notifications || data
@@ -300,7 +300,7 @@ async function markNotificationRead(args, context) {
         notificationId: args.notificationId
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: 'Notification marked as read'
@@ -312,10 +312,10 @@ async function markNotificationRead(args, context) {
 
 async function getBookmarks(context) {
   try {
-    const data = await cmsRequest('bookmarks.php', {
-      body: { getBookmarks: 'true' }
+    const data = await cmsRequest('v2/bookmarks', {
+      // body: { getBookmarks: 'true' }
     }, context);
-    
+
     return formatResponse({
       success: true,
       bookmarks: data.bookmarks || data
@@ -327,15 +327,15 @@ async function getBookmarks(context) {
 
 async function addBookmark(args, context) {
   try {
-    const data = await cmsRequest('bookmarks.php', {
+    const data = await cmsRequest('v2/bookmarks', {
       body: {
-        addBookmark: 'true',
+        //addBookmark: 'true',
         url: args.url,
         title: args.title,
         icon: args.icon || 'bookmark-outline'
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: 'Bookmark added',
@@ -348,13 +348,13 @@ async function addBookmark(args, context) {
 
 async function deleteBookmark(args, context) {
   try {
-    const data = await cmsRequest('bookmarks.php', {
+    const data = await cmsRequest('v2/bookmarks', {
       body: {
         deleteBookmark: 'true',
         bookmarkId: args.bookmarkId
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: 'Bookmark deleted'

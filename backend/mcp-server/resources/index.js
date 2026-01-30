@@ -227,10 +227,10 @@ async function fetchProjectFiles(projectLink, backendUrl) {
 }
 
 async function fetchBookmarks(backendUrl) {
-  const response = await fetch(`${backendUrl}/bookmarks.php`, {
+  const response = await fetch(`${backendUrl}/v2/bookmarks`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ getBookmarks: 'true' })
+    //body: new URLSearchParams({ getBookmarks: 'true' })
   });
   return response.json();
 }
