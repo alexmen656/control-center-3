@@ -619,11 +619,7 @@ export default {
         // Fetch available domains if super admin
         if (this.isSuperAdmin) {
           try {
-            const domainsRes = await this.$axios.post('domains.php', JSON.stringify({
-              action: 'list_available'
-            }), {
-              headers: { 'Content-Type': 'application/json' }
-            });
+            const domainsRes = await this.$axios.get('v2/domains/available');
             if (domainsRes.data.success) {
               this.availableDomains = domainsRes.data.domains;
             }

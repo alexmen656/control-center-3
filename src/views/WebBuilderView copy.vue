@@ -534,15 +534,7 @@ export default defineComponent({
         // If super admin, fetch available domains from domain management
         if (isSuperAdmin.value) {
           try {
-            const domainsResponse = await axios.post(
-              'domains.php',
-              JSON.stringify({ action: 'list_available' }),
-              {
-                headers: {
-                  'Content-Type': 'application/json'
-                }
-              }
-            );
+            const domainsResponse = await axios.get('v2/domains/available');
             
             if (domainsResponse.data.success) {
               availableDomains.value = domainsResponse.data.data || [];

@@ -265,9 +265,7 @@ onMounted(() => {
 async function loadDomains() {
   loading.value = true;
   try {
-    const response = await axios.post('domains.php', {
-      action: 'list'
-    });
+    const response = await axios.get('v2/domains');
 
     if (response.data.success) {
       domains.value = response.data.domains;
@@ -282,9 +280,7 @@ async function loadDomains() {
 
 async function loadExpiringDomains() {
   try {
-    const response = await axios.post('domains.php', {
-      action: 'expiring'
-    });
+    const response = await axios.get('v2/domains/expiring');
 
     if (response.data.success) {
       expiringDomains.value = response.data.domains;
@@ -297,9 +293,7 @@ async function loadExpiringDomains() {
 async function fetchCloudflare() {
   loading.value = true;
   try {
-    const response = await axios.post('domains.php', {
-      action: 'fetch_cloudflare'
-    });
+    const response = await axios.post('v2/domains/fetch-cloudflare');
 
     if (response.data.success) {
       showToast(response.data.message, 'success');
@@ -353,7 +347,6 @@ async function saveDomain() {
 
   try {
     const data: any = {
-      action: 'save',
       ...formData.value
     };
 
@@ -361,7 +354,7 @@ async function saveDomain() {
       data.id = editingDomain.value.id;
     }
 
-    const response = await axios.post('domains.php', data);
+    const response = await axios.post('v2/domains', data);
 
     if (response.data.success) {
       showToast(response.data.message, 'success');
@@ -391,10 +384,7 @@ async function deleteDomain(domain: Domain) {
         role: 'destructive',
         handler: async () => {
           try {
-            const response = await axios.post('domains.php', {
-              action: 'delete',
-              id: domain.id
-            });
+            const response = await axios.delete('v2/domains/' + domain.id);
 
             if (response.data.success) {
               showToast('Domain deleted', 'success');
