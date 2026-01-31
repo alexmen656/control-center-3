@@ -11,6 +11,27 @@
     </ion-menu-toggle>
   </ion-list>
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
+    <h4 v-if="!isCollapsed">Dev Tools</h4>
+    <div v-if="!isCollapsed">
+      <router-link to="/manage/projects/"><ion-icon style="color: var(--ion-color-medium-shade)"
+          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/projects/"><ion-icon
+          style="color: var(--ion-color-medium-shade)"
+          name="information-circle-outline"></ion-icon></router-link><router-link to="/new/project/"><ion-icon
+          style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>
+    </div>
+  </ion-note>
+  <ion-list :class="{ collapsed: isCollapsed }">
+    <ion-menu-toggle auto-hide="false" v-for="(p, i) in dev_tools" :key="i">
+      <ion-item button @click="this.selectedIndex = i + tools.length" lines="none" detail="false"
+        :router-link="'/' + p.name.toLowerCase().replaceAll(' ', '-') + '/'" class="hydrated menu-item"
+        :class="{ selected: this.selectedIndex === i + tools.length, collapsed: isCollapsed }"
+        :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''">
+        <ion-icon slot="start" :name="p.icon"></ion-icon>
+        <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
+      </ion-item>
+    </ion-menu-toggle>
+  </ion-list>
+  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
     <h4 v-if="!isCollapsed">Projects</h4>
     <div v-if="!isCollapsed">
       <router-link to="/manage/projects/"><ion-icon style="color: var(--ion-color-medium-shade)"
@@ -36,8 +57,10 @@
   </ion-note>
   <ion-list :class="{ collapsed: isCollapsed }">
     <ion-menu-toggle auto-hide="false">
-      <ion-item button lines="none" detail="false" router-link="/ai-website-generator" class="hydrated menu-item"
-        :class="{ collapsed: isCollapsed }" :data-tooltip="isCollapsed ? 'AI Website Generator' : ''">
+      <ion-item button @click="this.selectedIndex = 1 + tools.length + dev_tools.length" lines="none" detail="false"
+        router-link="/ai-website-generator" class="hydrated menu-item"
+        :class="{ selected: this.selectedIndex === 1 + tools.length + dev_tools.length, collapsed: isCollapsed }"
+        :data-tooltip="isCollapsed ? 'AI Website Generator' : ''">
         <ion-icon slot="start" name="rocket-outline"></ion-icon>
         <ion-label v-if="!isCollapsed">AI Website Generator</ion-label>
       </ion-item>
@@ -55,8 +78,9 @@
   </ion-note>
   <ion-list v-if="bookmarks.length > 0" :class="{ collapsed: isCollapsed }">
     <ion-menu-toggle auto-hide="false" v-for="(p, i) in bookmarks" :key="i">
-      <ion-item button lines="none" detail="false" @click="goToBookmark(p.location)" class="hydrated menu-item"
-        :class="{ collapsed: isCollapsed }"
+      <ion-item button @click="this.selectedIndex = i + 2 + tools.length + dev_tools.length; goToBookmark(p.location)"
+        lines="none" detail="false" class="hydrated menu-item"
+        :class="{ collapsed: isCollapsed, selected: this.selectedIndex === i + 2 + tools.length + dev_tools.length }"
         :data-tooltip="isCollapsed ? (p.title[0].toUpperCase() + p.title.substring(1)) : ''"
         v-if="p.title"><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
         <ion-icon slot="start" :name="p.icon ? p.icon : 'help-circle-outline'"></ion-icon>
@@ -64,10 +88,10 @@
       </ion-item>
     </ion-menu-toggle>
   </ion-list>
-      <div v-if="!isCollapsed" class="version-footer">
-      <ion-icon name="information-circle-outline"></ion-icon>
-      <span>v{{ version }}</span>
-    </div>
+  <div v-if="!isCollapsed" class="version-footer">
+    <ion-icon name="information-circle-outline"></ion-icon>
+    <span>v{{ version }}</span>
+  </div>
 </template>
 
 <script>
@@ -76,7 +100,7 @@ import { defineComponent, ref } from "vue";
 export default defineComponent({
   name: "SideBar",
   props: {
-    tools: Array,
+    //tools: Array,
     bookmarks: Array,
     projects: Array,
     isCollapsed: {
@@ -87,6 +111,23 @@ export default defineComponent({
   data() {
     return {
       version: import.meta.env.VITE_APP_VERSION ?? "0.0.0",
+      tools: [
+        { icon: "home-outline", name: "Home" },
+        //{ icon: "chatbubbles-outline", name: "Messages" },
+        { icon: "calendar-outline", name: "My Tasks" },
+        { icon: "people-outline", name: "Users" },
+        { icon: "file-tray-full-outline", name: "Filesystem" },
+        //{ icon: "bar-chart-outline", name: "Statistics" },
+        { icon: "library-outline", name: "Notepad" },
+        { icon: "mail-outline", name: "Emails" }
+      ],
+      dev_tools: [
+        { icon: "key-outline", name: "Access Log" },
+        { icon: "server-outline", name: "Databases" },
+        { icon: "cloud-outline", name: "Pages" },
+        { icon: "globe-outline", name: "Domains" },
+        { icon: "storefront-outline", name: "Manage Store" }
+      ],
     };
   },
   methods: {
@@ -339,9 +380,9 @@ ion-menu ion-item.selected ion-icon {
   color: var(--ion-color-primary) !important;
 }
 
-ion-item:focus {
+/*ion-item:focus {
   --background: var(--ion-color-primary);
-}
+}*/
 
 .list-md.articles {
   background: var(--ion-background-color);
