@@ -334,14 +334,12 @@ export default defineComponent({
       this.isGenerating = true;
       
       try {
-        const formData = new FormData();
-        formData.append('generate_ai_schema', '1');
-        formData.append('description', this.description);
-        formData.append('context', this.context);
-        formData.append('provider', this.selectedProvider);
-        formData.append('project', this.$route.params.project || '');
-        
-        const response = await this.$axios.post('ai_schema_generator.php', formData);
+        const response = await this.$axios.post('v2/ai-schema/generate', {
+          description: this.description,
+          context: this.context,
+          provider: this.selectedProvider,
+          project: this.$route.params.project || ''
+        });
         
         if (response.data.success) {
           this.generatedSchema = response.data.schema;
@@ -365,13 +363,11 @@ export default defineComponent({
       this.isCreating = true;
       
       try {
-        const formData = new FormData();
-        formData.append('create_ai_form', '1');
-        formData.append('schema', JSON.stringify(this.generatedSchema));
-        formData.append('name', this.formName);
-        formData.append('project', this.$route.params.project);
-        
-        const response = await this.$axios.post('ai_schema_generator.php', formData);
+        const response = await this.$axios.post('v2/ai-schema/create-form', {
+          schema: JSON.stringify(this.generatedSchema),
+          name: this.formName,
+          project: this.$route.params.project
+        });
         
         if (response.data.success) {
           await this.showToast('Formular erfolgreich erstellt!', 'success');

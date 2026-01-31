@@ -577,14 +577,12 @@ export default defineComponent({
       this.isGeneratingAi = true;
       
       try {
-        const formData = new FormData();
-        formData.append('generate_ai_schema', '1');
-        formData.append('description', this.aiDescription);
-        formData.append('context', this.aiContext);
-        formData.append('checkForms', this.checkForms);
-        formData.append('project', this.$route.params.project || '');
-        
-        const response = await this.$axios.post('ai_schema_generator.php', formData);
+        const response = await this.$axios.post('v2/ai-schema/generate', {
+          description: this.aiDescription,
+          context: this.aiContext,
+          checkForms: this.checkForms,
+          project: this.$route.params.project || ''
+        });
         
         if (response.data.success) {
           const schema = response.data.schema;

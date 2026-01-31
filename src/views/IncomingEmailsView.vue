@@ -268,7 +268,7 @@ export default defineComponent({
         const { appContext } = getCurrentInstance() as any;
         const axios = appContext.config.globalProperties.$axios;
 
-        const apiBase = 'emails.php'; // Relative to baseURL in axios config
+        const apiBase = 'v2/emails';
 
         const emails = ref<Email[]>([]);
         const selectedEmail = ref<Email | null>(null);
@@ -315,7 +315,6 @@ export default defineComponent({
             try {
                 const response = await axios.get(apiBase, {
                     params: {
-                        action: 'list',
                         folder: currentFolder.value,
                         limit: limit.value,
                         offset: offset.value,
@@ -336,10 +335,8 @@ export default defineComponent({
 
         const fetchEmailDetail = async (id: number) => {
             try {
-                const response = await axios.get(apiBase, {
+                const response = await axios.get(`${apiBase}/${id}`, {
                     params: {
-                        action: 'get',
-                        id: id,
                         mark_read: true
                     }
                 });
@@ -358,9 +355,7 @@ export default defineComponent({
 
         const fetchFolderStats = async () => {
             try {
-                const response = await axios.get(apiBase, {
-                    params: { action: 'stats' }
-                });
+                const response = await axios.get(`${apiBase}/stats`);
                 if (response.data.success) {
                     folderStats.value = response.data.data;
                 }
@@ -423,8 +418,7 @@ export default defineComponent({
             if (!selectedEmail.value) return;
             const newValue = !selectedEmail.value.is_starred;
             try {
-                await axios.post(`${apiBase}?action=mark_starred`, {
-                    id: selectedEmail.value.id,
+                await axios.post(`${apiBase}/${selectedEmail.value.id}/starred`, {
                     starred: newValue
                 });
 
@@ -438,8 +432,7 @@ export default defineComponent({
         const archiveEmail = async () => {
             if (!selectedEmail.value) return;
             try {
-                await axios.post(`${apiBase}?action=move`, {
-                    id: selectedEmail.value.id,
+                await axios.post(`${apiBase}/${selectedEmail.value.id}/move`, {
                     folder: 'archive'
                 });
                 emails.value = emails.value.filter(e => e.id !== selectedEmail.value?.id);
@@ -454,9 +447,7 @@ export default defineComponent({
         const deleteEmail = async () => {
             if (!selectedEmail.value) return;
             try {
-                await axios.post(`${apiBase}?action=delete`, {
-                    id: selectedEmail.value.id
-                });
+                await axios.delete(`${apiBase}/${selectedEmail.value.id}`);
                 emails.value = emails.value.filter(e => e.id !== selectedEmail.value?.id);
                 selectedEmail.value = null;
                 emailDetail.value = null;
@@ -469,7 +460,7 @@ export default defineComponent({
         const bulkMarkRead = async () => {
             if (selectedEmails.value.length === 0) return;
             try {
-                await axios.post(`${apiBase}?action=bulk_action`, {
+                await axios.post(`${apiBase}/bulk`, {
                     ids: selectedEmails.value,
                     action: 'mark_read'
                 });
@@ -486,7 +477,7 @@ export default defineComponent({
         const bulkDelete = async () => {
             if (selectedEmails.value.length === 0) return;
             try {
-                await axios.post(`${apiBase}?action=bulk_action`, {
+                await axios.post(`${apiBase}/bulk`, {
                     ids: selectedEmails.value,
                     action: 'delete'
                 });
@@ -501,7 +492,7 @@ export default defineComponent({
         const downloadAttachment = (attachment: Attachment) => {
             const baseUrl = axios.defaults.baseURL || import.meta.env.VITE_API_URL || '/backend';
             const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-            const url = `${cleanBase}/emails.php?action=get_attachment&id=${attachment.id}&download=true`;
+            const url = `${cleanBase}/v2/emails/attachments/${attachment.id}?download=true`;
             window.open(url, '_blank');
         };
 
