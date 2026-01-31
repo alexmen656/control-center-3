@@ -4,7 +4,8 @@
     "require": {
         "php": ">=7.4",
         "aws/aws-sdk-php": "^3.300",
-        "resend/resend-php": "^0.13"
+        "resend/resend-php": "^0.13",
+        "phpoffice/phpspreadsheet": "^1.29"
     },
     "autoload": {
         "psr-4": {

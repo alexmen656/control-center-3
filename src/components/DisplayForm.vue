@@ -1,49 +1,20 @@
 <template>
   <div v-for="(input, index) in inputs" :key="input.name">
-    <FloatingSelect
-      v-model="inputValues[index]"
-      :select="input"
-      v-if="input.type == 'select'"
-    />
-    <FloatingSelect
-      v-model="inputValues[index]"
-      :select="input"
-      v-if="input.type == 'select2'"
-    />
-    <FloatingCheckbox
-      v-model="inputValues[index]"
-      :label="input.label"
-      v-if="input.type == 'checkbox'"
-    />
-    <FloatingTextarea
-      v-model="inputValues[index]"
-      :label="input.label"
-      :placeholder="input.placeholder"
-      v-if="input.type == 'textarea'"
-      @change="checkOperation(input.label, inputValues[index])"
-    />
-    <FloatingInput
-      v-if="input.type == 'operation'"
-      v-model="inputValues[index]"
-      :label="input.label"
-      :placeholder="input.placeholder"
-      disabled="true"
-      type="number"
-    />
-    <FloatingInput
-      v-if="
-        input.type != 'select' &&
-        input.type != 'select2' &&
-        input.type != 'checkbox' &&
-        input.type != 'textarea' &&
-        input.type != 'operation'
-      "
-      v-model="inputValues[index]"
-      :label="input.label"
-      :placeholder="input.placeholder"
-      :type="input.type"
-      @change="checkOperation(input.label, inputValues[index])"
-    />
+    <FloatingSelect v-model="inputValues[index]" :select="input" v-if="input.type == 'select'" />
+    <FloatingSelect v-model="inputValues[index]" :select="input" v-if="input.type == 'select2'" />
+    <FloatingCheckbox v-model="inputValues[index]" :label="input.label" v-if="input.type == 'checkbox'" />
+    <FloatingTextarea v-model="inputValues[index]" :label="input.label" :placeholder="input.placeholder"
+      v-if="input.type == 'textarea'" @change="checkOperation(input.label, inputValues[index])" />
+    <FloatingInput v-if="input.type == 'operation'" v-model="inputValues[index]" :label="input.label"
+      :placeholder="input.placeholder" disabled="true" type="number" />
+    <FloatingInput v-if="
+      input.type != 'select' &&
+      input.type != 'select2' &&
+      input.type != 'checkbox' &&
+      input.type != 'textarea' &&
+      input.type != 'operation'
+    " v-model="inputValues[index]" :label="input.label" :placeholder="input.placeholder" :type="input.type"
+      @change="checkOperation(input.label, inputValues[index])" />
   </div>
   <form @submit.prevent="submit">
     <ion-button type="submit">Submit</ion-button>
@@ -80,13 +51,14 @@ export default {
   },
   created() {
     this.$axios
-      .post(
-        "form.php",
-        this.$qs.stringify({
-          get_form: "get_form",
-          project: this.$route.params.project,
-          form: this.$route.params.form,
-        })
+      .get(
+        "v2/forms/single",
+        {
+          params: {
+            project: this.$route.params.project,
+            form: this.$route.params.form,
+          }
+        }
       )
       .then((res) => {
         this.form = res.data.form;
@@ -96,13 +68,14 @@ export default {
             //console.log(input);
             const inputInstance = { ...input }; // Create a copy of the input object
             await this.$axios
-              .post(
-                "form.php",
-                this.$qs.stringify({
-                  get_form_data: "get_form_data",
-                  project: this.$route.params.project,
-                  form: input.options[0].value,
-                })
+              .get(
+                "v2/forms/data",
+                {
+                  params: {
+                    project: this.$route.params.project,
+                    form: input.options[0].value,
+                  }
+                }
               )
               .then((res) => {
                 //console.log(res.data);
@@ -133,7 +106,7 @@ export default {
     checkOperation(label) {
       this.inputs.forEach((input, index) => {
         if (input.type == "operation") {
-          if (input.options[0].value == label.toLowerCase()  || input.options[2].value == label.toLowerCase()) {
+          if (input.options[0].value == label.toLowerCase() || input.options[2].value == label.toLowerCase()) {
             let value1 = 0;
             let value2 = 0;
 

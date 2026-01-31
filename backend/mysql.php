@@ -6,7 +6,7 @@ if (isset($_POST['getTables']) && $_POST['getTables']) {
     $tables = query("SHOW TABLES");
     $i = 0;
     foreach ($tables as $t) {
-        $json[$i][0] = $t['Tables_in_alex01d01'];
+        $json[$i][0] = $t['Tables_in_control_center'];
         $i++;
     }
 } elseif (isset($_POST['getDataById']) && isset($_POST['id']) && isset($_POST['project']) && isset($_POST['form'])) {
@@ -58,7 +58,7 @@ if (isset($_POST['getTables']) && $_POST['getTables']) {
         $sql_limit = " LIMIT " . $limit;
     }
 
-    $primary_key = fetch_assoc(query("SELECT `COLUMN_NAME` FROM `information_schema`.`COLUMNS` WHERE (`TABLE_SCHEMA` = 'alex01d01') AND (`TABLE_NAME` = '$tbName') AND (`COLUMN_KEY` = 'PRI')"))["COLUMN_NAME"];
+    $primary_key = fetch_assoc(query("SELECT `COLUMN_NAME` FROM `information_schema`.`COLUMNS` WHERE (`TABLE_SCHEMA` = 'control_center') AND (`TABLE_NAME` = '$tbName') AND (`COLUMN_KEY` = 'PRI')"))["COLUMN_NAME"];
 
     if (
         $data = query("SELECT * FROM `$tbName` ORDER BY $primary_key" . $sql_limit)
@@ -128,7 +128,7 @@ if (isset($_POST['getTables']) && $_POST['getTables']) {
     $newValue = escape_string($_POST['newValue']);
     $rowIndex = (int) $_POST['rowIndex'];
 
-    $primaryKey = fetch_assoc(query("SELECT `COLUMN_NAME` FROM `information_schema`.`COLUMNS` WHERE (`TABLE_SCHEMA` = 'alex01d01') AND (`TABLE_NAME` = '$tableName') AND (`COLUMN_KEY` = 'PRI')"))["COLUMN_NAME"];
+    $primaryKey = fetch_assoc(query("SELECT `COLUMN_NAME` FROM `information_schema`.`COLUMNS` WHERE (`TABLE_SCHEMA` = 'control_center') AND (`TABLE_NAME` = '$tableName') AND (`COLUMN_KEY` = 'PRI')"))["COLUMN_NAME"];
     $primaryKeyValue = fetch_assoc(query("SELECT `$primaryKey` FROM `$tableName` LIMIT $rowIndex, 1"))[$primaryKey];
 
     if (query("UPDATE `$tableName` SET `$fieldName` = '$newValue' WHERE `$primaryKey` = '$primaryKeyValue'")) {

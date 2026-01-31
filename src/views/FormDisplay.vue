@@ -1,11 +1,14 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle v-if="true" icon="person-outline" title="Yyyyy" />
-
+      <SiteTitle v-if="true" icon="list-outline" :title="form2.title || 'Form'" />
       <div class="page-container">
-
-        <!-- Action Bar -->
+        <div class="page-header">
+          <div class="header-content">
+            <h1>{{ form2.title || 'Form Data' }}</h1>
+            <p>Manage and view form entries</p>
+          </div>
+        </div>
         <div class="action-bar">
           <div class="action-group-left">
             <button class="action-btn primary" @click="toggleFormView">
@@ -13,12 +16,23 @@
               <span>Add Entry</span>
             </button>
           </div>
-
           <div class="action-group-right">
-            <button class="action-btn secondary" @click="exportCSV()">
-              <ion-icon name="download-outline"></ion-icon>
-              <span>Export CSV</span>
-            </button>
+            <div class="dropdown">
+              <button class="action-btn secondary dropdown-toggle" @click="toggleExportDropdown">
+                <ion-icon name="download-outline"></ion-icon>
+                <span>Export</span>
+              </button>
+              <div class="dropdown-menu" :class="{ active: exportDropdownOpen }">
+                <a @click="exportData('csv')" class="dropdown-item">
+                  <ion-icon name="document-text-outline"></ion-icon>
+                  Export CSV
+                </a>
+                <a @click="exportData('excel')" class="dropdown-item">
+                  <ion-icon name="grid-outline"></ion-icon>
+                  Export Excel
+                </a>
+              </div>
+            </div>
             <button class="action-btn secondary" @click="openTriggerModal()">
               <ion-icon name="notifications-outline"></ion-icon>
               <span>Triggers</span>
@@ -40,8 +54,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Data Table Card -->
         <div class="data-card">
           <div class="card-header">
             <div class="header-left">
@@ -55,10 +67,8 @@
               </div>
             </div>
           </div>
-
           <div class="table-wrapper">
             <div class="modern-table">
-              <!-- Table Header -->
               <div class="table-header">
                 <div v-for="(label, index) in labels" :key="label" class="header-cell" @click="sortBy(index)">
                   <span class="header-text">{{ label }}</span>
@@ -72,10 +82,7 @@
                 </div>
                 <div class="header-cell actions-header">Actions</div>
               </div>
-
-              <!-- Table Body -->
               <div class="table-body">
-                <!-- No Data State -->
                 <div v-if="!sortedData || sortedData.length === 0" class="no-data-state">
                   <div class="no-data-content">
                     <ion-icon name="folder-open-outline" class="no-data-icon"></ion-icon>
@@ -88,8 +95,6 @@
                     </button>
                   </div>
                 </div>
-
-                <!-- Data Rows -->
                 <div v-for="(tr, rowIndex) in sortedData" :key="rowIndex" class="table-row"
                   :class="{ 'row-hover': true }">
                   <div v-for="(td, colIndex) in tr" :key="colIndex" class="table-cell">
@@ -109,8 +114,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Load More Button -->
           <div v-if="load_more_btn" class="load-more-container">
             <button class="load-more-btn" @click="loadMore()">
               <ion-icon name="chevron-down-outline"></ion-icon>
@@ -118,8 +121,6 @@
             </button>
           </div>
         </div>
-
-        <!-- Form Section -->
         <div class="form-section" :class="{ 'form-visible': showForm }">
           <div class="form-card">
             <div class="form-header">
@@ -134,9 +135,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Custom Modals -->
-      <!-- Edit Entry Modal -->
       <div v-if="isOpenRef" class="custom-modal-overlay" @click="closeModal(false)">
         <div class="custom-modal-content" @click.stop>
           <div class="custom-modal-header">
@@ -149,40 +147,27 @@
             <div v-if="editFormData.length > 0" class="modern-edit-form">
               <div v-for="field in editFormData" :key="field.name" class="form-group">
                 <label class="form-label">{{ field.label }}</label>
-
-                <!-- Text Input -->
                 <input v-if="field.type === 'text' || field.type === 'email' || field.type === 'number'"
                   v-model="editFormValues[field.name]" :type="field.type"
                   :placeholder="field.placeholder || field.label" class="modern-input" />
-
-                <!-- Textarea -->
                 <textarea v-else-if="field.type === 'textarea'" v-model="editFormValues[field.name]"
                   :placeholder="field.placeholder || field.label" class="modern-textarea" rows="4"></textarea>
-
-                <!-- Select -->
                 <select v-else-if="field.type === 'select'" v-model="editFormValues[field.name]" class="modern-select">
                   <option value="">Select {{ field.label }}</option>
                   <option v-for="option in field.options" :key="option.value" :value="option.value">
                     {{ option.label }}
                   </option>
                 </select>
-
-                <!-- Checkbox -->
                 <label v-else-if="field.type === 'checkbox'" class="checkbox-container">
                   <input type="checkbox" v-model="editFormValues[field.name]" class="modern-checkbox" />
                   <span class="checkmark"></span>
                   {{ field.label }}
                 </label>
-
-                <!-- Date -->
                 <input v-else-if="field.type === 'date'" v-model="editFormValues[field.name]" type="date"
                   class="modern-input" />
-
-                <!-- Default text input for other types -->
                 <input v-else v-model="editFormValues[field.name]" type="text"
                   :placeholder="field.placeholder || field.label" class="modern-input" />
               </div>
-
               <div class="form-actions">
                 <button class="action-btn secondary" @click="closeModal(false)">
                   Cancel
@@ -192,7 +177,6 @@
                 </button>
               </div>
             </div>
-
             <div v-else class="loading-state">
               <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
               <p>Loading entry data...</p>
@@ -200,12 +184,8 @@
           </div>
         </div>
       </div>
-
-      <!-- Trigger Manager Modal (Component has its own modal) -->
       <TriggerManager v-if="triggerModalOpen" :project="$route.params.project" :form="$route.params.form"
         @close="triggerModalOpen = false" />
-
-      <!-- Rename Form Modal (Component has its own modal) -->
       <RenameForm v-if="renameModalOpen" :project="$route.params.project" :form="$route.params.form"
         @close="renameModalOpen = false" @success="handleRenameSuccess" @sidebarRefresh="refreshSidebar" />
     </ion-content>
@@ -216,7 +196,7 @@
 //lang="ts"
 import DisplayForm from "@/components/DisplayForm.vue";
 import TriggerManager from "@/components/TriggerManager.vue";
-import RenameForm from "@/components/RenameForm_new.vue";
+import RenameForm from "@/components/RenameForm.vue";
 import { defineComponent, ref } from "vue";
 import SiteTitle from "@/components/SiteTitle.vue";
 
@@ -231,6 +211,7 @@ export default defineComponent({
   data() {
     return {
       form: {},
+      form2: {},
       labels: [],
       data: [],
       load_more_btn: false,
@@ -241,6 +222,7 @@ export default defineComponent({
       renameModalOpen: false,
       showForm: false,
       dropdownOpen: false,
+      exportDropdownOpen: false,
       searchTerm: '',
       editFormData: [],
       editFormValues: {},
@@ -248,12 +230,10 @@ export default defineComponent({
   },
   computed: {
     sortedData() {
-      // Handle undefined or null data
       if (!this.data || !Array.isArray(this.data)) {
         return [];
       }
 
-      // First apply search filter
       let dataToSort = this.data;
 
       if (this.searchTerm.trim()) {
@@ -265,7 +245,6 @@ export default defineComponent({
         );
       }
 
-      // Then apply sorting
       if (this.sortColumn === null) {
         return dataToSort;
       }
@@ -274,27 +253,22 @@ export default defineComponent({
         const aVal = a[this.sortColumn];
         const bVal = b[this.sortColumn];
 
-        // Check if values are dates (datetime format like "2025-08-12 21:55:09")
         const dateRegex = /^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}$/;
         const aIsDate = dateRegex.test(aVal);
         const bIsDate = dateRegex.test(bVal);
 
         if (aIsDate && bIsDate) {
-          // Date sort
           const aDate = new Date(aVal);
           const bDate = new Date(bVal);
           return this.sortDirection === 'asc' ? aDate - bDate : bDate - aDate;
         }
 
-        // Check if values are numbers
         const aNum = parseFloat(aVal);
         const bNum = parseFloat(bVal);
 
         if (!isNaN(aNum) && !isNaN(bNum)) {
-          // Numeric sort
           return this.sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
         } else {
-          // String sort
           const aStr = String(aVal).toLowerCase();
           const bStr = String(bVal).toLowerCase();
 
@@ -322,7 +296,6 @@ export default defineComponent({
     return { isOpenRef, edit, closeModal, edit_id };
   },
   watch: {
-    // Watch for when edit modal opens to load form data
     isOpenRef(newVal) {
       if (newVal && this.edit_id) {
         this.loadEditFormData();
@@ -339,16 +312,13 @@ export default defineComponent({
     toggleDropdown() {
       this.dropdownOpen = !this.dropdownOpen;
     },
-    handleSearch() {
-      // Search is now handled in computed property, so we don't need this method
-      // But we keep it in case we need custom search logic later
+    toggleExportDropdown() {
+      this.exportDropdownOpen = !this.exportDropdownOpen;
     },
     sortBy(columnIndex) {
       if (this.sortColumn === columnIndex) {
-        // Toggle direction if same column
         this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
       } else {
-        // New column, start with ascending
         this.sortColumn = columnIndex;
         this.sortDirection = 'asc';
       }
@@ -356,46 +326,43 @@ export default defineComponent({
     handleSubmit(data) {
       this.$axios
         .post(
-          "form.php",
-          this.$qs.stringify({
-            submit_form: "submit_form",
+          "v2/forms/submit",
+          {
             form: JSON.stringify(data),
             form_name: this.$route.params.form,
             project: this.$route.params.project,
-          })
+          }
         )
         .then(() => {
           this.loadData();
-          this.showForm = false; // Hide form after successful submission
+          this.showForm = false;
         });
     },
     async loadEditFormData() {
       try {
-        // Load form schema
-        const formResponse = await this.$axios.post(
-          "form.php",
-          this.$qs.stringify({
-            get_form_schema: "get_form_schema",
-            form_name: this.$route.params.form,
-            project: this.$route.params.project,
-          })
+        const formResponse = await this.$axios.get(
+          "v2/forms/schema", {
+            params:
+            {
+              form_name: this.$route.params.form,
+              project: this.$route.params.project,
+            }
+        }
         );
 
-        // Load current entry data
-        const entryResponse = await this.$axios.post(
-          "form.php",
-          this.$qs.stringify({
-            get_entry: "get_entry",
-            entry_id: this.edit_id,
-            form_name: this.$route.params.form,
-            project: this.$route.params.project,
-          })
+        const entryResponse = await this.$axios.get(
+          `v2/forms/entry/${this.edit_id}`, {
+            params:
+            {
+              form_name: this.$route.params.form,
+              project: this.$route.params.project,
+            }
+        }
         );
 
         this.editFormData = formResponse.data.schema || [];
         const entryData = entryResponse.data.entry || {};
 
-        // Initialize form values with current data
         this.editFormValues = {};
         this.editFormData.forEach(field => {
           this.editFormValues[field.name] = entryData[field.name] || '';
@@ -403,14 +370,12 @@ export default defineComponent({
 
       } catch (error) {
         console.error('Error loading edit form data:', error);
-        // Fallback: use labels as field names
         this.editFormData = this.labels.map((label) => ({
           name: label.toLowerCase().replace(/\s+/g, '_'),
           label: label,
           type: 'text'
         }));
 
-        // Find current row data
         const currentRow = this.data.find(row => row[0] == this.edit_id);
         this.editFormValues = {};
         if (currentRow) {
@@ -422,15 +387,14 @@ export default defineComponent({
     },
     saveEdit() {
       this.$axios
-        .post(
-          "form.php",
-          this.$qs.stringify({
-            update_entry: "update_entry",
+        .put(
+          `v2/forms/entry/${this.edit_id}`,
+          {
             entry_id: this.edit_id,
             form: JSON.stringify(this.editFormValues),
             form_name: this.$route.params.form,
             project: this.$route.params.project,
-          })
+          }
         )
         .then(() => {
           this.closeModal(false);
@@ -442,53 +406,61 @@ export default defineComponent({
           console.error('Error saving edit:', error);
         });
     },
-    handleEdit() {
-      // This method is kept for backward compatibility but not used anymore
-      this.saveEdit();
-    },
     deletee(id) {
       this.$axios
-        .post(
-          "form.php",
-          this.$qs.stringify({
-            delete_entry: "delete_entry",
-            entry_id: id,
-            form_name: this.$route.params.form,
-            project: this.$route.params.project,
-          })
+        .delete(
+          `v2/forms/entry/${id}`,
+          {
+            params: {
+              form_name: this.$route.params.form,
+              project: this.$route.params.project
+            }
+          }
         )
         .then(() => {
           this.loadData();
         });
     },
-    exportCSV() {
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = 'https://api.fringelo.com/triggers.php'; // Fixed path
-      form.target = '_blank';
+    async exportData(format) {
+      this.exportDropdownOpen = false;
 
-      const exportField = document.createElement('input');
-      exportField.type = 'hidden';
-      exportField.name = 'export_csv';
-      exportField.value = 'true';
+      const url = format === 'csv'
+        ? `v2/forms/export/csv`
+        : `v2/forms/export/excel`;
 
-      const projectField = document.createElement('input');
-      projectField.type = 'hidden';
-      projectField.name = 'project';
-      projectField.value = this.$route.params.project;
+      try {
+        const response = await this.$axios.get(url, {
+          params: {
+            form_name: this.$route.params.form,
+            project: this.$route.params.project
+          },
+          responseType: 'blob'
+        });
 
-      const formField = document.createElement('input');
-      formField.type = 'hidden';
-      formField.name = 'form_name';
-      formField.value = this.$route.params.form;
+        // Create download link
+        const blob = new Blob([response.data], {
+          type: format === 'csv'
+            ? 'text/csv; charset=utf-8'
+            : 'application/vnd.ms-excel'
+        });
 
-      form.appendChild(exportField);
-      form.appendChild(projectField);
-      form.appendChild(formField);
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
 
-      document.body.appendChild(form);
-      form.submit();
-      document.body.removeChild(form);
+        const fileName = `${this.$route.params.form}_export_${new Date().toISOString().split('T')[0]}.${format === 'csv' ? 'csv' : 'xls'}`;
+        link.setAttribute('download', fileName);
+
+        document.body.appendChild(link);
+        link.click();
+
+        // Cleanup
+        link.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+      } catch (error) {
+        console.error('Export error:', error);
+        alert('Export failed. Please try again.');
+      }
     },
     openTriggerModal() {
       this.triggerModalOpen = true;
@@ -497,14 +469,12 @@ export default defineComponent({
       this.renameModalOpen = true;
     },
     openEditModal() {
-      // Navigate to edit form using the existing NewTool interface
       this.$router.push({
         path: `/project/${this.$route.params.project}/forms/${this.$route.params.form}/edit`
       });
     },
     handleRenameSuccess(newFormName) {
       this.renameModalOpen = false;
-      // Navigate to the new form URL
       this.$router.push({
         name: 'FormDisplay',
         params: {
@@ -514,7 +484,6 @@ export default defineComponent({
       });
     },
     refreshSidebar() {
-      // Emit event to refresh the sidebar
       this.emitter.emit("updateSidebar");
     },
     loadData() {
@@ -529,6 +498,20 @@ export default defineComponent({
           this.data = res.data.data;
           this.load_more_btn = res.data.load_more_btn;
           this.current_limit = 1;
+        });
+
+      this.$axios
+        .get(
+          `v2/forms/info`,
+          {
+            params: {
+              form_name: this.$route.params.form,
+              project: this.$route.params.project,
+            }
+          }
+        )
+        .then((res) => {
+          this.form2 = res.data || {};
         });
     },
     loadMore() {
@@ -546,7 +529,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* Modern Design System */
 .modern-content {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
@@ -575,7 +557,28 @@ export default defineComponent({
   background: var(--background);
 }
 
-/* Action Bar */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-content h1 {
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.header-content p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
 .action-bar {
   display: flex;
   justify-content: space-between;
@@ -630,7 +633,6 @@ export default defineComponent({
   font-size: 16px;
 }
 
-/* Dropdown */
 .dropdown {
   position: relative;
 }
@@ -666,7 +668,7 @@ export default defineComponent({
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
   text-decoration: none;
   font-size: 14px;
   cursor: pointer;
@@ -686,7 +688,6 @@ export default defineComponent({
   color: var(--text-secondary);
 }
 
-/* Data Card */
 .data-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
@@ -749,7 +750,6 @@ export default defineComponent({
   box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
-/* Modern Table */
 .table-wrapper {
   overflow-x: auto;
 }
@@ -823,7 +823,6 @@ export default defineComponent({
   opacity: 0.6;
 }
 
-/* Table Body */
 .table-body {
   background: var(--surface);
 }
@@ -865,7 +864,6 @@ export default defineComponent({
   max-width: 200px;
 }
 
-/* Action Buttons */
 .action-buttons {
   display: flex;
   gap: 8px;
@@ -904,7 +902,6 @@ export default defineComponent({
   transform: scale(1.05);
 }
 
-/* Load More */
 .load-more-container {
   padding: 24px;
   text-align: center;
@@ -931,7 +928,6 @@ export default defineComponent({
   background: #eff6ff;
 }
 
-/* Form Section */
 .form-section {
   position: fixed;
   top: 0;
@@ -996,7 +992,6 @@ export default defineComponent({
   overflow-y: auto;
 }
 
-/* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   .modern-content {
     --background: #0f172a;
@@ -1013,7 +1008,6 @@ export default defineComponent({
   }
 }
 
-/* Modal Integration */
 :global(.modern-trigger-modal .modal-content),
 :global(.modern-rename-modal .modal-content) {
   --ion-backdrop-opacity: 0;
@@ -1026,7 +1020,6 @@ export default defineComponent({
   --backdrop-opacity: 0 !important;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
@@ -1081,7 +1074,6 @@ export default defineComponent({
   }
 }
 
-/* No Data State */
 .no-data-state {
   padding: 60px 20px;
   text-align: center;
@@ -1114,7 +1106,6 @@ export default defineComponent({
   line-height: 1.5;
 }
 
-/* Custom Modal Styles */
 .custom-modal-overlay {
   position: fixed;
   top: 0;
@@ -1186,7 +1177,6 @@ export default defineComponent({
   min-height: 0;
 }
 
-/* Modal Animations */
 @keyframes modalFadeIn {
   from {
     opacity: 0;
@@ -1209,7 +1199,6 @@ export default defineComponent({
   }
 }
 
-/* Modal Responsive */
 @media (max-width: 768px) {
   .custom-modal-content {
     width: 95vw;
@@ -1223,7 +1212,6 @@ export default defineComponent({
   }
 }
 
-/* Modern Edit Form Styles */
 .modern-edit-form {
   width: 100%;
 }

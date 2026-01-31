@@ -44,4 +44,18 @@ class Response
         $response = array_merge(['success' => false, 'error' => $message], $extra);
         $this->json($response, $status);
     }
+
+    public function download(string $content, string $filename, string $contentType = 'application/octet-stream'): void
+    {
+        if ($this->sent) return;
+        $this->sent = true;
+
+        http_response_code($this->statusCode);
+        header('Content-Type: ' . $contentType);
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($content));
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        echo $content;
+    }
 }
