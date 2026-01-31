@@ -452,13 +452,12 @@ export default defineComponent({
     },
     async loadStats() {
       try {
-        const params = new URLSearchParams({
-          getStats: 'true',
-          dateFrom: this.filters.dateFrom,
-          dateTo: this.filters.dateTo
+        const response = await this.$axios.get('v2/access-logs/stats', {
+          params: {
+            dateFrom: this.filters.dateFrom,
+            dateTo: this.filters.dateTo
+          }
         });
-        
-        const response = await this.$axios.get(`access_logs.php?${params}`);
         
         if (response.data.status === 'success') {
           this.stats = response.data.stats;
@@ -470,17 +469,16 @@ export default defineComponent({
     async loadLogs() {
       this.loading = true;
       try {
-        const params = new URLSearchParams({
-          getAllLogs: 'true',
-          page: this.pagination.current_page,
-          limit: this.pagination.limit,
-          status: this.filters.status,
-          search: this.filters.search,
-          dateFrom: this.filters.dateFrom,
-          dateTo: this.filters.dateTo
+        const response = await this.$axios.get('v2/access-logs', {
+          params: {
+            page: this.pagination.current_page,
+            limit: this.pagination.limit,
+            status: this.filters.status,
+            search: this.filters.search,
+            dateFrom: this.filters.dateFrom,
+            dateTo: this.filters.dateTo
+          }
         });
-        
-        const response = await this.$axios.get(`access_logs.php?${params}`);
         
         if (response.data.status === 'success') {
           this.logs = response.data.data;
@@ -494,14 +492,13 @@ export default defineComponent({
     },
     async loadChartData() {
       try {
-        const params = new URLSearchParams({
-          getChartData: 'true',
-          days: this.chartDays,
-          dateFrom: this.filters.dateFrom,
-          dateTo: this.filters.dateTo
+        const response = await this.$axios.get('v2/access-logs/chart', {
+          params: {
+            days: this.chartDays,
+            dateFrom: this.filters.dateFrom,
+            dateTo: this.filters.dateTo
+          }
         });
-        
-        const response = await this.$axios.get(`access_logs.php?${params}`);
         
         if (response.data.status === 'success') {
           this.chartData = response.data.data;
@@ -513,14 +510,13 @@ export default defineComponent({
     },
     async loadTopFailedAttempts() {
       try {
-        const params = new URLSearchParams({
-          getTopFailedAttempts: 'true',
-          limit: 5,
-          dateFrom: this.filters.dateFrom,
-          dateTo: this.filters.dateTo
+        const response = await this.$axios.get('v2/access-logs/top-failed', {
+          params: {
+            limit: 5,
+            dateFrom: this.filters.dateFrom,
+            dateTo: this.filters.dateTo
+          }
         });
-        
-        const response = await this.$axios.get(`access_logs.php?${params}`);
         
         if (response.data.status === 'success') {
           this.topFailedAttempts = response.data.data;
@@ -531,14 +527,13 @@ export default defineComponent({
     },
     async loadTopIPs() {
       try {
-        const params = new URLSearchParams({
-          getTopIPs: 'true',
-          limit: 6,
-          dateFrom: this.filters.dateFrom,
-          dateTo: this.filters.dateTo
+        const response = await this.$axios.get('v2/access-logs/top-ips', {
+          params: {
+            limit: 6,
+            dateFrom: this.filters.dateFrom,
+            dateTo: this.filters.dateTo
+          }
         });
-        
-        const response = await this.$axios.get(`access_logs.php?${params}`);
         
         if (response.data.status === 'success') {
           this.topIPs = response.data.data;

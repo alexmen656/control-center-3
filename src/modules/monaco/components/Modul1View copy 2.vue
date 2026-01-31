@@ -817,7 +817,7 @@ const askAI = async () => {
         content: msg.type === 'ai' ? msg.content.replace(/<[^>]*>/g, '') : msg.content
       }));
 
-    const response = await axios.post('ai_assistant.php', {
+    const response = await axios.post('v2/ai-assistant', {
       question: question,
       filename: currentFile.value,
       fileContent: code.value,

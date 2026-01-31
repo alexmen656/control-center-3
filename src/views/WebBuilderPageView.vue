@@ -486,7 +486,7 @@ const askAI = async () => {
             components: pageComponents.value
         }
 
-        const response = await axios.post('ai_assistant.php', {
+        const response = await axios.post('v2/ai-assistant', {
             message: question,
             context: JSON.stringify(context),
             agent_mode: agentMode.value,
