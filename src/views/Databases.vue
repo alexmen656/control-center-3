@@ -8,7 +8,7 @@
         <div class="page-header">
           <div class="header-content">
             <h1>Database Management</h1>
-            <p>Browse and manage your database tables</p>
+            <p>Browse and manage your tables</p>
           </div>
           <div class="header-actions">
             <button class="action-btn secondary" @click="refreshTables">
@@ -57,13 +57,7 @@
         <div v-if="showSearch" class="search-container">
           <div class="search-box">
             <ion-icon name="search-outline"></ion-icon>
-            <input 
-              type="text" 
-              placeholder="Search tables..." 
-              v-model="search"
-              class="search-input"
-              autofocus
-            >
+            <input type="text" placeholder="Search tables..." v-model="search" class="search-input" autofocus>
             <button v-if="search" @click="search = ''" class="clear-search">
               <ion-icon name="close-outline"></ion-icon>
             </button>
@@ -74,8 +68,9 @@
         <div class="data-card">
           <div class="card-header">
             <div class="header-left">
-              <h3>Database Tables</h3>
-              <span class="entry-count">{{ filteredTables.length }} table{{ filteredTables.length !== 1 ? 's' : '' }}</span>
+              <h3>Tables</h3>
+              <span class="entry-count">{{ filteredTables.length }} table{{ filteredTables.length !== 1 ? 's' : ''
+                }}</span>
             </div>
           </div>
 
@@ -97,12 +92,7 @@
             </div>
 
             <div v-else class="tables-grid">
-              <div 
-                v-for="table in filteredTables" 
-                :key="table[0]"
-                class="table-card"
-                @click="openTable(table[0])"
-              >
+              <div v-for="table in filteredTables" :key="table[0]" class="table-card" @click="openTable(table[0])">
                 <div class="table-icon">
                   <ion-icon name="grid-outline"></ion-icon>
                 </div>
@@ -180,8 +170,8 @@ export default defineComponent({
     const loadTables = async () => {
       try {
         const response = await axios.post(
-          "mysql.php", 
-          qs.stringify({getTables: "getTables"}),
+          "mysql.php",
+          qs.stringify({ getTables: "getTables" }),
           {
             headers: {
               "Authorization": localStorage.getItem("token")
@@ -218,7 +208,7 @@ export default defineComponent({
         window.addEventListener('keydown', handleKeydown);
       }
     });
-    
+
     onUnmounted(() => {
       if (typeof window !== 'undefined') {
         window.removeEventListener('keydown', handleKeydown);
@@ -354,8 +344,10 @@ export default defineComponent({
   align-items: center;
   justify-content: center;
   font-size: 28px;
-  color: white;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  /*color: white;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);*/
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary-color);
   flex-shrink: 0;
 }
 
@@ -523,6 +515,7 @@ export default defineComponent({
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }

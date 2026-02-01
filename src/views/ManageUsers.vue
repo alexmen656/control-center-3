@@ -878,8 +878,10 @@ export default defineComponent({
   align-items: center;
   justify-content: center;
   font-size: 28px;
-  color: white;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  /*color: white;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);*/
+  color: var(--primary-color);
+  background: rgba(37, 99, 235, 0.1);
   flex-shrink: 0;
 }
 

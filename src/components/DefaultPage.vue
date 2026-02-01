@@ -244,7 +244,7 @@ export default defineComponent({
   --radius-lg: 12px;
   
   padding: 20px;
-  /*max-width: 1400px;*/
+  max-width: 1400px;
   margin: 0 auto;
   min-height: 100vh;
   background: var(--background);
@@ -372,9 +372,9 @@ export default defineComponent({
   justify-content: center;
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  background: rgba(37, 99, 235, 0.1)/*linear-gradient(135deg, var(--primary-color), var(--primary-hover))*/;
   border-radius: var(--radius);
-  color: white;
+  color: var(--primary-color);
   flex-shrink: 0;
 }
 

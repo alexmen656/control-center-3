@@ -39,4 +39,9 @@ export default defineComponent({
   --radius-lg: 12px;
   background: var(--background);
 }*/
+
+.modern-content {
+  --background: #f8fafc;
+  background: var(--background);
+}
 </style>
