@@ -5,7 +5,7 @@ header('Access-Control-Allow-Methods: *');
 $path = $_GET['path'] ?? '';
 
 if ($path) {
-    $file = '/data/filesystem/' . $path;
+    $file = '/var/www/api.fringelo.com/filesystem/' . $path;
 
     if (file_exists($file)) {
         $mimeType = mime_content_type($file);

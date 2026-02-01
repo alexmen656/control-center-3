@@ -53,7 +53,7 @@ if ($action === 'upload_file') {
             }
             $projectID = $projectData['projectID'];
             
-            $dir = '/data/project_filesystems/' . $projectID;
+            $dir = '/var/www/api.fringelo.com/project_filesystems/' . $projectID;
             
             $parentQuery = query("SELECT id FROM project_filesystem WHERE name = '$directory' AND projectID = '$projectID'");
             $parentId = $parentQuery ? $parentQuery->fetch_assoc()['id'] : 0;
@@ -99,7 +99,7 @@ if ($action === 'upload_file') {
             ]);
             
         } else {
-            $dir = '/data/filesystem';
+            $dir = '/var/www/api.fringelo.com/filesystem';
 
             $parentQuery = query("SELECT id FROM control_center_filesystem WHERE name = '$directory'");
             $parentId = $parentQuery ? $parentQuery->fetch_assoc()['id'] : 0;
@@ -167,7 +167,7 @@ if ($action === 'upload_file') {
             }
             $projectID = $projectData['projectID'];
             
-            $dir = '/data/project_filesystems/' . $projectID;
+            $dir = '/var/www/api.fringelo.com/project_filesystems/' . $projectID;
             
             $parentQuery = query("SELECT id FROM project_filesystem WHERE name = '$directory' AND projectID = '$projectID'");
             $parentId = $parentQuery ? $parentQuery->fetch_assoc()['id'] : 0;
@@ -195,7 +195,7 @@ if ($action === 'upload_file') {
             ]);
 
         } else {
-            $dir = '/data/filesystem';
+            $dir = '/var/www/api.fringelo.com/filesystem';
 
             $parentQuery = query("SELECT id FROM control_center_filesystem WHERE name = '$directory'");
             $parentId = $parentQuery ? $parentQuery->fetch_assoc()['id'] : 0;

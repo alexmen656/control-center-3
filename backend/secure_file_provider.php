@@ -13,8 +13,8 @@ define('SIGNATURE_VALIDITY', 3600);
 
 class SecureFileProvider
 {
-    private const BASE_PATH = '/data/filesystem';
-    private const PROJECT_BASE_PATH = '/data/project_filesystems';
+    private const BASE_PATH = '/var/www/api.fringelo.com/filesystem';
+    private const PROJECT_BASE_PATH = '/var/www/api.fringelo.com/project_filesystems';
 
     private function verifySignature($path, $expires, $signature, $projectID = null)
     {

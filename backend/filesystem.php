@@ -6,8 +6,8 @@ class FilesystemManager
     private const TYPE_FOLDER = 0;
     private const TYPE_FILE = 1;
 
-    private const BASE_PATH = '/data/filesystem';
-    private const PROJECT_BASE_PATH = '/data/project_filesystems';
+    private const BASE_PATH = '/var/www/api.fringelo.com/filesystem';
+    private const PROJECT_BASE_PATH = '/var/www/api.fringelo.com/project_filesystems';
 
     private static function generateUUID()
     {
@@ -289,7 +289,7 @@ class FilesystemManager
         if ($this->projectID) {
             $sql .= " AND projectID = '{$this->projectID}'";
         }
-        
+
         $result = query($sql);
         if (!$result || mysqli_num_rows($result) == 0) {
             throw new Exception('File not found');
@@ -299,7 +299,7 @@ class FilesystemManager
     }
 }
 
-try {
+/*try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $projectLink = isset($_POST['project']) ? $_POST['project'] : null;
         $fs = new FilesystemManager($projectLink);
@@ -340,3 +340,4 @@ try {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
+*/

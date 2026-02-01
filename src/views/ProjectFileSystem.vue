@@ -109,7 +109,7 @@
               <div class="header-title-row">
                 <h3>{{ currentFolderName }}</h3>
                 <span class="entry-count">{{ displayedItems.length }} item{{ displayedItems.length !== 1 ? 's' : ''
-                  }}</span>
+                }}</span>
               </div>
 
               <!-- Breadcrumbs Moved Here -->
@@ -212,7 +212,7 @@
                     <span v-if="item.type === 'folder'" class="cell-content text-secondary">{{ item.children ?
                       item.children.length : 0 }} items</span>
                     <span v-else class="cell-content text-secondary">{{ getFileExtension(item.name).toUpperCase()
-                      }}</span>
+                    }}</span>
                   </div>
                   <div class="table-cell actions-cell" style="flex: 0 0 100px;" @click.stop>
                     <div class="action-buttons">
@@ -456,7 +456,7 @@ export default defineComponent({
 
     async fetchFileSystemData() {
       try {
-        const response = await axios.get(`filesystem.php?project=${this.$route.params.project}`);
+        const response = await axios.get(`v2/filesystem/?project=${this.$route.params.project}`);
         console.log('File system data:', response.data);
 
         if (response.data) {
@@ -550,7 +550,7 @@ export default defineComponent({
         formData.append("parentId", this.currentFolderId);
         formData.append("project", this.$route.params.project);
 
-        axios.post("filesystem.php", formData).then(() => {
+        axios.post("v2/filesystem/folder", formData).then(() => {
           this.fetchFileSystemData();
           this.newFolderName = "";
         }).catch((err) => {
@@ -583,7 +583,7 @@ export default defineComponent({
         formData.append("parentId", this.currentFolderId);
         formData.append("project", this.$route.params.project);
 
-        this.$axios.post("filesystem.php", formData, {
+        this.$axios.post("v2/filesystem/upload", formData, {
           headers: { "Content-Type": "multipart/form-data" },
           onUploadProgress: (progressEvent) => {
             this.uploadPercentage = parseInt(Math.round((progressEvent.loaded * 100) / progressEvent.total));
@@ -701,7 +701,7 @@ export default defineComponent({
       formData.append('project', this.$route.params.project);
 
       try {
-        const response = await axios.post('filesystem.php', formData);
+        const response = await axios.post('v2/filesystem/move', formData);
         if (response.data.success) {
           this.fetchFileSystemData();
         }

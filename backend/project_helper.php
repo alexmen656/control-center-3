@@ -2,7 +2,7 @@
 
 function createFileSystemMainDir($projectID)
 {
-    $dir = "/data/project_filesystems/" . $projectID;
+    $dir = "/var/www/api.fringelo.com/project_filesystems/" . $projectID;
     if (!mkdir($dir, 0777, true)) {
         return false;
     }
