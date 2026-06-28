@@ -45,7 +45,7 @@ function HomepageFeatures() {
                 </div>
                 <div className="card__body">
                   <p>
-                    Complete documentation for Control Center CMS features including 
+                    Complete documentation for Fringelo CMS features including 
                     project management, service integrations, and development workflows.
                   </p>
                   <ul style={{textAlign: 'left'}}>

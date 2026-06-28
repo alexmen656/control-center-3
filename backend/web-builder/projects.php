@@ -3,7 +3,7 @@
  * Web Builder Projects API
  * 
  * Handles CRUD operations for web builder projects
- * Uses Control Center authentication
+ * Uses Fringelo authentication
  */
 
 require_once __DIR__ . '/api_base.php';
@@ -58,7 +58,7 @@ function getProjects($userId)
 
         $project = fetch_assoc($result);
 
-        // Get Control Center project info
+        // Get Fringelo project info
         $ccProject = getControlCenterProject($project['project_id']);
         if ($ccProject) {
             $project['control_center_project'] = $ccProject;
@@ -130,20 +130,20 @@ function createProject($userId)
     // Resolve the project - could be projectID or link
     $ccProject = getControlCenterProject($ccProjectInput);
     if (!$ccProject) {
-        sendError('Control Center project not found: ' . $ccProjectInput, 404);
+        sendError('Fringelo project not found: ' . $ccProjectInput, 404);
     }
     
     // Use the actual projectID from the database
     $ccProjectId = $ccProject['projectID'];
 
     if (!userHasProjectAccess($userId, $ccProjectId)) {
-        sendError('Access denied: You do not have access to this Control Center project', 403);
+        sendError('Access denied: You do not have access to this Fringelo project', 403);
     }
 
     // Check if a Web Builder project already exists for this CC project
     $existingCheck = query("SELECT id FROM control_center_modul_web_builder_projects WHERE project_id = '$ccProjectId'");
     if ($existingCheck && mysqli_num_rows($existingCheck) > 0) {
-        sendError('A Web Builder project already exists for this Control Center project', 409);
+        sendError('A Web Builder project already exists for this Fringelo project', 409);
     }
 
     $insertResult = query("INSERT INTO control_center_modul_web_builder_projects (user_id, project_id, name, description) 
@@ -204,7 +204,7 @@ function updateProject($userId)
     $projectData = fetch_assoc($checkResult);
 
     if (!userHasProjectAccess($userId, $projectData['project_id'])) {
-        sendError('Access denied: You no longer have access to the linked Control Center project', 403);
+        sendError('Access denied: You no longer have access to the linked Fringelo project', 403);
     }
 
     $data = getJsonData();
@@ -222,7 +222,7 @@ function updateProject($userId)
 
     // Don't allow changing project_id - it's immutable
     if (isset($data['project_id'])) {
-        sendError('Cannot change the linked Control Center project', 400);
+        sendError('Cannot change the linked Fringelo project', 400);
     }
 
     if (empty($updates)) {
@@ -276,7 +276,7 @@ function deleteProject($userId)
 
     // Verify user still has access to the linked CC project
     if (!userHasProjectAccess($userId, $projectData['project_id'])) {
-        sendError('Access denied: You no longer have access to the linked Control Center project', 403);
+        sendError('Access denied: You no longer have access to the linked Fringelo project', 403);
     }
 
     // Delete components first (foreign key constraint)

@@ -46,7 +46,7 @@ elseif (isset($_POST['addService']) && isset($_POST['name']) && isset($_POST['pr
         // Get the new service ID
         //$serviceId = mysqli_insert_id($con);
 
-        // Add the service page to the control center pages
+        // Add the service page to the Fringelo pages
         $url = "project/" . $projectName . "/services/" . $link;
         $configUrl = $url . "/config";
 
@@ -116,12 +116,12 @@ elseif (isset($_POST['deleteServiceComplete']) && isset($_POST['serviceId'])) {
             throw new Exception('Failed to delete service status history: ' . mysqli_error($con));
         }
         
-        // Delete control center pages for this service
+        // Delete Fringelo pages for this service
         $serviceUrl = "project/" . $projectLink . "/services/" . $serviceLink;
         $configUrl = $serviceUrl . "/config";
         $deletePages = query("DELETE FROM control_center_pages WHERE url='$serviceUrl' OR url='$configUrl'");
         if (!$deletePages) {
-            throw new Exception('Failed to delete control center pages: ' . mysqli_error($con));
+            throw new Exception('Failed to delete Fringelo pages: ' . mysqli_error($con));
         }
         
         // Finally, delete the service itself

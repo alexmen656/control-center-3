@@ -1,7 +1,7 @@
 /**
  * CMS API Helper
  * 
- * Common functions for making requests to the Control Center backend
+ * Common functions for making requests to the Fringelo backend
  */
 
 /**

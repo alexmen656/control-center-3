@@ -10,7 +10,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Control Center Documentation',
+  title: 'Fringelo Documentation',
   tagline: 'Comprehensive documentation for CMS and API integration',
   favicon: 'img/logo.png',
 

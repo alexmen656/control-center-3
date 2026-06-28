@@ -4,7 +4,7 @@
       <ion-buttons slot="start">
         <ion-menu-button></ion-menu-button>
       </ion-buttons>
-      <ion-title @click="goToStart()" @dblclick="toggleSidebar()"><img height="28px" src="/assets/logo.png" alt="Logo"/>Control Center</ion-title><!--{{ title }}-->
+      <ion-title @click="goToStart()" @dblclick="toggleSidebar()"><img height="28px" src="/assets/logo.png" alt="Logo"/>Fringelo</ion-title><!--{{ title }}-->
       <router-link
         style="height: 36px; margin-right: 5px"
         slot="end"
@@ -42,7 +42,7 @@ export default defineComponent({
   },
   setup() {
     const width = document.body.clientWidth;
-    const title = width > 380 ? "Control Center" : "CCenter";
+    const title = width > 380 ? "Fringelo" : "CCenter";
 
     return {
       title: title,

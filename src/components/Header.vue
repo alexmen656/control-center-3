@@ -7,7 +7,7 @@
       <ion-title @click="goToStart()" @dblclick="toggleSidebar()" class="logo-title">
         <div class="logo-container">
           <img class="logo-image" src="/assets/logo.png" alt="Logo"/>
-          <span class="logo-text">Control Center</span>
+          <span class="logo-text">Fringelo</span>
         </div>
       </ion-title><!--{{ title }}-->
       <router-link
@@ -47,7 +47,7 @@ export default defineComponent({
   },
   setup() {
     const width = document.body.clientWidth;
-    const title = width > 380 ? "Control Center" : "CCenter";
+    const title = width > 380 ? "Fringelo" : "CCenter";
 
     return {
       title: title,

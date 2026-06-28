@@ -141,7 +141,7 @@ class GitHubAPI
             'sha' => substr(md5($message . time()), 0, 40),
             'message' => $message,
             'author' => [
-                'name' => 'Control Center User',
+                'name' => 'Fringelo User',
                 'email' => 'user@example.com'
             ],
             'created_at' => date('c')

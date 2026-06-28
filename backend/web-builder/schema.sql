@@ -1,13 +1,13 @@
 -- =============================================
 -- Web Builder Module Database Schema
--- For Control Center Integration
+-- For Fringelo Integration
 -- =============================================
 -- 
--- This schema uses Control Center's existing user system
+-- This schema uses Fringelo's existing user system
 -- (control_center_users table) for authentication.
 -- No separate users table needed.
 --
--- Run this on the Control Center database
+-- Run this on the Fringelo database
 -- =============================================
 
 -- Drop existing tables if they exist (in reverse order of dependencies)
@@ -18,12 +18,12 @@ DROP TABLE IF EXISTS `control_center_modul_web_builder_projects`;
 -- =============================================
 -- Projects table
 -- =============================================
--- Stores web builder projects linked to Control Center projects
--- MUST be linked to an existing Control Center project (projects.projectID)
+-- Stores web builder projects linked to Fringelo projects
+-- MUST be linked to an existing Fringelo project (projects.projectID)
 CREATE TABLE `control_center_modul_web_builder_projects` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL COMMENT 'References control_center_users.userID',
-  `project_id` varchar(255) NOT NULL COMMENT 'References projects.projectID - REQUIRED link to Control Center project',
+  `project_id` varchar(255) NOT NULL COMMENT 'References projects.projectID - REQUIRED link to Fringelo project',
   `name` varchar(100) NOT NULL,
   `description` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),

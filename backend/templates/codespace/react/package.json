@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "A React codespace created with Control Center IDE",
+  "description": "A React codespace created with Fringelo IDE",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

@@ -5,7 +5,7 @@ slug: /
 
 # API Documentation
 
-Welcome to the Control Center API documentation. This comprehensive guide covers all available APIs, from external service integrations to internal CMS functionality.
+Welcome to the Fringelo API documentation. This comprehensive guide covers all available APIs, from external service integrations to internal CMS functionality.
 
 ## API Overview
 

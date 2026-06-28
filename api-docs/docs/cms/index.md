@@ -5,11 +5,11 @@ slug: /
 
 # CMS Documentation
 
-Welcome to the Control Center CMS documentation. This comprehensive guide covers all aspects of our content management system, from basic project management to advanced development workflows.
+Welcome to the Fringelo CMS documentation. This comprehensive guide covers all aspects of our content management system, from basic project management to advanced development workflows.
 
-## What is Control Center CMS?
+## What is Fringelo CMS?
 
-Control Center CMS is a powerful, developer-friendly content management system designed for modern web development. It provides:
+Fringelo CMS is a powerful, developer-friendly content management system designed for modern web development. It provides:
 
 - **Project Management**: Create, organize, and manage multiple projects
 - **Service Integration**: Connect various external services and APIs
@@ -38,7 +38,7 @@ Control Center CMS is a powerful, developer-friendly content management system d
 
 ```mermaid
 graph TB
-    A[Control Center CMS] --> B[Project Management]
+    A[Fringelo CMS] --> B[Project Management]
     A --> C[Service Integration]
     A --> D[Development Tools]
     

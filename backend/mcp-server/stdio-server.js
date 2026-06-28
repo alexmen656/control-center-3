@@ -1,5 +1,5 @@
 /**
- * Control Center MCP Server - STDIO Transport
+ * Fringelo MCP Server - STDIO Transport
  * 
  * For local MCP clients that communicate via STDIO
  */
@@ -144,7 +144,7 @@ async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  console.error('Control Center MCP Server connected via STDIO');
+  console.error('Fringelo MCP Server connected via STDIO');
 }
 
 main().catch(console.error);

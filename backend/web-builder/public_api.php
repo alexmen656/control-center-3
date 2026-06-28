@@ -2,7 +2,7 @@
 /**
  * Public API for Web Builder Vue Sites
  *
- * This API runs on the Control Center server and provides
+ * This API runs on the Fringelo server and provides
  * dynamic data to Vue-based websites hosted elsewhere.
  *
  * No authentication required - public read-only access.

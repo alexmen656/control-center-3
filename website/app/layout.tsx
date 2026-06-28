@@ -5,12 +5,12 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Control Center CMS - Professional Content Management System',
+  title: 'Fringelo CMS - Professional Content Management System',
   description: 'Powerful, developer-friendly CMS with integrated codespaces, API management, and modern development workflows.',
   keywords: 'CMS, Content Management, API Management, Development Tools, Codespaces',
-  authors: [{ name: 'Control Center Team' }],
+  authors: [{ name: 'Fringelo Team' }],
   openGraph: {
-    title: 'Control Center CMS',
+    title: 'Fringelo CMS',
     description: 'Professional Content Management System for modern developers',
     type: 'website',
     url: 'https://control-center.eu',

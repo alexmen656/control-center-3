@@ -1,6 +1,6 @@
-# Control Center CMS - Professional Website
+# Fringelo CMS - Professional Website
 
-Eine moderne, professionelle Website für das Control Center CMS mit dunklem schwarz-rot Design.
+Eine moderne, professionelle Website für das Fringelo CMS mit dunklem schwarz-rot Design.
 
 ## Features
 

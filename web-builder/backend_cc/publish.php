@@ -190,7 +190,7 @@ if ($deployToServer) {
     $projectLinkRow = $stmtProjectLink->fetch(PDO::FETCH_ASSOC);
     
     if (!$projectLinkRow || empty($projectLinkRow['project_id'])) {
-        echo "<p style='color: orange;'>⚠️ Kein Control Center Projekt verknüpft. Deployment übersprungen.</p>";
+        echo "<p style='color: orange;'>⚠️ Kein Fringelo Projekt verknüpft. Deployment übersprungen.</p>";
     } else {
         $ccProjectLink = $projectLinkRow['project_id'];
         
@@ -200,7 +200,7 @@ if ($deployToServer) {
         $ccProject = $stmtCCProject->fetch(PDO::FETCH_ASSOC);
         
         if (!$ccProject || empty($ccProject['link'])) {
-            echo "<p style='color: orange;'>⚠️ Control Center Projekt nicht gefunden. Deployment übersprungen.</p>";
+            echo "<p style='color: orange;'>⚠️ Fringelo Projekt nicht gefunden. Deployment übersprungen.</p>";
         } else {
             $projectSlug = $ccProject['link'];
             

@@ -1,10 +1,10 @@
 /**
- * Control Center MCP Server - HTTP Transport
+ * Fringelo MCP Server - HTTP Transport
  * 
  * This server exposes the CMS functionality via MCP protocol over HTTP.
  * AI agents can connect via HTTP to manage projects, pages, content, and more.
  * 
- * Authentication: JWT token from Control Center
+ * Authentication: JWT token from Fringelo
  */
 
 import express from 'express';
@@ -170,7 +170,7 @@ app.get('/mcp', (req, res) => {
   res.json({
     name: 'control-center-cms',
     version: '1.0.0',
-    description: 'MCP Server for Control Center CMS',
+    description: 'MCP Server for Fringelo CMS',
     capabilities: ['tools', 'resources'],
     authentication: 'JWT Bearer token required'
   });
@@ -359,7 +359,7 @@ app.post('/mcp/batch', authMiddleware, async (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Control Center MCP Server running on port ${PORT}`);
+  console.log(`🚀 Fringelo MCP Server running on port ${PORT}`);
   console.log(`📚 API Docs: http://localhost:${PORT}/mcp`);
   console.log(`🔧 Tools: http://localhost:${PORT}/mcp/tools`);
   console.log(`📁 Resources: http://localhost:${PORT}/mcp/resources`);

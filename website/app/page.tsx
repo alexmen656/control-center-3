@@ -31,7 +31,7 @@ export default function Home() {
               <div className="w-10 h-10 bg-red-gradient rounded-lg flex items-center justify-center">
                 <Monitor className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">Control Center</span>
+              <span className="text-xl font-bold text-white">Fringelo</span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-gray-300 hover:text-white transition-colors">Features</a>
@@ -234,7 +234,7 @@ export default function Home() {
               Ready to accelerate your development?
             </h2>
             <p className="text-xl text-gray-400 mb-8">
-              Join thousands of developers building faster with Control Center CMS
+              Join thousands of developers building faster with Fringelo CMS
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link 
@@ -265,7 +265,7 @@ export default function Home() {
                 <div className="w-8 h-8 bg-red-gradient rounded flex items-center justify-center">
                   <Monitor className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-lg font-bold text-white">Control Center</span>
+                <span className="text-lg font-bold text-white">Fringelo</span>
               </div>
               <p className="text-gray-400">
                 Professional CMS for modern developers
@@ -301,7 +301,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Control Center CMS. All rights reserved.</p>
+            <p>&copy; 2024 Fringelo CMS. All rights reserved.</p>
           </div>
         </div>
       </footer>

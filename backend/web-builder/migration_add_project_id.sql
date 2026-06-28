@@ -2,12 +2,12 @@
 -- Migration Script: Add project_id to Web Builder
 -- =============================================
 -- This script adds the project_id column to link 
--- Web Builder projects to Control Center projects
+-- Web Builder projects to Fringelo projects
 -- =============================================
 
 -- Step 1: Add project_id column (nullable initially for migration)
 ALTER TABLE `control_center_modul_web_builder_projects` 
-ADD COLUMN `project_id` varchar(255) NULL COMMENT 'References projects.projectID - REQUIRED link to Control Center project' 
+ADD COLUMN `project_id` varchar(255) NULL COMMENT 'References projects.projectID - REQUIRED link to Fringelo project' 
 AFTER `user_id`;
 
 -- Step 2: MANUAL STEP - Update existing rows
@@ -24,7 +24,7 @@ AFTER `user_id`;
 
 -- Step 3: After all projects have a project_id, make the column NOT NULL
 -- ALTER TABLE `control_center_modul_web_builder_projects` 
--- MODIFY COLUMN `project_id` varchar(255) NOT NULL COMMENT 'References projects.projectID - REQUIRED link to Control Center project';
+-- MODIFY COLUMN `project_id` varchar(255) NOT NULL COMMENT 'References projects.projectID - REQUIRED link to Fringelo project';
 
 -- Step 4: Add unique index to ensure one web builder project per CC project
 -- CREATE UNIQUE INDEX `idx_project_id` ON `control_center_modul_web_builder_projects` (`project_id`);

@@ -135,8 +135,8 @@ if ($action === 'getConfig' && isset($_GET['domain'])) {
                 'domain' => $row['domain'],
                 'primary_color' => $row['primary_color'],
                 'logo_url' => $row['logo_url'],
-                'company_name' => $row['company_name'] ?: ($project['name'] ?? 'Control Center'),
-                'project_name' => $project['name'] ?? 'Control Center'
+                'company_name' => $row['company_name'] ?: ($project['name'] ?? 'Fringelo'),
+                'project_name' => $project['name'] ?? 'Fringelo'
             ]
         ]);
     } else {

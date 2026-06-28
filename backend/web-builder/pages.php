@@ -21,7 +21,7 @@ if ($projectId) {
 
     $projectData = fetch_assoc($checkResult);
     if (!userHasProjectAccess($userId, $projectData['cc_project_id'])) {
-        sendError('Access denied: You no longer have access to the linked Control Center project', 403);
+        sendError('Access denied: You no longer have access to the linked Fringelo project', 403);
     }
 }
 

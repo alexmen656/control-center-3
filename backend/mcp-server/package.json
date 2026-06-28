@@ -1,7 +1,7 @@
 {
   "name": "control-center-mcp-server",
   "version": "1.0.0",
-  "description": "MCP Server for Control Center CMS - HTTP Transport",
+  "description": "MCP Server for Fringelo CMS - HTTP Transport",
   "type": "module",
   "main": "server.js",
   "scripts": {

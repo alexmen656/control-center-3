@@ -12,10 +12,10 @@
               <!-- <picture>
                 <source media="(min-width:465px)" srcset="/assets/logo_inline_large.png" />
                 <source media="(max-width:465px)" srcset="/assets/logo_block_large.png" />
-                <img src="/assets/logo_inline_large.png" alt="Control Center Logo" class="logo-image" />
+                <img src="/assets/logo_inline_large.png" alt="Fringelo Logo" class="logo-image" />
               </picture>-->
               <span class="logo">
-                Control Center
+                Fringelo
               </span>
             </template>
             <!--<h1 class="welcome-title" v-if="!createPasswordView">Welcome Back</h1>
@@ -149,7 +149,7 @@
             </form>
             <div class="footer-section">
               <p class="footer-text">
-                © 2025 {{ isCustomLogin ? companyName : 'Control Center' }}. All rights reserved.
+                © 2025 {{ isCustomLogin ? companyName : 'Fringelo' }}. All rights reserved.
               </p>
             </div>
           </div>
@@ -224,7 +224,7 @@ export default defineComponent({
       return this.customLoginConfig?.logo_url || '/assets/logo_inline_large.png';
     },
     companyName(): string {
-      return this.customLoginConfig?.company_name || 'Control Center';
+      return this.customLoginConfig?.company_name || 'Fringelo';
     }
   },
   components: {},

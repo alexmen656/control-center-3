@@ -1,8 +1,8 @@
-# Web Builder Backend - Control Center Project Integration
+# Web Builder Backend - Fringelo Project Integration
 
 ## Übersicht
 
-Das Web Builder Backend wurde so umgebaut, dass **jedes Web Builder Projekt zwingend mit einem Control Center Projekt verknüpft sein muss**. Dies gewährleistet eine konsistente Rechteverwaltung und Integration in das Control Center Ökosystem.
+Das Web Builder Backend wurde so umgebaut, dass **jedes Web Builder Projekt zwingend mit einem Fringelo Projekt verknüpft sein muss**. Dies gewährleistet eine konsistente Rechteverwaltung und Integration in das Fringelo Ökosystem.
 
 ## Änderungen
 
@@ -10,7 +10,7 @@ Das Web Builder Backend wurde so umgebaut, dass **jedes Web Builder Projekt zwin
 
 **Neue Spalte in `control_center_modul_web_builder_projects`:**
 - `project_id` (varchar(255), NOT NULL) - Referenz zu `projects.projectID`
-- UNIQUE constraint - Ein Control Center Projekt kann nur ein Web Builder Projekt haben
+- UNIQUE constraint - Ein Fringelo Projekt kann nur ein Web Builder Projekt haben
 
 ### 2. Berechtigungssystem
 
@@ -51,7 +51,7 @@ Das Web Builder Backend wurde so umgebaut, dass **jedes Web Builder Projekt zwin
     "name": "Mein Web Builder Projekt",
     "control_center_project": {
       "projectID": "cc-project-id",
-      "name": "Control Center Projekt",
+      "name": "Fringelo Projekt",
       "link": "projekt-slug",
       "icon": "icon.png"
     },
@@ -128,14 +128,14 @@ getUserControlCenterProjects($userId): array
 ```json
 {
   "error": true,
-  "message": "Access denied: You do not have access to this Control Center project"
+  "message": "Access denied: You do not have access to this Fringelo project"
 }
 ```
 
 ```json
 {
   "error": true,
-  "message": "A web builder project already exists for this Control Center project"
+  "message": "A web builder project already exists for this Fringelo project"
 }
 ```
 
@@ -236,10 +236,10 @@ Alle drei Checks müssen erfolgreich sein!
 ## Datenbankstruktur
 
 ```
-projects (Control Center)
+projects (Fringelo)
   └─ projectID (PK)
 
-control_center_user_projects (Control Center)
+control_center_user_projects (Fringelo)
   ├─ userID (FK → control_center_users)
   └─ projectID (FK → projects)
 

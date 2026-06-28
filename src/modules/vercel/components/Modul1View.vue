@@ -271,7 +271,7 @@ export default {
                 // Get current project from URL or context - this should be the connected project
                 const currentProject = route.params.project || 'default-project'; // This should come from your project context
 
-                // Get the connected Vercel project for this Control Center project
+                // Get the connected Vercel project for this Fringelo project
                 const response = await axios.post('project_vercel.php', qs.stringify({
                     action: 'get',
                     project: currentProject

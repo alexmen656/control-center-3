@@ -1,10 +1,10 @@
-# Control Center MCP Server
+# Fringelo MCP Server
 
-Model Context Protocol (MCP) Server für das Control Center CMS. Ermöglicht AI Agents Zugriff auf alle CMS-Funktionen über HTTP oder STDIO.
+Model Context Protocol (MCP) Server für das Fringelo CMS. Ermöglicht AI Agents Zugriff auf alle CMS-Funktionen über HTTP oder STDIO.
 
 ## Features
 
-- 🔐 JWT-basierte Authentifizierung (Control Center Login-Token)
+- 🔐 JWT-basierte Authentifizierung (Fringelo Login-Token)
 - 🛠️ 40+ Tools für CMS-Management
 - 📚 Resources für schnellen Datenzugriff
 - 🌐 HTTP-Transport für Web-Integration
@@ -197,7 +197,7 @@ Authorization: Bearer <jwt_token>
 
 ### Signed URLs für Filesystem-Bilder in Web Builder
 
-Mit Signed URLs können Bilder aus dem Control Center Filesystem sicher in Web Builder Komponenten verwendet werden.
+Mit Signed URLs können Bilder aus dem Fringelo Filesystem sicher in Web Builder Komponenten verwendet werden.
 
 **Workflow:**
 1. Bild hochladen mit `file_upload_to_filesystem`
@@ -384,7 +384,7 @@ const response = await fetch('http://localhost:3001/mcp/tools/webbuilder_project
   body: JSON.stringify({
     name: 'Meine Website',
     description: 'Eine moderne Landingpage',
-    ccProjectId: 'my-project-id'  // Control Center Projekt ID
+    ccProjectId: 'my-project-id'  // Fringelo Projekt ID
   })
 });
 ```
@@ -695,7 +695,7 @@ Für HTTP-basierte MCP-Clients:
 
 ## JWT Token bekommen
 
-1. Login im Control Center
+1. Login im Fringelo
 2. Token aus localStorage: `localStorage.getItem('authToken')`
 3. Oder über Login-API:
 

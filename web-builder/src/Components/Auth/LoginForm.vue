@@ -65,7 +65,7 @@ const handleCancel2FA = () => {
   <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
       <div>
-        <img class="mx-auto h-12 w-auto" src="/public/logo/logo.png" alt="Control Center Web Builder">
+        <img class="mx-auto h-12 w-auto" src="/public/logo/logo.png" alt="Fringelo Web Builder">
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
           {{ requires2FA ? 'Verifizierung erforderlich' : 'Anmelden' }}
         </h2>
@@ -153,7 +153,7 @@ const handleCancel2FA = () => {
         </div>
         
         <div class="text-sm text-center text-gray-500">
-          <p>Verwende dein Control Center Konto</p>
+          <p>Verwende dein Fringelo Konto</p>
         </div>
       </form>
     </div>

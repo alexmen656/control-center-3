@@ -28,7 +28,7 @@ if (!userHasProjectAccess($userId, $ccProjectId)) {
 $ccProject = getControlCenterProject($ccProjectId);
 
 if (!$ccProject) {
-    sendError('Linked Control Center project not found', 404);
+    sendError('Linked Fringelo project not found', 404);
 }
 
 $projectSlug = $ccProject['link'];
@@ -190,7 +190,7 @@ sendResponse($response);
  * Replaces {{table_name.column_name[index]}} with actual content from CC Forms database tables
  * 
  * @param string $html - HTML content with dynamic content syntax
- * @param int $ccProjectId - Control Center project ID for content lookup
+ * @param int $ccProjectId - Fringelo project ID for content lookup
  * @return string - HTML with resolved dynamic content
  */
 function processDynamicContent($html, $ccProjectId)

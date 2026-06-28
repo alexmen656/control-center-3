@@ -28,10 +28,10 @@
         <div v-else-if="availableAPIs.length === 0" class="empty-state">
           <ion-icon name="server-outline" class="empty-icon"></ion-icon>
           <h3>Keine APIs verfügbar</h3>
-          <p>Abonnieren Sie APIs im Haupt-Control Center, um sie hier zu verwalten.</p>
+          <p>Abonnieren Sie APIs im Haupt-Fringelo, um sie hier zu verwalten.</p>
           <button @click="openControlCenter" class="primary-button">
             <ion-icon name="open-outline"></ion-icon>
-            Control Center öffnen
+            Fringelo öffnen
           </button>
         </div>
 

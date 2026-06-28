@@ -3,7 +3,7 @@
  * Web Builder API Base Handler
  * 
  * Provides common functionality for all Web Builder API endpoints
- * Uses Control Center authentication system
+ * Uses Fringelo authentication system
  */
 
 // Enable CORS for all requests
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Include Control Center dependencies
+// Include Fringelo dependencies
 include_once __DIR__ . '/../jwt_helper.php';
 include_once __DIR__ . '/../config.php';
 require_once '/www/paxar/components/php_head.php';
@@ -121,7 +121,7 @@ function validateRequiredFields($data, $requiredFields) {
 }
 
 /**
- * Authenticate user using Control Center JWT token
+ * Authenticate user using Fringelo JWT token
  * Returns user ID from token or sends error response
  * 
  * @return int The authenticated user ID
@@ -152,7 +152,7 @@ function authenticateUser() {
 }
 
 /**
- * Get user data from Control Center database
+ * Get user data from Fringelo database
  * 
  * @param int $userId The user ID
  * @return array|null User data or null if not found
@@ -168,10 +168,10 @@ function getUserData($userId) {
 }
 
 /**
- * Verify user has access to a Control Center project
+ * Verify user has access to a Fringelo project
  * 
  * @param int $userId The user ID
- * @param string $projectId The Control Center project ID (projects.projectID) or link (projects.link)
+ * @param string $projectId The Fringelo project ID (projects.projectID) or link (projects.link)
  * @return bool True if user has access, false otherwise
  */
 function userHasProjectAccess($userId, $projectId) {
@@ -196,9 +196,9 @@ function userHasProjectAccess($userId, $projectId) {
 }
 
 /**
- * Get Control Center project data
+ * Get Fringelo project data
  * 
- * @param string $projectId The Control Center project ID or link
+ * @param string $projectId The Fringelo project ID or link
  * @return array|null Project data or null if not found
  */
 function getControlCenterProject($projectId) {
@@ -213,7 +213,7 @@ function getControlCenterProject($projectId) {
 }
 
 /**
- * Get all Control Center projects for a user
+ * Get all Fringelo projects for a user
  * 
  * @param int $userId The user ID
  * @return array List of projects the user has access to

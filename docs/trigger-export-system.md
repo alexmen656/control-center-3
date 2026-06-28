@@ -2,7 +2,7 @@
 
 ## Übersicht
 
-Das neue **Trigger & Export System** erweitert das Control Center um zwei wichtige Features:
+Das neue **Trigger & Export System** erweitert das Fringelo um zwei wichtige Features:
 
 1. **Trigger-System**: Automatische Benachrichtigungen bei Datenbank-Operationen
 2. **CSV/Excel Export**: Export von Formulardaten

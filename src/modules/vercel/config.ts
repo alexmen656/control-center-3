@@ -2,7 +2,7 @@ export const vercelConfig = {
     name: 'Vercel Environment Variables',
     description: 'Manage environment variables for your Vercel projects',
     version: '1.0.0',
-    author: 'Control Center',
+    author: 'Fringelo',
     category: 'deployment',
     
     routes: {

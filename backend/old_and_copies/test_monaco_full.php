@@ -35,7 +35,7 @@ if (!is_dir('.git')) {
         echo "<span class='success'>✓ Git Repository initialisiert</span><br>";
         
         exec('git config user.email "test@controlcenter.dev" 2>&1');
-        exec('git config user.name "Control Center Test" 2>&1');
+        exec('git config user.name "Fringelo Test" 2>&1');
         echo "<span class='success'>✓ Git Konfiguration gesetzt</span><br>";
         
         // Create test files
@@ -196,7 +196,7 @@ echo "</ul>";
 
 echo "<p><strong>Nächste Schritte:</strong></p>";
 echo "<ol>";
-echo "<li>Erstelle ein neues Projekt über die normale Control Center UI</li>";
+echo "<li>Erstelle ein neues Projekt über die normale Fringelo UI</li>";
 echo "<li>Öffne die Monaco IDE für das Projekt</li>";
 echo "<li>Die Sidebar sollte jetzt echte Daten anzeigen (keine Mock-Daten mehr)</li>";
 echo "<li>Erstelle/bearbeite Dateien und sieh die Änderungen in der Git-Section</li>";

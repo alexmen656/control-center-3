@@ -733,7 +733,7 @@ function createInitialCommitAndPush($codespaceId, $repoFullName, $githubToken, $
         if (!file_exists($readmeFile)) {
             $readmeContent = "# " . $codespace['name'] . "\n\n";
             $readmeContent .= $codespace['description'] ?: "Codespace for " . $codespace['name'];
-            $readmeContent .= "\n\nCreated with Control Center\n";
+            $readmeContent .= "\n\nCreated with Fringelo\n";
             file_put_contents($readmeFile, $readmeContent);
         }
 

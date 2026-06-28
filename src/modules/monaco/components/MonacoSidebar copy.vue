@@ -260,7 +260,7 @@
         <div class="subsection-header">Available in Project</div> -->
         <div v-if="installedAPIs.length === 0" class="no-apis">
           No APIs available for this project.<br>
-          <small>Manage APIs in the main Control Center.</small>
+          <small>Manage APIs in the main Fringelo.</small>
         </div>
         <div v-for="api in installedAPIs" :key="api.slug" class="api-item">
           <ion-icon :name="api.icon || 'server-outline'" class="api-icon"></ion-icon>

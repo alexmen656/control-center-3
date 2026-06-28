@@ -263,7 +263,7 @@ function goBack() {
                     <div v-if="forms.length === 0" class="text-center py-12">
                         <span class="material-symbols-outlined text-6xl text-gray-300">inbox</span>
                         <p class="mt-4 text-gray-500">Keine Forms in diesem Projekt gefunden</p>
-                        <p class="text-sm text-gray-400">Erstelle zuerst eine Form im Control Center</p>
+                        <p class="text-sm text-gray-400">Erstelle zuerst eine Form im Fringelo</p>
                     </div>
 
                     <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">

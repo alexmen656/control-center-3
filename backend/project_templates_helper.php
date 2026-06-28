@@ -72,8 +72,8 @@ function applyTemplate($templateId, $projectName, $projectIcon, $headers) {
             $webBuilderUserId = mysqli_insert_id($con);
         }
         
-        // Create web builder project and link to Control Center project
-        $projectDesc = "Project created from template (Control Center Project ID: $projectID)";
+        // Create web builder project and link to Fringelo project
+        $projectDesc = "Project created from template (Fringelo Project ID: $projectID)";
         query("INSERT INTO control_center_web_builder_projects (user_id, name, description, created_at) VALUES ('$webBuilderUserId', '$projectName', '$projectDesc', NOW())");
         $webBuilderProjectId = mysqli_insert_id($con);
                 

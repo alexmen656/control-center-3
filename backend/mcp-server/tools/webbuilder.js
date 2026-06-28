@@ -15,13 +15,13 @@ export const webBuilderTools = [
   // ============================================
   {
     name: 'webbuilder_project_list',
-    description: 'List all Web Builder projects the user has access to. Returns projects with their pages and linked Control Center project info.',
+    description: 'List all Web Builder projects the user has access to. Returns projects with their pages and linked Fringelo project info.',
     inputSchema: {
       type: 'object',
       properties: {
         ccProject: {
           type: 'string',
-          description: 'Optional: Filter by Control Center project link/slug'
+          description: 'Optional: Filter by Fringelo project link/slug'
         }
       },
       required: []
@@ -29,7 +29,7 @@ export const webBuilderTools = [
   },
   {
     name: 'webbuilder_project_create',
-    description: 'Create a new Web Builder project linked to a Control Center project. This automatically creates a homepage. IMPORTANT: Use project_list first to get the correct project link/slug.',
+    description: 'Create a new Web Builder project linked to a Fringelo project. This automatically creates a homepage. IMPORTANT: Use project_list first to get the correct project link/slug.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -43,7 +43,7 @@ export const webBuilderTools = [
         },
         ccProjectLink: {
           type: 'string',
-          description: 'The Control Center project LINK/SLUG (NOT the numeric ID). Example: "my-project", "demo-website". Use project_list to find the correct link.'
+          description: 'The Fringelo project LINK/SLUG (NOT the numeric ID). Example: "my-project", "demo-website". Use project_list to find the correct link.'
         }
       },
       required: ['name', 'ccProjectLink']
@@ -431,7 +431,7 @@ This structure is REQUIRED for the page builder to track and save user edits pro
       properties: {
         ccProject: {
           type: 'string',
-          description: 'Control Center project link/slug'
+          description: 'Fringelo project link/slug'
         }
       },
       required: ['ccProject']
@@ -445,7 +445,7 @@ This structure is REQUIRED for the page builder to track and save user edits pro
       properties: {
         ccProject: {
           type: 'string',
-          description: 'Control Center project link/slug'
+          description: 'Fringelo project link/slug'
         },
         subdomain: {
           type: 'string',
@@ -473,7 +473,7 @@ This structure is REQUIRED for the page builder to track and save user edits pro
       properties: {
         ccProject: {
           type: 'string',
-          description: 'Control Center project link/slug'
+          description: 'Fringelo project link/slug'
         }
       },
       required: ['ccProject']

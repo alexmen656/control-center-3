@@ -9,7 +9,7 @@ import { cmsRequest, formatResponse, formatError } from '../utils/api.js';
 export const fileTools = [
   {
     name: 'file_list',
-    description: `List files and folders in the Control Center filesystem or project filesystem.
+    description: `List files and folders in the Fringelo filesystem or project filesystem.
 
 IMPORTANT: Returns "location" (UUID) and "projectID" for each file.
 - location: Use this for file_get_signed_url "path" argument.
@@ -35,7 +35,7 @@ Example Return:
   },
   {
     name: 'file_upload_to_filesystem',
-    description: 'Upload a file to the Control Center filesystem or project filesystem',
+    description: 'Upload a file to the Fringelo filesystem or project filesystem',
     inputSchema: {
       type: 'object',
       properties: {
@@ -67,7 +67,7 @@ Example Return:
   },
   {
     name: 'file_create_folder_in_filesystem',
-    description: 'Create a new folder in the Control Center filesystem or project filesystem',
+    description: 'Create a new folder in the Fringelo filesystem or project filesystem',
     inputSchema: {
       type: 'object',
       properties: {
@@ -90,7 +90,7 @@ Example Return:
   },
   {
     name: 'file_get_signed_url',
-    description: `Generate a signed URL for a file in the Control Center filesystem or project filesystem.
+    description: `Generate a signed URL for a file in the Fringelo filesystem or project filesystem.
 
 IMPORTANT: Use the "location" (UUID) and "projectID" from file_list!
 Do NOT use the display path or project slug.
@@ -269,7 +269,7 @@ async function uploadToFilesystem(args, context) {
     if (data.success) {
       return formatResponse({
         success: true,
-        message: `File "${name}" uploaded successfully to ${project ? `project ${project}` : 'Control Center filesystem'}`,
+        message: `File "${name}" uploaded successfully to ${project ? `project ${project}` : 'Fringelo filesystem'}`,
         path: data.path
       });
     } else {
@@ -298,7 +298,7 @@ async function createFolderInFilesystem(args, context) {
     if (data.success) {
       return formatResponse({
         success: true,
-        message: `Folder "${name}" created successfully in ${project ? `project ${project}` : 'Control Center filesystem'}`,
+        message: `Folder "${name}" created successfully in ${project ? `project ${project}` : 'Fringelo filesystem'}`,
         path: data.path
       });
     } else {

@@ -289,7 +289,7 @@ require_once 'services/ResendMailer.php';
 $mailer = new \ControlCenter\ResendMailer();
 $result = $mailer->send(
     'your-email@example.com',
-    'Test von Control Center',
+    'Test von Fringelo',
     '<h1>Es funktioniert!</h1>'
 );
 print_r($result);

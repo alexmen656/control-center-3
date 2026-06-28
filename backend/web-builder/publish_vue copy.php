@@ -29,7 +29,7 @@ if (!userHasProjectAccess($userId, $ccProjectId)) {
 $ccProject = getControlCenterProject($ccProjectId);
 
 if (!$ccProject) {
-    sendError('Linked Control Center project not found', 404);
+    sendError('Linked Fringelo project not found', 404);
 }
 
 $projectSlug = $ccProject['link'];

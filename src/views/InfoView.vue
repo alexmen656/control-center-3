@@ -2,7 +2,7 @@
   <ion-page>
     <!--  <ion-header>
         <ion-toolbar color="primary">
-          <ion-title>Control Center Info</ion-title>
+          <ion-title>Fringelo Info</ion-title>
         </ion-toolbar>
       </ion-header>-->
     <ion-content class="ion-padding">

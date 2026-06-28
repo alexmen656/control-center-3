@@ -27,7 +27,7 @@ if (!is_dir('.git')) {
         
         // Set basic config
         exec('git config user.email "test@controlcenter.dev" 2>&1');
-        exec('git config user.name "Control Center Test" 2>&1');
+        exec('git config user.name "Fringelo Test" 2>&1');
         echo "✓ Git config set<br>";
         
         // Create initial file

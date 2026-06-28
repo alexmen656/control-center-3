@@ -3,7 +3,7 @@
  * Web Builder Components API
  * 
  * Handles CRUD operations for web builder page components
- * Uses Control Center authentication
+ * Uses Fringelo authentication
  */
 
 require_once __DIR__ . '/api_base.php';

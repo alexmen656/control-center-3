@@ -192,7 +192,7 @@ function updateAPIBundle($projectName, $userID)
     } else {
         $indexContent = '// CMS APIs Integration
             // No APIs are currently subscribed for this project
-            // Subscribe to APIs in the main Control Center to get access
+            // Subscribe to APIs in the main Fringelo to get access
 
             export default {};
         ';

@@ -11,11 +11,11 @@
           <!-- Logo Section -->
           <div class="logo-section">
             <span class="logo">
-              Control Center
+              Fringelo
             </span>
             <h1 class="welcome-title" v-if="!createPasswordView">Create Account</h1>
             <h1 class="welcome-title" v-else>Complete Setup</h1>
-            <p class="welcome-subtitle" v-if="!createPasswordView">Join Control Center today</p>
+            <p class="welcome-subtitle" v-if="!createPasswordView">Join Fringelo today</p>
             <p class="welcome-subtitle" v-else>Create a password for your account</p>
           </div>
 

@@ -303,7 +303,7 @@
         <!-- Available APIs with toggle switches -->
         <div v-if="availableAPIs.length === 0" class="no-apis">
           No APIs subscribed for this project.<br>
-          <small>Subscribe to APIs in the main Control Center.</small>
+          <small>Subscribe to APIs in the main Fringelo.</small>
         </div>
 
         <div v-for="api in availableAPIs" :key="api.slug" class="api-item">

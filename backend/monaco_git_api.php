@@ -906,7 +906,7 @@ function commitChanges($projectPath, $message, $files, $project, $userID, $codes
     $commitData = [
         'hash' => $commitHash,
         'short_hash' => substr($commitHash, 0, 7),
-        'author' => 'Control Center User',
+        'author' => 'Fringelo User',
         'email' => 'user@controlcenter.dev',
         'date' => date('c'),
         'message' => $message,
@@ -957,7 +957,7 @@ function commitChanges($projectPath, $message, $files, $project, $userID, $codes
             'short_sha' => substr($commitHash, 0, 7),
             'message' => $message,
             'author' => [
-                'name' => 'Control Center User',
+                'name' => 'Fringelo User',
                 'email' => 'user@controlcenter.dev'
             ],
             'created_at' => date('c'),
