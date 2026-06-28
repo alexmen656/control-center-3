@@ -102,7 +102,6 @@ export default defineComponent({
         { icon: "people-outline", name: "Users" },
         { icon: "file-tray-full-outline", name: "Filesystem" },
         //{ icon: "bar-chart-outline", name: "Statistics" },
-        { icon: "mail-outline", name: "Emails" }
       ],
       dev_tools: [
         { icon: "key-outline", name: "Access Log" },

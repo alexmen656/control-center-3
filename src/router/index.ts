@@ -49,14 +49,6 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/AccessLog.vue"),
   },
   {
-    path: "/emails",
-    component: () => import("../views/IncomingEmailsView.vue"),
-  },
-  {
-    path: "/emails/:id",
-    component: () => import("../views/IncomingEmailsView.vue"),
-  },
-  {
     path: "/databases",
     component: DatabasesView,
   },
