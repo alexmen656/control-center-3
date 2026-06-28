@@ -53,21 +53,6 @@
   </ion-list>
 
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
-    <h4 v-if="!isCollapsed">AI Tools</h4>
-  </ion-note>
-  <ion-list :class="{ collapsed: isCollapsed }">
-    <ion-menu-toggle auto-hide="false">
-      <ion-item button @click="this.selectedIndex = 1 + tools.length + dev_tools.length" lines="none" detail="false"
-        router-link="/ai-website-generator" class="hydrated menu-item"
-        :class="{ selected: this.selectedIndex === 1 + tools.length + dev_tools.length, collapsed: isCollapsed }"
-        :data-tooltip="isCollapsed ? 'AI Website Generator' : ''">
-        <ion-icon slot="start" name="rocket-outline"></ion-icon>
-        <ion-label v-if="!isCollapsed">AI Website Generator</ion-label>
-      </ion-item>
-    </ion-menu-toggle>
-  </ion-list>
-
-  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
     <h4 v-if="!isCollapsed">Bookmarks</h4>
     <div v-if="!isCollapsed">
       <router-link to="/manage/bookmarks/"><ion-icon style="color: var(--ion-color-medium-shade)"
