@@ -8,7 +8,6 @@ import TableDetail from "../views/TableDetail.vue";
 import MyAccount from "../views/MyAccount.vue";
 import PhotoView from "../views/PhotoView.vue";
 import PinVerification from "../views/PinVerification.vue";
-import DefaultPage from "../components/DefaultPage.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -17,7 +16,7 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: "/projects",
-    component: DefaultPage,
+    component: () => import("../views/PageViev.vue"),
   },
   {
     path: "/login",
