@@ -178,7 +178,7 @@ try {
 }
 
 if (localStorage.getItem("token")) {
-  //location.href = "/home";
+  //location.href = "/projects";
 }
 
 interface VerificationData {

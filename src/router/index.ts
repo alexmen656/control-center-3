@@ -1,24 +1,23 @@
 import { createRouter, createWebHistory } from "@ionic/vue-router";
 import { RouteRecordRaw } from "vue-router";
-//import PageView from '../views/PageViev.vue'
 import LogIn from "../views/LogIn.vue";
 import LogInVerification from "../views/LogInVerification.vue";
-//import MessagesView from '../views/MesagesView.vue'
 import ChatsView from "../views/ChatsView.vue";
 import DatabasesView from "../views/Databases.vue";
 import TableDetail from "../views/TableDetail.vue";
 import MyAccount from "../views/MyAccount.vue";
 import PhotoView from "../views/PhotoView.vue";
 import PinVerification from "../views/PinVerification.vue";
+import DefaultPage from "../components/DefaultPage.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    redirect: "/dashboard",
+    redirect: "/projects",
   },
   {
-    path: "/home",
-    redirect: "/dashboard",
+    path: "/projects",
+    component: DefaultPage,
   },
   {
     path: "/login",
@@ -30,11 +29,11 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: "/messages",
-    component: ChatsView, //MessagesVeiw
+    component: ChatsView,
   },
   {
     path: "/messages/:id",
-    component: ChatsView, //MessagesVeiw
+    component: ChatsView,
   },
   {
     path: "/messages/new/group",
@@ -76,7 +75,7 @@ const routes: Array<RouteRecordRaw> = [
     path: "/manage/domains",
     component: () => import("../views/ManageDomains.vue"),
   },
-   {
+  {
     path: "/domains",
     component: () => import("../views/ManageDomains.vue"),
   },
@@ -326,7 +325,6 @@ const modules = import.meta.glob("@/modules/*/routes.ts", { eager: true });
 for (const path in modules) {
   const moduleRoutes = (modules[path] as { default: RouteRecordRaw[] }).default;
 
-  // Extract the module name from the folder name instead of the file name
   const moduleName =
     path
       .split("/")
@@ -334,7 +332,6 @@ for (const path in modules) {
       ?.replace(/[^a-zA-Z0-9]/g, "-")
       ?.toLowerCase() || "default-module";
 
-  // Modify each route to prepend `/project/:project/`
   const transformedRoutes = moduleRoutes.map((route) => ({
     ...route,
     path: `/project/:project${route.path.startsWith("/") ? "" : "/"}${
@@ -342,14 +339,7 @@ for (const path in modules) {
     }`,
   }));
 
-  // Add the `/config` route for each module
-  /*const configRoute: RouteRecordRaw = {
-    path: `/project/:project/${moduleName}/config`,
-    name: `${moduleName}-config`,
-    component: () => import(`@/views/ConfigView.vue`),
-  };*/
-
-  routes.push(...transformedRoutes); //, configRoute
+  routes.push(...transformedRoutes);
 }
 
 const services = import.meta.glob("@/user_services/*/routes.ts", {
@@ -360,7 +350,6 @@ for (const path in services) {
   const serviceRoutes = (services[path] as { default: RouteRecordRaw[] })
     .default;
 
-  // Modify each route to prepend `/project/:project/`
   const transformedRoutes = serviceRoutes.map((route) => ({
     ...route,
     path: `/project/:project${
@@ -371,7 +360,6 @@ for (const path in services) {
   routes.push(...transformedRoutes);
 }
 
-// Add the specified routes
 routes.push(
   {
     path: "/project/:project/forms/:form/edit",
@@ -398,7 +386,7 @@ routes.push(
   {
     path: "/:url(.*)",
     component: () => import("../views/PageViev.vue"),
-  }
+  },
 );
 
 const router = createRouter({

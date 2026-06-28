@@ -1,655 +1,497 @@
 <template>
-  <div class="modern-dashboard">
-    <!-- Header Section -->
-    <div class="dashboard-header">
-      <div class="header-content">
-        <div class="header-info">
-          <h1 class="dashboard-title">
-            <ion-icon name="grid-outline"></ion-icon>
-            Dashboard
-          </h1>
-          <!--<p class="dashboard-subtitle">Overview of your system metrics and quick access to key features</p>-->
-        </div>
-       <!-- <div class="header-stats">
-          <div class="stat-card">
-            <span class="stat-number">{{ tableData.length }}</span>
-            <span class="stat-label">Total Users</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-number">{{ data.datasets[0].data.reduce((a, b) => a + b, 0) }}</span>
-            <span class="stat-label">Total Sales</span>
-          </div>
-        </div>-->
-      </div>
+  <div>
+    <SiteTitle icon="grid-outline" title="Dashboard" />
+    <div class="projects-dashboard">
+    <!-- Page title -->
+    <div class="page-header">
+      <h1 class="page-title">
+        <ion-icon name="grid-outline"></ion-icon>
+        Projects
+      </h1>
+      <p class="page-subtitle">All your projects in one place</p>
     </div>
 
-    <!-- Quick Actions Grid -->
-    <div class="quick-actions">
-      <h3 class="section-title">Quick Actions</h3>
-      <div class="actions-grid">
-        <div class="action-card" @click="navigateTo('/users')">
-          <div class="action-icon">
-            <ion-icon name="people-outline"></ion-icon>
-          </div>
-          <div class="action-content">
-            <h4>Manage Users</h4>
-            <p>View and manage user accounts</p>
-          </div>
-          <ion-icon name="chevron-forward-outline" class="action-arrow"></ion-icon>
-        </div>
-
-        <div class="action-card" @click="navigateTo('/statistics')">
-          <div class="action-icon">
-            <ion-icon name="analytics-outline"></ion-icon>
-          </div>
-          <div class="action-content">
-            <h4>Statistics</h4>
-            <p>View system analytics</p>
-          </div>
-          <ion-icon name="chevron-forward-outline" class="action-arrow"></ion-icon>
-        </div>
-
-        <div class="action-card" @click="navigateTo('/dashboard')">
-          <div class="action-icon">
-            <ion-icon name="speedometer-outline"></ion-icon>
-          </div>
-          <div class="action-content">
-            <h4>Dashboard</h4>
-            <p>Main dashboard view</p>
-          </div>
-          <ion-icon name="chevron-forward-outline" class="action-arrow"></ion-icon>
-        </div>
-
-        <div class="action-card" @click="navigateTo('/project/alexs-blog')">
-          <div class="action-icon">
-            <ion-icon name="newspaper-outline"></ion-icon>
-          </div>
-          <div class="action-content">
-            <h4>Alex's Blog</h4>
-            <p>Manage blog content</p>
-          </div>
-          <ion-icon name="chevron-forward-outline" class="action-arrow"></ion-icon>
-        </div>
+    <!-- Header / toolbar (Vercel-style) -->
+    <div class="dashboard-toolbar">
+      <div class="search-wrapper">
+        <ion-icon name="search-outline" class="search-icon"></ion-icon>
+        <input type="text" v-model="searchTerm" class="search-input" placeholder="Search Projects..." />
       </div>
+      <button class="new-project-btn" @click="navigateTo('/new/project/')">
+        <ion-icon name="add-outline"></ion-icon>
+        <span>Add New</span>
+      </button>
     </div>
 
-    <!-- Analytics Section -->
-    <div class="analytics-section">
-      <h3 class="section-title">Analytics Overview</h3>
-      <div class="analytics-grid">
-        <!-- Charts Row -->
-        <div class="chart-container large">
-          <div class="chart-card">
-            <div class="chart-header">
-              <h4>Monthly Sales</h4>
-              <span class="chart-period">Last 5 months</span>
-            </div>
-            <div class="chart-content">
-              <BarChart
-                :data="{
-                  labels: ['January', 'February', 'March', 'April', 'May'],
-                  datasets: [
-                    {
-                      label: 'Sales',
-                      data: [40, 20, 12, 300, 123],
-                      backgroundColor: '#2563eb',
-                      borderRadius: 6,
-                    },
-                  ],
-                }"
-                :options="{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: { display: false }
-                  },
-                  scales: {
-                    y: { beginAtZero: true }
-                  }
-                }"
-              ></BarChart>
-            </div>
-          </div>
-        </div>
-
-        <!-- Side Charts -->
-        <div class="chart-container">
-          <div class="chart-card">
-            <div class="chart-header">
-              <h4>Technology Usage</h4>
-              <span class="chart-period">Current distribution</span>
-            </div>
-            <div class="chart-content">
-              <DonutChart :data="data" :options="chartOptions"></DonutChart>
-            </div>
-          </div>
-        </div>
-
-        <div class="chart-container">
-          <div class="chart-card">
-            <div class="chart-header">
-              <h4>Market Share</h4>
-              <span class="chart-period">By framework</span>
-            </div>
-            <div class="chart-content">
-              <PieChart :data="data" :options="chartOptions"></PieChart>
-            </div>
+    <!-- Loading -->
+    <div v-if="loading" class="projects-grid">
+      <div v-for="n in 6" :key="'skeleton-' + n" class="project-card skeleton">
+        <div class="card-top">
+          <div class="skeleton-avatar"></div>
+          <div class="skeleton-lines">
+            <div class="skeleton-line w-60"></div>
+            <div class="skeleton-line w-40"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Data Table Section -->
-    <div class="data-section">
-      <div class="data-card">
-        <div class="card-header">
-          <div class="header-left">
-            <h3>User Management</h3>
-            <span class="table-count">{{ tableData.length }} users</span>
+    <!-- Empty -->
+    <div v-else-if="filteredProjects.length === 0" class="empty-state">
+      <ion-icon name="folder-open-outline"></ion-icon>
+      <h3>{{ searchTerm ? 'No matching projects' : 'No projects yet' }}</h3>
+      <p>
+        {{ searchTerm
+          ? 'Try a different search term.'
+          : 'Create your first project to get started.' }}
+      </p>
+      <button v-if="!searchTerm" class="new-project-btn" @click="navigateTo('/new/project/')">
+        <ion-icon name="add-outline"></ion-icon>
+        <span>Add New</span>
+      </button>
+    </div>
+
+    <!-- Projects grid -->
+    <div v-else class="projects-grid">
+      <div v-for="project in filteredProjects" :key="project.id" class="project-card" @click="openProject(project)">
+        <div class="card-top">
+          <div class="project-avatar">
+            <ion-icon :name="project.icon || 'folder-outline'"></ion-icon>
           </div>
-          <div class="header-right">
-            <button class="action-btn primary" @click="navigateTo('/users')">
-              <ion-icon name="add-outline"></ion-icon>
-              Add User
-            </button>
+          <div class="project-meta">
+            <h3 class="project-name">{{ project.name }}</h3>
+            <div class="project-link">
+              <ion-icon name="link-outline"></ion-icon>
+              <span>{{ project.link }}</span>
+            </div>
           </div>
+          <ion-icon name="chevron-forward-outline" class="card-arrow"></ion-icon>
         </div>
-        <div class="card-content">
-          <TableCard :labels="labels" :data="tableData"></TableCard>
+        <div class="card-footer">
+          <span class="footer-tag">
+            <ion-icon name="cube-outline"></ion-icon>
+            Project
+          </span>
+          <span class="footer-open">Open</span>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import BarChart from "@/components/BarChart.vue";
-import TableCard from "@/components/TableCard.vue";
-import DonutChart from "@/components/DonutChart.vue";
-import PieChart from "@/components/PieChart.vue";
+import SiteTitle from "@/components/SiteTitle.vue";
+
+interface Project {
+  id: string | number;
+  name: string;
+  link: string;
+  icon?: string;
+}
 
 export default defineComponent({
   name: "DefaultPage",
+  components: {
+    SiteTitle,
+  },
   data() {
     return {
-      labels: ["ID", "Name"],
-      tableData: [
-        ["1", "Alex"],
-        ["2", "Matej"],
-        ["3", "Martin"],
-        ["4", "John"],
-        ["5", "Michael"],
-        ["6", "Elias"],
-        ["7", "Johann"],
-      ],
-      data: {
-        labels: ["VueJs", "EmberJs", "ReactJs", "AngularJs"],
-        datasets: [
-          {
-            backgroundColor: ["#2563eb", "#059669", "#dc2626", "#d97706"],
-            label: "Usage",
-            data: [990, 20, 80, 10],
-            borderWidth: [0, 0, 0, 0],
-          },
-        ],
-      },
-      chartOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { 
-            position: 'bottom',
-            labels: {
-              usePointStyle: true,
-              padding: 15
-            }
-          }
-        }
-      },
+      projects: [] as Project[],
+      loading: true,
+      searchTerm: "",
     };
   },
-  components: {
-    BarChart,
-    DonutChart,
-    PieChart,
-    TableCard,
+  computed: {
+    filteredProjects(): Project[] {
+      const term = this.searchTerm.trim().toLowerCase();
+      if (!term) return this.projects;
+      return this.projects.filter(
+        (p) =>
+          (p.name || "").toLowerCase().includes(term) ||
+          (p.link || "").toLowerCase().includes(term)
+      );
+    },
+  },
+  mounted() {
+    this.loadProjects();
   },
   methods: {
+    async loadProjects() {
+      this.loading = true;
+      try {
+        const response = await this.$axios.get("projects.php");
+        this.projects = Array.isArray(response.data) ? response.data : [];
+      } catch (error) {
+        console.error("Error loading projects:", error);
+        this.projects = [];
+      } finally {
+        this.loading = false;
+      }
+    },
+    openProject(project: Project) {
+      this.$router.push("/project/" + project.link);
+    },
     navigateTo(path: string) {
       this.$router.push(path);
-    }
-  }
+    },
+  },
 });
 </script>
+
 <style scoped>
-/* Modern Design System */
-.modern-dashboard {
+/* Design tokens */
+.projects-dashboard {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
   --background: #f8fafc;
   --surface: #ffffff;
+  --surface-hover: #f9fafb;
   --border: #e2e8f0;
+  --border-strong: #cbd5e1;
   --text-primary: #1e293b;
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-  
-  padding: 20px;
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.12);
+  --radius: 10px;
+
+  padding: 24px;
   max-width: 1400px;
   margin: 0 auto;
-  min-height: 100vh;
+  min-height: 100%;
   background: var(--background);
-  overflow: hidden;
 }
 
-/* Dashboard Header */
-.dashboard-header {
-  margin-bottom: 32px;
+/* Page header */
+.page-header {
+  margin-bottom: 24px;
 }
 
-.header-content {
+.page-title {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 24px;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 6px 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
 }
 
-.header-info {
-  flex: 1;
-  min-width: 300px;
+.page-title ion-icon {
+  font-size: 28px;
+  color: var(--primary-color);
 }
 
-.dashboard-title {
+.page-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Toolbar */
+.dashboard-toolbar {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 0 0 8px 0;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.search-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 18px;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 11px 14px 11px 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
   color: var(--text-primary);
-  font-size: 32px;
-  font-weight: 700;
-  letter-spacing: -0.025em;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.dashboard-title ion-icon {
-  font-size: 36px;
-  color: var(--primary-color);
+.search-input::placeholder {
+  color: var(--text-muted);
 }
 
-.dashboard-subtitle {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 16px;
-  line-height: 1.5;
+.search-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
-.header-stats {
-  display: flex;
+.new-project-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 18px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+
+.new-project-btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.new-project-btn ion-icon {
+  font-size: 18px;
+}
+
+/* Grid */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
 }
 
-.stat-card {
+/* Card */
+.project-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 16px 24px;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  min-width: 100px;
-  overflow: hidden;
-}
-
-.stat-number {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--primary-color);
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-top: 4px;
-  text-align: center;
-}
-
-/* Section Titles */
-.section-title {
-  margin: 0 0 20px 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Quick Actions */
-.quick-actions {
-  margin-bottom: 48px;
-}
-
-.actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-}
-
-.action-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   box-shadow: var(--shadow);
   cursor: pointer;
-  transition: all 0.2s ease;
-  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    transform 0.15s ease;
 }
 
-.action-card:hover {
-  transform: translateY(-2px);
+.project-card:not(.skeleton):hover {
+  border-color: var(--border-strong);
   box-shadow: var(--shadow-md);
-  border-color: var(--primary-color);
+  transform: translateY(-2px);
 }
 
-.action-icon {
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.project-avatar {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  background: rgba(37, 99, 235, 0.1)/*linear-gradient(135deg, var(--primary-color), var(--primary-hover))*/;
-  border-radius: var(--radius);
-  color: var(--primary-color);
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary-color);
 }
 
-.action-icon ion-icon {
-  font-size: 24px;
+.project-avatar ion-icon {
+  font-size: 22px;
 }
 
-.action-content {
+.project-meta {
   flex: 1;
   min-width: 0;
 }
 
-.action-content h4 {
+.project-name {
   margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  line-height: 1.3;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.action-content p {
-  margin: 0;
+.project-link {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   color: var(--text-secondary);
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: 13px;
+  min-width: 0;
 }
 
-.action-arrow {
-  color: var(--text-muted);
-  font-size: 20px;
-  transition: all 0.2s ease;
+.project-link ion-icon {
+  font-size: 14px;
   flex-shrink: 0;
 }
 
-.action-card:hover .action-arrow {
-  color: var(--primary-color);
-  transform: translateX(4px);
-}
-
-/* Analytics Section */
-.analytics-section {
-  margin-bottom: 48px;
-}
-
-.analytics-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 20px;
-}
-
-.chart-container {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+.project-link span {
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.chart-container.large {
-  grid-row: span 2;
+.card-arrow {
+  color: var(--text-muted);
+  font-size: 18px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, color 0.15s ease;
 }
 
-.chart-card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+.project-card:hover .card-arrow {
+  color: var(--primary-color);
+  transform: translateX(3px);
 }
 
-.chart-header {
-  padding: 20px 20px 0 20px;
-  border-bottom: 1px solid var(--border);
-}
-
-.chart-header h4 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.chart-period {
-  color: var(--text-secondary);
-  font-size: 12px;
-}
-
-.chart-content {
-  flex: 1;
-  padding: 20px;
+.card-footer {
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: 200px;
-}
-
-.chart-container.large .chart-content {
-  min-height: 300px;
-}
-
-/* Data Section */
-.data-section {
-  margin-bottom: 32px;
-}
-
-.data-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-}
-
-.card-header {
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  background: linear-gradient(135deg, var(--background), var(--surface));
-  display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
 }
 
-.header-left h3 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.table-count {
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.header-right {
-  display: flex;
-  gap: 12px;
-}
-
-.action-btn {
+.footer-tag {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.footer-tag ion-icon {
   font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: var(--surface);
+}
+
+.footer-open {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.project-card:hover .footer-open {
+  opacity: 1;
+  color: var(--primary-color);
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-state ion-icon {
+  font-size: 56px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  font-weight: 600;
   color: var(--text-primary);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
 }
 
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+.empty-state p {
+  margin: 0 0 20px 0;
+  font-size: 14px;
 }
 
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
+/* Skeleton */
+.project-card.skeleton {
+  cursor: default;
 }
 
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
+.skeleton-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  background: var(--border);
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
-.action-btn ion-icon {
-  font-size: 16px;
+.skeleton-lines {
+  flex: 1;
 }
 
-.card-content {
-  padding: 24px;
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--border);
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
-/* Responsive Design */
-@media (max-width: 1200px) {
-  .analytics-grid {
-    grid-template-columns: 1fr 1fr;
+.skeleton-line.w-60 {
+  width: 60%;
+  margin-bottom: 8px;
+}
+
+.skeleton-line.w-40 {
+  width: 40%;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
   }
-  
-  .chart-container.large {
-    grid-column: span 2;
-    grid-row: span 1;
+
+  50% {
+    opacity: 0.5;
   }
 }
 
+/* Responsive */
 @media (max-width: 768px) {
-  .modern-dashboard {
+  .projects-dashboard {
     padding: 16px;
   }
-  
-  .header-content {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .dashboard-title {
-    font-size: 28px;
-  }
-  
-  .actions-grid {
+
+  .projects-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .analytics-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .chart-container.large {
-    grid-column: span 1;
-    grid-row: span 1;
-  }
-  
-  .card-header {
-    padding: 20px;
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .header-right {
-    justify-content: stretch;
-  }
-  
-  .action-btn {
-    justify-content: center;
   }
 }
 
-@media (max-width: 480px) {
-  .modern-dashboard {
-    padding: 12px;
-  }
-  
-  .dashboard-title {
-    font-size: 24px;
-  }
-  
-  .header-stats {
-    flex-direction: column;
-    width: 100%;
-  }
-  
-  .stat-card {
-    flex-direction: row;
-    gap: 12px;
-  }
-  
-  .action-card {
-    padding: 16px;
-  }
-  
-  .card-header,
-  .card-content {
-    padding: 16px;
-  }
-  
-  .chart-content {
-    min-height: 180px;
-  }
-}
-
+/* Dark mode */
 @media (prefers-color-scheme: dark) {
-  .modern-dashboard {
+  .projects-dashboard {
     --background: #121212;
     --surface: #1a1a1a;
+    --surface-hover: #222222;
     --border: #2a2a2a;
+    --border-strong: #3a3a3a;
     --text-primary: #f1f5f9;
     --text-secondary: #b0b0b0;
     --text-muted: #707070;
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4);
+    --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.5);
   }
 }
 </style>

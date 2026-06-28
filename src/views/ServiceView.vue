@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle :icon="service?.icon || 'cog-outline'" :title="service?.name || 'Service'" bg="#121212"/>
+      <SiteTitle :icon="service?.icon || 'cog-outline'" :title="service?.name || 'Service'" bg="#121212" />
 
       <div class="page-container">
         <!-- Loading State -->
@@ -35,10 +35,7 @@
               </div>
             </div>
             <div class="service-status">
-              <span 
-                class="status-badge"
-                :class="getStatusClass(service.status)"
-              >
+              <span class="status-badge" :class="getStatusClass(service.status)">
                 <ion-icon :name="getStatusIcon(service.status)"></ion-icon>
                 {{ getStatusText(service.status) }}
               </span>
@@ -56,13 +53,8 @@
                 </h2>
               </div>
               <div class="card-content">
-                <ApiKeyManager 
-                  ref="apiKeyManager"
-                  :projectId="projectId" 
-                  :service="service.link"
-                  :hideTitle="true"
-                  @create-key="showApiKeyModal = true"
-                />
+                <ApiKeyManager ref="apiKeyManager" :projectId="projectId" :service="service.link" :hideTitle="true"
+                  @create-key="showApiKeyModal = true" />
               </div>
             </div>
 
@@ -74,7 +66,8 @@
                   Status Monitoring
                 </h2>
                 <div class="card-actions">
-                  <ion-select v-model="statusSelectedDays" placeholder="Zeitraum" interface="popover" @ionChange="refreshStatusHistory" style="width: 120px; margin-right: 8px;">
+                  <ion-select v-model="statusSelectedDays" placeholder="Zeitraum" interface="popover"
+                    @ionChange="refreshStatusHistory" style="width: 120px; margin-right: 8px;">
                     <ion-select-option value="1">24 Stunden</ion-select-option>
                     <ion-select-option value="3">3 Tage</ion-select-option>
                     <ion-select-option value="7">7 Tage</ion-select-option>
@@ -87,12 +80,8 @@
                 </div>
               </div>
               <div class="card-content">
-                <ServiceStatusHistory
-                  ref="statusHistory"
-                  :projectId="projectId"
-                  :service="service.link"
-                  :hideTitle="true"
-                />
+                <ServiceStatusHistory ref="statusHistory" :projectId="projectId" :service="service.link"
+                  :hideTitle="true" />
               </div>
             </div>
 
@@ -104,7 +93,8 @@
                   Service Logs
                 </h2>
                 <div class="card-actions">
-                  <ion-select v-model="logTypeFilter" placeholder="Log Type" interface="popover" @ionChange="refreshLogs" style="width: 120px; margin-right: 8px;">
+                  <ion-select v-model="logTypeFilter" placeholder="Log Type" interface="popover"
+                    @ionChange="refreshLogs" style="width: 120px; margin-right: 8px;">
                     <ion-select-option value="">All Types</ion-select-option>
                     <ion-select-option value="info">Info</ion-select-option>
                     <ion-select-option value="warn">Warning</ion-select-option>
@@ -112,26 +102,17 @@
                     <ion-select-option value="success">Success</ion-select-option>
                     <ion-select-option value="debug">Debug</ion-select-option>
                   </ion-select>
-                  <input
-                    type="text"
-                    v-model="logSearchQuery"
-                    placeholder="Search logs..."
+                  <input type="text" v-model="logSearchQuery" placeholder="Search logs..."
                     style="width: 150px; margin-right: 8px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px;"
-                    @input="onLogSearch"
-                  />
+                    @input="onLogSearch" />
                   <button class="icon-btn" @click="refreshLogs" title="Refresh Logs">
                     <ion-icon name="refresh-outline"></ion-icon>
                   </button>
                 </div>
               </div>
               <div class="card-content">
-                <ServiceLogs
-                  ref="serviceLogs"
-                  :projectId="projectId"
-                  :service="service.link"
-                  :limit="logLimit"
-                  :hideTitle="true"
-                />
+                <ServiceLogs ref="serviceLogs" :projectId="projectId" :service="service.link" :limit="logLimit"
+                  :hideTitle="true" />
               </div>
             </div>
 
@@ -143,10 +124,8 @@
                   Configuration
                 </h2>
                 <div class="card-actions">
-                  <button 
-                    class="action-btn secondary"
-                    @click="$router.push(`/project/${$route.params.project}/services/${service.link}/config`)"
-                  >
+                  <button class="action-btn secondary"
+                    @click="$router.push(`/project/${$route.params.project}/services/${service.link}/config`)">
                     <ion-icon name="cog-outline"></ion-icon>
                     Configure
                   </button>
@@ -255,20 +234,16 @@
           <!-- Modal Content -->
           <div class="modal-body">
             <div class="modal-description">
-              <p>API keys allow external services to send logs to this service. Use these keys in your API requests with the <code>X-Api-Key</code> header.</p>
+              <p>API keys allow external services to send logs to this service. Use these keys in your API requests with
+                the <code>X-Api-Key</code> header.</p>
             </div>
 
             <!-- Form Fields -->
             <div class="form-fields">
               <div class="form-group">
                 <label class="form-label">Key Name</label>
-                <input
-                  v-model="newKey.name"
-                  type="text"
-                  class="form-input"
-                  placeholder="Enter a descriptive name"
-                  required
-                />
+                <input v-model="newKey.name" type="text" class="form-input" placeholder="Enter a descriptive name"
+                  required />
                 <div class="form-help">
                   A descriptive name to identify this API key.
                 </div>
@@ -276,12 +251,8 @@
 
               <div class="form-group">
                 <label class="form-label">Description (Optional)</label>
-                <textarea
-                  v-model="newKey.description"
-                  class="form-textarea"
-                  placeholder="Enter description"
-                  rows="3"
-                ></textarea>
+                <textarea v-model="newKey.description" class="form-textarea" placeholder="Enter description"
+                  rows="3"></textarea>
                 <div class="form-help">
                   Optional description explaining what this key is used for.
                 </div>
@@ -289,12 +260,8 @@
 
               <div class="form-group">
                 <label class="form-label">Expiration Date (Optional)</label>
-                <input
-                  v-model="newKey.expires_at"
-                  type="datetime-local"
-                  class="form-input"
-                  placeholder="mm/dd/yyyy, --:-- --"
-                />
+                <input v-model="newKey.expires_at" type="datetime-local" class="form-input"
+                  placeholder="mm/dd/yyyy, --:-- --" />
                 <div class="form-help">
                   Leave empty for no expiration. Key will be automatically deactivated after this date.
                 </div>
@@ -334,7 +301,7 @@
               </div>
               <h3>Your API Key is Ready!</h3>
               <p>Copy this key now - it won't be shown again in full.</p>
-              
+
               <div class="new-key-display">
                 <div class="key-container">
                   <code class="api-key-code">{{ createdKey }}</code>
@@ -343,7 +310,7 @@
                   </button>
                 </div>
               </div>
-              
+
               <div class="usage-example">
                 <h4>Usage Example:</h4>
                 <div class="code-block">
@@ -426,7 +393,7 @@ export default {
   methods: {
     fetchServiceDetails() {
       this.loading = true;
-      
+
       // Find the service in the project's services list
       this.$axios.post(
         'services.php',
@@ -435,21 +402,21 @@ export default {
           project: this.$route.params.project,
         })
       )
-      .then(response => {
-        const services = response.data || [];
-        this.service = services.find(s => s.link === this.$route.params.service);
-        
-        // Get project ID for logs
-        if (this.service) {
-          this.fetchProjectId();
-        }
-        
-        this.loading = false;
-      })
-      .catch(error => {
-        console.error('Error fetching service:', error);
-        this.loading = false;
-      });
+        .then(response => {
+          const services = response.data || [];
+          this.service = services.find(s => s.link === this.$route.params.service);
+
+          // Get project ID for logs
+          if (this.service) {
+            this.fetchProjectId();
+          }
+
+          this.loading = false;
+        })
+        .catch(error => {
+          console.error('Error fetching service:', error);
+          this.loading = false;
+        });
     },
     fetchProjectId() {
       this.$axios.post(
@@ -459,15 +426,15 @@ export default {
           project: this.$route.params.project,
         })
       )
-      .then(response => {
-        if (response.data && response.data.projectID) {
-          this.projectId = response.data.projectID;
-          this.fetchLogs();
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching project ID:', error);
-      });
+        .then(response => {
+          if (response.data && response.data.projectID) {
+            this.projectId = response.data.projectID;
+            this.fetchLogs();
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching project ID:', error);
+        });
     },
     resetLogs() {
       this.logs = [];
@@ -476,7 +443,7 @@ export default {
     },
     fetchLogs() {
       if (!this.projectId || !this.service) return;
-      
+
       this.loadingLogs = true;
       const params = {
         project_id: this.projectId,
@@ -484,47 +451,47 @@ export default {
         limit: this.logLimit,
         offset: this.logOffset
       };
-      
+
       if (this.logTypeFilter) {
         params.type = this.logTypeFilter;
       }
-      
+
       // Convert params to query string
       const queryParams = new URLSearchParams();
       for (const key in params) {
         queryParams.append(key, params[key]);
       }
-      
+
       this.$axios.get(`api/service_logs.php?${queryParams.toString()}`, {
         headers: {
           'Authorization': localStorage.getItem('token')
         }
       })
-      .then(response => {
-        if (response.data.success && response.data.data) {
-          if (response.data.data.length < this.logLimit) {
-            this.hasMoreLogs = false;
+        .then(response => {
+          if (response.data.success && response.data.data) {
+            if (response.data.data.length < this.logLimit) {
+              this.hasMoreLogs = false;
+            }
+
+            if (this.logOffset === 0) {
+              this.logs = response.data.data;
+            } else {
+              this.logs = [...this.logs, ...response.data.data];
+            }
           }
-          
-          if (this.logOffset === 0) {
-            this.logs = response.data.data;
-          } else {
-            this.logs = [...this.logs, ...response.data.data];
-          }
-        }
-        this.loadingLogs = false;
-      })
-      .catch(error => {
-        console.error('Error fetching logs:', error);
-        this.loadingLogs = false;
-      });
+          this.loadingLogs = false;
+        })
+        .catch(error => {
+          console.error('Error fetching logs:', error);
+          this.loadingLogs = false;
+        });
     },
     loadMoreLogs(event) {
       if (!this.hasMoreLogs) {
         event.target.complete();
         return;
       }
-      
+
       this.logOffset += this.logLimit;
       this.fetchLogs();
       event.target.complete();
@@ -534,7 +501,7 @@ export default {
       this.showLogModal = true;
     },
     getBadgeColor(status) {
-      switch(status) {
+      switch (status) {
         case 'active': return 'success';
         case 'maintenance': return 'warning';
         case 'inactive': return 'danger';
@@ -542,7 +509,7 @@ export default {
       }
     },
     getStatusText(status) {
-      switch(status) {
+      switch (status) {
         case 'active': return 'Active';
         case 'maintenance': return 'Maintenance';
         case 'inactive': return 'Inactive';
@@ -550,7 +517,7 @@ export default {
       }
     },
     getStatusClass(status) {
-      switch(status) {
+      switch (status) {
         case 'active': return 'status-active';
         case 'maintenance': return 'status-maintenance';
         case 'inactive': return 'status-inactive';
@@ -558,7 +525,7 @@ export default {
       }
     },
     getStatusIcon(status) {
-      switch(status) {
+      switch (status) {
         case 'active': return 'checkmark-circle-outline';
         case 'maintenance': return 'construct-outline';
         case 'inactive': return 'close-circle-outline';
@@ -651,7 +618,7 @@ export default {
       });
     },
     getLogIcon(type) {
-      switch(type) {
+      switch (type) {
         case 'info': return 'information-circle-outline';
         case 'warn': return 'warning-outline';
         case 'error': return 'alert-circle-outline';
@@ -660,7 +627,7 @@ export default {
       }
     },
     getLogColor(type) {
-      switch(type) {
+      switch (type) {
         case 'info': return 'primary';
         case 'warn': return 'warning';
         case 'error': return 'danger';
@@ -670,20 +637,20 @@ export default {
     },
     formatDate(dateString) {
       const date = new Date(dateString);
-      return new Intl.DateTimeFormat('default', { 
-        month: 'short', 
-        day: 'numeric', 
-        hour: '2-digit', 
+      return new Intl.DateTimeFormat('default', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
         minute: '2-digit'
       }).format(date);
     },
     formatDateFull(dateString) {
       const date = new Date(dateString);
-      return new Intl.DateTimeFormat('default', { 
+      return new Intl.DateTimeFormat('default', {
         year: 'numeric',
-        month: 'long', 
-        day: 'numeric', 
-        hour: '2-digit', 
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
         minute: '2-digit',
         second: '2-digit'
       }).format(date);
@@ -989,8 +956,13 @@ export default {
 
 /* Animations */
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Pre formatting for logs */
@@ -1042,37 +1014,37 @@ pre {
   .page-container {
     padding: 16px;
   }
-  
+
   .service-header {
     flex-direction: column;
     align-items: flex-start;
     text-align: center;
   }
-  
+
   .service-info {
     flex-direction: column;
     text-align: center;
     width: 100%;
   }
-  
+
   .service-status {
     align-self: center;
   }
-  
+
   .service-cards-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .card-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .card-actions {
     align-self: flex-end;
   }
-  
+
   .config-item {
     flex-direction: column;
     align-items: flex-start;
@@ -1086,11 +1058,11 @@ pre {
     height: 48px;
     font-size: 24px;
   }
-  
+
   .service-details h1 {
     font-size: 20px;
   }
-  
+
   .card-content {
     padding: 16px;
   }
@@ -1130,6 +1102,7 @@ pre {
     opacity: 0;
     transform: scale(0.95) translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);

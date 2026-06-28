@@ -97,11 +97,9 @@ export default defineComponent({
     return {
       version: import.meta.env.VITE_APP_VERSION ?? "0.0.0",
       tools: [
-        { icon: "home-outline", name: "Home" },
-        //{ icon: "chatbubbles-outline", name: "Messages" },
+        { icon: "apps-outline", name: "Projects" },
         { icon: "people-outline", name: "Users" },
         { icon: "file-tray-full-outline", name: "Filesystem" },
-        //{ icon: "bar-chart-outline", name: "Statistics" },
       ],
       dev_tools: [
         { icon: "key-outline", name: "Access Log" },

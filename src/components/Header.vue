@@ -6,20 +6,13 @@
       </ion-buttons>
       <ion-title @click="goToStart()" @dblclick="toggleSidebar()" class="logo-title">
         <div class="logo-container">
-          <img class="logo-image" src="/assets/logo.png" alt="Logo"/>
+          <img class="logo-image" src="/assets/logo.png" alt="Logo" />
           <span class="logo-text">Fringelo</span>
         </div>
-      </ion-title><!--{{ title }}-->
-      <router-link
-        style="height: 36px; margin-right: 5px"
-        slot="end"
-        to="/my-account/"
-        ><Avatar
-          :profileImg="user.profileImg"
-          :firstName="user.firstName"
-          :lastName="user.lastName"
-          avatarColor="green"
-        />
+      </ion-title>
+      <router-link style="height: 36px; margin-right: 5px" slot="end" to="/my-account/">
+        <Avatar :profileImg="user.profileImg" :firstName="user.firstName" :lastName="user.lastName"
+          avatarColor="green" />
       </router-link>
     </ion-toolbar>
   </ion-header>
@@ -55,7 +48,7 @@ export default defineComponent({
   },
   methods: {
     goToStart() {
-     this.$router.push("/");
+      this.$router.push("/");
     },
     toggleSidebar() {
       this.$emit('toggleSidebar');
@@ -65,7 +58,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* Logo Title Styling */
 .logo-title {
   font-size: 20px;
   cursor: pointer !important;
@@ -90,22 +82,13 @@ export default defineComponent({
 
 .logo-text {
   font-weight: 700;
-  font-size: 22px;
+  font-size: 24px;
   color: var(--ion-color-primary);
   letter-spacing: -0.8px;
   line-height: 1;
   transition: color 0.2s ease;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
-
-/* Hover effects */
-/*.logo-title:hover .logo-image {
-  transform: scale(1.05);
-}
-
-.logo-title:hover .logo-text {
-  color: var(--ion-color-primary-shade);
-}*/
 
 .logo-title:active .logo-image {
   transform: scale(0.98);
@@ -116,15 +99,15 @@ export default defineComponent({
   .logo-title {
     text-align: center;
   }
-  
+
   .logo-container {
     justify-content: center;
   }
-  
+
   .logo-text {
     font-size: 18px;
   }
-  
+
   .logo-image {
     height: 28px;
   }
@@ -135,17 +118,16 @@ export default defineComponent({
     font-size: 16px;
     letter-spacing: -0.3px;
   }
-  
+
   .logo-image {
     height: 32px;
   }
-  
+
   .logo-container {
     gap: 10px;
   }
 }
 
-/* Header styling */
 ion-footer ion-toolbar {
   color: #000;
 }
@@ -155,15 +137,14 @@ ion-toolbar,
 .header {
   --background: #eff3f6;
   box-shadow: none;
- /* border-bottom: 1px solid rgba(0, 0, 0, 0.05);*/
 }
 
 @media (prefers-color-scheme: dark) {
+
   ion-header,
   ion-toolbar,
   .header {
     --background: #1e1e1e;
-    /*border-bottom: 1px solid rgba(255, 255, 255, 0.1);*/
   }
 }
 
@@ -176,7 +157,6 @@ ion-toolbar {
   --padding-end: 8px;
 }
 
-/* Mobile header improvements */
 @media only screen and (max-width: 600px) {
   ion-header {
     position: relative !important;
@@ -185,7 +165,7 @@ ion-toolbar {
   ion-toolbar {
     height: 56px !important;
   }
-  
+
   ion-toolbar,
   .header {
     height: 56px !important;
@@ -195,8 +175,9 @@ ion-toolbar {
     border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
     box-shadow: 0;
   }
-  
+
   @media (prefers-color-scheme: dark) {
+
     ion-toolbar,
     .header {
       --background: #1e1e1e !important;

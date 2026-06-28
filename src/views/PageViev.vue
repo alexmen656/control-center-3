@@ -42,6 +42,11 @@ export default defineComponent({
 
 .modern-content {
   --background: #f8fafc;
-  background: var(--background);
+}
+
+@media (prefers-color-scheme: dark) {
+  .modern-content {
+    --background: #121212;
+  }
 }
 </style>

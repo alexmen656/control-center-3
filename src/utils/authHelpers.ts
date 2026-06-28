@@ -10,11 +10,11 @@ export function checkPendingVerification(userData) {
     (location.pathname == allowedPaths2[0] ||
       location.pathname == allowedPaths2[1])
   ) {
-    location.href = "/home";
+    location.href = "/projects";
   }
- }
+}
 
-  export function checkLoginStatus() {
+export function checkLoginStatus() {
   const allowedPaths = [
     "/login",
     "/login/verification/",
@@ -32,67 +32,75 @@ export function checkPendingVerification(userData) {
 }
 
 export async function checkProjectAccess() {
-  // Check if user has project assignment and enforce access restrictions
   try {
     const token = localStorage.getItem("token");
     if (!token) return;
-    
-    // Decode JWT to get user info (basic parsing, assuming JWT structure)
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    
+
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map(function (c) {
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join(""),
+    );
+
     const userInfo = JSON.parse(jsonPayload);
     const userID = userInfo.sub;
-    
-    // Make API call to check project assignment
-    const response = await fetch('https://api.fringelo.com/users.php', {
-      method: 'POST',
+
+    const response = await fetch("https://api.fringelo.com/users.php", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': token
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: token,
       },
       body: new URLSearchParams({
-        getUserAssignments: 'true'
-      })
+        getUserAssignments: "true",
+      }),
     });
-    
+
     if (response.ok) {
       const data = await response.json();
       if (data.success) {
-        const userAssignment = data.assignments.find(a => a.user_id == userID);
-        
+        const userAssignment = data.assignments.find(
+          (a) => a.user_id == userID,
+        );
+
         if (userAssignment && userAssignment.project_link) {
-          // User has project assignment - restrict access to everything except their project and profile
           const currentPath = location.pathname;
           const assignedProjectPath = `/project/${userAssignment.project_link}`;
-          
-          // Allow access to profile-related pages
           const allowedPaths = [
-            '/my-account', '/my-account/',
-            '/profile', '/profile/',
-            '/my-profile', '/my-profile/',
-            '/account', '/account/',
-            '/logout', '/logout/',
-            assignedProjectPath, `${assignedProjectPath}/`
+            "/my-account",
+            "/my-account/",
+            "/profile",
+            "/profile/",
+            "/my-profile",
+            "/my-profile/",
+            "/account",
+            "/account/",
+            "/logout",
+            "/logout/",
+            assignedProjectPath,
+            `${assignedProjectPath}/`,
           ];
-          
-          // Check if current path starts with assigned project path or is an allowed path
+
           const isProjectPath = currentPath.startsWith(assignedProjectPath);
-          const isAllowedPath = allowedPaths.some(path => 
-            currentPath.startsWith(path) || currentPath === path
+          const isAllowedPath = allowedPaths.some(
+            (path) => currentPath.startsWith(path) || currentPath === path,
           );
-          
+
           if (!isProjectPath && !isAllowedPath) {
-            // Redirect to assigned project for any other path
             location.href = assignedProjectPath;
             return;
           }
-          
-          // If user is on home page, redirect to their assigned project
-          if (currentPath === '/' || currentPath === '/home' || currentPath === '/home/') {
+
+          if (
+            currentPath === "/" ||
+            currentPath === "/projects" ||
+            currentPath === "/projects/"
+          ) {
             location.href = assignedProjectPath;
             return;
           }
@@ -100,6 +108,6 @@ export async function checkProjectAccess() {
       }
     }
   } catch (error) {
-    console.error('Error checking project access:', error);
+    console.error("Error checking project access:", error);
   }
 }
