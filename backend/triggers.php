@@ -14,7 +14,7 @@ class FormTriggers {
             project VARCHAR(255) NOT NULL,
             form_name VARCHAR(255) NOT NULL,
             trigger_event ENUM('insert', 'update', 'delete') NOT NULL,
-            notification_type ENUM('email', 'telegram', 'discord', 'sms') NOT NULL,
+            notification_type ENUM('email', 'discord', 'sms') NOT NULL,
             notification_target TEXT NOT NULL,
             message_template TEXT NOT NULL,
             is_active BOOLEAN DEFAULT TRUE,
@@ -44,9 +44,6 @@ class FormTriggers {
         $message = $this->replacePlaceholders($trigger['message_template'], $data);
         
         switch($trigger['notification_type']) {
-            case 'telegram':
-                $this->sendTelegram($trigger['notification_target'], $message);
-                break;
             case 'discord':
                 $this->sendDiscord($trigger['notification_target'], $message);
                 break;
@@ -65,32 +62,6 @@ class FormTriggers {
             $message = str_replace("{" . $key . "}", $value, $message);
         }
         return $message;
-    }
-    
-    private function sendTelegram($target, $message) {
-        // Parse target (format: "token:chatid")
-        $parts = explode(':', $target);
-        if (count($parts) != 2) return false;
-        
-        $token = $parts[0];
-        $chatId = $parts[1];
-        
-        $url = "https://api.telegram.org/bot{$token}/sendMessage";
-        $postData = json_encode([
-            'chat_id' => $chatId,
-            'text' => $message,
-            'parse_mode' => 'HTML'
-        ]);
-        
-        $context = stream_context_create([
-            'http' => [
-                'method' => 'POST',
-                'header' => 'Content-Type: application/json',
-                'content' => $postData
-            ]
-        ]);
-        
-        return file_get_contents($url, false, $context);
     }
     
     private function sendDiscord($webhookUrl, $message) {

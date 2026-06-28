@@ -42,7 +42,6 @@
                   <select v-model="newTrigger.type" class="modern-select">
                     <option value="">Select Type</option>
                     <option value="email">📧 Email</option>
-                    <option value="telegram">📱 Telegram</option>
                     <option value="discord">💬 Discord</option>
                     <option value="sms">📲 SMS</option>
                   </select>
@@ -58,16 +57,6 @@
                   class="modern-input" 
                   placeholder="user@example.com"
                 >
-              </div>
-
-              <div class="form-group full-width" v-if="newTrigger.type === 'telegram'">
-                <label class="form-label">Telegram (Token:ChatID)</label>
-                <input 
-                  v-model="newTrigger.target" 
-                  class="modern-input" 
-                  placeholder="1234567890:ABCDEF:123456789"
-                >
-                <span class="input-hint">Format: bot_token:chat_id</span>
               </div>
 
               <div class="form-group full-width" v-if="newTrigger.type === 'discord'">
@@ -217,7 +206,6 @@ export default defineComponent({
     getNotificationIcon(type) {
       const icons = {
         email: '📧',
-        telegram: '📱',
         discord: '💬',
         sms: '📲'
       };

@@ -31,7 +31,6 @@
                   <ion-select-option value="ai_dashboard">
                     AI Dashboard Generator</ion-select-option
                   >
-                  <!--<ion-select-option value="qr_code_scanner"> QR Code Scanner</ion-select-option>-->
                 </ion-select>
               </ion-item>
             </ion-list>

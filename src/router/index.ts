@@ -289,14 +289,6 @@ const routes: Array<RouteRecordRaw> = [
     path: "/project/:project/chat-app/config",
     component: () => import("../views/ChatAppConfig.vue"),
   },
-  {
-    path: "/project/:project/nfc",
-    component: () => import("../views/NFCView.vue"),
-  },
-  {
-    path: "/project/:project/nfc/config",
-    component: () => import("../views/NFCConfigView.vue"),
-  },
   /*{
     path: "/project/:project/web-builder",
     component: () => import("../views/WebBuilderView.vue"),
