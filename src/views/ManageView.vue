@@ -847,12 +847,12 @@ export default defineComponent({
 }
 
 .info-btn {
-  background: #eff6ff;
+  background: rgba(59, 130, 246, 0.12);
   color: var(--primary-color);
 }
 
 .info-btn:hover {
-  background: #dbeafe;
+  background: rgba(59, 130, 246, 0.22);
 }
 
 .toggle-btn {
@@ -865,21 +865,21 @@ export default defineComponent({
 }
 
 .edit-btn {
-  background: #f0fdf4;
+  background: rgba(45, 211, 111, 0.12);
   color: var(--success-color);
 }
 
 .edit-btn:hover {
-  background: #dcfce7;
+  background: rgba(45, 211, 111, 0.22);
 }
 
 .delete-btn {
-  background: #fef2f2;
+  background: rgba(235, 68, 90, 0.12);
   color: var(--danger-color);
 }
 
 .delete-btn:hover {
-  background: #fee2e2;
+  background: rgba(235, 68, 90, 0.22);
 }
 
 /* Modal Styles */

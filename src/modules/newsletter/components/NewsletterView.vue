@@ -877,22 +877,22 @@ export default defineComponent({
 }
 
 .view-btn {
-  background: #eff6ff;
+  background: rgba(59, 130, 246, 0.12);
   color: var(--primary-color);
 }
 
 .view-btn:hover {
-  background: #dbeafe;
+  background: rgba(59, 130, 246, 0.22);
   transform: scale(1.05);
 }
 
 .delete-btn {
-  background: #fef2f2;
+  background: rgba(235, 68, 90, 0.12);
   color: var(--danger-color);
 }
 
 .delete-btn:hover {
-  background: #fee2e2;
+  background: rgba(235, 68, 90, 0.22);
   transform: scale(1.05);
 }
 

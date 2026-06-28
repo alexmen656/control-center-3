@@ -896,7 +896,7 @@ export default defineComponent({
 }
 
 .action-btn.danger:hover {
-  background: #fef2f2;
+  background: rgba(235, 68, 90, 0.12);
   color: var(--danger-color);
 }
 

@@ -1449,12 +1449,12 @@ textarea.modern-input {
 }
 
 .edit-btn {
-  background: #eff6ff;
+  background: rgba(59, 130, 246, 0.12);
   color: var(--primary-color);
 }
 
 .edit-btn:hover {
-  background: #dbeafe;
+  background: rgba(59, 130, 246, 0.22);
   transform: scale(1.05);
 }
 

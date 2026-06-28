@@ -968,7 +968,7 @@ async function showToast(message: string, color: string = 'primary') {
   height: 32px;
   border-radius: var(--radius);
   border: none;
-  background: #eff6ff;
+  background: rgba(59, 130, 246, 0.12);
   color: var(--primary-color);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -976,17 +976,17 @@ async function showToast(message: string, color: string = 'primary') {
 }
 
 .action-icon-btn:hover {
-  background: #dbeafe;
+  background: rgba(59, 130, 246, 0.22);
   transform: scale(1.05);
 }
 
 .action-icon-btn.delete {
-  background: #fef2f2;
+  background: rgba(235, 68, 90, 0.12);
   color: var(--danger-color);
 }
 
 .action-icon-btn.delete:hover {
-  background: #fee2e2;
+  background: rgba(235, 68, 90, 0.22);
   transform: scale(1.05);
 }
 

@@ -580,7 +580,7 @@ export default defineComponent({
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: #fef2f2;
+  background: rgba(235, 68, 90, 0.12);
   color: var(--danger-color);
   border: none;
   border-radius: var(--radius);
@@ -589,7 +589,7 @@ export default defineComponent({
 }
 
 .danger-btn-small:hover {
-  background: #fee2e2;
+  background: rgba(235, 68, 90, 0.22);
   transform: scale(1.05);
 }
 
