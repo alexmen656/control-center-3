@@ -9,18 +9,6 @@
         <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
       </ion-item>
     </ion-menu-toggle>
-  </ion-list>
-  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
-    <h4 v-if="!isCollapsed">Dev Tools</h4>
-    <div v-if="!isCollapsed">
-      <router-link to="/manage/projects/"><ion-icon style="color: var(--ion-color-medium-shade)"
-          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/projects/"><ion-icon
-          style="color: var(--ion-color-medium-shade)"
-          name="information-circle-outline"></ion-icon></router-link><router-link to="/new/project/"><ion-icon
-          style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>
-    </div>
-  </ion-note>
-  <ion-list :class="{ collapsed: isCollapsed }">
     <ion-menu-toggle auto-hide="false" v-for="(p, i) in dev_tools" :key="i">
       <ion-item button @click="this.selectedIndex = i + tools.length" lines="none" detail="false"
         :router-link="'/' + p.name.toLowerCase().replaceAll(' ', '-') + '/'" class="hydrated menu-item"
@@ -32,33 +20,10 @@
     </ion-menu-toggle>
   </ion-list>
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
-    <h4 v-if="!isCollapsed">Projects</h4>
-    <div v-if="!isCollapsed">
-      <router-link to="/manage/projects/"><ion-icon style="color: var(--ion-color-medium-shade)"
-          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/projects/"><ion-icon
-          style="color: var(--ion-color-medium-shade)"
-          name="information-circle-outline"></ion-icon></router-link><router-link to="/new/project/"><ion-icon
-          style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>
-    </div>
-  </ion-note>
-  <ion-list :class="{ collapsed: isCollapsed }">
-    <ion-menu-toggle auto-hide="false" v-for="(p, i) in projects" :key="i">
-      <ion-item button lines="none" detail="false" @click="goToProject(p.link)" class="hydrated menu-item"
-        :class="{ collapsed: isCollapsed }"
-        :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''"><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
-        <ion-icon slot="start" :name="p.icon ? p.icon : 'folder-outline'"></ion-icon>
-        <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
-      </ion-item>
-    </ion-menu-toggle>
-  </ion-list>
-
-  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
     <h4 v-if="!isCollapsed">Bookmarks</h4>
     <div v-if="!isCollapsed">
       <router-link to="/manage/bookmarks/"><ion-icon style="color: var(--ion-color-medium-shade)"
-          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/info/bookmarks/"><ion-icon
-          style="color: var(--ion-color-medium-shade)"
-          name="information-circle-outline"></ion-icon></router-link><!--<router-link to="/new/bookmark/"><ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>-->
+          name="ellipsis-horizontal-circle-outline" /></router-link><!--<router-link to="/new/bookmark/"><ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>-->
     </div>
   </ion-note>
   <ion-list v-if="bookmarks.length > 0" :class="{ collapsed: isCollapsed }">
@@ -70,6 +35,25 @@
         v-if="p.title"><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
         <ion-icon slot="start" :name="p.icon ? p.icon : 'help-circle-outline'"></ion-icon>
         <ion-label v-if="!isCollapsed">{{ p.title[0].toUpperCase() }}{{ p.title.substring(1) }}</ion-label>
+      </ion-item>
+    </ion-menu-toggle>
+  </ion-list>
+
+  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
+    <h4 v-if="!isCollapsed">Projects</h4>
+    <div v-if="!isCollapsed">
+      <router-link to="/manage/projects/"><ion-icon style="color: var(--ion-color-medium-shade)"
+          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/new/project/"><ion-icon
+          style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>
+    </div>
+  </ion-note>
+  <ion-list :class="{ collapsed: isCollapsed }">
+    <ion-menu-toggle auto-hide="false" v-for="(p, i) in projects" :key="i">
+      <ion-item button lines="none" detail="false" @click="goToProject(p.link)" class="hydrated menu-item"
+        :class="{ collapsed: isCollapsed }"
+        :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''"><!-- @click="this.selectedIndex = i" //  :class="{ selected: this.selectedIndex === i }"-->
+        <ion-icon slot="start" :name="p.icon ? p.icon : 'folder-outline'"></ion-icon>
+        <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
       </ion-item>
     </ion-menu-toggle>
   </ion-list>
