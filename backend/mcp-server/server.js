@@ -26,7 +26,6 @@ import { fileTools, handleFileTool } from './tools/files.js';
 import { codespaceTools, handleCodespaceTool } from './tools/codespaces.js';
 import { userTools, handleUserTool } from './tools/users.js';
 import { webBuilderTools, handleWebBuilderTool } from './tools/webbuilder.js';
-import { appstoreTools, handleAppstoreTool } from './tools/appstore.js';
 import { domainTools, handleDomainTool } from './tools/domains.js';
 
 // Import resources
@@ -94,7 +93,6 @@ function createMcpServer(user) {
       ...codespaceTools,
       ...userTools,
       ...webBuilderTools,
-      ...appstoreTools,
       ...domainTools
     ];
 
@@ -125,8 +123,6 @@ function createMcpServer(user) {
         return await handleUserTool(name, args, context);
       } else if (name.startsWith('webbuilder_')) {
         return await handleWebBuilderTool(name, args, context);
-      } else if (name.startsWith('appstore_')) {
-        return await handleAppstoreTool(name, args, context);
       } else if (name.startsWith('domain_')) {
         return await handleDomainTool(name, args, context);
       }
