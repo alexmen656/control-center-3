@@ -168,11 +168,6 @@ Authorization: Bearer <jwt_token>
 | `content_form_submissions` | Formular-Einsendungen |
 | `content_newsletter_list` | Newsletter-Abonnenten |
 | `content_newsletter_send` | Newsletter senden |
-| `content_tasks_list` | Tasks auflisten |
-| `content_task_create` | Task erstellen |
-| `content_task_update` | Task aktualisieren |
-| `content_notepad_get` | Notepad lesen |
-| `content_notepad_save` | Notepad speichern |
 
 ### Datei-Management
 

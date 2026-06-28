@@ -129,10 +129,6 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/ManageStore.vue"),
   },
   {
-    path: "/notepad/",
-    component: () => import("../views/NotePad.vue"),
-  },
-  {
     path: "/info/icons/",
     component: () => import("../views/AllIcons.vue"),
   },
@@ -302,14 +298,6 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/project/:project/chat-app/config",
     component: () => import("../views/ChatAppConfig.vue"),
-  },
-  {
-    path: "/project/:project/my-tasks",
-    component: () => import("../views/MyTasks.vue"),
-  },
-  {
-    path: "/project/:project/my-tasks/config",
-    component: () => import("../views/ConfigView.vue"),
   },
   {
     path: "/project/:project/nfc",

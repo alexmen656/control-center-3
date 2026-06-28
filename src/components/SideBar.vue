@@ -99,11 +99,9 @@ export default defineComponent({
       tools: [
         { icon: "home-outline", name: "Home" },
         //{ icon: "chatbubbles-outline", name: "Messages" },
-        { icon: "calendar-outline", name: "My Tasks" },
         { icon: "people-outline", name: "Users" },
         { icon: "file-tray-full-outline", name: "Filesystem" },
         //{ icon: "bar-chart-outline", name: "Statistics" },
-        { icon: "library-outline", name: "Notepad" },
         { icon: "mail-outline", name: "Emails" }
       ],
       dev_tools: [
