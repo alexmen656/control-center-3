@@ -60,10 +60,6 @@
                 <ion-icon name="document-outline"></ion-icon>
                 <span>{{ countComponentsByType(template, 'page') }} {{ countComponentsByType(template, 'page') == 1 ? 'Page' : 'Pages'}}</span>
               </div>
-              <div class="stat-item" v-if="countComponentsByType(template, 'service') > 0">
-                <ion-icon name="server-outline"></ion-icon>
-                <span>{{ countComponentsByType(template, 'service') }} Services</span>
-              </div>
               <div class="stat-item" v-if="countComponentsByType(template, 'api') > 0">
                 <ion-icon name="code-slash-outline"></ion-icon>
                 <span>{{ countComponentsByType(template, 'api') }} APIs</span>
@@ -83,16 +79,6 @@
         <ion-list>
           <ion-item v-for="component in getComponentsByType(selectedTemplate, 'tool')" :key="'tool-'+component.id">
             <ion-icon :name="component.icon || 'build-outline'" slot="start"></ion-icon>
-            <ion-label>{{ component.name }}</ion-label>
-          </ion-item>
-        </ion-list>
-      </div>
-      
-      <div class="component-group" v-if="getComponentsByType(selectedTemplate, 'service').length > 0">
-        <h5>Services</h5>
-        <ion-list>
-          <ion-item v-for="component in getComponentsByType(selectedTemplate, 'service')" :key="'service-'+component.id">
-            <ion-icon :name="component.icon || 'server-outline'" slot="start"></ion-icon>
             <ion-label>{{ component.name }}</ion-label>
           </ion-item>
         </ion-list>

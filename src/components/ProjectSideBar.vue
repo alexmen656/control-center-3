@@ -95,11 +95,11 @@
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
       <ion-menu-toggle auto-hide="false" v-for="(codespace, i) in filteredCodespaces" :key="`codespace-${i}`">
         <ion-item
-          @click="this.selectedIndex = Number(tools.length) + Number(forms.length) + Number(components.length) + Number(services.length) + Number(i) + 1"
+          @click="this.selectedIndex = Number(tools.length) + Number(forms.length) + Number(components.length) + Number(i) + 1"
           lines="none" detail="false"
           :router-link="'/project/' + $route.params.project + '/codespace/' + codespace.slug" class="hydrated menu-item"
           :class="{
-            selected: this.selectedIndex === Number(tools.length) + Number(forms.length) + Number(components.length) + Number(services.length) + Number(i) + 1,
+            selected: this.selectedIndex === Number(tools.length) + Number(forms.length) + Number(components.length) + Number(i) + 1,
             collapsed: isCollapsed,
             hasToBeDarkmode: hasToBeDarkmode
           }" :data-tooltip="isCollapsed ? codespace.name : ''">
@@ -185,32 +185,6 @@
     </ion-reorder-group>
   </ion-list>
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed && isAdminOrOwner">
-    <h4 v-if="!isCollapsed">Services</h4>
-    <div v-if="!isCollapsed">
-      <router-link v-for="(action, idx) in serviceActions" :key="idx" :to="action.to">
-        <ion-icon style="color: var(--ion-color-medium-shade)" :name="action.icon" />
-      </router-link>
-    </div>
-  </ion-note>
-  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }" v-if="isAdminOrOwner">
-    <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
-      <ion-menu-toggle auto-hide="false" v-for="(p, i) in filteredServices" :key="i">
-        <ion-item @click="this.selectedIndex = Number(i) + Number(tools.length) + Number(components.length) + 1"
-          lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/services/' + p.link"
-          class="hydrated menu-item" :class="{
-            selected: this.selectedIndex === Number(i) + Number(tools.length) + Number(components.length) + 1,
-            collapsed: isCollapsed,
-            hasToBeDarkmode: hasToBeDarkmode
-          }" :data-tooltip="isCollapsed ? p.name : ''"><!-- target="_blank"-->
-          <ion-icon slot="start" :name="p.icon || 'cog-outline'" />
-          <ion-label v-if="!isCollapsed">{{ p.name }}</ion-label>
-          <span class="service-status-indicator"
-            :class="{ 'status-up': p.status === 'up', 'status-down': p.status === 'down' }"></span>
-        </ion-item>
-      </ion-menu-toggle>
-    </ion-reorder-group>
-  </ion-list>
-  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed && isAdminOrOwner">
     <h4>APIs</h4>
     <div>
       <router-link v-for="(action, idx) in apiActions" :key="idx" :to="action.to">
@@ -222,10 +196,10 @@
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
       <ion-menu-toggle auto-hide="false" v-for="(api, i) in filteredApis" :key="`api-${i}`">
         <ion-item
-          @click="this.selectedIndex = Number(tools.length) + Number(components.length) + Number(services.length) + Number(i) + 1"
+          @click="this.selectedIndex = Number(tools.length) + Number(components.length) + Number(i) + 1"
           lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/apis/' + api.slug"
           class="hydrated menu-item" :class="{
-            selected: this.selectedIndex === Number(tools.length) + Number(components.length) + Number(services.length) + Number(i) + 1,
+            selected: this.selectedIndex === Number(tools.length) + Number(components.length) + Number(i) + 1,
             collapsed: isCollapsed,
             hasToBeDarkmode: hasToBeDarkmode
           }" :data-tooltip="isCollapsed ? api.name : ''">
@@ -327,7 +301,6 @@ export default defineComponent({
     const tools = ref<SidebarTool[]>([]);
     const sections = ref<SidebarSection[]>([]);
     const components = ref([]);
-    const services = ref([]);
     const apis = ref([]);
     const codespaces = ref([]);
     const forms = ref<SidebarForm[]>([]);
@@ -372,11 +345,6 @@ export default defineComponent({
       return [];
     });
 
-    const filteredServices = computed(() => {
-      if (isAdminOrOwner.value) return services.value;
-      return [];
-    });
-
     const filteredCodespaces = computed(() => {
       if (isAdminOrOwner.value) return codespaces.value;
       return [];
@@ -390,7 +358,7 @@ export default defineComponent({
     const shouldShowSection = (sectionName: string) => {
       if (isAdminOrOwner.value) return true;
 
-      const adminOnlySections = ['APIs', 'Services', 'Codespaces', 'Web Builder'];
+      const adminOnlySections = ['APIs', 'Codespaces', 'Web Builder'];
       return !adminOnlySections.includes(sectionName);
     };
 
@@ -555,7 +523,6 @@ export default defineComponent({
           sections.value = response.data.sections || [];
           tools.value = response.data.tools || [];
           components.value = response.data.components || [];
-          services.value = response.data.services || [];
           apis.value = response.data.apis || [];
           codespaces.value = response.data.codespaces || [];
           forms.value = response.data.forms || [];
@@ -605,15 +572,6 @@ export default defineComponent({
       ];
     });
 
-    const serviceActions = computed(() => {
-      const projectPath = '/project/' + route.params.project;
-      return [
-        { to: projectPath + '/manage/services', icon: 'ellipsis-horizontal-circle-outline' },
-        { to: '/info/services/', icon: 'information-circle-outline' },
-        { to: projectPath + '/new/service', icon: 'add-circle-outline' }
-      ];
-    });
-
     const apiActions = computed(() => {
       const projectPath = '/project/' + route.params.project;
       return [
@@ -631,7 +589,6 @@ export default defineComponent({
       selectedToolIndex,
       selectedItemIndex,
       components,
-      services,
       apis,
       codespaces,
       forms,
@@ -660,13 +617,11 @@ export default defineComponent({
       loadSidebarData,
       webBuilderActions,
       codespaceActions,
-      serviceActions,
       apiActions,
       userPermissions,
       userRole,
       isAdminOrOwner,
       filteredApis,
-      filteredServices,
       filteredCodespaces,
       filteredComponents,
       shouldShowSection,
@@ -734,21 +689,6 @@ ion-item.new-tool ion-icon {
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-.service-status-indicator {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-left: 8px;
-}
-
-.service-status-indicator.status-up {
-  background-color: green;
-}
-
-.service-status-indicator.status-down {
-  background-color: red;
 }
 
 .api-status-indicator {

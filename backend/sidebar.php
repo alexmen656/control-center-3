@@ -209,48 +209,6 @@ if (isset($headers['Authorization'])) {
             }
         }
 
-        $services = query("SELECT * FROM project_services WHERE projectID='$projectID'");
-
-        if (mysqli_num_rows($services) == 0) {
-            $json['services'] = [];
-        } else {
-            $s = 0;
-            foreach ($services as $service) {
-                $service_id = $service['id'];
-                $service_link = $service['link'];
-
-                // Status ermitteln - 'down' als Standardwert
-                $status = 'down';
-
-                // Überprüfen des letzten Logs (Ping) für diesen Service
-                $sql = "SELECT * FROM control_center_services_logs 
-                        WHERE project_id = '$projectID' 
-                        AND service = '$service_link'
-                        ORDER BY timestamp DESC 
-                        LIMIT 1";
-
-                $last_log = query($sql);
-
-                if (mysqli_num_rows($last_log) > 0) {
-                    $log = fetch_assoc($last_log);
-                    $last_ping_time = strtotime($log['timestamp']);
-                    $current_time = time();
-
-                    // Wenn der letzte Ping weniger als 30 Minuten zurückliegt, betrachten wir den Service als 'up'
-                    if (($current_time - $last_ping_time) < (30 * 60)) {
-                        $status = 'up';
-                    }
-                }
-
-                $json['services'][$s]["id"] = $service['id'];
-                $json['services'][$s]["icon"] = $service['icon'];
-                $json['services'][$s]["name"] = $service['name'];
-                $json['services'][$s]["link"] = $service['link'];
-                $json['services'][$s]["status"] = $status;
-                $s++;
-            }
-        }
-
         // Get subscribed APIs for this project
         $subscribed_apis = query("
             SELECT pas.*, ca.name, ca.slug, ca.icon, ca.category

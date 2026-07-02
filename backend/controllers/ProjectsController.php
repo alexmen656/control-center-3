@@ -169,9 +169,7 @@ class ProjectsController
             ['page/main', 'Main', '', 'true'],
             ['module-store', 'Module Store', '', 'false'],
             ['package-manager', 'Package Manager', '', 'true'],
-            ['filesystem', 'Filesystem', 'file-tray-full-outlinepr', 'true'],
-            ['new/service', 'New Service', '', 'true'],
-            ['manage/services', 'Manage Services', '', 'true']
+            ['filesystem', 'Filesystem', 'file-tray-full-outlinepr', 'true']
         ];
 
         $urls = [];
@@ -206,12 +204,6 @@ class ProjectsController
             $response->error('Failed to add user to project', 500);
             return;
         }
-
-        $serviceUrl = "project/$href/services/my-service";
-        query("INSERT INTO project_services VALUES (0, 'cog-outline', 'My Service', 'my-service', 'Default service for your project', 'active', '$projectID')");
-        query("INSERT INTO control_center_pages VALUES
-            (0, '$serviceUrl', 'true', 'cog-outline', 'My Service', '', 0),
-            (0, '$serviceUrl/config', 'true', 'cog-outline', 'My Service Config', '', 0)");
 
         if (createFileSystem($projectID)) {
             $response->success(['projectID' => $projectID, 'link' => $href], 'The project was created successfully.');

@@ -126,7 +126,6 @@ Authorization: Bearer <jwt_token>
 | `project_get` | Projekt-Details abrufen |
 | `project_update` | Projekt aktualisieren |
 | `project_delete` | Projekt löschen |
-| `project_get_services` | Services/Module eines Projekts |
 | `project_get_users` | Projekt-Benutzer auflisten |
 | `project_add_user` | Benutzer zum Projekt hinzufügen |
 | `project_apply_template` | Projekt aus Template erstellen |

@@ -90,7 +90,6 @@ export default {
       // Resource detail pages link their type crumb back to the list/manage page.
       const LISTS = {
         forms: "manage/forms",
-        services: "manage/services",
         apis: "manage/apis",
         page: "manage/pages",
         pages: "manage/pages",

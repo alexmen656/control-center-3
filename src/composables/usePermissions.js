@@ -74,11 +74,6 @@ export function usePermissions(project) {
     const canCreatePages = computed(() => hasPermission('pages', 'create'));
     const canEditPages = computed(() => hasPermission('pages', 'edit'));
     const canDeletePages = computed(() => hasPermission('pages', 'delete'));
-    const canViewServices = computed(() => hasPermission('services', 'view'));
-    const canCreateServices = computed(() => hasPermission('services', 'create'));
-    const canEditServices = computed(() => hasPermission('services', 'edit'));
-    const canDeleteServices = computed(() => hasPermission('services', 'delete'));
-    const canConfigureServices = computed(() => hasPermission('services', 'configure'));
     const canViewFilesystem = computed(() => hasPermission('filesystem', 'view'));
     const canCreateFiles = computed(() => hasPermission('filesystem', 'create'));
     const canEditFiles = computed(() => hasPermission('filesystem', 'edit'));
@@ -126,11 +121,6 @@ export function usePermissions(project) {
         canCreatePages,
         canEditPages,
         canDeletePages,
-        canViewServices,
-        canCreateServices,
-        canEditServices,
-        canDeleteServices,
-        canConfigureServices,
         canViewFilesystem,
         canCreateFiles,
         canEditFiles,

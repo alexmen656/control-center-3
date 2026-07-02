@@ -32,9 +32,7 @@ function handleCreateProject($userID)
         ['page/main', 'Main', '', 'true'],
         ['module-store', 'Module Store', '', 'false'],
         ['package-manager', 'Package Manager', '', 'true'],
-        ['filesystem', 'Filesystem', 'file-tray-full-outlinepr', 'true'],
-        ['new/service', 'New Service', '', 'true'],
-        ['manage/services', 'Manage Services', '', 'true']
+        ['filesystem', 'Filesystem', 'file-tray-full-outlinepr', 'true']
     ];
 
     $urls = [];
@@ -69,12 +67,6 @@ function handleCreateProject($userID)
         echo jsonResponse("Failed to add user to project", false);
         exit;
     }
-
-    $serviceUrl = "project/$href/services/my-service";
-    query("INSERT INTO project_services VALUES (0, 'cog-outline', 'My Service', 'my-service', 'Default service for your project', 'active', '$projectID')");
-    query("INSERT INTO control_center_pages VALUES 
-        (0, '$serviceUrl', 'true', 'cog-outline', 'My Service', '', 0),
-        (0, '$serviceUrl/config', 'true', 'cog-outline', 'My Service Config', '', 0)");
 
     echo createFileSystem($projectID)
         ? jsonResponse('The project was created successfully. <a href="/paxar/projects/' . $href . '/">Go to the project</a>')

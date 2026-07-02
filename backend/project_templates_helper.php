@@ -122,28 +122,6 @@ function applyTemplate($templateId, $projectName, $projectIcon, $headers) {
                     ];
                     break;
                     
-                case 'service':
-                    $description = isset($config['description']) ? $config['description'] : '';
-                    
-                    query("INSERT INTO project_services (projectID, name, icon, link, description) 
-                           VALUES ('$projectID', '$componentName', '$icon', '$link', '$description')");
-
-                    $endpointsConfig[] = [
-                        'path' => 'services/'.$link,
-                        'title' => $componentName,
-                        'icon' => $icon,
-                        'isVisible' => 'true'
-                    ];
-
-                    $endpointsConfig[] = [
-                        'path' => 'services/'.$link.'/config',
-                        'title' => $componentName.' Config',
-                        'icon' => 'cog-outline',
-                        'isVisible' => 'true'
-                    ];
-
-                    break;
-                    
                 case 'api':
                     break;
             }
@@ -208,18 +186,6 @@ function applyTemplate($templateId, $projectName, $projectIcon, $headers) {
                 'path' => 'filesystem',
                 'title' => 'Filesystem',
                 'icon' => 'file-tray-full-outlinepr',
-                'isVisible' => 'true'
-            ],
-            [
-                'path' => 'new/service',
-                'title' => 'New Service',
-                'icon' => '',
-                'isVisible' => 'true'
-            ],
-            [
-                'path' => 'manage/services',
-                'title' => 'Manage Services',
-                'icon' => '',
                 'isVisible' => 'true'
             ],
             [

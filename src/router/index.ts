@@ -234,22 +234,6 @@ const routes: Array<RouteRecordRaw> = [
     path: "/project/:project/module-store",
     component: () => import("../views/StoreOverview.vue"),
   },
-  {
-    path: "/project/:project/new/service",
-    component: () => import("../views/NewService.vue"),
-  },
-  {
-    path: "/project/:project/manage/services",
-    component: () => import("../views/ManageServices.vue"),
-  },
-  {
-    path: "/project/:project/services/:service",
-    component: () => import("../views/ServiceView.vue"),
-  },
-  {
-    path: "/project/:project/services/:service/config",
-    component: () => import("../views/ServiceConfigView.vue"),
-  },
   // Codespace Routes
   {
     path: "/project/:project/manage/codespaces",
@@ -328,24 +312,6 @@ for (const path in modules) {
     path: `/project/:project${route.path.startsWith("/") ? "" : "/"}${
       route.path
     }`,
-  }));
-
-  routes.push(...transformedRoutes);
-}
-
-const services = import.meta.glob("@/user_services/*/routes.ts", {
-  eager: true,
-});
-
-for (const path in services) {
-  const serviceRoutes = (services[path] as { default: RouteRecordRaw[] })
-    .default;
-
-  const transformedRoutes = serviceRoutes.map((route) => ({
-    ...route,
-    path: `/project/:project${
-      route.path.startsWith("/") ? "/services" : "/services/"
-    }${route.path}`,
   }));
 
   routes.push(...transformedRoutes);

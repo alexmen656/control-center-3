@@ -89,20 +89,6 @@ export const projectTools = [
     }
   },
   {
-    name: 'project_get_services',
-    description: 'Get all services/modules within a project',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        }
-      },
-      required: ['project']
-    }
-  },
-  {
     name: 'project_get_users',
     description: 'Get users who have access to a project',
     inputSchema: {
@@ -187,9 +173,6 @@ export async function handleProjectTool(toolName, args, context) {
       
     case 'project_delete':
       return await deleteProject(args, context);
-      
-    case 'project_get_services':
-      return await getProjectServices(args, context);
       
     case 'project_get_users':
       return await getProjectUsers(args, context);
@@ -298,24 +281,6 @@ async function deleteProject(args, context) {
     return formatResponse({
       success: true,
       message: data.message || 'Project deleted successfully'
-    });
-  } catch (error) {
-    return formatError(error.message);
-  }
-}
-
-async function getProjectServices(args, context) {
-  try {
-    const data = await cmsRequest('services.php', {
-      body: {
-        getServices: 'true',
-        project: args.project
-      }
-    }, context);
-    
-    return formatResponse({
-      success: true,
-      services: data.services || data
     });
   } catch (error) {
     return formatError(error.message);
