@@ -4,26 +4,27 @@ require_once __DIR__ . '/../filesystem.php';
 
 class FilesystemController
 {
-    /**
-     * GET /v2/filesystem
-     * Get directory structure
-     */
     public function getStructure(Request $request, Response $response): void
     {
         $projectLink = $request->input('project');
+        if (!$projectLink) {
+            $response->error('project is required', 400);
+            return;
+        }
         $fs = new FilesystemManager($projectLink);
         $response->json($fs->getDirectoryStructure());
     }
 
-    /**
-     * POST /v2/filesystem/folder
-     * Create a folder
-     */
     public function createFolder(Request $request, Response $response): void
     {
         $projectLink = $request->input('project');
         $name = $request->input('name');
         $parentId = $request->input('parentId', 0);
+
+        if (!$projectLink) {
+            $response->error('project is required', 400);
+            return;
+        }
 
         if (!$name) {
             $response->error('name is required', 400);
@@ -43,6 +44,11 @@ class FilesystemController
     {
         $projectLink = $request->input('project');
         $parentId = $request->input('parentId', 0);
+
+        if (!$projectLink) {
+            $response->error('project is required', 400);
+            return;
+        }
 
         if (!isset($_FILES['files'])) {
             $response->error('No files uploaded', 400);
@@ -68,6 +74,11 @@ class FilesystemController
         $sourceId = $request->input('sourceId');
         $targetFolderId = $request->input('targetFolderId');
 
+        if (!$projectLink) {
+            $response->error('project is required', 400);
+            return;
+        }
+
         if (!$sourceId || $targetFolderId === null) {
             $response->error('sourceId and targetFolderId are required', 400);
             return;
@@ -88,6 +99,11 @@ class FilesystemController
         $name = $request->input('name', '');
         $directory = $request->input('directory', '');
 
+        if (!$projectLink) {
+            $response->error('project is required', 400);
+            return;
+        }
+
         if (!$name) {
             $response->error('name is required', 400);
             return;
@@ -107,6 +123,11 @@ class FilesystemController
         $projectLink = $request->input('project');
         $name = $request->input('name', '');
         $directory = $request->input('directory', '');
+
+        if (!$projectLink) {
+            $response->error('project is required', 400);
+            return;
+        }
 
         if (!$name) {
             $response->error('name is required', 400);

@@ -44,20 +44,26 @@ if ($action === 'upload_file') {
         exit;
     }
     
+    // The global (control center) filesystem has been removed. A project is required.
+    if (!$project) {
+        echo json_encode(['success' => false, 'message' => 'A project is required']);
+        exit;
+    }
+
     try {
-        if ($project) {
+        {
             $projectData = fetch_assoc(query("SELECT projectID FROM projects WHERE link='$project'"));
             if (!$projectData) {
                 echo json_encode(['success' => false, 'message' => 'Project not found']);
                 exit;
             }
             $projectID = $projectData['projectID'];
-            
+
             $dir = '/var/www/api.fringelo.com/project_filesystems/' . $projectID;
-            
+
             $parentQuery = query("SELECT id FROM project_filesystem WHERE name = '$directory' AND projectID = '$projectID'");
             $parentId = $parentQuery ? $parentQuery->fetch_assoc()['id'] : 0;
-            
+
             if ($parentId == 0 && !empty($directory)) {
                 echo json_encode(['success' => false, 'message' => 'Parent directory not found']);
                 exit;

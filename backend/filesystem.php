@@ -30,13 +30,11 @@ class FilesystemManager
 
     public function __construct($projectLink = null)
     {
-        if ($projectLink) {
-            $this->initializeProjectFilesystem($projectLink);
-        } else {
-            $this->tableName = 'control_center_filesystem';
-            $this->baseDir = self::BASE_PATH;
-            $this->projectID = null;
+        if (!$projectLink) {
+            throw new Exception('A project is required');
         }
+
+        $this->initializeProjectFilesystem($projectLink);
     }
 
     private function initializeProjectFilesystem($projectLink)

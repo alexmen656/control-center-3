@@ -90,7 +90,6 @@ export default defineComponent({
       tools: [
         { icon: "apps-outline", name: "Projects" },
         { icon: "people-outline", name: "Users" },
-        { icon: "file-tray-full-outline", name: "Filesystem" },
       ],
       dev_tools: [
         { icon: "key-outline", name: "Access Log" },
