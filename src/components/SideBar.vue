@@ -57,17 +57,23 @@
       </ion-item>
     </ion-menu-toggle>
   </ion-list>
-  <div v-if="!isCollapsed" class="version-footer">
+  <div v-if="!isCollapsed" class="version-footer" @click="isVersionModalOpen = true">
     <ion-icon name="information-circle-outline"></ion-icon>
     <span>v{{ version }}</span>
   </div>
+
+  <VersionInfoModal :is-open="isVersionModalOpen" @close="isVersionModalOpen = false" />
 </template>
 
 <script>
 import { defineComponent, ref } from "vue";
+import VersionInfoModal from "@/components/VersionInfoModal.vue";
 
 export default defineComponent({
   name: "SideBar",
+  components: {
+    VersionInfoModal,
+  },
   props: {
     //tools: Array,
     bookmarks: Array,
@@ -79,6 +85,7 @@ export default defineComponent({
   },
   data() {
     return {
+      isVersionModalOpen: false,
       version: import.meta.env.VITE_APP_VERSION ?? "0.0.0",
       tools: [
         { icon: "apps-outline", name: "Projects" },

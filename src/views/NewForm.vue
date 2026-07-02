@@ -560,7 +560,6 @@ export default defineComponent({
   background: var(--background);
 }
 
-/* Page header */
 .page-header {
   margin-bottom: 24px;
 }

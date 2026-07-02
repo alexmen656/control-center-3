@@ -2,18 +2,25 @@
   <div class="navigation-tree" :style="'--background: ' + bg_color">
     <div class="tree-container">
       <!-- Breadcrumb Navigation -->
-      <nav class="breadcrumb-nav">
-        <div class="breadcrumb-path">
-          <span class="breadcrumb-item home-item">
-            <ion-icon name="home-outline" class="home-icon"></ion-icon>
-            <span>Home</span>
-          </span>
-          <ion-icon name="chevron-forward-outline" class="separator-icon"></ion-icon>
-          <span class="breadcrumb-item" v-if="$route.params.project">{{ $route.params.project }}</span>
-          <ion-icon name="chevron-forward-outline" class="separator-icon" v-if="$route.params.project"></ion-icon>
-          <span class="breadcrumb-current" v-if="title">{{ title[0].toUpperCase() + title.slice(1) }}</span>
-          <span class="breadcrumb-current" v-else>Page</span>
-        </div>
+      <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+        <ol class="breadcrumb-path">
+          <template v-for="(crumb, idx) in crumbs" :key="idx">
+            <li class="breadcrumb-segment">
+              <router-link v-if="crumb.to" :to="crumb.to" class="breadcrumb-item breadcrumb-link"
+                :class="{ 'home-item': idx === 0 }">
+                <ion-icon v-if="crumb.icon" :name="crumb.icon" class="home-icon"></ion-icon>
+                <span>{{ crumb.label }}</span>
+              </router-link>
+              <span v-else class="breadcrumb-item breadcrumb-current"
+                :class="{ 'home-item': idx === 0 }" aria-current="page">
+                <ion-icon v-if="crumb.icon" :name="crumb.icon" class="home-icon"></ion-icon>
+                <span>{{ crumb.label }}</span>
+              </span>
+            </li>
+            <ion-icon v-if="idx < crumbs.length - 1" name="chevron-forward-outline"
+              class="separator-icon"></ion-icon>
+          </template>
+        </ol>
         <!-- Actions
         <div class="title-actions">
           <button class="action-icon" @click="toggleBookmark()"
@@ -49,6 +56,72 @@ export default {
     return {
       isBookmark: false,
     };
+  },
+  computed: {
+    // Build a real, navigable breadcrumb trail from the current route.
+    // Every ancestor crumb links to its actual route (validated against the
+    // router so we never link to a dead path); the final crumb is the page.
+    crumbs() {
+      const segs = this.$route.path
+        .replace(/\/+$/, "")
+        .split("/")
+        .filter(Boolean);
+
+      const items = [{ label: "Home", icon: "home-outline", to: "/projects" }];
+
+      // The projects overview is itself "Home" — show it as the current page.
+      if (segs.length === 0 || (segs.length === 1 && segs[0] === "projects")) {
+        items[0].to = null;
+        return items;
+      }
+
+      let rest = segs;
+      let base = "";
+
+      // Project routes get a dedicated, clickable project crumb.
+      if (segs[0] === "project" && segs[1]) {
+        base = `/project/${segs[1]}`;
+        items.push({ label: this.humanize(segs[1]), to: base });
+        rest = segs.slice(2);
+      }
+
+      // Structural URL segments that only group their child (no page of their own).
+      const FOLD = new Set(["manage", "new", "table"]);
+      // Resource detail pages link their type crumb back to the list/manage page.
+      const LISTS = {
+        forms: "manage/forms",
+        services: "manage/services",
+        apis: "manage/apis",
+        page: "manage/pages",
+        pages: "manage/pages",
+        codespaces: "manage/codespaces",
+      };
+
+      let acc = base;
+      for (let j = 0; j < rest.length; j++) {
+        const seg = rest[j];
+        acc += "/" + seg;
+        const isLast = j === rest.length - 1;
+        if (FOLD.has(seg) && !isLast) continue;
+
+        let to = this.isRealRoute(acc) ? acc : null;
+        if (!isLast && !to && base && LISTS[seg]) {
+          const listPath = `${base}/${LISTS[seg]}`;
+          if (this.isRealRoute(listPath)) to = listPath;
+        }
+        items.push({ label: this.humanize(seg), to });
+      }
+
+      // The leaf is the current page: prefer a meaningful page-provided title
+      // (falling back to the humanized URL segment), and never link it.
+      const leaf = items[items.length - 1];
+      if (this.title && this.title !== "Page") {
+        leaf.label = this.title[0].toUpperCase() + this.title.slice(1);
+      }
+      leaf.to = null;
+
+      return items;
+    },
   },
   mounted() {
     this.siteLocation = "";
@@ -88,12 +161,29 @@ export default {
       });
 
     if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      this.bg_color = this.bg || "#0f172a";
+      this.bg_color = this.bg || "#121212";
     } else {
       this.bg_color = "#f8fafc";
     }
   },
   methods: {
+    // "very-cool_project" -> "Very Cool Project"
+    humanize(seg) {
+      const s = decodeURIComponent(seg).replace(/[-_]+/g, " ").trim();
+      return s.replace(/\b\w/g, (c) => c.toUpperCase());
+    },
+    // True only when the path matches a concrete route (not the catch-all).
+    isRealRoute(path) {
+      try {
+        const resolved = this.$router.resolve(path);
+        return (
+          resolved.matched.length > 0 &&
+          !resolved.matched.some((m) => /:url|\(\.\*\)/.test(m.path))
+        );
+      } catch (e) {
+        return false;
+      }
+    },
     share() {
       if (navigator.share) {
         navigator.share({ text: "", url: "", title: "gh" });
@@ -156,13 +246,14 @@ export default {
   --radius-lg: 12px;
 
   background: var(--background);
-  padding: 16px 20px 0px 20px;
+  padding: 16px 0px 0px 0px;
   /* margin-bottom: 24px;*/
 }
 
 .tree-container {
   max-width: 1400px;
   margin: 0 auto;
+  padding: 0 24px;
 }
 
 /* Breadcrumb Navigation
@@ -175,6 +266,15 @@ export default {
   align-items: center;
   gap: 8px;
   font-size: 13px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+}
+
+.breadcrumb-segment {
+  display: flex;
+  align-items: center;
 }
 
 .breadcrumb-item {
@@ -183,15 +283,21 @@ export default {
   gap: 6px;
   color: var(--text-secondary);
   transition: all 0.2s ease;
-  padding: 4px 8px 4px 0px;
+  padding: 4px 8px;
   border-radius: var(--radius);
+  text-decoration: none;
 }
 
+/* First crumb (Home) sits flush with the page title's left edge. */
 .breadcrumb-item.home-item {
+  padding-left: 0;
+}
+
+.breadcrumb-link {
   cursor: pointer;
 }
 
-.breadcrumb-item.home-item:hover {
+.breadcrumb-link:hover {
   color: var(--primary-color);
   background: rgba(37, 99, 235, 0.08);
 }
@@ -298,8 +404,12 @@ export default {
 /* Responsive Design */
 @media (max-width: 768px) {
   .navigation-tree {
-    padding: 12px 16px;
+    padding: 12px 0px 0px 0px;
     /* margin-bottom: 16px;*/
+  }
+
+  .tree-container {
+    padding: 0 16px;
   }
 
   .title-section {
@@ -324,7 +434,7 @@ export default {
 
 @media (max-width: 480px) {
   .navigation-tree {
-    padding: 10px 12px;
+    padding: 10px 0px 0px 0px;
     margin-bottom: 12px;
   }
 
@@ -349,12 +459,12 @@ export default {
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   .navigation-tree {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
+    --background: #121212;
+    --surface: #1e1e1e;
+    --border: #2a2a2a;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --text-muted: #777777;
   }
 }
 </style>

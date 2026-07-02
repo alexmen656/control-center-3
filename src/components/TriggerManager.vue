@@ -799,12 +799,12 @@ input:checked + .toggle-slider:before {
 /* Dark Mode */
 @media (prefers-color-scheme: dark) {
   .modern-modal {
-    --surface: #1e293b;
-    --background: #0f172a;
-    --border: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
+    --surface: #1e1e1e;
+    --background: #121212;
+    --border: #2a2a2a;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --text-muted: #777777;
   }
   
   .modern-input,
