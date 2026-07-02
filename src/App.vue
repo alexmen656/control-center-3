@@ -3,7 +3,7 @@
   <div v-if="!loading" :class="store.theme">
     <ion-app>
       <ion-content v-if="showContent">
-        <SiteHeader v-if="showHeader" @toggleSidebar="toggleSidebar"></SiteHeader>
+        <SiteHeader v-if="showHeader" :class="{ hasToBeDarkmode }" @toggleSidebar="toggleSidebar"></SiteHeader>
         <ion-split-pane content-id="main-content" :class="{ 'collapsed-sidebar': isMenuCollapsed }">
           <ion-menu v-if="token && account_active" content-id="main-content"
             :class="['ion-menu', { 'collapsed-menu': isMenuCollapsed, 'hasToBeDarkmode': hasToBeDarkmode }]"
@@ -15,7 +15,7 @@
                 v-if="showProjectSideBar" @sidebarToggled="onSidebarToggled"></ProjectSideBar>
             </ion-content>
           </ion-menu>
-          <div id="main-content" :class="{ 'has-touch-bar': showTouchBar, 'isNotLogin': isLoginPage }">
+          <div id="main-content" :class="{ 'has-touch-bar': showTouchBar, 'isNotLogin': isLoginPage, hasToBeDarkmode }">
             <!--  <SiteTitle v-if="showSiteTitle" :icon="page.icon" :title="page.title" @updateSidebar="updateSidebar()" />-->
             <ion-router-outlet v-if="page.title" @updateSidebar="updateSidebar()" :class="{
               showTitle: showTitle,
