@@ -1,13 +1,12 @@
 {
   "name": "control-center-mcp-server",
-  "version": "1.0.0",
-  "description": "MCP Server for Fringelo CMS - HTTP Transport",
+  "version": "2.0.0",
+  "description": "MCP Server for Fringelo CMS - Streamable HTTP with OAuth 2.1",
   "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js",
-    "stdio": "node stdio-server.js"
+    "dev": "node --watch server.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
