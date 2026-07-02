@@ -416,8 +416,8 @@ export default defineComponent({
 <style scoped>
 /* Modern Design System - Same as FormDisplay and ManageUsers */
 .modern-content {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
@@ -510,7 +510,7 @@ export default defineComponent({
   font-size: 28px;
   /*color: white;
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);*/
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
   flex-shrink: 0;
 }
@@ -800,7 +800,7 @@ export default defineComponent({
 }
 
 .table-cell:hover {
-  background: rgba(37, 99, 235, 0.05);
+  background: rgba(249, 115, 22, 0.05);
 }
 
 .actions-cell {
@@ -856,12 +856,12 @@ export default defineComponent({
 }
 
 .edit-btn {
-  background: rgba(59, 130, 246, 0.12);
+  background: rgba(249, 115, 22, 0.12);
   color: var(--primary-color);
 }
 
 .edit-btn:hover {
-  background: rgba(59, 130, 246, 0.22);
+  background: rgba(249, 115, 22, 0.22);
   transform: scale(1.05);
 }
 
@@ -897,7 +897,7 @@ export default defineComponent({
   width: 40px;
   height: 40px;
   border-radius: var(--radius);
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(29, 78, 216, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.1) 0%, rgba(234, 88, 12, 0.1) 100%);
   display: flex;
   align-items: center;
   justify-content: center;

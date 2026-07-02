@@ -447,7 +447,7 @@ export default {
   --text-primary: #24292f;
   --text-secondary: #57606a;
   --text-muted: #8c959f;
-  --primary-color: #2563eb;
+  --primary-color: #f97316;
   --success-color: #059669;
   --danger-color: #dc2626;
   --radius: 8px;
@@ -511,7 +511,7 @@ export default {
 }
 
 .action-btn.primary:hover {
-  background: #1d4ed8;
+  background: #ea580c;
   transform: translateY(-1px);
 }
 
@@ -554,7 +554,7 @@ export default {
   width: 48px;
   height: 48px;
   border-radius: var(--radius);
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -609,7 +609,7 @@ export default {
 
 .entry-count {
   padding: 4px 12px;
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
   border-radius: 20px;
   font-size: 12px;
@@ -797,12 +797,12 @@ export default {
 }
 
 .edit-btn {
-  background: rgba(59, 130, 246, 0.12);
+  background: rgba(249, 115, 22, 0.12);
   color: var(--primary-color);
 }
 
 .edit-btn:hover {
-  background: rgba(59, 130, 246, 0.22);
+  background: rgba(249, 115, 22, 0.22);
   transform: scale(1.05);
 }
 

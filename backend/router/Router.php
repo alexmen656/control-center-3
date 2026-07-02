@@ -177,7 +177,7 @@ class Router
     private function sendCorsHeaders(): void
     {
         header('Access-Control-Allow-Origin: *');
-        header('Access-Control-Allow-Headers: *');
+        header('Access-Control-Allow-Headers: Authorization, Content-Type, Accept, Origin, X-Requested-With');
         header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
     }
 }

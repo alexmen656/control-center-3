@@ -269,7 +269,7 @@ export default {
 <style scoped>
 /* Modern Component Styles */
 .modern-component {
-  --primary-color: #2563eb;
+  --primary-color: #f97316;
   --success-color: #059669;
   --danger-color: #dc2626;
   --background: #f8fafc;
@@ -474,7 +474,7 @@ export default {
 }
 
 .copy-btn:hover {
-  background: #1d4ed8;
+  background: #ea580c;
   transform: translateY(-1px);
 }
 
@@ -571,7 +571,7 @@ export default {
 }
 
 .btn-primary:not(:disabled):hover {
-  background: #1d4ed8;
+  background: #ea580c;
 }
 
 .btn-secondary {
@@ -713,7 +713,7 @@ export default {
 .form-textarea:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
 }
 
 .form-textarea {
@@ -809,7 +809,7 @@ export default {
 }
 
 .copy-btn-inline:hover {
-  background: #1d4ed8;
+  background: #ea580c;
   transform: translateY(-1px);
 }
 

@@ -15,7 +15,7 @@ export const newsletterDashboardProvider: ModuleDashboardProvider = {
   moduleId: 'newsletter',
   moduleName: 'Newsletter',
   moduleIcon: 'mail-outline',
-  moduleColor: '#2563eb',
+  moduleColor: '#f97316',
   
   widgets: [
     // Stat Widgets
@@ -217,8 +217,8 @@ export const newsletterDashboardProvider: ModuleDashboardProvider = {
               {
                 label: 'Gesendete',
                 data: data.map((d: any) => d.sent),
-                borderColor: '#2563eb',
-                backgroundColor: 'rgba(37, 99, 235, 0.1)'
+                borderColor: '#f97316',
+                backgroundColor: 'rgba(249, 115, 22, 0.1)'
               },
               {
                 label: 'Geöffnet',

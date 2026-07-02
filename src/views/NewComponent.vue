@@ -154,8 +154,8 @@ export default defineComponent({
   --text-primary: #1e293b;
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --success-color: #059669;
   --danger-color: #dc2626;
   --radius: 8px;

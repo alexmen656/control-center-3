@@ -741,8 +741,8 @@ export default defineComponent({
 <style scoped>
 /* Modern Design System */
 .modern-content {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
@@ -812,7 +812,7 @@ export default defineComponent({
     height: 36px;
 }
 .action-btn.active {
-    background: #eff6ff;
+    background: #fff7ed;
     border-color: var(--primary-color);
     color: var(--primary-color);
 }
@@ -954,7 +954,7 @@ export default defineComponent({
     transform: translateY(-2px);
 }
 .file-card.drag-over {
-    background: #eff6ff;
+    background: #fff7ed;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px var(--primary-color);
 }
@@ -1032,7 +1032,7 @@ export default defineComponent({
     background: #f1f5f9;
 }
 .files-table tr.drag-over {
-    background: #eff6ff;
+    background: #fff7ed;
     border: 2px solid var(--primary-color); /* Note: border on tr might behave oddly */
 }
 .list-icon {
@@ -1058,7 +1058,7 @@ export default defineComponent({
 /* Drag Utils */
 .drop-zone.drag-over {
     border-color: var(--primary-color);
-    background: #eff6ff;
+    background: #fff7ed;
 }
 
 /* Common Layout stuff from original */

@@ -557,13 +557,13 @@ const showAIFeatures = () => {
     <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;" onclick="this.remove()">
       <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d35 100%); border-radius: 20px; padding: 40px; max-width: 800px; width: 90%; max-height: 80%; overflow-y: auto; border: 1px solid rgba(234, 14, 43, 0.3);" onclick="event.stopPropagation()">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-          <h2 style="color: #ffffff; margin: 0; font-size: 2rem; background: linear-gradient(135deg, #ea0e2b 0%, #8a2be2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">🤖 KI-Assistent Features</h2>
+          <h2 style="color: #ffffff; margin: 0; font-size: 2rem; background: linear-gradient(135deg, #f97316 0%, #8a2be2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">🤖 KI-Assistent Features</h2>
           <button onclick="this.closest('div').parentElement.remove()" style="background: none; border: none; color: #666; font-size: 24px; cursor: pointer;">✕</button>
         </div>
         
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px;">
           <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 24px;">
-            <h3 style="color: #ea0e2b; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">💬 Intelligenter Chat</h3>
+            <h3 style="color: #f97316; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">💬 Intelligenter Chat</h3>
             <ul style="color: #cccccc; line-height: 1.6; margin: 0; padding-left: 20px;">
               <li>Kontextbewusste Gespräche über deinen Code</li>
               <li>Debugging-Hilfe mit konkreten Lösungen</li>
@@ -624,7 +624,7 @@ const showAIFeatures = () => {
         </div>
         
         <div style="margin-top: 30px; text-align: center;">
-          <button onclick="document.querySelector('.ai-assistant-button').click(); this.closest('div').parentElement.remove();" style="background: linear-gradient(135deg, #ea0e2b 0%, #8a2be2 100%); color: white; border: none; padding: 15px 30px; border-radius: 25px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+          <button onclick="document.querySelector('.ai-assistant-button').click(); this.closest('div').parentElement.remove();" style="background: linear-gradient(135deg, #f97316 0%, #8a2be2 100%); color: white; border: none; padding: 15px 30px; border-radius: 25px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
             🚀 KI-Assistent jetzt starten
           </button>
         </div>
@@ -991,7 +991,7 @@ const applyReplacement = (replacement) => {
 .main-title {
   font-size: 3.5rem;
   font-weight: 100;
-  background: linear-gradient(135deg, #ffffff 0%, #ea0e2b 50%, #00aeff 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #f97316 50%, #00aeff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1107,7 +1107,7 @@ const applyReplacement = (replacement) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ea0e2b;
+  color: #f97316;
   font-size: 24px;
 }
 
@@ -1136,7 +1136,7 @@ const applyReplacement = (replacement) => {
   display: block;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #ea0e2b;
+  color: #f97316;
   margin-bottom: 4px;
 }
 
@@ -1178,7 +1178,7 @@ const applyReplacement = (replacement) => {
 .shortcut-item kbd {
   background: rgba(234, 14, 43, 0.1);
   border: 1px solid rgba(234, 14, 43, 0.3);
-  color: #ea0e2b;
+  color: #f97316;
   padding: 4px 8px;
   border-radius: 4px;
   font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
@@ -1269,13 +1269,13 @@ const applyReplacement = (replacement) => {
 }
 
 .action-button.primary {
-  background: linear-gradient(135deg, #ea0e2b 0%, #cf3c4f 100%);
-  border-color: #ea0e2b;
+  background: linear-gradient(135deg, #f97316 0%, #db6513 100%);
+  border-color: #f97316;
   color: white;
 }
 
 .action-button.primary:hover {
-  background: linear-gradient(135deg, #cf3c4f 0%, #ea0e2b 100%);
+  background: linear-gradient(135deg, #db6513 0%, #f97316 100%);
   transform: translateX(4px) translateY(-2px);
   box-shadow: 0 8px 25px rgba(234, 14, 43, 0.3);
 }
@@ -1408,7 +1408,7 @@ const applyReplacement = (replacement) => {
 .shortcut-item kbd {
   background: rgba(234, 14, 43, 0.1);
   border: 1px solid rgba(234, 14, 43, 0.3);
-  color: #ea0e2b;
+  color: #f97316;
   padding: 4px 8px;
   border-radius: 4px;
   font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
@@ -1503,7 +1503,7 @@ const applyReplacement = (replacement) => {
   right: 20px;
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #ea0e2b 0%, #cf3c4f 100%);
+  background: linear-gradient(135deg, #f97316 0%, #db6513 100%);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -1522,7 +1522,7 @@ const applyReplacement = (replacement) => {
 }
 
 .ai-assistant-button.active {
-  background: linear-gradient(135deg, #cf3c4f 0%, #ea0e2b 100%);
+  background: linear-gradient(135deg, #db6513 0%, #f97316 100%);
   transform: scale(1.1);
 }
 
@@ -1560,7 +1560,7 @@ const applyReplacement = (replacement) => {
 }
 
 .chat-header {
-  background: linear-gradient(135deg, #ea0e2b 0%, #cf3c4f 100%);
+  background: linear-gradient(135deg, #f97316 0%, #db6513 100%);
   color: white;
   padding: 16px;
   display: flex;
@@ -1635,7 +1635,7 @@ const applyReplacement = (replacement) => {
 }
 
 .message.user .message-content {
-  background: linear-gradient(135deg, #ea0e2b 0%, #cf3c4f 100%);
+  background: linear-gradient(135deg, #f97316 0%, #db6513 100%);
   color: white;
   display: inline-block;
   padding: 12px 16px;
@@ -1688,7 +1688,7 @@ const applyReplacement = (replacement) => {
   border-radius: 8px;
   padding: 12px;
   margin-top: 8px;
-  border-left: 4px solid #ea0e2b;
+  border-left: 4px solid #f97316;
 }
 
 .apply-btn {
@@ -1757,7 +1757,7 @@ const applyReplacement = (replacement) => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ea0e2b;
+  background: #f97316;
   animation: typing 1.4s infinite ease-in-out;
 }
 
@@ -1791,12 +1791,12 @@ const applyReplacement = (replacement) => {
 }
 
 .chat-input textarea:focus {
-  border-color: #ea0e2b;
+  border-color: #f97316;
   box-shadow: 0 0 0 3px rgba(234, 14, 43, 0.1);
 }
 
 .send-btn {
-  background: linear-gradient(135deg, #ea0e2b 0%, #cf3c4f 100%);
+  background: linear-gradient(135deg, #f97316 0%, #db6513 100%);
   color: white;
   border: none;
   border-radius: 50%;
@@ -1812,7 +1812,7 @@ const applyReplacement = (replacement) => {
 }
 
 .send-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #cf3c4f 0%, #ea0e2b 100%);
+  background: linear-gradient(135deg, #db6513 0%, #f97316 100%);
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(234, 14, 43, 0.3);
 }

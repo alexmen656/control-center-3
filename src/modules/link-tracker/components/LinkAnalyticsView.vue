@@ -352,8 +352,8 @@ export default {
           datasets: [{
             label: 'Klicks',
             data: this.analytics.timeline.map(item => item.clicks),
-            borderColor: '#2563eb',
-            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+            borderColor: '#f97316',
+            backgroundColor: 'rgba(249, 115, 22, 0.1)',
             tension: 0.4,
             fill: true
           }]
@@ -524,8 +524,8 @@ export default {
 <style scoped>
 /* Same modern styling as FormDisplay */
 .modern-content {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;

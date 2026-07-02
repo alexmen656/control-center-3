@@ -166,7 +166,7 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
       category: 'charts',
       config: {
         chartType: 'line',
-        color: '#2563eb'
+        color: '#f97316'
       },
       getData: async (params?: { project?: string; period?: number; linkId?: string }) => {
         try {
@@ -191,8 +191,8 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
             datasets: [{
               label: 'Klicks',
               data: clicksData,
-              backgroundColor: 'rgba(37, 99, 235, 0.1)',
-              borderColor: '#2563eb',
+              backgroundColor: 'rgba(249, 115, 22, 0.1)',
+              borderColor: '#f97316',
               borderWidth: 2,
               tension: 0.4,
               fill: true
@@ -233,7 +233,7 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
           const countsData = countries.map((c: any) => c.count || 0);
           
           const colors = [
-            '#2563eb', '#059669', '#d97706', '#dc2626', '#8b5cf6',
+            '#f97316', '#059669', '#d97706', '#dc2626', '#8b5cf6',
             '#0891b2', '#f59e0b', '#10b981', '#ef4444', '#6366f1'
           ];
           
@@ -281,7 +281,7 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
           const labels = devices.map((d: any) => d.device_type || 'Unknown');
           const countsData = devices.map((d: any) => d.count || 0);
           
-          const colors = ['#2563eb', '#059669', '#d97706', '#dc2626'];
+          const colors = ['#f97316', '#059669', '#d97706', '#dc2626'];
           
           return {
             labels,
@@ -332,8 +332,8 @@ export const linkTrackerDashboardProvider: ModuleDashboardProvider = {
             datasets: [{
               label: 'Klicks',
               data: countsData,
-              backgroundColor: '#2563eb',
-              borderColor: '#1d4ed8',
+              backgroundColor: '#f97316',
+              borderColor: '#ea580c',
               borderWidth: 1
             }]
           };

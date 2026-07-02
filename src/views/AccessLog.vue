@@ -688,8 +688,8 @@ export default defineComponent({
 
 <style scoped>
 .modern-content {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
@@ -897,7 +897,7 @@ export default defineComponent({
 }
 
 .stat-card.primary .stat-icon {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
 }
 
 .stat-card.success .stat-icon {
@@ -1271,12 +1271,12 @@ export default defineComponent({
 }
 
 .view-btn {
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
 }
 
 .view-btn:hover {
-  background: rgba(37, 99, 235, 0.2);
+  background: rgba(249, 115, 22, 0.2);
   transform: scale(1.05);
 }
 

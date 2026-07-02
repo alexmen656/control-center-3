@@ -530,8 +530,8 @@ export default defineComponent({
 
 <style scoped>
 .modern-content {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
@@ -883,12 +883,12 @@ export default defineComponent({
 }
 
 .edit-btn {
-  background: rgba(59, 130, 246, 0.12);
+  background: rgba(249, 115, 22, 0.12);
   color: var(--primary-color);
 }
 
 .edit-btn:hover {
-  background: rgba(59, 130, 246, 0.22);
+  background: rgba(249, 115, 22, 0.22);
   transform: scale(1.05);
 }
 
@@ -925,7 +925,7 @@ export default defineComponent({
 .load-more-btn:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
-  background: #eff6ff;
+  background: #fff7ed;
 }
 
 .form-section {

@@ -647,7 +647,7 @@ export default defineComponent({
 }
 
 ion-item.new-tool {
-  --background: #2563eb;
+  --background: #f97316;
   border-radius: 8px !important;
   margin-top: 0.125rem !important;
 }

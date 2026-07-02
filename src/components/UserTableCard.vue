@@ -420,6 +420,6 @@ ion-popover ion-item {
 }
 ion-popover ion-item:hover {
   background: var(--ion-color-step-150, #2223);
-  color: var(--ion-color-primary, #3880ff);
+  color: var(--ion-color-primary, #f97316);
 }
 </style>

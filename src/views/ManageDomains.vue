@@ -566,8 +566,8 @@ async function showToast(message: string, color: string = 'primary') {
 <style scoped>
 /* Modern Design System - Same as ManageUsers */
 .modern-content {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
@@ -714,7 +714,7 @@ async function showToast(message: string, color: string = 'primary') {
   font-size: 28px;
   /*color: white;
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);*/
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
   flex-shrink: 0;
 }
@@ -1078,7 +1078,7 @@ async function showToast(message: string, color: string = 'primary') {
   height: 32px;
   border-radius: var(--radius);
   border: none;
-  background: rgba(59, 130, 246, 0.12);
+  background: rgba(249, 115, 22, 0.12);
   color: var(--primary-color);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1086,7 +1086,7 @@ async function showToast(message: string, color: string = 'primary') {
 }
 
 .action-icon-btn:hover {
-  background: rgba(59, 130, 246, 0.22);
+  background: rgba(249, 115, 22, 0.22);
   transform: scale(1.05);
 }
 
@@ -1245,7 +1245,7 @@ async function showToast(message: string, color: string = 'primary') {
   gap: 6px;
   padding: 4px 10px;
   border-radius: 20px;
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
   font-size: 12px;
   font-weight: 500;
@@ -1254,7 +1254,7 @@ async function showToast(message: string, color: string = 'primary') {
 }
 
 .project-chip:hover {
-  background: rgba(37, 99, 235, 0.2);
+  background: rgba(249, 115, 22, 0.2);
 }
 
 .project-chip ion-icon {
@@ -1380,7 +1380,7 @@ async function showToast(message: string, color: string = 'primary') {
 .form-group textarea:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
 }
 
 .form-row {

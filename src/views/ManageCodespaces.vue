@@ -1305,8 +1305,8 @@ watch(() => formData.value.template, (newTemplate) => {
   --text-primary: #1e293b;
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --success-color: #059669;
   --danger-color: #dc2626;
   --warning-color: #f59e0b;
@@ -1458,7 +1458,7 @@ watch(() => formData.value.template, (newTemplate) => {
 
 .search-box:focus-within {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
 }
 
 .search-box ion-icon {
@@ -1689,7 +1689,7 @@ watch(() => formData.value.template, (newTemplate) => {
 }
 
 .connection-badge.vercel {
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
 }
 
@@ -1712,12 +1712,12 @@ watch(() => formData.value.template, (newTemplate) => {
 .language-badge {
   display: inline-block;
   padding: 4px 12px;
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
-  border: 1px solid rgba(37, 99, 235, 0.2);
+  border: 1px solid rgba(249, 115, 22, 0.2);
 }
 
 /* Date Text */
@@ -1746,12 +1746,12 @@ watch(() => formData.value.template, (newTemplate) => {
 }
 
 .icon-btn.open-btn {
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
 }
 
 .icon-btn.open-btn:hover {
-  background: rgba(37, 99, 235, 0.2);
+  background: rgba(249, 115, 22, 0.2);
 }
 
 .icon-btn.settings-btn {
@@ -1902,7 +1902,7 @@ watch(() => formData.value.template, (newTemplate) => {
 
 .form-input:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
 }
 
 textarea.form-input {

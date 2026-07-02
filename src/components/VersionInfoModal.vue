@@ -147,8 +147,8 @@ export default defineComponent({
   position: relative;
   padding: 28px 26px 24px;
   background: linear-gradient(135deg,
-      var(--ion-color-primary, #3880ff) 0%,
-      var(--ion-color-primary-shade, #3171e0) 100%);
+      var(--ion-color-primary, #f97316) 0%,
+      var(--ion-color-primary-shade, #f97316) 100%);
   color: #fff;
   overflow: hidden;
 }
@@ -288,7 +288,7 @@ export default defineComponent({
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--ion-color-primary, #3880ff);
+  color: var(--ion-color-primary, #f97316);
   background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.12);
 }
 
@@ -345,7 +345,7 @@ export default defineComponent({
 }
 
 .vm-tag--improvement {
-  color: #2563c9;
+  color: #ea580c;
   background: rgba(56, 128, 255, 0.13);
 }
 
@@ -441,7 +441,7 @@ export default defineComponent({
   padding: 9px 22px;
   border: none;
   border-radius: 10px;
-  background: var(--ion-color-primary, #3880ff);
+  background: var(--ion-color-primary, #f97316);
   color: #fff;
   font-size: 14px;
   font-weight: 600;
@@ -450,7 +450,7 @@ export default defineComponent({
 }
 
 .vm-done:hover {
-  background: var(--ion-color-primary-shade, #3171e0);
+  background: var(--ion-color-primary-shade, #f97316);
 }
 
 .vm-done:active {

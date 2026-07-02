@@ -454,8 +454,8 @@ export default defineComponent({
 <style scoped>
 /* Modern Design System */
 .modern-content {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
@@ -820,12 +820,12 @@ export default defineComponent({
 }
 
 .visit-btn {
-  background: rgba(59, 130, 246, 0.12);
+  background: rgba(249, 115, 22, 0.12);
   color: var(--primary-color);
 }
 
 .visit-btn:hover {
-  background: rgba(59, 130, 246, 0.22);
+  background: rgba(249, 115, 22, 0.22);
 }
 
 .edit-btn {

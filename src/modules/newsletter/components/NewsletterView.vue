@@ -25,7 +25,7 @@
         <!-- Stats Cards -->
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-icon" style="background: rgba(37, 99, 235, 0.1); color: #2563eb;">
+            <div class="stat-icon" style="background: rgba(249, 115, 22, 0.1); color: #f97316;">
               <ion-icon name="mail-outline"></ion-icon>
             </div>
             <div class="stat-content">
@@ -515,8 +515,8 @@ export default defineComponent({
 <style scoped>
 /* Modern Design System */
 .modern-content {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
@@ -877,12 +877,12 @@ export default defineComponent({
 }
 
 .view-btn {
-  background: rgba(59, 130, 246, 0.12);
+  background: rgba(249, 115, 22, 0.12);
   color: var(--primary-color);
 }
 
 .view-btn:hover {
-  background: rgba(59, 130, 246, 0.22);
+  background: rgba(249, 115, 22, 0.22);
   transform: scale(1.05);
 }
 

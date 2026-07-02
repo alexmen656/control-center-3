@@ -237,8 +237,8 @@ export default {
   --text-primary: #1e293b;
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --radius: 8px;
@@ -298,7 +298,7 @@ export default {
 
 .breadcrumb-link:hover {
   color: var(--primary-color);
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(249, 115, 22, 0.08);
 }
 
 .home-icon {
@@ -371,7 +371,7 @@ export default {
 
 .action-icon:hover {
   color: var(--primary-color);
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(249, 115, 22, 0.08);
   border-color: var(--primary-color);
   transform: scale(1.05);
 }

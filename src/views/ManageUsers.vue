@@ -788,8 +788,8 @@ export default defineComponent({
 </script>
 <style scoped>
 .modern-content {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
@@ -881,7 +881,7 @@ export default defineComponent({
   /*color: white;
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);*/
   color: var(--primary-color);
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   flex-shrink: 0;
 }
 
@@ -1347,12 +1347,12 @@ export default defineComponent({
 .project-badge {
   display: inline-block;
   padding: 6px 12px;
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
-  border: 1px solid rgba(37, 99, 235, 0.2);
+  border: 1px solid rgba(249, 115, 22, 0.2);
 }
 
 .no-project {
@@ -1390,22 +1390,22 @@ export default defineComponent({
 }
 
 .assign-btn {
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
 }
 
 .assign-btn:hover {
-  background: rgba(37, 99, 235, 0.2);
+  background: rgba(249, 115, 22, 0.2);
   transform: scale(1.05);
 }
 
 .edit-btn {
-  background: rgba(59, 130, 246, 0.12);
+  background: rgba(249, 115, 22, 0.12);
   color: var(--primary-color);
 }
 
 .edit-btn:hover {
-  background: rgba(59, 130, 246, 0.22);
+  background: rgba(249, 115, 22, 0.22);
   transform: scale(1.05);
 }
 

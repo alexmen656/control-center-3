@@ -747,8 +747,8 @@ export default defineComponent({
 <style scoped>
 /* Modern Design System */
 .modern-content {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
@@ -872,7 +872,7 @@ export default defineComponent({
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: #eff6ff;
+  background: #fff7ed;
   color: var(--primary-color);
   display: flex;
   align-items: center;
@@ -1084,7 +1084,7 @@ export default defineComponent({
 
 .data-card.drag-over-card {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
   /* Maybe a background tint? */
 }
 
@@ -1121,7 +1121,7 @@ export default defineComponent({
 .search-box input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
 }
 
 .files-wrapper {
@@ -1160,7 +1160,7 @@ export default defineComponent({
 }
 
 .file-card.drag-over {
-  background: #eff6ff;
+  background: #fff7ed;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px var(--primary-color);
 }
@@ -1521,7 +1521,7 @@ export default defineComponent({
   }
 
   .stat-icon {
-    background: rgba(37, 99, 235, 0.2);
+    background: rgba(249, 115, 22, 0.2);
   }
 
   .table-header,
@@ -1530,7 +1530,7 @@ export default defineComponent({
   }
 
   .table-row.drag-over {
-    background: rgba(37, 99, 235, 0.2);
+    background: rgba(249, 115, 22, 0.2);
   }
 
   .upload-header {
@@ -1543,7 +1543,7 @@ export default defineComponent({
 
   .drop-zone:hover,
   .drop-zone.drag-over {
-    background: rgba(37, 99, 235, 0.1);
+    background: rgba(249, 115, 22, 0.1);
   }
 }
 </style>

@@ -872,8 +872,8 @@ export default defineComponent({
 <style scoped>
 /* Modern Design System - Same as ManageUsers */
 .modern-content {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
@@ -1020,7 +1020,7 @@ export default defineComponent({
   font-size: 28px;
   /*color: white;
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);*/
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
   flex-shrink: 0;
 }
@@ -1155,7 +1155,7 @@ export default defineComponent({
   gap: 8px;
   padding: 12px;
   background: var(--primary-color);
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   border-radius: var(--radius);
   margin-bottom: 20px;
   color: var(--primary-color);
@@ -1252,7 +1252,7 @@ textarea.modern-input {
 
 .radio-option:hover {
   border-color: var(--primary-color);
-  background: rgba(37, 99, 235, 0.05);
+  background: rgba(249, 115, 22, 0.05);
 }
 
 .radio-option input[type="radio"] {
@@ -1533,22 +1533,22 @@ textarea.modern-input {
 }
 
 .edit-btn {
-  background: #eff6ff;
+  background: #fff7ed;
   color: var(--primary-color);
 }
 
 .edit-btn:hover {
-  background: #dbeafe;
+  background: #ffedd5;
   transform: scale(1.05);
 }
 
 .assign-btn {
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
 }
 
 .assign-btn:hover {
-  background: rgba(37, 99, 235, 0.2);
+  background: rgba(249, 115, 22, 0.2);
   transform: scale(1.05);
 }
 

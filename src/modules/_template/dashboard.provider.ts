@@ -18,7 +18,7 @@ export const templateDashboardProvider: ModuleDashboardProvider = {
   moduleIcon: 'cube-outline',
   
   // Modul-Farbe (optional)
-  moduleColor: '#2563eb',
+  moduleColor: '#f97316',
   
   widgets: [
     // ===== BEISPIEL: Stat Widget =====
@@ -70,7 +70,7 @@ export const templateDashboardProvider: ModuleDashboardProvider = {
           
           // Farben für Pie/Donut Charts
           const colors = [
-            '#2563eb', '#059669', '#d97706', '#dc2626', '#8b5cf6',
+            '#f97316', '#059669', '#d97706', '#dc2626', '#8b5cf6',
             '#0891b2', '#f59e0b', '#10b981', '#ef4444', '#6366f1'
           ];
           
@@ -110,8 +110,8 @@ export const templateDashboardProvider: ModuleDashboardProvider = {
             datasets: [{
               label: 'Datensatz',
               data: [10, 20, 15, 30, 25],
-              backgroundColor: '#2563eb',
-              borderColor: '#1d4ed8',
+              backgroundColor: '#f97316',
+              borderColor: '#ea580c',
               borderWidth: 1
             }]
           };
@@ -174,8 +174,8 @@ export const templateDashboardProvider: ModuleDashboardProvider = {
             datasets: [{
               label: 'Werte',
               data: values,
-              backgroundColor: 'rgba(37, 99, 235, 0.1)',
-              borderColor: '#2563eb',
+              backgroundColor: 'rgba(249, 115, 22, 0.1)',
+              borderColor: '#f97316',
               borderWidth: 2,
               tension: 0.4,  // Kurven-Glättung
               fill: true     // Fläche füllen

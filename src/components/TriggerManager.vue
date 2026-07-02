@@ -329,7 +329,7 @@ export default defineComponent({
   right: 0;
   bottom: 0;
   z-index: 10000;
-  --primary-color: #2563eb;
+  --primary-color: #f97316;
   --success-color: #059669;
   --danger-color: #dc2626;
   --warning-color: #d97706;
@@ -553,7 +553,7 @@ export default defineComponent({
 }
 
 .primary-btn:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: #ea580c;
   transform: translateY(-1px);
 }
 
@@ -666,7 +666,7 @@ export default defineComponent({
 }
 
 .notification-badge {
-  background: #eff6ff;
+  background: #fff7ed;
   color: var(--primary-color);
 }
 

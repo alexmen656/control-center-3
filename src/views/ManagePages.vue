@@ -202,8 +202,8 @@ export default {
 
 <style scoped>
 .modern-content {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
@@ -539,7 +539,7 @@ export default {
 .page-action-btn:hover {
   color: var(--primary-color);
   border-color: var(--primary-color);
-  background: rgba(37, 99, 235, 0.05);
+  background: rgba(249, 115, 22, 0.05);
 }
 
 .page-action-btn.danger:hover {

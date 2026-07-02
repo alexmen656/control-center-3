@@ -218,7 +218,7 @@ form {
   width: 100%;
 }
 .message-user1 {
-  background-color: red;
+  background-color: var(--ion-color-primary, #f97316);
   border-radius: 1rem 1rem 0 1rem;
 }
 

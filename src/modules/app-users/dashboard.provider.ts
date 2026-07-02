@@ -166,7 +166,7 @@ export const appUsersDashboardProvider: ModuleDashboardProvider = {
             'active': '#10b981',
             'inactive': '#f59e0b',
             'suspended': '#ef4444',
-            'pending': '#3b82f6'
+            'pending': '#f97316'
           };
           
           const backgroundColor = labels.map(l => colors[l as keyof typeof colors] || '#6b7280');
@@ -196,7 +196,7 @@ export const appUsersDashboardProvider: ModuleDashboardProvider = {
       category: 'charts',
       config: {
         chartType: 'line',
-        color: '#2563eb'
+        color: '#f97316'
       },
       getData: async (params?: { period?: number }) => {
         try {
@@ -224,8 +224,8 @@ export const appUsersDashboardProvider: ModuleDashboardProvider = {
             datasets: [{
               label: 'Registrierungen',
               data,
-              backgroundColor: 'rgba(37, 99, 235, 0.1)',
-              borderColor: '#2563eb',
+              backgroundColor: 'rgba(249, 115, 22, 0.1)',
+              borderColor: '#f97316',
               borderWidth: 2,
               tension: 0.4,
               fill: true
@@ -268,8 +268,8 @@ export const appUsersDashboardProvider: ModuleDashboardProvider = {
             datasets: [{
               label: 'Benutzer',
               data,
-              backgroundColor: '#2563eb',
-              borderColor: '#1d4ed8',
+              backgroundColor: '#f97316',
+              borderColor: '#ea580c',
               borderWidth: 1
             }]
           };
@@ -308,7 +308,7 @@ export const appUsersDashboardProvider: ModuleDashboardProvider = {
           const labels = Object.keys(roleCounts);
           const data = Object.values(roleCounts);
           
-          const colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#8b5cf6'];
+          const colors = ['#f97316', '#059669', '#d97706', '#dc2626', '#8b5cf6'];
           
           return {
             labels,

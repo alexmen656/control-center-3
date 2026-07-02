@@ -821,8 +821,8 @@ export default defineComponent({
 
 <style scoped>
 .apis-modern {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --success-color: #059669;
   --danger-color: #dc2626;
   --warning-color: #d97706;
@@ -1006,7 +1006,7 @@ export default defineComponent({
   width: 44px;
   height: 44px;
   border-radius: var(--radius);
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
   display: flex;
   align-items: center;
@@ -1027,7 +1027,7 @@ export default defineComponent({
 
 .cat-auth { background: #eef2ff; color: #4f46e5; border-color: transparent; }
 .cat-storage, .cat-file { background: #f0fdfa; color: #0d9488; border-color: transparent; }
-.cat-data, .cat-database { background: #eff6ff; color: #2563eb; border-color: transparent; }
+.cat-data, .cat-database { background: #fff7ed; color: #f97316; border-color: transparent; }
 .cat-communication, .cat-notification { background: #ecfdf5; color: #059669; border-color: transparent; }
 .cat-analytics { background: #fffbeb; color: #d97706; border-color: transparent; }
 .cat-user { background: #fdf4ff; color: #a21caf; border-color: transparent; }
@@ -1271,10 +1271,10 @@ export default defineComponent({
   align-items: center;
   gap: 10px;
   padding: 14px 16px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
   border-radius: var(--radius);
-  color: #1e40af;
+  color: #9a3412;
   font-size: 13px;
   margin-bottom: 20px;
 }
@@ -1396,7 +1396,7 @@ export default defineComponent({
     --text-secondary: #cbd5e1;
     --text-muted: #64748b;
   }
-  .codespace-info { background: rgba(37, 99, 235, 0.12); border-color: rgba(37, 99, 235, 0.3); color: #bfdbfe; }
+  .codespace-info { background: rgba(249, 115, 22, 0.12); border-color: rgba(249, 115, 22, 0.3); color: #fed7aa; }
   .status-tag.on { background: rgba(5, 150, 105, 0.2); }
 }
 

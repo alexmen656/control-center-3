@@ -566,7 +566,7 @@ export default {
           datasets: [{
             label: 'Klicks',
             data: data,
-            borderColor: '#3880ff',
+            borderColor: '#f97316',
             backgroundColor: 'rgba(56,128,255,0.1)',
             fill: true,
             tension: 0.4
@@ -600,7 +600,7 @@ export default {
           datasets: [{
             data: topCountriesData.map(c => c.clicks),
             backgroundColor: [
-              '#3880ff', '#3dc2ff', '#2fdf75', '#ffce00',
+              '#f97316', '#3dc2ff', '#2fdf75', '#ffce00',
               '#ff6b6b', '#c77dff', '#06ffa5', '#ffc409'
             ]
           }]
@@ -633,7 +633,7 @@ export default {
           labels: Object.keys(deviceData),
           datasets: [{
             data: Object.values(deviceData),
-            backgroundColor: ['#3880ff', '#2fdf75', '#ffce00', '#ff6b6b']
+            backgroundColor: ['#f97316', '#2fdf75', '#ffce00', '#ff6b6b']
           }]
         },
         options: {

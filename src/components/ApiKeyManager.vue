@@ -205,7 +205,7 @@ export default {
 <style scoped>
 /* Modern Component Styles */
 .modern-component {
-  --primary-color: #2563eb;
+  --primary-color: #f97316;
   --success-color: #059669;
   --danger-color: #dc2626;
   --warning-color: #d97706;
@@ -392,7 +392,7 @@ export default {
 }
 
 .copy-btn:hover {
-  background: #1d4ed8;
+  background: #ea580c;
   transform: translateY(-1px);
 }
 
@@ -508,7 +508,7 @@ export default {
 }
 
 .btn-primary:not(:disabled):hover {
-  background: #1d4ed8;
+  background: #ea580c;
 }
 
 .btn-secondary {

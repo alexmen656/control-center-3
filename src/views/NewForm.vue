@@ -538,8 +538,8 @@ export default defineComponent({
 }
 
 .new-form-page {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --secondary-color: #0ea5e9;
   --background: #f8fafc;
   --surface: #ffffff;
@@ -675,7 +675,7 @@ export default defineComponent({
 }
 
 .panel-icon.primary {
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
 }
 
@@ -760,7 +760,7 @@ export default defineComponent({
 
 .modern-input:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
 }
 
 .modern-textarea {
@@ -841,7 +841,7 @@ export default defineComponent({
 .btn-ghost:not(:disabled):hover {
   color: var(--primary-color);
   border-color: var(--primary-color);
-  background: rgba(37, 99, 235, 0.06);
+  background: rgba(249, 115, 22, 0.06);
 }
 
 .icon-btn {
@@ -911,7 +911,7 @@ export default defineComponent({
 .example-chip:hover {
   color: var(--primary-color);
   border-color: var(--primary-color);
-  background: rgba(37, 99, 235, 0.06);
+  background: rgba(249, 115, 22, 0.06);
   transform: translateY(-1px);
 }
 
@@ -938,7 +938,7 @@ export default defineComponent({
   gap: 6px;
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
   font-size: 13px;
   font-weight: 600;

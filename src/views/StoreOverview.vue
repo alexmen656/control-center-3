@@ -319,7 +319,7 @@ export default {
   --text-primary: #24292f;
   --text-secondary: #57606a;
   --text-muted: #8c959f;
-  --primary-color: #2563eb;
+  --primary-color: #f97316;
   --success-color: #059669;
   --danger-color: #dc2626;
   --warning-color: #d97706;
@@ -385,9 +385,9 @@ export default {
 }
 
 .action-btn.primary:hover {
-  background: #1d4ed8;
+  background: #ea580c;
   transform: translateY(-1px);
-  /*box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);*/
+  /*box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);*/
 }
 
 .action-btn.secondary {
@@ -445,7 +445,7 @@ export default {
   width: 48px;
   height: 48px;
   border-radius: var(--radius);
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -500,7 +500,7 @@ export default {
 
 .entry-count {
   padding: 4px 12px;
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
   border-radius: 20px;
   font-size: 12px;

@@ -207,7 +207,7 @@ export const marketingCampaignsDashboardProvider: ModuleDashboardProvider = {
           
           const colors = {
             'draft': '#6b7280',
-            'scheduled': '#3b82f6',
+            'scheduled': '#f97316',
             'active': '#10b981',
             'paused': '#f59e0b',
             'completed': '#8b5cf6'
@@ -261,7 +261,7 @@ export const marketingCampaignsDashboardProvider: ModuleDashboardProvider = {
           const labels = Object.keys(channelCounts);
           const data = Object.values(channelCounts);
           
-          const colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#8b5cf6'];
+          const colors = ['#f97316', '#059669', '#d97706', '#dc2626', '#8b5cf6'];
           
           return {
             labels,
@@ -314,8 +314,8 @@ export const marketingCampaignsDashboardProvider: ModuleDashboardProvider = {
               {
                 label: 'Budget',
                 data: budgetData,
-                backgroundColor: '#3b82f6',
-                borderColor: '#2563eb',
+                backgroundColor: '#f97316',
+                borderColor: '#f97316',
                 borderWidth: 1
               },
               {
@@ -370,8 +370,8 @@ export const marketingCampaignsDashboardProvider: ModuleDashboardProvider = {
               {
                 label: 'Impressions',
                 data: impressions,
-                backgroundColor: '#3b82f6',
-                borderColor: '#2563eb',
+                backgroundColor: '#f97316',
+                borderColor: '#f97316',
                 borderWidth: 1
               },
               {

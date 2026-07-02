@@ -598,7 +598,7 @@ ion-content.hasToBeDarkmode {
 .glitch {
   font-size: 120px;
   font-weight: 900;
-  color: var(--ion-color-primary, #ea0e2b);
+  color: var(--ion-color-primary, #f97316);
   text-transform: uppercase;
   position: relative;
   text-shadow: 0.05em 0 0 rgba(234, 14, 43, 0.75),
@@ -635,14 +635,14 @@ glitch {
 
 .glitch::before {
   left: 2px;
-  text-shadow: -2px 0 var(--ion-color-primary-shade, #cf3c4f);
+  text-shadow: -2px 0 var(--ion-color-primary-shade, #db6513);
   clip: rect(44px, 450px, 56px, 0);
   animation: glitch-anim 5s infinite linear alternate-reverse;
 }
 
 .glitch::after {
   left: -2px;
-  text-shadow: -2px 0 var(--ion-color-primary-tint, #ed576b), 2px 2px var(--ion-color-primary-shade, #cf3c4f);
+  text-shadow: -2px 0 var(--ion-color-primary-tint, #fa8232), 2px 2px var(--ion-color-primary-shade, #db6513);
   animation: glitch-anim2 1s infinite linear alternate-reverse;
 }
 

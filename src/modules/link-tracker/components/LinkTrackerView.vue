@@ -535,8 +535,8 @@ export default {
           datasets: [{
             label: 'Klicks',
             data: this.analytics.timeline.map(item => item.clicks),
-            borderColor: '#2563eb',
-            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+            borderColor: '#f97316',
+            backgroundColor: 'rgba(249, 115, 22, 0.1)',
             tension: 0.4,
             fill: true
           }]
@@ -565,7 +565,7 @@ export default {
           labels: this.analytics.devices.map(item => item.device_type),
           datasets: [{
             data: this.analytics.devices.map(item => item.count),
-            backgroundColor: ['#2563eb', '#059669', '#d97706', '#dc2626']
+            backgroundColor: ['#f97316', '#059669', '#d97706', '#dc2626']
           }]
         },
         options: {
@@ -642,8 +642,8 @@ export default {
 <style scoped>
 /* Use the same modern styling as FormDisplay.vue */
 .modern-content {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
@@ -982,7 +982,7 @@ ion-content.modern-content {
 }
 
 .analytics-btn:hover {
-  background: #e0f2fe;
+  background: #fff7ed;
   transform: scale(1.05);
 }
 

@@ -922,7 +922,7 @@ const applyReplacement = (replacement) => {
   right: 20px;
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #ea0e2b 0%, #cf3c4f 100%);
+  background: linear-gradient(135deg, #f97316 0%, #db6513 100%);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -941,7 +941,7 @@ const applyReplacement = (replacement) => {
 }
 
 .ai-assistant-button.active {
-  background: linear-gradient(135deg, #cf3c4f 0%, #ea0e2b 100%);
+  background: linear-gradient(135deg, #db6513 0%, #f97316 100%);
   transform: scale(1.1);
 }
 
@@ -979,7 +979,7 @@ const applyReplacement = (replacement) => {
 }
 
 .chat-header {
-  background: linear-gradient(135deg, #ea0e2b 0%, #cf3c4f 100%);
+  background: linear-gradient(135deg, #f97316 0%, #db6513 100%);
   color: white;
   padding: 16px;
   display: flex;
@@ -1054,7 +1054,7 @@ const applyReplacement = (replacement) => {
 }
 
 .message.user .message-content {
-  background: linear-gradient(135deg, #ea0e2b 0%, #cf3c4f 100%);
+  background: linear-gradient(135deg, #f97316 0%, #db6513 100%);
   color: white;
   display: inline-block;
   padding: 12px 16px;
@@ -1107,7 +1107,7 @@ const applyReplacement = (replacement) => {
   border-radius: 8px;
   padding: 12px;
   margin-top: 8px;
-  border-left: 4px solid #ea0e2b;
+  border-left: 4px solid #f97316;
 }
 
 .apply-btn {
@@ -1177,7 +1177,7 @@ const applyReplacement = (replacement) => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ea0e2b;
+  background: #f97316;
   animation: typing 1.4s infinite ease-in-out;
 }
 
@@ -1211,12 +1211,12 @@ const applyReplacement = (replacement) => {
 }
 
 .chat-input textarea:focus {
-  border-color: #ea0e2b;
+  border-color: #f97316;
   box-shadow: 0 0 0 3px rgba(234, 14, 43, 0.1);
 }
 
 .send-btn {
-  background: linear-gradient(135deg, #ea0e2b 0%, #cf3c4f 100%);
+  background: linear-gradient(135deg, #f97316 0%, #db6513 100%);
   color: white;
   border: none;
   border-radius: 50%;
@@ -1232,7 +1232,7 @@ const applyReplacement = (replacement) => {
 }
 
 .send-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #cf3c4f 0%, #ea0e2b 100%);
+  background: linear-gradient(135deg, #db6513 0%, #f97316 100%);
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(234, 14, 43, 0.3);
 }

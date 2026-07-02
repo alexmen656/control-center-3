@@ -145,8 +145,8 @@ export default defineComponent({
 }
 
 .projects-dashboard {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --background: #f8fafc;
   --surface: #ffffff;
   --surface-hover: #f9fafb;
@@ -232,7 +232,7 @@ export default defineComponent({
 
 .search-input:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
 }
 
 .new-project-btn {
@@ -301,7 +301,7 @@ export default defineComponent({
   height: 44px;
   flex-shrink: 0;
   border-radius: 10px;
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary-color);
 }
 

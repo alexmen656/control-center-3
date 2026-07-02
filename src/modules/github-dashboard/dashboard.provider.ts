@@ -159,7 +159,7 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
       category: 'charts',
       config: {
         chartType: 'line',
-        color: '#2563eb'
+        color: '#f97316'
       },
       getData: async (params?: { project?: string; period?: number }) => {
         try {
@@ -194,8 +194,8 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
             datasets: [{
               label: 'Commits',
               data,
-              backgroundColor: 'rgba(37, 99, 235, 0.1)',
-              borderColor: '#2563eb',
+              backgroundColor: 'rgba(249, 115, 22, 0.1)',
+              borderColor: '#f97316',
               borderWidth: 2,
               tension: 0.4,
               fill: true
@@ -253,8 +253,8 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
             datasets: [{
               label: 'Commits',
               data,
-              backgroundColor: '#2563eb',
-              borderColor: '#1d4ed8',
+              backgroundColor: '#f97316',
+              borderColor: '#ea580c',
               borderWidth: 1
             }]
           };
@@ -291,7 +291,7 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
           const data = Object.values(languageCounts);
           
           const colors = [
-            '#2563eb', '#059669', '#d97706', '#dc2626', '#8b5cf6',
+            '#f97316', '#059669', '#d97706', '#dc2626', '#8b5cf6',
             '#0891b2', '#f59e0b', '#10b981', '#ef4444', '#6366f1'
           ];
           
@@ -357,7 +357,7 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
           const labels = ['Open', 'Closed', 'Merged'];
           const data = [stateCounts['open'], stateCounts['closed'], stateCounts['merged']];
           
-          const colors = ['#3b82f6', '#6b7280', '#10b981'];
+          const colors = ['#f97316', '#6b7280', '#10b981'];
           
           return {
             labels,

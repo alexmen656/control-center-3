@@ -518,7 +518,7 @@ onMounted(() => {
 }
 
 .count-badge {
-  background: var(--vscode-badge-background, #4c7bd6);
+  background: var(--vscode-badge-background, #f97316);
   color: var(--vscode-badge-foreground, #ffffff);
   padding: 4px 8px;
   border-radius: 12px;

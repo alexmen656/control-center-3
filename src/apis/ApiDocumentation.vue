@@ -1254,8 +1254,8 @@ export default defineComponent({
 
 <style scoped>
 .modern-content {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
@@ -1712,7 +1712,7 @@ export default defineComponent({
 }
 
 .method-badge.GET {
-  background: #dbeafe;
+  background: #ffedd5;
   color: var(--primary-color);
 }
 
@@ -1959,7 +1959,7 @@ export default defineComponent({
 }
 
 .activity-method.GET {
-  background: #dbeafe;
+  background: #ffedd5;
   color: var(--primary-color);
 }
 

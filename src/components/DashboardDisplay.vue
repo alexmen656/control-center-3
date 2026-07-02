@@ -313,7 +313,7 @@ export default defineComponent({
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(90deg, #f97316, #8b5cf6);
   opacity: 0.5;
   z-index: 1;
   pointer-events: none;
@@ -335,15 +335,15 @@ export default defineComponent({
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   border-radius: 8px;
-  color: #3b82f6;
+  color: #f97316;
   cursor: grab;
   transition: all 0.2s ease;
 }
 
 .drag-handle:hover {
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(249, 115, 22, 0.2);
   transform: scale(1.1);
 }
 
@@ -546,8 +546,8 @@ export default defineComponent({
   height: 32px;
   border-radius: 8px;
   border: none;
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: rgba(249, 115, 22, 0.1);
+  color: #f97316;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -556,7 +556,7 @@ export default defineComponent({
 }
 
 .resize-btn:hover {
-  background: #3b82f6;
+  background: #f97316;
   color: white;
   transform: scale(1.1);
 }

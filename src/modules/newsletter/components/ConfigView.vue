@@ -519,8 +519,8 @@ export default defineComponent({
 <style scoped>
 /* Modern Design System */
 .modern-content {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
   --secondary-color: #64748b;
   --success-color: #059669;
   --danger-color: #dc2626;
@@ -605,8 +605,8 @@ export default defineComponent({
   display: flex;
   gap: 16px;
   padding: 20px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
   border-radius: var(--radius-lg);
   margin-bottom: 24px;
 }
@@ -800,8 +800,8 @@ export default defineComponent({
   }
   
   .info-card {
-    background: #1e3a8a;
-    border-color: #1e40af;
+    background: #7c2d12;
+    border-color: #9a3412;
   }
 }
 </style>
