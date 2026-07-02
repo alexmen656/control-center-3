@@ -13,6 +13,9 @@ $router->group('/v2/domains', function ($router) {
     // GET /v2/domains/available
     $router->get('/available', [DomainsController::class, 'listAvailable']);
 
+    // GET /v2/domains/{id}/subdomains
+    $router->get('/{id}/subdomains', [DomainsController::class, 'subdomains']);
+
     // POST /v2/domains
     $router->post('/', [DomainsController::class, 'save']);
 

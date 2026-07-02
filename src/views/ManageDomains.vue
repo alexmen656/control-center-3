@@ -21,7 +21,6 @@
           </div>
         </div>
 
-        <!-- Stats Grid -->
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon">
@@ -51,8 +50,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Expiring Domains Alert -->
         <div v-if="expiringDomains.length > 0" class="alert-card warning">
           <ion-icon name="warning-outline" class="alert-icon"></ion-icon>
           <div class="alert-content">
@@ -65,13 +62,12 @@
             </div>
           </div>
         </div>
-
-        <!-- Domains Table -->
         <div class="data-card">
           <div class="card-header">
             <div class="header-left">
               <h3>Alle Domains</h3>
-              <span class="entry-count">{{ filteredDomains.length }} domain{{ filteredDomains.length !== 1 ? 's' : '' }}</span>
+              <span class="entry-count">{{ filteredDomains.length }} domain{{ filteredDomains.length !== 1 ? 's' : ''
+              }}</span>
             </div>
             <div class="search-box">
               <ion-icon name="search-outline"></ion-icon>
@@ -94,7 +90,6 @@
             </div>
 
             <div v-else class="modern-table">
-              <!-- Table Header -->
               <div class="table-header">
                 <div class="header-cell">Domain</div>
                 <div class="header-cell">Registrar</div>
@@ -102,48 +97,101 @@
                 <div class="header-cell">Expiry Date</div>
                 <div class="header-cell">Status</div>
                 <div class="header-cell actions-header">Actions</div>
+                <div class="header-cell expand-header"></div>
               </div>
 
-              <!-- Table Body -->
               <div class="table-body">
-                <div v-for="domain in filteredDomains" :key="domain.id" class="table-row">
-                  <div class="table-cell cell-domain">
-                    <div class="domain-info">
-                      <ion-icon name="globe-outline" class="domain-icon"></ion-icon>
-                      <span class="domain-name">{{ domain.domain }}</span>
-                      <ion-icon v-if="domain.cloudflare_zone_id" name="cloud-outline" class="cf-badge" title="Cloudflare"></ion-icon>
+                <template v-for="domain in filteredDomains" :key="domain.id">
+                  <div class="table-row" :class="{ 'row-expanded': isExpanded(domain.id) }">
+                    <div class="table-cell cell-domain">
+                      <div class="domain-info">
+                        <ion-icon name="globe-outline" class="domain-icon"></ion-icon>
+                        <span class="domain-name">{{ domain.domain }}</span>
+                        <ion-icon v-if="domain.cloudflare_zone_id" name="cloud-outline" class="cf-badge"
+                          title="Cloudflare"></ion-icon>
+                      </div>
+                    </div>
+
+                    <div class="table-cell">
+                      <span class="registrar">{{ domain.registrar || '-' }}</span>
+                    </div>
+
+                    <div class="table-cell">
+                      <span class="date">{{ domain.buy_date ? formatDate(domain.buy_date) : '-' }}</span>
+                    </div>
+
+                    <div class="table-cell">
+                      <span class="date" :class="getExpiryClass(domain.expiry_date)">
+                        {{ domain.expiry_date ? formatDate(domain.expiry_date) : '-' }}
+                      </span>
+                    </div>
+
+                    <div class="table-cell">
+                      <span class="status-badge" :class="getStatusClass(domain.expiry_date)">
+                        {{ getStatusText(domain.expiry_date) }}
+                      </span>
+                    </div>
+
+                    <div class="table-cell cell-actions">
+                      <button class="action-icon-btn" @click="openModal(domain)" title="Edit">
+                        <ion-icon name="pencil-outline"></ion-icon>
+                      </button>
+                      <button class="action-icon-btn delete" @click="deleteDomain(domain)" title="Delete">
+                        <ion-icon name="trash-outline"></ion-icon>
+                      </button>
+                    </div>
+
+                    <div class="table-cell cell-expand">
+                      <button class="expand-btn" :class="{ open: isExpanded(domain.id) }"
+                        @click="toggleSubdomains(domain)"
+                        :title="isExpanded(domain.id) ? 'Subdomains ausblenden' : 'Subdomains anzeigen'">
+                        <ion-icon name="chevron-down-outline"></ion-icon>
+                      </button>
                     </div>
                   </div>
 
-                  <div class="table-cell">
-                    <span class="registrar">{{ domain.registrar || '-' }}</span>
-                  </div>
+                  <!-- Expanded Subdomain Rows -->
+                  <div v-if="isExpanded(domain.id)" class="subdomain-panel">
+                    <div v-if="isLoadingSubdomains(domain.id)" class="subdomain-state">
+                      <ion-icon name="sync-outline" class="subdomain-loading-icon"></ion-icon>
+                      <span>Loading subdomains...</span>
+                    </div>
 
-                  <div class="table-cell">
-                    <span class="date">{{ domain.buy_date ? formatDate(domain.buy_date) : '-' }}</span>
-                  </div>
+                    <div v-else-if="(subdomainsByDomain[domain.id] || []).length === 0" class="subdomain-state">
+                      <ion-icon name="git-branch-outline"></ion-icon>
+                      <span>No subdomains found for this domain</span>
+                    </div>
 
-                  <div class="table-cell">
-                    <span class="date" :class="getExpiryClass(domain.expiry_date)">
-                      {{ domain.expiry_date ? formatDate(domain.expiry_date) : '-' }}
-                    </span>
+                    <div v-else class="subdomain-table">
+                      <div class="subdomain-head">
+                        <div class="sub-cell">Subdomain</div>
+                        <div class="sub-cell">Full Domain</div>
+                        <div class="sub-cell">Connected Project</div>
+                        <div class="sub-cell sub-cell-ssl">SSL</div>
+                      </div>
+                      <div v-for="sub in subdomainsByDomain[domain.id]" :key="sub.domain" class="subdomain-row">
+                        <div class="sub-cell">
+                          <ion-icon name="git-branch-outline" class="sub-icon"></ion-icon>
+                          <span class="sub-name">{{ sub.subdomain }}</span>
+                        </div>
+                        <div class="sub-cell mono">{{ sub.domain }}</div>
+                        <div class="sub-cell">
+                          <router-link v-if="sub.project_link" class="project-chip"
+                            :to="'/project/' + sub.project_link + '/'">
+                            <ion-icon name="cube-outline"></ion-icon>
+                            <span>{{ sub.project_name || sub.project_link }}</span>
+                          </router-link>
+                          <span v-else class="no-project">Not connected</span>
+                        </div>
+                        <div class="sub-cell sub-cell-ssl">
+                          <span v-if="sub.ssl_status" class="ssl-badge" :class="sub.ssl_status">{{ sub.ssl_status
+                          }}</span>
+                          <span v-else class="ssl-badge none">—</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-
-                  <div class="table-cell">
-                    <span class="status-badge" :class="getStatusClass(domain.expiry_date)">
-                      {{ getStatusText(domain.expiry_date) }}
-                    </span>
-                  </div>
-
-                  <div class="table-cell cell-actions">
-                    <button class="action-icon-btn" @click="openModal(domain)" title="Edit">
-                      <ion-icon name="pencil-outline"></ion-icon>
-                    </button>
-                    <button class="action-icon-btn delete" @click="deleteDomain(domain)" title="Delete">
-                      <ion-icon name="trash-outline"></ion-icon>
-                    </button>
-                  </div>
-                </div>
+                </template>
               </div>
             </div>
           </div>
@@ -228,12 +276,26 @@ interface Domain {
   updated_at: string;
 }
 
+interface Subdomain {
+  subdomain: string;
+  domain: string;
+  project_link: string | null;
+  project_name: string | null;
+  is_enabled: boolean;
+  ssl_status: 'pending' | 'active' | 'failed' | null;
+  source: string;
+}
+
 const domains = ref<Domain[]>([]);
 const expiringDomains = ref<Domain[]>([]);
 const loading = ref(false);
 const searchTerm = ref('');
 const showModal = ref(false);
 const editingDomain = ref<Domain | null>(null);
+
+const expandedDomains = ref<Set<number>>(new Set());
+const loadingSubdomains = ref<Set<number>>(new Set());
+const subdomainsByDomain = ref<Record<number, Subdomain[]>>({});
 
 const formData = ref({
   domain: '',
@@ -247,7 +309,7 @@ const formData = ref({
 const filteredDomains = computed(() => {
   if (!searchTerm.value) return domains.value;
   const term = searchTerm.value.toLowerCase();
-  return domains.value.filter(d => 
+  return domains.value.filter(d =>
     d.domain.toLowerCase().includes(term) ||
     (d.registrar && d.registrar.toLowerCase().includes(term))
   );
@@ -287,6 +349,49 @@ async function loadExpiringDomains() {
     }
   } catch (error) {
     console.error('Error loading expiring domains:', error);
+  }
+}
+
+function isExpanded(domainId: number): boolean {
+  return expandedDomains.value.has(domainId);
+}
+
+function isLoadingSubdomains(domainId: number): boolean {
+  return loadingSubdomains.value.has(domainId);
+}
+
+async function toggleSubdomains(domain: Domain) {
+  if (expandedDomains.value.has(domain.id)) {
+    expandedDomains.value.delete(domain.id);
+    expandedDomains.value = new Set(expandedDomains.value);
+    return;
+  }
+
+  expandedDomains.value.add(domain.id);
+  expandedDomains.value = new Set(expandedDomains.value);
+
+  // Lazy-load subdomains only once per domain
+  if (subdomainsByDomain.value[domain.id]) {
+    return;
+  }
+
+  loadingSubdomains.value.add(domain.id);
+  loadingSubdomains.value = new Set(loadingSubdomains.value);
+
+  try {
+    const response = await axios.get('v2/domains/' + domain.id + '/subdomains');
+
+    if (response.data.success) {
+      subdomainsByDomain.value[domain.id] = response.data.subdomains;
+    } else {
+      showToast(response.data.error || 'Error loading subdomains', 'danger');
+    }
+  } catch (error) {
+    console.error('Error loading subdomains:', error);
+    showToast('Error loading subdomains', 'danger');
+  } finally {
+    loadingSubdomains.value.delete(domain.id);
+    loadingSubdomains.value = new Set(loadingSubdomains.value);
   }
 }
 
@@ -784,8 +889,13 @@ async function showToast(message: string, color: string = 'primary') {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .no-data-icon {
@@ -988,6 +1098,207 @@ async function showToast(message: string, color: string = 'primary') {
 .action-icon-btn.delete:hover {
   background: rgba(235, 68, 90, 0.22);
   transform: scale(1.05);
+}
+
+/* Expand toggle */
+.expand-header {
+  flex: 0 0 56px;
+  min-width: 56px;
+}
+
+.cell-expand {
+  flex: 0 0 56px;
+  min-width: 56px;
+  justify-content: center;
+}
+
+.expand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s ease;
+  font-size: 18px;
+}
+
+.expand-btn:hover {
+  color: var(--primary-color);
+}
+
+.expand-btn ion-icon {
+  transition: transform 0.2s ease;
+}
+
+.expand-btn.open {
+  color: var(--primary-color);
+}
+
+.expand-btn.open ion-icon {
+  transform: rotate(180deg);
+}
+
+.table-row.row-expanded {
+  background: var(--background);
+}
+
+/* Subdomain panel */
+.subdomain-panel {
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px 16px 48px;
+}
+
+.subdomain-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.subdomain-state ion-icon {
+  font-size: 18px;
+  color: var(--text-muted);
+}
+
+.subdomain-loading-icon {
+  animation: spin 1s linear infinite;
+  color: var(--primary-color) !important;
+}
+
+.subdomain-table {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.subdomain-head {
+  display: flex;
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
+}
+
+.subdomain-head .sub-cell {
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.subdomain-row {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s ease;
+}
+
+.subdomain-row:last-child {
+  border-bottom: none;
+}
+
+.subdomain-row:hover {
+  background: var(--background);
+}
+
+.sub-cell {
+  flex: 1;
+  min-width: 120px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.sub-cell-ssl {
+  flex: 0 0 100px;
+  min-width: 100px;
+}
+
+.sub-icon {
+  font-size: 16px;
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.sub-name {
+  font-weight: 600;
+}
+
+.sub-cell.mono {
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.project-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary-color);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.project-chip:hover {
+  background: rgba(37, 99, 235, 0.2);
+}
+
+.project-chip ion-icon {
+  font-size: 14px;
+}
+
+.no-project {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.ssl-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ssl-badge.active {
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--success-color);
+  border: 1px solid rgba(5, 150, 105, 0.2);
+}
+
+.ssl-badge.pending {
+  background: rgba(217, 119, 6, 0.1);
+  color: var(--warning-color);
+  border: 1px solid rgba(217, 119, 6, 0.2);
+}
+
+.ssl-badge.failed {
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--danger-color);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.ssl-badge.none {
+  background: var(--background);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
 }
 
 /* Modal */

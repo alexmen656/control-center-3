@@ -30,9 +30,6 @@ class DomainsController
         query($sql);
     }
 
-    /**
-     * GET /v2/domains
-     */
     public function list(Request $request, Response $response): void
     {
         $userID = $request->userID;
@@ -57,9 +54,6 @@ class DomainsController
         $response->json(['success' => true, 'domains' => $domains]);
     }
 
-    /**
-     * POST /v2/domains/fetch-cloudflare
-     */
     public function fetchCloudflare(Request $request, Response $response): void
     {
         global $cloudflare_api_token;
@@ -140,9 +134,6 @@ class DomainsController
         ]);
     }
 
-    /**
-     * POST /v2/domains
-     */
     public function save(Request $request, Response $response): void
     {
         $userID = $request->userID;
@@ -189,9 +180,6 @@ class DomainsController
         }
     }
 
-    /**
-     * DELETE /v2/domains/{id}
-     */
     public function delete(Request $request, Response $response): void
     {
         $userID = $request->userID;
@@ -206,9 +194,85 @@ class DomainsController
         $response->success([], 'Domain gelöscht');
     }
 
-    /**
-     * GET /v2/domains/expiring
-     */
+    public function subdomains(Request $request, Response $response): void
+    {
+        $userID = $request->userID;
+        $id = intval($request->params['id']);
+
+        if (!$id) {
+            $response->error('Domain ID fehlt', 400);
+            return;
+        }
+
+        $domainResult = query("SELECT domain FROM domains WHERE id='$id' AND user_id='$userID' LIMIT 1");
+        $domainRow = fetch_assoc($domainResult);
+
+        if (!$domainRow) {
+            $response->error('Domain nicht gefunden', 404);
+            return;
+        }
+
+        $mainDomain = $domainRow['domain'];
+        $escapedMain = escape_string($mainDomain);
+        $suffixLen = strlen('.' . $mainDomain);
+        $subdomains = [];
+        $seen = [];
+
+        $wbResult = query("
+            SELECT wbd.subdomain, wbd.domain, wbd.projectID AS project_link, wbd.is_enabled, wbd.ssl_status,
+                   p.name AS project_name
+            FROM web_builder_domains wbd
+            LEFT JOIN projects p ON p.link = wbd.projectID
+            WHERE wbd.domain LIKE '%.$escapedMain'
+            ORDER BY wbd.domain ASC
+        ");
+
+        while ($wbResult && $row = fetch_assoc($wbResult)) {
+            $full = $row['domain'];
+            $seen[$full] = true;
+            $label = $row['subdomain'] !== '' && $row['subdomain'] !== null
+                ? $row['subdomain']
+                : rtrim(substr($full, 0, -$suffixLen), '.');
+            $subdomains[] = [
+                'subdomain' => $label !== '' ? $label : $full,
+                'domain' => $full,
+                'project_link' => $row['project_link'],
+                'project_name' => $row['project_name'] ?: $row['project_link'],
+                'is_enabled' => (bool) $row['is_enabled'],
+                'ssl_status' => $row['ssl_status'],
+                'source' => 'web_builder'
+            ];
+        }
+
+        $pdResult = query("
+            SELECT pd.domain, pd.project AS project_link, p.name AS project_name
+            FROM control_center_project_domains pd
+            LEFT JOIN projects p ON p.link = pd.project
+            WHERE pd.domain LIKE '%.$escapedMain'
+            ORDER BY pd.domain ASC
+        ");
+
+        while ($pdResult && $row = fetch_assoc($pdResult)) {
+            $full = $row['domain'];
+            if (isset($seen[$full])) {
+                continue;
+            }
+            $seen[$full] = true;
+            $label = rtrim(substr($full, 0, -$suffixLen), '.');
+            $subdomains[] = [
+                'subdomain' => $label !== '' ? $label : $full,
+                'domain' => $full,
+                'project_link' => $row['project_link'],
+                'project_name' => $row['project_name'] ?: $row['project_link'],
+                'is_enabled' => true,
+                'ssl_status' => null,
+                'source' => 'project_domain'
+            ];
+        }
+
+        $response->json(['success' => true, 'subdomains' => $subdomains]);
+    }
+
     public function expiring(Request $request, Response $response): void
     {
         $userID = $request->userID;
@@ -233,14 +297,10 @@ class DomainsController
         $response->json(['success' => true, 'domains' => $domains]);
     }
 
-    /**
-     * GET /v2/domains/available
-     */
     public function listAvailable(Request $request, Response $response): void
     {
         $userID = $request->userID;
 
-        // Nur Super Admin (userID 152) darf Domains verbinden
         if ($userID != 152) {
             $response->error('Keine Berechtigung', 403);
             return;
