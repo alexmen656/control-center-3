@@ -6,20 +6,23 @@
       </ion-buttons>
       <ion-title @click="goToStart()" @dblclick="toggleSidebar()" class="logo-title">
         <div class="logo-container">
-          <img class="logo-image" src="/assets/logo.png" alt="Logo" />
-          <span class="logo-text">Fringelo</span>
+          <img class="logo-wordmark" src="/assets/brand/fringelo-wordmark.svg" alt="fringelo" />
         </div>
       </ion-title>
-      <router-link style="height: 36px; margin-right: 5px" slot="end" to="/my-account/">
-        <Avatar :profileImg="user.profileImg" :firstName="user.firstName" :lastName="user.lastName"
-          avatarColor="green" />
-      </router-link>
+      <div slot="end" class="header-end">
+        <GlobalSearch />
+        <router-link style="height: 36px; margin-right: 5px" to="/my-account/">
+          <Avatar :profileImg="user.profileImg" :firstName="user.firstName" :lastName="user.lastName"
+            avatarColor="green" />
+        </router-link>
+      </div>
     </ion-toolbar>
   </ion-header>
 </template>
 
 <script>
 import Avatar from "@/components/AvatarComponent.vue";
+import GlobalSearch from "@/components/GlobalSearch.vue";
 import { defineComponent } from "vue";
 import { loadUserData, getUserData } from "@/userData";
 
@@ -28,6 +31,7 @@ export default defineComponent({
   emits: ['toggleSidebar'],
   components: {
     Avatar,
+    GlobalSearch,
   },
   data() {
     return {
@@ -58,6 +62,12 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.header-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .logo-title {
   font-size: 20px;
   cursor: pointer !important;
@@ -73,28 +83,17 @@ export default defineComponent({
   padding: 4px 0;
 }
 
-.logo-image {
-  height: 32px;
+.logo-wordmark {
+  height: 34px;
   width: auto;
+  display: block;
   transition: transform 0.2s ease;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
-.logo-text {
-  font-weight: 700;
-  font-size: 24px;
-  color: var(--ion-color-primary);
-  letter-spacing: -0.8px;
-  line-height: 1;
-  transition: color 0.2s ease;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-.logo-title:active .logo-image {
+.logo-title:active .logo-wordmark {
   transform: scale(0.98);
 }
 
-/* Responsive adjustments */
 @media only screen and (max-width: 600px) {
   .logo-title {
     text-align: center;
@@ -104,23 +103,14 @@ export default defineComponent({
     justify-content: center;
   }
 
-  .logo-text {
-    font-size: 18px;
-  }
-
-  .logo-image {
-    height: 28px;
+  .logo-wordmark {
+    height: 24px;
   }
 }
 
 @media only screen and (max-width: 480px) {
-  .logo-text {
-    font-size: 16px;
-    letter-spacing: -0.3px;
-  }
-
-  .logo-image {
-    height: 32px;
+  .logo-wordmark {
+    height: 22px;
   }
 
   .logo-container {
