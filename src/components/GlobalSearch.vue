@@ -71,7 +71,6 @@ const STATIC_PAGES = [
   { label: "Manage Projects", path: "/manage/projects", icon: "folder-outline" },
   { label: "Access Log", path: "/access-log", icon: "time-outline" },
   { label: "Messages", path: "/messages", icon: "chatbubbles-outline" },
-  { label: "File System", path: "/filesystem/", icon: "folder-open-outline" },
   { label: "New Project", path: "/new/project/", icon: "add-circle-outline" },
   { label: "My Account", path: "/my-account", icon: "person-circle-outline" },
   { label: "Account Security", path: "/my-account/account-security", icon: "shield-checkmark-outline" },

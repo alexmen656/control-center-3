@@ -107,10 +107,6 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/NewProject.vue"),
   },
   {
-    path: "/filesystem/",
-    component: () => import("../views/FileSystem.vue"),
-  },
-  {
     path: "/pages/",
     component: () => import("../views/ManagePages.vue"),
   },
