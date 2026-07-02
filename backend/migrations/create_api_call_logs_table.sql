@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS `cms_api_usage_logs` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `subscription_id` int(11) NOT NULL,
+    `endpoint_id` int(11) DEFAULT NULL,
+    `method` varchar(10) NOT NULL,
+    `path` varchar(500) NOT NULL,
+    `status_code` int(11) NOT NULL DEFAULT 0,
+    `response_time` int(11) DEFAULT 0,
+    `ip_address` varchar(45) DEFAULT NULL,
+    `user_agent` text DEFAULT NULL,
+    `request_query` text DEFAULT NULL,
+    `request_headers` json DEFAULT NULL,
+    `request_body` longtext DEFAULT NULL,
+    `response_headers` json DEFAULT NULL,
+    `response_body` longtext DEFAULT NULL,
+    `error_message` text DEFAULT NULL,
+    `timestamp` timestamp DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    INDEX `idx_subscription_timestamp` (`subscription_id`, `timestamp`),
+    INDEX `idx_status_code` (`status_code`),
+    INDEX `idx_timestamp` (`timestamp`)
+);

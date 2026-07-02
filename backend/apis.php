@@ -94,7 +94,6 @@ if (isset($_POST['getAvailableApis'])) {
     if (mysqli_num_rows($api) == 1) {
         $apiData = fetch_assoc($api);
 
-        // Get endpoints for this API
         $endpoints = query("SELECT * FROM cms_api_endpoints WHERE api_id='$apiId' AND is_active=1 ORDER BY method, endpoint");
         $apiEndpoints = [];
         foreach ($endpoints as $endpoint) {
@@ -193,6 +192,40 @@ if (isset($_POST['getAvailableApis'])) {
     $updateKey = query("UPDATE project_api_subscriptions SET api_key='$newApiKey' WHERE id='$subscriptionId'");
 
     showJSON($updateKey ? ['success' => true, 'message' => 'API key regenerated successfully', 'api_key' => $newApiKey] : ['error' => 'Failed to regenerate API key']);
+} elseif (isset($_POST['getApiCallLogs'])) {
+    $subscriptionId = 0;
+
+    if (isset($_POST['subscription_id']) && intval($_POST['subscription_id']) > 0) {
+        $subscriptionId = intval($_POST['subscription_id']);
+    } elseif (isset($_POST['project']) && isset($_POST['api_slug'])) {
+        $projectName = escape_string($_POST['project']);
+        $projectID = getProjectID($projectName);
+        $apiSlug = escape_string($_POST['api_slug']);
+        $sub = fetch_assoc(query("
+            SELECT pas.id
+            FROM project_api_subscriptions pas
+            JOIN cms_apis ca ON pas.api_id = ca.id
+            WHERE ca.slug='$apiSlug' AND pas.projectID='$projectID'
+            LIMIT 1
+        "));
+        $subscriptionId = $sub ? intval($sub['id']) : 0;
+    }
+
+    if (!$subscriptionId) {
+        showJSON(['error' => 'Subscription not found', 'logs' => [], 'total' => 0, 'page' => 1, 'limit' => 25, 'totalPages' => 0, 'stats' => calculateUsageStats(0)]);
+        exit;
+    }
+
+    $result = getApiCallLogs($subscriptionId, [
+        'method' => $_POST['method'] ?? '',
+        'statusGroup' => $_POST['status_group'] ?? '',
+        'search' => $_POST['search'] ?? '',
+        'page' => $_POST['page'] ?? 1,
+        'limit' => $_POST['limit'] ?? 25
+    ]);
+
+    $result['stats'] = calculateUsageStats($subscriptionId);
+    showJSON($result);
 } else {
     showJSON(['error' => 'Invalid request']);
 }

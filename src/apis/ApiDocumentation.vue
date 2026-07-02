@@ -1,16 +1,15 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle v-if="true" icon="cloud-outline" title="API Documentation"/>
-      
+      <SiteTitle v-if="true" icon="cloud-outline" title="API Documentation" />
+
       <div class="page-container">
-        <!-- Navigation Header -->
         <div class="nav-header">
           <button class="back-btn" @click="$router.go(-1)">
             <ion-icon name="arrow-back-outline"></ion-icon>
             <span>Back to APIs</span>
           </button>
-          
+
           <div class="api-info">
             <div class="api-icon">
               <ion-icon :name="api.icon || 'cloud-outline'"></ion-icon>
@@ -25,7 +24,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="header-actions">
             <button class="action-btn primary" @click="testApi">
               <ion-icon name="flash-outline"></ion-icon>
@@ -38,46 +37,31 @@
           </div>
         </div>
 
-        <!-- Tab Navigation -->
         <div class="tab-navigation">
           <div class="tab-buttons">
-            <button 
-              class="tab-btn" 
-              :class="{ active: selectedTab === 'overview' }"
-              @click="selectedTab = 'overview'"
-            >
+            <button class="tab-btn" :class="{ active: selectedTab === 'overview' }" @click="selectedTab = 'overview'">
               <ion-icon name="information-circle-outline"></ion-icon>
               <span>Overview</span>
             </button>
-            <button 
-              class="tab-btn" 
-              :class="{ active: selectedTab === 'docs' }"
-              @click="selectedTab = 'docs'"
-            >
+            <button class="tab-btn" :class="{ active: selectedTab === 'docs' }" @click="selectedTab = 'docs'">
               <ion-icon name="document-text-outline"></ion-icon>
               <span>Documentation</span>
             </button>
-            <button 
-              class="tab-btn" 
-              :class="{ active: selectedTab === 'usage' }"
-              @click="selectedTab = 'usage'"
-            >
+            <button class="tab-btn" :class="{ active: selectedTab === 'logs' }" @click="selectedTab = 'logs'">
+              <ion-icon name="list-outline"></ion-icon>
+              <span>Call Log</span>
+            </button>
+            <button class="tab-btn" :class="{ active: selectedTab === 'usage' }" @click="selectedTab = 'usage'">
               <ion-icon name="analytics-outline"></ion-icon>
               <span>Usage & Stats</span>
             </button>
-            <button 
-              class="tab-btn" 
-              :class="{ active: selectedTab === 'settings' }"
-              @click="selectedTab = 'settings'"
-            >
+            <button class="tab-btn" :class="{ active: selectedTab === 'settings' }" @click="selectedTab = 'settings'">
               <ion-icon name="settings-outline"></ion-icon>
               <span>Settings</span>
             </button>
           </div>
         </div>
 
-        <!-- Content Sections -->
-        <!-- Overview Tab -->
         <div v-if="selectedTab === 'overview'" class="tab-content">
           <div class="content-cards">
             <div class="card modern-card">
@@ -127,7 +111,8 @@
                     <div class="key-display">
                       <div class="api-key">{{ showFullKey ? subscription.api_key : maskedKey }}</div>
                       <div class="key-actions">
-                        <button class="icon-btn" @click="toggleKeyVisibility" :title="showFullKey ? 'Hide key' : 'Show key'">
+                        <button class="icon-btn" @click="toggleKeyVisibility"
+                          :title="showFullKey ? 'Hide key' : 'Show key'">
                           <ion-icon :name="showFullKey ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
                         </button>
                         <button class="icon-btn" @click="copyApiKey" title="Copy to clipboard">
@@ -139,8 +124,8 @@
                   <div class="auth-example">
                     <div class="example-label">Usage Example</div>
                     <div class="code-example">
-curl -H "Authorization: Bearer {{ subscription.api_key }}" \
-     {{ api.endpoint_base }}/endpoint
+                      curl -H "Authorization: Bearer {{ subscription.api_key }}" \
+                      {{ api.endpoint_base }}/endpoint
                     </div>
                   </div>
                 </div>
@@ -159,8 +144,8 @@ curl -H "Authorization: Bearer {{ subscription.api_key }}" \
                   <div class="step-content">
                     <h4>Set up your API key</h4>
                     <div class="code-example">
-const API_KEY = '{{ subscription.api_key }}';
-const BASE_URL = '{{ api.endpoint_base }}';
+                      const API_KEY = '{{ subscription.api_key }}';
+                      const BASE_URL = '{{ api.endpoint_base }}';
                     </div>
                   </div>
                 </div>
@@ -170,14 +155,14 @@ const BASE_URL = '{{ api.endpoint_base }}';
                   <div class="step-content">
                     <h4>Make your first request</h4>
                     <div class="code-example">
-fetch(`${BASE_URL}/endpoint`, {
-  headers: {
-    'Authorization': `Bearer ${API_KEY}`,
-    'Content-Type': 'application/json'
-  }
-})
-.then(response => response.json())
-.then(data => console.log(data));
+                      fetch(`${BASE_URL}/endpoint`, {
+                      headers: {
+                      'Authorization': `Bearer ${API_KEY}`,
+                      'Content-Type': 'application/json'
+                      }
+                      })
+                      .then(response => response.json())
+                      .then(data => console.log(data));
                     </div>
                   </div>
                 </div>
@@ -186,7 +171,8 @@ fetch(`${BASE_URL}/endpoint`, {
                   <div class="step-number">3</div>
                   <div class="step-content">
                     <h4>Handle responses</h4>
-                    <p>All API responses follow a consistent format. Check the Documentation tab for detailed endpoint specifications.</p>
+                    <p>All API responses follow a consistent format. Check the Documentation tab for detailed endpoint
+                      specifications.</p>
                   </div>
                 </div>
               </div>
@@ -194,7 +180,6 @@ fetch(`${BASE_URL}/endpoint`, {
           </div>
         </div>
 
-        <!-- Documentation Tab -->
         <div v-if="selectedTab === 'docs'" class="tab-content">
           <div class="card modern-card">
             <div class="card-header">
@@ -212,12 +197,13 @@ fetch(`${BASE_URL}/endpoint`, {
                       <div class="endpoint-path">{{ api.endpoint_base }}{{ endpoint.endpoint }}</div>
                     </div>
                   </div>
-                  
+
                   <div class="endpoint-description" v-if="endpoint.description">
                     <p>{{ endpoint.description }}</p>
                   </div>
 
-                  <div v-if="endpoint.parameters && Object.keys(endpoint.parameters).length > 0" class="parameters-section">
+                  <div v-if="endpoint.parameters && Object.keys(endpoint.parameters).length > 0"
+                    class="parameters-section">
                     <h5>Parameters</h5>
                     <div class="parameters-list">
                       <div v-for="(param, paramName) in endpoint.parameters" :key="paramName" class="parameter-item">
@@ -232,17 +218,20 @@ fetch(`${BASE_URL}/endpoint`, {
                     </div>
                   </div>
 
-                  <div v-if="endpoint.example_request && Object.keys(endpoint.example_request).length > 0" class="example-section">
+                  <div v-if="endpoint.example_request && Object.keys(endpoint.example_request).length > 0"
+                    class="example-section">
                     <h5>Example Request</h5>
                     <div class="code-example">{{ formatJson(endpoint.example_request) }}</div>
                   </div>
 
-                  <div v-if="endpoint.example_response && Object.keys(endpoint.example_response).length > 0" class="example-section">
+                  <div v-if="endpoint.example_response && Object.keys(endpoint.example_response).length > 0"
+                    class="example-section">
                     <h5>Example Response</h5>
                     <div class="code-example">{{ formatJson(endpoint.example_response) }}</div>
                   </div>
 
-                  <div v-if="endpoint.response_schema && Object.keys(endpoint.response_schema).length > 0" class="schema-section">
+                  <div v-if="endpoint.response_schema && Object.keys(endpoint.response_schema).length > 0"
+                    class="schema-section">
                     <h5>Response Schema</h5>
                     <div class="schema-list">
                       <div v-for="(field, fieldName) in endpoint.response_schema" :key="fieldName" class="schema-item">
@@ -265,7 +254,6 @@ fetch(`${BASE_URL}/endpoint`, {
           </div>
         </div>
 
-        <!-- Usage & Stats Tab -->
         <div v-if="selectedTab === 'usage'" class="tab-content">
           <div class="content-cards">
             <div class="card modern-card">
@@ -328,7 +316,8 @@ fetch(`${BASE_URL}/endpoint`, {
                   <div class="activity-details">
                     <div class="activity-path">{{ activity.path }}</div>
                     <div class="activity-meta">
-                      <span class="activity-status" :class="getStatusClass(activity.status)">{{ activity.status }}</span>
+                      <span class="activity-status" :class="getStatusClass(activity.status)">{{ activity.status
+                        }}</span>
                       <span class="activity-time">{{ activity.response_time }}ms</span>
                       <span class="activity-timestamp">{{ formatDate(activity.timestamp) }}</span>
                     </div>
@@ -346,7 +335,193 @@ fetch(`${BASE_URL}/endpoint`, {
           </div>
         </div>
 
-        <!-- Settings Tab -->
+        <div v-if="selectedTab === 'logs'" class="tab-content">
+          <div class="card modern-card">
+            <div class="card-header logs-header">
+              <div>
+                <h3>Detailed Call Log</h3>
+                <p class="card-subtitle">Every request served through this API is logged automatically.</p>
+              </div>
+              <div class="logs-header-actions">
+                <button class="chip-toggle" :class="{ active: autoRefresh }" @click="toggleAutoRefresh"
+                  :title="autoRefresh ? 'Auto-refresh on (5s)' : 'Auto-refresh off'">
+                  <span class="live-dot" :class="{ on: autoRefresh }"></span>
+                  <span>Live</span>
+                </button>
+                <button class="icon-btn" @click="loadCallLogs" title="Refresh now">
+                  <ion-icon name="refresh-outline"></ion-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="card-content">
+              <div class="log-summary">
+                <div class="log-summary-item">
+                  <div class="summary-value">{{ logStats.totalRequests || 0 }}</div>
+                  <div class="summary-label">Total Calls</div>
+                </div>
+                <div class="log-summary-item">
+                  <div class="summary-value">{{ logStats.avgResponseTime || 0 }}ms</div>
+                  <div class="summary-label">Avg Time</div>
+                </div>
+                <div class="log-summary-item">
+                  <div class="summary-value success">{{ logStats.successRate || 0 }}%</div>
+                  <div class="summary-label">Success</div>
+                </div>
+                <div class="log-summary-item">
+                  <div class="summary-value">{{ logStats.requestsToday || 0 }}</div>
+                  <div class="summary-label">Today</div>
+                </div>
+              </div>
+
+              <div class="log-filters">
+                <div class="log-search">
+                  <ion-icon name="search-outline"></ion-icon>
+                  <input v-model="logFilters.search" type="text" placeholder="Search path, IP or method…"
+                    @input="onLogSearchInput" />
+                </div>
+                <select v-model="logFilters.method" class="log-select" @change="applyLogFilters">
+                  <option value="">All methods</option>
+                  <option value="GET">GET</option>
+                  <option value="POST">POST</option>
+                  <option value="PUT">PUT</option>
+                  <option value="PATCH">PATCH</option>
+                  <option value="DELETE">DELETE</option>
+                </select>
+                <select v-model="logFilters.statusGroup" class="log-select" @change="applyLogFilters">
+                  <option value="">All status</option>
+                  <option value="2xx">2xx Success</option>
+                  <option value="3xx">3xx Redirect</option>
+                  <option value="4xx">4xx Client error</option>
+                  <option value="5xx">5xx Server error</option>
+                </select>
+                <select v-model.number="logFilters.limit" class="log-select" @change="applyLogFilters">
+                  <option :value="25">25 / page</option>
+                  <option :value="50">50 / page</option>
+                  <option :value="100">100 / page</option>
+                </select>
+              </div>
+
+              <div v-if="logLoading" class="log-loading">
+                <ion-spinner></ion-spinner>
+                <span>Loading call log…</span>
+              </div>
+
+              <div v-else-if="callLogs.length > 0" class="log-table">
+                <div class="log-table-head">
+                  <div class="col-method">Method</div>
+                  <div class="col-path">Endpoint</div>
+                  <div class="col-status">Status</div>
+                  <div class="col-time">Time</div>
+                  <div class="col-ip">IP</div>
+                  <div class="col-when">When</div>
+                  <div class="col-chevron"></div>
+                </div>
+
+                <div v-for="log in callLogs" :key="log.id" class="log-row-wrapper">
+                  <div class="log-row" :class="{ expanded: isLogExpanded(log.id) }" @click="toggleLogExpand(log.id)">
+                    <div class="col-method">
+                      <span class="method-badge" :class="getMethodColor(log.method)">{{ log.method }}</span>
+                    </div>
+                    <div class="col-path">
+                      <code>{{ log.path }}</code>
+                    </div>
+                    <div class="col-status">
+                      <span class="status-pill" :class="getStatusClass(log.status)">{{ log.status }}</span>
+                    </div>
+                    <div class="col-time">
+                      <span :class="responseTimeClass(log.response_time)">{{ log.response_time }}ms</span>
+                    </div>
+                    <div class="col-ip">{{ log.ip_address || '—' }}</div>
+                    <div class="col-when">{{ formatRelative(log.timestamp) }}</div>
+                    <div class="col-chevron">
+                      <ion-icon
+                        :name="isLogExpanded(log.id) ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+                    </div>
+                  </div>
+
+                  <div v-if="isLogExpanded(log.id)" class="log-detail">
+                    <div class="log-detail-meta">
+                      <div class="meta-cell">
+                        <span class="meta-label">Timestamp</span>
+                        <span class="meta-value">{{ formatDate(log.timestamp) }}</span>
+                      </div>
+                      <div class="meta-cell">
+                        <span class="meta-label">Response time</span>
+                        <span class="meta-value">{{ log.response_time }}ms</span>
+                      </div>
+                      <div class="meta-cell">
+                        <span class="meta-label">IP address</span>
+                        <span class="meta-value">{{ log.ip_address || '—' }}</span>
+                      </div>
+                      <div class="meta-cell wide">
+                        <span class="meta-label">User agent</span>
+                        <span class="meta-value">{{ log.user_agent || '—' }}</span>
+                      </div>
+                    </div>
+
+                    <div v-if="log.error_message" class="log-error">
+                      <ion-icon name="warning-outline"></ion-icon>
+                      <span>{{ log.error_message }}</span>
+                    </div>
+
+                    <div class="log-detail-grid">
+                      <div class="detail-block">
+                        <div class="detail-block-title">Request</div>
+                        <div v-if="log.request_query" class="detail-sub">
+                          <span class="detail-sub-label">Query</span>
+                          <code class="detail-inline">{{ log.request_query }}</code>
+                        </div>
+                        <div class="detail-sub">
+                          <span class="detail-sub-label">Headers</span>
+                          <pre class="detail-pre">{{ formatBlock(log.request_headers) }}</pre>
+                        </div>
+                        <div class="detail-sub" v-if="log.request_body">
+                          <span class="detail-sub-label">Body</span>
+                          <pre class="detail-pre">{{ formatBlock(log.request_body) }}</pre>
+                        </div>
+                      </div>
+                      <div class="detail-block">
+                        <div class="detail-block-title">Response</div>
+                        <div class="detail-sub">
+                          <span class="detail-sub-label">Headers</span>
+                          <pre class="detail-pre">{{ formatBlock(log.response_headers) }}</pre>
+                        </div>
+                        <div class="detail-sub" v-if="log.response_body">
+                          <span class="detail-sub-label">Body</span>
+                          <pre class="detail-pre">{{ formatBlock(log.response_body) }}</pre>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else class="empty-state">
+                <ion-icon name="receipt-outline" size="large"></ion-icon>
+                <h4>No calls logged yet</h4>
+                <p>Requests to this API will appear here as soon as they happen.</p>
+              </div>
+
+              <div v-if="!logLoading && logPagination.total > 0" class="log-pagination">
+                <div class="pagination-info">
+                  Showing {{ logRangeStart }}–{{ logRangeEnd }} of {{ logPagination.total }}
+                </div>
+                <div class="pagination-controls">
+                  <button class="page-btn" :disabled="logPagination.page <= 1" @click="logPrevPage">
+                    <ion-icon name="chevron-back-outline"></ion-icon>
+                  </button>
+                  <span class="page-current">{{ logPagination.page }} / {{ logPagination.totalPages || 1 }}</span>
+                  <button class="page-btn" :disabled="logPagination.page >= logPagination.totalPages"
+                    @click="logNextPage">
+                    <ion-icon name="chevron-forward-outline"></ion-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div v-if="selectedTab === 'settings'" class="tab-content">
           <div class="card modern-card">
             <div class="card-header">
@@ -356,20 +531,11 @@ fetch(`${BASE_URL}/endpoint`, {
               <div class="settings-form">
                 <div class="form-field">
                   <label>Rate Limit (requests/minute)</label>
-                  <input 
-                    v-model.number="settings.rate_limit" 
-                    type="number" 
-                    min="1"
-                    class="form-input"
-                  />
+                  <input v-model.number="settings.rate_limit" type="number" min="1" class="form-input" />
                 </div>
                 <div class="form-field checkbox-field">
                   <label class="checkbox-label">
-                    <input 
-                      type="checkbox" 
-                      v-model="settings.is_enabled"
-                      class="form-checkbox"
-                    />
+                    <input type="checkbox" v-model="settings.is_enabled" class="form-checkbox" />
                     <span class="checkbox-content">
                       <strong>Enable API Access</strong>
                       <span class="checkbox-description">When disabled, all requests will return 403 Forbidden</span>
@@ -418,7 +584,6 @@ fetch(`${BASE_URL}/endpoint`, {
         </div>
       </div>
 
-      <!-- Test Results Modal -->
       <ion-modal :is-open="isTestModalOpen" ref="testModal">
         <ion-header>
           <ion-toolbar>
@@ -453,9 +618,9 @@ fetch(`${BASE_URL}/endpoint`, {
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, computed } from 'vue';
+import { defineComponent, ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { 
+import {
   IonPage, IonContent, IonButton, IonIcon, IonBadge,
   IonModal, IonHeader, IonToolbar, IonButtons, IonTitle, IonSpinner,
   alertController, toastController
@@ -472,13 +637,13 @@ export default defineComponent({
   setup() {
     const route = useRoute();
     const router = useRouter();
-    
+
     const selectedTab = ref('overview');
     const showFullKey = ref(false);
     const isTestModalOpen = ref(false);
     const testLoading = ref(false);
     const testResults = ref(null);
-    
+
     const api = ref({
       id: 1,
       name: 'User Management API',
@@ -515,6 +680,187 @@ export default defineComponent({
     const currentUsage = ref(23);
     const recentActivity = ref([]);
 
+    const callLogs = ref<any[]>([]);
+    const logLoading = ref(false);
+    const expandedLogIds = ref<number[]>([]);
+    const autoRefresh = ref(false);
+    let autoRefreshTimer: number | undefined;
+    let logSearchTimer: number | undefined;
+
+    const logStats = ref({
+      totalRequests: 0,
+      avgResponseTime: 0,
+      successRate: 0,
+      requestsToday: 0
+    });
+
+    const logFilters = ref({
+      search: '',
+      method: '',
+      statusGroup: '',
+      limit: 25
+    });
+
+    const logPagination = ref({
+      page: 1,
+      total: 0,
+      totalPages: 1,
+      limit: 25
+    });
+
+    const logRangeStart = computed(() => {
+      if (logPagination.value.total === 0) return 0;
+      return (logPagination.value.page - 1) * logPagination.value.limit + 1;
+    });
+
+    const logRangeEnd = computed(() => {
+      return Math.min(logPagination.value.page * logPagination.value.limit, logPagination.value.total);
+    });
+
+    const loadCallLogs = async () => {
+      logLoading.value = callLogs.value.length === 0;
+      try {
+        const token = localStorage.getItem('authToken');
+        const body: Record<string, string> = {
+          getApiCallLogs: '1',
+          project: (route.params.project as string) || '',
+          api_slug: (route.params.apiSlug as string) || '',
+          method: logFilters.value.method,
+          status_group: logFilters.value.statusGroup,
+          search: logFilters.value.search,
+          page: logPagination.value.page.toString(),
+          limit: logFilters.value.limit.toString()
+        };
+        if (subscription.value.id) {
+          body.subscription_id = subscription.value.id.toString();
+        }
+
+        const response = await fetch('/backend/apis.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': token || ''
+          },
+          body: new URLSearchParams(body)
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          callLogs.value = data.logs || [];
+          logPagination.value = {
+            page: data.page || 1,
+            total: data.total || 0,
+            totalPages: data.totalPages || 1,
+            limit: data.limit || logFilters.value.limit
+          };
+          if (data.stats) {
+            logStats.value = data.stats;
+          }
+        }
+      } catch (error) {
+        console.error('Error loading call logs:', error);
+      } finally {
+        logLoading.value = false;
+      }
+    };
+
+    const applyLogFilters = () => {
+      logPagination.value.page = 1;
+      loadCallLogs();
+    };
+
+    const onLogSearchInput = () => {
+      if (logSearchTimer) window.clearTimeout(logSearchTimer);
+      logSearchTimer = window.setTimeout(() => {
+        applyLogFilters();
+      }, 350);
+    };
+
+    const toggleLogExpand = (id: number) => {
+      const idx = expandedLogIds.value.indexOf(id);
+      if (idx === -1) {
+        expandedLogIds.value.push(id);
+      } else {
+        expandedLogIds.value.splice(idx, 1);
+      }
+    };
+
+    const isLogExpanded = (id: number) => expandedLogIds.value.includes(id);
+
+    const logPrevPage = () => {
+      if (logPagination.value.page > 1) {
+        logPagination.value.page--;
+        loadCallLogs();
+      }
+    };
+
+    const logNextPage = () => {
+      if (logPagination.value.page < logPagination.value.totalPages) {
+        logPagination.value.page++;
+        loadCallLogs();
+      }
+    };
+
+    const toggleAutoRefresh = () => {
+      autoRefresh.value = !autoRefresh.value;
+      if (autoRefresh.value) {
+        autoRefreshTimer = window.setInterval(() => loadCallLogs(), 5000);
+      } else if (autoRefreshTimer) {
+        window.clearInterval(autoRefreshTimer);
+        autoRefreshTimer = undefined;
+      }
+    };
+
+    const responseTimeClass = (ms: number) => {
+      if (ms >= 1000) return 'time-slow';
+      if (ms >= 400) return 'time-medium';
+      return 'time-fast';
+    };
+
+    const formatRelative = (dateString: string) => {
+      if (!dateString) return '—';
+      const then = new Date(dateString).getTime();
+      const diff = Math.max(0, Date.now() - then);
+      const s = Math.floor(diff / 1000);
+      if (s < 60) return `${s}s ago`;
+      const m = Math.floor(s / 60);
+      if (m < 60) return `${m}m ago`;
+      const h = Math.floor(m / 60);
+      if (h < 24) return `${h}h ago`;
+      const d = Math.floor(h / 24);
+      if (d < 7) return `${d}d ago`;
+      return new Date(dateString).toLocaleDateString();
+    };
+
+    const formatBlock = (value: any) => {
+      if (value === null || value === undefined || value === '') return '—';
+      if (typeof value === 'string') {
+        try {
+          return JSON.stringify(JSON.parse(value), null, 2);
+        } catch {
+          return value;
+        }
+      }
+      return JSON.stringify(value, null, 2);
+    };
+
+    watch(selectedTab, (tab) => {
+      if (tab === 'logs') {
+        loadCallLogs();
+      } else if (autoRefresh.value) {
+        autoRefresh.value = false;
+        if (autoRefreshTimer) {
+          window.clearInterval(autoRefreshTimer);
+          autoRefreshTimer = undefined;
+        }
+      }
+    });
+
+    onUnmounted(() => {
+      if (autoRefreshTimer) window.clearInterval(autoRefreshTimer);
+      if (logSearchTimer) window.clearTimeout(logSearchTimer);
+    });
+
     const maskedKey = computed(() => {
       if (!subscription.value.api_key) return '';
       const key = subscription.value.api_key;
@@ -530,7 +876,7 @@ export default defineComponent({
         const token = localStorage.getItem('authToken');
         const apiSlug = route.params.apiSlug as string;
         const project = route.params.project as string;
-        
+
         const response = await fetch('/backend/apis.php', {
           method: 'POST',
           headers: {
@@ -543,7 +889,7 @@ export default defineComponent({
             'project': project
           })
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           api.value = data;
@@ -555,15 +901,15 @@ export default defineComponent({
             last_used: data.last_used,
             is_enabled: data.is_enabled
           };
-          
+
           if (data.usage_stats) {
             usageStats.value = data.usage_stats;
           }
-          
+
           if (data.recent_activity) {
             recentActivity.value = data.recent_activity;
           }
-          
+
           settings.value = {
             rate_limit: data.rate_limit,
             is_enabled: data.is_enabled
@@ -571,17 +917,15 @@ export default defineComponent({
         }
       } catch (error) {
         console.error('Error loading API data:', error);
-        // Fallback to mock data
         loadMockData();
       }
     };
 
     const loadMockData = () => {
-      // Mock data for development/fallback
       api.value = {
         id: 1,
         name: 'User Management API',
-        slug: 'user-management', 
+        slug: 'user-management',
         description: 'Create, read, update and delete users in your project',
         icon: 'people-outline',
         category: 'user',
@@ -692,7 +1036,6 @@ export default defineComponent({
     const toggleKeyVisibility = () => {
       showFullKey.value = !showFullKey.value;
       if (showFullKey.value) {
-        // Auto-hide after 10 seconds
         setTimeout(() => {
           showFullKey.value = false;
         }, 10000);
@@ -711,8 +1054,7 @@ export default defineComponent({
     const testApi = () => {
       testLoading.value = true;
       isTestModalOpen.value = true;
-      
-      // Mock test
+
       setTimeout(() => {
         testResults.value = {
           status: 200,
@@ -755,7 +1097,7 @@ export default defineComponent({
     const performRegenerateKey = async () => {
       try {
         const token = localStorage.getItem('authToken');
-        
+
         const response = await fetch('/backend/apis.php', {
           method: 'POST',
           headers: {
@@ -767,7 +1109,7 @@ export default defineComponent({
             'subscription_id': subscription.value.id.toString()
           })
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           subscription.value.api_key = data.api_key;
@@ -803,7 +1145,6 @@ export default defineComponent({
 
     const performUnsubscribe = async () => {
       try {
-        // Mock unsubscribe
         showToast('Successfully unsubscribed from API', 'success');
         router.push(`/project/${route.params.project}/manage/apis`);
       } catch (error) {
@@ -814,7 +1155,7 @@ export default defineComponent({
     const saveSettings = async () => {
       try {
         const token = localStorage.getItem('authToken');
-        
+
         const response = await fetch('/backend/apis.php', {
           method: 'POST',
           headers: {
@@ -828,7 +1169,7 @@ export default defineComponent({
             'is_enabled': settings.value.is_enabled.toString()
           })
         });
-        
+
         if (response.ok) {
           subscription.value.rate_limit = settings.value.rate_limit;
           subscription.value.is_enabled = settings.value.is_enabled;
@@ -874,6 +1215,25 @@ export default defineComponent({
       recentActivity,
       maskedKey,
       usagePercentage,
+      callLogs,
+      logLoading,
+      logStats,
+      logFilters,
+      logPagination,
+      logRangeStart,
+      logRangeEnd,
+      autoRefresh,
+      loadCallLogs,
+      applyLogFilters,
+      onLogSearchInput,
+      toggleLogExpand,
+      isLogExpanded,
+      logPrevPage,
+      logNextPage,
+      toggleAutoRefresh,
+      responseTimeClass,
+      formatRelative,
+      formatBlock,
       getStatusColor,
       getMethodColor,
       getStatusClass,
@@ -893,7 +1253,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* Modern Design System */
 .modern-content {
   --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
@@ -922,7 +1281,6 @@ export default defineComponent({
   background: var(--background);
 }
 
-/* Navigation Header */
 .nav-header {
   display: flex;
   align-items: center;
@@ -1076,7 +1434,6 @@ export default defineComponent({
   font-size: 16px;
 }
 
-/* Tab Navigation */
 .tab-navigation {
   margin-bottom: 24px;
 }
@@ -1121,7 +1478,6 @@ export default defineComponent({
   font-size: 16px;
 }
 
-/* Content Cards */
 .tab-content {
   margin-bottom: 24px;
 }
@@ -1167,7 +1523,6 @@ export default defineComponent({
   padding: 24px;
 }
 
-/* Info Grid */
 .info-grid {
   display: grid;
   gap: 16px;
@@ -1205,7 +1560,6 @@ export default defineComponent({
   color: var(--primary-color);
 }
 
-/* Authentication Section */
 .auth-section {
   display: flex;
   flex-direction: column;
@@ -1285,7 +1639,6 @@ export default defineComponent({
   overflow-x: auto;
 }
 
-/* Quick Start */
 .quick-start {
   display: flex;
   flex-direction: column;
@@ -1328,7 +1681,6 @@ export default defineComponent({
   line-height: 1.5;
 }
 
-/* Endpoints Documentation */
 .endpoints-documentation {
   display: flex;
   flex-direction: column;
@@ -1480,7 +1832,6 @@ export default defineComponent({
   margin-top: 4px;
 }
 
-/* Empty States */
 .empty-state {
   text-align: center;
   padding: 48px 24px;
@@ -1505,7 +1856,6 @@ export default defineComponent({
   font-size: 14px;
 }
 
-/* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1534,7 +1884,6 @@ export default defineComponent({
   letter-spacing: 0.5px;
 }
 
-/* Rate Limiting */
 .rate-limit-info {
   display: flex;
   flex-direction: column;
@@ -1583,7 +1932,6 @@ export default defineComponent({
   text-align: center;
 }
 
-/* Activity List */
 .activity-list {
   display: flex;
   flex-direction: column;
@@ -1664,7 +2012,6 @@ export default defineComponent({
   color: var(--danger-color);
 }
 
-/* Settings Form */
 .settings-form {
   display: flex;
   flex-direction: column;
@@ -1737,7 +2084,6 @@ export default defineComponent({
   padding-top: 8px;
 }
 
-/* Danger Zone */
 .danger-card {
   border-color: var(--danger-color);
 }
@@ -1788,7 +2134,421 @@ export default defineComponent({
   line-height: 1.4;
 }
 
-/* Dark Mode Support */
+.logs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.card-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.logs-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chip-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chip-toggle.active {
+  border-color: var(--success-color);
+  color: var(--success-color);
+  background: rgba(5, 150, 105, 0.08);
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.live-dot.on {
+  background: var(--success-color);
+  box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.5);
+  animation: livePulse 1.6s infinite;
+}
+
+@keyframes livePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.5);
+  }
+
+  70% {
+    box-shadow: 0 0 0 6px rgba(5, 150, 105, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(5, 150, 105, 0);
+  }
+}
+
+.log-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.log-summary-item {
+  text-align: center;
+  padding: 14px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.summary-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.summary-value.success {
+  color: var(--success-color);
+}
+
+.summary-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+.log-filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.log-search {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.log-search ion-icon {
+  color: var(--text-muted);
+  font-size: 18px;
+}
+
+.log-search input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 10px 0;
+  font-size: 14px;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.log-select {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.log-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px;
+  color: var(--text-secondary);
+}
+
+.log-table {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.log-table-head,
+.log-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 70px 80px 120px 90px 32px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.log-table-head {
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.log-row-wrapper {
+  border-bottom: 1px solid var(--border);
+}
+
+.log-row-wrapper:last-child {
+  border-bottom: none;
+}
+
+.log-row {
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-size: 13px;
+}
+
+.log-row:hover {
+  background: var(--background);
+}
+
+.log-row.expanded {
+  background: var(--background);
+}
+
+.col-path code {
+  font-family: 'Courier New', monospace;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--background);
+  border: 1px solid var(--border);
+}
+
+.status-pill.success {
+  background: #dcfce7;
+  color: var(--success-color);
+  border-color: transparent;
+}
+
+.status-pill.warning {
+  background: #fef3c7;
+  color: var(--warning-color);
+  border-color: transparent;
+}
+
+.status-pill.danger {
+  background: #fee2e2;
+  color: var(--danger-color);
+  border-color: transparent;
+}
+
+.time-fast {
+  color: var(--success-color);
+  font-weight: 500;
+}
+
+.time-medium {
+  color: var(--warning-color);
+  font-weight: 500;
+}
+
+.time-slow {
+  color: var(--danger-color);
+  font-weight: 600;
+}
+
+.col-ip,
+.col-when {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.col-chevron {
+  display: flex;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.log-detail {
+  padding: 16px;
+  background: var(--surface);
+  border-top: 1px dashed var(--border);
+}
+
+.log-detail-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.meta-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meta-cell.wide {
+  grid-column: 1 / -1;
+}
+
+.meta-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.meta-value {
+  font-size: 13px;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.log-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fef2f2;
+  color: var(--danger-color);
+  border-radius: var(--radius);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.log-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.detail-block-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.detail-sub {
+  margin-bottom: 10px;
+}
+
+.detail-sub-label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.detail-inline {
+  display: block;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  background: var(--background);
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  word-break: break-all;
+}
+
+.detail-pre {
+  margin: 0;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  background: var(--background);
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  max-height: 240px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.log-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-current {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.page-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--background);
+  color: var(--text-primary);
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 @media (prefers-color-scheme: dark) {
   .modern-content {
     --background: #0f172a;
@@ -1798,63 +2558,103 @@ export default defineComponent({
     --text-secondary: #cbd5e1;
     --text-muted: #64748b;
   }
+
+  .status-pill.success {
+    background: rgba(5, 150, 105, 0.2);
+  }
+
+  .status-pill.warning {
+    background: rgba(217, 119, 6, 0.2);
+  }
+
+  .status-pill.danger {
+    background: rgba(220, 38, 38, 0.2);
+  }
+
+  .log-error {
+    background: rgba(220, 38, 38, 0.12);
+  }
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
   }
-  
+
   .nav-header {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
   }
-  
+
   .api-info {
     flex-direction: column;
     align-items: center;
     text-align: center;
   }
-  
+
   .header-actions {
     justify-content: center;
   }
-  
+
   .tab-buttons {
     flex-direction: column;
   }
-  
+
   .content-cards {
     grid-template-columns: 1fr;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .danger-item {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
   }
-  
+
   .activity-item {
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .endpoint-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .param-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
+  }
+
+  .log-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .log-table-head {
+    display: none;
+  }
+
+  .log-row {
+    grid-template-columns: 70px 1fr auto 28px;
+    row-gap: 4px;
+  }
+
+  .log-row .col-time,
+  .log-row .col-ip,
+  .log-row .col-when {
+    grid-column: 2 / 3;
+    font-size: 11px;
+  }
+
+  .log-detail-meta,
+  .log-detail-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1862,12 +2662,12 @@ export default defineComponent({
   .api-details h1 {
     font-size: 20px;
   }
-  
+
   .tab-btn {
     padding: 8px 12px;
     font-size: 12px;
   }
-  
+
   .tab-btn span {
     display: none;
   }

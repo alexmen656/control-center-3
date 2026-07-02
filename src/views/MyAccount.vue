@@ -84,11 +84,6 @@ export default defineComponent({
           description: "Update your personal details and profile information"
         },
         {
-          title: "Settings",
-          icon: "cog-outline",
-          description: "Configure app settings and preferences"
-        },
-        {
           title: "Preferences",
           icon: "sunny-outline",
           description: "Customize your app theme and display options"
@@ -97,16 +92,6 @@ export default defineComponent({
           title: "Account Security",
           icon: "key-outline",
           description: "Manage your password and security settings"
-        },
-        {
-          title: "My Team",
-          icon: "people-outline",
-          description: "View and manage your team members"
-        },
-        {
-          title: "My Projects",
-          icon: "folder-outline",
-          description: "Access and organize your projects"
         },
       ],
     };

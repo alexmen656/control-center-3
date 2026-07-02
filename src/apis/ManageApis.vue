@@ -1,227 +1,249 @@
 <template>
   <ion-page>
-    <ion-content>
-      <ion-grid class="md">
-        <ion-row class="md">
-          <ion-col size="1"></ion-col>
-          <ion-col size="10">
-            <h1 style="text-align: center; margin-top: 2rem;">CMS APIs</h1>
-            <p style="text-align: center; color: var(--ion-color-medium); margin-bottom: 2rem;">
-              Browse and subscribe to APIs provided by your CMS system
-            </p>
+    <ion-content class="apis-modern">
+      <SiteTitle icon="cloud-outline" title="CMS APIs" />
+      <div class="apis-container">
+        <div class="page-header">
+          <div class="header-content">
+            <h1>CMS APIs</h1>
+            <p>Browse, subscribe and monitor the APIs provided by your CMS system.</p>
+          </div>
+        </div>
 
-            <div class="tabs-container">
-              <ion-segment v-model="activeTab" @ionChange="segmentChanged">
-                <ion-segment-button value="available">
-                  <ion-label>Available APIs</ion-label>
-                </ion-segment-button>
-                <ion-segment-button value="subscribed">
-                  <ion-label>Project APIs</ion-label>
-                  <ion-badge v-if="subscribedApis.length > 0" color="primary">{{ subscribedApis.length }}</ion-badge>
-                </ion-segment-button>
-                <ion-segment-button value="codespaces">
-                  <ion-label>Codespace APIs</ion-label>
-                  <ion-badge v-if="projectCodespaces.length > 0" color="secondary">{{ projectCodespaces.length }}</ion-badge>
-                </ion-segment-button>
-                <ion-segment-button value="usage">
-                  <ion-label>Usage & Stats</ion-label>
-                </ion-segment-button>
-              </ion-segment>
+        <div class="apis-tabs">
+          <button class="apis-tab" :class="{ active: activeTab === 'available' }" @click="setTab('available')">
+            <ion-icon name="grid-outline"></ion-icon>
+            <span>Available APIs</span>
+          </button>
+          <button class="apis-tab" :class="{ active: activeTab === 'subscribed' }" @click="setTab('subscribed')">
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <span>Project APIs</span>
+            <span v-if="subscribedApis.length > 0" class="tab-count">{{ subscribedApis.length }}</span>
+          </button>
+          <button class="apis-tab" :class="{ active: activeTab === 'codespaces' }" @click="setTab('codespaces')">
+            <ion-icon name="cube-outline"></ion-icon>
+            <span>Codespace APIs</span>
+            <span v-if="projectCodespaces.length > 0" class="tab-count">{{ projectCodespaces.length }}</span>
+          </button>
+          <button class="apis-tab" :class="{ active: activeTab === 'usage' }" @click="setTab('usage')">
+            <ion-icon name="analytics-outline"></ion-icon>
+            <span>Usage &amp; Stats</span>
+          </button>
+        </div>
+
+        <div v-if="activeTab === 'available'" class="tab-content">
+          <div class="filter-bar">
+            <div class="filter-search">
+              <ion-icon name="search-outline"></ion-icon>
+              <input v-model="searchTerm" type="text" placeholder="Search APIs…" />
             </div>
+            <select v-model="selectedCategory" class="filter-select">
+              <option value="">All Categories</option>
+              <option value="auth">Authentication</option>
+              <option value="storage">Storage</option>
+              <option value="data">Data</option>
+              <option value="communication">Communication</option>
+              <option value="analytics">Analytics</option>
+            </select>
+          </div>
 
-            <!-- Available APIs Tab -->
-            <div v-if="activeTab === 'available'" class="tab-content">
-              <div class="filter-bar">
-                <ion-searchbar v-model="searchTerm" placeholder="Search APIs..." @ionInput="filterApis"></ion-searchbar>
-                <ion-select v-model="selectedCategory" placeholder="All Categories" @ionChange="filterApis">
-                  <ion-select-option value="">All Categories</ion-select-option>
-                  <ion-select-option value="auth">Authentication</ion-select-option>
-                  <ion-select-option value="storage">Storage</ion-select-option>
-                  <ion-select-option value="data">Data</ion-select-option>
-                  <ion-select-option value="communication">Communication</ion-select-option>
-                  <ion-select-option value="analytics">Analytics</ion-select-option>
-                </ion-select>
-              </div>
-
-              <div class="apis-grid">
-                <ion-card v-for="api in filteredApis" :key="api.id" class="api-card">
-                  <ion-card-header>
-                    <div class="api-card-header">
-                      <ion-icon :name="api.icon" class="api-icon"></ion-icon>
-                      <div class="api-title">
-                        <ion-card-title>{{ api.name }}</ion-card-title>
-                        <ion-badge :color="getCategoryColor(api.category)">{{ api.category }}</ion-badge>
-                      </div>
-                      <div class="api-version">v{{ api.version }}</div>
-                    </div>
-                  </ion-card-header>
-                  <ion-card-content>
-                    <p class="api-description">{{ api.description }}</p>
-                    <div class="api-details">
-                      <div class="detail-item">
-                        <ion-icon name="globe-outline"></ion-icon>
-                        <span>{{ api.endpoint_base }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <ion-icon name="shield-outline"></ion-icon>
-                        <span>{{ api.auth_required ? 'Auth Required' : 'No Auth' }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <ion-icon name="speedometer-outline"></ion-icon>
-                        <span>{{ api.rate_limit_default }}/min</span>
-                      </div>
-                    </div>
-                    <div class="api-actions">
-                      <ion-button @click="viewApiDetails(api)" fill="clear" size="small">
-                        <ion-icon slot="start" name="eye-outline"></ion-icon>
-                        Details
-                      </ion-button>
-                      <ion-button @click="subscribeToApi(api)" color="primary" size="small"
-                        :disabled="isSubscribed(api.id)">
-                        <ion-icon slot="start"
-                          :name="isSubscribed(api.id) ? 'checkmark-outline' : 'add-outline'"></ion-icon>
-                        {{ isSubscribed(api.id) ? 'Subscribed' : 'Subscribe' }}
-                      </ion-button>
-                    </div>
-                  </ion-card-content>
-                </ion-card>
-              </div>
-            </div>
-
-            <!-- Subscribed APIs Tab -->
-            <div v-if="activeTab === 'subscribed'" class="tab-content">
-              <div class="action-buttons" v-if="subscribedApis.length > 0">
-                <ion-button @click="refreshUsage" fill="outline">
-                  <ion-icon slot="start" name="refresh-outline"></ion-icon>
-                  Refresh Usage
-                </ion-button>
-              </div>
-
-              <ion-list v-if="subscribedApis.length > 0">
-                <ion-item-sliding v-for="api in subscribedApis" :key="api.subscription_id">
-                  <ion-item>
-                    <ion-icon :name="api.icon" slot="start" class="api-list-icon"></ion-icon>
-                    <ion-label>
-                      <h2>{{ api.name }}</h2>
-                      <p>{{ api.description }}</p>
-                      <div class="subscription-details">
-                        <span class="api-key">Key: {{ api.api_key }}</span>
-                        <span class="usage-info">{{ api.usage_count }} requests</span>
-                        <span class="last-used" v-if="api.last_used">Last used: {{ formatDate(api.last_used) }}</span>
-                      </div>
-                    </ion-label>
-                    <div class="api-status" slot="end">
-                      <ion-badge :color="getCategoryColor(api.category)">{{ api.category }}</ion-badge>
-                      <ion-button fill="clear" @click="viewApiUsage(api)">
-                        <ion-icon slot="icon-only" name="analytics-outline"></ion-icon>
-                      </ion-button>
-                      <ion-button fill="clear" @click="openApiSettings(api)">
-                        <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
-                      </ion-button>
-                    </div>
-                  </ion-item>
-                  <ion-item-options>
-                    <ion-item-option @click="regenerateApiKey(api)" color="warning">
-                      <ion-icon slot="icon-only" name="key-outline"></ion-icon>
-                    </ion-item-option>
-                    <ion-item-option @click="unsubscribeFromApi(api)" color="danger">
-                      <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
-                    </ion-item-option>
-                  </ion-item-options>
-                </ion-item-sliding>
-              </ion-list>
-              <ion-item v-else>
-                <ion-label class="ion-text-center">
-                  <h2>No API subscriptions</h2>
-                  <p>Subscribe to APIs from the "Available APIs" tab</p>
-                </ion-label>
-              </ion-item>
-            </div>
-
-            <!-- Codespace APIs Tab -->
-            <div v-if="activeTab === 'codespaces'" class="tab-content">
-              <div class="codespace-selector" v-if="projectCodespaces.length > 0">
-                <ion-select v-model="selectedCodespace" placeholder="Select Codespace" @ionChange="loadCodespaceAPIs">
-                  <ion-select-option v-for="codespace in projectCodespaces" :key="codespace.slug" :value="codespace.slug">
-                    {{ codespace.name }}
-                  </ion-select-option>
-                </ion-select>
-              </div>
-
-              <div v-if="selectedCodespace && codespaceAPIs.length > 0">
-                <h3>API Activation for {{ getCodespaceName(selectedCodespace) }}</h3>
-                <p class="codespace-info">
-                  Toggle APIs on/off for this specific codespace. Only activated APIs will have their SDKs available in the .monaco_apis folder.
-                </p>
-
-                <ion-list>
-                  <ion-item v-for="api in codespaceAPIs" :key="api.subscription_id">
-                    <ion-icon :name="api.icon" slot="start" class="api-list-icon"></ion-icon>
-                    <ion-label>
-                      <h2>{{ api.name }}</h2>
-                      <p>{{ api.description }}</p>
-                      <div class="subscription-details">
-                        <span class="api-status-badge">
-                          <ion-badge :color="api.is_active ? 'success' : 'medium'">
-                            {{ api.is_active ? 'Active' : 'Inactive' }}
-                          </ion-badge>
-                        </span>
-                      </div>
-                    </ion-label>
-                    <ion-toggle 
-                      slot="end" 
-                      :checked="api.is_active" 
-                      @ionChange="toggleCodespaceAPI(api)"
-                      :disabled="api.isToggling">
-                    </ion-toggle>
-                  </ion-item>
-                </ion-list>
-              </div>
-
-              <div v-else-if="selectedCodespace && codespaceAPIs.length === 0" class="no-apis">
-                <ion-icon name="server-outline" size="large" color="medium"></ion-icon>
-                <p>No APIs available for this codespace</p>
-                <p>Subscribe to APIs in the "Project APIs" tab first</p>
-              </div>
-
-              <div v-else-if="projectCodespaces.length === 0" class="no-codespaces">
-                <ion-icon name="cube-outline" size="large" color="medium"></ion-icon>
-                <p>No codespaces found for this project</p>
-              </div>
-
-              <div v-else class="select-codespace">
-                <ion-icon name="cube-outline" size="large" color="medium"></ion-icon>
-                <p>Select a codespace above to manage API activations</p>
-              </div>
-            </div>
-
-            <!-- Usage & Stats Tab -->
-            <div v-if="activeTab === 'usage'" class="tab-content">
-              <div class="stats-overview" v-if="usageStats.length > 0">
-                <div class="stat-card">
-                  <h3>Total Requests</h3>
-                  <div class="stat-number">{{ totalRequests }}</div>
+          <div class="apis-grid">
+            <article v-for="api in filteredApis" :key="api.id" class="api-tile">
+              <div class="tile-top">
+                <div class="tile-icon">
+                  <ion-icon :name="api.icon || 'cloud-outline'"></ion-icon>
                 </div>
-                <div class="stat-card">
-                  <h3>Success Rate</h3>
-                  <div class="stat-number">{{ averageSuccessRate }}%</div>
+                <span class="category-pill" :class="'cat-' + api.category">{{ api.category }}</span>
+              </div>
+              <h3 class="tile-title">{{ api.name }}</h3>
+              <p class="tile-description">{{ api.description }}</p>
+              <div class="tile-meta">
+                <div class="meta-line">
+                  <ion-icon name="globe-outline"></ion-icon>
+                  <code>{{ api.endpoint_base }}</code>
                 </div>
-                <div class="stat-card">
-                  <h3>Avg Response Time</h3>
-                  <div class="stat-number">{{ averageResponseTime }}ms</div>
+                <div class="meta-line">
+                  <ion-icon name="shield-checkmark-outline"></ion-icon>
+                  <span>{{ api.auth_required ? 'Auth required' : 'No auth' }}</span>
+                </div>
+                <div class="meta-line">
+                  <ion-icon name="speedometer-outline"></ion-icon>
+                  <span>{{ api.rate_limit_default }}/min</span>
                 </div>
               </div>
-              <div v-else class="no-stats">
-                <ion-icon name="analytics-outline" size="large" color="medium"></ion-icon>
-                <p>No usage data available yet</p>
+              <div class="tile-footer">
+                <span class="tile-version">v{{ api.version }}</span>
+                <div class="tile-actions">
+                  <button class="btn ghost" @click="viewApiDetails(api)">
+                    <ion-icon name="eye-outline"></ion-icon>
+                    Details
+                  </button>
+                  <button class="btn primary" @click="subscribeToApi(api)" :disabled="isSubscribed(api.id)">
+                    <ion-icon :name="isSubscribed(api.id) ? 'checkmark-outline' : 'add-outline'"></ion-icon>
+                    {{ isSubscribed(api.id) ? 'Subscribed' : 'Subscribe' }}
+                  </button>
+                </div>
               </div>
-            </div>
-          </ion-col>
-          <ion-col size="1"></ion-col>
-        </ion-row>
-      </ion-grid>
+            </article>
+          </div>
 
-      <!-- API Details Modal -->
+          <div v-if="filteredApis.length === 0" class="empty-block">
+            <ion-icon name="cloud-offline-outline"></ion-icon>
+            <h4>No APIs found</h4>
+            <p>Try adjusting your search or category filter.</p>
+          </div>
+        </div>
+
+        <div v-if="activeTab === 'subscribed'" class="tab-content">
+          <div class="action-row" v-if="subscribedApis.length > 0">
+            <p class="section-hint">Open an API to inspect its detailed call log and usage.</p>
+            <button class="btn ghost" @click="refreshUsage">
+              <ion-icon name="refresh-outline"></ion-icon>
+              Refresh
+            </button>
+          </div>
+
+          <div v-if="subscribedApis.length > 0" class="apis-grid">
+            <article
+              v-for="api in subscribedApis"
+              :key="api.subscription_id"
+              class="api-tile subscribed"
+              @click="openApiDetail(api)"
+            >
+              <div class="tile-top">
+                <div class="tile-icon">
+                  <ion-icon :name="api.icon || 'cloud-outline'"></ion-icon>
+                </div>
+                <span class="category-pill" :class="'cat-' + api.category">{{ api.category }}</span>
+              </div>
+              <h3 class="tile-title">{{ api.name }}</h3>
+              <p class="tile-description">{{ api.description }}</p>
+
+              <div class="sub-metrics">
+                <div class="sub-metric">
+                  <div class="sub-metric-value">{{ api.usage_count || 0 }}</div>
+                  <div class="sub-metric-label">Requests</div>
+                </div>
+                <div class="sub-metric">
+                  <div class="sub-metric-value">{{ api.last_used ? formatDate(api.last_used) : '—' }}</div>
+                  <div class="sub-metric-label">Last used</div>
+                </div>
+              </div>
+
+              <div class="key-chip">
+                <ion-icon name="key-outline"></ion-icon>
+                <code>{{ api.api_key }}</code>
+              </div>
+
+              <div class="tile-footer">
+                <button class="btn primary" @click.stop="openApiDetail(api)">
+                  <ion-icon name="list-outline"></ion-icon>
+                  Call Log
+                </button>
+                <div class="tile-actions">
+                  <button class="icon-action" title="Settings" @click.stop="openApiSettings(api)">
+                    <ion-icon name="settings-outline"></ion-icon>
+                  </button>
+                  <button class="icon-action" title="Regenerate key" @click.stop="regenerateApiKey(api)">
+                    <ion-icon name="refresh-outline"></ion-icon>
+                  </button>
+                  <button class="icon-action danger" title="Unsubscribe" @click.stop="unsubscribeFromApi(api)">
+                    <ion-icon name="trash-outline"></ion-icon>
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div v-else class="empty-block">
+            <ion-icon name="albums-outline"></ion-icon>
+            <h4>No API subscriptions</h4>
+            <p>Subscribe to APIs from the "Available APIs" tab to get started.</p>
+          </div>
+        </div>
+
+        <div v-if="activeTab === 'codespaces'" class="tab-content">
+          <div class="codespace-selector" v-if="projectCodespaces.length > 0">
+            <label>Codespace</label>
+            <select v-model="selectedCodespace" class="filter-select" @change="loadCodespaceAPIs">
+              <option value="" disabled>Select Codespace</option>
+              <option v-for="codespace in projectCodespaces" :key="codespace.slug" :value="codespace.slug">
+                {{ codespace.name }}
+              </option>
+            </select>
+          </div>
+
+          <div v-if="selectedCodespace && codespaceAPIs.length > 0">
+            <div class="codespace-info">
+              <ion-icon name="information-circle-outline"></ion-icon>
+              <span>Toggle APIs on/off for this codespace. Only activated APIs have their SDKs available in the .monaco_apis folder.</span>
+            </div>
+
+            <div class="apis-grid">
+              <article v-for="api in codespaceAPIs" :key="api.subscription_id" class="api-tile">
+                <div class="tile-top">
+                  <div class="tile-icon">
+                    <ion-icon :name="api.icon || 'cloud-outline'"></ion-icon>
+                  </div>
+                  <ion-toggle
+                    :checked="api.is_active"
+                    @ionChange="toggleCodespaceAPI(api)"
+                    :disabled="api.isToggling">
+                  </ion-toggle>
+                </div>
+                <h3 class="tile-title">{{ api.name }}</h3>
+                <p class="tile-description">{{ api.description }}</p>
+                <div class="tile-footer">
+                  <span class="status-tag" :class="api.is_active ? 'on' : 'off'">
+                    {{ api.is_active ? 'Active' : 'Inactive' }}
+                  </span>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div v-else-if="selectedCodespace && codespaceAPIs.length === 0" class="empty-block">
+            <ion-icon name="server-outline"></ion-icon>
+            <h4>No APIs for this codespace</h4>
+            <p>Subscribe to APIs in the "Project APIs" tab first.</p>
+          </div>
+
+          <div v-else-if="projectCodespaces.length === 0" class="empty-block">
+            <ion-icon name="cube-outline"></ion-icon>
+            <h4>No codespaces found</h4>
+            <p>This project has no codespaces yet.</p>
+          </div>
+
+          <div v-else class="empty-block">
+            <ion-icon name="cube-outline"></ion-icon>
+            <h4>Select a codespace</h4>
+            <p>Choose a codespace above to manage API activations.</p>
+          </div>
+        </div>
+
+        <div v-if="activeTab === 'usage'" class="tab-content">
+          <div class="stats-overview" v-if="usageStats.length > 0">
+            <div class="stat-tile">
+              <div class="stat-tile-value">{{ totalRequests }}</div>
+              <div class="stat-tile-label">Total Requests</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-tile-value">{{ averageSuccessRate }}%</div>
+              <div class="stat-tile-label">Success Rate</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-tile-value">{{ averageResponseTime }}ms</div>
+              <div class="stat-tile-label">Avg Response Time</div>
+            </div>
+          </div>
+          <div v-else class="empty-block">
+            <ion-icon name="analytics-outline"></ion-icon>
+            <h4>No usage data yet</h4>
+            <p>Aggregate statistics will appear here once your APIs are used.</p>
+          </div>
+        </div>
+      </div>
+
       <ion-modal :is-open="isDetailsModalOpen" ref="detailsModal">
         <ion-header>
           <ion-toolbar>
@@ -280,7 +302,6 @@
         </ion-content>
       </ion-modal>
 
-      <!-- API Settings Modal -->
       <ion-modal :is-open="isSettingsModalOpen" ref="settingsModal">
         <ion-header>
           <ion-toolbar>
@@ -322,15 +343,14 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import {
-  IonPage, IonContent, IonGrid, IonRow, IonCol, IonSegment, IonSegmentButton,
-  IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton,
-  IonIcon, IonBadge, IonSearchbar, IonSelect, IonSelectOption, IonList, IonItem,
-  IonItemSliding, IonItemOptions, IonItemOption, IonCheckbox, IonInput, IonToggle,
-  IonModal, IonHeader, IonToolbar, IonButtons, IonTitle,
+  IonPage, IonContent, IonLabel, IonButton,
+  IonIcon, IonBadge, IonCheckbox, IonInput, IonToggle,
+  IonModal, IonHeader, IonToolbar, IonButtons, IonTitle, IonItem,
   alertController, toastController
 } from '@ionic/vue';
+import SiteTitle from '@/components/SiteTitle.vue';
 import axios from 'axios';
 
 
@@ -388,14 +408,14 @@ interface Codespace {
 export default defineComponent({
   name: 'ManageApis',
   components: {
-    IonPage, IonContent, IonGrid, IonRow, IonCol, IonSegment, IonSegmentButton,
-    IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton,
-    IonIcon, IonBadge, IonSearchbar, IonSelect, IonSelectOption, IonList, IonItem,
-    IonItemSliding, IonItemOptions, IonItemOption, IonCheckbox, IonInput, IonToggle,
-    IonModal, IonHeader, IonToolbar, IonButtons, IonTitle
+    IonPage, IonContent, IonLabel, IonButton,
+    IonIcon, IonBadge, IonCheckbox, IonInput, IonToggle,
+    IonModal, IonHeader, IonToolbar, IonButtons, IonTitle, IonItem,
+    SiteTitle
   },
   setup() {
     const route = useRoute();
+    const router = useRouter();
 
     const activeTab = ref('available');
     const availableApis = ref<CmsApi[]>([]);
@@ -404,7 +424,6 @@ export default defineComponent({
     const selectedCategory = ref('');
     const usageStats = ref([]);
 
-    // New codespace-related reactive variables
     const projectCodespaces = ref<Codespace[]>([]);
     const selectedCodespace = ref('');
     const codespaceAPIs = ref<CodespaceApi[]>([]);
@@ -451,7 +470,7 @@ export default defineComponent({
       const total = usageStats.value.reduce((sum, stat) => sum + stat.avg_response_time, 0);
       return Math.round(total / usageStats.value.length);
     });
- 
+
     const loadAvailableApis = async () => {
       try {
 
@@ -552,6 +571,10 @@ export default defineComponent({
       }
     };
 
+    const openApiDetail = (api: SubscribedApi) => {
+      router.push(`/project/${route.params.project}/apis/${api.slug}`);
+    };
+
     const openApiSettings = (api: SubscribedApi) => {
       selectedSubscription.value = api;
       settingsForm.value = {
@@ -562,7 +585,6 @@ export default defineComponent({
     };
 
     const saveSubscriptionSettings = async () => {
-      // Implementation for saving settings
       showToast('Settings saved successfully', 'success');
       closeSettingsModal();
     };
@@ -600,27 +622,18 @@ export default defineComponent({
       await alert.present();
     };
 
-    const segmentChanged = (event: any) => {
-      activeTab.value = event.detail.value;
-      if (activeTab.value === 'subscribed') {
+    const setTab = (tab: string) => {
+      activeTab.value = tab;
+      if (tab === 'subscribed') {
         loadSubscribedApis();
-      } else if (activeTab.value === 'codespaces') {
+      } else if (tab === 'codespaces') {
         loadProjectCodespaces();
       }
-    };
-
-    const filterApis = () => {
-      // Filtering is handled by computed property
     };
 
     const refreshUsage = () => {
       loadSubscribedApis();
       showToast('Usage data refreshed', 'success');
-    };
-
-    const viewApiUsage = (api: SubscribedApi) => {
-      // Implementation for viewing usage details
-      showToast(`Viewing usage for ${api.name}`, 'primary');
     };
 
     const closeDetailsModal = () => {
@@ -664,14 +677,13 @@ export default defineComponent({
       return new Date(dateString).toLocaleDateString();
     };
 
-    // New codespace-related methods
     const loadProjectCodespaces = async () => {
       try {
         const response = await axios.post('project_codespaces.php', new URLSearchParams({
           getCodespaces: 'true',
           project: route.params.project as string
         }));
-        
+
         if (response.data && response.data.success && response.data.codespaces) {
           projectCodespaces.value = response.data.codespaces;
         } else {
@@ -686,15 +698,15 @@ export default defineComponent({
 
     const loadCodespaceAPIs = async () => {
       if (!selectedCodespace.value) return;
-      
+
       try {
         const formData = new FormData();
         formData.append('getCodespaceAPIs', '1');
         formData.append('project', route.params.project as string);
         formData.append('codespace', selectedCodespace.value);
-        
+
         const response = await axios.post('codespace_apis.php', formData);
-        
+
         if (response.data && Array.isArray(response.data)) {
           codespaceAPIs.value = response.data.map((api: any) => ({
             ...api,
@@ -712,19 +724,19 @@ export default defineComponent({
 
     const toggleCodespaceAPI = async (api: CodespaceApi) => {
       if (api.isToggling) return;
-      
+
       api.isToggling = true;
-      
+
       try {
         const formData = new FormData();
         formData.append('project', route.params.project as string);
         formData.append('codespace', selectedCodespace.value);
         formData.append('subscription_id', api.subscription_id.toString());
-        
+
         if (api.is_active) {
           formData.append('deactivateCodespaceAPI', '1');
           const response = await axios.post('codespace_apis.php', formData);
-          
+
           if (response.data && response.data.success) {
             api.is_active = false;
             showToast('API deactivated successfully', 'success');
@@ -734,7 +746,7 @@ export default defineComponent({
         } else {
           formData.append('activateCodespaceAPI', '1');
           const response = await axios.post('codespace_apis.php', formData);
-          
+
           if (response.data && response.data.success) {
             api.is_active = true;
             showToast('API activated successfully', 'success');
@@ -748,11 +760,6 @@ export default defineComponent({
       } finally {
         api.isToggling = false;
       }
-    };
-
-    const getCodespaceName = (slug: string) => {
-      const codespace = projectCodespaces.value.find(cs => cs.slug === slug);
-      return codespace ? codespace.name : slug;
     };
 
     const showToast = async (message: string, color: string) => {
@@ -785,271 +792,591 @@ export default defineComponent({
       selectedApi,
       selectedSubscription,
       settingsForm,
-      // New codespace-related variables
       projectCodespaces,
       selectedCodespace,
       codespaceAPIs,
-      // Methods
+      setTab,
       isSubscribed,
       subscribeToApi,
       unsubscribeFromApi,
       viewApiDetails,
+      openApiDetail,
       openApiSettings,
       saveSubscriptionSettings,
       regenerateApiKey,
-      segmentChanged,
-      filterApis,
       refreshUsage,
-      viewApiUsage,
       closeDetailsModal,
       closeSettingsModal,
       openDocumentation,
       getCategoryColor,
       getMethodColor,
       formatDate,
-      // New codespace methods
       loadProjectCodespaces,
       loadCodespaceAPIs,
-      toggleCodespaceAPI,
-      getCodespaceName
+      toggleCodespaceAPI
     };
   }
 });
 </script>
 
 <style scoped>
-.tabs-container {
+.apis-modern {
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --success-color: #059669;
+  --danger-color: #dc2626;
+  --warning-color: #d97706;
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --radius: 8px;
+  --radius-lg: 12px;
+  --ion-background-color: var(--background);
+}
+
+.apis-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-content h1 {
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.header-content p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+.apis-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 4px;
+  box-shadow: var(--shadow);
   margin-bottom: 24px;
 }
 
-.tab-content {
-  min-height: 400px;
+.apis-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.apis-tab:hover {
+  background: var(--background);
+  color: var(--text-primary);
+}
+
+.apis-tab.active {
+  background: var(--primary-color);
+  color: white;
+  box-shadow: var(--shadow);
+}
+
+.apis-tab ion-icon {
+  font-size: 18px;
+}
+
+.tab-count {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.apis-tab:not(.active) .tab-count {
+  background: var(--primary-color);
+  color: white;
 }
 
 .filter-bar {
   display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
-.filter-bar ion-searchbar {
+.filter-search {
   flex: 1;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 
-.filter-bar ion-select {
-  min-width: 200px;
+.filter-search ion-icon {
+  color: var(--text-muted);
+  font-size: 18px;
+}
+
+.filter-search input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 11px 0;
+  font-size: 14px;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.filter-select {
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 14px;
+  min-width: 190px;
+  cursor: pointer;
 }
 
 .apis-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
 }
 
-.api-card {
-  height: 100%;
+.api-tile {
   display: flex;
   flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.api-card-header {
+.api-tile.subscribed {
+  cursor: pointer;
+}
+
+.api-tile.subscribed:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-md);
+}
+
+.tile-top {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
 }
 
-.api-icon {
-  font-size: 2rem;
-  color: var(--ion-color-primary);
-  flex-shrink: 0;
+.tile-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius);
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
 }
 
-.api-title {
+.category-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+  background: var(--background);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.cat-auth { background: #eef2ff; color: #4f46e5; border-color: transparent; }
+.cat-storage, .cat-file { background: #f0fdfa; color: #0d9488; border-color: transparent; }
+.cat-data, .cat-database { background: #eff6ff; color: #2563eb; border-color: transparent; }
+.cat-communication, .cat-notification { background: #ecfdf5; color: #059669; border-color: transparent; }
+.cat-analytics { background: #fffbeb; color: #d97706; border-color: transparent; }
+.cat-user { background: #fdf4ff; color: #a21caf; border-color: transparent; }
+
+.tile-title {
+  margin: 0 0 6px 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tile-description {
+  margin: 0 0 16px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
   flex: 1;
 }
 
-.api-title ion-card-title {
-  margin-bottom: 4px;
-  font-size: 1.2rem;
-}
-
-.api-version {
-  background: var(--ion-color-step-100);
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  color: var(--ion-color-medium);
-}
-
-.api-description {
-  color: var(--ion-color-medium);
-  margin-bottom: 16px;
-  line-height: 1.4;
-}
-
-.api-details {
+.tile-meta {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-bottom: 16px;
 }
 
-.detail-item {
+.meta-line {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.9rem;
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 
-.detail-item ion-icon {
-  color: var(--ion-color-medium);
-  font-size: 1rem;
+.meta-line ion-icon {
+  font-size: 15px;
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
-.api-actions {
+.meta-line code {
+  font-family: 'Courier New', monospace;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tile-footer {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-top: auto;
 }
 
-.action-buttons {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.api-list-icon {
-  font-size: 1.5rem;
-  margin-right: 12px;
-}
-
-.subscription-details {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.8rem;
-  color: var(--ion-color-medium);
-}
-
-.api-key {
-  font-family: monospace;
-  background: var(--ion-color-step-100);
-  padding: 2px 4px;
+.tile-version {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--background);
+  padding: 4px 8px;
   border-radius: 4px;
-  display: inline-block;
 }
 
-.api-status {
+.tile-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.btn ion-icon {
+  font-size: 16px;
+}
+
+.btn:hover {
+  background: var(--background);
+}
+
+.btn.primary {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.btn.primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn.primary:disabled {
+  background: var(--success-color);
+  border-color: var(--success-color);
+  opacity: 0.85;
+  cursor: default;
+}
+
+.btn.ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.icon-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-action:hover {
+  background: var(--background);
+  color: var(--text-primary);
+}
+
+.icon-action.danger:hover {
+  background: #fef2f2;
+  color: var(--danger-color);
+  border-color: var(--danger-color);
+}
+
+.action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.section-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.sub-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.sub-metric {
+  padding: 10px 12px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.sub-metric-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.sub-metric-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.key-chip {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 8px 12px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.key-chip ion-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.key-chip code {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-tag {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-tag.on {
+  background: #dcfce7;
+  color: var(--success-color);
+}
+
+.status-tag.off {
+  background: var(--background);
+  color: var(--text-muted);
+}
+
+.codespace-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+  max-width: 360px;
+}
+
+.codespace-selector label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.codespace-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius);
+  color: #1e40af;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.codespace-info ion-icon {
+  font-size: 20px;
+  flex-shrink: 0;
 }
 
 .stats-overview {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
 }
 
-.stat-card {
-  background: var(--ion-color-step-50);
-  border-radius: 8px;
-  padding: 20px;
+.stat-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
   text-align: center;
+  box-shadow: var(--shadow);
 }
 
-.stat-card h3 {
-  margin: 0 0 8px 0;
-  color: var(--ion-color-medium);
-  font-size: 0.9rem;
+.stat-tile-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.stat-tile-label {
+  margin-top: 6px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  color: var(--text-secondary);
 }
 
-.stat-number {
-  font-size: 2rem;
-  font-weight: bold;
-  color: var(--ion-color-primary);
-}
-
-.no-stats {
+.empty-block {
   text-align: center;
   padding: 64px 32px;
-  color: var(--ion-color-medium);
+  color: var(--text-muted);
 }
 
-.no-stats ion-icon {
+.empty-block ion-icon {
+  font-size: 48px;
+  opacity: 0.5;
   margin-bottom: 16px;
 }
 
-.api-details-content {
-  max-width: 800px;
+.empty-block h4 {
+  margin: 0 0 8px 0;
+  color: var(--text-secondary);
+  font-size: 16px;
+  font-weight: 500;
 }
 
-.api-overview {
-  margin-bottom: 32px;
+.empty-block p {
+  margin: 0;
+  font-size: 14px;
 }
 
+.api-details-content { max-width: 800px; }
+.api-overview { margin-bottom: 32px; }
 .api-meta {
   display: grid;
   gap: 8px;
   margin-top: 16px;
-  background: var(--ion-color-step-50);
+  background: var(--ion-color-step-50, #f4f5f8);
   padding: 16px;
   border-radius: 8px;
 }
-
-.api-meta div {
-  display: flex;
-  justify-content: space-between;
-}
-
+.api-meta div { display: flex; justify-content: space-between; }
 .api-meta code {
-  background: var(--ion-color-step-100);
+  background: var(--ion-color-step-100, #e9eaed);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: monospace;
 }
-
-.endpoints-section {
-  margin-bottom: 32px;
-}
-
+.endpoints-section { margin-bottom: 32px; }
 .endpoint-card {
-  border: 1px solid var(--ion-color-step-200);
+  border: 1px solid var(--ion-color-step-200, #d7d8da);
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 12px;
-  background: var(--ion-color-step-50);
+  background: var(--ion-color-step-50, #f4f5f8);
 }
-
 .endpoint-header {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
 }
-
 .endpoint-path {
   font-family: monospace;
-  background: var(--ion-color-step-100);
+  background: var(--ion-color-step-100, #e9eaed);
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.9rem;
 }
-
-.endpoint-description {
-  color: var(--ion-color-medium);
-  margin: 8px 0;
-}
-
-.parameters ul {
-  margin: 8px 0;
-  padding-left: 20px;
-}
-
+.endpoint-description { color: var(--ion-color-medium); margin: 8px 0; }
+.parameters ul { margin: 8px 0; padding-left: 20px; }
 .parameters code {
   background: var(--ion-color-primary-tint);
   color: var(--ion-color-primary-contrast);
@@ -1057,64 +1384,28 @@ export default defineComponent({
   border-radius: 4px;
   font-size: 0.8rem;
 }
+.required { color: var(--ion-color-danger); font-weight: bold; }
+.documentation-link { margin-top: 24px; }
 
-.required {
-  color: var(--ion-color-danger);
-  font-weight: bold;
-}
-
-.documentation-link {
-  margin-top: 24px;
-}
-
-/* Codespace-related styles */
-.codespace-selector {
-  margin-bottom: 24px;
-}
-
-.codespace-selector ion-select {
-  width: 100%;
-  border: 1px solid var(--ion-color-step-200);
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.codespace-info {
-  background: var(--ion-color-step-50);
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 24px;
-  color: var(--ion-color-medium);
-}
-
-.no-codespaces,
-.select-codespace {
-  text-align: center;
-  padding: 64px 32px;
-  color: var(--ion-color-medium);
-}
-
-.no-codespaces ion-icon,
-.select-codespace ion-icon {
-  margin-bottom: 16px;
-}
-
-.api-status-badge {
-  margin-right: 8px;
+@media (prefers-color-scheme: dark) {
+  .apis-modern {
+    --background: #0f172a;
+    --surface: #1e293b;
+    --border: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+  }
+  .codespace-info { background: rgba(37, 99, 235, 0.12); border-color: rgba(37, 99, 235, 0.3); color: #bfdbfe; }
+  .status-tag.on { background: rgba(5, 150, 105, 0.2); }
 }
 
 @media (max-width: 768px) {
-  .apis-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .filter-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .stats-overview {
-    grid-template-columns: 1fr;
-  }
+  .apis-container { padding: 16px; }
+  .apis-tabs { flex-wrap: wrap; }
+  .apis-tab { flex: 1 1 45%; }
+  .apis-grid { grid-template-columns: 1fr; }
+  .filter-bar { flex-direction: column; }
+  .filter-select { min-width: 0; width: 100%; }
 }
 </style>

@@ -107,6 +107,133 @@ function calculateUsageStats($subscriptionId)
     ];
 }
 
+function logApiCall($subscriptionId, array $data)
+{
+    $subscriptionId = intval($subscriptionId);
+    if (!$subscriptionId) {
+        return false;
+    }
+
+    $method        = escape_string($data['method'] ?? 'GET');
+    $path          = escape_string($data['path'] ?? '/');
+    $statusCode    = intval($data['status_code'] ?? 0);
+    $responseTime  = intval($data['response_time'] ?? 0);
+    $endpointId    = isset($data['endpoint_id']) ? intval($data['endpoint_id']) : null;
+    $ip            = escape_string($data['ip_address'] ?? ($_SERVER['REMOTE_ADDR'] ?? ''));
+    $userAgent     = escape_string($data['user_agent'] ?? ($_SERVER['HTTP_USER_AGENT'] ?? ''));
+    $requestQuery  = escape_string($data['request_query'] ?? '');
+    $requestBody   = escape_string($data['request_body'] ?? '');
+    $responseBody  = escape_string($data['response_body'] ?? '');
+    $errorMessage  = escape_string($data['error_message'] ?? '');
+
+    $reqHeaders = isset($data['request_headers'])
+        ? escape_string(is_string($data['request_headers']) ? $data['request_headers'] : json_encode($data['request_headers']))
+        : null;
+    $resHeaders = isset($data['response_headers'])
+        ? escape_string(is_string($data['response_headers']) ? $data['response_headers'] : json_encode($data['response_headers']))
+        : null;
+
+    $endpointSql   = $endpointId ? "'$endpointId'" : "NULL";
+    $reqHeadersSql = $reqHeaders !== null ? "'$reqHeaders'" : "NULL";
+    $resHeadersSql = $resHeaders !== null ? "'$resHeaders'" : "NULL";
+
+    $ok = query("
+        INSERT INTO cms_api_usage_logs
+            (subscription_id, endpoint_id, method, path, status_code, response_time,
+             ip_address, user_agent, request_query, request_headers, request_body,
+             response_headers, response_body, error_message)
+        VALUES
+            ('$subscriptionId', $endpointSql, '$method', '$path', '$statusCode', '$responseTime',
+             '$ip', '$userAgent', '$requestQuery', $reqHeadersSql, '$requestBody',
+             $resHeadersSql, '$responseBody', '$errorMessage')
+    ");
+
+    query("UPDATE project_api_subscriptions
+           SET usage_count = usage_count + 1, last_used = NOW()
+           WHERE id='$subscriptionId'");
+
+    return $ok;
+}
+
+function getApiCallLogs($subscriptionId, array $filters = [])
+{
+    $subscriptionId = intval($subscriptionId);
+    $page  = max(1, intval($filters['page'] ?? 1));
+    $limit = intval($filters['limit'] ?? 25);
+    $limit = max(1, min(100, $limit));
+    $offset = ($page - 1) * $limit;
+
+    $where = ["subscription_id='$subscriptionId'"];
+
+    if (!empty($filters['method'])) {
+        $method = escape_string(strtoupper($filters['method']));
+        $where[] = "method='$method'";
+    }
+
+    if (!empty($filters['statusGroup'])) {
+        $group = intval(substr($filters['statusGroup'], 0, 1));
+        if ($group >= 1 && $group <= 5) {
+            $low = $group * 100;
+            $high = $low + 99;
+            $where[] = "status_code BETWEEN $low AND $high";
+        }
+    }
+
+    if (!empty($filters['search'])) {
+        $search = escape_string($filters['search']);
+        $where[] = "(path LIKE '%$search%' OR ip_address LIKE '%$search%' OR method LIKE '%$search%')";
+    }
+
+    $whereSql = implode(' AND ', $where);
+
+    $countRow = fetch_assoc(query("SELECT COUNT(*) as total FROM cms_api_usage_logs WHERE $whereSql"));
+    $total = intval($countRow['total'] ?? 0);
+
+    $rows = query("
+        SELECT id, subscription_id, endpoint_id, method, path, status_code, response_time,
+               ip_address, user_agent, request_query, request_headers, request_body,
+               response_headers, response_body, error_message, timestamp
+        FROM cms_api_usage_logs
+        WHERE $whereSql
+        ORDER BY timestamp DESC, id DESC
+        LIMIT $limit OFFSET $offset
+    ");
+
+    $logs = [];
+    foreach ($rows as $row) {
+        $logs[] = formatCallLogEntry($row);
+    }
+
+    return [
+        'logs' => $logs,
+        'total' => $total,
+        'page' => $page,
+        'limit' => $limit,
+        'totalPages' => $limit > 0 ? (int) ceil($total / $limit) : 1
+    ];
+}
+
+function formatCallLogEntry($row)
+{
+    return [
+        'id' => intval($row['id']),
+        'endpoint_id' => $row['endpoint_id'] !== null ? intval($row['endpoint_id']) : null,
+        'method' => $row['method'],
+        'path' => $row['path'],
+        'status' => intval($row['status_code']),
+        'response_time' => intval($row['response_time']),
+        'ip_address' => $row['ip_address'],
+        'user_agent' => $row['user_agent'],
+        'request_query' => $row['request_query'],
+        'request_headers' => json_decode($row['request_headers'] ?? 'null', true),
+        'request_body' => $row['request_body'],
+        'response_headers' => json_decode($row['response_headers'] ?? 'null', true),
+        'response_body' => $row['response_body'],
+        'error_message' => $row['error_message'],
+        'timestamp' => $row['timestamp']
+    ];
+}
+
 function copyAPISDKToProject($projectName, $apiSlug, $userID)
 {
     $projectDir = __DIR__ . "/../data/projects/" . $userID . "/" . $projectName;
