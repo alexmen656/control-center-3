@@ -1,6 +1,5 @@
 <template>
   <div class="monaco-sidebar">
-    <!-- File Explorer Section -->
     <div class="sidebar-section">
       <div class="section-header">
         <ion-icon name="folder-outline"></ion-icon>
@@ -31,23 +30,18 @@
               </ion-button>
             </div>
           </div>
-
           <div class="tree-item">
             <div class="file-item" :class="{ 'active-file': activeFile === 'environment' }"
               @click="openFile({ name: 'environment', path: 'environment' })">
               <span class="file-indent"></span>
-              <ion-icon name="shield-outline" class="file-icon"></ion-icon>
+              <ion-icon name="shield-outline" class="file-icon" />
               <span class="file-name">Environment</span>
-              <ion-button fill="clear" size="small" class="delete-btn"><!-- @click.stop="openEnvView" manage-btn-->
-                <!--<ion-icon name="settings-outline"></ion-icon>-->
-                <ion-icon name="trash-outline"></ion-icon>
+              <ion-button fill="clear" size="small" class="delete-btn">
+                <ion-icon name="trash-outline" />
               </ion-button>
             </div>
           </div>
-
-          <!-- Recursive file tree rendering -->
           <div v-for="item in hierarchicalFileTree" :key="item.path" class="tree-item">
-            <!-- Folder -->
             <div v-if="item.type === 'directory' && item.path != 'apis'" class="file-item folder-item"
               @click="toggleFolder(item.path)">
               <ion-icon :name="isFolderExpanded(item.path) ? 'chevron-down-outline' : 'chevron-forward-outline'"
@@ -59,25 +53,17 @@
                 <ion-icon name="trash-outline"></ion-icon>
               </ion-button>
             </div>
-
-            <!-- Apis -->
             <div v-if="item.type === 'directory' && item.path == 'apis'" class="file-item"
               :class="{ 'active-file': activeFile === item.path }" @click="openFile({ name: 'apis', path: 'apis' })">
               <span class="file-indent"></span>
               <ion-icon name="server-outline" class="file-icon"></ion-icon>
               <span class="file-name">APIs</span>
-              <!--<ion-button fill="clear" size="small" @click.stop="openAPIsView" class="manage-btn">
-                <ion-icon name="settings-outline"></ion-icon>
-              </ion-button>-->
               <ion-button fill="clear" size="small" @click.stop="deleteFile(child)" class="delete-btn">
                 <ion-icon name="trash-outline"></ion-icon>
               </ion-button>
             </div>
-
-            <!-- Children (if folder is expanded) -->
             <div v-if="item.type === 'directory' && isFolderExpanded(item.path)" class="folder-children">
               <div v-for="child in item.children" :key="child.path" class="tree-item" style="margin-left: 16px;">
-                <!-- Nested Folder -->
                 <div v-if="child.type === 'directory'" class="file-item folder-item" @click="toggleFolder(child.path)">
                   <ion-icon :name="isFolderExpanded(child.path) ? 'chevron-down-outline' : 'chevron-forward-outline'"
                     class="folder-chevron"></ion-icon>
@@ -88,12 +74,9 @@
                     <ion-icon name="trash-outline"></ion-icon>
                   </ion-button>
                 </div>
-
-                <!-- Nested Children -->
                 <div v-if="child.type === 'directory' && isFolderExpanded(child.path)" class="folder-children">
                   <div v-for="grandchild in child.children" :key="grandchild.path" class="tree-item"
                     style="margin-left: 32px;">
-                    <!-- File in nested folder -->
                     <div v-if="grandchild.type === 'file'" class="file-item"
                       :class="{ 'active-file': activeFile === grandchild.path }" @click="openFile(grandchild)">
                       <span class="file-indent"></span>
@@ -105,8 +88,6 @@
                     </div>
                   </div>
                 </div>
-
-                <!-- File in first level folder -->
                 <div v-if="child.type === 'file'" class="file-item"
                   :class="{ 'active-file': activeFile === child.path }" @click="openFile(child)">
                   <span class="file-indent"></span>
@@ -118,8 +99,6 @@
                 </div>
               </div>
             </div>
-
-            <!-- File at root level -->
             <div v-if="item.type === 'file'" class="file-item" :class="{ 'active-file': activeFile === item.path }"
               @click="openFile(item)">
               <span class="file-indent"></span>
@@ -133,27 +112,21 @@
         </div>
       </div>
     </div>
-
-    <!-- GitHub Section -->
     <div class="sidebar-section">
       <div class="section-header">
-        <ion-icon name="logo-github"></ion-icon>
+        <ion-icon name="git-branch-outline"></ion-icon>
         <span>Source Control</span>
         <ion-button fill="clear" size="small" @click="refreshGitStatus">
           <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
         </ion-button>
         <ion-button fill="clear" size="small" @click="pullFromGitHub" :disabled="isPulling">
           <ion-icon slot="icon-only" name="cloud-download-outline"></ion-icon>
-          <!--{{ isPulling ? 'Pulling...' : 'Pull' }}-->
         </ion-button>
         <ion-button fill="clear" size="small" @click="pushToGitHub" :disabled="isPushing">
           <ion-icon slot="icon-only" name="cloud-upload-outline"></ion-icon>
-          <!--{{ isPushing ? 'Pushing...' : 'Push' }}-->
         </ion-button>
       </div>
-
       <div class="section-content">
-        <!-- Commit Input -->
         <div class="commit-input-section">
           <ion-textarea v-model="commitMessage" placeholder="Message (press Ctrl+Enter to commit)" rows="3"
             class="commit-textarea" @keydown="handleCommitKeyDown"></ion-textarea>
@@ -163,8 +136,6 @@
             {{ isCommitting ? 'Committing...' : 'Commit' }}
           </ion-button>
         </div>
-
-        <!-- Changed Files -->
         <div class="changed-files">
           <div class="subsection-header">Changes</div>
           <div v-if="changedFiles.length === 0" class="no-changes">
@@ -186,46 +157,20 @@
             </ion-button>
           </div>
         </div>
-
-        <!-- Recent Commits -->
         <div class="recent-commits">
           <div class="subsection-header">Recent Commits</div>
           <div v-if="recentCommits.length === 0" class="no-commits">
             No commits yet
           </div>
           <div v-for="commit in recentCommits" :key="commit.hash" class="commit-item">
-            <div class="commit-hash" @dblclick="openCommitOnGitHub(commit)">{{ commit.hash.substring(0, 7) }}</div>
-            <div class="commit-message" @dblclick="openCommitOnGitHub(commit)">{{ commit.message }}</div>
+            <div class="commit-hash">{{ commit.hash.substring(0, 7) }}</div>
+            <div class="commit-message">{{ commit.message }}</div>
             <div class="commit-author">{{ commit.author }}</div>
             <div class="commit-date">{{ formatDate(commit.date) }}</div>
           </div>
         </div>
-
-        <!-- Pull Requests -->
-        <div class="pull-requests">
-          <div class="subsection-header">
-            Pull Requests
-            <ion-button fill="clear" size="small" @click="createPullRequest" class="create-pr-btn">
-              <ion-icon name="git-pull-request-outline"></ion-icon>
-            </ion-button>
-          </div>
-          <div v-if="pullRequests.length === 0" class="no-prs">
-            No pull requests
-          </div>
-          <div v-for="pr in pullRequests" :key="pr.number" class="pr-item" @click="openPullRequest(pr)">
-            <div class="pr-status" :class="pr.state">
-              <ion-icon :name="getPRIcon(pr.state)"></ion-icon>
-            </div>
-            <div class="pr-info">
-              <div class="pr-title">#{{ pr.number }} {{ pr.title }}</div>
-              <div class="pr-meta">{{ pr.user.login }} • {{ formatDate(pr.created_at) }}</div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
-
-    <!-- Vercel Section -->
     <div class="sidebar-section">
       <div class="section-header">
         <ion-icon name="cloud-outline"></ion-icon>
@@ -234,15 +179,11 @@
           <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
         </ion-button>
       </div>
-
       <div class="section-content">
-        <!-- Deploy Button -->
         <ion-button expand="block" color="success" size="small" @click="deployToVercel" :disabled="isDeploying">
           <ion-icon name="rocket-outline" slot="start"></ion-icon>
           {{ isDeploying ? 'Deploying...' : 'Deploy' }}
         </ion-button>
-
-        <!-- Deployment List -->
         <div class="deployments-list">
           <div v-if="deployments.length === 0" class="no-deployments">
             No deployments yet
@@ -263,8 +204,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Environment Variables Section -->
     <div class="sidebar-section">
       <div class="section-header">
         <ion-icon name="shield-outline"></ion-icon>
@@ -273,7 +212,6 @@
           <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
         </ion-button>
       </div>
-
       <div class="section-content">
         <div class="subsection-header">Quick Actions</div>
         <div class="env-quick-actions">
@@ -288,8 +226,6 @@
         </div>
       </div>
     </div>
-
-    <!-- CMS APIs Section -->
     <div class="sidebar-section">
       <div class="section-header">
         <ion-icon name="server-outline"></ion-icon>
@@ -298,14 +234,11 @@
           <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
         </ion-button>
       </div>
-
       <div class="section-content">
-        <!-- Available APIs with toggle switches -->
         <div v-if="availableAPIs.length === 0" class="no-apis">
           No APIs subscribed for this project.<br>
           <small>Subscribe to APIs in the main Fringelo.</small>
         </div>
-
         <div v-for="api in availableAPIs" :key="api.slug" class="api-item">
           <div class="api-info">
             <ion-icon :name="api.icon || 'server-outline'" class="api-icon"></ion-icon>
@@ -314,13 +247,10 @@
               <small class="api-category">{{ api.category }}</small>
             </div>
           </div>
-
           <div class="api-controls">
             <ion-toggle :checked="api.is_active" @ionChange="toggleAPI(api)" :disabled="api.isToggling"></ion-toggle>
           </div>
         </div>
-
-        <!-- Active APIs Quick Copy -->
         <div v-if="activeAPIs.length === 0" class="no-apis-message">
           Activate APIs above to see import examples
         </div>
@@ -343,8 +273,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Diff Viewer Modal -->
   <div v-if="showDiffViewer" class="diff-viewer-modal" @click="closeDiffViewer">
     <div class="diff-viewer-content" @click.stop>
       <div class="diff-viewer-header">
@@ -363,8 +291,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Merge Editor Modal -->
   <div v-if="showMergeEditor" class="merge-editor-modal" @click="closeMergeEditor">
     <div class="merge-editor-content" @click.stop>
       <div class="merge-editor-header">
@@ -396,8 +322,6 @@ import axios from 'axios'
 import { ToastService } from '@/services/ToastService'
 
 const route = useRoute()
-
-// State
 const commitMessage = ref('')
 const isCommitting = ref(false)
 const isPulling = ref(false)
@@ -407,9 +331,7 @@ const changedFiles = ref([])
 const recentCommits = ref([])
 const deployments = ref([])
 const projectFiles = ref([])
-const pullRequests = ref([])
 
-// API State
 const availableAPIs = ref([])
 const activeAPIs = computed(() => availableAPIs.value.filter(api => api.is_active))
 
@@ -795,19 +717,6 @@ const loadGitData = async () => {
   }
 }
 
-const loadPullRequests = async () => {
-  try {
-    const response = await axios.get(`monaco_pr_api.php?project=${projectName}&codespace=${codespace}&action=list`)
-    if (response.data.success) {
-      pullRequests.value = response.data.data || []
-    } else {
-      pullRequests.value = []
-    }
-  } catch (error) {
-    console.error('Failed to load pull requests:', error)
-    pullRequests.value = []
-  }
-}
 
 const loadDeployments = async () => {
   try {
@@ -1061,10 +970,8 @@ const discardChanges = async (filePath) => {
 }
 
 const refreshGitStatus = async () => {
-  console.log('Refreshing git status...')
   await Promise.allSettled([
-    loadGitData(),
-    loadPullRequests()
+    loadGitData()
   ])
 }
 
@@ -1117,48 +1024,6 @@ const closeDiffViewer = () => {
   diffData.value = {}
 }
 
-// Pull Request Methods
-const createPullRequest = async () => {
-  const title = prompt('Enter pull request title:')
-  const baseBranch = prompt('Enter base branch (default: main):', 'main')
-  const headBranch = prompt('Enter head branch (default: feature):')
-
-  if (title && headBranch) {
-    try {
-      const response = await axios.post(`monaco_pr_api.php?project=${projectName}&codespace=${codespace}&action=create`, {
-        title: title,
-        base_branch: baseBranch,
-        head_branch: headBranch,
-        body: 'Created via Monaco IDE'
-      })
-
-      if (response.data.success) {
-        await loadPullRequests()
-        ToastService.success('Pull request created successfully!')
-      } else {
-        ToastService.error('Failed to create pull request: ' + response.data.message)
-      }
-    } catch (error) {
-      console.error('Failed to create pull request:', error)
-      ToastService.error('Failed to create pull request: ' + (error.response?.data?.message || error.message))
-    }
-  }
-}
-
-const openPullRequest = (pr) => {
-  window.open(pr.html_url, '_blank')
-}
-
-const getPRIcon = (state) => {
-  switch (state) {
-    case 'open': return 'git-pull-request-outline'
-    case 'closed': return 'close-circle-outline'
-    case 'merged': return 'git-merge-outline'
-    default: return 'help-circle-outline'
-  }
-}
-
-// Deployment Methods
 const deployToVercel = async () => {
   isDeploying.value = true
   try {
@@ -1259,16 +1124,6 @@ function formatDate(date) {
   return `${days}d ago`;
 }
 
-function openCommitOnGitHub(commit) {
-  // Passe ggf. die URL-Struktur an dein Repo an
-  const repo = projectName;
-  const hash = commit.hash;
-  // Beispiel: https://github.com/<owner>/<repo>/commit/<hash>
-  // Owner ggf. dynamisch holen, hier als Platzhalter 'alexmen656'
-  const url = `https://github.com/alexmen656/${repo}/commit/${hash}`;
-  window.open(url, '_blank');
-}
-
 function openDeploymentInspector(deployment) {
   if (deployment.inspectorUrl) {
     window.open(deployment.inspectorUrl, '_blank');
@@ -1277,16 +1132,13 @@ function openDeploymentInspector(deployment) {
 
 // Initialize
 onMounted(async () => {
-  // Load real data only
   await Promise.allSettled([
     refreshFiles(),
     loadGitData(),
-    loadPullRequests(),
     loadDeployments(),
     loadAvailableAPIs()
   ])
 
-  // Start live git updates
   startLiveGitUpdates()
 
   // Listen for file save events from Monaco editor to trigger git refresh
@@ -1377,13 +1229,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.create-pr-btn {
-  --color: var(--vscode-descriptionForeground, #999999);
-  margin: 0;
-  height: 16px;
-  width: 16px;
 }
 
 /* File Explorer */
@@ -1512,8 +1357,7 @@ onUnmounted(() => {
 }
 
 .changed-files,
-.recent-commits,
-.pull-requests {
+.recent-commits {
   margin-bottom: 16px;
 }
 
@@ -1601,55 +1445,9 @@ onUnmounted(() => {
   color: var(--vscode-descriptionForeground, #999999);
 }
 
-/* Pull Requests */
-.pr-item {
-  display: flex;
-  align-items: center;
-  padding: 8px;
-  border-radius: 4px;
-  margin-bottom: 4px;
-  cursor: pointer;
-}
-
-.pr-item:hover {
-  background: var(--vscode-list-hoverBackground, #2a2d2e);
-}
-
-.pr-status {
-  margin-right: 8px;
-}
-
-.pr-status.open {
-  color: var(--vscode-testing-iconQueued, #73c991);
-}
-
-.pr-status.closed {
-  color: var(--vscode-testing-iconFailed, #f85149);
-}
-
-.pr-status.merged {
-  color: var(--vscode-testing-iconPassed, #a991f5);
-}
-
-.pr-info {
-  flex: 1;
-}
-
-.pr-title {
-  font-size: 13px;
-  margin-bottom: 2px;
-  line-height: 1.3;
-}
-
-.pr-meta {
-  font-size: 11px;
-  color: var(--vscode-descriptionForeground, #999999);
-}
-
 .no-changes,
 .no-commits,
-.no-deployments,
-.no-prs {
+.no-deployments {
   padding: 16px 8px;
   text-align: center;
   color: var(--vscode-descriptionForeground, #999999);

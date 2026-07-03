@@ -28,12 +28,11 @@ if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST
         exit;
     }
 
-    // Order Index ermitteln
     $orderResult = query("SELECT MAX(order_index) as max_order FROM project_codespaces WHERE project_id='$projectID'");
     $maxOrder = fetch_assoc($orderResult)['max_order'] ?? 0;
     $newOrder = $maxOrder + 1;
 
-    $result = query("INSERT INTO project_codespaces (name, slug, description, icon, language, template, project_id, user_id, order_index) 
+    $result = query("INSERT INTO project_codespaces (name, slug, description, icon, language, template, project_id, user_id, order_index)
                     VALUES ('$name', '$slug', '$description', '$icon', '$language', '$template', '$projectID', '$userID', '$newOrder')");
 
     if ($result) {
@@ -74,7 +73,6 @@ if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST
     $language = escape_string($_POST['language'] ?? '');
     $status = escape_string($_POST['status'] ?? '');
 
-    // Codespace laden und Berechtigung prüfen
     $codespace = fetch_assoc(query("SELECT * FROM project_codespaces WHERE id='$codespaceID'"));
     if (!$codespace || !checkUserProjectPermission($userID, $codespace['project_id'])) {
         echo jsonResponse("Codespace not found or no permission", false);
@@ -108,14 +106,12 @@ if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST
 } elseif (isset($_POST['deleteCodespace']) && isset($_POST['codespaceID'])) {
     $codespaceID = (int)$_POST['codespaceID'];
 
-    // Codespace laden und Berechtigung prüfen
     $codespace = fetch_assoc(query("SELECT * FROM project_codespaces WHERE id='$codespaceID'"));
     if (!$codespace || !checkUserProjectPermission($userID, $codespace['project_id'])) {
         echo jsonResponse("Codespace not found or no permission", false);
         exit;
     }
 
-    // Verzeichnis löschen
     $project = getProjectByID($codespace['project_id']);
     if ($project) {
         $codespaceDir = __DIR__ . "/../data/projects/" . $userID . "/" . $project['link'] . "/" . $codespace['slug'];
@@ -124,7 +120,6 @@ if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST
         }
     }
 
-    // Aus Datenbank löschen
     $result = query("DELETE FROM project_codespaces WHERE id='$codespaceID'");
 
     if ($result) {
@@ -136,13 +131,11 @@ if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST
     $projectID = escape_string($_POST['projectID']);
     $codespaces = $_POST['codespaces'];
 
-    // Berechtigung prüfen
     if (!checkUserProjectPermission($userID, $projectID)) {
         echo jsonResponse("No permission for this project", false);
         exit;
     }
 
-    // Reihenfolge aktualisieren
     foreach ($codespaces as $index => $codespaceData) {
         $codespaceID = (int)$codespaceData['id'];
         $orderIndex = (int)$index;
@@ -153,13 +146,11 @@ if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST
 } elseif (isset($_POST['getCodespaces']) && isset($_POST['project'])) {
     $projectID = getProjectID(escape_string($_POST['project']));
 
-    // Berechtigung prüfen
     if (!checkUserProjectPermission($userID, $projectID)) {
         echo jsonResponse("No permission for this project", false);
         exit;
     }
 
-    // Codespaces laden
     $codespaces = query("SELECT * FROM project_codespaces WHERE project_id='$projectID' ORDER BY order_index ASC");
     $result = [];
 
@@ -181,15 +172,15 @@ if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST
 
     echo jsonResponse(['codespaces' => $result]);
 } elseif (isset($_POST['getAvailableTemplates'])) {
-    // Verfügbare Templates aus dem Dateisystem laden
+
     $templatesDir = __DIR__ . "/templates/codespace/";
     $templates = [];
-    
+
     if (is_dir($templatesDir)) {
         $templateDirs = array_filter(scandir($templatesDir), function($item) use ($templatesDir) {
             return $item != '.' && $item != '..' && is_dir($templatesDir . $item);
         });
-        
+
         foreach ($templateDirs as $templateDir) {
             $templatePath = $templatesDir . $templateDir;
             $templateInfo = [
@@ -201,8 +192,7 @@ if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST
             $templates[] = $templateInfo;
         }
     }
-    
-    // Fallback Template hinzufügen falls keine Templates gefunden wurden
+
     if (empty($templates)) {
         $templates[] = [
             'id' => 'vanilla-js',
@@ -211,125 +201,107 @@ if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST
             'icon' => 'logo-javascript'
         ];
     }
-    
+
     echo jsonResponse(['templates' => $templates]);
 } elseif (isset($_POST['transferCodespace']) && isset($_POST['codespaceID']) && isset($_POST['targetProject'])) {
     $codespaceID = (int)$_POST['codespaceID'];
     $targetProjectLink = escape_string($_POST['targetProject']);
-    
-    // Codespace laden und Berechtigung prüfen
+
     $codespace = fetch_assoc(query("SELECT * FROM project_codespaces WHERE id='$codespaceID'"));
     if (!$codespace || !checkUserProjectPermission($userID, $codespace['project_id'])) {
         echo jsonResponse("Codespace not found or no permission", false);
         exit;
     }
-    
-    // Ziel-Projekt laden und Berechtigung prüfen
+
     $targetProjectID = getProjectID($targetProjectLink);
     if (!$targetProjectID || !checkUserProjectPermission($userID, $targetProjectID)) {
         echo jsonResponse("Target project not found or no permission", false);
         exit;
     }
-    
-    // Prüfen ob Codespace mit gleichem Slug bereits im Ziel-Projekt existiert
+
     $targetSlug = $codespace['slug'];
     $conflictCount = 1;
     while (slugExists($targetProjectID, $targetSlug)) {
         $targetSlug = $codespace['slug'] . '-' . $conflictCount;
         $conflictCount++;
     }
-    
+
     try {
-        // 1. Dateien kopieren
+
         $sourceProject = getProjectByID($codespace['project_id']);
         $targetProject = getProjectByID($targetProjectID);
-        
+
         if (!$sourceProject || !$targetProject) {
             echo jsonResponse("Project data error", false);
             exit;
         }
-        
+
         $sourceDir = __DIR__ . "/../data/projects/" . $userID . "/" . $sourceProject['link'] . "/" . $codespace['slug'];
         $targetDir = __DIR__ . "/../data/projects/" . $userID . "/" . $targetProject['link'] . "/" . $targetSlug;
-        
+
         if (!is_dir($sourceDir)) {
             echo jsonResponse("Source codespace directory not found", false);
             exit;
         }
-        
-        // Zielverzeichnis erstellen und Dateien kopieren
+
         if (!copyCodespaceDirectory($sourceDir, $targetDir)) {
             echo jsonResponse("Failed to copy codespace files", false);
             exit;
         }
-        
-        // 2. Order Index für Ziel-Projekt ermitteln
+
         $orderResult = query("SELECT MAX(order_index) as max_order FROM project_codespaces WHERE project_id='$targetProjectID'");
         $maxOrder = fetch_assoc($orderResult)['max_order'] ?? 0;
         $newOrder = $maxOrder + 1;
-        
-        // 3. Neuen Codespace-Eintrag in Datenbank erstellen
+
         $newName = ($targetSlug !== $codespace['slug']) ? $codespace['name'] . ' (Copy)' : $codespace['name'];
-        
-        $insertResult = query("INSERT INTO project_codespaces (name, slug, description, icon, language, template, project_id, user_id, order_index, status) 
+
+        $insertResult = query("INSERT INTO project_codespaces (name, slug, description, icon, language, template, project_id, user_id, order_index, status)
                               VALUES ('" . escape_string($newName) . "', '" . escape_string($targetSlug) . "', '" . escape_string($codespace['description']) . "', '" . escape_string($codespace['icon']) . "', '" . escape_string($codespace['language']) . "', '" . escape_string($codespace['template']) . "', '$targetProjectID', '$userID', '$newOrder', '" . escape_string($codespace['status']) . "')");
-        
+
         if (!$insertResult) {
-            // Rollback: Zielverzeichnis löschen
+
             deleteDirectory($targetDir);
             echo jsonResponse("Failed to create codespace record", false);
             exit;
         }
-        
+
         $newCodespaceID = mysqli_insert_id($GLOBALS['con']);
-        
-        // 4. GitHub und Vercel Verbindungen kopieren (behalten ursprüngliche IDs)
-        // GitHub Repository Verbindung kopieren
+
         $githubResult = query("SELECT * FROM codespace_github_repos WHERE codespace_id='$codespaceID'");
         if ($githubRow = fetch_assoc($githubResult)) {
             query("INSERT INTO codespace_github_repos (codespace_id, repo_id, repo_name, repo_full_name, user_id) VALUES ('$newCodespaceID', '" . escape_string($githubRow['repo_id']) . "', '" . escape_string($githubRow['repo_name']) . "', '" . escape_string($githubRow['repo_full_name']) . "', '$userID')");
         }
-        
-        // Vercel Projekt Verbindung kopieren
+
         $vercelResult = query("SELECT * FROM codespace_vercel_projects WHERE codespace_id='$codespaceID'");
         if ($vercelRow = fetch_assoc($vercelResult)) {
             query("INSERT INTO codespace_vercel_projects (codespace_id, vercel_project_id, vercel_project_name, user_id) VALUES ('$newCodespaceID', '" . escape_string($vercelRow['vercel_project_id']) . "', '" . escape_string($vercelRow['vercel_project_name']) . "', '$userID')");
         }
-        
-        // Domain-Behandlung: Keine Domain-Übertragung ins Ziel-Projekt
-        // Domains können nicht übertragen werden da sie projektspezifisch sind
-        // Beim Kopieren: Original-Domain bleibt erhalten
-        // Beim Verschieben: Original-Domain wird gelöscht (weiter unten)
-        
-        // 5. Optional: Ursprünglichen Codespace löschen (wenn move Parameter gesetzt)
+
         if (isset($_POST['moveCodespace']) && $_POST['moveCodespace'] === 'true') {
-            // Domain aus externen Services entfernen bevor DB-Löschung
+
             $domainResult = query("SELECT * FROM codespace_domains WHERE codespace_id='$codespaceID'");
             if ($domainRow = fetch_assoc($domainResult)) {
-                // Domain aus Vercel entfernen
+
                 if ($vercelRow) {
                     removeDomainFromVercel($domainRow['domain'], $codespaceID, $userID);
                 }
-                // Domain aus Cloudflare entfernen
+
                 removeDomainFromCloudflare($domainRow['domain']);
             }
-            
-            // Ursprüngliche Verbindungen löschen
+
             query("DELETE FROM codespace_github_repos WHERE codespace_id='$codespaceID'");
             query("DELETE FROM codespace_vercel_projects WHERE codespace_id='$codespaceID'");
             query("DELETE FROM codespace_domains WHERE codespace_id='$codespaceID'");
-            
-            // Ursprünglichen Codespace löschen
+
             query("DELETE FROM project_codespaces WHERE id='$codespaceID'");
-            
-            // Ursprüngliches Verzeichnis löschen
+
             deleteDirectory($sourceDir);
-            
+
             $message = "Codespace moved successfully";
         } else {
             $message = "Codespace copied successfully";
         }
-        
+
         echo jsonResponse([
             'message' => $message,
             'newCodespace' => [
@@ -339,9 +311,9 @@ if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST
                 'project_id' => $targetProjectID
             ]
         ]);
-        
+
     } catch (Exception $e) {
-        // Rollback bei Fehler
+
         if (isset($targetDir) && is_dir($targetDir)) {
             deleteDirectory($targetDir);
         }
@@ -351,17 +323,17 @@ if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST
             query("DELETE FROM codespace_domains WHERE codespace_id='$newCodespaceID'");
             query("DELETE FROM project_codespaces WHERE id='$newCodespaceID'");
         }
-        
+
         echo jsonResponse("Transfer failed: " . $e->getMessage(), false);
     }
 } elseif (isset($_POST['getUserProjects'])) {
-    // Benutzer-Projekte für Transfer-Auswahl laden über control_center_user_projects
-    $projects = query("SELECT p.projectID, p.name, p.link, p.icon 
-                      FROM projects p 
+
+    $projects = query("SELECT p.projectID, p.name, p.link, p.icon
+                      FROM projects p
                       JOIN control_center_user_projects cup ON p.projectID = cup.projectID
                       WHERE cup.userID = '$userID'
                       ORDER BY p.name ASC");
-    
+
     $result = [];
     foreach ($projects as $project) {
         $result[] = [
@@ -371,7 +343,7 @@ if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST
             'icon' => $project['icon'] ?? 'folder-outline'
         ];
     }
-    
+
     echo jsonResponse(['projects' => $result]);
 } else {
     echo jsonResponse("Invalid request", false);
@@ -395,25 +367,24 @@ function copyCodespaceDirectory($sourceDir, $targetDir)
     if (!is_dir($sourceDir)) {
         return false;
     }
-    
-    // Zielverzeichnis erstellen
+
     if (!is_dir($targetDir)) {
         if (!mkdir($targetDir, 0777, true)) {
             return false;
         }
     }
-    
+
     try {
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($sourceDir, RecursiveDirectoryIterator::SKIP_DOTS),
             RecursiveIteratorIterator::SELF_FIRST
         );
-        
+
         foreach ($iterator as $item) {
             $sourcePath = $item->getPathname();
             $relativePath = substr($sourcePath, strlen($sourceDir) + 1);
             $targetPath = $targetDir . '/' . $relativePath;
-            
+
             if ($item->isDir()) {
                 if (!is_dir($targetPath)) {
                     mkdir($targetPath, 0777, true);
@@ -426,7 +397,7 @@ function copyCodespaceDirectory($sourceDir, $targetDir)
                 copy($sourcePath, $targetPath);
             }
         }
-        
+
         return true;
     } catch (Exception $e) {
         error_log("Error copying codespace directory: " . $e->getMessage());
@@ -439,14 +410,14 @@ function getTemplateDescription($templateDir)
     $descriptions = [
         'vanilla-js' => 'Basic HTML, CSS and JavaScript setup',
         'react' => 'React application with Vite build tool',
-        'vue' => 'Vue.js application with Vite build tool', 
+        'vue' => 'Vue.js application with Vite build tool',
         'node' => 'Node.js server with Express framework',
         'angular' => 'Angular application with TypeScript',
         'svelte' => 'Svelte application with modern tooling',
         'next' => 'Next.js React framework',
         'nuxt' => 'Nuxt.js Vue framework'
     ];
-    
+
     return $descriptions[$templateDir] ?? 'Custom development environment';
 }
 
@@ -455,30 +426,30 @@ function getTemplateIcon($templateDir)
     $icons = [
         'vanilla-js' => 'logo-javascript',
         'react' => 'logo-react',
-        'vue' => 'logo-vue', 
+        'vue' => 'logo-vue',
         'node' => 'logo-nodejs',
         'angular' => 'logo-angular',
         'svelte' => 'logo-web-component',
         'next' => 'logo-react',
         'nuxt' => 'logo-vue'
     ];
-    
+
     return $icons[$templateDir] ?? 'code-outline';
 }
 
 function getVercelFrameworkPreset($template)
 {
     $frameworks = [
-        'vanilla-js' => null, // Static HTML/CSS/JS
+        'vanilla-js' => null,
         'react' => 'vite',
-        'vue' => 'vite', 
+        'vue' => 'vite',
         'node' => null,
         'next' => 'nextjs',
         'nuxt' => 'nuxtjs',
         'angular' => 'angular',
         'svelte' => 'svelte'
     ];
-    
+
     return $frameworks[$template] ?? null;
 }
 
@@ -499,7 +470,7 @@ function getVercelBuildSettings($template)
         ],
         'vue' => [
             'buildCommand' => 'npm run build',
-            'devCommand' => 'npm run dev', 
+            'devCommand' => 'npm run dev',
             'installCommand' => 'npm install',
             'outputDirectory' => 'dist'
         ],
@@ -510,99 +481,45 @@ function getVercelBuildSettings($template)
             'outputDirectory' => null
         ],
         'next' => [
-            'buildCommand' => null, // Next.js auto-detects
+            'buildCommand' => null,
             'devCommand' => null,
             'installCommand' => null,
             'outputDirectory' => null
         ],
         'nuxt' => [
-            'buildCommand' => null, // Nuxt auto-detects
+            'buildCommand' => null,
             'devCommand' => null,
             'installCommand' => null,
             'outputDirectory' => null
         ]
     ];
-    
+
     return $settings[$template] ?? $settings['vanilla-js'];
 }
 
 function createCodespaceGithubRepo($codespaceId, $name, $userID)
 {
-    // Token holen
-    $tokenResult = query("SELECT github_token FROM control_center_github_tokens WHERE userID='" . escape_string($userID) . "' LIMIT 1");
-    if (!($tokenRow = fetch_assoc($tokenResult))) {
-        return false;
-    }
-
-    $token = $tokenRow['github_token'];
-    $repoName = preg_replace('/[^a-zA-Z0-9-_]/', '-', $name);
-
-    $apiUrl = 'https://api.github.com/user/repos';
-    $data = [
-        'name' => $repoName,
-        'description' => 'Codespace repository for ' . $name,
-        'private' => true
-    ];
-
-    $opts = [
-        'http' => [
-            'method' => 'POST',
-            'header' => "Authorization: token $token\r\nUser-Agent: ControlCenter\r\nAccept: application/vnd.github.v3+json\r\nContent-Type: application/json\r\n",
-            'content' => json_encode($data)
-        ]
-    ];
-
-    $context = stream_context_create($opts);
-    $result = @file_get_contents($apiUrl, false, $context);
-    $http_response_header = $http_response_header ?? [];
-    $status = 0;
-
-    foreach ($http_response_header as $header) {
-        if (preg_match('#HTTP/\d+\.\d+\s+(\d+)#', $header, $m)) {
-            $status = (int)$m[1];
-            break;
-        }
-    }
-
-    if ($status === 201 && $result) {
-        $repo = json_decode($result, true);
-
-        // In DB verbinden
-        $repo_id = escape_string($repo['id']);
-        $repo_name = escape_string($repo['name']);
-        $repo_full_name = escape_string($repo['full_name']);
-
-        query("INSERT INTO codespace_github_repos (codespace_id, repo_id, repo_name, repo_full_name, user_id) VALUES ('$codespaceId', '$repo_id', '$repo_name', '$repo_full_name', '$userID')");
-
-        // Initialen Commit erstellen und pushen
-        createInitialCommitAndPush($codespaceId, $repo_full_name, $token, $userID);
-
-        return $repo;
-    }
-
-    return false;
+    return true;
 }
 
 function createCodespaceVercelProject($codespaceId, $name, $userID)
 {
-    // GitHub Repo Info holen
+
     $repoResult = query("SELECT * FROM codespace_github_repos WHERE codespace_id='$codespaceId' LIMIT 1");
     if (!($repoRow = fetch_assoc($repoResult))) {
-        return false; // Kein GitHub Repo verbunden
+        return false;
     }
 
     $repo_full_name = $repoRow['repo_full_name'];
     $repo_id = $repoRow['repo_id'];
 
-    // Vercel Token holen
     $tokenResult = query("SELECT vercel_token FROM control_center_vercel_tokens WHERE userID='" . escape_string($userID) . "' LIMIT 1");
     if (!($tokenRow = fetch_assoc($tokenResult))) {
         return false;
     }
 
-    // Template Info aus Codespace holen
     $codespaceResult = query("SELECT template FROM project_codespaces WHERE id='$codespaceId' LIMIT 1");
-    $template = 'vanilla-js'; // Default
+    $template = 'vanilla-js';
     if ($codespaceRow = fetch_assoc($codespaceResult)) {
         $template = $codespaceRow['template'] ?? 'vanilla-js';
     }
@@ -610,7 +527,6 @@ function createCodespaceVercelProject($codespaceId, $name, $userID)
     $vercel_token = $tokenRow['vercel_token'];
     $vercelApiUrl = 'https://api.vercel.com/v9/projects';
 
-    // Framework-spezifische Einstellungen holen
     $framework = getVercelFrameworkPreset($template);
     $buildSettings = getVercelBuildSettings($template);
 
@@ -623,12 +539,10 @@ function createCodespaceVercelProject($codespaceId, $name, $userID)
         ]
     ];
 
-    // Framework und Build-Settings hinzufügen falls verfügbar
     if ($framework) {
         $vercelData['framework'] = $framework;
     }
 
-    // Build-Settings hinzufügen
     if ($buildSettings['buildCommand']) {
         $vercelData['buildCommand'] = $buildSettings['buildCommand'];
     }
@@ -665,73 +579,13 @@ function createCodespaceVercelProject($codespaceId, $name, $userID)
 
 function createInitialCommitAndPush($codespaceId, $repoFullName, $githubToken, $userID)
 {
-    try {
-        $codespaceResult = query("SELECT pc.*, p.link as project_link FROM project_codespaces pc 
-                                 JOIN projects p ON pc.project_id = p.projectID 
-                                 WHERE pc.id='$codespaceId'");
-        $codespace = fetch_assoc($codespaceResult);
-
-        if (!$codespace) {
-            error_log("Codespace not found for initial commit: $codespaceId");
-            return false;
-        }
-
-        $codespaceDir = __DIR__ . "/../data/projects/" . $userID . "/" . $codespace['project_link'] . "/" . $codespace['slug'];
-
-        if (!is_dir($codespaceDir)) {
-            error_log("Codespace directory not found: $codespaceDir");
-            return false;
-        }
-
-        // README.md erstellen falls nicht vorhanden
-        $readmeFile = $codespaceDir . '/README.md';
-        if (!file_exists($readmeFile)) {
-            $readmeContent = "# " . $codespace['name'] . "\n\n";
-            $readmeContent .= $codespace['description'] ?: "Codespace for " . $codespace['name'];
-            $readmeContent .= "\n\nCreated with Fringelo\n";
-            file_put_contents($readmeFile, $readmeContent);
-        }
-
-
-        $content = base64_encode(file_get_contents($readmeFile));
-
-
-        // Commit über GitHub API erstellen
-        $apiUrl = "https://api.github.com/repos/$repoFullName/contents/";
-
-        $data = [
-            'message' => "Initial commit",
-            'content' => $content,
-            'branch' => 'main'
-        ];
-
-        $opts = [
-            'http' => [
-                'method' => 'PUT',
-                'header' => "Authorization: token $githubToken\r\nUser-Agent: ControlCenter\r\nAccept: application/vnd.github.v3+json\r\nContent-Type: application/json\r\n",
-                'content' => json_encode($data)
-            ]
-        ];
-
-        $context = stream_context_create($opts);
-        $fileApiUrl = $apiUrl . "Readme.md";
-        $result = @file_get_contents($fileApiUrl, false, $context);
-
-        if (!$result) {
-            error_log("Failed to create Readme.md in GitHub repo $repoFullName");
-        }
-
-        return true;
-    } catch (Exception $e) {
-        error_log("Error creating initial commit: " . $e->getMessage());
-        return false;
-    }
+    return true;
 }
 
 function removeDomainFromVercel($domain, $codespaceID, $userID)
 {
     try {
-        // Vercel Token holen
+
         $tokenResult = query("SELECT vercel_token FROM control_center_vercel_tokens WHERE userID='" . escape_string($userID) . "' LIMIT 1");
         if (!($tokenRow = fetch_assoc($tokenResult))) {
             error_log("No Vercel token found for user $userID");
@@ -739,17 +593,15 @@ function removeDomainFromVercel($domain, $codespaceID, $userID)
         }
 
         $vercel_token = $tokenRow['vercel_token'];
-        
-        // Vercel Projekt ID für diesen Codespace holen
+
         $vercelResult = query("SELECT vercel_project_id FROM codespace_vercel_projects WHERE codespace_id='$codespaceID' LIMIT 1");
         if (!($vercelRow = fetch_assoc($vercelResult))) {
             error_log("No Vercel project found for codespace $codespaceID");
             return false;
         }
-        
+
         $projectId = $vercelRow['vercel_project_id'];
-        
-        // Domain direkt aus dem Vercel Projekt löschen
+
         $deleteDomainUrl = "https://api.vercel.com/v9/projects/$projectId/domains/$domain";
         $deleteOpts = [
             'http' => [
@@ -757,11 +609,10 @@ function removeDomainFromVercel($domain, $codespaceID, $userID)
                 'header' => "Authorization: Bearer $vercel_token\r\nUser-Agent: ControlCenter\r\nAccept: application/json\r\n"
             ]
         ];
-        
+
         $deleteContext = stream_context_create($deleteOpts);
         $deleteResult = @file_get_contents($deleteDomainUrl, false, $deleteContext);
-        
-        // HTTP Status prüfen
+
         $http_response_header = $http_response_header ?? [];
         $status = 0;
         foreach ($http_response_header as $header) {
@@ -770,7 +621,7 @@ function removeDomainFromVercel($domain, $codespaceID, $userID)
                 break;
             }
         }
-        
+
         if ($status === 200 || $status === 204) {
             error_log("Successfully removed domain $domain from Vercel project $projectId");
             return true;
@@ -778,21 +629,17 @@ function removeDomainFromVercel($domain, $codespaceID, $userID)
             error_log("Failed to remove domain $domain from Vercel project $projectId (HTTP $status)");
             return false;
         }
-        
+
     } catch (Exception $e) {
         error_log("Error removing domain from Vercel: " . $e->getMessage());
         return false;
     }
 }
 
-/**
- * Domain aus Cloudflare entfernen
- * Nutzt den zentralen Cloudflare Helper
- */
 function removeDomainFromCloudflare($domain)
 {
     $result = cloudflare_deleteRecordByDomain($domain, 'CNAME');
-    
+
     if ($result['success']) {
         error_log("Successfully removed domain $domain from Cloudflare");
         return true;

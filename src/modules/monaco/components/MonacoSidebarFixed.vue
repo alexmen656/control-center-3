@@ -1,6 +1,5 @@
 <template>
   <div class="monaco-sidebar">
-    <!-- File Explorer Section -->
     <div class="sidebar-section">
       <div class="section-header">
         <ion-icon name="folder-outline"></ion-icon>
@@ -15,7 +14,7 @@
           <ion-icon name="folder-outline"></ion-icon>
         </ion-button>
       </div>
-      
+
       <div class="section-content">
         <div class="file-tree">
           <div v-if="projectFiles.length === 0" class="no-files">
@@ -41,39 +40,24 @@
         </div>
       </div>
     </div>
-
-    <!-- GitHub Section -->
     <div class="sidebar-section">
       <div class="section-header">
-        <ion-icon name="logo-github"></ion-icon>
+        <ion-icon name="git-branch-outline"></ion-icon>
         <span>Source Control</span>
         <ion-button fill="clear" size="small" @click="refreshGitStatus">
           <ion-icon name="refresh-outline"></ion-icon>
         </ion-button>
       </div>
-      
       <div class="section-content">
-        <!-- Commit Input -->
         <div class="commit-input-section">
-          <ion-textarea
-            v-model="commitMessage"
-            placeholder="Message (press Ctrl+Enter to commit)"
-            rows="3"
-            class="commit-textarea"
-            @keydown="handleCommitKeyDown"
-          ></ion-textarea>
-          <ion-button 
-            expand="block" 
-            size="small" 
-            @click="commitChanges"
-            :disabled="!commitMessage.trim() || isCommitting"
-          >
+          <ion-textarea v-model="commitMessage" placeholder="Message (press Ctrl+Enter to commit)" rows="3"
+            class="commit-textarea" @keydown="handleCommitKeyDown"></ion-textarea>
+          <ion-button expand="block" size="small" @click="commitChanges"
+            :disabled="!commitMessage.trim() || isCommitting">
             <ion-icon name="checkmark-outline" slot="start"></ion-icon>
             {{ isCommitting ? 'Committing...' : 'Commit' }}
           </ion-button>
         </div>
-
-        <!-- Changed Files -->
         <div class="changed-files">
           <div class="subsection-header">Changes</div>
           <div v-if="changedFiles.length === 0" class="no-changes">
@@ -93,8 +77,6 @@
             </ion-button>
           </div>
         </div>
-
-        <!-- Recent Commits -->
         <div class="recent-commits">
           <div class="subsection-header">Recent Commits</div>
           <div v-if="recentCommits.length === 0" class="no-commits">
@@ -107,32 +89,8 @@
             <div class="commit-date">{{ formatDate(commit.date) }}</div>
           </div>
         </div>
-
-        <!-- Pull Requests -->
-        <div class="pull-requests">
-          <div class="subsection-header">
-            Pull Requests
-            <ion-button fill="clear" size="small" @click="createPullRequest" class="create-pr-btn">
-              <ion-icon name="git-pull-request-outline"></ion-icon>
-            </ion-button>
-          </div>
-          <div v-if="pullRequests.length === 0" class="no-prs">
-            No pull requests
-          </div>
-          <div v-for="pr in pullRequests" :key="pr.number" class="pr-item" @click="openPullRequest(pr)">
-            <div class="pr-status" :class="pr.state">
-              <ion-icon :name="getPRIcon(pr.state)"></ion-icon>
-            </div>
-            <div class="pr-info">
-              <div class="pr-title">#{{ pr.number }} {{ pr.title }}</div>
-              <div class="pr-meta">{{ pr.user.login }} • {{ formatDate(pr.created_at) }}</div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
-
-    <!-- Vercel Section -->
     <div class="sidebar-section">
       <div class="section-header">
         <ion-icon name="cloud-outline"></ion-icon>
@@ -141,26 +99,17 @@
           <ion-icon name="refresh-outline"></ion-icon>
         </ion-button>
       </div>
-      
       <div class="section-content">
-        <!-- Deploy Button -->
-        <ion-button 
-          expand="block" 
-          color="success" 
-          size="small" 
-          @click="deployToVercel"
-          :disabled="isDeploying"
-        >
+        <ion-button expand="block" color="success" size="small" @click="deployToVercel" :disabled="isDeploying">
           <ion-icon name="rocket-outline" slot="start"></ion-icon>
           {{ isDeploying ? 'Deploying...' : 'Deploy' }}
         </ion-button>
-
-        <!-- Deployment List -->
         <div class="deployments-list">
           <div v-if="deployments.length === 0" class="no-deployments">
             No deployments yet
           </div>
-          <div v-for="deployment in deployments" :key="deployment.id" class="deployment-item" @dblclick="openDeploymentInspector(deployment)">
+          <div v-for="deployment in deployments" :key="deployment.id" class="deployment-item"
+            @dblclick="openDeploymentInspector(deployment)">
             <div class="deployment-status" :class="deployment.state">
               <ion-icon :name="getDeploymentIcon(deployment.state)"></ion-icon>
             </div>
@@ -193,7 +142,6 @@ const changedFiles = ref([])
 const recentCommits = ref([])
 const deployments = ref([])
 const projectFiles = ref([])
-const pullRequests = ref([])
 
 // Live update state
 const gitRefreshInterval = ref(null)
@@ -289,7 +237,7 @@ const deleteFile = async (file) => {
 
 const getFileIcon = (file) => {
   if (file.type === 'directory') return 'folder-outline'
-  
+
   const ext = file.name.split('.').pop()?.toLowerCase()
   switch (ext) {
     case 'js': return 'logo-javascript'
@@ -314,7 +262,7 @@ const loadGitData = async () => {
     } else {
       changedFiles.value = []
     }
-    
+
     // Load commit history
     const commitsResponse = await axios.get(`/backend/monaco_git_api.php?project=${projectName}&action=commits`)
     if (commitsResponse.data.success) {
@@ -335,19 +283,6 @@ const loadGitData = async () => {
   }
 }
 
-const loadPullRequests = async () => {
-  try {
-    const response = await axios.get(`/backend/monaco_git_api.php?project=${projectName}&action=pull_requests`)
-    if (response.data.success) {
-      pullRequests.value = response.data.pull_requests || []
-    } else {
-      pullRequests.value = []
-    }
-  } catch (error) {
-    console.error('Failed to load pull requests:', error)
-    pullRequests.value = []
-  }
-}
 
 const loadDeployments = async () => {
   try {
@@ -379,7 +314,7 @@ const handleCommitKeyDown = (event) => {
 
 const commitChanges = async () => {
   if (!commitMessage.value.trim()) return
-  
+
   isCommitting.value = true
   try {
     const response = await axios.post(`/backend/monaco_git_api.php?project=${projectName}`, {
@@ -387,7 +322,7 @@ const commitChanges = async () => {
       message: commitMessage.value,
       files: changedFiles.value
     })
-    
+
     if (response.data.success) {
       // Add to recent commits
       recentCommits.value.unshift({
@@ -396,11 +331,11 @@ const commitChanges = async () => {
         author: response.data.commit.author.name,
         date: new Date(response.data.commit.date)
       })
-      
+
       // Clear changed files and commit message
       changedFiles.value = []
       commitMessage.value = ''
-      
+
       // Refresh git status
       await refreshGitStatus()
     } else {
@@ -421,7 +356,7 @@ const stageFile = async (filePath) => {
       action: 'stage',
       file: filePath
     })
-    
+
     if (response.data.success) {
       await refreshGitStatus()
     } else {
@@ -439,7 +374,7 @@ const unstageFile = async (filePath) => {
       action: 'unstage',
       file: filePath
     })
-    
+
     if (response.data.success) {
       await refreshGitStatus()
     } else {
@@ -457,7 +392,7 @@ const discardChanges = async (filePath) => {
         action: 'discard',
         file: filePath
       })
-      
+
       if (response.data.success) {
         await refreshGitStatus()
         // Refresh the file in editor if it's currently open
@@ -472,56 +407,11 @@ const discardChanges = async (filePath) => {
 }
 
 const refreshGitStatus = async () => {
-  console.log('Refreshing git status...')
   await Promise.allSettled([
-    loadGitData(),
-    loadPullRequests()
+    loadGitData()
   ])
 }
 
-// Pull Request Methods
-const createPullRequest = async () => {
-  const title = prompt('Enter pull request title:')
-  const baseBranch = prompt('Enter base branch (default: main):', 'main')
-  const headBranch = prompt('Enter head branch (default: feature):')
-  
-  if (title && headBranch) {
-    try {
-      const response = await axios.post(`/backend/monaco_git_api.php?project=${projectName}`, {
-        action: 'create_pull_request',
-        title: title,
-        base: baseBranch,
-        head: headBranch,
-        body: 'Created via Monaco IDE'
-      })
-      
-      if (response.data.success) {
-        await loadPullRequests()
-        alert('Pull request created successfully!')
-      } else {
-        alert('Failed to create pull request: ' + response.data.message)
-      }
-    } catch (error) {
-      console.error('Failed to create pull request:', error)
-      alert('Failed to create pull request: ' + error.message)
-    }
-  }
-}
-
-const openPullRequest = (pr) => {
-  window.open(pr.html_url, '_blank')
-}
-
-const getPRIcon = (state) => {
-  switch (state) {
-    case 'open': return 'git-pull-request-outline'
-    case 'closed': return 'close-circle-outline'
-    case 'merged': return 'git-merge-outline'
-    default: return 'help-circle-outline'
-  }
-}
-
-// Deployment Methods
 const deployToVercel = async () => {
   isDeploying.value = true
   try {
@@ -533,7 +423,7 @@ const deployToVercel = async () => {
         ref: 'main'
       }
     })
-    
+
     if (response.data.success) {
       // Add new deployment
       deployments.value.unshift({
@@ -543,7 +433,7 @@ const deployToVercel = async () => {
         commit: recentCommits.value[0]?.hash || 'latest',
         created: new Date()
       })
-      
+
       // Simulate deployment completion
       setTimeout(() => {
         if (deployments.value[0]) {
@@ -563,7 +453,7 @@ const deployToVercel = async () => {
       commit: recentCommits.value[0]?.hash || 'latest',
       created: new Date()
     })
-    
+
     setTimeout(() => {
       if (deployments.value[0]) {
         deployments.value[0].state = 'READY'
@@ -638,13 +528,10 @@ function openDeploymentInspector(deployment) {
   }
 }
 
-// Initialize
 onMounted(async () => {
-  // Load real data only
   await Promise.allSettled([
     refreshFiles(),
     loadGitData(),
-    loadPullRequests(),
     loadDeployments()
   ])
 })
@@ -709,13 +596,6 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.create-pr-btn {
-  --color: var(--vscode-descriptionForeground, #999999);
-  margin: 0;
-  height: 16px;
-  width: 16px;
 }
 
 /* File Explorer */
@@ -807,8 +687,7 @@ onMounted(async () => {
 }
 
 .changed-files,
-.recent-commits,
-.pull-requests {
+.recent-commits {
   margin-bottom: 16px;
 }
 
@@ -896,55 +775,9 @@ onMounted(async () => {
   color: var(--vscode-descriptionForeground, #999999);
 }
 
-/* Pull Requests */
-.pr-item {
-  display: flex;
-  align-items: center;
-  padding: 8px;
-  border-radius: 4px;
-  margin-bottom: 4px;
-  cursor: pointer;
-}
-
-.pr-item:hover {
-  background: var(--vscode-list-hoverBackground, #2a2d2e);
-}
-
-.pr-status {
-  margin-right: 8px;
-}
-
-.pr-status.open {
-  color: var(--vscode-testing-iconQueued, #73c991);
-}
-
-.pr-status.closed {
-  color: var(--vscode-testing-iconFailed, #f85149);
-}
-
-.pr-status.merged {
-  color: var(--vscode-testing-iconPassed, #a991f5);
-}
-
-.pr-info {
-  flex: 1;
-}
-
-.pr-title {
-  font-size: 13px;
-  margin-bottom: 2px;
-  line-height: 1.3;
-}
-
-.pr-meta {
-  font-size: 11px;
-  color: var(--vscode-descriptionForeground, #999999);
-}
-
 .no-changes,
 .no-commits,
-.no-deployments,
-.no-prs {
+.no-deployments {
   padding: 16px 8px;
   text-align: center;
   color: var(--vscode-descriptionForeground, #999999);

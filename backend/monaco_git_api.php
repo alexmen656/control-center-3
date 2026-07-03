@@ -1,5 +1,6 @@
 <?php
 require_once 'head.php';
+require_once 'git_helper.php';
 
 function getUserIDFromToken()
 {
@@ -12,8 +13,7 @@ function getUserIDFromToken()
         return 'dev_user';
     }
 
-    $token = $authHeader;
-    $userData = SimpleJWT::verify($token, $jwt_secret);
+    $userData = SimpleJWT::verify($authHeader, $jwt_secret);
     if (!$userData || !isset($userData['sub'])) {
         return 'dev_user';
     }
@@ -26,495 +26,13 @@ function getProjectPath($project, $userID, $codespace = 'main')
     return __DIR__ . '/../data/projects/' . $userID . '/' . $project . '/' . $codespace;
 }
 
-function getGitHubCredentials($project, $userID, $codespace = 'main')
+function gitAuthor($projectPath)
 {
-    try {
-        $codespaceQuery = "SELECT pc.id as codespace_id FROM project_codespaces pc 
-                          JOIN projects p ON pc.project_id = p.projectID 
-                          WHERE p.link = '$project' AND pc.slug = '$codespace' LIMIT 1";
-        $codespaceResult = query($codespaceQuery);
-
-        if (!$codespaceResult || mysqli_num_rows($codespaceResult) == 0) {
-            error_log("Codespace not found for project: $project, codespace: $codespace");
-            return null;
-        }
-
-        $codespaceData = mysqli_fetch_assoc($codespaceResult);
-        $codespaceId = $codespaceData['codespace_id'];
-
-        $repoQuery = "SELECT repo_full_name FROM codespace_github_repos WHERE codespace_id = '$codespaceId' LIMIT 1";
-        $repoResult = query($repoQuery);
-
-        if (!$repoResult || mysqli_num_rows($repoResult) == 0) {
-            error_log("No GitHub repo found for codespace ID: $codespaceId");
-            return null;
-        }
-
-        $repoData = mysqli_fetch_assoc($repoResult);
-
-        // Get GitHub token for user
-        $tokenQuery = "SELECT github_token FROM control_center_github_tokens WHERE userID = '$userID' LIMIT 1";
-        $tokenResult = query($tokenQuery);
-
-        if (!$tokenResult || mysqli_num_rows($tokenResult) == 0) {
-            error_log("No GitHub token found for user: $userID");
-            return null;
-        }
-
-        $tokenData = mysqli_fetch_assoc($tokenResult);
-
-        // Split repo_full_name into owner/repo
-        $repoParts = explode('/', $repoData['repo_full_name']);
-        if (count($repoParts) !== 2) {
-            error_log("Invalid repo format: " . $repoData['repo_full_name']);
-            return null;
-        }
-
-        return [
-            'token' => $tokenData['github_token'],
-            'owner' => $repoParts[0],
-            'repo' => $repoParts[1],
-            'repo_full_name' => $repoData['repo_full_name'],
-            'codespace_id' => $codespaceId
-        ];
-    } catch (Exception $e) {
-        error_log("GitHub credentials error: " . $e->getMessage());
-        return null;
-    }
-}
-
-class GitHubAPI
-{
-    private $token;
-    private $owner;
-    private $repo;
-
-    public function __construct($token, $owner, $repo)
-    {
-        $this->token = $token;
-        $this->owner = $owner;
-        $this->repo = $repo;
-    }
-
-    private function makeRequest($endpoint, $method = 'GET', $data = null)
-    {
-        // Handle Git API endpoints differently
-        if (strpos($endpoint, 'git/') === 0) {
-            $url = "https://api.github.com/repos/{$this->owner}/{$this->repo}/" . $endpoint;
-        } else {
-            $url = "https://api.github.com/repos/{$this->owner}/{$this->repo}/" . ltrim($endpoint, '/');
-        }
-
-        $headers = [
-            'Authorization: token ' . $this->token,
-            'User-Agent: ControlCenter-App/1.0',
-            'Accept: application/vnd.github.v3+json'
-        ];
-
-        $context_options = [
-            'http' => [
-                'method' => $method,
-                'header' => implode("\r\n", $headers),
-                'ignore_errors' => true,
-                'timeout' => 30
-            ]
-        ];
-
-        if ($data && in_array($method, ['POST', 'PUT', 'PATCH'])) {
-            $headers[] = 'Content-Type: application/json';
-            $context_options['http']['content'] = json_encode($data);
-            $context_options['http']['header'] = implode("\r\n", $headers);
-        }
-
-        $context = stream_context_create($context_options);
-        $response = file_get_contents($url, false, $context);
-
-        if ($response === false) {
-            throw new Exception("GitHub API request failed: Unable to connect to $url");
-        }
-
-        // Get HTTP response code from headers
-        $http_response_header = $http_response_header ?? [];
-        $httpCode = 200;
-        if (!empty($http_response_header[0])) {
-            preg_match('/HTTP\/\d\.\d\s+(\d+)/', $http_response_header[0], $matches);
-            $httpCode = isset($matches[1]) ? (int) $matches[1] : 200;
-        }
-
-        if ($httpCode >= 200 && $httpCode < 300) {
-            return json_decode($response, true);
-        } else {
-            error_log("GitHub API Error: HTTP {$httpCode} for URL: $url, Response: $response");
-            throw new Exception("GitHub API request failed: HTTP {$httpCode}");
-        }
-    }
-
-    public function getBranches()
-    {
-        return $this->makeRequest('branches');
-    }
-
-    public function getCommits($per_page = 10)
-    {
-        return $this->makeRequest("commits?per_page={$per_page}");
-    }
-
-    public function getRepoContents($path = '')
-    {
-        return $this->makeRequest("contents/" . $path);
-    }
-
-    public function createOrUpdateFile($path, $content, $message, $sha = null)
-    {
-        $data = [
-            'message' => $message,
-            'content' => base64_encode($content)
-        ];
-
-        if ($sha) {
-            $data['sha'] = $sha;
-        }
-
-        return $this->makeRequest("contents/" . $path, 'PUT', $data);
-    }
-
-    public function getFileContent($path)
-    {
-        try {
-            $response = $this->makeRequest("contents/" . $path);
-            if (isset($response['content']) && $response['encoding'] === 'base64') {
-                return [
-                    'content' => base64_decode($response['content']),
-                    'sha' => $response['sha'],
-                    'size' => $response['size']
-                ];
-            }
-            return null;
-        } catch (Exception $e) {
-            return null;
-        }
-    }
-
-    public function createPullRequest($title, $body, $head_branch, $base_branch = 'main')
-    {
-        try {
-            $data = [
-                'title' => $title,
-                'body' => $body,
-                'head' => $head_branch,
-                'base' => $base_branch
-            ];
-
-            return $this->makeRequest("pulls", $data, 'POST');
-        } catch (Exception $e) {
-            throw new Exception("Fehler beim Erstellen des Pull Requests: " . $e->getMessage());
-        }
-    }
-
-    public function listPullRequests($state = 'open')
-    {
-        try {
-            return $this->makeRequest("pulls?state=" . $state);
-        } catch (Exception $e) {
-            throw new Exception("Fehler beim Abrufen der Pull Requests: " . $e->getMessage());
-        }
-    }
-
-    public function mergePullRequest($pull_number, $commit_title = null, $commit_message = null, $merge_method = 'merge')
-    {
-        try {
-            $data = [
-                'merge_method' => $merge_method
-            ];
-
-            if ($commit_title) {
-                $data['commit_title'] = $commit_title;
-            }
-
-            if ($commit_message) {
-                $data['commit_message'] = $commit_message;
-            }
-
-            return $this->makeRequest("pulls/{$pull_number}/merge", $data, 'PUT');
-        } catch (Exception $e) {
-            throw new Exception("Fehler beim Mergen des Pull Requests: " . $e->getMessage());
-        }
-    }
-
-    public function closePullRequest($pull_number)
-    {
-        try {
-            $data = ['state' => 'closed'];
-            return $this->makeRequest("pulls/{$pull_number}", $data, 'PATCH');
-        } catch (Exception $e) {
-            throw new Exception("Fehler beim Schließen des Pull Requests: " . $e->getMessage());
-        }
-    }
-
-    // Erstelle einen einzigen GitHub-Commit mit mehreren Dateien
-    public function createCommitWithMultipleFiles($files, $message, $branch = 'main')
-    {
-        try {
-            error_log("Creating multi-file commit with " . count($files) . " files using Git Tree API");
-
-            // Schritt 1: Hole die aktuelle Branch-Referenz
-            $ref = $this->makeRequest("git/refs/heads/{$branch}", 'GET');
-            $latestCommitSha = $ref['object']['sha'];
-            error_log("Latest commit SHA: $latestCommitSha");
-
-            // Schritt 2: Hole den aktuellen Tree vom letzten Commit
-            $commit = $this->makeRequest("git/commits/{$latestCommitSha}", 'GET');
-            $baseTreeSha = $commit['tree']['sha'];
-            error_log("Base tree SHA: $baseTreeSha");
-
-            // Schritt 3: Erstelle ein neues Tree mit allen Dateien
-            $treeData = [
-                'base_tree' => $baseTreeSha,
-                'tree' => []
-            ];
-
-            foreach ($files as $file) {
-                error_log("Processing file for tree: " . $file['path']);
-
-                // Erstelle Blob für jede Datei
-                $blobData = [
-                    'content' => base64_encode($file['content']),
-                    'encoding' => 'base64'
-                ];
-
-                $blob = $this->makeRequest('git/blobs', 'POST', $blobData);
-                error_log("Created blob for " . $file['path'] . ": " . $blob['sha']);
-
-                // Füge zur Tree-Struktur hinzu
-                $treeData['tree'][] = [
-                    'path' => $file['path'],
-                    'mode' => '100644', // Normal file mode
-                    'type' => 'blob',
-                    'sha' => $blob['sha']
-                ];
-            }
-
-            // Erstelle das neue Tree
-            $tree = $this->makeRequest('git/trees', 'POST', $treeData);
-            error_log("Created new tree: " . $tree['sha']);
-
-            // Schritt 4: Erstelle den Commit
-            $commitData = [
-                'message' => $message,
-                'tree' => $tree['sha'],
-                'parents' => [$latestCommitSha]
-            ];
-
-            $newCommit = $this->makeRequest('git/commits', 'POST', $commitData);
-            error_log("Created new commit: " . $newCommit['sha']);
-
-            // Schritt 5: Update die Branch-Referenz
-            $this->makeRequest("git/refs/heads/{$branch}", 'PATCH', [
-                'sha' => $newCommit['sha']
-            ]);
-
-            error_log("Updated branch reference successfully");
-
-            return [
-                'success' => true,
-                'commit' => $newCommit,
-                'files_count' => count($files)
-            ];
-
-        } catch (Exception $e) {
-            error_log("Multi-file commit failed: " . $e->getMessage());
-            throw new Exception("Fehler beim Erstellen des Multi-File-Commits: " . $e->getMessage());
-        }
-    }
-
-    public function pullFromGitHub($projectPath, $branch = 'main')
-    {
-        try {
-            // Hole alle Dateien vom Repository
-            $tree = $this->getRepositoryTree($branch);
-            $pulledFiles = [];
-            $errors = [];
-
-            foreach ($tree as $item) {
-                if ($item['type'] === 'blob') {
-                    try {
-                        $fileData = $this->getFileContent($item['path']);
-                        if ($fileData) {
-                            $localPath = $projectPath . '/' . $item['path'];
-
-                            $dir = dirname($localPath);
-                            if (!is_dir($dir)) {
-                                mkdir($dir, 0755, true);
-                            }
-
-                            file_put_contents($localPath, $fileData['content']);
-                            $pulledFiles[] = $item['path'];
-                        }
-                    } catch (Exception $e) {
-                        $errors[] = "Fehler bei {$item['path']}: " . $e->getMessage();
-                    }
-                }
-            }
-
-            return [
-                'success' => true,
-                'pulled_files' => $pulledFiles,
-                'files_count' => count($pulledFiles),
-                'errors' => $errors,
-                'message' => count($pulledFiles) . ' Dateien erfolgreich von GitHub geholt'
-            ];
-
-        } catch (Exception $e) {
-            throw new Exception("Fehler beim Pull von GitHub: " . $e->getMessage());
-        }
-    }
-
-    public function pushToGitHub($projectPath, $branch = 'main')
-    {
-        error_log("GitHubAPI::pushToGitHub called for project path: $projectPath");
-
-        try {
-            $pushedCommits = [];
-            $errors = [];
-
-            $commitsFile = $projectPath . '/.monaco_commits.json';
-            if (!file_exists($commitsFile)) {
-                error_log("No commits file found at: $commitsFile");
-                return [
-                    'success' => true,
-                    'commits_count' => 0,
-                    'message' => 'Keine lokalen Commits zum Pushen gefunden'
-                ];
-            }
-
-            $localCommits = [];
-            $fileContent = file_get_contents($commitsFile);
-            if ($fileContent !== false) {
-                $decodedCommits = json_decode($fileContent, true);
-                if (is_array($decodedCommits)) {
-                    $localCommits = $decodedCommits;
-                }
-            }
-            error_log("Found " . count($localCommits) . " local commits");
-
-            $remoteCommits = $this->getCommits(100);
-            $remoteHashes = array_column($remoteCommits, 'sha');
-            $commitsToPush = [];
-
-            foreach ($localCommits as $commit) {
-                if (!in_array($commit['hash'], $remoteHashes)) {
-                    $commitsToPush[] = $commit;
-                }
-            }
-
-            error_log("Found " . count($commitsToPush) . " commits to push");
-
-            if (empty($commitsToPush)) {
-                return [
-                    'success' => true,
-                    'commits_count' => 0,
-                    'message' => 'Alle Commits sind bereits auf GitHub'
-                ];
-            }
-
-            foreach ($commitsToPush as $commit) {
-                error_log("Processing commit: " . $commit['hash'] . " with message: " . $commit['message']);
-                try {
-                    if (!isset($commit['files']) || !is_array($commit['files'])) {
-                        $allFiles = getProjectFiles($projectPath);
-                        $commit['files'] = [];
-
-                        foreach ($allFiles as $file) {
-                            $relativePath = str_replace($projectPath . '/', '', $file);
-                            $excludedFiles = ['.monaco_commits.json', '.monaco_git', '.monaco_initialized', '.monaco_lastcommit.json', '.monaco_staged.json'];
-                            if (!in_array($relativePath, $excludedFiles)) {
-                                $commit['files'][] = ['path' => $relativePath];
-                            }
-                        }
-                    }
-
-                    $filesToCommit = [];
-                    foreach ($commit['files'] as $file) {
-                        $filePath = isset($file['path']) ? $file['path'] : $file;
-                        $fullPath = $projectPath . '/' . $filePath;
-
-                        if (file_exists($fullPath)) {
-                            $content = file_get_contents($fullPath);
-                            $sha = null;
-
-                            $filesToCommit[] = [
-                                'path' => $filePath,
-                                'content' => $content,
-                                'sha' => $sha
-                            ];
-                        }
-                    }
-
-                    if (!empty($filesToCommit)) {
-                        error_log("Creating single GitHub commit with " . count($filesToCommit) . " files");
-                        $this->createCommitWithMultipleFiles($filesToCommit, $commit['message']);
-                        error_log("GitHub commit created successfully");
-                    }
-
-                    $pushedCommits[] = $commit;
-                } catch (Exception $e) {
-                    $errors[] = "Fehler bei Commit {$commit['hash']}: " . $e->getMessage();
-                }
-            }
-
-            if (!empty($pushedCommits)) {
-                $this->cleanupPushedCommits($projectPath, $pushedCommits);
-            }
-
-            return [
-                'success' => true,
-                'pushed_commits' => $pushedCommits,
-                'commits_count' => count($pushedCommits),
-                'errors' => $errors,
-                'message' => count($pushedCommits) . ' Commits erfolgreich zu GitHub gepusht'
-            ];
-
-        } catch (Exception $e) {
-            throw new Exception("Fehler beim Push zu GitHub: " . $e->getMessage());
-        }
-    }
-
-    private function cleanupPushedCommits($projectPath, $pushedCommits)
-    {
-        $commitsFile = $projectPath . '/.monaco_commits.json';
-        if (!file_exists($commitsFile)) {
-            return;
-        }
-
-        $allCommits = [];
-        $fileContent = file_get_contents($commitsFile);
-        if ($fileContent !== false) {
-            $decodedCommits = json_decode($fileContent, true);
-            if (is_array($decodedCommits)) {
-                $allCommits = $decodedCommits;
-            }
-        }
-        $pushedHashes = array_column($pushedCommits, 'hash');
-
-        $remainingCommits = [];
-        foreach ($allCommits as $commit) {
-            if (!in_array($commit['hash'], $pushedHashes)) {
-                $remainingCommits[] = $commit;
-            }
-        }
-
-        file_put_contents($commitsFile, json_encode($remainingCommits, JSON_PRETTY_PRINT));
-    }
-
-    private function getRepositoryTree($branch = 'main')
-    {
-        try {
-            $response = $this->makeRequest("git/trees/{$branch}?recursive=1");
-            return $response['tree'] ?? [];
-        } catch (Exception $e) {
-            throw new Exception("Fehler beim Abrufen des Repository-Trees: " . $e->getMessage());
-        }
-    }
+    list(, $name) = git_exec($projectPath, ['config', 'user.name']);
+    list(, $email) = git_exec($projectPath, ['config', 'user.email']);
+    $name = trim($name) ?: 'Fringelo';
+    $email = trim($email) ?: 'codespaces@fringelo.com';
+    return ['name' => $name, 'email' => $email];
 }
 
 if (basename($_SERVER['PHP_SELF']) === 'monaco_git_api.php') {
@@ -526,9 +44,7 @@ if (basename($_SERVER['PHP_SELF']) === 'monaco_git_api.php') {
 
         $projectPath = getProjectPath($project, $userID, $codespace);
 
-        if (!is_dir($projectPath)) {
-            mkdir($projectPath, 0755, true);
-        }
+        git_ensureRepo($projectPath, $project, $userID, $codespace);
 
         switch ($_SERVER['REQUEST_METHOD']) {
             case 'GET':
@@ -540,7 +56,6 @@ if (basename($_SERVER['PHP_SELF']) === 'monaco_git_api.php') {
             default:
                 throw new Exception('Method not allowed');
         }
-
     } catch (Exception $e) {
         http_response_code(400);
         echo json_encode(['error' => $e->getMessage()]);
@@ -554,17 +69,17 @@ function handleGetRequest($action, $projectPath, $project, $userID, $codespace =
             echo json_encode(getLocalChanges($projectPath));
             break;
         case 'changes':
-            echo json_encode(getDetailedChanges($projectPath, $project, $userID));
+            echo json_encode(getDetailedChanges($projectPath));
             break;
         case 'commits':
-            echo json_encode(getCommitHistory($project, $userID, $codespace));
+            echo json_encode(getCommitHistory($projectPath));
             break;
         case 'diff':
             $file = $_GET['file'] ?? '';
-            echo json_encode(getFileDiff($projectPath, $file, $project, $userID, $codespace));
+            echo json_encode(getFileDiff($projectPath, $file));
             break;
         case 'branches':
-            echo json_encode(getBranches($project, $userID, $codespace));
+            echo json_encode(getBranches($projectPath));
             break;
         default:
             throw new Exception('Invalid action');
@@ -584,22 +99,20 @@ function handlePostRequest($projectPath, $project, $userID, $codespace = 'main')
             echo json_encode(unstageFile($projectPath, $input['file']));
             break;
         case 'commit':
-            error_log("Commit request received - Project: $project, Codespace: $codespace, Message: " . ($input['message'] ?? 'empty') . ", Files count: " . count($input['files'] ?? []));
-            echo json_encode(commitChanges($projectPath, $input['message'], $input['files'] ?? [], $project, $userID, $codespace));
+            echo json_encode(commitChanges($projectPath, $input['message'] ?? '', $input['files'] ?? []));
             break;
         case 'push':
-            error_log("Push request received - Project: $project, Codespace: $codespace");
-            echo json_encode(pushToGitHub($projectPath, $project, $userID, $codespace));
-            break;
-        case 'auto_resolve_conflicts':
-            $conflicts = $_POST['conflicts'] ?? [];
-            echo json_encode(autoResolveConflicts($projectPath, $conflicts, $project, $userID, $codespace));
+            echo json_encode(pushToRemote($projectPath));
             break;
         case 'pull':
-            echo json_encode(pullFromGitHubToLocal($projectPath, $project, $userID, $codespace));
+            echo json_encode(pullFromRemote($projectPath));
+            break;
+        case 'auto_resolve_conflicts':
+            $conflicts = $input['conflicts'] ?? ($_POST['conflicts'] ?? []);
+            echo json_encode(autoResolveConflicts($projectPath, $conflicts));
             break;
         case 'discard':
-            echo json_encode(discardChanges($projectPath, $input['file'], $project, $userID, $codespace));
+            echo json_encode(discardChanges($projectPath, $input['file']));
             break;
         default:
             throw new Exception('Invalid action');
@@ -608,82 +121,57 @@ function handlePostRequest($projectPath, $project, $userID, $codespace = 'main')
 
 function getLocalChanges($projectPath)
 {
-    $stagedFile = $projectPath . '/.monaco_staged.json';
-    $staged = [];
-    if (file_exists($stagedFile)) {
-        $fileContent = file_get_contents($stagedFile);
-        if ($fileContent !== false) {
-            $decodedStaged = json_decode($fileContent, true);
-            if (is_array($decodedStaged)) {
-                $staged = $decodedStaged;
-            }
-        }
-    }
-
-    $lastCommitFile = $projectPath . '/.monaco_lastcommit.json';
-    $lastCommit = [];
-    if (file_exists($lastCommitFile)) {
-        $fileContent = file_get_contents($lastCommitFile);
-        if ($fileContent !== false) {
-            $decodedLastCommit = json_decode($fileContent, true);
-            if (is_array($decodedLastCommit)) {
-                $lastCommit = $decodedLastCommit;
-            }
-        }
-    }
+    list($code, $out) = git_exec($projectPath, [
+        '-c',
+        'core.quotepath=false',
+        'status',
+        '--porcelain',
+        '--untracked-files=all'
+    ]);
 
     $changes = [];
+    if ($code === 0) {
+        foreach (explode("\n", $out) as $line) {
+            if (strlen($line) < 3) {
+                continue;
+            }
+            $x = $line[0];
+            $y = $line[1];
+            $file = substr($line, 3);
 
-    // Get all files in project
-    $files = getProjectFiles($projectPath);
+            if (strpos($file, ' -> ') !== false) {
+                $parts = explode(' -> ', $file);
+                $file = end($parts);
+            }
+            $file = trim($file, '"');
 
-    foreach ($files as $file) {
-        $relativePath = str_replace($projectPath . '/', '', $file);
+            $staged = ($x !== ' ' && $x !== '?');
 
-        // Skip only specific Monaco metadata files, but KEEP .monaco_apis/ files
-        $excludedFiles = ['.monaco_commits.json', '.monaco_git', '.monaco_initialized', '.monaco_lastcommit.json', '.monaco_staged.json'];
-        if (in_array($relativePath, $excludedFiles))
-            continue;
+            if ($x === 'D' || $y === 'D') {
+                $status = 'deleted';
+            } elseif ($x === '?') {
+                $status = 'untracked';
+            } elseif ($x === 'A') {
+                $status = 'untracked';
+            } else {
+                $status = 'modified';
+            }
 
-        $currentHash = md5(file_get_contents($file));
-        $lastCommitHash = $lastCommit[$relativePath] ?? null;
-        $isStaged = isset($staged[$relativePath]);
-
-        if (!$lastCommitHash) {
-            // New file
-            $changes[] = [
-                'file' => $relativePath,
-                'staged' => $isStaged,
-                'status' => 'untracked'
-            ];
-        } elseif ($currentHash !== $lastCommitHash) {
-            // Modified file
-            $changes[] = [
-                'file' => $relativePath,
-                'staged' => $isStaged,
-                'status' => 'modified'
-            ];
-        }
-    }
-
-    // Check for deleted files
-    foreach ($lastCommit as $file => $hash) {
-        if (!file_exists($projectPath . '/' . $file)) {
             $changes[] = [
                 'file' => $file,
-                'staged' => isset($staged[$file]),
-                'status' => 'deleted'
+                'staged' => $staged,
+                'status' => $status,
             ];
         }
     }
 
     return [
         'success' => true,
-        'changes' => $changes
+        'changes' => $changes,
     ];
 }
 
-function getDetailedChanges($projectPath, $project, $userID)
+function getDetailedChanges($projectPath)
 {
     $localChanges = getLocalChanges($projectPath);
     $changes = $localChanges['changes'] ?? [];
@@ -696,7 +184,7 @@ function getDetailedChanges($projectPath, $project, $userID)
         $changeData = [
             'path' => $change['file'],
             'status' => $change['status'],
-            'type' => $change['staged'] ? 'staged' : ($change['status'] === 'untracked' ? 'untracked' : 'unstaged')
+            'type' => $change['staged'] ? 'staged' : ($change['status'] === 'untracked' ? 'untracked' : 'unstaged'),
         ];
 
         if ($change['staged']) {
@@ -708,7 +196,6 @@ function getDetailedChanges($projectPath, $project, $userID)
         }
     }
 
-    // Combine for frontend
     $allChanges = array_merge($staged, $unstaged, $untracked);
 
     return [
@@ -717,452 +204,249 @@ function getDetailedChanges($projectPath, $project, $userID)
         'detailed' => [
             'staged' => $staged,
             'unstaged' => $unstaged,
-            'untracked' => $untracked
+            'untracked' => $untracked,
         ],
         'summary' => [
             'staged_count' => count($staged),
             'unstaged_count' => count($unstaged),
-            'untracked_count' => count($untracked)
-        ]
+            'untracked_count' => count($untracked),
+        ],
     ];
-}
-
-function getCommitHistory($project, $userID, $codespace = 'main')
-{
-    $credentials = getGitHubCredentials($project, $userID, $codespace);
-
-    if (!$credentials) {
-        // Return local commit history if no GitHub integration
-        return getLocalCommitHistory($project, $userID, $codespace);
-    }
-
-    try {
-        $github = new GitHubAPI($credentials['token'], $credentials['owner'], $credentials['repo']);
-        $commits = $github->getCommits(20);
-
-        $formattedCommits = [];
-        foreach ($commits as $commit) {
-            $formattedCommits[] = [
-                'hash' => $commit['sha'],
-                'short_hash' => substr($commit['sha'], 0, 7),
-                'author' => $commit['commit']['author']['name'],
-                'email' => $commit['commit']['author']['email'],
-                'date' => $commit['commit']['author']['date'],
-                'message' => $commit['commit']['message'],
-                'parents' => array_column($commit['parents'] ?? [], 'sha')
-            ];
-        }
-
-        return [
-            'success' => true,
-            'commits' => $formattedCommits
-        ];
-    } catch (Exception $e) {
-        return getLocalCommitHistory($project, $userID, $codespace);
-    }
-}
-
-function getLocalCommitHistory($project, $userID, $codespace = 'main')
-{
-    $projectPath = getProjectPath($project, $userID, $codespace);
-    $commitsFile = $projectPath . '/.monaco_commits.json';
-
-    if (!file_exists($commitsFile)) {
-        return [
-            'success' => true,
-            'commits' => []
-        ];
-    }
-
-    $commits = json_decode(file_get_contents($commitsFile), true) ?? [];
-
-    return [
-        'success' => true,
-        'commits' => array_slice($commits, 0, 20) // Limit to 20 commits
-    ];
-}
-
-function getProjectFiles($dir)
-{
-    $files = [];
-    $iterator = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
-        RecursiveIteratorIterator::LEAVES_ONLY
-    );
-
-    foreach ($iterator as $file) {
-        if ($file->isFile()) {
-            $files[] = $file->getPathname();
-        }
-    }
-
-    return $files;
 }
 
 function stageFile($projectPath, $file)
 {
-    $stagedFile = $projectPath . '/.monaco_staged.json';
-    $staged = file_exists($stagedFile) ? json_decode(file_get_contents($stagedFile), true) : [];
 
-    $filePath = $projectPath . '/' . $file;
-    if (file_exists($filePath)) {
-        $staged[$file] = md5(file_get_contents($filePath));
-    } else {
-        $staged[$file] = 'deleted';
+    list($code, $out) = git_exec($projectPath, ['add', '--', $file]);
+    if ($code !== 0) {
+        return ['success' => false, 'file' => $file, 'message' => trim($out) ?: 'Failed to stage file'];
     }
-
-    file_put_contents($stagedFile, json_encode($staged, JSON_PRETTY_PRINT));
-
-    return [
-        'success' => true,
-        'file' => $file,
-        'message' => 'File staged successfully'
-    ];
+    return ['success' => true, 'file' => $file, 'message' => 'File staged successfully'];
 }
 
 function unstageFile($projectPath, $file)
 {
-    $stagedFile = $projectPath . '/.monaco_staged.json';
-    $staged = file_exists($stagedFile) ? json_decode(file_get_contents($stagedFile), true) : [];
+    list($code, $out) = git_exec($projectPath, ['restore', '--staged', '--', $file]);
+    if ($code !== 0) {
 
-    unset($staged[$file]);
-
-    file_put_contents($stagedFile, json_encode($staged, JSON_PRETTY_PRINT));
-
-    return [
-        'success' => true,
-        'file' => $file,
-        'message' => 'File unstaged successfully'
-    ];
+        git_exec($projectPath, ['rm', '--cached', '--', $file]);
+    }
+    return ['success' => true, 'file' => $file, 'message' => 'File unstaged successfully'];
 }
 
-function commitChanges($projectPath, $message, $files, $project, $userID, $codespace)
+function commitChanges($projectPath, $message, $files)
 {
-    error_log("CommitChanges called - Message: $message, Files: " . json_encode($files) . ", Codespace: $codespace");
+    if (trim($message) === '') {
+        $message = 'Update';
+    }
 
-    // Stage all files if none specified
     if (empty($files)) {
-        $changes = getLocalChanges($projectPath);
-        $files = array_column($changes['changes'], 'file');
-    }
-
-    // Normalize file paths to string array
-    $filePaths = [];
-    foreach ($files as $file) {
-        if (is_array($file)) {
-            // Handle both { file: "path" } and { path: "path" } structures
-            $filePath = $file['file'] ?? $file['path'] ?? null;
-        } else {
-            $filePath = $file;
-        }
-
-        if ($filePath && !in_array($filePath, $filePaths)) {
-            $filePaths[] = $filePath;
-        }
-    }
-
-    error_log("Normalized file paths: " . json_encode($filePaths));
-
-    // **WICHTIG: Verhindere Commits mit 0 Änderungen**
-    if (empty($filePaths)) {
-        return [
-            'success' => false,
-            'error' => 'No changes to commit',
-            'message' => 'Es gibt keine Änderungen zum Committen'
-        ];
-    }
-
-    // Prüfe ob die Dateien tatsächlich Änderungen haben
-    $actualChanges = getLocalChanges($projectPath);
-    $changedFiles = array_column($actualChanges['changes'], 'file');
-
-    // Filtere nur Dateien mit tatsächlichen Änderungen
-    $validFilePaths = array_intersect($filePaths, $changedFiles);
-
-    if (empty($validFilePaths)) {
-        return [
-            'success' => false,
-            'error' => 'No actual changes detected',
-            'message' => 'Die ausgewählten Dateien haben keine Änderungen zum Committen'
-        ];
-    }
-
-    $filePaths = array_values($validFilePaths); // Re-index array
-
-    // Stage all files at once (instead of one by one)
-    foreach ($filePaths as $filePath) {
-        stageFile($projectPath, $filePath);
-    }
-
-    // Create single commit with all files
-    $commitHash = substr(md5($message . time() . json_encode($filePaths)), 0, 40);
-
-    // Bereite die Datei-Informationen für den Commit vor
-    $commitFiles = [];
-    foreach ($filePaths as $filePath) {
-        $commitFiles[] = ['path' => $filePath];
-    }
-
-    $commitData = [
-        'hash' => $commitHash,
-        'short_hash' => substr($commitHash, 0, 7),
-        'author' => 'Fringelo User',
-        'email' => 'user@controlcenter.dev',
-        'date' => date('c'),
-        'message' => $message,
-        'files' => $commitFiles,
-        'parents' => []
-    ];
-
-    // Save to local commit history
-    $commitsFile = $projectPath . '/.monaco_commits.json';
-    $commits = [];
-    if (file_exists($commitsFile)) {
-        $fileContent = file_get_contents($commitsFile);
-        if ($fileContent !== false) {
-            $decodedCommits = json_decode($fileContent, true);
-            if (is_array($decodedCommits)) {
-                $commits = $decodedCommits;
+        git_exec($projectPath, ['add', '-A']);
+    } else {
+        foreach ($files as $file) {
+            if (is_array($file)) {
+                $filePath = $file['file'] ?? $file['path'] ?? null;
+            } else {
+                $filePath = $file;
+            }
+            if ($filePath) {
+                git_exec($projectPath, ['add', '--', $filePath]);
             }
         }
     }
-    array_unshift($commits, $commitData);
-    file_put_contents($commitsFile, json_encode($commits, JSON_PRETTY_PRINT));
 
-    // Update last commit state
-    $lastCommitFile = $projectPath . '/.monaco_lastcommit.json';
-    $lastCommit = [];
-    $projectFiles = getProjectFiles($projectPath);
-
-    foreach ($projectFiles as $file) {
-        $relativePath = str_replace($projectPath . '/', '', $file);
-        // Skip only specific Monaco metadata files, but KEEP .monaco_apis/ files
-        $excludedFiles = ['.monaco_commits.json', '.monaco_git', '.monaco_initialized', '.monaco_lastcommit.json', '.monaco_staged.json'];
-        if (in_array($relativePath, $excludedFiles))
-            continue;
-        $lastCommit[$relativePath] = md5(file_get_contents($file));
+    list($diffCode) = git_exec($projectPath, ['diff', '--cached', '--quiet']);
+    if ($diffCode === 0) {
+        return [
+            'success' => false,
+            'error' => 'No changes to commit',
+            'message' => 'Es gibt keine Änderungen zum Committen',
+        ];
     }
 
-    file_put_contents($lastCommitFile, json_encode($lastCommit, JSON_PRETTY_PRINT));
+    list($code, $out) = git_exec($projectPath, ['commit', '-m', $message]);
+    if ($code !== 0) {
+        return [
+            'success' => false,
+            'error' => trim($out),
+            'message' => 'Commit fehlgeschlagen: ' . trim($out),
+        ];
+    }
 
-    // Clear staged files
-    file_put_contents($projectPath . '/.monaco_staged.json', '{}');
-
-    error_log("Commit completed successfully - Hash: $commitHash, Files: " . count($filePaths));
+    list(, $sha) = git_exec($projectPath, ['rev-parse', 'HEAD']);
+    $sha = trim($sha);
+    $author = gitAuthor($projectPath);
 
     return [
         'success' => true,
         'commit' => [
-            'sha' => $commitHash,
-            'short_sha' => substr($commitHash, 0, 7),
+            'sha' => $sha,
+            'short_sha' => substr($sha, 0, 7),
             'message' => $message,
-            'author' => [
-                'name' => 'Fringelo User',
-                'email' => 'user@controlcenter.dev'
-            ],
+            'author' => $author,
             'created_at' => date('c'),
-            'date' => date('c')
-        ]
+            'date' => date('c'),
+        ],
     ];
 }
 
-function pullFromGitHubToLocal($projectPath, $project, $userID, $codespace)
+function pushToRemote($projectPath, $branch = 'main')
 {
-    error_log("pullFromGitHubToLocal called - Project: $project, User: $userID, Codespace: $codespace");
 
-    $credentials = getGitHubCredentials($project, $userID, $codespace);
+    git_exec($projectPath, ['fetch', 'origin']);
 
-    if (!$credentials) {
-        throw new Exception('GitHub credentials not found');
+    if (git_remoteHasBranch($projectPath, $branch)) {
+        list(, $countOut) = git_exec($projectPath, ['rev-list', '--count', "origin/$branch..HEAD"]);
+    } else {
+        list(, $countOut) = git_exec($projectPath, ['rev-list', '--count', 'HEAD']);
+    }
+    $count = (int) trim($countOut);
+
+    list($code, $out) = git_exec($projectPath, ['push', 'origin', "HEAD:$branch"]);
+    if ($code !== 0) {
+        throw new Exception('Push to git server failed: ' . trim($out));
     }
 
-    try {
-        $github = new GitHubAPI($credentials['token'], $credentials['owner'], $credentials['repo']);
-        $result = $github->pullFromGitHub($projectPath);
-
-        // **WICHTIG: Nach Pull die lastcommit.json mit aktuellen File-Hashes aktualisieren**
-        // Das verhindert, dass gepullte Dateien als "geändert" angezeigt werden
-        $lastCommitFile = $projectPath . '/.monaco_lastcommit.json';
-        $lastCommit = [];
-        $projectFiles = getProjectFiles($projectPath);
-
-        foreach ($projectFiles as $file) {
-            $relativePath = str_replace($projectPath . '/', '', $file);
-            // Skip only specific Monaco metadata files, but KEEP .monaco_apis/ files
-            $excludedFiles = ['.monaco_commits.json', '.monaco_git', '.monaco_initialized', '.monaco_lastcommit.json', '.monaco_staged.json'];
-            if (in_array($relativePath, $excludedFiles))
-                continue;
-            $lastCommit[$relativePath] = md5(file_get_contents($file));
-        }
-
-        file_put_contents($lastCommitFile, json_encode($lastCommit, JSON_PRETTY_PRINT));
-
-        // Clear staged changes since we pulled fresh content
-        $stagedFile = $projectPath . '/.monaco_staged.json';
-        file_put_contents($stagedFile, '{}');
-
-        return $result;
-
-    } catch (Exception $e) {
-        throw new Exception('Pull from GitHub failed: ' . $e->getMessage());
-    }
+    return [
+        'success' => true,
+        'pushed_commits' => [],
+        'commits_count' => $count,
+        'errors' => [],
+        'message' => $count . ' Commits erfolgreich zum Git-Server gepusht',
+    ];
 }
 
-function pushToGitHub($projectPath, $project, $userID, $codespace)
+function pullFromRemote($projectPath, $branch = 'main')
 {
-    error_log("PushToGitHub called - Project: $project, User: $userID, Codespace: $codespace");
+    git_exec($projectPath, ['fetch', 'origin']);
 
-    $credentials = getGitHubCredentials($project, $userID, $codespace);
-
-    if (!$credentials) {
-        throw new Exception('GitHub credentials not found for project');
+    if (!git_remoteHasBranch($projectPath, $branch)) {
+        return [
+            'success' => true,
+            'pulled_files' => [],
+            'files_count' => 0,
+            'errors' => [],
+            'message' => 'Nichts zum Pullen gefunden',
+        ];
     }
 
-    try {
-        $github = new GitHubAPI($credentials['token'], $credentials['owner'], $credentials['repo']);
-        $result = $github->pushToGitHub($projectPath);
+    list(, $before) = git_exec($projectPath, ['rev-parse', 'HEAD']);
+    $before = trim($before);
 
-        error_log("Push completed - Commits pushed: " . ($result['commits_count'] ?? 0));
-
-        // Zusätzliche Sicherheit: Entferne auch hier erfolgreich gepushte Commits
-        if ($result['success'] && !empty($result['pushed_commits'])) {
-            $commitsFile = $projectPath . '/.monaco_commits.json';
-            if (file_exists($commitsFile)) {
-                $allCommits = [];
-                $fileContent = file_get_contents($commitsFile);
-                if ($fileContent !== false) {
-                    $decodedCommits = json_decode($fileContent, true);
-                    if (is_array($decodedCommits)) {
-                        $allCommits = $decodedCommits;
-                    }
-                }
-                $pushedHashes = array_column($result['pushed_commits'], 'hash');
-
-                $remainingCommits = [];
-                foreach ($allCommits as $commit) {
-                    if (!in_array($commit['hash'], $pushedHashes)) {
-                        $remainingCommits[] = $commit;
-                    }
-                }
-
-                file_put_contents($commitsFile, json_encode($remainingCommits, JSON_PRETTY_PRINT));
-            }
-        }
-
-        return $result;
-
-    } catch (Exception $e) {
-        error_log("Push failed: " . $e->getMessage());
-        throw new Exception('Push to GitHub failed: ' . $e->getMessage());
-    }
-}
-
-function discardChanges($projectPath, $file, $project, $userID, $codespace)
-{
-    error_log("discardChanges called - File: $file, Project: $project, User: $userID, Codespace: $codespace");
-
-    $credentials = getGitHubCredentials($project, $userID, $codespace);
-
-    if ($credentials) {
-        // Restore from GitHub
-        try {
-            $github = new GitHubAPI($credentials['token'], $credentials['owner'], $credentials['repo']);
-            $fileContent = $github->getFileContent($file);
-
-            if ($fileContent) {
-                file_put_contents($projectPath . '/' . $file, $fileContent['content']);
-                return [
-                    'success' => true,
-                    'file' => $file,
-                    'message' => 'Changes discarded, restored from GitHub'
-                ];
-            }
-        } catch (Exception $e) {
-            // Fall through to local restore
-        }
+    list($code, $out) = git_exec($projectPath, ['pull', '--no-rebase', 'origin', $branch]);
+    if ($code !== 0) {
+        throw new Exception('Pull from git server failed: ' . trim($out));
     }
 
-    // Restore from last commit state
-    $lastCommitFile = $projectPath . '/.monaco_lastcommit.json';
-    if (file_exists($lastCommitFile)) {
-        $lastCommit = json_decode(file_get_contents($lastCommitFile), true);
-        if (isset($lastCommit[$file])) {
-            // Would need to restore from backup - for now just delete the file
-            $filePath = $projectPath . '/' . $file;
-            if (file_exists($filePath)) {
-                unlink($filePath);
-            }
+    list(, $after) = git_exec($projectPath, ['rev-parse', 'HEAD']);
+    $after = trim($after);
 
-            return [
-                'success' => true,
-                'file' => $file,
-                'message' => 'Changes discarded'
-            ];
+    $pulledFiles = [];
+    if ($before && $after && $before !== $after) {
+        list(, $names) = git_exec($projectPath, ['diff', '--name-only', $before, $after]);
+        foreach (explode("\n", trim($names)) as $n) {
+            if ($n !== '') {
+                $pulledFiles[] = $n;
+            }
         }
     }
 
     return [
-        'success' => false,
-        'file' => $file,
-        'message' => 'Unable to discard changes'
+        'success' => true,
+        'pulled_files' => $pulledFiles,
+        'files_count' => count($pulledFiles),
+        'errors' => [],
+        'message' => count($pulledFiles) . ' Dateien erfolgreich vom Git-Server geholt',
     ];
 }
 
-function getFileDiff($projectPath, $file, $project, $userID, $codespace)
+function getCommitHistory($projectPath)
 {
-    error_log("getFileDiff called - File: $file, Project: $project, User: $userID, Codespace: $codespace");
+    $sep = "\x1f";
+    list($code, $out) = git_exec($projectPath, [
+        'log',
+        '-n',
+        '20',
+        '--pretty=format:%H' . $sep . '%an' . $sep . '%ae' . $sep . '%aI' . $sep . '%s' . $sep . '%P',
+    ]);
 
-    $filePath = $projectPath . '/' . $file;
+    if ($code !== 0 || trim($out) === '') {
+        return ['success' => true, 'commits' => []];
+    }
 
-    if (!file_exists($filePath)) {
-        return [
-            'success' => false,
-            'error' => 'File not found'
+    $commits = [];
+    foreach (explode("\n", $out) as $line) {
+        if ($line === '') {
+            continue;
+        }
+        $f = explode($sep, $line);
+        if (count($f) < 6) {
+            continue;
+        }
+        $commits[] = [
+            'hash' => $f[0],
+            'short_hash' => substr($f[0], 0, 7),
+            'author' => $f[1],
+            'email' => $f[2],
+            'date' => $f[3],
+            'message' => $f[4],
+            'parents' => $f[5] === '' ? [] : explode(' ', $f[5]),
         ];
     }
 
-    $currentContent = file_get_contents($filePath);
+    return ['success' => true, 'commits' => $commits];
+}
 
-    // Get content from last commit
-    $lastCommitFile = $projectPath . '/.monaco_lastcommit.json';
-    $lastCommit = file_exists($lastCommitFile) ? json_decode(file_get_contents($lastCommitFile), true) : [];
+function getBranches($projectPath)
+{
+    list(, $curOut) = git_exec($projectPath, ['rev-parse', '--abbrev-ref', 'HEAD']);
+    $current = trim($curOut) ?: 'main';
 
-    $originalContent = '';
+    list($code, $out) = git_exec($projectPath, ['branch', '--format=%(refname:short)']);
 
-    // Try to get original content from GitHub first
-    $credentials = getGitHubCredentials($project, $userID, $codespace);
-    if ($credentials) {
-        try {
-            $github = new GitHubAPI($credentials['token'], $credentials['owner'], $credentials['repo']);
-            $githubFile = $github->getFileContent($file);
-            if ($githubFile) {
-                $originalContent = $githubFile['content'];
+    $branches = [];
+    if ($code === 0) {
+        foreach (explode("\n", trim($out)) as $name) {
+            $name = trim($name);
+            if ($name === '') {
+                continue;
             }
-        } catch (Exception $e) {
-            // Fall through to local backup
+            $branches[] = [
+                'name' => $name,
+                'current' => $name === $current,
+                'remote' => false,
+            ];
         }
     }
 
-    // If no GitHub content, check if it's a new file
-    if (empty($originalContent) && !isset($lastCommit[$file])) {
-        $originalContent = ''; // New file
-    } else if (empty($originalContent)) {
-        // Use a simple placeholder for modified files without original content
-        $originalContent = "// Original content not available\n// This is a modified file";
+    if (empty($branches)) {
+        $branches[] = ['name' => 'main', 'current' => true, 'remote' => false];
+        $current = 'main';
     }
 
-    // Generate simple line-by-line diff
-    $originalLines = explode("\n", $originalContent);
-    $currentLines = explode("\n", $currentContent);
+    return [
+        'success' => true,
+        'branches' => $branches,
+        'current' => $current,
+    ];
+}
 
-    $diff = generateLineDiff($originalLines, $currentLines);
+function getFileDiff($projectPath, $file)
+{
+    $filePath = $projectPath . '/' . $file;
+    $currentContent = file_exists($filePath) ? file_get_contents($filePath) : '';
+
+    list($code, $out) = git_exec($projectPath, ['show', 'HEAD:' . $file]);
+    $originalContent = ($code === 0) ? $out : '';
+
+    $diff = generateLineDiff(explode("\n", $originalContent), explode("\n", $currentContent));
 
     return [
         'success' => true,
         'file' => $file,
         'diff' => $diff,
         'original_content' => $originalContent,
-        'current_content' => $currentContent
+        'current_content' => $currentContent,
     ];
 }
 
@@ -1176,131 +460,72 @@ function generateLineDiff($originalLines, $currentLines)
         $currentLine = isset($currentLines[$i]) ? $currentLines[$i] : null;
 
         if ($originalLine === null) {
-            // Added line
-            $diff[] = [
-                'type' => 'added',
-                'lineNumber' => $i + 1,
-                'content' => $currentLine
-            ];
-        } else if ($currentLine === null) {
-            // Deleted line
-            $diff[] = [
-                'type' => 'deleted',
-                'lineNumber' => $i + 1,
-                'content' => $originalLine
-            ];
-        } else if ($originalLine !== $currentLine) {
-            // Modified line
-            $diff[] = [
-                'type' => 'deleted',
-                'lineNumber' => $i + 1,
-                'content' => $originalLine
-            ];
-            $diff[] = [
-                'type' => 'added',
-                'lineNumber' => $i + 1,
-                'content' => $currentLine
-            ];
+            $diff[] = ['type' => 'added', 'lineNumber' => $i + 1, 'content' => $currentLine];
+        } elseif ($currentLine === null) {
+            $diff[] = ['type' => 'deleted', 'lineNumber' => $i + 1, 'content' => $originalLine];
+        } elseif ($originalLine !== $currentLine) {
+            $diff[] = ['type' => 'deleted', 'lineNumber' => $i + 1, 'content' => $originalLine];
+            $diff[] = ['type' => 'added', 'lineNumber' => $i + 1, 'content' => $currentLine];
         } else {
-            // Unchanged line
-            $diff[] = [
-                'type' => 'unchanged',
-                'lineNumber' => $i + 1,
-                'content' => $currentLine
-            ];
+            $diff[] = ['type' => 'unchanged', 'lineNumber' => $i + 1, 'content' => $currentLine];
         }
     }
 
     return $diff;
 }
 
-function autoResolveConflicts($projectPath, $conflicts, $project, $userID, $codespace)
+function discardChanges($projectPath, $file)
 {
-    error_log("autoResolveConflicts called - Project: $project, User: $userID, Codespace: $codespace, Conflicts: " . json_encode($conflicts));
 
+    list($existsCode) = git_exec($projectPath, ['cat-file', '-e', 'HEAD:' . $file]);
+
+    if ($existsCode === 0) {
+        git_exec($projectPath, ['checkout', 'HEAD', '--', $file]);
+        return [
+            'success' => true,
+            'file' => $file,
+            'message' => 'Changes discarded, restored from git server',
+        ];
+    }
+
+    $filePath = $projectPath . '/' . $file;
+    if (file_exists($filePath)) {
+        unlink($filePath);
+    }
+    return [
+        'success' => true,
+        'file' => $file,
+        'message' => 'Changes discarded',
+    ];
+}
+
+function autoResolveConflicts($projectPath, $conflicts)
+{
     try {
         foreach ($conflicts as $file) {
             $filePath = $projectPath . '/' . $file;
             if (file_exists($filePath)) {
                 $content = file_get_contents($filePath);
 
-                // Simple auto-resolution: Keep current version (remove conflict markers)
-                $resolvedContent = preg_replace('/<<<<<<< HEAD
-(.*?)
-=======
-.*?
->>>>>>> .*?
-/s', '$1', $content);
-
-                // If no conflicts were found with HEAD, try other pattern
+                $resolvedContent = preg_replace('/<<<<<<< HEAD\n(.*?)\n=======\n.*?\n>>>>>>> .*?\n/s', '$1', $content);
                 if ($resolvedContent === $content) {
-                    $resolvedContent = preg_replace('/<<<<<<< .*?
-(.*?)
-=======
-.*?
->>>>>>> .*?
-/s', '$1', $content);
+                    $resolvedContent = preg_replace('/<<<<<<< .*?\n(.*?)\n=======\n.*?\n>>>>>>> .*?\n/s', '$1', $content);
                 }
 
                 file_put_contents($filePath, $resolvedContent);
+                git_exec($projectPath, ['add', '--', $file]);
             }
         }
 
         return [
             'success' => true,
             'message' => 'Conflicts auto-resolved successfully',
-            'resolved_files' => $conflicts
+            'resolved_files' => $conflicts,
         ];
     } catch (Exception $e) {
         return [
             'success' => false,
-            'error' => 'Failed to auto-resolve conflicts: ' . $e->getMessage()
+            'error' => 'Failed to auto-resolve conflicts: ' . $e->getMessage(),
         ];
     }
 }
-
-function getBranches($project, $userID, $codespace = 'main')
-{
-    $credentials = getGitHubCredentials($project, $userID, $codespace);
-
-    if (!$credentials) {
-        return [
-            'success' => true,
-            'branches' => [
-                ['name' => 'main', 'current' => true, 'remote' => false]
-            ],
-            'current' => 'main'
-        ];
-    }
-
-    try {
-        $github = new GitHubAPI($credentials['token'], $credentials['owner'], $credentials['repo']);
-        $branches = $github->getBranches();
-
-        $formattedBranches = [];
-        $defaultBranch = 'main';
-
-        foreach ($branches as $branch) {
-            $formattedBranches[] = [
-                'name' => $branch['name'],
-                'current' => $branch['name'] === $defaultBranch,
-                'remote' => false
-            ];
-        }
-
-        return [
-            'success' => true,
-            'branches' => $formattedBranches,
-            'current' => $defaultBranch
-        ];
-    } catch (Exception $e) {
-        return [
-            'success' => true,
-            'branches' => [
-                ['name' => 'main', 'current' => true, 'remote' => false]
-            ],
-            'current' => 'main'
-        ];
-    }
-}
-?>
