@@ -182,6 +182,12 @@
           </ion-menu-toggle>
         </div>
       </template>
+      <ion-menu-toggle auto-hide="false" v-if="filteredComponents.length === 0 && !isCollapsed && isAdminOrOwner">
+        <ion-item lines="none" detail="false" class="no-webbuilder-item">
+          <ion-icon slot="start" name="cube-outline" color="medium" />
+          <ion-label color="medium">No Web Builder yet</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
     </ion-reorder-group>
   </ion-list>
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed && isAdminOrOwner">
@@ -195,8 +201,7 @@
   <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }" v-if="isAdminOrOwner">
     <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
       <ion-menu-toggle auto-hide="false" v-for="(api, i) in filteredApis" :key="`api-${i}`">
-        <ion-item
-          @click="this.selectedIndex = Number(tools.length) + Number(components.length) + Number(i) + 1"
+        <ion-item @click="this.selectedIndex = Number(tools.length) + Number(components.length) + Number(i) + 1"
           lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/apis/' + api.slug"
           class="hydrated menu-item" :class="{
             selected: this.selectedIndex === Number(tools.length) + Number(components.length) + Number(i) + 1,
@@ -1047,6 +1052,14 @@ ion-list.hasToBeDarkmode {
 }
 
 .no-codespaces-item ion-icon {
+  color: var(--ion-color-medium) !important;
+}
+
+.no-webbuilder-item {
+  opacity: 0.6;
+}
+
+.no-webbuilder-item ion-icon {
   color: var(--ion-color-medium) !important;
 }
 
