@@ -377,7 +377,6 @@ import {
 import SiteTitle from '@/components/SiteTitle.vue'
 import PageTitle from "@/components/PageTitle.vue"
 import axios from 'axios'
-import qs from 'qs'
 import { ToastService } from '@/services/ToastService'
 
 const route = useRoute()
@@ -462,9 +461,7 @@ const loadAvailableTemplates = async () => {
   try {
     loadingTemplates.value = true
 
-    const response = await axios.post('project_codespaces.php', qs.stringify({
-      getAvailableTemplates: true
-    }))
+    const response = await axios.get('v2/codespaces/templates')
 
     if (response.data.success) {
       availableTemplates.value = response.data.templates
@@ -493,24 +490,15 @@ const loadCodespaces = async () => {
   try {
     loading.value = true
     const project = route.params.project
-    const { getUserData } = await import('@/userData')
-    const user = getUserData()
 
-    const response = await axios.post('project_codespaces.php', qs.stringify({
-      getCodespaces: true,
-      project: project
-    }))
+    const response = await axios.get(`v2/codespaces?project=${project}`)
 
     if (response.data.success) {
       codespaces.value = response.data.codespaces
 
       for (const codespace of codespaces.value) {
         try {
-          const connectionsResponse = await axios.post('codespace_connections.php', qs.stringify({
-            action: 'get_all_connections',
-            codespace_id: codespace.id,
-            user_id: user.userID
-          }))
+          const connectionsResponse = await axios.get(`v2/codespaces/${codespace.id}/domain`)
 
           codespace.connections = {
             domain: connectionsResponse.data.domain
@@ -565,9 +553,7 @@ const saveCodespace = async () => {
     const project = route.params.project
 
     if (editingCodespace.value) {
-      await axios.post('project_codespaces.php', {
-        updateCodespace: true,
-        codespaceID: editingCodespace.value.id,
+      await axios.put(`v2/codespaces/${editingCodespace.value.id}`, {
         name: formData.value.name,
         description: formData.value.description,
         language: formData.value.language,
@@ -576,17 +562,14 @@ const saveCodespace = async () => {
       })
       toast.success('Codespace aktualisiert!')
     } else {
-      const data: any = {
-        createCodespace: true,
+      await axios.post('v2/codespaces', {
         project: project,
         name: formData.value.name,
         description: formData.value.description,
         language: formData.value.language,
         template: formData.value.template,
         icon: formData.value.icon
-      }
-
-      await axios.post('project_codespaces.php', qs.stringify(data))
+      })
       toast.success('Codespace erstellt!')
     }
 
@@ -611,10 +594,7 @@ const deleteCodespace = async (codespace) => {
         text: 'Löschen',
         handler: async () => {
           try {
-            await axios.post('project_codespaces.php', qs.stringify({
-              deleteCodespace: true,
-              codespaceID: codespace.id
-            }))
+            await axios.delete(`v2/codespaces/${codespace.id}`)
             toast.success('Codespace gelöscht!')
             loadCodespaces()
           } catch (error) {
@@ -651,14 +631,7 @@ const closeSettingsModal = () => {
 
 const loadConnections = async (codespaceId) => {
   try {
-    const { getUserData } = await import('@/userData')
-    const user = getUserData()
-
-    const response = await axios.post('codespace_connections.php', qs.stringify({
-      action: 'get_all_connections',
-      codespace_id: codespaceId,
-      user_id: user.userID
-    }))
+    const response = await axios.get(`v2/codespaces/${codespaceId}/domain`)
 
     connections.value = {
       domain: response.data.domain || null
@@ -688,9 +661,7 @@ const closeTransferModal = () => {
 
 const loadAvailableProjects = async () => {
   try {
-    const response = await axios.post('project_codespaces.php', qs.stringify({
-      getUserProjects: true
-    }))
+    const response = await axios.get('v2/codespaces/user-projects')
 
     if (response.data.success) {
       const currentProject = route.params.project
@@ -713,8 +684,6 @@ const executeTransfer = async () => {
     transferInProgress.value = true
 
     const data: any = {
-      transferCodespace: true,
-      codespaceID: transferCodespace.value.id,
       targetProject: selectedTargetProject.value
     }
 
@@ -722,7 +691,7 @@ const executeTransfer = async () => {
       data.moveCodespace = 'true'
     }
 
-    const response = await axios.post('project_codespaces.php', qs.stringify(data))
+    const response = await axios.post(`v2/codespaces/${transferCodespace.value.id}/transfer`, data)
 
     if (response.data.success) {
       const action = moveInsteadOfCopy.value ? 'verschoben' : 'kopiert'
@@ -747,14 +716,8 @@ const executeTransfer = async () => {
 const loadDomainInfo = async (codespaceId) => {
   try {
     loadingDomainInfo.value = true
-    const { getUserData } = await import('@/userData')
-    const user = getUserData()
 
-    const response = await axios.post('codespace_connections.php', qs.stringify({
-      action: 'get_project_domain_info',
-      codespace_id: codespaceId,
-      user_id: user.userID
-    }))
+    const response = await axios.get(`v2/codespaces/${codespaceId}/domain-info`)
 
     if (response.data.base_domain) {
       domainInfo.value = response.data
@@ -771,13 +734,7 @@ const loadDomainInfo = async (codespaceId) => {
 
 const connectDomain = async () => {
   try {
-    const { getUserData } = await import('@/userData')
-    const user = getUserData()
-
     const data: any = {
-      action: 'connect_domain',
-      codespace_id: selectedCodespace.value.id,
-      user_id: user.userID,
       is_main: domainType.value === 'main' ? 'true' : 'false'
     }
 
@@ -785,7 +742,7 @@ const connectDomain = async () => {
       data.subdomain = domainInput.value
     }
 
-    const response = await axios.post('codespace_connections.php', qs.stringify(data))
+    const response = await axios.post(`v2/codespaces/${selectedCodespace.value.id}/domain`, data)
 
     if (response.data.success) {
       toast.success('Domain erfolgreich verbunden!')
@@ -795,22 +752,15 @@ const connectDomain = async () => {
     } else {
       toast.error(response.data.error || 'Fehler beim Verbinden der Domain')
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error connecting domain:', error)
-    toast.error('Verbindungsfehler')
+    toast.error(error.response?.data?.error || 'Verbindungsfehler')
   }
 }
 
 const disconnectDomain = async () => {
   try {
-    const { getUserData } = await import('@/userData')
-    const user = getUserData()
-
-    const response = await axios.post('codespace_connections.php', qs.stringify({
-      action: 'disconnect_domain',
-      codespace_id: selectedCodespace.value.id,
-      user_id: user.userID
-    }))
+    const response = await axios.delete(`v2/codespaces/${selectedCodespace.value.id}/domain`)
 
     if (response.data.success) {
       toast.success('Domain getrennt!')

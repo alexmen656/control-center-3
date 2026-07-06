@@ -1,7 +1,4 @@
 <?php
-/**
- * Router
- */
 
 require_once __DIR__ . '/users.routes.php';
 require_once __DIR__ . '/projects.routes.php';
@@ -14,3 +11,5 @@ require_once __DIR__ . '/ai-assistant.routes.php';
 require_once __DIR__ . '/ai-schema.routes.php';
 require_once __DIR__ . '/forms.routes.php';
 require_once __DIR__ . '/filesystem.routes.php';
+require_once __DIR__ . '/codespaces.routes.php';
+require_once __DIR__ . '/codespace-apis.routes.php';

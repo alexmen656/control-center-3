@@ -201,13 +201,8 @@ const refreshAPIs = async () => {
 const loadAvailableAPIs = async () => {
   isLoading.value = true
   try {
-    const formData = new FormData()
-    formData.append('getCodespaceAPIs', '1')
-    formData.append('project', props.projectName)
-    formData.append('codespace', props.codespace)
-    
-    const response = await axios.post('codespace_apis.php', formData)
-    
+    const response = await axios.get(`v2/codespace-apis?project=${props.projectName}&codespace=${props.codespace}`)
+
     if (response.data && Array.isArray(response.data)) {
       availableAPIs.value = response.data.map(api => ({
         ...api,
@@ -231,15 +226,15 @@ const toggleAPI = async (api) => {
   api.isToggling = true
   
   try {
-    const formData = new FormData()
-    formData.append('project', props.projectName)
-    formData.append('codespace', props.codespace)
-    formData.append('subscription_id', api.subscription_id)
-    
+    const body = {
+      project: props.projectName,
+      codespace: props.codespace,
+      subscription_id: api.subscription_id
+    }
+
     if (api.is_active) {
-      formData.append('deactivateCodespaceAPI', '1')
-      const response = await axios.post('codespace_apis.php', formData)
-      
+      const response = await axios.post('v2/codespace-apis/deactivate', body)
+
       if (response.data && response.data.success) {
         api.is_active = false
         ToastService.success('API erfolgreich deaktiviert')
@@ -247,9 +242,8 @@ const toggleAPI = async (api) => {
         ToastService.error(response.data?.message || 'Fehler beim Deaktivieren der API')
       }
     } else {
-      formData.append('activateCodespaceAPI', '1')
-      const response = await axios.post('codespace_apis.php', formData)
-      
+      const response = await axios.post('v2/codespace-apis/activate', body)
+
       if (response.data && response.data.success) {
         api.is_active = true
         ToastService.success('API erfolgreich aktiviert')

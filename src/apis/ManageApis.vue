@@ -680,10 +680,7 @@ export default defineComponent({
 
     const loadProjectCodespaces = async () => {
       try {
-        const response = await axios.post('project_codespaces.php', new URLSearchParams({
-          getCodespaces: 'true',
-          project: route.params.project as string
-        }));
+        const response = await axios.get(`v2/codespaces?project=${route.params.project}`);
 
         if (response.data && response.data.success && response.data.codespaces) {
           projectCodespaces.value = response.data.codespaces;
@@ -701,12 +698,7 @@ export default defineComponent({
       if (!selectedCodespace.value) return;
 
       try {
-        const formData = new FormData();
-        formData.append('getCodespaceAPIs', '1');
-        formData.append('project', route.params.project as string);
-        formData.append('codespace', selectedCodespace.value);
-
-        const response = await axios.post('codespace_apis.php', formData);
+        const response = await axios.get(`v2/codespace-apis?project=${route.params.project}&codespace=${selectedCodespace.value}`);
 
         if (response.data && Array.isArray(response.data)) {
           codespaceAPIs.value = response.data.map((api: any) => ({
@@ -729,14 +721,14 @@ export default defineComponent({
       api.isToggling = true;
 
       try {
-        const formData = new FormData();
-        formData.append('project', route.params.project as string);
-        formData.append('codespace', selectedCodespace.value);
-        formData.append('subscription_id', api.subscription_id.toString());
+        const body = {
+          project: route.params.project as string,
+          codespace: selectedCodespace.value,
+          subscription_id: api.subscription_id
+        };
 
         if (api.is_active) {
-          formData.append('deactivateCodespaceAPI', '1');
-          const response = await axios.post('codespace_apis.php', formData);
+          const response = await axios.post('v2/codespace-apis/deactivate', body);
 
           if (response.data && response.data.success) {
             api.is_active = false;
@@ -745,8 +737,7 @@ export default defineComponent({
             showToast(response.data?.message || 'Failed to deactivate API', 'danger');
           }
         } else {
-          formData.append('activateCodespaceAPI', '1');
-          const response = await axios.post('codespace_apis.php', formData);
+          const response = await axios.post('v2/codespace-apis/activate', body);
 
           if (response.data && response.data.success) {
             api.is_active = true;
