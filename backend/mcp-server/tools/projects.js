@@ -219,10 +219,16 @@ async function createProject(args, context) {
         projectIcon: args.icon || 'folder-outline'
       }
     }, context);
-    
+
+    if (data && typeof data === 'object' && data.success === false) {
+      return formatError(data.message || 'Failed to create project');
+    }
+
     return formatResponse({
       success: true,
       message: data.message || 'Project created successfully',
+      link: data.link,
+      projectId: data.projectID,
       project: data
     });
   } catch (error) {

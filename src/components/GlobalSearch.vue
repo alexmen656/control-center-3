@@ -205,7 +205,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* ---------- Header trigger ---------- */
 .search-trigger {
   display: flex;
   align-items: center;
@@ -273,7 +272,21 @@ export default defineComponent({
   }
 }
 
-/* Collapse to an icon-only button on small screens */
+.hasToBeDarkmode .search-trigger {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ion-color-medium, #92949c);
+}
+
+.hasToBeDarkmode .search-trigger:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.hasToBeDarkmode .kbd {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
 @media only screen and (max-width: 700px) {
   .search-trigger {
     min-width: 0;
@@ -286,7 +299,6 @@ export default defineComponent({
   }
 }
 
-/* ---------- Overlay + palette ---------- */
 .gs-overlay {
   position: fixed;
   inset: 0;
@@ -460,7 +472,6 @@ export default defineComponent({
   margin-right: 2px;
 }
 
-/* Transition */
 .gs-fade-enter-active,
 .gs-fade-leave-active {
   transition: opacity 0.15s ease;

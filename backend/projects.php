@@ -69,7 +69,7 @@ function handleCreateProject($userID)
     }
 
     echo createFileSystem($projectID)
-        ? jsonResponse('The project was created successfully. <a href="/paxar/projects/' . $href . '/">Go to the project</a>')
+        ? jsonResponse(['message' => 'The project was created successfully', 'link' => $href, 'projectID' => $projectID])
         : jsonResponse('Project created but file system setup failed', false);
 }
 

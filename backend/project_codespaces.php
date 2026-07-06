@@ -10,7 +10,12 @@ function slugExists($projectID, $slug)
 }
 
 if (isset($_POST['createCodespace']) && isset($_POST['project']) && isset($_POST['name'])) {
-    $projectID = getProjectID(escape_string($_POST['project']));
+    try {
+        $projectID = getProjectID(escape_string($_POST['project']));
+    } catch (Exception $e) {
+        echo jsonResponse("Project not found: " . $_POST['project'], false);
+        exit;
+    }
     $name = escape_string($_POST['name']);
     $description = escape_string($_POST['description'] ?? '');
     $icon = escape_string($_POST['icon'] ?? 'code-outline');

@@ -17,6 +17,15 @@ function deployApi(args, action) {
   return `vercel_api.php?project=${enc(args.project)}&codespace=${enc(args.codespace || 'main')}&action=${action}`;
 }
 
+function backendResult(data) {
+  if (data && typeof data === 'object' && 'success' in data) {
+    return data.success
+      ? formatResponse({ success: true, result: data })
+      : formatError(data.message || 'Backend rejected the request');
+  }
+  return formatError(typeof data === 'string' ? data.slice(0, 500) : 'Unexpected backend response');
+}
+
 const projectProp = { type: 'string', description: 'Project link/slug' };
 const codespaceProp = {
   type: 'string',
@@ -321,7 +330,7 @@ async function createCodespace(args, context) {
       }
     }, context);
 
-    return formatResponse({ success: true, result: data });
+    return backendResult(data);
   } catch (error) {
     return formatError(error.message);
   }
@@ -543,7 +552,7 @@ async function publishAsApi(args, context) {
         rate_limit: String(args.rate_limit || 60)
       }
     }, context);
-    return formatResponse({ success: true, result: data });
+    return backendResult(data);
   } catch (error) {
     return formatError(error.message);
   }
@@ -558,7 +567,7 @@ async function unpublishApi(args, context) {
         codespace: args.codespace
       }
     }, context);
-    return formatResponse({ success: true, result: data });
+    return backendResult(data);
   } catch (error) {
     return formatError(error.message);
   }
@@ -573,7 +582,7 @@ async function syncApiKeys(args, context) {
         codespace: args.codespace
       }
     }, context);
-    return formatResponse({ success: true, result: data });
+    return backendResult(data);
   } catch (error) {
     return formatError(error.message);
   }
