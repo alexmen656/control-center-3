@@ -3,6 +3,7 @@ if (php_sapi_name() !== 'cli') {
     http_response_code(403);
     exit('cli only');
 }
+
 require_once __DIR__ . '/../deploy_helper.php';
 require_once __DIR__ . '/framework.php';
 
@@ -34,7 +35,7 @@ function sh($cmd, $logFile = null)
 
 function ensure_dirs()
 {
-    foreach ([DEPLOY_ROOT, DEPLOY_BUILD_TMP, DEPLOY_LOG_ROOT, DEPLOY_ROOT . '/queue'] as $d) {
+    foreach ([DEPLOY_ROOT, DEPLOY_BUILD_TMP, DEPLOY_LOG_ROOT] as $d) {
         if (!is_dir($d)) {
             @mkdir($d, 0775, true);
         }
@@ -50,12 +51,31 @@ function claim_next_deployment()
     $row = mysqli_fetch_assoc($res);
     $id = (int) $row['id'];
     query("UPDATE deployments SET status='building' WHERE id='$id' AND status='queued'");
-    $check = query("SELECT status FROM deployments WHERE id='$id' LIMIT 1");
-    $c = mysqli_fetch_assoc($check);
-    if ($c && $c['status'] === 'building') {
-        return deploy_get($id);
+    if (mysqli_affected_rows($GLOBALS['con']) !== 1) {
+        return null;
     }
-    return null;
+    return deploy_get($id);
+}
+
+function reap_stuck_deployments()
+{
+    query("UPDATE deployments SET status='error', error_msg='worker timeout'
+           WHERE status='building' AND created_at < (NOW() - INTERVAL 20 MINUTE)");
+}
+
+function wait_for_port($port, $timeoutSeconds)
+{
+    for ($i = 0; $i < $timeoutSeconds; $i++) {
+        $conn = @fsockopen('127.0.0.1', (int) $port, $errno, $errstr, 1);
+
+        if ($conn) {
+            fclose($conn);
+            return true;
+        }
+
+        sleep(1);
+    }
+    return false;
 }
 
 function write_env_file($codespaceId, $target, $path)
@@ -66,6 +86,7 @@ function write_env_file($codespaceId, $target, $path)
         if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $k)) {
             continue;
         }
+
         $v = str_replace(["\n", "\r"], '', $v);
         $lines[] = $k . '=' . $v;
     }
@@ -77,7 +98,6 @@ function build_deployment($dep)
 {
     $deploymentId = (int) $dep['id'];
     $codespaceId = (int) $dep['codespace_id'];
-    $slug = deploy_slug($codespaceId);
 
     $logFile = DEPLOY_LOG_ROOT . '/' . $deploymentId . '.log';
     @file_put_contents($logFile, '');
@@ -100,7 +120,14 @@ function build_deployment($dep)
         return;
     }
     if (!empty($dep['commit_sha'])) {
-        sh('git -C ' . escapeshellarg($work) . ' fetch --depth 1 origin ' . escapeshellarg($dep['commit_sha']) . ' 2>/dev/null; git -C ' . escapeshellarg($work) . ' checkout ' . escapeshellarg($dep['commit_sha']), $logFile);
+        sh('git -C ' . escapeshellarg($work) . ' fetch --depth 1 origin ' . escapeshellarg($dep['commit_sha']), $logFile);
+        list($coc) = sh('git -C ' . escapeshellarg($work) . ' checkout --detach ' . escapeshellarg($dep['commit_sha']), $logFile);
+        list(, $head) = sh('git -C ' . escapeshellarg($work) . ' rev-parse HEAD');
+        if ($coc !== 0 || trim($head) !== $dep['commit_sha']) {
+            fail($deploymentId, $logFile, 'could not check out commit ' . $dep['commit_sha']);
+            sh('rm -rf ' . escapeshellarg($work));
+            return;
+        }
     }
 
     $cfg = deploy_effective_config($codespaceId, $work);
@@ -136,7 +163,7 @@ function build_deployment($dep)
 
     if ($bc !== 0) {
         fail($deploymentId, $logFile, 'build failed (exit ' . $bc . ')');
-        sh('rm -rf ' . escapeshellarg($work));
+        sh('rm -rf ' . escapeshellarg($work) . ' ' . escapeshellarg($releaseDir));
         return;
     }
 
@@ -148,24 +175,32 @@ function build_deployment($dep)
     prune_releases($codespaceId, $deploymentId);
 }
 
-function activate_release($codespaceId, $deploymentId, $releaseDir, $runtime, $cfg, $logFile)
+function flip_current($codespaceId, $releaseDir)
 {
-    $slug = deploy_slug($codespaceId);
     $current = deploy_current_link($codespaceId);
     $tmpLink = $current . '.tmp';
     sh('ln -sfn ' . escapeshellarg($releaseDir) . ' ' . escapeshellarg($tmpLink));
     sh('mv -Tf ' . escapeshellarg($tmpLink) . ' ' . escapeshellarg($current));
+}
+
+function activate_release($codespaceId, $deploymentId, $releaseDir, $runtime, $cfg, $logFile)
+{
+    $slug = deploy_slug($codespaceId);
 
     if ($runtime === 'node') {
-        start_node_runtime($codespaceId, $releaseDir, $cfg, $logFile);
-        $port = deploy_internal_port($codespaceId);
+        if (!start_node_runtime($codespaceId, $releaseDir, $cfg, $logFile)) {
+            fail($deploymentId, $logFile, 'node runtime failed to start or become healthy');
+            return;
+        }
+        flip_current($codespaceId, $releaseDir);
         deploy_set_status($deploymentId, 'ready', [
             'url' => deploy_url($codespaceId),
-            'internal_port' => $port,
+            'internal_port' => deploy_internal_port($codespaceId),
             'runtime' => 'node',
             'build_log' => $logFile,
         ]);
     } else {
+        flip_current($codespaceId, $releaseDir);
         stop_node_runtime($slug);
         deploy_set_status($deploymentId, 'ready', [
             'url' => deploy_url($codespaceId),
@@ -203,17 +238,34 @@ function start_node_runtime($codespaceId, $releaseDir, $cfg, $logFile)
     list($rc) = sh($runCmd, $logFile);
     @unlink($envFile);
 
-    write_node_vhost($slug, $port);
-    sh('nginx -t && systemctl reload nginx', $logFile);
-    return $rc;
+    if ($rc !== 0) {
+        return false;
+    }
+
+    if (!wait_for_port($port, 25)) {
+        sh('docker logs --tail 40 ' . escapeshellarg($name) . ' >> ' . escapeshellarg($logFile) . ' 2>&1');
+        sh('docker rm -f ' . escapeshellarg($name) . ' 2>/dev/null');
+        return false;
+    }
+
+    return write_node_vhost($slug, $port, $logFile);
 }
 
-function write_node_vhost($slug, $port)
+function write_node_vhost($slug, $port, $logFile)
 {
     $host = $slug . '.' . DEPLOY_APPS_DOMAIN;
     $tpl = file_get_contents(WORKER_NGINX_TPL);
     $conf = str_replace(['__HOST__', '__PORT__'], [$host, $port], $tpl);
-    file_put_contents(WORKER_NGINX_DIR . '/app-' . $slug . '.conf', $conf);
+    $path = WORKER_NGINX_DIR . '/app-' . $slug . '.conf';
+    file_put_contents($path, $conf);
+
+    list($tc) = sh('nginx -t', $logFile);
+    if ($tc !== 0) {
+        @unlink($path);
+        return false;
+    }
+    sh('systemctl reload nginx', $logFile);
+    return true;
 }
 
 function stop_node_runtime($slug)
@@ -257,11 +309,13 @@ function main_loop()
     ensure_dirs();
     wlog('worker started');
     while (true) {
+        reap_stuck_deployments();
         $dep = claim_next_deployment();
         if (!$dep) {
             sleep(2);
             continue;
         }
+
         try {
             build_deployment($dep);
         } catch (Throwable $e) {

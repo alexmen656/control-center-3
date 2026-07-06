@@ -71,12 +71,21 @@ function deploy_detect($codespaceDir)
         ]);
     }
 
-    if (isset($deps['nuxt']) || isset($deps['nuxt3'])) {
+    if (isset($deps['nuxt'])) {
         return array_merge($base, [
             'framework' => 'nuxt',
             'output_dir' => '.output',
             'runtime' => 'node',
             'start_cmd' => 'node .output/server/index.mjs',
+        ]);
+    }
+
+    if (isset($deps['react-scripts'])) {
+        return array_merge($base, [
+            'framework' => 'cra',
+            'output_dir' => 'build',
+            'runtime' => 'static',
+            'start_cmd' => '',
         ]);
     }
 

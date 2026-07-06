@@ -44,9 +44,11 @@ function deploy_decrypt($stored)
 {
     $key = deploy_encryption_key();
     $raw = base64_decode($stored);
-    if ($raw === false || strlen($raw) < 29) {
+
+    if ($raw === false || strlen($raw) < 28) {
         return '';
     }
+
     $iv = substr($raw, 0, 12);
     $tag = substr($raw, 12, 16);
     $cipher = substr($raw, 28);
@@ -91,14 +93,14 @@ function deploy_bare_repo($codespaceId)
 
 function deploy_internal_port($codespaceId)
 {
-    return DEPLOY_PORT_BASE + ((int) $codespaceId % 40000);
+    return DEPLOY_PORT_BASE + (int) $codespaceId;
 }
 
 function deploy_resolve_codespace($project, $codespace)
 {
     $p = escape_string($project);
     $c = escape_string($codespace);
-    $res = query("SELECT pc.id, pc.slug, pc.template, p.link AS project_link
+    $res = query("SELECT pc.id, pc.slug, pc.template, pc.project_id, p.link AS project_link
                   FROM project_codespaces pc
                   JOIN projects p ON pc.project_id = p.projectID
                   WHERE p.link = '$p' AND pc.slug = '$c' LIMIT 1");
@@ -208,7 +210,7 @@ function deploy_status_to_ready_state($status)
 function deploy_log_sig($deploymentId)
 {
     global $jwt_secret;
-    return substr(hash_hmac('sha256', 'deploylog:' . (int) $deploymentId, $jwt_secret), 0, 16);
+    return substr(hash_hmac('sha256', 'deploylog:' . (int) $deploymentId, $jwt_secret), 0, 32);
 }
 
 function deploy_list_for_frontend($codespaceId, $limit = 20)
@@ -248,11 +250,3 @@ function deploy_env_vars($codespaceId, $target)
     return $out;
 }
 
-function deploy_enqueue_job($deploymentId)
-{
-    $dir = DEPLOY_ROOT . '/queue';
-    if (!is_dir($dir)) {
-        @mkdir($dir, 0775, true);
-    }
-    @file_put_contents($dir . '/' . (int) $deploymentId . '.job', (string) time());
-}

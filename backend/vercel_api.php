@@ -17,11 +17,16 @@ if ($project === '') {
 }
 
 $cs = deploy_resolve_codespace($project, $codespace);
+
 if (!$cs) {
     deploy_api_fail('codespace not found');
 }
-$codespaceId = (int) $cs['id'];
 
+if (!checkUserProjectPermission($userID, $cs['project_id'])) {
+    deploy_api_fail('no permission for this codespace', 403);
+}
+
+$codespaceId = (int) $cs['id'];
 $method = $_SERVER['REQUEST_METHOD'];
 $input = json_decode(file_get_contents('php://input'), true) ?: [];
 $action = $_GET['action'] ?? ($input['action'] ?? '');
@@ -62,9 +67,7 @@ if ($method === 'POST') {
             }
             $saved = deploy_get_config($codespaceId);
             $runtime = ($saved && $saved['runtime'] === 'node') ? 'node' : 'static';
-
             $deploymentId = deploy_create($codespaceId, $commit, $runtime);
-            deploy_enqueue_job($deploymentId);
 
             echo json_encode([
                 'success' => true,
@@ -99,12 +102,15 @@ if ($method === 'POST') {
             $key = trim($input['key'] ?? '');
             $value = (string) ($input['value'] ?? '');
             $target = in_array($input['target'] ?? 'both', ['build', 'runtime', 'both'], true) ? $input['target'] : 'both';
+
             if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $key)) {
                 deploy_api_fail('invalid env key');
             }
+
             $k = escape_string($key);
             $enc = escape_string(deploy_encrypt($value));
             $t = escape_string($target);
+
             query("INSERT INTO codespace_env_vars (codespace_id, var_key, value_encrypted, target)
                    VALUES ('$codespaceId', '$k', '$enc', '$t')
                    ON DUPLICATE KEY UPDATE value_encrypted='$enc', target='$t'");
