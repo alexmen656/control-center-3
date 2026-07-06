@@ -1,6 +1,7 @@
 <?php
 include 'head.php';
 include 'apis_helper.php';
+include 'api_keys.php';
 
 if (isset($_POST['getAvailableApis'])) {
     $apis = query("SELECT * FROM cms_apis WHERE is_active=1 ORDER BY category, name ASC");
@@ -66,9 +67,8 @@ if (isset($_POST['getAvailableApis'])) {
     echo json_encode(['success' => true]);
 } elseif (isset($_POST['regenerateApiKey']) && isset($_POST['subscription_id'])) {
     $subscriptionId = intval($_POST['subscription_id']);
-    $newApiKey = generateApiKey();
-
-    query("UPDATE project_api_subscriptions SET api_key='$newApiKey' WHERE id='$subscriptionId'");
+    $newApiKey = api_generate_key();
+    api_store_key($subscriptionId, $newApiKey);
     echo json_encode(['success' => true, 'api_key' => $newApiKey]);
 } elseif (isset($_POST['getProjectApis']) && isset($_POST['project'])) {
     $projectName = escape_string($_POST['project']);
@@ -116,17 +116,16 @@ if (isset($_POST['getAvailableApis'])) {
         exit;
     }
 
-    $apiKey = generateApiKey($projectID);
+    $apiKey = api_generate_key($projectID);
     $api = fetch_assoc(query("SELECT rate_limit_default, slug FROM cms_apis WHERE id='$apiId'"));
     $rateLimit = $api['rate_limit_default'];
-    $apiSlug = $api['slug'];
 
-    $insertSub = query("INSERT INTO project_api_subscriptions (projectID, api_id, api_key, rate_limit) 
-                              VALUES ('$projectID', '$apiId', '$apiKey', '$rateLimit')");
+    $insertSub = query("INSERT INTO project_api_subscriptions (projectID, api_id, api_key, rate_limit)
+                              VALUES ('$projectID', '$apiId', '', '$rateLimit')");
 
     if ($insertSub) {
-        $copyResult = copyAPISDKToProject($projectName, $apiSlug, $userID);
-        showJSON($copyResult ? ['success' => true, 'message' => 'Successfully subscribed to API and SDK installed', 'api_key' => $apiKey] : ['success' => true, 'message' => 'Subscribed to API but SDK copy failed', 'api_key' => $apiKey]);
+        api_store_key(mysqli_insert_id($GLOBALS['con']), $apiKey);
+        showJSON(['success' => true, 'message' => 'Successfully subscribed to API', 'api_key' => $apiKey]);
     } else {
         showJSON(['error' => 'Failed to subscribe to API']);
     }
@@ -188,10 +187,10 @@ if (isset($_POST['getAvailableApis'])) {
     $sub = fetch_assoc(query("SELECT projectID FROM project_api_subscriptions WHERE id='$subscriptionId'"));
     $projectID = $sub['projectID'];
 
-    $newApiKey = generateApiKey($projectID);
-    $updateKey = query("UPDATE project_api_subscriptions SET api_key='$newApiKey' WHERE id='$subscriptionId'");
+    $newApiKey = api_generate_key($projectID);
+    api_store_key($subscriptionId, $newApiKey);
 
-    showJSON($updateKey ? ['success' => true, 'message' => 'API key regenerated successfully', 'api_key' => $newApiKey] : ['error' => 'Failed to regenerate API key']);
+    showJSON(['success' => true, 'message' => 'API key regenerated successfully', 'api_key' => $newApiKey]);
 } elseif (isset($_POST['getApiCallLogs'])) {
     $subscriptionId = 0;
 

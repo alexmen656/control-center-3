@@ -61,21 +61,25 @@ class BaseAPI
 
     private function validateApiKey($apiKey, $apiId)
     {
-        $apiKey = escape_string($apiKey);
+        $prefix = escape_string(substr($apiKey, 0, 16));
+        $hash = hash('sha256', $apiKey);
         $apiId = escape_string($apiId);
 
         $result = query("
-            SELECT projectID 
-            FROM project_api_subscriptions 
-            WHERE api_key = '$apiKey' 
+            SELECT projectID, key_hash
+            FROM project_api_subscriptions
+            WHERE key_prefix = '$prefix'
             AND api_id = '$apiId'
+            AND is_enabled = 1
         ");
 
-        if ($result && mysqli_num_rows($result) === 1) {
-            $subscription = mysqli_fetch_assoc($result);
-            $this->projectID = $subscription['projectID'];
-
-            return true;
+        if ($result) {
+            while ($subscription = mysqli_fetch_assoc($result)) {
+                if (!empty($subscription['key_hash']) && hash_equals($subscription['key_hash'], $hash)) {
+                    $this->projectID = $subscription['projectID'];
+                    return true;
+                }
+            }
         }
 
         return false;
@@ -147,19 +151,6 @@ class BaseAPI
 
         return htmlspecialchars(strip_tags($data), ENT_QUOTES, 'UTF-8');
     }
-
-    /*protected function logApiCall($endpoint, $method, $responseCode = 200)
-    {
-        $endpoint = escape_string($endpoint);
-        $method = escape_string($method);
-        $userAgent = escape_string($_SERVER['HTTP_USER_AGENT'] ?? '');
-        $ip = escape_string($_SERVER['REMOTE_ADDR'] ?? '');
-        $timestamp = date('Y-m-d H:i:s');
-        $apiId = escape_string($this->apiId ?? '');
-
-        query("INSERT INTO api_logs (project_id, user_id, app_id, endpoint, method, response_code, user_agent, ip_address, created_at) 
-               VALUES ('{$this->projectID}', {$this->userID}, '$apiId', '$endpoint', '$method', $responseCode, '$userAgent', '$ip', '$timestamp')");
-    }*/
 
     protected function checkRateLimit()
     {

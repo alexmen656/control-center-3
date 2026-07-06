@@ -1,7 +1,7 @@
 <?php
 include 'head.php';
 include 'apis_helper.php';
-include 'vercel_helper.php';
+include 'api_keys.php';
 
 if (isset($_POST['getProjectAPIs']) && isset($_POST['project'])) {
     $projectName = escape_string($_POST['project']);
@@ -27,7 +27,6 @@ if (isset($_POST['getProjectAPIs']) && isset($_POST['project'])) {
     showJSON($json);
 }
 
-// Get activated APIs for a specific codespace
 elseif (isset($_POST['getCodespaceAPIs']) && isset($_POST['project']) && isset($_POST['codespace'])) {
     $projectName = escape_string($_POST['project']);
     $codespaceSlug = escape_string($_POST['codespace']);
@@ -38,7 +37,6 @@ elseif (isset($_POST['getCodespaceAPIs']) && isset($_POST['project']) && isset($
         exit;
     }
 
-    // Get codespace ID
     $codespaceResult = query("SELECT id FROM project_codespaces WHERE project_id='$projectID' AND slug='$codespaceSlug' LIMIT 1");
     if (mysqli_num_rows($codespaceResult) === 0) {
         showJSON(['error' => 'Codespace not found']);
@@ -47,7 +45,6 @@ elseif (isset($_POST['getCodespaceAPIs']) && isset($_POST['project']) && isset($
     $codespace = fetch_assoc($codespaceResult);
     $codespaceId = $codespace['id'];
 
-    // Get all project APIs with their activation status for this codespace
     $apis = query("
         SELECT 
             pas.id as subscription_id,
@@ -78,7 +75,6 @@ elseif (isset($_POST['getCodespaceAPIs']) && isset($_POST['project']) && isset($
     showJSON($json);
 }
 
-// Activate an API for a specific codespace
 elseif (isset($_POST['activateCodespaceAPI']) && isset($_POST['project']) && isset($_POST['codespace']) && isset($_POST['subscription_id'])) {
     $projectName = escape_string($_POST['project']);
     $codespaceSlug = escape_string($_POST['codespace']);
@@ -90,7 +86,6 @@ elseif (isset($_POST['activateCodespaceAPI']) && isset($_POST['project']) && iss
         exit;
     }
 
-    // Get codespace ID
     $codespaceResult = query("SELECT id FROM project_codespaces WHERE project_id='$projectID' AND slug='$codespaceSlug' LIMIT 1");
     if (mysqli_num_rows($codespaceResult) === 0) {
         showJSON(['error' => 'Codespace not found']);
@@ -99,66 +94,38 @@ elseif (isset($_POST['activateCodespaceAPI']) && isset($_POST['project']) && iss
     $codespace = fetch_assoc($codespaceResult);
     $codespaceId = $codespace['id'];
 
-    // Verify subscription belongs to this project
     $subscriptionResult = query("SELECT api_id FROM project_api_subscriptions WHERE id='$subscriptionId' AND projectID='$projectID' LIMIT 1");
     if (mysqli_num_rows($subscriptionResult) === 0) {
         showJSON(['error' => 'Invalid subscription']);
         exit;
     }
 
-    // Check if already activated
     $existingResult = query("SELECT id FROM codespace_api_activations WHERE codespace_id='$codespaceId' AND subscription_id='$subscriptionId' LIMIT 1");
     if (mysqli_num_rows($existingResult) > 0) {
-        // Update existing activation
         $updateResult = query("UPDATE codespace_api_activations SET is_active=1 WHERE codespace_id='$codespaceId' AND subscription_id='$subscriptionId'");
     } else {
-        // Create new activation
         $updateResult = query("INSERT INTO codespace_api_activations (codespace_id, subscription_id, is_active) VALUES ('$codespaceId', '$subscriptionId', 1)");
     }
 
     if ($updateResult) {
-        // Get API slug and api_key for SDK installation and Vercel env var
-        $apiResult = query("
-            SELECT ca.slug, pas.api_key
-            FROM project_api_subscriptions pas 
-            JOIN cms_apis ca ON pas.api_id = ca.id 
+        $sub = fetch_assoc(query("
+            SELECT pas.*, ca.slug
+            FROM project_api_subscriptions pas
+            JOIN cms_apis ca ON pas.api_id = ca.id
             WHERE pas.id='$subscriptionId'
-        ");
-        $api = fetch_assoc($apiResult);
-        
-        // Install SDK files
-        $copyResult = copyAPISDKToCodespace($projectName, $codespaceSlug, $api['slug'], $userID);
-        
-        // Set API key as environment variable in Vercel
-        $vercelResult = ['success' => true, 'message' => 'No Vercel integration'];
-        try {
-            $vercelHelper = new VercelHelper($userID);
-            $vercelResult = $vercelHelper->setAPIKeyEnvironmentVariable($projectName, $codespaceSlug, $api['slug'], $api['api_key']);
-        } catch (Exception $e) {
-            error_log("Vercel API key setup failed: " . $e->getMessage());
-            $vercelResult = ['success' => false, 'error' => $e->getMessage()];
-        }
-        
-        $message = 'API activated';
-        if ($copyResult) {
-            $message .= ' and SDK installed';
-        } else {
-            $message .= ' but SDK installation failed';
-        }
-        
-        if ($vercelResult['success']) {
-            $message .= ', API key set in Vercel as ' . ($vercelResult['env_var_name'] ?? 'environment variable');
-        } else {
-            $message .= ', but Vercel API key setup failed: ' . ($vercelResult['error'] ?? 'Unknown error');
-        }
-        
-        showJSON(['success' => true, 'message' => $message, 'vercel_result' => $vercelResult]);
+        "));
+
+        $envName = api_env_name($sub['slug']);
+        $key = api_decrypt_key($sub);
+        deploy_set_env_var($codespaceId, $envName, $key, 'both');
+        deploy_set_env_var($codespaceId, 'FRINGELO_API_URL', 'https://gw.fringelo.com', 'both');
+
+        showJSON(['success' => true, 'message' => 'API activated; key injected as ' . $envName . ' on next deploy', 'env_var' => $envName]);
     } else {
         showJSON(['error' => 'Failed to activate API']);
     }
 }
 
-// Deactivate an API for a specific codespace
 elseif (isset($_POST['deactivateCodespaceAPI']) && isset($_POST['project']) && isset($_POST['codespace']) && isset($_POST['subscription_id'])) {
     $projectName = escape_string($_POST['project']);
     $codespaceSlug = escape_string($_POST['codespace']);
@@ -170,7 +137,6 @@ elseif (isset($_POST['deactivateCodespaceAPI']) && isset($_POST['project']) && i
         exit;
     }
 
-    // Get codespace ID
     $codespaceResult = query("SELECT id FROM project_codespaces WHERE project_id='$projectID' AND slug='$codespaceSlug' LIMIT 1");
     if (mysqli_num_rows($codespaceResult) === 0) {
         showJSON(['error' => 'Codespace not found']);
@@ -179,56 +145,22 @@ elseif (isset($_POST['deactivateCodespaceAPI']) && isset($_POST['project']) && i
     $codespace = fetch_assoc($codespaceResult);
     $codespaceId = $codespace['id'];
 
-    // Deactivate API
     $updateResult = query("UPDATE codespace_api_activations SET is_active=0 WHERE codespace_id='$codespaceId' AND subscription_id='$subscriptionId'");
 
     if ($updateResult) {
-        // Get API slug for SDK removal and Vercel env var removal
-        $apiResult = query("
-            SELECT ca.slug 
-            FROM project_api_subscriptions pas 
-            JOIN cms_apis ca ON pas.api_id = ca.id 
+        $api = fetch_assoc(query("
+            SELECT ca.slug
+            FROM project_api_subscriptions pas
+            JOIN cms_apis ca ON pas.api_id = ca.id
             WHERE pas.id='$subscriptionId'
-        ");
-        $api = fetch_assoc($apiResult);
-        
-        // Remove SDK files
-        $removeResult = removeAPISDKFromCodespace($projectName, $codespaceSlug, $api['slug'], $userID);
-        
-        // Remove API key environment variable from Vercel
-        $vercelResult = ['success' => true, 'message' => 'No Vercel integration'];
-        try {
-            $vercelHelper = new VercelHelper($userID);
-            $vercelResult = $vercelHelper->removeAPIKeyEnvironmentVariable($projectName, $codespaceSlug, $api['slug']);
-        } catch (Exception $e) {
-            error_log("Vercel API key removal failed: " . $e->getMessage());
-            $vercelResult = ['success' => false, 'error' => $e->getMessage()];
-        }
-        
-        $message = 'API deactivated';
-        if ($removeResult) {
-            $message .= ' and SDK removed';
-        } else {
-            $message .= ' but SDK removal failed';
-        }
-        
-        if ($vercelResult['success']) {
-            if ($vercelResult['action'] === 'deleted') {
-                $message .= ', API key removed from Vercel';
-            } else if ($vercelResult['action'] === 'not_found') {
-                $message .= ', API key was not found in Vercel';
-            }
-        } else {
-            $message .= ', but Vercel API key removal failed: ' . ($vercelResult['error'] ?? 'Unknown error');
-        }
-        
-        showJSON(['success' => true, 'message' => $message, 'vercel_result' => $vercelResult]);
+        "));
+        deploy_delete_env_var($codespaceId, api_env_name($api['slug']));
+        showJSON(['success' => true, 'message' => 'API deactivated; key removed on next deploy']);
     } else {
         showJSON(['error' => 'Failed to deactivate API']);
     }
 }
 
-// Get API details for a codespace
 elseif (isset($_POST['getCodespaceAPIDetails']) && isset($_POST['project']) && isset($_POST['codespace']) && isset($_POST['api_slug'])) {
     $projectName = escape_string($_POST['project']);
     $codespaceSlug = escape_string($_POST['codespace']);
@@ -240,7 +172,6 @@ elseif (isset($_POST['getCodespaceAPIDetails']) && isset($_POST['project']) && i
         exit;
     }
 
-    // Get codespace ID
     $codespaceResult = query("SELECT id FROM project_codespaces WHERE project_id='$projectID' AND slug='$codespaceSlug' LIMIT 1");
     if (mysqli_num_rows($codespaceResult) === 0) {
         showJSON(['error' => 'Codespace not found']);
@@ -275,18 +206,15 @@ elseif (isset($_POST['getCodespaceAPIDetails']) && isset($_POST['project']) && i
 
     $api = fetch_assoc($api_query);
     
-    // Get endpoints for this API
     $endpoints = query("SELECT * FROM cms_api_endpoints WHERE api_id='" . $api['id'] . "' ORDER BY endpoint ASC");
     $api['endpoints'] = [];
     foreach ($endpoints as $endpoint) {
         $api['endpoints'][] = formatEndpointData($endpoint);
     }
 
-    // Get usage stats for this codespace activation
     if ($api['activation_id']) {
         $api['usage_stats'] = calculateCodespaceUsageStats($api['activation_id']);
         
-        // Get recent activity
         $activity_query = query("
             SELECT method, path, status_code, response_time, timestamp
             FROM cms_api_usage_logs
@@ -318,7 +246,6 @@ elseif (isset($_POST['getCodespaceAPIDetails']) && isset($_POST['project']) && i
     showJSON($api);
 }
 
-// Sync all API keys for a codespace to Vercel
 elseif (isset($_POST['syncCodespaceAPIKeysToVercel']) && isset($_POST['project']) && isset($_POST['codespace'])) {
     $projectName = escape_string($_POST['project']);
     $codespaceSlug = escape_string($_POST['codespace']);
@@ -329,13 +256,84 @@ elseif (isset($_POST['syncCodespaceAPIKeysToVercel']) && isset($_POST['project']
         exit;
     }
 
-    try {
-        $vercelHelper = new VercelHelper($userID);
-        $result = $vercelHelper->syncCodespaceAPIKeys($projectName, $codespaceSlug);
-        showJSON($result);
-    } catch (Exception $e) {
-        showJSON(['success' => false, 'error' => $e->getMessage()]);
+    $codespaceResult = query("SELECT id FROM project_codespaces WHERE project_id='$projectID' AND slug='$codespaceSlug' LIMIT 1");
+    if (mysqli_num_rows($codespaceResult) === 0) {
+        showJSON(['error' => 'Codespace not found']);
+        exit;
     }
+    $codespaceId = fetch_assoc($codespaceResult)['id'];
+
+    $active = query("
+        SELECT ca.slug, pas.*
+        FROM codespace_api_activations caa
+        JOIN project_api_subscriptions pas ON caa.subscription_id = pas.id
+        JOIN cms_apis ca ON pas.api_id = ca.id
+        WHERE caa.codespace_id='$codespaceId' AND caa.is_active=1
+    ");
+    $synced = [];
+    foreach ($active as $sub) {
+        $envName = api_env_name($sub['slug']);
+        deploy_set_env_var($codespaceId, $envName, api_decrypt_key($sub), 'both');
+        $synced[] = $envName;
+    }
+    deploy_set_env_var($codespaceId, 'FRINGELO_API_URL', 'https://gw.fringelo.com', 'both');
+
+    showJSON(['success' => true, 'synced' => $synced, 'message' => count($synced) . ' API keys injected as env vars']);
+}
+
+elseif (isset($_POST['publishCodespaceAsAPI']) && isset($_POST['project']) && isset($_POST['codespace'])) {
+    $projectName = escape_string($_POST['project']);
+    $codespaceSlug = escape_string($_POST['codespace']);
+    $projectID = getProjectID($projectName);
+
+    if (!checkUserProjectPermission($userID, $projectID)) {
+        showJSON(['error' => 'No permission for this project']);
+        exit;
+    }
+
+    $cs = fetch_assoc(query("SELECT id, name FROM project_codespaces WHERE project_id='$projectID' AND slug='$codespaceSlug' LIMIT 1"));
+    if (!$cs) {
+        showJSON(['error' => 'Codespace not found']);
+        exit;
+    }
+    $codespaceId = (int) $cs['id'];
+
+    $name = escape_string($_POST['name'] ?? $cs['name']);
+    $description = escape_string($_POST['description'] ?? '');
+    $rateLimit = (int) ($_POST['rate_limit'] ?? 60);
+    $slug = trim(strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $_POST['slug'] ?? ($projectName . '-' . $codespaceSlug))), '-');
+
+    $exists = fetch_assoc(query("SELECT id, codespace_id FROM cms_apis WHERE slug='$slug' LIMIT 1"));
+    if ($exists && (int) $exists['codespace_id'] !== $codespaceId) {
+        showJSON(['error' => 'API slug already taken, choose another']);
+        exit;
+    }
+
+    query("INSERT INTO cms_apis (name, slug, description, category, version, endpoint_base, auth_required, rate_limit_default, is_active, source_type, codespace_id)
+           VALUES ('$name', '$slug', '$description', 'codespace', 'v1', '/', 1, '$rateLimit', 1, 'codespace', '$codespaceId')
+           ON DUPLICATE KEY UPDATE name='$name', description='$description', rate_limit_default='$rateLimit', is_active=1, source_type='codespace', codespace_id='$codespaceId'");
+
+    showJSON(['success' => true, 'slug' => $slug, 'gateway_url' => 'https://gw.fringelo.com/' . $slug]);
+}
+
+elseif (isset($_POST['unpublishCodespaceAPI']) && isset($_POST['project']) && isset($_POST['codespace'])) {
+    $projectName = escape_string($_POST['project']);
+    $codespaceSlug = escape_string($_POST['codespace']);
+    $projectID = getProjectID($projectName);
+
+    if (!checkUserProjectPermission($userID, $projectID)) {
+        showJSON(['error' => 'No permission for this project']);
+        exit;
+    }
+
+    $cs = fetch_assoc(query("SELECT id FROM project_codespaces WHERE project_id='$projectID' AND slug='$codespaceSlug' LIMIT 1"));
+    if (!$cs) {
+        showJSON(['error' => 'Codespace not found']);
+        exit;
+    }
+    $codespaceId = (int) $cs['id'];
+    query("UPDATE cms_apis SET is_active=0 WHERE source_type='codespace' AND codespace_id='$codespaceId'");
+    showJSON(['success' => true, 'message' => 'Codespace API unpublished']);
 }
 
 else {

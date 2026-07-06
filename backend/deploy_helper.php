@@ -235,6 +235,24 @@ function deploy_list_for_frontend($codespaceId, $limit = 20)
     return ['deployments' => $items];
 }
 
+function deploy_set_env_var($codespaceId, $key, $value, $target = 'both')
+{
+    $id = (int) $codespaceId;
+    $k = escape_string($key);
+    $enc = escape_string(deploy_encrypt($value));
+    $t = in_array($target, ['build', 'runtime', 'both'], true) ? $target : 'both';
+    query("INSERT INTO codespace_env_vars (codespace_id, var_key, value_encrypted, target)
+           VALUES ('$id', '$k', '$enc', '$t')
+           ON DUPLICATE KEY UPDATE value_encrypted='$enc', target='$t'");
+}
+
+function deploy_delete_env_var($codespaceId, $key)
+{
+    $id = (int) $codespaceId;
+    $k = escape_string($key);
+    query("DELETE FROM codespace_env_vars WHERE codespace_id='$id' AND var_key='$k'");
+}
+
 function deploy_env_vars($codespaceId, $target)
 {
     $id = (int) $codespaceId;
