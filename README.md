@@ -18,8 +18,10 @@ That means:
 - **Automatic DNS:** all my domains are connected — I don't need to set DNS records, it's automatically handled by Fringelo via the Cloudflare API.
 
 ## Tech Stack
-- Frontend: Vue + Vite + Little bit TypeScript
-- Backend: Native PHP + MariaDB
+
+- **Frontend:** Vue + Vite + a little bit of TypeScript
+- **Backend:** native PHP + MariaDB
 
 ## AI Declaration
-I used AI for repetative tasks like migrating my old hand-written (you can tell) backend to a new proper arhcitecture with routes and middleware. Also for changing the accent color and some generel stuff whoch would take ages to go through all files.
+
+I used AI for repetitive tasks like migrating my old hand-written (you can tell) backend to a new proper architecture with routes and middleware. Also for changing the accent color and some general stuff which would take ages to go through all files.
