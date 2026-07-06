@@ -166,28 +166,6 @@ export default defineComponent({
   margin-bottom: 24px;
 }
 
-.page-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 6px 0;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-}
-
-.page-title ion-icon {
-  font-size: 28px;
-  color: var(--primary-color);
-}
-
-.page-subtitle {
-  margin: 0;
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
 .dashboard-toolbar {
   display: flex;
   align-items: center;

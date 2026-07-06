@@ -96,7 +96,7 @@ export default defineComponent({
         { icon: "server-outline", name: "Databases" },
         { icon: "cloud-outline", name: "Pages" },
         { icon: "globe-outline", name: "Domains" },
-        { icon: "storefront-outline", name: "Manage Store" }
+        //{ icon: "storefront-outline", name: "Manage Store" }
       ],
     };
   },
