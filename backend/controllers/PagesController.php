@@ -21,12 +21,6 @@ class PagesController
         $result = query("SELECT * FROM control_center_pages WHERE url='$escapedUrl'");
         if ($result && mysqli_num_rows($result) > 0) {
             $p = fetch_assoc($result);
-            $pageID = $p['pageID'];
-            $replaces = [];
-            $data = query("SELECT * FROM control_center_page_data WHERE pageID='$pageID'");
-            foreach ($data as $d) {
-                $replaces[$d['key']] = $d['value'];
-            }
             $response->json([
                 'exists' => true,
                 'page' => [
@@ -35,7 +29,6 @@ class PagesController
                     'showTitle' => $p['showTitle'],
                     'icon' => $p['icon'],
                     'title' => $p['title'],
-                    'html' => $this->useTemplate($p['html'], $replaces),
                     'pageID' => $p['pageID'],
                 ]
             ]);
@@ -287,16 +280,5 @@ class PagesController
         }
 
         $response->json(['exists' => false, 'page' => null]);
-    }
-
-    private function useTemplate(string $template, array $data = []): string
-    {
-        $keys = [];
-        $values = [];
-        foreach ($data as $key => $val) {
-            $keys[] = '{{' . $key . '}}';
-            $values[] = $val;
-        }
-        return str_replace($keys, $values, $template);
     }
 }

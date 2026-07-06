@@ -40,17 +40,6 @@ if (isset($headers['Authorization'])) {
     exit;
 }
 
-function useTemplate2($temp, $data = [])
-{
-    $co = [];
-    $zaco = [];
-    foreach ($data as $key => $val):
-        $co[] = '{{' . $key . '}}';
-        $zaco[] = $val;
-    endforeach;
-    return str_replace($co, $zaco, $temp);
-}
-
 $i = 0;
 // Get regular pages
 $pages = query("SELECT * FROM control_center_pages");
@@ -65,7 +54,6 @@ foreach ($pages as $p) {
     $json[$i]['showTitle'] = $p['showTitle'];
     $json[$i]['icon'] = $p['icon'];
     $json[$i]['title'] = $p['title'];
-    $json[$i]['html'] = useTemplate2($p['html'], $replaces);
     $json[$i]['pageID'] = $p['pageID'];
     $i++;
 }
