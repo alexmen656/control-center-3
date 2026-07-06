@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from "@ionic/vue-router";
 import { RouteRecordRaw } from "vue-router";
 import LogIn from "../views/LogIn.vue";
 import LogInVerification from "../views/LogInVerification.vue";
-import ChatsView from "../views/ChatsView.vue";
 import DatabasesView from "../views/Databases.vue";
 import TableDetail from "../views/TableDetail.vue";
 import MyAccount from "../views/MyAccount.vue";
@@ -27,14 +26,6 @@ const routes: Array<RouteRecordRaw> = [
     component: LogInVerification,
   },
   {
-    path: "/messages",
-    component: ChatsView,
-  },
-  {
-    path: "/messages/:id",
-    component: ChatsView,
-  },
-  {
     path: "/messages/new/group",
     component: () => import("../views/NewGroup.vue"),
   },
@@ -53,10 +44,6 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/databases/table/:name",
     component: TableDetail,
-  },
-  {
-    path: "/chat/:id",
-    component: () => import("../views/ChatView.vue"),
   },
   {
     path: "/my-account",
