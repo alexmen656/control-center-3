@@ -1,308 +1,336 @@
-/**
- * Codespace Management Tools
- * 
- * Tools for managing project codespaces and editing source code files
- */
-
 import { cmsRequest, formatResponse, formatError } from '../utils/api.js';
 
-/**
- * Tool definitions for codespaces
- */
+const enc = encodeURIComponent;
+
+const CODESPACE_HINT =
+  'A codespace is one deployable app inside a project. A project can hold several codespaces, each identified by its slug (default "main"). Omit "codespace" to target the default "main" codespace.';
+
+function fileApi(args, extra = '') {
+  return `file_api.php?project=${enc(args.project)}&codespace=${enc(args.codespace || 'main')}${extra}`;
+}
+
+function gitApi(args, extra = '') {
+  return `monaco_git_api.php?project=${enc(args.project)}&codespace=${enc(args.codespace || 'main')}${extra}`;
+}
+
+function deployApi(args, action) {
+  return `vercel_api.php?project=${enc(args.project)}&codespace=${enc(args.codespace || 'main')}&action=${action}`;
+}
+
+const projectProp = { type: 'string', description: 'Project link/slug' };
+const codespaceProp = {
+  type: 'string',
+  description: 'Codespace slug (default "main"). Use the slug returned by codespace_create to target a specific codespace.'
+};
+
 export const codespaceTools = [
   {
-    name: 'codespace_list_files',
-    description: 'List source code files in a project codespace directory',
+    name: 'codespace_create',
+    description: `Create a new codespace (deployable app) inside a project and return its slug. ${CODESPACE_HINT} Use this first when asked to build a new backend/app, then write files into it with codespace_create_file, deploy with codespace_deploy, and optionally expose it via codespace_publish_as_api.`,
     inputSchema: {
       type: 'object',
       properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        path: {
-          type: 'string',
-          description: 'Directory path (relative to project root)',
-          default: '/'
-        }
+        project: projectProp,
+        name: { type: 'string', description: 'Human-readable codespace name (the slug is derived from it)' },
+        description: { type: 'string', description: 'Optional description' },
+        language: { type: 'string', description: 'Primary language (javascript, typescript, python, php, ...)', default: 'javascript' },
+        template: { type: 'string', description: 'Starter template (e.g. node, react, vue, vanilla-js). Use "node" for an HTTP backend.', default: 'node' },
+        icon: { type: 'string', description: 'Icon name', default: 'code-outline' }
+      },
+      required: ['project', 'name']
+    }
+  },
+  {
+    name: 'codespace_list_files',
+    description: `List source files/folders in a codespace directory (recursive tree). ${CODESPACE_HINT}`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project: projectProp,
+        codespace: codespaceProp,
+        path: { type: 'string', description: 'Directory path relative to codespace root', default: '/' }
       },
       required: ['project']
     }
   },
   {
     name: 'codespace_read_file',
-    description: 'Read source code file contents',
+    description: 'Read the contents of a source file in a codespace.',
     inputSchema: {
       type: 'object',
       properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        path: {
-          type: 'string',
-          description: 'File path (relative to project root)'
-        }
+        project: projectProp,
+        codespace: codespaceProp,
+        path: { type: 'string', description: 'File path relative to codespace root' }
       },
       required: ['project', 'path']
     }
   },
   {
     name: 'codespace_create_file',
-    description: 'Create a new source code file',
+    description: 'Create a new source file (with content) in a codespace. Parent folders are created as needed.',
     inputSchema: {
       type: 'object',
       properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        path: {
-          type: 'string',
-          description: 'File path (relative to project root)'
-        },
-        content: {
-          type: 'string',
-          description: 'File content'
-        }
+        project: projectProp,
+        codespace: codespaceProp,
+        path: { type: 'string', description: 'File path relative to codespace root' },
+        content: { type: 'string', description: 'File content' }
       },
       required: ['project', 'path', 'content']
     }
   },
   {
     name: 'codespace_update_file',
-    description: 'Update source code file contents',
+    description: 'Overwrite the contents of an existing source file in a codespace.',
     inputSchema: {
       type: 'object',
       properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        path: {
-          type: 'string',
-          description: 'File path'
-        },
-        content: {
-          type: 'string',
-          description: 'New file content'
-        }
+        project: projectProp,
+        codespace: codespaceProp,
+        path: { type: 'string', description: 'File path relative to codespace root' },
+        content: { type: 'string', description: 'New file content' }
       },
       required: ['project', 'path', 'content']
     }
   },
   {
     name: 'codespace_delete_file',
-    description: 'Delete a source code file',
+    description: 'Delete a source file in a codespace.',
     inputSchema: {
       type: 'object',
       properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        path: {
-          type: 'string',
-          description: 'File path to delete'
-        }
+        project: projectProp,
+        codespace: codespaceProp,
+        path: { type: 'string', description: 'File path to delete' }
       },
       required: ['project', 'path']
     }
   },
   {
     name: 'codespace_rename_file',
-    description: 'Rename or move a source code file',
+    description: 'Rename or move a source file within a codespace (copies content to the new path and removes the old one).',
     inputSchema: {
       type: 'object',
       properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        oldPath: {
-          type: 'string',
-          description: 'Current file path'
-        },
-        newPath: {
-          type: 'string',
-          description: 'New file path'
-        }
+        project: projectProp,
+        codespace: codespaceProp,
+        oldPath: { type: 'string', description: 'Current file path' },
+        newPath: { type: 'string', description: 'New file path' }
       },
       required: ['project', 'oldPath', 'newPath']
     }
   },
   {
     name: 'codespace_mkdir',
-    description: 'Create a new directory in codespace',
+    description: 'Create a new directory in a codespace.',
     inputSchema: {
       type: 'object',
       properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        path: {
-          type: 'string',
-          description: 'Directory path to create'
-        }
+        project: projectProp,
+        codespace: codespaceProp,
+        path: { type: 'string', description: 'Directory path to create' }
       },
       required: ['project', 'path']
     }
   },
   {
     name: 'codespace_search',
-    description: 'Search for files in codespace by name or content',
+    description: 'Search files in a codespace by file name, or by content when searchContent is true.',
     inputSchema: {
       type: 'object',
       properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        query: {
-          type: 'string',
-          description: 'Search query'
-        },
-        searchContent: {
-          type: 'boolean',
-          description: 'Search in file contents (not just names)',
-          default: false
-        }
+        project: projectProp,
+        codespace: codespaceProp,
+        query: { type: 'string', description: 'Search query' },
+        searchContent: { type: 'boolean', description: 'Also match inside file contents (slower)', default: false }
       },
       required: ['project', 'query']
     }
   },
   {
     name: 'codespace_git_status',
-    description: 'Get git status of project files',
+    description: 'Show pending git changes (modified/added/deleted files) in a codespace.',
     inputSchema: {
       type: 'object',
       properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        }
+        project: projectProp,
+        codespace: codespaceProp
       },
       required: ['project']
     }
   },
   {
     name: 'codespace_git_commit',
-    description: 'Commit changes to git',
+    description: 'Commit changes in a codespace. Committing + pushing versions your code; it does NOT deploy — call codespace_deploy to build and go live.',
     inputSchema: {
       type: 'object',
       properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        message: {
-          type: 'string',
-          description: 'Commit message'
-        },
-        files: {
-          type: 'array',
-          description: 'Files to commit (empty = all changes)',
-          items: { type: 'string' }
-        }
+        project: projectProp,
+        codespace: codespaceProp,
+        message: { type: 'string', description: 'Commit message' },
+        files: { type: 'array', description: 'Files to commit (empty = all changes)', items: { type: 'string' } }
       },
       required: ['project', 'message']
     }
   },
   {
     name: 'codespace_git_push',
-    description: 'Push commits to remote',
+    description: 'Push commits to the codespace git remote. This versions the code but does NOT trigger a deploy — use codespace_deploy for that.',
     inputSchema: {
       type: 'object',
       properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        }
+        project: projectProp,
+        codespace: codespaceProp
       },
       required: ['project']
     }
   },
   {
     name: 'codespace_git_pull',
-    description: 'Pull latest changes from remote',
+    description: 'Pull latest changes from the codespace git remote.',
     inputSchema: {
       type: 'object',
       properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        }
+        project: projectProp,
+        codespace: codespaceProp
       },
       required: ['project']
+    }
+  },
+  {
+    name: 'codespace_deploy',
+    description: 'Build and deploy the current codespace code. Returns the live app URL (https://cs-<id>.apps.fringelo.com) and a deployment id. Poll codespace_list_deployments for build status.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project: projectProp,
+        codespace: codespaceProp
+      },
+      required: ['project']
+    }
+  },
+  {
+    name: 'codespace_list_deployments',
+    description: 'List deployments of a codespace with their status (QUEUED/BUILDING/READY/ERROR) and URLs.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project: projectProp,
+        codespace: codespaceProp
+      },
+      required: ['project']
+    }
+  },
+  {
+    name: 'codespace_publish_as_api',
+    description: 'Expose a deployed codespace as a public REST API through the gateway. Returns the gateway URL (https://gw.fringelo.com/<slug>). Use this to make a backend callable by others; api_create is only for cataloging external API metadata.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project: projectProp,
+        codespace: codespaceProp,
+        name: { type: 'string', description: 'Public API name (defaults to codespace name)' },
+        slug: { type: 'string', description: 'Gateway slug (defaults to project-codespace)' },
+        description: { type: 'string', description: 'Optional API description' },
+        rate_limit: { type: 'number', description: 'Requests per minute', default: 60 }
+      },
+      required: ['project', 'codespace']
+    }
+  },
+  {
+    name: 'codespace_unpublish_api',
+    description: 'Remove a codespace from the public API gateway (unpublish).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project: projectProp,
+        codespace: codespaceProp
+      },
+      required: ['project', 'codespace']
+    }
+  },
+  {
+    name: 'codespace_sync_api_keys',
+    description: 'Re-inject the keys of all APIs activated for this codespace as environment variables on the next deploy.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project: projectProp,
+        codespace: codespaceProp
+      },
+      required: ['project', 'codespace']
     }
   }
 ];
 
-/**
- * Handle codespace tool calls
- */
 export async function handleCodespaceTool(toolName, args, context) {
   switch (toolName) {
+    case 'codespace_create':
+      return await createCodespace(args, context);
     case 'codespace_list_files':
       return await listFiles(args, context);
-
     case 'codespace_read_file':
       return await readFile(args, context);
-
     case 'codespace_create_file':
       return await createFile(args, context);
-
     case 'codespace_update_file':
       return await updateFile(args, context);
-
     case 'codespace_delete_file':
       return await deleteFile(args, context);
-
     case 'codespace_rename_file':
       return await renameFile(args, context);
-
     case 'codespace_mkdir':
       return await createDirectory(args, context);
-
     case 'codespace_search':
       return await searchFiles(args, context);
-
     case 'codespace_git_status':
       return await gitStatus(args, context);
-
     case 'codespace_git_commit':
       return await gitCommit(args, context);
-
     case 'codespace_git_push':
       return await gitPush(args, context);
-
     case 'codespace_git_pull':
       return await gitPull(args, context);
-
+    case 'codespace_deploy':
+      return await deployCodespace(args, context);
+    case 'codespace_list_deployments':
+      return await listDeployments(args, context);
+    case 'codespace_publish_as_api':
+      return await publishAsApi(args, context);
+    case 'codespace_unpublish_api':
+      return await unpublishApi(args, context);
+    case 'codespace_sync_api_keys':
+      return await syncApiKeys(args, context);
     default:
       return formatError(`Unknown codespace tool: ${toolName}`);
   }
 }
 
-// ============================================
-// Tool Implementations
-// ============================================
+async function createCodespace(args, context) {
+  try {
+    const data = await cmsRequest('project_codespaces.php', {
+      body: {
+        createCodespace: 'true',
+        project: args.project,
+        name: args.name,
+        description: args.description || '',
+        language: args.language || 'javascript',
+        template: args.template || 'node',
+        icon: args.icon || 'code-outline'
+      }
+    }, context);
+
+    return formatResponse({ success: true, result: data });
+  } catch (error) {
+    return formatError(error.message);
+  }
+}
 
 async function listFiles(args, context) {
   try {
-    const response = await fetch(
-      `${context.backendUrl}/file_api.php?project=${encodeURIComponent(args.project)}&action=list&path=${encodeURIComponent(args.path || '/')}`,
-      {
-        headers: { 'Authorization': context.token }
-      }
-    );
-    const data = await response.json();
-
-    return formatResponse({
-      success: true,
-      files: data.files || data
-    });
+    const data = await cmsRequest(fileApi(args, `&action=list&path=${enc(args.path || '/')}`), { method: 'GET' }, context);
+    return formatResponse({ success: true, files: Array.isArray(data) ? data : (data.files || data) });
   } catch (error) {
     return formatError(error.message);
   }
@@ -310,19 +338,8 @@ async function listFiles(args, context) {
 
 async function readFile(args, context) {
   try {
-    const response = await fetch(
-      `${context.backendUrl}/file_api.php?project=${encodeURIComponent(args.project)}&action=read&file=${encodeURIComponent(args.path)}`,
-      {
-        headers: { 'Authorization': context.token }
-      }
-    );
-    const data = await response.json();
-
-    return formatResponse({
-      success: true,
-      content: data.content,
-      path: args.path
-    });
+    const data = await cmsRequest(fileApi(args, `&action=read&file=${enc(args.path)}`), { method: 'GET' }, context);
+    return formatResponse({ success: true, content: data.content, path: args.path });
   } catch (error) {
     return formatError(error.message);
   }
@@ -330,22 +347,12 @@ async function readFile(args, context) {
 
 async function createFile(args, context) {
   try {
-    const data = await cmsRequest('file_api.php', {
+    await cmsRequest(fileApi(args), {
       method: 'POST',
       contentType: 'application/json',
-      body: {
-        action: 'create_file',
-        project: args.project,
-        path: args.path,
-        content: args.content
-      }
+      body: { action: 'create_file', path: args.path, content: args.content }
     }, context);
-
-    return formatResponse({
-      success: true,
-      message: 'File created successfully',
-      path: args.path
-    });
+    return formatResponse({ success: true, message: 'File created', path: args.path });
   } catch (error) {
     return formatError(error.message);
   }
@@ -353,22 +360,12 @@ async function createFile(args, context) {
 
 async function updateFile(args, context) {
   try {
-    const data = await cmsRequest('file_api.php', {
-      method: 'POST',
+    await cmsRequest(fileApi(args), {
+      method: 'PUT',
       contentType: 'application/json',
-      body: {
-        action: 'save_file',
-        project: args.project,
-        path: args.path,
-        content: args.content
-      }
+      body: { file: args.path, content: args.content }
     }, context);
-
-    return formatResponse({
-      success: true,
-      message: 'File updated successfully',
-      path: args.path
-    });
+    return formatResponse({ success: true, message: 'File updated', path: args.path });
   } catch (error) {
     return formatError(error.message);
   }
@@ -376,20 +373,12 @@ async function updateFile(args, context) {
 
 async function deleteFile(args, context) {
   try {
-    const data = await cmsRequest('file_api.php', {
-      method: 'POST',
+    await cmsRequest(fileApi(args), {
+      method: 'DELETE',
       contentType: 'application/json',
-      body: {
-        action: 'delete',
-        project: args.project,
-        path: args.path
-      }
+      body: { file: args.path }
     }, context);
-
-    return formatResponse({
-      success: true,
-      message: 'File deleted successfully'
-    });
+    return formatResponse({ success: true, message: 'File deleted', path: args.path });
   } catch (error) {
     return formatError(error.message);
   }
@@ -397,21 +386,19 @@ async function deleteFile(args, context) {
 
 async function renameFile(args, context) {
   try {
-    const data = await cmsRequest('file_api.php', {
+    const read = await cmsRequest(fileApi(args, `&action=read&file=${enc(args.oldPath)}`), { method: 'GET' }, context);
+    const content = read.content ?? '';
+    await cmsRequest(fileApi(args), {
       method: 'POST',
       contentType: 'application/json',
-      body: {
-        action: 'rename',
-        project: args.project,
-        oldPath: args.oldPath,
-        newPath: args.newPath
-      }
+      body: { action: 'create_file', path: args.newPath, content }
     }, context);
-
-    return formatResponse({
-      success: true,
-      message: 'File renamed successfully'
-    });
+    await cmsRequest(fileApi(args), {
+      method: 'DELETE',
+      contentType: 'application/json',
+      body: { file: args.oldPath }
+    }, context);
+    return formatResponse({ success: true, message: 'File renamed', from: args.oldPath, to: args.newPath });
   } catch (error) {
     return formatError(error.message);
   }
@@ -419,42 +406,54 @@ async function renameFile(args, context) {
 
 async function createDirectory(args, context) {
   try {
-    const data = await cmsRequest('file_api.php', {
+    await cmsRequest(fileApi(args), {
       method: 'POST',
       contentType: 'application/json',
-      body: {
-        action: 'create_folder',
-        project: args.project,
-        path: args.path
-      }
+      body: { action: 'create_folder', path: args.path }
     }, context);
-
-    return formatResponse({
-      success: true,
-      message: 'Directory created successfully'
-    });
+    return formatResponse({ success: true, message: 'Directory created', path: args.path });
   } catch (error) {
     return formatError(error.message);
   }
 }
 
+function flattenFiles(nodes, acc) {
+  for (const node of nodes || []) {
+    if (node.type === 'directory') {
+      flattenFiles(node.children, acc);
+    } else {
+      acc.push(node);
+    }
+  }
+  return acc;
+}
+
 async function searchFiles(args, context) {
   try {
-    const data = await cmsRequest('file_api.php', {
-      method: 'POST',
-      contentType: 'application/json',
-      body: {
-        action: 'search',
-        project: args.project,
-        query: args.query,
-        searchContent: args.searchContent || false
-      }
-    }, context);
+    const tree = await cmsRequest(fileApi(args, '&action=list&path=/'), { method: 'GET' }, context);
+    const files = flattenFiles(Array.isArray(tree) ? tree : (tree.files || []), []);
+    const q = String(args.query).toLowerCase();
+    const results = [];
 
-    return formatResponse({
-      success: true,
-      results: data.results || data
-    });
+    for (const file of files) {
+      const nameMatch = file.name.toLowerCase().includes(q) || file.path.toLowerCase().includes(q);
+      let contentMatch = false;
+
+      if (args.searchContent && !nameMatch && results.length < 100) {
+        try {
+          const read = await cmsRequest(fileApi(args, `&action=read&file=${enc(file.path)}`), { method: 'GET' }, context);
+          contentMatch = typeof read.content === 'string' && read.content.toLowerCase().includes(q);
+        } catch {
+          contentMatch = false;
+        }
+      }
+
+      if (nameMatch || contentMatch) {
+        results.push({ name: file.name, path: file.path, matchedContent: contentMatch });
+      }
+    }
+
+    return formatResponse({ success: true, results });
   } catch (error) {
     return formatError(error.message);
   }
@@ -462,19 +461,8 @@ async function searchFiles(args, context) {
 
 async function gitStatus(args, context) {
   try {
-    const data = await cmsRequest('monaco_git_api.php', {
-      method: 'POST',
-      contentType: 'application/json',
-      body: {
-        action: 'status',
-        project: args.project
-      }
-    }, context);
-
-    return formatResponse({
-      success: true,
-      status: data.status || data
-    });
+    const data = await cmsRequest(gitApi(args, '&action=status'), { method: 'GET' }, context);
+    return formatResponse({ success: true, status: data });
   } catch (error) {
     return formatError(error.message);
   }
@@ -482,22 +470,12 @@ async function gitStatus(args, context) {
 
 async function gitCommit(args, context) {
   try {
-    const data = await cmsRequest('monaco_git_api.php', {
+    const data = await cmsRequest(gitApi(args), {
       method: 'POST',
       contentType: 'application/json',
-      body: {
-        action: 'commit',
-        project: args.project,
-        message: args.message,
-        files: args.files || []
-      }
+      body: { action: 'commit', message: args.message, files: args.files || [] }
     }, context);
-
-    return formatResponse({
-      success: true,
-      message: 'Changes committed successfully',
-      commit: data.commit
-    });
+    return formatResponse({ success: true, message: 'Changes committed', commit: data.commit || data });
   } catch (error) {
     return formatError(error.message);
   }
@@ -505,19 +483,12 @@ async function gitCommit(args, context) {
 
 async function gitPush(args, context) {
   try {
-    const data = await cmsRequest('monaco_git_api.php', {
+    await cmsRequest(gitApi(args), {
       method: 'POST',
       contentType: 'application/json',
-      body: {
-        action: 'push',
-        project: args.project
-      }
+      body: { action: 'push' }
     }, context);
-
-    return formatResponse({
-      success: true,
-      message: 'Changes pushed to remote'
-    });
+    return formatResponse({ success: true, message: 'Changes pushed to remote' });
   } catch (error) {
     return formatError(error.message);
   }
@@ -525,19 +496,84 @@ async function gitPush(args, context) {
 
 async function gitPull(args, context) {
   try {
-    const data = await cmsRequest('monaco_git_api.php', {
+    await cmsRequest(gitApi(args), {
       method: 'POST',
       contentType: 'application/json',
+      body: { action: 'pull' }
+    }, context);
+    return formatResponse({ success: true, message: 'Latest changes pulled' });
+  } catch (error) {
+    return formatError(error.message);
+  }
+}
+
+async function deployCodespace(args, context) {
+  try {
+    const data = await cmsRequest(deployApi(args, 'deploy'), {
+      method: 'POST',
+      contentType: 'application/json',
+      body: {}
+    }, context);
+    const url = data.deployment?.url ? `https://${data.deployment.url}` : null;
+    return formatResponse({ success: true, url, deployment: data.deployment || data });
+  } catch (error) {
+    return formatError(error.message);
+  }
+}
+
+async function listDeployments(args, context) {
+  try {
+    const data = await cmsRequest(deployApi(args, 'deployments'), { method: 'GET' }, context);
+    return formatResponse({ success: true, deployments: data.deployments || data });
+  } catch (error) {
+    return formatError(error.message);
+  }
+}
+
+async function publishAsApi(args, context) {
+  try {
+    const data = await cmsRequest('codespace_apis.php', {
       body: {
-        action: 'pull',
-        project: args.project
+        publishCodespaceAsAPI: 'true',
+        project: args.project,
+        codespace: args.codespace,
+        name: args.name || '',
+        slug: args.slug || '',
+        description: args.description || '',
+        rate_limit: String(args.rate_limit || 60)
       }
     }, context);
+    return formatResponse({ success: true, result: data });
+  } catch (error) {
+    return formatError(error.message);
+  }
+}
 
-    return formatResponse({
-      success: true,
-      message: 'Latest changes pulled'
-    });
+async function unpublishApi(args, context) {
+  try {
+    const data = await cmsRequest('codespace_apis.php', {
+      body: {
+        unpublishCodespaceAPI: 'true',
+        project: args.project,
+        codespace: args.codespace
+      }
+    }, context);
+    return formatResponse({ success: true, result: data });
+  } catch (error) {
+    return formatError(error.message);
+  }
+}
+
+async function syncApiKeys(args, context) {
+  try {
+    const data = await cmsRequest('codespace_apis.php', {
+      body: {
+        syncCodespaceAPIKeysToVercel: 'true',
+        project: args.project,
+        codespace: args.codespace
+      }
+    }, context);
+    return formatResponse({ success: true, result: data });
   } catch (error) {
     return formatError(error.message);
   }

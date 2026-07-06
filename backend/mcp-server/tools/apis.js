@@ -1,18 +1,10 @@
-/**
- * API Management Tools
- * 
- * Tools for managing CMS APIs and endpoints
- */
 
 import { cmsRequest, formatResponse, formatError } from '../utils/api.js';
 
-/**
- * Tool definitions for APIs
- */
 export const apiTools = [
   {
     name: 'api_list',
-    description: 'List all APIs in a project',
+    description: 'List API definitions registered in a project API catalog (metadata only, not running code).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -26,7 +18,7 @@ export const apiTools = [
   },
   {
     name: 'api_create',
-    description: 'Create a new API in a project',
+    description: 'Register an API definition (name, external baseUrl, endpoints) in the project API catalog. This stores METADATA only — it does NOT implement, host, or deploy a backend. To turn a codespace\'s own code into a live callable API, deploy it and use codespace_publish_as_api instead.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -107,7 +99,7 @@ export const apiTools = [
   },
   {
     name: 'api_endpoint_create',
-    description: 'Create a new endpoint for an API',
+    description: 'Add an endpoint definition (path, method, request/response schema) to a catalog API. This documents the endpoint; it does NOT generate backend code.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -183,7 +175,7 @@ export const apiTools = [
   },
   {
     name: 'api_available_list',
-    description: 'List all available APIs that can be subscribed to',
+    description: 'List available third-party/platform APIs a project can subscribe to and consume.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -206,9 +198,6 @@ export const apiTools = [
   }
 ];
 
-/**
- * Handle API tool calls
- */
 export async function handleApiTool(toolName, args, context) {
   switch (toolName) {
     case 'api_list':
@@ -243,9 +232,6 @@ export async function handleApiTool(toolName, args, context) {
   }
 }
 
-// ============================================
-// Tool Implementations
-// ============================================
 
 async function listApis(args, context) {
   try {

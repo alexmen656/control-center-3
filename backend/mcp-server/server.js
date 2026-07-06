@@ -49,6 +49,26 @@ const ALL_TOOLS = [
   ...domainTools,
 ];
 
+const SERVER_INSTRUCTIONS = `Fringelo Control Center — build and run backends/apps for a project.
+
+Core concepts:
+- Project: the top-level container. Almost every tool needs a "project" (link/slug).
+- Codespace: one deployable app inside a project (its own code + git + deploy URL). A project can have several; each has a "slug" (default "main"). Most codespace_* tools accept an optional "codespace" slug.
+- Data storage: there is no raw SQL database tool. Use content_form_* as your data tables — content_form_create defines a collection (table) with typed fields, and content_form_submit / content_form_submissions / content_form_update / content_form_delete are its create/read/update/delete. Treat a "form" as a database table.
+- API catalog (api_*): registers/documents API metadata (name, endpoints, external baseUrl) and subscribes to third-party APIs. api_create does NOT implement or host a backend.
+- Gateway API: to make a codespace's own code callable as a public REST API, deploy it and then call codespace_publish_as_api (returns https://gw.fringelo.com/<slug>).
+
+Recommended workflow to build a backend (e.g. "program me a calorie counter backend"):
+1. codespace_create(project, name, template:"node") -> note the returned slug.
+2. Write code with codespace_create_file / codespace_update_file (pass the slug as "codespace"). For a Node backend include a package.json with a start script and an HTTP server listening on the PORT env var.
+3. Persist data with content_form_create (e.g. a "calorie_entries" collection with fields date/food/calories) and read/write it via content_form_submit / content_form_submissions — or from inside the codespace via the gateway.
+4. Deploy with codespace_deploy -> returns the live URL https://cs-<id>.apps.fringelo.com. Poll codespace_list_deployments for READY/ERROR.
+5. Optional: codespace_publish_as_api to expose it at https://gw.fringelo.com/<slug>; api_generate_key issues a project API key; domain_codespace_connect / connect a custom domain.
+
+Notes:
+- git commit/push versions code but does NOT deploy; always call codespace_deploy to go live.
+- When unsure which codespace exists, inspect files with codespace_list_files before writing.`;
+
 function routeTool(name, args, context) {
   if (name.startsWith('project_')) return handleProjectTool(name, args, context);
   if (name.startsWith('page_')) return handlePageTool(name, args, context);
@@ -68,7 +88,7 @@ function routeTool(name, args, context) {
 function buildMcpServer(context) {
   const server = new Server(
     { name: 'control-center-cms', version: '2.0.0' },
-    { capabilities: { tools: {}, resources: {} } }
+    { capabilities: { tools: {}, resources: {} }, instructions: SERVER_INSTRUCTIONS }
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: ALL_TOOLS }));
