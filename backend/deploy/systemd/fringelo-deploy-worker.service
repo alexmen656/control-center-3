@@ -1,0 +1,16 @@
+[Unit]
+Description=Fringelo Deploy Worker
+After=network.target docker.service mariadb.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/php /var/www/api.fringelo.com/public_html/deploy/worker.php
+Restart=always
+RestartSec=3
+StandardOutput=append:/var/www/deploy-logs/worker.log
+StandardError=append:/var/www/deploy-logs/worker.log
+
+[Install]
+WantedBy=multi-user.target

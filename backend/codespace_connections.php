@@ -65,58 +65,7 @@ function getVercelBuildSettings($template)
 
 function updateVercelProjectFramework($vercel_project_id, $template, $user_id)
 {
-
-    $tokenResult = query("SELECT vercel_token FROM control_center_vercel_tokens WHERE userID='" . escape_string($user_id) . "' LIMIT 1");
-    if (!($tokenRow = fetch_assoc($tokenResult))) {
-        return false;
-    }
-
-    $vercel_token = $tokenRow['vercel_token'];
-
-    $framework = getVercelFrameworkPreset($template);
-    $buildSettings = getVercelBuildSettings($template);
-
-    if (!$framework && !$buildSettings['buildCommand'] && !$buildSettings['devCommand'] && !$buildSettings['installCommand'] && !$buildSettings['outputDirectory']) {
-        return true;
-    }
-
-    $vercelApiUrl = "https://api.vercel.com/v9/projects/$vercel_project_id";
-
-    $updateData = [];
-
-    if ($framework) {
-        $updateData['framework'] = $framework;
-    }
-
-    if ($buildSettings['buildCommand']) {
-        $updateData['buildCommand'] = $buildSettings['buildCommand'];
-    }
-    if ($buildSettings['devCommand']) {
-        $updateData['devCommand'] = $buildSettings['devCommand'];
-    }
-    if ($buildSettings['installCommand']) {
-        $updateData['installCommand'] = $buildSettings['installCommand'];
-    }
-    if ($buildSettings['outputDirectory']) {
-        $updateData['outputDirectory'] = $buildSettings['outputDirectory'];
-    }
-
-    if (empty($updateData)) {
-        return true;
-    }
-
-    $opts = [
-        'http' => [
-            'method' => 'PATCH',
-            'header' => "Authorization: Bearer $vercel_token\r\nUser-Agent: ControlCenter\r\nAccept: application/json\r\nContent-Type: application/json\r\n",
-            'content' => json_encode($updateData)
-        ]
-    ];
-
-    $context = stream_context_create($opts);
-    $response = @file_get_contents($vercelApiUrl, false, $context);
-
-    return $response !== false;
+    return true;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -193,141 +142,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'connect_vercel' && $codespace_id && $user_id) {
-        $vercel_project_id = escape_string($_POST['vercel_project_id'] ?? '');
-        $vercel_project_name = escape_string($_POST['vercel_project_name'] ?? '');
-
-        if (!$vercel_project_id) {
-            echo json_encode(['error' => 'No Vercel project selected']);
-            exit;
-        }
-
-        $template = 'vanilla-js';
-        $projectResult = query("SELECT pc.slug, p.link as project_link FROM project_codespaces pc
-                               JOIN projects p ON pc.project_id = p.projectID
-                               WHERE pc.id='$codespace_id'");
-        if ($projectRow = fetch_assoc($projectResult)) {
-            $codespaceDir = __DIR__ . "/../data/projects/" . $user_id . "/" . $projectRow['project_link'] . "/" . $projectRow['slug'];
-            $monacoInitFile = $codespaceDir . '/.monaco_initialized';
-
-            if (file_exists($monacoInitFile)) {
-                $monacoData = json_decode(file_get_contents($monacoInitFile), true);
-                if (isset($monacoData['template'])) {
-                    $template = $monacoData['template'];
-                }
-            }
-        }
-
-        updateVercelProjectFramework($vercel_project_id, $template, $user_id);
-
-        query("DELETE FROM codespace_vercel_projects WHERE codespace_id='$codespace_id'");
-
-        $insert = query("INSERT INTO codespace_vercel_projects (codespace_id, vercel_project_id, vercel_project_name, user_id) VALUES ('$codespace_id', '$vercel_project_id', '$vercel_project_name', '$user_id')");
-
-        if ($insert) {
-            echo json_encode(['success' => true]);
-        } else {
-            echo json_encode(['error' => 'Failed to connect Vercel project']);
-        }
+        echo json_encode(['success' => true, 'message' => 'Codespace uses the built-in deploy system']);
         exit;
     }
 
     if ($action === 'create_and_connect_vercel' && $codespace_id && $user_id) {
-
-        $repoResult = query("SELECT * FROM codespace_github_repos WHERE codespace_id='$codespace_id' LIMIT 1");
-        if (!($repoRow = fetch_assoc($repoResult))) {
-            echo json_encode(['error' => 'No GitHub repo connected. Connect a GitHub repo first.']);
-            exit;
-        }
-
-        $repo_full_name = $repoRow['repo_full_name'];
-        $repo_id = $repoRow['repo_id'];
-
-        $template = 'vanilla-js';
-        $projectResult = query("SELECT pc.slug, p.link as project_link FROM project_codespaces pc
-                               JOIN projects p ON pc.project_id = p.projectID
-                               WHERE pc.id='$codespace_id'");
-        if ($projectRow = fetch_assoc($projectResult)) {
-            $codespaceDir = __DIR__ . "/../data/projects/" . $user_id . "/" . $projectRow['project_link'] . "/" . $projectRow['slug'];
-            $monacoInitFile = $codespaceDir . '/.monaco_initialized';
-
-            if (file_exists($monacoInitFile)) {
-                $monacoData = json_decode(file_get_contents($monacoInitFile), true);
-                if (isset($monacoData['template'])) {
-                    $template = $monacoData['template'];
-                }
-            }
-        }
-
-        $tokenResult = query("SELECT vercel_token FROM control_center_vercel_tokens WHERE userID='" . escape_string($user_id) . "' LIMIT 1");
-        if (!($tokenRow = fetch_assoc($tokenResult))) {
-            echo json_encode(['error' => 'No Vercel token found for user.']);
-            exit;
-        }
-
-        $vercel_token = $tokenRow['vercel_token'];
-        $vercelApiUrl = 'https://api.vercel.com/v9/projects';
-
-        $framework = getVercelFrameworkPreset($template);
-        $buildSettings = getVercelBuildSettings($template);
-
-        $vercelData = [
-            'name' => strtolower(preg_replace('/[^a-zA-Z0-9-_]/', '-', $codespace['name'])),
-            'gitRepository' => [
-                'type' => 'github',
-                'repo' => $repo_full_name,
-                'repoId' => (string) $repo_id
-            ]
-        ];
-
-        if ($framework) {
-            $vercelData['framework'] = $framework;
-        }
-
-        if ($buildSettings['buildCommand']) {
-            $vercelData['buildCommand'] = $buildSettings['buildCommand'];
-        }
-        if ($buildSettings['devCommand']) {
-            $vercelData['devCommand'] = $buildSettings['devCommand'];
-        }
-        if ($buildSettings['installCommand']) {
-            $vercelData['installCommand'] = $buildSettings['installCommand'];
-        }
-        if ($buildSettings['outputDirectory']) {
-            $vercelData['outputDirectory'] = $buildSettings['outputDirectory'];
-        }
-
-        $opts = [
-            'http' => [
-                'method' => 'POST',
-                'header' => "Authorization: Bearer $vercel_token\r\nUser-Agent: ControlCenter\r\nAccept: application/json\r\nContent-Type: application/json\r\n",
-                'content' => json_encode($vercelData)
-            ]
-        ];
-
-        $context = stream_context_create($opts);
-        $response = @file_get_contents($vercelApiUrl, false, $context);
-        $data = $response ? json_decode($response, true) : null;
-
-        if (!$response || (isset($data['error']) && isset($data['error']['message']))) {
-            $errMsg = isset($data['error']['message']) ? $data['error']['message'] : 'Vercel API error';
-            echo json_encode(['error' => $errMsg]);
-            exit;
-        }
-
-        if (!isset($data['id'])) {
-            echo json_encode(['error' => 'Vercel API error: No project ID received.']);
-            exit;
-        }
-
-        query("DELETE FROM codespace_vercel_projects WHERE codespace_id='$codespace_id'");
-
-        $insert = query("INSERT INTO codespace_vercel_projects (codespace_id, vercel_project_id, vercel_project_name, user_id) VALUES ('$codespace_id', '" . escape_string($data['id']) . "', '" . escape_string($data['name']) . "', '$user_id')");
-
-        if ($insert) {
-            echo json_encode(['success' => true, 'vercel_project_id' => $data['id'], 'vercel_project_name' => $data['name']]);
-        } else {
-            echo json_encode(['error' => 'Failed to save Vercel project connection after creation']);
-        }
+        echo json_encode(['success' => true, 'message' => 'Codespace uses the built-in deploy system']);
         exit;
     }
 
@@ -444,14 +264,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $vercelResult = query("SELECT * FROM codespace_vercel_projects WHERE codespace_id='$codespace_id' LIMIT 1");
-        if (!$vercelRow = fetch_assoc($vercelResult)) {
-            echo json_encode(['error' => 'Kein Vercel-Projekt verbunden. Bitte zuerst ein Vercel-Projekt verbinden.']);
-            exit;
-        }
-
-        $vercel_project_id = $vercelRow['vercel_project_id'];
-
         query("DELETE FROM codespace_domains WHERE codespace_id='$codespace_id'");
 
         $insert = query("INSERT INTO codespace_domains (codespace_id, domain, is_main, user_id) VALUES ('$codespace_id', '$full_domain', " . ($is_main ? 1 : 0) . ", '$user_id')");
@@ -461,65 +273,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $vercelTokenResult = query("SELECT vercel_token FROM control_center_vercel_tokens WHERE userID='" . escape_string($user_id) . "' LIMIT 1");
-        if (!$vercelTokenRow = fetch_assoc($vercelTokenResult)) {
-            query("DELETE FROM codespace_domains WHERE codespace_id='$codespace_id'");
-            echo json_encode(['error' => 'Kein Vercel-Token gefunden']);
-            exit;
-        }
-
-        $vercel_token = $vercelTokenRow['vercel_token'];
-
-        $vercelApiUrl = "https://api.vercel.com/v10/projects/{$vercel_project_id}/domains";
-        $vercelData = ['name' => $full_domain];
-        $vercelOpts = [
-            'http' => [
-                'method' => 'POST',
-                'header' => "Authorization: Bearer $vercel_token\r\nUser-Agent: ControlCenter\r\nAccept: application/json\r\nContent-Type: application/json\r\n",
-                'content' => json_encode($vercelData)
-            ]
-        ];
-
-        $vercelContext = stream_context_create($vercelOpts);
-        $vercelResponse = @file_get_contents($vercelApiUrl, false, $vercelContext);
-        $vercelResult = $vercelResponse ? json_decode($vercelResponse, true) : null;
-
-        if (!$vercelResponse || (isset($vercelResult['error']) && $vercelResult['error'])) {
-            query("DELETE FROM codespace_domains WHERE codespace_id='$codespace_id'");
-            $errMsg = isset($vercelResult['error']['message']) ? $vercelResult['error']['message'] : 'Vercel API Fehler';
-            echo json_encode(['error' => 'Vercel: ' . $errMsg]);
-            exit;
-        }
-
-        $cnameTarget = null;
-        $vercelDomainConfigUrl = "https://api.vercel.com/v6/domains/$full_domain/config";
-        $vercelDomainConfigOpts = [
-            'http' => [
-                'method' => 'GET',
-                'header' => "Authorization: Bearer $vercel_token\r\nUser-Agent: ControlCenter\r\nAccept: application/json\r\n"
-            ]
-        ];
-
-        $vercelDomainConfigContext = stream_context_create($vercelDomainConfigOpts);
-        $vercelDomainConfigResponse = @file_get_contents($vercelDomainConfigUrl, false, $vercelDomainConfigContext);
-
-        if ($vercelDomainConfigResponse) {
-            $vercelDomainConfig = json_decode($vercelDomainConfigResponse, true);
-            if (isset($vercelDomainConfig['recommendedCNAME'][0]['value'])) {
-                $cnameTarget = $vercelDomainConfig['recommendedCNAME'][0]['value'];
-            } elseif (isset($vercelDomainConfig['cnameTarget'])) {
-                $cnameTarget = $vercelDomainConfig['cnameTarget'];
-            } elseif (isset($vercelDomainConfig['domain']['cnameTarget'])) {
-                $cnameTarget = $vercelDomainConfig['domain']['cnameTarget'];
-            }
-        }
-
-        if (!$cnameTarget) {
-            query("DELETE FROM codespace_domains WHERE codespace_id='$codespace_id'");
-            echo json_encode(['error' => 'Kein CNAME-Target von Vercel erhalten']);
-            exit;
-        }
-
+        $cnameTarget = 'apps.fringelo.com';
         $cloudflareResult = cloudflare_createCNAMERecord($full_domain, $cnameTarget, false);
 
         if (!$cloudflareResult['success']) {
@@ -532,7 +286,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'success' => true,
             'domain' => $full_domain,
             'is_main' => $is_main,
-            'vercel' => $vercelResult,
             'cloudflare' => $cloudflareResult
         ]);
         exit;
