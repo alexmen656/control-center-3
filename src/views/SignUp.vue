@@ -1,14 +1,11 @@
 <template>
   <ion-page>
     <ion-content :fullscreen="true" class="signup-content">
-      <!-- Background Pattern -->
       <div class="background-pattern"></div>
-      
-      <!-- Main Container -->
+
       <div class="signup-container">
         <div class="signup-card">
-          
-          <!-- Logo Section -->
+
           <div class="logo-section">
             <span class="logo">
               Fringelo
@@ -19,7 +16,6 @@
             <p class="welcome-subtitle" v-else>Create a password for your account</p>
           </div>
 
-          <!-- Error Message -->
           <div v-if="errorMessage" class="error-container">
             <div class="error-card">
               <div class="error-content">
@@ -32,7 +28,6 @@
             </div>
           </div>
 
-          <!-- Password Creation Form (for social login) -->
           <div v-if="createPasswordView" class="form-section">
             <div class="input-group">
               <div class="custom-input-wrapper">
@@ -62,9 +57,9 @@
               </div>
             </div>
 
-            <button 
-              @click="onSignUp()" 
-              type="submit" 
+            <button
+              @click="onSignUp()"
+              type="submit"
               class="primary-button"
             >
               <ion-icon name="checkmark-circle" class="button-icon"></ion-icon>
@@ -72,10 +67,8 @@
             </button>
           </div>
 
-          <!-- Regular Signup Form -->
           <div v-else class="form-section">
             <div class="input-group">
-              <!-- Name Fields -->
               <div class="name-row">
                 <div class="custom-input-wrapper">
                   <label class="input-label">First Name *</label>
@@ -104,7 +97,6 @@
                 </div>
               </div>
 
-              <!-- Email Field -->
               <div class="custom-input-wrapper">
                 <label class="input-label">Email *</label>
                 <div class="input-container">
@@ -118,7 +110,6 @@
                 </div>
               </div>
 
-              <!-- Password Fields -->
               <div class="custom-input-wrapper">
                 <label class="input-label">Password *</label>
                 <div class="input-container">
@@ -146,11 +137,10 @@
               </div>
             </div>
 
-            <!-- Main Actions -->
             <div class="button-group">
-              <button 
-                @click="validateAndSignUp" 
-                type="submit" 
+              <button
+                @click="validateAndSignUp"
+                type="submit"
                 class="primary-button"
               >
                 <ion-icon name="person-add" class="button-icon"></ion-icon>
@@ -165,12 +155,10 @@
               </router-link>
             </div>
 
-            <!-- Divider -->
             <div class="divider">
               <span class="divider-text">or sign up with</span>
             </div>
 
-            <!-- Social Login -->
             <div class="social-buttons">
               <button
                 @click="continueWithGoogle()"
@@ -203,7 +191,6 @@
           </div>
         </div>
 
-        <!-- Footer -->
         <div class="footer-section">
           <p class="footer-text">
             By creating an account, you agree to our Terms of Service and Privacy Policy
@@ -421,30 +408,22 @@ export default defineComponent({
 
       try {
         const loginRequest = {
-          scopes: ["user.read"], // Berechtigungen, die du benötigst
+          scopes: ["user.read"],
         };
-        await msalInstance.loginPopup(loginRequest); //const loginResponse =
-        //console.log("Login erfolgreich:", loginResponse);
+        await msalInstance.loginPopup(loginRequest);
 
-        // Rufe das Access-Token ab
         const tokenResponse = await msalInstance.acquireTokenSilent({
           scopes: ["User.Read"],
-          account: msalInstance.getAllAccounts()[0], // Verwende das erste Konto, das angemeldet ist
+          account: msalInstance.getAllAccounts()[0],
         });
 
-        //console.log("Access-Token erhalten:", tokenResponse.accessToken);
-
-        // Rufe automatisch Benutzerinformationen ab
         const userData = await this.fetchUserData(tokenResponse.accessToken);
-        //console.log("Benutzerdaten:", userData);
 
-        // Setze die Benutzerdaten
         this.user.email = userData.mail || userData.userPrincipalName;
         this.user.givenName = userData.givenName;
         this.user.familyName = userData.surname;
         this.user.imageUrl = userData.photo || "";
 
-        // Überprüfe, ob die E-Mail existiert
         await axios
           .post(
             "user.php",
@@ -519,32 +498,29 @@ export default defineComponent({
     },
   },
   async mounted() {
-    await msalInstance.initialize(); // Initialisiere hier
+    await msalInstance.initialize();
 
-    // Stelle sicher, dass die MSAL-Instanz initialisiert wird
     if (!msalInstance.getAllAccounts().length) {
-      await msalInstance.initialize(); // Initialisiere hier
+      await msalInstance.initialize();
     }
   },
 });
 </script>
 <style scoped>
-/* Brand Colors */
 :root {
-  --brand-red: #e53e3e;
-  --brand-red-light: #fc8181;
-  --brand-red-dark: #c53030;
+  --brand-orange: #f97316;
+  --brand-orange-light: #fb923c;
+  --brand-orange-dark: #ea580c;
   --brand-gray: #f7fafc;
   --brand-gray-dark: #2d3748;
   --brand-text: #2d3748;
   --brand-text-light: #718096;
 }
 
-/* Main Container Styles */
 .signup-content {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
 .background-pattern {
@@ -553,10 +529,10 @@ export default defineComponent({
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
-    radial-gradient(circle at 20% 50%, rgba(229, 62, 62, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(229, 62, 62, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 40% 80%, rgba(229, 62, 62, 0.03) 0%, transparent 50%);
+  background-image:
+    radial-gradient(circle at 20% 50%, rgba(249, 115, 22, 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(249, 115, 22, 0.03) 0%, transparent 50%);
   z-index: 0;
 }
 
@@ -569,23 +545,22 @@ export default defineComponent({
   justify-content: center;
   align-items: center;
   padding: 2rem 1rem;
-  max-width: 600px; /* Increased width */
+  max-width: 600px;
   margin: 0 auto;
 }
 
 .signup-card {
   width: 100%;
-  max-width: 500px; /* Increased width */
-  background: white;
-  border-radius: 24px;
-  padding: 3rem 2.5rem; /* Increased padding */
-  box-shadow: 
-    0 25px 50px -12px rgba(0, 0, 0, 0.1),
-    0 10px 20px -5px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  max-width: 500px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 3rem 2.5rem;
+  box-shadow:
+    0 1px 3px rgba(15, 23, 42, 0.06),
+    0 10px 30px -12px rgba(15, 23, 42, 0.12);
+  border: 1px solid #eef2f7;
 }
 
-/* Logo Section */
 .logo-section {
   text-align: center;
   margin-bottom: 2.5rem;
@@ -611,22 +586,21 @@ export default defineComponent({
 }
 
 .welcome-subtitle {
-  font-size: 1.1rem;
-  color: #4a5568;
+  font-size: 1.05rem;
+  color: #64748b;
   margin: 0;
   font-weight: 400;
 }
 
-/* Error Styles */
 .error-container {
   margin-bottom: 1.5rem;
 }
 
 .error-card {
   margin: 0;
-  background: rgba(229, 62, 62, 0.1);
-  border: 1px solid rgba(229, 62, 62, 0.2);
-  border-radius: 12px;
+  background: rgba(249, 115, 22, 0.08);
+  border: 1px solid rgba(249, 115, 22, 0.2);
+  border-radius: 10px;
   padding: 1rem;
 }
 
@@ -637,7 +611,7 @@ export default defineComponent({
 }
 
 .error-icon {
-  color: var(--brand-red);
+  color: var(--brand-orange-dark);
   font-size: 1.25rem;
   flex-shrink: 0;
 }
@@ -646,34 +620,33 @@ export default defineComponent({
   margin: 0 0 0.25rem 0;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--brand-red);
+  color: var(--brand-orange-dark);
 }
 
 .error-content p {
   margin: 0;
   font-size: 0.85rem;
-  color: var(--brand-red);
+  color: var(--brand-orange-dark);
   opacity: 0.9;
 }
 
-/* Form Styles */
 .form-section {
   width: 100%;
 }
 
 .input-group {
-  margin-bottom: 2rem; /* Increased spacing */
+  margin-bottom: 2rem;
 }
 
 .name-row {
   display: flex;
-  gap: 1rem; /* Increased gap */
+  gap: 1rem;
   margin-bottom: 1.5rem;
 }
 
 .custom-input-wrapper {
   width: 100%;
-  margin-bottom: 1.5rem; /* Increased spacing */
+  margin-bottom: 1.5rem;
 }
 
 .input-label {
@@ -681,7 +654,7 @@ export default defineComponent({
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #2d3748;
+  color: #334155;
 }
 
 .input-container {
@@ -696,18 +669,19 @@ export default defineComponent({
   color: var(--brand-text-light);
   font-size: 1.1rem;
   z-index: 2;
+  transition: color 0.2s ease;
 }
 
 .custom-input {
   width: 100%;
   height: 52px;
   padding: 0 1rem 0 3rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
   font-size: 1rem;
   background: #ffffff;
   color: #1a202c;
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   outline: none;
 }
 
@@ -717,8 +691,8 @@ export default defineComponent({
 }
 
 .custom-input:focus {
-  border-color: #e53e3e;
-  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.15);
+  border-color: var(--brand-orange);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
   background: #ffffff;
 }
 
@@ -726,17 +700,16 @@ export default defineComponent({
   border-color: #cbd5e0;
 }
 
-/* Button Styles */
 .button-group {
-  margin-bottom: 2rem; /* Increased spacing */
+  margin-bottom: 2rem;
 }
 
 .primary-button {
   width: 100%;
   height: 52px;
-  background: #e53e3e;
+  background: var(--brand-orange);
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   color: #ffffff;
   font-size: 1rem;
   font-weight: 600;
@@ -745,29 +718,25 @@ export default defineComponent({
   justify-content: center;
   gap: 0.5rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease;
   margin-bottom: 1rem;
-  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.35);
 }
 
 .primary-button:hover {
-  background: #c53030;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(229, 62, 62, 0.45);
+  background: var(--brand-orange-dark);
 }
 
 .primary-button:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.3);
+  background: var(--brand-orange-dark);
 }
 
 .secondary-button {
   width: 100%;
   height: 52px;
-  background: white;
-  border: 2px solid #e53e3e;
-  border-radius: 12px;
-  color: #e53e3e;
+  background: #ffffff;
+  border: 1.5px solid var(--brand-orange);
+  border-radius: 10px;
+  color: var(--brand-orange-dark);
   font-size: 1rem;
   font-weight: 600;
   display: flex;
@@ -775,19 +744,12 @@ export default defineComponent({
   justify-content: center;
   gap: 0.5rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .secondary-button:hover {
-  background: #e53e3e;
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.25);
-}
-
-.secondary-button:active {
-  transform: translateY(0);
+  background: var(--brand-orange);
+  color: #ffffff;
 }
 
 .login-link {
@@ -798,11 +760,10 @@ export default defineComponent({
   font-size: 1.1rem;
 }
 
-/* Divider */
 .divider {
   display: flex;
   align-items: center;
-  margin: 2rem 0; /* Increased spacing */
+  margin: 2rem 0;
   color: var(--brand-text-light);
 }
 
@@ -815,26 +776,25 @@ export default defineComponent({
 }
 
 .divider-text {
-  padding: 0 1.5rem; /* Increased padding */
+  padding: 0 1.5rem;
   font-size: 0.9rem;
   font-weight: 500;
   white-space: nowrap;
 }
 
-/* Social Buttons */
 .social-buttons {
   display: flex;
   flex-direction: column;
-  gap: 1rem; /* Increased gap */
+  gap: 1rem;
 }
 
 .social-button {
   width: 100%;
   height: 52px;
   background: #ffffff;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  color: #2d3748;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  color: #334155;
   font-size: 1rem;
   font-weight: 500;
   display: flex;
@@ -842,19 +802,12 @@ export default defineComponent({
   justify-content: center;
   gap: 0.75rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .social-button:hover {
   border-color: #cbd5e0;
-  background: #f7fafc;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.social-button:active {
-  transform: translateY(0);
+  background: #f8fafc;
 }
 
 .social-icon {
@@ -863,50 +816,46 @@ export default defineComponent({
 
 .google-button:hover {
   border-color: #4285f4;
-  background: rgba(66, 133, 244, 0.08);
-  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.15);
+  background: rgba(66, 133, 244, 0.06);
 }
 
 .microsoft-button:hover {
   border-color: #00a4ef;
-  background: rgba(0, 164, 239, 0.08);
-  box-shadow: 0 4px 12px rgba(0, 164, 239, 0.15);
+  background: rgba(0, 164, 239, 0.06);
 }
 
-/* Footer */
 .footer-section {
-  margin-top: 2.5rem; /* Increased spacing */
+  margin-top: 2.5rem;
   text-align: center;
 }
 
 .footer-text {
-  font-size: 0.85rem; /* Slightly larger */
+  font-size: 0.85rem;
   color: var(--brand-text-light);
   margin: 0;
-  line-height: 1.5; /* Better line height */
+  line-height: 1.5;
 }
 
-/* Responsive Design */
 @media (max-width: 600px) {
   .signup-container {
     padding: 1.5rem 1rem;
     max-width: 100%;
   }
-  
+
   .signup-card {
     padding: 2.5rem 2rem;
-    border-radius: 20px;
+    border-radius: 14px;
     max-width: 100%;
   }
-  
+
   .logo {
     font-size: 36px;
   }
-  
+
   .welcome-title {
     font-size: 1.7rem;
   }
-  
+
   .name-row {
     flex-direction: column;
     gap: 0;
@@ -919,51 +868,32 @@ export default defineComponent({
     padding-top: 2rem;
     padding-bottom: 2rem;
   }
-  
+
   .logo-section {
     margin-bottom: 2rem;
   }
-  
+
   .logo {
     font-size: 36px;
     margin-bottom: 1rem;
   }
-  
+
   .welcome-title {
     font-size: 1.6rem;
   }
 }
 
-/* Animation */
-.signup-card {
-  animation: slideUp 0.6s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Focus and Accessibility */
 .custom-input:focus + .input-icon,
 .input-container:focus-within .input-icon {
-  color: var(--brand-red);
+  color: var(--brand-orange);
 }
 
-/* Remove iOS input styling */
 .custom-input {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
 }
 
-/* Prevent zoom on iOS */
 @media screen and (max-width: 767px) {
   .custom-input {
     font-size: 16px;
@@ -974,7 +904,7 @@ export default defineComponent({
   display: block;
   font-weight: 700;
   font-size: 42px;
-  color: #e53e3e;
+  color: var(--brand-orange);
   letter-spacing: -0.8px;
   line-height: 1.2;
   margin-bottom: 2rem;

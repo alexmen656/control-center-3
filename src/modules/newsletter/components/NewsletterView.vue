@@ -7,7 +7,7 @@
         <!-- Action Bar -->
         <div class="action-bar">
           <div class="action-group-left">
-            <h2 class="page-title">Newsletter versenden</h2>
+            <PageTitle icon="mail-outline" title="Newsletter versenden" />
           </div>
           
           <div class="action-group-right">
@@ -278,6 +278,7 @@
 <script>
 import { defineComponent } from 'vue';
 import SiteTitle from '@/components/SiteTitle.vue';
+import PageTitle from '@/components/PageTitle.vue';
 import { IonPage, IonContent, IonIcon, toastController, alertController } from '@ionic/vue';
 
 export default defineComponent({
@@ -286,7 +287,8 @@ export default defineComponent({
     IonPage,
     IonContent,
     IonIcon,
-    SiteTitle
+    SiteTitle,
+    PageTitle
   },
   data() {
     return {

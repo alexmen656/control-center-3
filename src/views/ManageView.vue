@@ -7,8 +7,7 @@
         <!-- Header -->
         <div class="page-header">
           <div class="header-content">
-            <h1>Project Management</h1>
-            <p>Manage your projects and create new ones</p>
+            <PageTitle icon="folder-outline" title="Project Management" />
           </div>
           <div class="header-actions">
             <button class="action-btn secondary" @click="refreshProjects">
@@ -283,12 +282,14 @@
 
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
+import PageTitle from "@/components/PageTitle.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "ManageView",
   components: {
     SiteTitle,
+    PageTitle,
   },
   data() {
     return {

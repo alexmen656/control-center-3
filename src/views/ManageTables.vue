@@ -7,8 +7,7 @@
         <!-- Header -->
         <div class="page-header">
           <div class="header-content">
-            <h1>Table Management</h1>
-            <p>Manage your project's form tables and data</p>
+            <PageTitle icon="server-outline" title="Table Management" />
           </div>
           <div class="header-actions">
             <button class="action-btn secondary" @click="refreshTables">
@@ -190,12 +189,14 @@
 
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
+import PageTitle from "@/components/PageTitle.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "ManageTables",
   components: {
     SiteTitle,
+    PageTitle,
   },
   data() {
     return {

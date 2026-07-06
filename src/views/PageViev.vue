@@ -4,11 +4,7 @@
       <SiteTitle icon="grid-outline" title="Dashboard" />
       <div class="projects-dashboard">
         <div class="page-header">
-          <h1 class="page-title">
-            <ion-icon name="grid-outline"></ion-icon>
-            Projects
-          </h1>
-          <p class="page-subtitle">All your projects in one place</p>
+          <PageTitle icon="grid-outline" title="Projects" />
         </div>
         <div class="dashboard-toolbar">
           <div class="search-wrapper">
@@ -76,6 +72,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import SiteTitle from "@/components/SiteTitle.vue";
+import PageTitle from "@/components/PageTitle.vue";
 
 interface Project {
   id: string | number;
@@ -88,6 +85,7 @@ export default defineComponent({
   name: "PageView",
   components: {
     SiteTitle,
+    PageTitle,
   },
   data() {
     return {

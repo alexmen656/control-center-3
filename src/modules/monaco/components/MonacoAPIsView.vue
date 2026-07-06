@@ -1,12 +1,12 @@
 <template>
   <div class="apis-container">
+    <SiteTitle icon="cloud-outline" title="CMS APIs" />
     <!-- Professional APIs Management Screen -->
     <div class="apis-screen">
       <div class="apis-header">
         <div class="header-left">
           <div class="title-section">
-            <h1 class="apis-title">CMS APIs</h1>
-            <p class="apis-subtitle">{{ projectName }} / {{ codespace }}</p>
+            <PageTitle icon="cloud-outline" title="CMS APIs" />
           </div>
         </div>
         <div class="header-actions">
@@ -170,6 +170,8 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { ToastService } from '@/services/ToastService'
+import PageTitle from '@/components/PageTitle.vue'
+import SiteTitle from '@/components/SiteTitle.vue'
 
 // Props
 const props = defineProps({

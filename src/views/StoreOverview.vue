@@ -6,7 +6,7 @@
       <div class="page-container">
         <div class="page-header">
           <div class="header-content">
-            <h1>Module Store</h1>
+            <PageTitle icon="storefront-outline" title="Module Store" />
           </div>
           <div class="header-actions">
             <button class="action-btn secondary" @click="loadModules">
@@ -124,11 +124,13 @@
 <script>
 import lunr from "lunr";
 import SiteTitle from "@/components/SiteTitle.vue";
+import PageTitle from "@/components/PageTitle.vue";
 
 export default {
   name: "StoreOverview",
   components: {
     SiteTitle,
+    PageTitle,
   },
   data() {
     return {

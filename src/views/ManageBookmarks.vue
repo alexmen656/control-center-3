@@ -7,8 +7,7 @@
         <!-- Header -->
         <div class="page-header">
           <div class="header-content">
-            <h1>Bookmark Management</h1>
-            <p>Manage your saved bookmarks and quick links</p>
+            <PageTitle icon="bookmarks-outline" title="Bookmark Management" />
           </div>
           <div class="header-actions">
             <button class="action-btn secondary" @click="refreshBookmarks">
@@ -250,12 +249,14 @@
 
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
+import PageTitle from "@/components/PageTitle.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "ManageBookmarks",
   components: {
     SiteTitle,
+    PageTitle,
   },
   data() {
     return {

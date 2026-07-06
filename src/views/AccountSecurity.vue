@@ -1,6 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
+      <SiteTitle icon="shield-checkmark-outline" title="Account Security" />
       <div class="page-container">
         <!-- Header -->
         <div class="page-header">
@@ -9,8 +10,7 @@
               <ion-icon name="arrow-back-outline"></ion-icon>
             </button>
             <div>
-              <h1>Account Security</h1>
-              <p>Manage your security settings and login methods</p>
+              <PageTitle icon="shield-checkmark-outline" title="Account Security" />
             </div>
           </div>
         </div>
@@ -166,9 +166,12 @@
 
 <script>
 import { defineComponent } from "vue";
+import PageTitle from "@/components/PageTitle.vue";
+import SiteTitle from "@/components/SiteTitle.vue";
 import { getUserData } from "@/userData";
 
 export default defineComponent({
+  components: { PageTitle, SiteTitle },
   data() {
     return {
       user: {},

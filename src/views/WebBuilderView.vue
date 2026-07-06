@@ -7,8 +7,7 @@
         <!-- Page Header -->
         <div class="page-header">
           <div class="header-content">
-            <h1>Web Builder</h1>
-            <p>Erstellen und gestalten Sie Ihre Website mit unserem visuellen Web Builder</p>
+            <PageTitle icon="globe-outline" title="Web Builder" />
           </div>
           <div class="header-actions">
             <button class="action-btn primary" @click="openWebBuilder()">
@@ -422,11 +421,13 @@ import { useRoute } from 'vue-router';
 import axios from 'axios';
 import qs from 'qs';
 import SiteTitle from '@/components/SiteTitle.vue';
+import PageTitle from "@/components/PageTitle.vue";
 
 export default defineComponent({
   name: 'WebBuilderView',
   components: {
-    SiteTitle
+    SiteTitle,
+    PageTitle
   },
 
   setup() {

@@ -7,8 +7,7 @@
         <!-- Page Header -->
         <div class="page-header">
           <div class="header-content">
-            <h1>Database Management</h1>
-            <p>Browse and manage your tables</p>
+            <PageTitle icon="server-outline" title="Database Management" />
           </div>
           <div class="header-actions">
             <button class="action-btn secondary" @click="refreshTables">
@@ -147,11 +146,13 @@
 <script>
 import { defineComponent, ref, getCurrentInstance, computed, onMounted, onUnmounted } from "vue";
 import SiteTitle from "@/components/SiteTitle.vue";
+import PageTitle from "@/components/PageTitle.vue";
 
 export default defineComponent({
   name: "DatabasesView",
   components: {
     SiteTitle,
+    PageTitle,
   },
   data() {
     return {

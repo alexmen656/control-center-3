@@ -1,6 +1,7 @@
 <template>
   <ion-page>
     <ion-content>
+      <SiteTitle icon="settings-outline" title="API Settings" />
       <ion-grid class="md">
         <ion-row class="md">
           <ion-col size="1"></ion-col>
@@ -10,10 +11,7 @@
                 <ion-icon slot="start" name="arrow-back-outline"></ion-icon>
                 Back to {{ api.name }}
               </ion-button>
-              <h1>
-                <ion-icon name="settings-outline" class="title-icon"></ion-icon>
-                API Settings
-              </h1>
+              <PageTitle icon="settings-outline" title="API Settings" />
             </div>
 
             <!-- General Settings -->
@@ -223,6 +221,8 @@ import {
   IonModal, IonHeader, IonToolbar, IonButtons, IonTitle,
   alertController, toastController
 } from '@ionic/vue';
+import PageTitle from "@/components/PageTitle.vue";
+import SiteTitle from "@/components/SiteTitle.vue";
 import axios from 'axios';
 
 interface ApiKey {
@@ -251,12 +251,13 @@ export default defineComponent({
     IonPage, IonContent, IonGrid, IonRow, IonCol, IonButton, IonIcon,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonLabel,
     IonInput, IonTextarea, IonSelect, IonSelectOption, IonCheckbox,
-    IonModal, IonHeader, IonToolbar, IonButtons, IonTitle
+    IonModal, IonHeader, IonToolbar, IonButtons, IonTitle,
+    PageTitle, SiteTitle
   },
   setup() {
     const route = useRoute();
     const router = useRouter();
-    
+
     const api = ref({ name: 'Weather API', id: 1 });
     const settings = ref<ApiSettings>({
       name: '',

@@ -6,8 +6,7 @@
       <div class="page-container">
         <div class="page-header">
           <div class="header-content">
-            <h1>Domain Management</h1>
-            <p>Manage your domains, registrars and expiry dates</p>
+            <PageTitle icon="globe-outline" title="Domain Management" />
           </div>
           <div class="header-actions">
             <button class="action-btn secondary" @click="fetchCloudflare">
@@ -260,6 +259,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { IonPage, IonContent, IonIcon, IonModal } from '@ionic/vue';
 import SiteTitle from '../components/SiteTitle.vue';
+import PageTitle from '@/components/PageTitle.vue';
 import axios from 'axios';
 import { alertController, toastController } from '@ionic/vue';
 

@@ -7,8 +7,7 @@
         <!-- Page Header -->
         <div class="page-header">
           <div class="header-content">
-            <h1>Project Information</h1>
-            <p>Manage project settings and configurations</p>
+            <PageTitle icon="information-circle-outline" title="Project Information" />
           </div>
         </div>
 
@@ -299,13 +298,15 @@
 
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
 import SiteTitle from "@/components/SiteTitle.vue";
+import PageTitle from "@/components/PageTitle.vue";
 import { getUserData } from "@/userData";
 
 export default {
   name: "ProjectInfo",
   components: {
     LoadingSpinner,
-    SiteTitle
+    SiteTitle,
+    PageTitle
   },
   computed: {
     sslStatusColor() {

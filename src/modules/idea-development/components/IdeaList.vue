@@ -7,8 +7,7 @@
         <!-- Header -->
         <div class="page-header">
           <div class="header-content">
-            <h1>Ideen Entwicklung</h1>
-            <p>Verwalte deine Projektideen, Meilensteine und Assets</p>
+            <PageTitle icon="bulb-outline" title="Ideen Entwicklung" />
           </div>
           <div class="header-actions">
             <button class="action-btn secondary" @click="loadIdeas">
@@ -158,12 +157,13 @@ import {
   searchOutline, syncOutline, createOutline
 } from 'ionicons/icons';
 import SiteTitle from "@/components/SiteTitle.vue";
+import PageTitle from "@/components/PageTitle.vue";
 import { ideaService, type Idea } from '../services/IdeaService';
 
 export default defineComponent({
   name: 'IdeaList',
-  components: { 
-    IonPage, IonContent, IonIcon, SiteTitle 
+  components: {
+    IonPage, IonContent, IonIcon, SiteTitle, PageTitle
   },
   setup() {
     const route = useRoute();

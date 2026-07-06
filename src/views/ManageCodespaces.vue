@@ -5,8 +5,7 @@
       <div class="page-container">
         <div class="page-header">
           <div class="header-content">
-            <h1>Codespaces</h1>
-            <p>Verwalten Sie Ihre Entwicklungsumgebungen für dieses Projekt</p>
+            <PageTitle icon="code-outline" title="Codespaces" />
           </div>
           <div class="header-actions">
             <button class="action-btn primary" @click="createNewCodespace">
@@ -376,6 +375,7 @@ import {
   IonPage, IonContent, IonIcon, IonSpinner, alertController
 } from '@ionic/vue'
 import SiteTitle from '@/components/SiteTitle.vue'
+import PageTitle from "@/components/PageTitle.vue"
 import axios from 'axios'
 import qs from 'qs'
 import { ToastService } from '@/services/ToastService'

@@ -1,6 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
+      <SiteTitle icon="person-outline" title="Personal Information" />
       <div class="page-container">
         <!-- Header -->
         <div class="page-header">
@@ -9,8 +10,7 @@
               <ion-icon name="arrow-back-outline"></ion-icon>
             </button>
             <div>
-              <h1>Personal Information</h1>
-              <p>Update your personal details and profile information</p>
+              <PageTitle icon="person-outline" title="Personal Information" />
             </div>
           </div>
         </div>
@@ -130,11 +130,14 @@
 
 <script>
 import { defineComponent } from "vue";
+import PageTitle from "@/components/PageTitle.vue";
+import SiteTitle from "@/components/SiteTitle.vue";
 import { usePhotoGallery } from "@/composables/updateProfileImage";//, Photo
 import { getUserData } from "@/userData";
 
 export default defineComponent({
   name: "PersonalInformation",
+  components: { PageTitle, SiteTitle },
   data() {
     return {
       user: {

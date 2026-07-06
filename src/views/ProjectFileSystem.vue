@@ -5,7 +5,7 @@
       <div class="page-container">
         <div class="page-header">
           <div class="header-content">
-            <h1>Files</h1>
+            <PageTitle icon="folder-outline" title="Files" />
           </div>
           <div class="header-actions">
             <!-- New Folder Input Moved Here -->
@@ -276,11 +276,13 @@ import {
   IonSpinner
 } from "@ionic/vue";
 import SiteTitle from "@/components/SiteTitle.vue";
+import PageTitle from "@/components/PageTitle.vue";
 import axios from "axios";
 
 export default defineComponent({
   name: "ProjectFileSystem",
   components: {
+    PageTitle,
     IonPage,
     IonContent,
     IonIcon,

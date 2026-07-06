@@ -1,15 +1,12 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
+      <SiteTitle icon="library-outline" title="Manage Pages" />
       <div class="page-container">
         <div class="page-header">
           <div class="header-content">
             <div class="header-info">
-              <h1 class="page-title">
-                <ion-icon name="library-outline"></ion-icon>
-                Manage Pages
-              </h1>
-              <p class="page-subtitle">Create and organize website pages with custom URLs and icons</p>
+              <PageTitle icon="library-outline" title="Manage Pages" />
             </div>
           </div>
         </div>
@@ -113,8 +110,12 @@
 </template>
 
 <script>
+import PageTitle from "@/components/PageTitle.vue";
+import SiteTitle from "@/components/SiteTitle.vue";
+
 export default {
   name: "ManagePages",
+  components: { PageTitle, SiteTitle },
   data() {
     return {
       title: "",

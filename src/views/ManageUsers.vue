@@ -5,8 +5,7 @@
       <div class="page-container">
         <div class="page-header">
           <div class="header-content">
-            <h1>User Management</h1>
-            <p>Manage users, permissions and project assignments</p>
+            <PageTitle icon="people-outline" title="User Management" />
           </div>
           <div class="header-actions">
             <button class="action-btn secondary" @click="refreshUsers">
@@ -359,12 +358,14 @@
 
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
+import PageTitle from "@/components/PageTitle.vue";
 import { defineComponent, ref, getCurrentInstance } from "vue";
 
 export default defineComponent({
   name: "ManageUsers",
   components: {
     SiteTitle,
+    PageTitle,
   },
   setup() {
     const { appContext } = getCurrentInstance();

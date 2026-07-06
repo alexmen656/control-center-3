@@ -7,8 +7,7 @@
         <!-- Page Header -->
         <div class="page-header">
           <div class="header-content">
-            <h1>{{ $route.params.name }}</h1>
-            <p>Database table overview and data management</p>
+            <PageTitle icon="server-outline" :title="$route.params.name" />
           </div>
           <div class="header-actions">
             <button class="action-btn secondary" @click="refreshData">
@@ -201,12 +200,14 @@
 <script>
 import { defineComponent, ref, getCurrentInstance, computed } from "vue";
 import SiteTitle from "@/components/SiteTitle.vue";
+import PageTitle from "@/components/PageTitle.vue";
 import { useRoute } from "vue-router";
 
 export default defineComponent({
   name: "TableDetailView",
   components: {
     SiteTitle,
+    PageTitle,
   },
   setup() {
     const labels = ref([]);

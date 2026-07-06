@@ -9,24 +9,15 @@
               <img :src="customLoginConfig.logo_url" :alt="companyName + ' Logo'" class="logo-image custom-logo" />
             </template>
             <template v-else>
-              <!-- <picture>
-                <source media="(min-width:465px)" srcset="/assets/logo_inline_large.png" />
-                <source media="(max-width:465px)" srcset="/assets/logo_block_large.png" />
-                <img src="/assets/logo_inline_large.png" alt="Fringelo Logo" class="logo-image" />
-              </picture>-->
               <span class="logo">
                 Fringelo
               </span>
             </template>
-            <!--<h1 class="welcome-title" v-if="!createPasswordView">Welcome Back</h1>
-            <h1 class="welcome-title" v-else>Complete Setup</h1>-->
             <p class="welcome-subtitle" v-if="!createPasswordView">
               {{ isCustomLogin ? 'Sign in to ' + companyName : 'Sign in to your account' }}
             </p>
-            <!-- <p class="welcome-subtitle" v-else>Create a password for your account</p>-->
           </div>
 
-          <!-- Error Message -->
           <div v-if="errorMessage" class="error-container">
             <div class="error-card">
               <div class="error-content">
@@ -39,7 +30,6 @@
             </div>
           </div>
 
-          <!-- Password Creation Form -->
           <div v-if="createPasswordView" class="form-section">
             <div class="input-group">
               <div class="custom-input-wrapper">
@@ -66,22 +56,9 @@
             </button>
           </div>
 
-          <!-- Login Form -->
           <div v-else class="form-section">
             <form @submit.prevent="login">
               <div class="input-group">
-                <!-- <div class="custom-input-wrapper">
-                  <label class="input-label">Username</label>
-                  <div class="input-container">
-                    <ion-icon name="person-outline" class="input-icon"></ion-icon>
-                    <input v-model="username" name="username" type="text" spellcheck="false" autocapitalize="off"
-                      @input="
-                        username = $event.target.value;
-                      showUsernameError = false;
-                      usernameError = '';
-                      " required placeholder="Enter your username" class="custom-input" />
-                  </div>-->
-
                 <div class="custom-input-wrapper">
                   <label class="input-label">Email</label>
                   <div class="input-container">
@@ -108,7 +85,6 @@
                 </div>
               </div>
 
-              <!-- Main Actions -->
               <div class="button-group">
                 <button @click="onLogin()" type="submit" class="primary-button">
                   <ion-icon name="log-in" class="button-icon"></ion-icon>
@@ -123,12 +99,10 @@
                 </router-link>
               </div>
 
-              <!-- Divider -->
               <div class="divider">
                 <span class="divider-text">or continue with</span>
               </div>
 
-              <!-- Social Login -->
               <div class="social-buttons">
                 <button @click="continueWithGoogle()" class="social-button google-button">
                   <img height="24" src="/assets/g-logo3.png" alt="Google" class="social-icon" />
@@ -211,14 +185,13 @@ export default defineComponent({
       g_password: "",
       g_confirmPassword: "",
       loginWith: "",
-      // Custom Login
       customLoginConfig: null as CustomLoginConfig | null,
       isCustomLogin: false,
     };
   },
   computed: {
     primaryColor(): string {
-      return this.customLoginConfig?.primary_color || '#e53e3e';
+      return this.customLoginConfig?.primary_color || '#f97316';
     },
     logoUrl(): string {
       return this.customLoginConfig?.logo_url || '/assets/logo_inline_large.png';
@@ -232,10 +205,7 @@ export default defineComponent({
     async checkCustomLoginDomain() {
       const currentDomain = window.location.hostname;
 
-      // Skip for localhost and default domains
-      if (currentDomain === 'localhost' /*||
-        currentDomain.includes('control-center.eu') ||
-        currentDomain.includes('polan.sk')*/) {
+      if (currentDomain === 'localhost') {
         return;
       }
 
@@ -253,11 +223,10 @@ export default defineComponent({
     applyCustomStyles() {
       if (!this.customLoginConfig) return;
 
-      // CSS Variables für Custom Colors setzen
       const root = document.documentElement;
-      root.style.setProperty('--brand-red', this.primaryColor);
-      root.style.setProperty('--brand-red-light', this.lightenColor(this.primaryColor, 30));
-      root.style.setProperty('--brand-red-dark', this.darkenColor(this.primaryColor, 20));
+      root.style.setProperty('--brand-orange', this.primaryColor);
+      root.style.setProperty('--brand-orange-light', this.lightenColor(this.primaryColor, 30));
+      root.style.setProperty('--brand-orange-dark', this.darkenColor(this.primaryColor, 20));
     },
     lightenColor(hex: string, percent: number): string {
       const num = parseInt(hex.replace('#', ''), 16);
@@ -305,7 +274,6 @@ export default defineComponent({
                   console.log(res.data);
                   if (res.data.token) {
                     localStorage.setItem("token", res.data.token);
-                    // Check for assigned project and redirect accordingly
                     if (res.data.assigned_project) {
                       location.href = `/project/${res.data.assigned_project}`;
                     } else {
@@ -430,30 +398,22 @@ export default defineComponent({
 
       try {
         const loginRequest = {
-          scopes: ["user.read"], // Berechtigungen, die du benötigst
+          scopes: ["user.read"],
         };
-        await msalInstance.loginPopup(loginRequest);//const loginResponse = 
-        //console.log("Login erfolgreich:", loginResponse);
+        await msalInstance.loginPopup(loginRequest);
 
-        // Rufe das Access-Token ab
         const tokenResponse = await msalInstance.acquireTokenSilent({
           scopes: ["User.Read"],
-          account: msalInstance.getAllAccounts()[0], // Verwende das erste Konto, das angemeldet ist
+          account: msalInstance.getAllAccounts()[0],
         });
 
-        //console.log("Access-Token erhalten:", tokenResponse.accessToken);
-
-        // Rufe automatisch Benutzerinformationen ab
         const userData = await this.fetchUserData(tokenResponse.accessToken);
-        //console.log("Benutzerdaten:", userData);
 
-        // Setze die Benutzerdaten
         this.user.email = userData.mail || userData.userPrincipalName;
         this.user.givenName = userData.givenName;
         this.user.familyName = userData.surname;
         this.user.imageUrl = userData.photo || "";
 
-        // Überprüfe, ob die E-Mail existiert
         await axios
           .post(
             "user.php",
@@ -477,7 +437,6 @@ export default defineComponent({
                     console.log(res.data);
                     if (res.data.token) {
                       localStorage.setItem("token", res.data.token);
-                      // Check for assigned project and redirect accordingly
                       if (res.data.assigned_project) {
                         location.href = `/project/${res.data.assigned_project}`;
                       } else {
@@ -527,36 +486,32 @@ export default defineComponent({
     },
   },
   async mounted() {
-    // Custom Login Domain Check
     await this.checkCustomLoginDomain();
 
-    await msalInstance.initialize(); // Initialisiere hier
+    await msalInstance.initialize();
 
-    // Stelle sicher, dass die MSAL-Instanz initialisiert wird
     if (!msalInstance.getAllAccounts().length) {
-      await msalInstance.initialize(); // Initialisiere hier
+      await msalInstance.initialize();
     }
   },
 });
 </script>
 
 <style scoped>
-/* Brand Colors */
 :root {
-  --brand-red: #e53e3e;
-  --brand-red-light: #fc8181;
-  --brand-red-dark: #c53030;
+  --brand-orange: #f97316;
+  --brand-orange-light: #fb923c;
+  --brand-orange-dark: #ea580c;
   --brand-gray: #f7fafc;
   --brand-gray-dark: #2d3748;
   --brand-text: #2d3748;
   --brand-text-light: #718096;
 }
 
-/* Main Container Styles */
 .login-content {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
 .background-pattern {
@@ -566,9 +521,9 @@ export default defineComponent({
   right: 0;
   bottom: 0;
   background-image:
-    radial-gradient(circle at 20% 50%, rgba(229, 62, 62, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(229, 62, 62, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 40% 80%, rgba(229, 62, 62, 0.03) 0%, transparent 50%);
+    radial-gradient(circle at 20% 50%, rgba(249, 115, 22, 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(249, 115, 22, 0.03) 0%, transparent 50%);
   z-index: 0;
 }
 
@@ -582,25 +537,21 @@ export default defineComponent({
   align-items: center;
   padding: 2rem 1rem;
   max-width: 600px;
-  /* Increased width */
   margin: 0 auto;
 }
 
 .login-card {
   width: 100%;
   max-width: 450px;
-  /* Increased width */
-  background: white;
-  border-radius: 24px;
+  background: #ffffff;
+  border-radius: 16px;
   padding: 3rem 2.5rem 1.5rem 2.5rem;
-  /* Increased padding */
   box-shadow:
-    0 25px 50px -12px rgba(0, 0, 0, 0.1),
-    0 10px 20px -5px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+    0 1px 3px rgba(15, 23, 42, 0.06),
+    0 10px 30px -12px rgba(15, 23, 42, 0.12);
+  border: 1px solid #eef2f7;
 }
 
-/* Logo Section */
 .logo-section {
   text-align: center;
   margin-bottom: 2.5rem;
@@ -608,7 +559,6 @@ export default defineComponent({
 
 .logo-image {
   max-width: 220px;
-  /* Increased logo size */
   height: auto;
   margin-bottom: 1.5rem;
 }
@@ -622,24 +572,23 @@ export default defineComponent({
 }
 
 .welcome-subtitle {
-  font-size: 1.1rem;
-  color: #4a5568;
+  font-size: 1.05rem;
+  color: #64748b;
   margin: 0;
   font-weight: 400;
   margin-top: 0.5rem;
   margin-bottom: 2rem;
 }
 
-/* Error Styles */
 .error-container {
   margin-bottom: 1.5rem;
 }
 
 .error-card {
   margin: 0;
-  background: rgba(229, 62, 62, 0.1);
-  border: 1px solid rgba(229, 62, 62, 0.2);
-  border-radius: 12px;
+  background: rgba(249, 115, 22, 0.08);
+  border: 1px solid rgba(249, 115, 22, 0.2);
+  border-radius: 10px;
   padding: 1rem;
 }
 
@@ -650,7 +599,7 @@ export default defineComponent({
 }
 
 .error-icon {
-  color: var(--brand-red);
+  color: var(--brand-orange-dark);
   font-size: 1.25rem;
   flex-shrink: 0;
 }
@@ -659,30 +608,27 @@ export default defineComponent({
   margin: 0 0 0.25rem 0;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--brand-red);
+  color: var(--brand-orange-dark);
 }
 
 .error-content p {
   margin: 0;
   font-size: 0.85rem;
-  color: var(--brand-red);
+  color: var(--brand-orange-dark);
   opacity: 0.9;
 }
 
-/* Form Styles */
 .form-section {
   width: 100%;
 }
 
 .input-group {
   margin-bottom: 2rem;
-  /* Increased spacing */
 }
 
 .custom-input-wrapper {
   width: 100%;
   margin-bottom: 1rem;
-  /* Increased spacing */
 }
 
 .input-label {
@@ -690,7 +636,7 @@ export default defineComponent({
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #2d3748;
+  color: #334155;
 }
 
 .input-container {
@@ -705,18 +651,19 @@ export default defineComponent({
   color: var(--brand-text-light);
   font-size: 1.1rem;
   z-index: 2;
+  transition: color 0.2s ease;
 }
 
 .custom-input {
   width: 100%;
   height: 52px;
   padding: 0 1rem 0 3rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
   font-size: 1rem;
   background: #ffffff;
   color: #1a202c;
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   outline: none;
 }
 
@@ -726,8 +673,8 @@ export default defineComponent({
 }
 
 .custom-input:focus {
-  border-color: #e53e3e;
-  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.15);
+  border-color: var(--brand-orange);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
   background: #ffffff;
 }
 
@@ -735,18 +682,16 @@ export default defineComponent({
   border-color: #cbd5e0;
 }
 
-/* Button Styles */
 .button-group {
   margin-bottom: 2rem;
-  /* Increased spacing */
 }
 
 .primary-button {
   width: 100%;
   height: 52px;
-  background: #e53e3e;
+  background: var(--brand-orange);
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   color: #ffffff;
   font-size: 1rem;
   font-weight: 600;
@@ -755,26 +700,25 @@ export default defineComponent({
   justify-content: center;
   gap: 0.5rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease;
   margin-bottom: 1rem;
 }
 
 .primary-button:hover {
-  background: #c53030;
+  background: var(--brand-orange-dark);
 }
 
 .primary-button:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.3);
+  background: var(--brand-orange-dark);
 }
 
 .secondary-button {
   width: 100%;
   height: 52px;
-  background: white;
-  border: 2px solid #e53e3e;
-  border-radius: 12px;
-  color: #e53e3e;
+  background: #ffffff;
+  border: 1.5px solid var(--brand-orange);
+  border-radius: 10px;
+  color: var(--brand-orange-dark);
   font-size: 1rem;
   font-weight: 600;
   display: flex;
@@ -782,17 +726,12 @@ export default defineComponent({
   justify-content: center;
   gap: 0.5rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .secondary-button:hover {
-  background: #e53e3e;
-  color: white;
-}
-
-.secondary-button:active {
-  transform: translateY(0);
+  background: var(--brand-orange);
+  color: #ffffff;
 }
 
 .signup-link {
@@ -803,12 +742,10 @@ export default defineComponent({
   font-size: 1.1rem;
 }
 
-/* Divider */
 .divider {
   display: flex;
   align-items: center;
   margin: 2rem 0;
-  /* Increased spacing */
   color: var(--brand-text-light);
 }
 
@@ -822,27 +759,24 @@ export default defineComponent({
 
 .divider-text {
   padding: 0 1.5rem;
-  /* Increased padding */
   font-size: 0.9rem;
   font-weight: 500;
   white-space: nowrap;
 }
 
-/* Social Buttons */
 .social-buttons {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  /* Increased gap */
 }
 
 .social-button {
   width: 100%;
   height: 52px;
   background: #ffffff;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  color: #2d3748;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  color: #334155;
   font-size: 1rem;
   font-weight: 500;
   display: flex;
@@ -850,19 +784,12 @@ export default defineComponent({
   justify-content: center;
   gap: 0.75rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .social-button:hover {
   border-color: #cbd5e0;
-  background: #f7fafc;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.social-button:active {
-  transform: translateY(0);
+  background: #f8fafc;
 }
 
 .social-icon {
@@ -871,33 +798,26 @@ export default defineComponent({
 
 .google-button:hover {
   border-color: #4285f4;
-  background: rgba(66, 133, 244, 0.08);
-  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.15);
+  background: rgba(66, 133, 244, 0.06);
 }
 
 .microsoft-button:hover {
   border-color: #00a4ef;
-  background: rgba(0, 164, 239, 0.08);
-  box-shadow: 0 4px 12px rgba(0, 164, 239, 0.15);
+  background: rgba(0, 164, 239, 0.06);
 }
 
-/* Footer */
 .footer-section {
   margin-top: 1.5rem;
-  /* Increased spacing */
   text-align: center;
 }
 
 .footer-text {
   font-size: 0.85rem;
-  /* Slightly larger */
   color: var(--brand-text-light);
   margin: 0;
   line-height: 1.5;
-  /* Better line height */
 }
 
-/* Responsive Design */
 @media (max-width: 600px) {
   .login-container {
     padding: 1.5rem 1rem;
@@ -906,7 +826,7 @@ export default defineComponent({
 
   .login-card {
     padding: 2.5rem 2rem;
-    border-radius: 20px;
+    border-radius: 14px;
     max-width: 100%;
   }
 
@@ -939,26 +859,9 @@ export default defineComponent({
   }
 }
 
-/* Animation */
-.login-card {
-  animation: slideUp 0.6s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .custom-input:focus+.input-icon,
 .input-container:focus-within .input-icon {
-  color: var(--brand-red);
+  color: var(--brand-orange);
 }
 
 .custom-input {
@@ -977,7 +880,7 @@ export default defineComponent({
   display: block;
   font-weight: 700;
   font-size: 48px;
-  color: #e53e3e;
+  color: var(--brand-orange);
   letter-spacing: -0.8px;
   line-height: 1.2;
   margin-bottom: 0 !important;

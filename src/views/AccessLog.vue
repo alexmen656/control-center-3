@@ -1,16 +1,13 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
+      <SiteTitle icon="shield-checkmark-outline" title="Access Log" />
       <div class="page-container">
         <!-- Page Header -->
         <div class="page-header">
           <div class="header-content">
             <div class="header-info">
-              <h1 class="page-title">
-                <ion-icon name="shield-checkmark-outline"></ion-icon>
-                Access Log
-              </h1>
-              <p class="page-subtitle">Monitor login attempts, security events, and access patterns</p>
+              <PageTitle icon="shield-checkmark-outline" title="Access Log" />
             </div>
           </div>
           <div class="header-actions">
@@ -390,11 +387,14 @@
 <script>
 import { defineComponent } from 'vue';
 import { Chart, registerables } from 'chart.js';
+import PageTitle from "@/components/PageTitle.vue";
+import SiteTitle from "@/components/SiteTitle.vue";
 
 Chart.register(...registerables);
 
 export default defineComponent({
   name: 'AccessLog',
+  components: { PageTitle, SiteTitle },
   data() {
     return {
       loading: false,

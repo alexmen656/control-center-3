@@ -11,12 +11,8 @@
           </button>
 
           <div class="api-info">
-            <div class="api-icon">
-              <ion-icon :name="api.icon || 'cloud-outline'"></ion-icon>
-            </div>
             <div class="api-details">
-              <h1>{{ api.name }}</h1>
-              <p>{{ api.description }}</p>
+              <PageTitle :icon="api.icon" :title="api.name" />
               <div class="api-meta">
                 <ion-badge :color="getStatusColor('active')" class="status-badge">Active</ion-badge>
                 <span class="version">v{{ api.version }}</span>
@@ -626,13 +622,15 @@ import {
   alertController, toastController
 } from '@ionic/vue';
 import SiteTitle from '@/components/SiteTitle.vue';
+import PageTitle from "@/components/PageTitle.vue";
 
 export default defineComponent({
   name: 'ApiDocumentation',
   components: {
     IonPage, IonContent, IonButton, IonIcon, IonBadge,
     IonModal, IonHeader, IonToolbar, IonButtons, IonTitle, IonSpinner,
-    SiteTitle
+    SiteTitle,
+    PageTitle
   },
   setup() {
     const route = useRoute();

@@ -6,8 +6,7 @@
       <div class="page-container">
         <div class="page-header">
           <div class="header-content">
-            <h1>Store Management</h1>
-            <p>Manage available modules in the store</p>
+            <PageTitle icon="settings-outline" title="Store Management" />
           </div>
           <div class="header-actions">
             <button class="action-btn secondary" @click="loadModules">
@@ -237,11 +236,13 @@
 
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
+import PageTitle from "@/components/PageTitle.vue";
 
 export default {
   name: "ManageStore",
   components: {
     SiteTitle,
+    PageTitle,
   },
   data() {
     return {

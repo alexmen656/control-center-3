@@ -1,6 +1,7 @@
 <template>
   <ion-page>
     <ion-content>
+      <SiteTitle :icon="api.icon" :title="api.name" />
       <ion-grid class="md">
         <ion-row class="md">
           <ion-col size="1"></ion-col>
@@ -11,10 +12,7 @@
                 Back
               </ion-button>
               <div class="api-title">
-                <h1>
-                  <ion-icon :name="api.icon" class="title-icon"></ion-icon>
-                  {{ api.name }}
-                </h1>
+                <PageTitle :icon="api.icon" :title="api.name" />
                 <ion-badge :color="getStatusColor(api.status)">{{ api.status }}</ion-badge>
               </div>
               <div class="api-actions">
@@ -200,6 +198,8 @@ import {
   IonInput, IonTextarea, IonSelect, IonSelectOption, IonSpinner,
   toastController
 } from '@ionic/vue';
+import PageTitle from "@/components/PageTitle.vue";
+import SiteTitle from "@/components/SiteTitle.vue";
 import axios from 'axios';
 
 interface ApiEndpoint {
@@ -242,7 +242,8 @@ export default defineComponent({
     IonPage, IonContent, IonGrid, IonRow, IonCol, IonButton, IonIcon,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonLabel,
     IonBadge, IonModal, IonHeader, IonToolbar, IonButtons, IonTitle,
-    IonInput, IonTextarea, IonSelect, IonSelectOption, IonSpinner
+    IonInput, IonTextarea, IonSelect, IonSelectOption, IonSpinner,
+    PageTitle, SiteTitle
   },
   setup() {
     const route = useRoute();

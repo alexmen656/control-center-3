@@ -5,8 +5,7 @@
       <div class="apis-container">
         <div class="page-header">
           <div class="header-content">
-            <h1>CMS APIs</h1>
-            <p>Browse, subscribe and monitor the APIs provided by your CMS system.</p>
+            <PageTitle icon="cloud-outline" title="CMS APIs" />
           </div>
         </div>
 
@@ -351,6 +350,7 @@ import {
   alertController, toastController
 } from '@ionic/vue';
 import SiteTitle from '@/components/SiteTitle.vue';
+import PageTitle from "@/components/PageTitle.vue";
 import axios from 'axios';
 
 
@@ -411,7 +411,8 @@ export default defineComponent({
     IonPage, IonContent, IonLabel, IonButton,
     IonIcon, IonBadge, IonCheckbox, IonInput, IonToggle,
     IonModal, IonHeader, IonToolbar, IonButtons, IonTitle, IonItem,
-    SiteTitle
+    SiteTitle,
+    PageTitle
   },
   setup() {
     const route = useRoute();
