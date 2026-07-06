@@ -157,7 +157,7 @@ export default defineComponent({
   --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.12);
   --radius: 10px;
   padding: 24px;
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   background: var(--background);
 }

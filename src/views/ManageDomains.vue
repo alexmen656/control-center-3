@@ -586,7 +586,7 @@ async function showToast(message: string, color: string = 'primary') {
 }
 
 .page-container {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 20px;
   min-height: 100vh;
