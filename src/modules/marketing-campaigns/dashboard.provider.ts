@@ -29,11 +29,7 @@ export const marketingCampaignsDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const formData = new FormData();
-          formData.append('action', 'getCampaigns');
-          formData.append('project', params?.project || '');
-          
-          const response = await axios.post('marketing_campaigns.php', formData);
+          const response = await axios.get(`v2/marketing/campaigns?project=${params?.project || ''}`);
           
           const campaigns = response.data.campaigns || [];
           return {
@@ -59,11 +55,7 @@ export const marketingCampaignsDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const formData = new FormData();
-          formData.append('action', 'getCampaigns');
-          formData.append('project', params?.project || '');
-          
-          const response = await axios.post('marketing_campaigns.php', formData);
+          const response = await axios.get(`v2/marketing/campaigns?project=${params?.project || ''}`);
           
           const campaigns = response.data.campaigns || [];
           const activeCampaigns = campaigns.filter((c: any) => c.status === 'active');
@@ -91,11 +83,7 @@ export const marketingCampaignsDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const formData = new FormData();
-          formData.append('action', 'getCampaigns');
-          formData.append('project', params?.project || '');
-          
-          const response = await axios.post('marketing_campaigns.php', formData);
+          const response = await axios.get(`v2/marketing/campaigns?project=${params?.project || ''}`);
           
           const campaigns = response.data.campaigns || [];
           const totalBudget = campaigns.reduce((sum: number, c: any) => sum + (parseFloat(c.budget) || 0), 0);
@@ -123,11 +111,7 @@ export const marketingCampaignsDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const formData = new FormData();
-          formData.append('action', 'getCampaigns');
-          formData.append('project', params?.project || '');
-          
-          const response = await axios.post('marketing_campaigns.php', formData);
+          const response = await axios.get(`v2/marketing/campaigns?project=${params?.project || ''}`);
           
           const campaigns = response.data.campaigns || [];
           const totalSpent = campaigns.reduce((sum: number, c: any) => sum + (parseFloat(c.spent) || 0), 0);
@@ -155,11 +139,7 @@ export const marketingCampaignsDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const formData = new FormData();
-          formData.append('action', 'getCampaigns');
-          formData.append('project', params?.project || '');
-          
-          const response = await axios.post('marketing_campaigns.php', formData);
+          const response = await axios.get(`v2/marketing/campaigns?project=${params?.project || ''}`);
           
           const campaigns = response.data.campaigns || [];
           const totalConversions = campaigns.reduce((sum: number, c: any) => sum + (parseInt(c.conversions) || 0), 0);
@@ -187,11 +167,7 @@ export const marketingCampaignsDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const formData = new FormData();
-          formData.append('action', 'getCampaigns');
-          formData.append('project', params?.project || '');
-          
-          const response = await axios.post('marketing_campaigns.php', formData);
+          const response = await axios.get(`v2/marketing/campaigns?project=${params?.project || ''}`);
           
           const campaigns = response.data.campaigns || [];
           
@@ -243,11 +219,7 @@ export const marketingCampaignsDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const formData = new FormData();
-          formData.append('action', 'getCampaigns');
-          formData.append('project', params?.project || '');
-          
-          const response = await axios.post('marketing_campaigns.php', formData);
+          const response = await axios.get(`v2/marketing/campaigns?project=${params?.project || ''}`);
           
           const campaigns = response.data.campaigns || [];
           
@@ -291,11 +263,7 @@ export const marketingCampaignsDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string; limit?: number }) => {
         try {
-          const formData = new FormData();
-          formData.append('action', 'getCampaigns');
-          formData.append('project', params?.project || '');
-          
-          const response = await axios.post('marketing_campaigns.php', formData);
+          const response = await axios.get(`v2/marketing/campaigns?project=${params?.project || ''}`);
           
           const campaigns = response.data.campaigns || [];
           
@@ -345,11 +313,7 @@ export const marketingCampaignsDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string; limit?: number }) => {
         try {
-          const formData = new FormData();
-          formData.append('action', 'getCampaigns');
-          formData.append('project', params?.project || '');
-          
-          const response = await axios.post('marketing_campaigns.php', formData);
+          const response = await axios.get(`v2/marketing/campaigns?project=${params?.project || ''}`);
           
           const campaigns = response.data.campaigns || [];
           

@@ -482,23 +482,21 @@ async function getProjectDomain(args, context) {
 
 async function connectCodespaceDomain(args, context) {
   try {
-    const params = new URLSearchParams({
-      action: 'connect_domain',
-      codespace_id: args.codespaceId.toString(),
-      user_id: args.userId.toString(),
-      is_main: args.isMain ? 'true' : 'false'
-    });
+    const body = {
+      is_main: args.isMain ? true : false
+    };
 
     if (!args.isMain) {
       if (!args.subdomain) {
         return formatError('subdomain is required when isMain is false');
       }
-      params.append('subdomain', args.subdomain);
+      body.subdomain = args.subdomain;
     }
 
-    const response = await cmsRequest('codespace_connections.php', {
+    const response = await cmsRequest(`v2/codespaces/${args.codespaceId}/domain`, {
       method: 'POST',
-      body: params
+      contentType: 'application/json',
+      body
     }, context);
 
     if (!response.success) {

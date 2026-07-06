@@ -179,10 +179,8 @@ export default defineComponent({
         loading.value = true;
         error.value = null;
         
-        const response = await axios.get('project_templates.php', {
-          params: { action: 'list' }
-        });
-        
+        const response = await axios.get('v2/project-templates');
+
         if (response.data.success && response.data.templates) {
           templates.value = response.data.templates;
         } else {

@@ -346,14 +346,11 @@ export default defineComponent({
   methods: {
     async loadSettings() {
       try {
-        const response = await this.$axios.post(
-          'newsletter.php',
-          this.$qs.stringify({
-            action: 'get_settings',
-            project: this.$route.params.project
-          })
+        const response = await this.$axios.get(
+          'v2/newsletter/settings',
+          { params: { project: this.$route.params.project } }
         );
-        
+
         if (response.data.success && response.data.settings) {
           this.settings = { ...this.settings, ...response.data.settings };
         }
@@ -364,14 +361,11 @@ export default defineComponent({
     
     async loadSmtpSettings() {
       try {
-        const response = await this.$axios.post(
-          'newsletter.php',
-          this.$qs.stringify({
-            action: 'get_smtp',
-            project: this.$route.params.project
-          })
+        const response = await this.$axios.get(
+          'v2/newsletter/smtp',
+          { params: { project: this.$route.params.project } }
         );
-        
+
         if (response.data.success && response.data.smtp) {
           this.smtp = { ...this.smtp, ...response.data.smtp };
         }
@@ -384,15 +378,14 @@ export default defineComponent({
       this.saving = true;
       
       try {
-        const response = await this.$axios.post(
-          'newsletter.php',
-          this.$qs.stringify({
-            action: 'save_settings',
+        const response = await this.$axios.put(
+          'v2/newsletter/settings',
+          {
             project: this.$route.params.project,
             settings: JSON.stringify(this.settings)
-          })
+          }
         );
-        
+
         if (response.data.success) {
           const toast = await toastController.create({
             message: 'Einstellungen gespeichert',
@@ -421,15 +414,14 @@ export default defineComponent({
       this.savingSmtp = true;
       
       try {
-        const response = await this.$axios.post(
-          'newsletter.php',
-          this.$qs.stringify({
-            action: 'save_smtp',
+        const response = await this.$axios.put(
+          'v2/newsletter/smtp',
+          {
             project: this.$route.params.project,
             smtp: JSON.stringify(this.smtp)
-          })
+          }
         );
-        
+
         if (response.data.success) {
           const toast = await toastController.create({
             message: 'SMTP Einstellungen gespeichert',
@@ -459,14 +451,13 @@ export default defineComponent({
       
       try {
         const response = await this.$axios.post(
-          'newsletter.php',
-          this.$qs.stringify({
-            action: 'test_smtp',
+          'v2/newsletter/smtp/test',
+          {
             project: this.$route.params.project,
             smtp: JSON.stringify(this.smtp)
-          })
+          }
         );
-        
+
         if (response.data.success) {
           const toast = await toastController.create({
             message: 'Verbindung erfolgreich! ✓',
@@ -480,9 +471,9 @@ export default defineComponent({
         }
       } catch (error) {
         console.error('Error testing connection:', error);
-        
+
         const toast = await toastController.create({
-          message: error.message || 'Verbindung fehlgeschlagen',
+          message: error.response?.data?.error || error.message || 'Verbindung fehlgeschlagen',
           duration: 5000,
           color: 'danger',
           position: 'top'

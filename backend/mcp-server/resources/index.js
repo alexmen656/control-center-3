@@ -138,7 +138,7 @@ export async function readResource(uri, user, backendUrl) {
         break;
         
       case 'templates':
-        data = await fetchTemplates(backendUrl);
+        data = await fetchTemplates(backendUrl, user);
         break;
         
       case 'apis':
@@ -235,8 +235,10 @@ async function fetchBookmarks(backendUrl) {
   return response.json();
 }
 
-async function fetchTemplates(backendUrl) {
-  const response = await fetch(`${backendUrl}/project_templates.php?action=list`);
+async function fetchTemplates(backendUrl, user) {
+  const response = await fetch(`${backendUrl}/v2/project-templates`, {
+    headers: { 'Authorization': user?.token || '' }
+  });
   return response.json();
 }
 

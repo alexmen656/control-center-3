@@ -332,9 +332,10 @@ async function addUserToProject(args, context) {
 
 async function applyTemplate(args, context) {
   try {
-    const data = await cmsRequest('project_templates.php', {
+    const data = await cmsRequest('v2/project-templates/apply', {
+      method: 'POST',
+      contentType: 'application/json',
       body: {
-        action: 'apply',
         template_id: args.templateId,
         project_name: args.projectName,
         project_icon: args.projectIcon || 'folder-outline'
@@ -353,11 +354,8 @@ async function applyTemplate(args, context) {
 
 async function listTemplates(context) {
   try {
-    const response = await fetch(`${context.backendUrl}/project_templates.php?action=list`, {
-      headers: { 'Authorization': context.token }
-    });
-    const data = await response.json();
-    
+    const data = await cmsRequest('v2/project-templates', { method: 'GET' }, context);
+
     return formatResponse({
       success: true,
       templates: data.templates || data

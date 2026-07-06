@@ -327,14 +327,11 @@ export default defineComponent({
   methods: {
     async loadStats() {
       try {
-        const response = await this.$axios.post(
-          'newsletter.php',
-          this.$qs.stringify({
-            action: 'get_stats',
-            project: this.$route.params.project
-          })
+        const response = await this.$axios.get(
+          'v2/newsletter/stats',
+          { params: { project: this.$route.params.project } }
         );
-        
+
         if (response.data.success) {
           this.stats = response.data.stats;
         }
@@ -345,15 +342,16 @@ export default defineComponent({
     
     async loadRecentNewsletters() {
       try {
-        const response = await this.$axios.post(
-          'newsletter.php',
-          this.$qs.stringify({
-            action: 'get_recent',
-            project: this.$route.params.project,
-            limit: 5
-          })
+        const response = await this.$axios.get(
+          'v2/newsletter/recent',
+          {
+            params: {
+              project: this.$route.params.project,
+              limit: 5
+            }
+          }
         );
-        
+
         if (response.data.success) {
           this.recentNewsletters = response.data.newsletters || [];
         }
@@ -369,17 +367,16 @@ export default defineComponent({
       
       try {
         const response = await this.$axios.post(
-          'newsletter.php',
-          this.$qs.stringify({
-            action: 'send',
+          'v2/newsletter/send',
+          {
             project: this.$route.params.project,
             subject: this.subject,
             email: this.email,
             recipients: this.recipients,
             test_mode: this.sendTestEmail
-          })
+          }
         );
-        
+
         if (response.data.success) {
           const toast = await toastController.create({
             message: response.data.message || 'Newsletter erfolgreich gesendet!',
@@ -397,9 +394,9 @@ export default defineComponent({
         }
       } catch (error) {
         console.error('Error sending newsletter:', error);
-        
+
         const toast = await toastController.create({
-          message: error.message || 'Fehler beim Senden des Newsletters',
+          message: error.response?.data?.error || error.message || 'Fehler beim Senden des Newsletters',
           duration: 5000,
           color: 'danger',
           position: 'top'
@@ -454,15 +451,11 @@ export default defineComponent({
             role: 'destructive',
             handler: async () => {
               try {
-                const response = await this.$axios.post(
-                  'newsletter.php',
-                  this.$qs.stringify({
-                    action: 'delete',
-                    project: this.$route.params.project,
-                    id: id
-                  })
+                const response = await this.$axios.delete(
+                  'v2/newsletter/' + id,
+                  { params: { project: this.$route.params.project } }
                 );
-                
+
                 if (response.data.success) {
                   const toast = await toastController.create({
                     message: 'Newsletter gelöscht',

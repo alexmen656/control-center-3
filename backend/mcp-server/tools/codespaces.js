@@ -274,9 +274,7 @@ export const codespaceTools = [
 ];
 
 async function fetchCodespaces(args, context) {
-  const data = await cmsRequest('project_codespaces.php', {
-    body: { getCodespaces: 'true', project: args.project }
-  }, context);
+  const data = await cmsRequest('v2/codespaces?project=' + enc(args.project), { method: 'GET' }, context);
   if (Array.isArray(data?.codespaces)) return data.codespaces;
   if (Array.isArray(data)) return data;
   return [];
@@ -353,9 +351,10 @@ export async function handleCodespaceTool(toolName, args, context) {
 
 async function createCodespace(args, context) {
   try {
-    const data = await cmsRequest('project_codespaces.php', {
+    const data = await cmsRequest('v2/codespaces', {
+      method: 'POST',
+      contentType: 'application/json',
       body: {
-        createCodespace: 'true',
         project: args.project,
         name: args.name,
         description: args.description || '',
@@ -576,16 +575,16 @@ async function listDeployments(args, context) {
 
 async function publishAsApi(args, context) {
   try {
-    const data = await cmsRequest('codespace_apis.php', {
-      body: {
-        publishCodespaceAsAPI: 'true',
-        project: args.project,
-        codespace: args.codespace,
-        name: args.name || '',
-        slug: args.slug || '',
-        description: args.description || '',
-        rate_limit: String(args.rate_limit || 60)
-      }
+    const body = { project: args.project, codespace: args.codespace };
+    if (args.name) body.name = args.name;
+    if (args.slug) body.slug = args.slug;
+    if (args.description) body.description = args.description;
+    if (args.rate_limit) body.rate_limit = args.rate_limit;
+
+    const data = await cmsRequest('v2/codespace-apis/publish', {
+      method: 'POST',
+      contentType: 'application/json',
+      body
     }, context);
     return backendResult(data);
   } catch (error) {
@@ -595,9 +594,10 @@ async function publishAsApi(args, context) {
 
 async function unpublishApi(args, context) {
   try {
-    const data = await cmsRequest('codespace_apis.php', {
+    const data = await cmsRequest('v2/codespace-apis/unpublish', {
+      method: 'POST',
+      contentType: 'application/json',
       body: {
-        unpublishCodespaceAPI: 'true',
         project: args.project,
         codespace: args.codespace
       }
@@ -610,9 +610,10 @@ async function unpublishApi(args, context) {
 
 async function syncApiKeys(args, context) {
   try {
-    const data = await cmsRequest('codespace_apis.php', {
+    const data = await cmsRequest('v2/codespace-apis/sync', {
+      method: 'POST',
+      contentType: 'application/json',
       body: {
-        syncCodespaceAPIKeysToVercel: 'true',
         project: args.project,
         codespace: args.codespace
       }

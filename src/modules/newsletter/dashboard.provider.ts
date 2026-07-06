@@ -5,7 +5,6 @@
  */
 
 import axios from 'axios';
-import qs from 'qs';
 import type { ModuleDashboardProvider } from '@/types/dashboard.types';
 
 /**
@@ -31,12 +30,9 @@ export const newsletterDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const response = await axios.post(
-            'newsletter.php',
-            qs.stringify({
-              action: 'get_stats',
-              project: params?.project || ''
-            })
+          const response = await axios.get(
+            'v2/newsletter/stats',
+            { params: { project: params?.project || '' } }
           );
           
           return {
@@ -62,12 +58,9 @@ export const newsletterDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const response = await axios.post(
-            'newsletter.php',
-            qs.stringify({
-              action: 'get_stats',
-              project: params?.project || ''
-            })
+          const response = await axios.get(
+            'v2/newsletter/stats',
+            { params: { project: params?.project || '' } }
           );
           
           return {
@@ -93,12 +86,9 @@ export const newsletterDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const response = await axios.post(
-            'newsletter.php',
-            qs.stringify({
-              action: 'get_stats',
-              project: params?.project || ''
-            })
+          const response = await axios.get(
+            'v2/newsletter/stats',
+            { params: { project: params?.project || '' } }
           );
           
           return {
@@ -124,12 +114,9 @@ export const newsletterDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const response = await axios.post(
-            'newsletter.php',
-            qs.stringify({
-              action: 'get_stats',
-              project: params?.project || ''
-            })
+          const response = await axios.get(
+            'v2/newsletter/stats',
+            { params: { project: params?.project || '' } }
           );
           
           return {
@@ -155,14 +142,15 @@ export const newsletterDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string; limit?: number; offset?: number }) => {
         try {
-          const response = await axios.post(
-            'newsletter.php',
-            qs.stringify({
-              action: 'get_recent',
-              project: params?.project || '',
-              limit: params?.limit || 10,
-              offset: params?.offset || 0
-            })
+          const response = await axios.get(
+            'v2/newsletter/recent',
+            {
+              params: {
+                project: params?.project || '',
+                limit: params?.limit || 10,
+                offset: params?.offset || 0
+              }
+            }
           );
           
           const newsletters = response.data.newsletters || [];
@@ -200,13 +188,14 @@ export const newsletterDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string; period?: string }) => {
         try {
-          const response = await axios.post(
-            'newsletter.php',
-            qs.stringify({
-              action: 'get_performance',
-              project: params?.project || '',
-              period: params?.period || '30d'
-            })
+          const response = await axios.get(
+            'v2/newsletter/performance',
+            {
+              params: {
+                project: params?.project || '',
+                period: params?.period || '30d'
+              }
+            }
           );
           
           const data = response.data.performance || [];

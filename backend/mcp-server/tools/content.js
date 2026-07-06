@@ -386,22 +386,26 @@ async function listNewsletterSubscribers(args, context) {
 async function sendNewsletter(args, context) {
   try {
     const body = {
-      sendNewsletter: 'true',
       project: args.project,
       subject: args.subject,
-      content: args.content
+      email: args.content
     };
-    
+
     if (args.testEmail) {
-      body.testEmail = args.testEmail;
+      body.recipients = args.testEmail;
+      body.test_mode = true;
     }
-    
-    const data = await cmsRequest('newsletter.php', { body }, context);
-    
+
+    const data = await cmsRequest('v2/newsletter/send', {
+      method: 'POST',
+      contentType: 'application/json',
+      body
+    }, context);
+
     return formatResponse({
       success: true,
       message: data.message || 'Newsletter sent successfully',
-      sentCount: data.sentCount
+      sentCount: data.sent
     });
   } catch (error) {
     return formatError(error.message);

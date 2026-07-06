@@ -545,7 +545,7 @@ export default {
       this.error = null;
       
       try {
-        const response = await this.$axios.get(`marketing_campaigns.php?project=${this.$route.params.project}`);
+        const response = await this.$axios.get(`v2/marketing/campaigns?project=${this.$route.params.project}`);
         this.campaigns = response.data.campaigns || [];
         this.calculateStats();
         this.filteredCampaigns = [...this.campaigns];
@@ -675,16 +675,15 @@ export default {
       try {
         const data = {
           ...this.campaignForm,
-          project: this.$route.params.project,
-          action: this.editingCampaign ? 'update' : 'create'
+          project: this.$route.params.project
         };
-        
+
         if (this.editingCampaign) {
-          data.id = this.editingCampaign.id;
+          await this.$axios.put(`v2/marketing/campaigns/${this.editingCampaign.id}`, data);
+        } else {
+          await this.$axios.post('v2/marketing/campaigns', data);
         }
-        
-        await this.$axios.post('marketing_campaigns.php', this.$qs.stringify(data));
-        
+
         this.closeCampaignForm();
         this.loadCampaigns();
       } catch (error) {
@@ -701,12 +700,8 @@ export default {
       }
       
       try {
-        await this.$axios.post('marketing_campaigns.php', this.$qs.stringify({
-          action: 'delete',
-          id: campaignId,
-          project: this.$route.params.project
-        }));
-        
+        await this.$axios.delete(`v2/marketing/campaigns/${campaignId}?project=${this.$route.params.project}`);
+
         this.loadCampaigns();
       } catch (error) {
         console.error('Error deleting campaign:', error);
@@ -716,13 +711,11 @@ export default {
     
     async pauseCampaign(campaignId) {
       try {
-        await this.$axios.post('marketing_campaigns.php', this.$qs.stringify({
-          action: 'update_status',
-          id: campaignId,
+        await this.$axios.put(`v2/marketing/campaigns/${campaignId}/status`, {
           status: 'paused',
           project: this.$route.params.project
-        }));
-        
+        });
+
         this.loadCampaigns();
       } catch (error) {
         console.error('Error pausing campaign:', error);
@@ -731,13 +724,11 @@ export default {
     
     async resumeCampaign(campaignId) {
       try {
-        await this.$axios.post('marketing_campaigns.php', this.$qs.stringify({
-          action: 'update_status',
-          id: campaignId,
+        await this.$axios.put(`v2/marketing/campaigns/${campaignId}/status`, {
           status: 'active',
           project: this.$route.params.project
-        }));
-        
+        });
+
         this.loadCampaigns();
       } catch (error) {
         console.error('Error resuming campaign:', error);

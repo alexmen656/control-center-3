@@ -141,13 +141,12 @@ export default defineComponent({
 
       try {
         const response = await this.$axios.post(
-          "project_templates.php",
-          this.$qs.stringify({
-            action: "apply",
+          "v2/project-templates/apply",
+          {
             template_id: this.selectedTemplateId,
             project_name: this.name,
             project_icon: this.icon || "folder-outline"
-          })
+          }
         );
         if (response.data.success) {
           this.showSuccess("Project created successfully from template!");
