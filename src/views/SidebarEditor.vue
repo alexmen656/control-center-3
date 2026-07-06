@@ -165,7 +165,6 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted } from "vue";
 import axios from "axios";
-import qs from "qs";
 import { useRoute } from "vue-router";
 import {
     IonPage,
@@ -288,11 +287,11 @@ export default defineComponent({
                 // Filter uncategorized forms (forms without section_id)
                 // Handle null, undefined, 0, empty string, or "null" string
                 const allForms = sidebarResponse.data.forms || [];
-                uncategorizedForms.value = allForms.filter((f: Form) => 
-                    f.section_id === null || 
-                    f.section_id === undefined || 
-                    f.section_id === 0 || 
-                    f.section_id === '' || 
+                uncategorizedForms.value = allForms.filter((f: Form) =>
+                    f.section_id === null ||
+                    f.section_id === undefined ||
+                    f.section_id === 0 ||
+                    f.section_id === '' ||
                     f.section_id === 'null' ||
                     f.section_id === '0'
                 );
@@ -301,7 +300,7 @@ export default defineComponent({
 
                 // Load templates
                 const templatesResponse = await axios.get(
-                    `sidebar_sections.php?templates=1`
+                    `v2/sidebar/section-templates`
                 );
                 sectionTemplates.value = templatesResponse.data.templates || [];
             } catch (error) {
@@ -342,13 +341,12 @@ export default defineComponent({
                                 return false;
                             }
                             try {
-                                await axios.post("sidebar_sections.php", qs.stringify({
-                                    createSection: true,
+                                await axios.post("v2/sidebar/sections", {
                                     project: route.params.project,
                                     name: data.name,
                                     icon: data.icon || 'folder-outline',
                                     add_button_route: data.add_button_route
-                                }));
+                                });
                                 await loadData();
                                 showToast('Section created', 'success');
                             } catch (error) {
@@ -363,13 +361,12 @@ export default defineComponent({
 
         const createFromTemplate = async (template: SectionTemplate) => {
             try {
-                await axios.post("sidebar_sections.php", qs.stringify({
-                    createSection: true,
+                await axios.post("v2/sidebar/sections", {
                     project: route.params.project,
                     name: template.name,
                     icon: template.icon,
                     slug: template.slug
-                }));
+                });
                 await loadData();
                 showToast(`Section "${template.name}" created`, 'success');
             } catch (error) {
@@ -393,16 +390,14 @@ export default defineComponent({
                         text: 'Save',
                         handler: async (data) => {
                             try {
-                                await axios.post("sidebar_sections.php", qs.stringify({
-                                    updateSection: true,
+                                await axios.put(`v2/sidebar/sections/${section.id}`, {
                                     project: route.params.project,
-                                    section_id: section.id,
                                     name: data.name,
                                     icon: data.icon,
                                     add_button_route: data.add_button_route,
                                     info_route: data.info_route,
                                     manage_route: data.manage_route
-                                }));
+                                });
                                 await loadData();
                                 showToast('Section updated', 'success');
                             } catch (error) {
@@ -426,11 +421,7 @@ export default defineComponent({
                         role: 'destructive',
                         handler: async () => {
                             try {
-                                await axios.post("sidebar_sections.php", qs.stringify({
-                                    deleteSection: true,
-                                    project: route.params.project,
-                                    section_id: section.id
-                                }));
+                                await axios.delete(`v2/sidebar/sections/${section.id}?project=${route.params.project}`);
                                 await loadData();
                                 showToast('Section deleted', 'success');
                             } catch (error) {
@@ -450,11 +441,10 @@ export default defineComponent({
             sections.value.splice(to, 0, movedSection);
             const order = sections.value.map(s => s.id);
             try {
-                await axios.post("sidebar_sections.php", qs.stringify({
-                    reorderSections: true,
+                await axios.post("v2/sidebar/sections/reorder", {
                     project: route.params.project,
-                    order: JSON.stringify(order)
-                }));
+                    order: order
+                });
             } catch (error) {
                 console.error("Error saving order:", error);
             }
@@ -470,12 +460,10 @@ export default defineComponent({
                 section.tools.splice(to, 0, movedTool);
                 // Save tool order
                 try {
-                    await axios.post("sidebar_sections.php", qs.stringify({
-                        reorderToolsInSection: true,
+                    await axios.post(`v2/sidebar/sections/${sectionId}/tools/reorder`, {
                         project: route.params.project,
-                        section_id: sectionId,
-                        tool_order: JSON.stringify(section.tools.map(t => t.id))
-                    }));
+                        tool_order: section.tools.map(t => t.id)
+                    });
                 } catch (error) {
                     console.error("Error saving tool order:", error);
                 }
@@ -485,13 +473,12 @@ export default defineComponent({
 
         const updateTool = async (tool: Tool) => {
             try {
-                await axios.post("update_sidebar.php", qs.stringify({
+                await axios.post("v2/sidebar/tools/update", {
                     project: route.params.project,
-                    updateTool: true,
                     tool_id: tool.id,
                     name: tool.name,
                     icon: tool.icon
-                }));
+                });
             } catch (error) {
                 console.error("Error updating tool:", error);
             }
@@ -514,12 +501,11 @@ export default defineComponent({
                         handler: async (sectionId) => {
                             if (sectionId) {
                                 try {
-                                    await axios.post("sidebar_sections.php", qs.stringify({
-                                        assignToolToSection: true,
+                                    await axios.post("v2/sidebar/assign-tool", {
                                         project: route.params.project,
                                         tool_id: tool.id,
                                         section_id: sectionId
-                                    }));
+                                    });
                                     await loadData();
                                     showToast('Tool moved', 'success');
                                 } catch (error) {
@@ -535,12 +521,10 @@ export default defineComponent({
 
         const updateFormIcon = async (form: any) => {
             try {
-                await axios.post("sidebar_sections.php", qs.stringify({
-                    updateFormSidebar: true,
+                await axios.put(`v2/sidebar/forms/${form.form_id}`, {
                     project: route.params.project,
-                    form_id: form.form_id,
                     icon: form.icon
-                }));
+                });
                 showToast('Icon updated', 'success');
             } catch (error) {
                 console.error("Error updating form icon:", error);
@@ -581,16 +565,15 @@ export default defineComponent({
                         text: 'Move',
                         handler: async (sectionId) => {
                             try {
-                                const endpoint = item.item_type === 'tool' ? 'assignToolToSection' : 'assignFormToSection';
+                                const path = item.item_type === 'tool' ? 'assign-tool' : 'assign-form';
                                 const idField = item.item_type === 'tool' ? 'tool_id' : 'form_id';
                                 const itemId = item.item_type === 'tool' ? item.id : item.form_id;
 
-                                await axios.post("sidebar_sections.php", qs.stringify({
-                                    [endpoint]: true,
+                                await axios.post(`v2/sidebar/${path}`, {
                                     project: route.params.project,
                                     [idField]: itemId,
                                     section_id: sectionId || 0
-                                }));
+                                });
                                 await loadData();
                                 showToast('Item moved', 'success');
                             } catch (error) {
@@ -621,12 +604,10 @@ export default defineComponent({
                 }));
 
                 try {
-                    await axios.post("sidebar_sections.php", qs.stringify({
-                        reorderSectionItems: true,
+                    await axios.post(`v2/sidebar/sections/${sectionId}/items/reorder`, {
                         project: route.params.project,
-                        section_id: sectionId,
-                        item_order: JSON.stringify(itemOrder)
-                    }));
+                        item_order: itemOrder
+                    });
                 } catch (error) {
                     console.error("Error saving item order:", error);
                 }
@@ -643,12 +624,11 @@ export default defineComponent({
         const assignToolToSection = async (toolId: number, event: CustomEvent) => {
             const sectionId = event.detail.value;
             try {
-                await axios.post("sidebar_sections.php", qs.stringify({
-                    assignToolToSection: true,
+                await axios.post("v2/sidebar/assign-tool", {
                     project: route.params.project,
                     tool_id: toolId,
                     section_id: sectionId
-                }));
+                });
                 await loadData();
                 showToast('Tool assigned to section', 'success');
             } catch (error) {
@@ -660,12 +640,11 @@ export default defineComponent({
         const assignFormToSection = async (formId: number, event: CustomEvent) => {
             const sectionId = event.detail.value;
             try {
-                await axios.post("sidebar_sections.php", qs.stringify({
-                    assignFormToSection: true,
+                await axios.post("v2/sidebar/assign-form", {
                     project: route.params.project,
                     form_id: formId,
                     section_id: sectionId
-                }));
+                });
                 await loadData();
                 showToast('Table assigned to section', 'success');
             } catch (error) {

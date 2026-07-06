@@ -397,12 +397,10 @@ export default defineComponent({
         }));
 
         try {
-          await axios.post("sidebar_sections.php", qs.stringify({
-            reorderSectionItems: true,
+          await axios.post(`v2/sidebar/sections/${sectionId}/items/reorder`, {
             project: route.params.project,
-            section_id: sectionId,
-            item_order: JSON.stringify(itemOrder)
-          }));
+            item_order: itemOrder
+          });
         } catch (error) {
           console.error("Error saving item order:", error);
         }
@@ -467,12 +465,10 @@ export default defineComponent({
         const toolIds = section.tools.map(t => t.id);
 
         try {
-          await axios.post("sidebar_sections.php", qs.stringify({
-            reorderToolsInSection: true,
+          await axios.post(`v2/sidebar/sections/${sectionId}/tools/reorder`, {
             project: route.params.project,
-            section_id: sectionId,
-            tool_order: JSON.stringify(toolIds)
-          }));
+            tool_order: toolIds
+          });
         } catch (error) {
           console.error("Error saving tool order:", error);
         }

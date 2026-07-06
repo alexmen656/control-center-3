@@ -13,3 +13,4 @@ require_once __DIR__ . '/forms.routes.php';
 require_once __DIR__ . '/filesystem.routes.php';
 require_once __DIR__ . '/codespaces.routes.php';
 require_once __DIR__ . '/codespace-apis.routes.php';
+require_once __DIR__ . '/sidebar.routes.php';
