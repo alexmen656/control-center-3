@@ -2,27 +2,19 @@
   <ion-page>
     <ion-content class="modern-content">
       <SiteTitle icon="code-outline" title="Codespaces" />
-
       <div class="page-container">
-        <!-- Page Header -->
         <div class="page-header">
           <div class="header-content">
             <h1>Codespaces</h1>
             <p>Verwalten Sie Ihre Entwicklungsumgebungen für dieses Projekt</p>
           </div>
           <div class="header-actions">
-            <button class="action-btn secondary" @click="loadCodespaces">
-              <ion-icon name="refresh-outline"></ion-icon>
-              Aktualisieren
-            </button>
             <button class="action-btn primary" @click="createNewCodespace">
               <ion-icon name="add-outline"></ion-icon>
               Neuer Codespace
             </button>
           </div>
         </div>
-
-        <!-- Codespaces Table -->
         <div class="data-card">
           <div class="card-header">
             <div class="header-left">
@@ -34,106 +26,88 @@
               <input type="text" placeholder="Codespaces durchsuchen..." v-model="searchTerm">
             </div>
           </div>
-
           <div class="table-wrapper">
-            <!-- Loading State -->
             <div v-if="loading" class="loading-state">
               <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
               <p>Codespaces werden geladen...</p>
             </div>
-
-            <!-- Empty State -->
             <div v-else-if="filteredCodespaces.length === 0" class="no-data-state">
               <div class="no-data-content">
                 <ion-icon name="code-slash-outline" class="no-data-icon"></ion-icon>
                 <h4>Keine Codespaces gefunden</h4>
-                <p>{{ searchTerm ? 'Keine Codespaces entsprechen Ihrer Suche.' : 'Erstellen Sie Ihren ersten Codespace, um mit der Entwicklung zu beginnen.' }}</p>
+                <p>{{ searchTerm ? 'Keine Codespaces entsprechen Ihrer Suche.' : `Erstellen Sie Ihren ersten Codespace,
+                  um mit der Entwicklung zu beginnen.` }}</p>
               </div>
             </div>
-
-            <!-- Table -->
             <div v-else class="modern-table">
-              <!-- Table Header -->
               <div class="table-header">
                 <div class="header-cell" @click="sortBy('name')">
                   <span class="header-text">Name</span>
                   <div class="sort-indicator">
-                    <ion-icon v-if="sortColumn === 'name' && sortDirection === 'asc'" name="chevron-up-outline" class="sort-active"></ion-icon>
-                    <ion-icon v-else-if="sortColumn === 'name' && sortDirection === 'desc'" name="chevron-down-outline" class="sort-active"></ion-icon>
+                    <ion-icon v-if="sortColumn === 'name' && sortDirection === 'asc'" name="chevron-up-outline"
+                      class="sort-active"></ion-icon>
+                    <ion-icon v-else-if="sortColumn === 'name' && sortDirection === 'desc'" name="chevron-down-outline"
+                      class="sort-active"></ion-icon>
                     <ion-icon v-else name="swap-vertical-outline" class="sort-default"></ion-icon>
                   </div>
                 </div>
                 <div class="header-cell">
-                  <span class="header-text">Verbindungen</span>
+                  <span class="header-text">Connections</span>
                 </div>
                 <div class="header-cell" @click="sortBy('language')">
-                  <span class="header-text">Sprache</span>
+                  <span class="header-text">Language</span>
                   <div class="sort-indicator">
-                    <ion-icon v-if="sortColumn === 'language' && sortDirection === 'asc'" name="chevron-up-outline" class="sort-active"></ion-icon>
-                    <ion-icon v-else-if="sortColumn === 'language' && sortDirection === 'desc'" name="chevron-down-outline" class="sort-active"></ion-icon>
+                    <ion-icon v-if="sortColumn === 'language' && sortDirection === 'asc'" name="chevron-up-outline"
+                      class="sort-active"></ion-icon>
+                    <ion-icon v-else-if="sortColumn === 'language' && sortDirection === 'desc'"
+                      name="chevron-down-outline" class="sort-active"></ion-icon>
                     <ion-icon v-else name="swap-vertical-outline" class="sort-default"></ion-icon>
                   </div>
                 </div>
                 <div class="header-cell" @click="sortBy('created_at')">
-                  <span class="header-text">Erstellt</span>
+                  <span class="header-text">Created</span>
                   <div class="sort-indicator">
-                    <ion-icon v-if="sortColumn === 'created_at' && sortDirection === 'asc'" name="chevron-up-outline" class="sort-active"></ion-icon>
-                    <ion-icon v-else-if="sortColumn === 'created_at' && sortDirection === 'desc'" name="chevron-down-outline" class="sort-active"></ion-icon>
+                    <ion-icon v-if="sortColumn === 'created_at' && sortDirection === 'asc'" name="chevron-up-outline"
+                      class="sort-active"></ion-icon>
+                    <ion-icon v-else-if="sortColumn === 'created_at' && sortDirection === 'desc'"
+                      name="chevron-down-outline" class="sort-active"></ion-icon>
                     <ion-icon v-else name="swap-vertical-outline" class="sort-default"></ion-icon>
                   </div>
                 </div>
-                <div class="header-cell actions-header">Aktionen</div>
+                <div class="header-cell actions-header">Actions</div>
               </div>
-
-              <!-- Table Body -->
               <div class="table-body">
                 <div v-for="codespace in filteredCodespaces" :key="codespace.id" class="table-row">
-                  <!-- Name -->
                   <div class="table-cell cell-name">
                     <div class="codespace-name-cell">
                       <ion-icon :name="codespace.icon" class="codespace-icon"></ion-icon>
                       <div class="codespace-details">
                         <span class="name">{{ codespace.name }}</span>
-                        <span class="description">{{ codespace.description || 'Keine Beschreibung' }}</span>
+                        <span class="description">{{ codespace.description || 'No description' }}</span>
                       </div>
                     </div>
                   </div>
-
-                  <!-- Connections -->
                   <div class="table-cell cell-connections">
                     <div class="connections-chips">
-                      <span v-if="codespace.connections?.github" class="connection-badge github">
-                        <ion-icon name="logo-github"></ion-icon>
-                        GitHub
-                      </span>
-                      <span v-if="codespace.connections?.vercel" class="connection-badge vercel">
-                        <ion-icon name="triangle"></ion-icon>
-                        Vercel
-                      </span>
                       <span v-if="codespace.connections?.domain" class="connection-badge domain">
                         <ion-icon name="globe"></ion-icon>
                         Domain
                       </span>
-                      <span v-if="!codespace.connections?.github && !codespace.connections?.vercel && !codespace.connections?.domain" class="no-connections">
-                        Keine Verbindungen
+                      <span v-if="!codespace.connections?.domain" class="no-connections">
+                        No connections
                       </span>
                     </div>
                   </div>
-
-                  <!-- Language -->
                   <div class="table-cell cell-language">
                     <span class="language-badge">{{ codespace.language }}</span>
                   </div>
-
-                  <!-- Created Date -->
                   <div class="table-cell cell-date">
                     <span class="date-text">{{ formatDate(codespace.created_at) }}</span>
                   </div>
-
-                  <!-- Actions -->
                   <div class="table-cell cell-actions">
                     <div class="action-buttons">
-                      <button class="icon-btn open-btn" @click="$router.push('/project/' + $route.params.project + '/codespace/' + codespace.slug)">
+                      <button class="icon-btn open-btn"
+                        @click="$router.push('/project/' + $route.params.project + '/codespace/' + codespace.slug)">
                         <ion-icon name="code-outline"></ion-icon>
                       </button>
                       <button class="icon-btn settings-btn" @click="openSettings(codespace)">
@@ -155,401 +129,241 @@
             </div>
           </div>
         </div>
-
-      <!-- Create/Edit Modal -->
-      <div v-if="showModal" class="custom-modal-overlay" @click="closeModal">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>{{ editingCodespace ? 'Codespace bearbeiten' : 'Neuer Codespace' }}</h3>
-            <button class="modal-close-btn" @click="closeModal">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
-          </div>
-          
-          <div class="custom-modal-body">
-            <div class="form-grid">
-              <div class="form-group full-width">
-                <label class="form-label">Name *</label>
-                <input type="text" class="form-input" v-model="formData.name" placeholder="z.B. Frontend App">
-              </div>
-
-              <div class="form-group full-width">
-                <label class="form-label">Beschreibung</label>
-                <textarea class="form-input" v-model="formData.description" placeholder="Beschreibung des Codespaces" rows="3"></textarea>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Sprache</label>
-                <select class="form-input" v-model="formData.language">
-                  <option value="javascript">JavaScript</option>
-                  <option value="typescript">TypeScript</option>
-                  <option value="python">Python</option>
-                  <option value="php">PHP</option>
-                  <option value="html">HTML</option>
-                  <option value="css">CSS</option>
-                  <option value="vue">Vue.js</option>
-                  <option value="react">React</option>
-                  <option value="angular">Angular</option>
-                  <option value="other">Andere</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Icon</label>
-                <select class="form-input" v-model="formData.icon">
-                  <option value="code-outline">Code</option>
-                  <option value="globe-outline">Web</option>
-                  <option value="phone-portrait-outline">Mobile</option>
-                  <option value="server-outline">Server</option>
-                  <option value="library-outline">Library</option>
-                  <option value="build-outline">Build</option>
-                </select>
-              </div>
-
-              <div class="form-group full-width">
-                <label class="form-label">Template</label>
-                <select class="form-input" v-model="formData.template">
-                  <option v-for="template in availableTemplates" :key="template.id" :value="template.id">
-                    {{ template.name }}
-                  </option>
-                </select>
-              </div>
-
-              <!-- Template Preview -->
-              <div v-if="formData.template && getSelectedTemplate()" class="template-preview full-width">
-                <div class="template-info">
-                  <ion-icon :name="getSelectedTemplate().icon" class="template-icon"></ion-icon>
-                  <div>
-                    <h4>{{ getSelectedTemplate().name }}</h4>
-                    <p>{{ getSelectedTemplate().description }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Auto-create options only for new codespaces -->
-              <div v-if="!editingCodespace" class="auto-create-section full-width">
-                <div class="checkbox-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" v-model="formData.createGithubRepo">
-                    <span>Automatisch GitHub Repository erstellen</span>
-                  </label>
-                </div>
-                
-                <div class="checkbox-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" v-model="formData.createVercelProject">
-                    <span>Automatisch Vercel Projekt erstellen</span>
-                  </label>
-                </div>
-                
-                <p class="form-note">Vercel Projekt benötigt ein GitHub Repository</p>
-              </div>
-            </div>
-
-            <div class="form-actions">
-              <button class="action-btn secondary" @click="closeModal">
-                Abbrechen
-              </button>
-              <button class="action-btn primary" @click="saveCodespace" :disabled="!formData.name">
-                {{ editingCodespace ? 'Aktualisieren' : 'Erstellen' }}
+        <div v-if="showModal" class="custom-modal-overlay" @click="closeModal">
+          <div class="custom-modal-content" @click.stop>
+            <div class="custom-modal-header">
+              <h3>{{ editingCodespace ? 'Codespace bearbeiten' : 'Neuer Codespace' }}</h3>
+              <button class="modal-close-btn" @click="closeModal">
+                <ion-icon name="close-outline"></ion-icon>
               </button>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Settings Modal -->
-      <div v-if="showSettingsModal" class="custom-modal-overlay" @click="closeSettingsModal">
-        <div class="custom-modal-content large" @click.stop>
-          <div class="custom-modal-header">
-            <h3>Codespace Einstellungen</h3>
-            <button class="modal-close-btn" @click="closeSettingsModal">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
-          </div>
-          
-          <div class="custom-modal-body">
-            <div v-if="selectedCodespace" class="settings-content">
-              <div class="settings-header">
-                <h2>{{ selectedCodespace.name }}</h2>
-                <p>Verwalten Sie GitHub und Vercel Verbindungen</p>
-              </div>
-
-              <!-- GitHub Section -->
-              <div class="connection-section">
-                <div class="section-header">
-                  <ion-icon name="logo-github"></ion-icon>
-                  <h3>GitHub Repository</h3>
+            <div class="custom-modal-body">
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label class="form-label">Name *</label>
+                  <input type="text" class="form-input" v-model="formData.name" placeholder="z.B. Frontend App">
                 </div>
-                
-                <div v-if="connections.github" class="connected-item">
-                  <div class="connection-info">
-                    <h4>{{ connections.github.repo_full_name }}</h4>
-                    <p>Repository ID: {{ connections.github.repo_id }}</p>
-                  </div>
-                  <button class="action-btn danger" @click="disconnectGithub">
-                    <ion-icon name="unlink-outline"></ion-icon>
-                    Trennen
-                  </button>
+                <div class="form-group full-width">
+                  <label class="form-label">Beschreibung</label>
+                  <textarea class="form-input" v-model="formData.description" placeholder="Beschreibung des Codespaces"
+                    rows="3"></textarea>
                 </div>
-                
-                <div v-else class="not-connected">
-                  <p>Kein GitHub Repository verbunden</p>
-                  <div class="connection-actions">
-                    <button class="action-btn primary" @click="createGithubRepo">
-                      <ion-icon name="add-outline"></ion-icon>
-                      Neues Repo erstellen
-                    </button>
-                    <button class="action-btn secondary" @click="showGithubRepos">
-                      <ion-icon name="link-outline"></ion-icon>
-                      Vorhandenes verbinden
-                    </button>
-                  </div>
+                <div class="form-group">
+                  <label class="form-label">Sprache</label>
+                  <select class="form-input" v-model="formData.language">
+                    <option value="javascript">JavaScript</option>
+                    <option value="typescript">TypeScript</option>
+                    <option value="python">Python</option>
+                    <option value="php">PHP</option>
+                    <option value="html">HTML</option>
+                    <option value="css">CSS</option>
+                    <option value="vue">Vue.js</option>
+                    <option value="react">React</option>
+                    <option value="angular">Angular</option>
+                    <option value="other">Andere</option>
+                  </select>
                 </div>
-              </div>
-
-              <!-- Vercel Section -->
-              <div class="connection-section">
-                <div class="section-header">
-                  <ion-icon name="triangle-outline"></ion-icon>
-                  <h3>Vercel Projekt</h3>
+                <div class="form-group">
+                  <label class="form-label">Icon</label>
+                  <select class="form-input" v-model="formData.icon">
+                    <option value="code-outline">Code</option>
+                    <option value="globe-outline">Web</option>
+                    <option value="phone-portrait-outline">Mobile</option>
+                    <option value="server-outline">Server</option>
+                    <option value="library-outline">Library</option>
+                    <option value="build-outline">Build</option>
+                  </select>
                 </div>
-                
-                <div v-if="connections.vercel" class="connected-item">
-                  <div class="connection-info">
-                    <h4>{{ connections.vercel.vercel_project_name }}</h4>
-                    <p>Projekt ID: {{ connections.vercel.vercel_project_id }}</p>
-                  </div>
-                  <button class="action-btn danger" @click="disconnectVercel">
-                    <ion-icon name="unlink-outline"></ion-icon>
-                    Trennen
-                  </button>
+                <div class="form-group full-width">
+                  <label class="form-label">Template</label>
+                  <select class="form-input" v-model="formData.template">
+                    <option v-for="template in availableTemplates" :key="template.id" :value="template.id">
+                      {{ template.name }}
+                    </option>
+                  </select>
                 </div>
-                
-                <div v-else class="not-connected">
-                  <p>Kein Vercel Projekt verbunden</p>
-                  <div class="connection-actions">
-                    <button class="action-btn primary" @click="createVercelProject" :disabled="!connections.github">
-                      <ion-icon name="add-outline"></ion-icon>
-                      Neues Projekt erstellen
-                    </button>
-                    <button class="action-btn secondary" @click="showVercelProjects">
-                      <ion-icon name="link-outline"></ion-icon>
-                      Vorhandenes verbinden
-                    </button>
-                  </div>
-                  <p v-if="!connections.github" class="form-note warning">
-                    GitHub Repository benötigt für Vercel Projekt
-                  </p>
-                </div>
-              </div>
-
-              <!-- Domain Section -->
-              <div class="connection-section">
-                <div class="section-header">
-                  <ion-icon name="globe-outline"></ion-icon>
-                  <h3>Domain</h3>
-                </div>
-                
-                <div v-if="connections.domain" class="connected-item">
-                  <div class="connection-info">
-                    <h4>{{ connections.domain.domain }}</h4>
-                    <p v-if="connections.domain.is_main">Haupt-Domain</p>
-                    <p v-else>Subdomain</p>
-                  </div>
-                  <button class="action-btn danger" @click="disconnectDomain">
-                    <ion-icon name="unlink-outline"></ion-icon>
-                    Trennen
-                  </button>
-                </div>
-                
-                <div v-else class="not-connected">
-                  <p>Keine Domain verbunden</p>
-                  <div v-if="domainInfo" class="domain-config">
-                    <div class="form-group full-width">
-                      <div class="radio-group">
-                        <label class="radio-label">
-                          <input type="radio" v-model="domainType" value="subdomain" :disabled="!connections.vercel">
-                          <span>
-                            <strong>Subdomain</strong>
-                            <small>{{ domainInput || 'subdomain' }}.{{ domainInfo.base_domain }}</small>
-                          </span>
-                        </label>
-                        
-                        <label class="radio-label">
-                          <input type="radio" v-model="domainType" value="main" :disabled="!connections.vercel || domainInfo.main_domain_taken">
-                          <span>
-                            <strong>Haupt-Domain {{ domainInfo.main_domain_taken ? '(vergeben)' : '' }}</strong>
-                            <small>{{ domainInfo.base_domain }}</small>
-                            <small v-if="domainInfo.main_domain_taken" class="warning-text">
-                              Verwendet von: {{ domainInfo.main_domain_codespace }}
-                            </small>
-                            <small class="info-text">Die Main Domain kann nur von einem System (Codespace ODER Web Builder) gleichzeitig genutzt werden</small>
-                          </span>
-                        </label>
-                      </div>
-                    </div>
-                    
-                    <div v-if="domainType === 'subdomain'" class="form-group full-width">
-                      <label class="form-label">Subdomain</label>
-                      <input type="text" class="form-input" v-model="domainInput" placeholder="z.B. api, admin, staging" pattern="[a-z0-9-]+">
-                    </div>
-                    
-                    <div class="connection-actions">
-                      <button class="action-btn primary" @click="connectDomain" :disabled="!connections.vercel || (domainType === 'subdomain' && (!domainInput || domainInput.length < 2)) || (domainType === 'main' && domainInfo.main_domain_taken)">
-                        <ion-icon name="link-outline"></ion-icon>
-                        Domain verbinden
-                      </button>
+                <div v-if="formData.template && getSelectedTemplate()" class="template-preview full-width">
+                  <div class="template-info">
+                    <ion-icon :name="getSelectedTemplate().icon" class="template-icon"></ion-icon>
+                    <div>
+                      <h4>{{ getSelectedTemplate().name }}</h4>
+                      <p>{{ getSelectedTemplate().description }}</p>
                     </div>
                   </div>
-                  
-                  <div v-else-if="loadingDomainInfo" class="loading-container">
-                    <ion-spinner name="circular"></ion-spinner>
-                    <p>Domain-Informationen werden geladen...</p>
-                  </div>
-                  
-                  <div v-else>
-                    <p class="form-note warning">
-                      Vercel Projekt benötigt für Domain-Konfiguration
-                    </p>
-                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- GitHub Repos Selection Modal -->
-      <div v-if="showGithubModal" class="custom-modal-overlay" @click="closeGithubModal">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>GitHub Repository auswählen</h3>
-            <button class="modal-close-btn" @click="closeGithubModal">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
-          </div>
-          
-          <div class="custom-modal-body">
-            <div v-if="loadingGithubRepos" class="loading-state">
-              <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
-              <p>Repositories werden geladen...</p>
-            </div>
-            
-            <div v-else class="repo-list">
-              <div v-for="repo in githubRepos" :key="repo.id" class="repo-item" @click="connectGithubRepo(repo)">
-                <div class="repo-info">
-                  <h4>{{ repo.full_name }}</h4>
-                  <p>{{ repo.description || 'Keine Beschreibung' }}</p>
-                </div>
-                <ion-icon :name="repo.private ? 'lock-closed-outline' : 'globe-outline'" class="repo-icon"></ion-icon>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Vercel Projects Selection Modal -->
-      <div v-if="showVercelModal" class="custom-modal-overlay" @click="closeVercelModal">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>Vercel Projekt auswählen</h3>
-            <button class="modal-close-btn" @click="closeVercelModal">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
-          </div>
-          
-          <div class="custom-modal-body">
-            <div v-if="loadingVercelProjects" class="loading-state">
-              <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
-              <p>Projekte werden geladen...</p>
-            </div>
-            
-            <div v-else class="repo-list">
-              <div v-for="project in vercelProjects" :key="project.id" class="repo-item" @click="connectVercelProject(project)">
-                <div class="repo-info">
-                  <h4>{{ project.name }}</h4>
-                  <p>{{ project.framework || 'Framework unbekannt' }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Transfer Modal -->
-      <div v-if="showTransferModal" class="custom-modal-overlay" @click="closeTransferModal">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>Codespace übertragen</h3>
-            <button class="modal-close-btn" @click="closeTransferModal">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
-          </div>
-          
-          <div class="custom-modal-body">
-            <div v-if="transferCodespace" class="transfer-content">
-              <div class="transfer-header">
-                <h2>{{ transferCodespace.name }}</h2>
-                <p>Wählen Sie das Ziel-Projekt für die Übertragung</p>
-              </div>
-
-              <div class="transfer-info">
-                <h4>Was wird übertragen?</h4>
-                <ul class="transfer-list">
-                  <li>
-                    <ion-icon name="folder-outline"></ion-icon>
-                    <span>Alle Dateien und Ordner</span>
-                  </li>
-                  <li v-if="transferCodespace.connections?.github">
-                    <ion-icon name="logo-github"></ion-icon>
-                    <span>GitHub Repository Verbindung</span>
-                  </li>
-                  <li v-if="transferCodespace.connections?.vercel">
-                    <ion-icon name="triangle-outline"></ion-icon>
-                    <span>Vercel Projekt Verbindung</span>
-                  </li>
-                  <li v-if="transferCodespace.connections?.domain">
-                    <ion-icon name="globe-outline"></ion-icon>
-                    <span>Domain Verbindung</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div class="form-group full-width">
-                <label class="form-label">Ziel-Projekt auswählen</label>
-                <select class="form-input" v-model="selectedTargetProject">
-                  <option value="">Projekt auswählen</option>
-                  <option v-for="project in availableProjects" :key="project.id" :value="project.link">
-                    {{ project.name }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="checkbox-group">
-                <label class="checkbox-label">
-                  <input type="checkbox" v-model="moveInsteadOfCopy">
-                  <span>
-                    <strong>Verschieben statt Kopieren</strong>
-                    <small>Löscht den ursprünglichen Codespace nach dem Transfer</small>
-                  </span>
-                </label>
               </div>
 
               <div class="form-actions">
-                <button class="action-btn secondary" @click="closeTransferModal">
+                <button class="action-btn secondary" @click="closeModal">
                   Abbrechen
                 </button>
-                <button class="action-btn primary" @click="executeTransfer" :disabled="!selectedTargetProject || transferInProgress">
-                  <ion-spinner v-if="transferInProgress" name="circular"></ion-spinner>
-                  <ion-icon v-else :name="moveInsteadOfCopy ? 'arrow-forward-outline' : 'copy-outline'"></ion-icon>
-                  {{ moveInsteadOfCopy ? 'Verschieben' : 'Kopieren' }}
+                <button class="action-btn primary" @click="saveCodespace" :disabled="!formData.name">
+                  {{ editingCodespace ? 'Aktualisieren' : 'Erstellen' }}
                 </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
+        <div v-if="showSettingsModal" class="custom-modal-overlay" @click="closeSettingsModal">
+          <div class="custom-modal-content large" @click.stop>
+            <div class="custom-modal-header">
+              <h3>Codespace Settings</h3>
+              <button class="modal-close-btn" @click="closeSettingsModal">
+                <ion-icon name="close-outline"></ion-icon>
+              </button>
+            </div>
+
+            <div class="custom-modal-body">
+              <div v-if="selectedCodespace" class="settings-content">
+                <div class="settings-header">
+                  <h2>{{ selectedCodespace.name }}</h2>
+                  <p>Verwalten Sie Domain-Verbindungen</p>
+                </div>
+
+                <div class="connection-section">
+                  <div class="section-header">
+                    <ion-icon name="globe-outline"></ion-icon>
+                    <h3>Domain</h3>
+                  </div>
+
+                  <div v-if="connections.domain" class="connected-item">
+                    <div class="connection-info">
+                      <h4>{{ connections.domain.domain }}</h4>
+                      <p v-if="connections.domain.is_main">Haupt-Domain</p>
+                      <p v-else>Subdomain</p>
+                    </div>
+                    <button class="action-btn danger" @click="disconnectDomain">
+                      <ion-icon name="unlink-outline"></ion-icon>
+                      Trennen
+                    </button>
+                  </div>
+
+                  <div v-else class="not-connected">
+                    <p>Keine Domain verbunden</p>
+                    <div v-if="domainInfo" class="domain-config">
+                      <div class="form-group full-width">
+                        <div class="radio-group">
+                          <label class="radio-label">
+                            <input type="radio" v-model="domainType" value="subdomain">
+                            <span>
+                              <strong>Subdomain</strong>
+                              <small>{{ domainInput || 'subdomain' }}.{{ domainInfo.base_domain }}</small>
+                            </span>
+                          </label>
+
+                          <label class="radio-label">
+                            <input type="radio" v-model="domainType" value="main"
+                              :disabled="domainInfo.main_domain_taken">
+                            <span>
+                              <strong>Haupt-Domain {{ domainInfo.main_domain_taken ? '(vergeben)' : '' }}</strong>
+                              <small>{{ domainInfo.base_domain }}</small>
+                              <small v-if="domainInfo.main_domain_taken" class="warning-text">
+                                Verwendet von: {{ domainInfo.main_domain_codespace }}
+                              </small>
+                              <small class="info-text">Die Main Domain kann nur von einem System (Codespace ODER Web
+                                Builder) gleichzeitig genutzt werden</small>
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div v-if="domainType === 'subdomain'" class="form-group full-width">
+                        <label class="form-label">Subdomain</label>
+                        <input type="text" class="form-input" v-model="domainInput"
+                          placeholder="z.B. api, admin, staging" pattern="[a-z0-9-]+">
+                      </div>
+
+                      <div class="connection-actions">
+                        <button class="action-btn primary" @click="connectDomain"
+                          :disabled="(domainType === 'subdomain' && (!domainInput || domainInput.length < 2)) || (domainType === 'main' && domainInfo.main_domain_taken)">
+                          <ion-icon name="link-outline"></ion-icon>
+                          Domain verbinden
+                        </button>
+                      </div>
+                    </div>
+
+                    <div v-else-if="loadingDomainInfo" class="loading-container">
+                      <ion-spinner name="circular"></ion-spinner>
+                      <p>Domain-Informationen werden geladen...</p>
+                    </div>
+
+                    <div v-else>
+                      <p class="form-note warning">
+                        Keine Domain-Informationen verfügbar
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="showTransferModal" class="custom-modal-overlay" @click="closeTransferModal">
+          <div class="custom-modal-content" @click.stop>
+            <div class="custom-modal-header">
+              <h3>Codespace übertragen</h3>
+              <button class="modal-close-btn" @click="closeTransferModal">
+                <ion-icon name="close-outline"></ion-icon>
+              </button>
+            </div>
+
+            <div class="custom-modal-body">
+              <div v-if="transferCodespace" class="transfer-content">
+                <div class="transfer-header">
+                  <h2>{{ transferCodespace.name }}</h2>
+                  <p>Wählen Sie das Ziel-Projekt für die Übertragung</p>
+                </div>
+
+                <div class="transfer-info">
+                  <h4>Was wird übertragen?</h4>
+                  <ul class="transfer-list">
+                    <li>
+                      <ion-icon name="folder-outline"></ion-icon>
+                      <span>Alle Dateien und Ordner</span>
+                    </li>
+                    <li v-if="transferCodespace.connections?.domain">
+                      <ion-icon name="globe-outline"></ion-icon>
+                      <span>Domain Verbindung</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="form-group full-width">
+                  <label class="form-label">Ziel-Projekt auswählen</label>
+                  <select class="form-input" v-model="selectedTargetProject">
+                    <option value="">Projekt auswählen</option>
+                    <option v-for="project in availableProjects" :key="project.id" :value="project.link">
+                      {{ project.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="checkbox-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" v-model="moveInsteadOfCopy">
+                    <span>
+                      <strong>Verschieben statt Kopieren</strong>
+                      <small>Löscht den ursprünglichen Codespace nach dem Transfer</small>
+                    </span>
+                  </label>
+                </div>
+
+                <div class="form-actions">
+                  <button class="action-btn secondary" @click="closeTransferModal">
+                    Abbrechen
+                  </button>
+                  <button class="action-btn primary" @click="executeTransfer"
+                    :disabled="!selectedTargetProject || transferInProgress">
+                    <ion-spinner v-if="transferInProgress" name="circular"></ion-spinner>
+                    <ion-icon v-else :name="moveInsteadOfCopy ? 'arrow-forward-outline' : 'copy-outline'"></ion-icon>
+                    {{ moveInsteadOfCopy ? 'Verschieben' : 'Kopieren' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </ion-content>
   </ion-page>
@@ -568,7 +382,6 @@ import { ToastService } from '@/services/ToastService'
 
 const route = useRoute()
 const toast = ToastService
-
 const codespaces = ref([])
 const loading = ref(true)
 const showModal = ref(false)
@@ -576,37 +389,19 @@ const editingCodespace = ref(null)
 const searchTerm = ref('')
 const sortColumn = ref('name')
 const sortDirection = ref('asc')
-
-// Settings Modal
 const showSettingsModal = ref(false)
 const selectedCodespace = ref(null)
-const connections = ref({ github: null, vercel: null, domain: null })
-
-// Domain
-const domainType = ref('subdomain') // 'subdomain' or 'main'
+const connections = ref({ domain: null })
+const domainType = ref('subdomain')
 const domainInput = ref('')
 const domainInfo = ref(null)
 const loadingDomainInfo = ref(false)
-
-// GitHub Modal
-const showGithubModal = ref(false)
-const githubRepos = ref([])
-const loadingGithubRepos = ref(false)
-
-// Vercel Modal  
-const showVercelModal = ref(false)
-const vercelProjects = ref([])
-const loadingVercelProjects = ref(false)
-
-// Transfer Modal
 const showTransferModal = ref(false)
 const transferCodespace = ref(null)
 const availableProjects = ref([])
 const selectedTargetProject = ref('')
 const moveInsteadOfCopy = ref(false)
 const transferInProgress = ref(false)
-
-// Available Templates
 const availableTemplates = ref([])
 const loadingTemplates = ref(false)
 
@@ -615,30 +410,26 @@ const formData = ref({
   description: '',
   language: 'javascript',
   template: 'vanilla-js',
-  icon: 'code-outline',
-  createGithubRepo: false,
-  createVercelProject: false
+  icon: 'code-outline'
 })
 
-// Computed properties
 const filteredCodespaces = computed(() => {
   let filtered = codespaces.value
 
   if (searchTerm.value) {
     const search = searchTerm.value.toLowerCase()
-    filtered = filtered.filter(cs => 
+    filtered = filtered.filter(cs =>
       cs.name.toLowerCase().includes(search) ||
       (cs.description && cs.description.toLowerCase().includes(search)) ||
       cs.language.toLowerCase().includes(search)
     )
   }
 
-  // Sort
   if (sortColumn.value) {
     filtered = [...filtered].sort((a, b) => {
       let aVal = a[sortColumn.value]
       let bVal = b[sortColumn.value]
-      
+
       if (sortColumn.value === 'created_at') {
         aVal = new Date(aVal).getTime()
         bVal = new Date(bVal).getTime()
@@ -646,7 +437,7 @@ const filteredCodespaces = computed(() => {
         aVal = String(aVal).toLowerCase()
         bVal = String(bVal).toLowerCase()
       }
-      
+
       if (sortDirection.value === 'asc') {
         return aVal > bVal ? 1 : -1
       } else {
@@ -670,7 +461,7 @@ const sortBy = (column: string) => {
 const loadAvailableTemplates = async () => {
   try {
     loadingTemplates.value = true
-    
+
     const response = await axios.post('project_codespaces.php', qs.stringify({
       getAvailableTemplates: true
     }))
@@ -678,7 +469,6 @@ const loadAvailableTemplates = async () => {
     if (response.data.success) {
       availableTemplates.value = response.data.templates
     } else {
-      // Fallback templates if backend fails
       availableTemplates.value = [
         { id: 'vanilla-js', name: 'Vanilla JavaScript', description: 'Basic HTML, CSS and JavaScript setup', icon: 'logo-javascript' },
         { id: 'react', name: 'React', description: 'React application with Vite build tool', icon: 'logo-react' },
@@ -688,7 +478,6 @@ const loadAvailableTemplates = async () => {
     }
   } catch (error) {
     console.error('Error loading templates:', error)
-    // Fallback templates
     availableTemplates.value = [
       { id: 'vanilla-js', name: 'Vanilla JavaScript', description: 'Basic HTML, CSS and JavaScript setup', icon: 'logo-javascript' },
       { id: 'react', name: 'React', description: 'React application with Vite build tool', icon: 'logo-react' },
@@ -706,7 +495,7 @@ const loadCodespaces = async () => {
     const project = route.params.project
     const { getUserData } = await import('@/userData')
     const user = getUserData()
-    
+
     const response = await axios.post('project_codespaces.php', qs.stringify({
       getCodespaces: true,
       project: project
@@ -714,8 +503,7 @@ const loadCodespaces = async () => {
 
     if (response.data.success) {
       codespaces.value = response.data.codespaces
-      
-      // Load connections for each codespace
+
       for (const codespace of codespaces.value) {
         try {
           const connectionsResponse = await axios.post('codespace_connections.php', qs.stringify({
@@ -723,15 +511,13 @@ const loadCodespaces = async () => {
             codespace_id: codespace.id,
             user_id: user.userID
           }))
-          
+
           codespace.connections = {
-            github: connectionsResponse.data.github,
-            vercel: connectionsResponse.data.vercel,
             domain: connectionsResponse.data.domain
           }
         } catch (error) {
           console.error(`Error loading connections for codespace ${codespace.id}:`, error)
-          codespace.connections = { github: null, vercel: null, domain: null }
+          codespace.connections = { domain: null }
         }
       }
     } else {
@@ -747,20 +533,17 @@ const loadCodespaces = async () => {
 
 const createNewCodespace = async () => {
   editingCodespace.value = null
-  
-  // Load templates if not already loaded
+
   if (availableTemplates.value.length === 0) {
     await loadAvailableTemplates()
   }
-  
+
   formData.value = {
     name: '',
     description: '',
     language: 'javascript',
     template: availableTemplates.value.length > 0 ? availableTemplates.value[0].id : 'vanilla-js',
-    icon: 'code-outline',
-    createGithubRepo: false,
-    createVercelProject: false
+    icon: 'code-outline'
   }
   showModal.value = true
 }
@@ -772,9 +555,7 @@ const editCodespace = (codespace) => {
     description: codespace.description,
     language: codespace.language,
     template: codespace.template,
-    icon: codespace.icon,
-    createGithubRepo: false,
-    createVercelProject: false
+    icon: codespace.icon
   }
   showModal.value = true
 }
@@ -784,7 +565,6 @@ const saveCodespace = async () => {
     const project = route.params.project
 
     if (editingCodespace.value) {
-      // Update existing codespace
       await axios.post('project_codespaces.php', {
         updateCodespace: true,
         codespaceID: editingCodespace.value.id,
@@ -796,7 +576,6 @@ const saveCodespace = async () => {
       })
       toast.success('Codespace aktualisiert!')
     } else {
-      // Create new codespace
       const data: any = {
         createCodespace: true,
         project: project,
@@ -807,22 +586,10 @@ const saveCodespace = async () => {
         icon: formData.value.icon
       }
 
-      // Add auto-create options if selected
-      if (formData.value.createGithubRepo) {
-        data.createGithubRepo = 'true'
-      }
-      if (formData.value.createVercelProject) {
-        data.createVercelProject = 'true'
-      }
-
       await axios.post('project_codespaces.php', qs.stringify(data))
       toast.success('Codespace erstellt!')
-      
-      if (formData.value.createGithubRepo || formData.value.createVercelProject) {
-        toast.success('GitHub und/oder Vercel Projekte werden erstellt...')
-      }
     }
-    
+
     closeModal()
     loadCodespaces()
   } catch (error) {
@@ -858,17 +625,17 @@ const deleteCodespace = async (codespace) => {
       }
     ]
   })
-  
+
   await alert.present()
 }
 
-// Settings Modal Functions
 const openSettings = async (codespace) => {
   selectedCodespace.value = codespace
   domainType.value = 'subdomain'
   domainInput.value = ''
   domainInfo.value = null
-  
+  connections.value = { domain: null }
+
   await loadConnections(codespace.id)
   await loadDomainInfo(codespace.id)
   showSettingsModal.value = true
@@ -877,7 +644,7 @@ const openSettings = async (codespace) => {
 const closeSettingsModal = () => {
   showSettingsModal.value = false
   selectedCodespace.value = null
-  connections.value = { github: null, vercel: null, domain: null }
+  connections.value = { domain: null }
   domainInfo.value = null
   domainInput.value = ''
 }
@@ -886,222 +653,26 @@ const loadConnections = async (codespaceId) => {
   try {
     const { getUserData } = await import('@/userData')
     const user = getUserData()
-    
+
     const response = await axios.post('codespace_connections.php', qs.stringify({
       action: 'get_all_connections',
       codespace_id: codespaceId,
       user_id: user.userID
     }))
 
-    if (response.data.github || response.data.vercel || response.data.domain) {
-      connections.value = {
-        github: response.data.github,
-        vercel: response.data.vercel,
-        domain: response.data.domain
-      }
+    connections.value = {
+      domain: response.data.domain || null
     }
   } catch (error) {
     console.error('Error loading connections:', error)
   }
 }
 
-// GitHub Functions
-const createGithubRepo = async () => {
-  try {
-    const { getUserData } = await import('@/userData')
-    const user = getUserData()
-    
-    const response = await axios.post('codespace_connections.php', qs.stringify({
-      action: 'create_and_connect_github',
-      codespace_id: selectedCodespace.value.id,
-      user_id: user.userID
-    }))
-
-    if (response.data.success) {
-      toast.success('GitHub Repository erstellt und verbunden!')
-      await loadConnections(selectedCodespace.value.id)
-    } else {
-      toast.error(response.data.error || 'Fehler beim Erstellen des GitHub Repos')
-    }
-  } catch (error) {
-    console.error('Error creating GitHub repo:', error)
-    toast.error('Verbindungsfehler')
-  }
-}
-
-const showGithubRepos = async () => {
-  try {
-    loadingGithubRepos.value = true
-    showGithubModal.value = true
-    
-    const { getUserData } = await import('@/userData')
-    const user = getUserData()
-    
-    const response = await axios.get(`github_repos.php?user_id=${user.userID}`)
-    githubRepos.value = response.data
-  } catch (error) {
-    console.error('Error loading GitHub repos:', error)
-    toast.error('Fehler beim Laden der GitHub Repositories')
-  } finally {
-    loadingGithubRepos.value = false
-  }
-}
-
-const connectGithubRepo = async (repo) => {
-  try {
-    const { getUserData } = await import('@/userData')
-    const user = getUserData()
-    
-    const response = await axios.post('codespace_connections.php', qs.stringify({
-      action: 'connect_github',
-      codespace_id: selectedCodespace.value.id,
-      user_id: user.userID,
-      repo: JSON.stringify(repo)
-    }))
-
-    if (response.data.success) {
-      toast.success('GitHub Repository verbunden!')
-      await loadConnections(selectedCodespace.value.id)
-      closeGithubModal()
-    } else {
-      toast.error(response.data.error || 'Fehler beim Verbinden')
-    }
-  } catch (error) {
-    console.error('Error connecting GitHub repo:', error)
-    toast.error('Verbindungsfehler')
-  }
-}
-
-const disconnectGithub = async () => {
-  try {
-    const { getUserData } = await import('@/userData')
-    const user = getUserData()
-    
-    const response = await axios.post('codespace_connections.php', qs.stringify({
-      action: 'disconnect_github',
-      codespace_id: selectedCodespace.value.id,
-      user_id: user.userID
-    }))
-
-    if (response.data.success) {
-      toast.success('GitHub Repository getrennt!')
-      await loadConnections(selectedCodespace.value.id)
-    } else {
-      toast.error('Fehler beim Trennen')
-    }
-  } catch (error) {
-    console.error('Error disconnecting GitHub:', error)
-    toast.error('Verbindungsfehler')
-  }
-}
-
-const closeGithubModal = () => {
-  showGithubModal.value = false
-  githubRepos.value = []
-}
-
-// Vercel Functions
-const createVercelProject = async () => {
-  try {
-    const { getUserData } = await import('@/userData')
-    const user = getUserData()
-    
-    const response = await axios.post('codespace_connections.php', qs.stringify({
-      action: 'create_and_connect_vercel',
-      codespace_id: selectedCodespace.value.id,
-      user_id: user.userID
-    }))
-
-    if (response.data.success) {
-      toast.success('Vercel Projekt erstellt und verbunden!')
-      await loadConnections(selectedCodespace.value.id)
-    } else {
-      toast.error(response.data.error || 'Fehler beim Erstellen des Vercel Projekts')
-    }
-  } catch (error) {
-    console.error('Error creating Vercel project:', error)
-    toast.error('Verbindungsfehler')
-  }
-}
-
-const showVercelProjects = async () => {
-  try {
-    loadingVercelProjects.value = true
-    showVercelModal.value = true
-    
-    const { getUserData } = await import('@/userData')
-    const user = getUserData()
-    
-    const response = await axios.get(`vercel_projects.php?user_id=${user.userID}`)
-    vercelProjects.value = response.data.projects || []
-  } catch (error) {
-    console.error('Error loading Vercel projects:', error)
-    toast.error('Fehler beim Laden der Vercel Projekte')
-  } finally {
-    loadingVercelProjects.value = false
-  }
-}
-
-const connectVercelProject = async (project) => {
-  try {
-    const { getUserData } = await import('@/userData')
-    const user = getUserData()
-    
-    const response = await axios.post('codespace_connections.php', qs.stringify({
-      action: 'connect_vercel',
-      codespace_id: selectedCodespace.value.id,
-      user_id: user.userID,
-      vercel_project_id: project.id,
-      vercel_project_name: project.name
-    }))
-
-    if (response.data.success) {
-      toast.success('Vercel Projekt verbunden!')
-      await loadConnections(selectedCodespace.value.id)
-      closeVercelModal()
-    } else {
-      toast.error(response.data.error || 'Fehler beim Verbinden')
-    }
-  } catch (error) {
-    console.error('Error connecting Vercel project:', error)
-    toast.error('Verbindungsfehler')
-  }
-}
-
-const disconnectVercel = async () => {
-  try {
-    const { getUserData } = await import('@/userData')
-    const user = getUserData()
-    
-    const response = await axios.post('codespace_connections.php', qs.stringify({
-      action: 'disconnect_vercel',
-      codespace_id: selectedCodespace.value.id,
-      user_id: user.userID
-    }))
-
-    if (response.data.success) {
-      toast.success('Vercel Projekt getrennt!')
-      await loadConnections(selectedCodespace.value.id)
-    } else {
-      toast.error('Fehler beim Trennen')
-    }
-  } catch (error) {
-    console.error('Error disconnecting Vercel:', error)
-    toast.error('Verbindungsfehler')
-  }
-}
-
-const closeVercelModal = () => {
-  showVercelModal.value = false
-  vercelProjects.value = []
-}
-
-// Transfer Functions
 const openTransferModal = async (codespace) => {
   transferCodespace.value = codespace
   selectedTargetProject.value = ''
   moveInsteadOfCopy.value = false
-  
+
   await loadAvailableProjects()
   showTransferModal.value = true
 }
@@ -1122,7 +693,6 @@ const loadAvailableProjects = async () => {
     }))
 
     if (response.data.success) {
-      // Aktuelles Projekt ausschließen
       const currentProject = route.params.project
       availableProjects.value = response.data.projects.filter(project => project.link !== currentProject)
     } else {
@@ -1138,29 +708,28 @@ const executeTransfer = async () => {
   if (!selectedTargetProject.value || !transferCodespace.value) {
     return
   }
-  
+
   try {
     transferInProgress.value = true
-    
+
     const data: any = {
       transferCodespace: true,
       codespaceID: transferCodespace.value.id,
       targetProject: selectedTargetProject.value
     }
-    
+
     if (moveInsteadOfCopy.value) {
       data.moveCodespace = 'true'
     }
-    
+
     const response = await axios.post('project_codespaces.php', qs.stringify(data))
 
     if (response.data.success) {
       const action = moveInsteadOfCopy.value ? 'verschoben' : 'kopiert'
       toast.success(`Codespace erfolgreich ${action}!`)
-      
+
       closeTransferModal()
-      
-      // Wenn verschoben, Liste neu laden um den entfernten Codespace zu reflektieren
+
       if (moveInsteadOfCopy.value) {
         await loadCodespaces()
       }
@@ -1175,13 +744,12 @@ const executeTransfer = async () => {
   }
 }
 
-// Domain Functions
 const loadDomainInfo = async (codespaceId) => {
   try {
     loadingDomainInfo.value = true
     const { getUserData } = await import('@/userData')
     const user = getUserData()
-    
+
     const response = await axios.post('codespace_connections.php', qs.stringify({
       action: 'get_project_domain_info',
       codespace_id: codespaceId,
@@ -1205,19 +773,18 @@ const connectDomain = async () => {
   try {
     const { getUserData } = await import('@/userData')
     const user = getUserData()
-    
+
     const data: any = {
       action: 'connect_domain',
       codespace_id: selectedCodespace.value.id,
       user_id: user.userID,
       is_main: domainType.value === 'main' ? 'true' : 'false'
     }
-    
-    // Nur Subdomain hinzufügen wenn nicht Haupt-Domain
+
     if (domainType.value === 'subdomain') {
       data.subdomain = domainInput.value
     }
-    
+
     const response = await axios.post('codespace_connections.php', qs.stringify(data))
 
     if (response.data.success) {
@@ -1238,7 +805,7 @@ const disconnectDomain = async () => {
   try {
     const { getUserData } = await import('@/userData')
     const user = getUserData()
-    
+
     const response = await axios.post('codespace_connections.php', qs.stringify({
       action: 'disconnect_domain',
       codespace_id: selectedCodespace.value.id,
@@ -1275,7 +842,7 @@ const getDefaultLanguageForTemplate = (templateId) => {
   const mapping = {
     'vanilla-js': 'javascript',
     'react': 'javascript',
-    'vue': 'javascript', 
+    'vue': 'javascript',
     'node': 'javascript',
     'typescript': 'typescript',
     'python': 'python',
@@ -1289,7 +856,6 @@ onMounted(() => {
   loadAvailableTemplates()
 })
 
-// Watch template changes to update language automatically
 watch(() => formData.value.template, (newTemplate) => {
   if (newTemplate && !editingCodespace.value) {
     formData.value.language = getDefaultLanguageForTemplate(newTemplate)
@@ -1356,7 +922,6 @@ watch(() => formData.value.template, (newTemplate) => {
   flex-wrap: wrap;
 }
 
-/* Action Buttons */
 .action-btn {
   display: inline-flex;
   align-items: center;
@@ -1413,7 +978,6 @@ watch(() => formData.value.template, (newTemplate) => {
   border-color: #b91c1c;
 }
 
-/* Data Card */
 .data-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1475,12 +1039,10 @@ watch(() => formData.value.template, (newTemplate) => {
   font-size: 14px;
 }
 
-/* Table Wrapper */
 .table-wrapper {
   overflow-x: auto;
 }
 
-/* Loading State */
 .loading-state {
   text-align: center;
   padding: 60px 20px;
@@ -1498,6 +1060,7 @@ watch(() => formData.value.template, (newTemplate) => {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -1508,7 +1071,6 @@ watch(() => formData.value.template, (newTemplate) => {
   font-size: 14px;
 }
 
-/* No Data State */
 .no-data-state {
   padding: 60px 20px;
   text-align: center;
@@ -1541,7 +1103,6 @@ watch(() => formData.value.template, (newTemplate) => {
   line-height: 1.5;
 }
 
-/* Modern Table */
 .modern-table {
   width: 100%;
   min-width: 800px;
@@ -1607,7 +1168,6 @@ watch(() => formData.value.template, (newTemplate) => {
   color: var(--primary-color);
 }
 
-/* Table Body */
 .table-body {
   background: var(--surface);
 }
@@ -1637,7 +1197,6 @@ watch(() => formData.value.template, (newTemplate) => {
   justify-content: center;
 }
 
-/* Codespace Name Cell */
 .codespace-name-cell {
   display: flex;
   align-items: center;
@@ -1666,7 +1225,6 @@ watch(() => formData.value.template, (newTemplate) => {
   color: var(--text-secondary);
 }
 
-/* Connections */
 .connections-chips {
   display: flex;
   gap: 6px;
@@ -1681,16 +1239,6 @@ watch(() => formData.value.template, (newTemplate) => {
   border-radius: 12px;
   font-size: 11px;
   font-weight: 500;
-}
-
-.connection-badge.github {
-  background: rgba(36, 41, 47, 0.1);
-  color: #24292f;
-}
-
-.connection-badge.vercel {
-  background: rgba(249, 115, 22, 0.1);
-  color: var(--primary-color);
 }
 
 .connection-badge.domain {
@@ -1708,7 +1256,6 @@ watch(() => formData.value.template, (newTemplate) => {
   font-style: italic;
 }
 
-/* Language Badge */
 .language-badge {
   display: inline-block;
   padding: 4px 12px;
@@ -1720,13 +1267,11 @@ watch(() => formData.value.template, (newTemplate) => {
   border: 1px solid rgba(249, 115, 22, 0.2);
 }
 
-/* Date Text */
 .date-text {
   color: var(--text-secondary);
   font-size: 13px;
 }
 
-/* Action Buttons */
 .action-buttons {
   display: flex;
   gap: 8px;
@@ -1790,7 +1335,6 @@ watch(() => formData.value.template, (newTemplate) => {
   background: rgba(220, 38, 38, 0.2);
 }
 
-/* Custom Modal */
 .custom-modal-overlay {
   position: fixed;
   top: 0;
@@ -1864,7 +1408,6 @@ watch(() => formData.value.template, (newTemplate) => {
   flex: 1;
 }
 
-/* Form Grid */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1925,7 +1468,6 @@ select.form-input {
   color: var(--warning-color);
 }
 
-/* Checkbox & Radio Groups */
 .checkbox-group,
 .radio-group {
   display: flex;
@@ -1981,7 +1523,6 @@ select.form-input {
   color: var(--warning-color);
 }
 
-/* Template Preview */
 .template-preview {
   padding: 16px;
   background: var(--background);
@@ -2013,13 +1554,11 @@ select.form-input {
   color: var(--text-secondary);
 }
 
-/* Auto-create Section */
 .auto-create-section {
   padding-top: 20px;
   border-top: 1px solid var(--border);
 }
 
-/* Form Actions */
 .form-actions {
   display: flex;
   gap: 12px;
@@ -2029,7 +1568,6 @@ select.form-input {
   border-top: 1px solid var(--border);
 }
 
-/* Settings Content */
 .settings-content {
   display: flex;
   flex-direction: column;
@@ -2055,7 +1593,6 @@ select.form-input {
   font-size: 14px;
 }
 
-/* Connection Section */
 .connection-section {
   padding: 20px;
   background: var(--background);
@@ -2130,48 +1667,6 @@ select.form-input {
   gap: 16px;
 }
 
-/* Repo List */
-.repo-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.repo-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.repo-item:hover {
-  background: var(--background);
-  border-color: var(--primary-color);
-}
-
-.repo-info h4 {
-  margin: 0 0 4px 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.repo-info p {
-  margin: 0;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.repo-icon {
-  font-size: 20px;
-  color: var(--text-secondary);
-}
-
-/* Transfer Content */
 .transfer-content {
   display: flex;
   flex-direction: column;
@@ -2233,11 +1728,11 @@ select.form-input {
   color: var(--primary-color);
 }
 
-/* Animations */
 @keyframes modalFadeIn {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -2248,13 +1743,13 @@ select.form-input {
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
@@ -2300,7 +1795,6 @@ select.form-input {
   }
 }
 
-/* Dark Mode */
 @media (prefers-color-scheme: dark) {
   .modern-content {
     --background: #0f172a;
@@ -2309,11 +1803,6 @@ select.form-input {
     --text-primary: #f1f5f9;
     --text-secondary: #cbd5e1;
     --text-muted: #94a3b8;
-  }
-
-  .connection-badge.github {
-    background: rgba(240, 246, 252, 0.1);
-    color: #f0f6fc;
   }
 }
 
