@@ -42,6 +42,8 @@ try {
     $codespace = $_GET['codespace'] ?? 'main';
     $action = $_GET['action'] ?? '';
 
+    requireExistingCodespace($userID, $project, $codespace);
+
     $projectPath = getProjectDataPath($project, $userID, $codespace);
 
     switch ($_SERVER['REQUEST_METHOD']) {

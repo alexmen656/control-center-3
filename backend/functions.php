@@ -103,6 +103,26 @@ function checkUserProjectPermission($userID, $projectID)
    return mysqli_num_rows($check) == 1;
 }
 
+function requireExistingCodespace($userID, $project, $codespace)
+{
+   try {
+      $projectID = getProjectID($project);
+   } catch (Exception $e) {
+      throw new Exception('Project not found: ' . $project);
+   }
+
+   if (!checkUserProjectPermission($userID, $projectID)) {
+      throw new Exception('No permission for this project');
+   }
+
+   $slug = escape_string($codespace);
+   $projectID = escape_string($projectID);
+   $result = query("SELECT id FROM project_codespaces WHERE project_id='$projectID' AND slug='$slug'");
+   if (mysqli_num_rows($result) === 0) {
+      throw new Exception('Codespace "' . $codespace . '" does not exist in this project. Create it first before writing files.');
+   }
+}
+
 function createLink($string_to_replace)
 {
    $replace = [

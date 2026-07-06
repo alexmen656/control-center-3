@@ -3,7 +3,7 @@ import { cmsRequest, formatResponse, formatError } from '../utils/api.js';
 const enc = encodeURIComponent;
 
 const CODESPACE_HINT =
-  'A codespace is one deployable app inside a project. A project can hold several codespaces, each identified by its slug (default "main"). Omit "codespace" to target the default "main" codespace.';
+  'A codespace is one deployable app inside a project. It must be created with codespace_create BEFORE any files can be written to it. A project can hold several codespaces, each identified by the slug returned by codespace_create. Pass that slug as "codespace"; never invent one. Do not assume a "main" codespace exists — a fresh project has no codespaces at all.';
 
 function fileApi(args, extra = '') {
   return `file_api.php?project=${enc(args.project)}&codespace=${enc(args.codespace || 'main')}${extra}`;
@@ -29,13 +29,13 @@ function backendResult(data) {
 const projectProp = { type: 'string', description: 'Project link/slug' };
 const codespaceProp = {
   type: 'string',
-  description: 'Codespace slug (default "main"). Use the slug returned by codespace_create to target a specific codespace.'
+  description: 'Slug of an existing codespace, as returned by codespace_create. The codespace must already exist — writing to a slug that was never created is rejected. Do not guess or default to "main".'
 };
 
 export const codespaceTools = [
   {
     name: 'codespace_create',
-    description: `Create a new codespace (deployable app) inside a project and return its slug. ${CODESPACE_HINT} Use this first when asked to build a new backend/app, then write files into it with codespace_create_file, deploy with codespace_deploy, and optionally expose it via codespace_publish_as_api.`,
+    description: `Create a new codespace (deployable app) inside a project and return its slug. This is a REQUIRED first step before any file can be written — project_create alone does NOT create a codespace. ${CODESPACE_HINT} Workflow: project_create -> codespace_create (keep the returned slug) -> codespace_create_file/codespace_update_file (pass that slug as "codespace") -> codespace_deploy -> optionally codespace_publish_as_api.`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -77,7 +77,7 @@ export const codespaceTools = [
   },
   {
     name: 'codespace_create_file',
-    description: 'Create a new source file (with content) in a codespace. Parent folders are created as needed.',
+    description: 'Create a new source file (with content) in an EXISTING codespace. The codespace must have been created with codespace_create first — if the given slug does not exist the call is rejected (no file is written). Parent folders are created as needed.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -86,12 +86,12 @@ export const codespaceTools = [
         path: { type: 'string', description: 'File path relative to codespace root' },
         content: { type: 'string', description: 'File content' }
       },
-      required: ['project', 'path', 'content']
+      required: ['project', 'codespace', 'path', 'content']
     }
   },
   {
     name: 'codespace_update_file',
-    description: 'Overwrite the contents of an existing source file in a codespace.',
+    description: 'Overwrite the contents of an existing source file in an existing codespace. Rejected if the codespace slug does not exist.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -100,12 +100,12 @@ export const codespaceTools = [
         path: { type: 'string', description: 'File path relative to codespace root' },
         content: { type: 'string', description: 'New file content' }
       },
-      required: ['project', 'path', 'content']
+      required: ['project', 'codespace', 'path', 'content']
     }
   },
   {
     name: 'codespace_delete_file',
-    description: 'Delete a source file in a codespace.',
+    description: 'Delete a source file in an existing codespace. Rejected if the codespace slug does not exist.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -113,12 +113,12 @@ export const codespaceTools = [
         codespace: codespaceProp,
         path: { type: 'string', description: 'File path to delete' }
       },
-      required: ['project', 'path']
+      required: ['project', 'codespace', 'path']
     }
   },
   {
     name: 'codespace_rename_file',
-    description: 'Rename or move a source file within a codespace (copies content to the new path and removes the old one).',
+    description: 'Rename or move a source file within an existing codespace (copies content to the new path and removes the old one). Rejected if the codespace slug does not exist.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -127,12 +127,12 @@ export const codespaceTools = [
         oldPath: { type: 'string', description: 'Current file path' },
         newPath: { type: 'string', description: 'New file path' }
       },
-      required: ['project', 'oldPath', 'newPath']
+      required: ['project', 'codespace', 'oldPath', 'newPath']
     }
   },
   {
     name: 'codespace_mkdir',
-    description: 'Create a new directory in a codespace.',
+    description: 'Create a new directory in an existing codespace. Rejected if the codespace slug does not exist.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -140,7 +140,7 @@ export const codespaceTools = [
         codespace: codespaceProp,
         path: { type: 'string', description: 'Directory path to create' }
       },
-      required: ['project', 'path']
+      required: ['project', 'codespace', 'path']
     }
   },
   {
@@ -273,7 +273,42 @@ export const codespaceTools = [
   }
 ];
 
+async function fetchCodespaces(args, context) {
+  const data = await cmsRequest('project_codespaces.php', {
+    body: { getCodespaces: 'true', project: args.project }
+  }, context);
+  if (Array.isArray(data?.codespaces)) return data.codespaces;
+  if (Array.isArray(data)) return data;
+  return [];
+}
+
+async function ensureCodespaceExists(args, context) {
+  const slug = args.codespace || 'main';
+  let list;
+  try {
+    list = await fetchCodespaces(args, context);
+  } catch (error) {
+    return formatError(`Could not verify codespace "${slug}" in project "${args.project}": ${error.message}`);
+  }
+
+  if (list.some((c) => c.slug === slug)) return null;
+
+  const available = list.map((c) => c.slug).filter(Boolean);
+  const hint = available.length
+    ? `Available codespaces in this project: ${available.join(', ')}.`
+    : 'This project has no codespaces yet.';
+  return formatError(
+    `Codespace "${slug}" does not exist in project "${args.project}". ` +
+    'Create it first with codespace_create (which returns a slug), then pass that slug as "codespace". ' +
+    `Do not write files before the codespace exists. ${hint}`
+  );
+}
+
 export async function handleCodespaceTool(toolName, args, context) {
+  if (toolName !== 'codespace_create') {
+    const guard = await ensureCodespaceExists(args, context);
+    if (guard) return guard;
+  }
   switch (toolName) {
     case 'codespace_create':
       return await createCodespace(args, context);

@@ -44,6 +44,8 @@ if (basename($_SERVER['PHP_SELF']) === 'monaco_git_api.php') {
 
         $projectPath = getProjectPath($project, $userID, $codespace);
 
+        requireExistingCodespace($userID, $project, $codespace);
+
         git_ensureRepo($projectPath, $project, $userID, $codespace);
 
         switch ($_SERVER['REQUEST_METHOD']) {
