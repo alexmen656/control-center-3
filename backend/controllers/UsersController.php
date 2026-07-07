@@ -75,22 +75,38 @@ class UsersController
     public function update(Request $request, Response $response): void
     {
         $userID = escape_string($request->params['id']);
-        $firstName = escape_string($request->input('first_name', ''));
-        $lastName = escape_string($request->input('last_name', ''));
-        $email = escape_string($request->input('email_adress', ''));
-        $accountStatus = escape_string($request->input('account_status', ''));
 
-        $updateFields = [
-            "firstname='$firstName'",
-            "lastname='$lastName'",
-            "email='$email'",
-            "account_status='$accountStatus'"
-        ];
+        $updateFields = [];
+
+        $firstName = trim($request->input('first_name', ''));
+        if ($firstName !== '') {
+            $updateFields[] = "firstname='" . escape_string($firstName) . "'";
+        }
+
+        $lastName = trim($request->input('last_name', ''));
+        if ($lastName !== '') {
+            $updateFields[] = "lastname='" . escape_string($lastName) . "'";
+        }
+
+        $email = trim($request->input('email_adress', ''));
+        if ($email !== '') {
+            $updateFields[] = "email='" . escape_string($email) . "'";
+        }
+
+        $accountStatus = trim($request->input('account_status', ''));
+        if ($accountStatus !== '') {
+            $updateFields[] = "account_status='" . escape_string($accountStatus) . "'";
+        }
 
         $password = $request->input('password');
         if (!empty(trim($password ?? ''))) {
             $hashed = password_hash(escape_string($password), PASSWORD_DEFAULT);
             $updateFields[] = "password='$hashed'";
+        }
+
+        if (empty($updateFields)) {
+            $response->error('No fields to update', 400);
+            return;
         }
 
         mysqli_autocommit($GLOBALS['con'], false);

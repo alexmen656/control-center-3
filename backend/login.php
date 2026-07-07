@@ -1,13 +1,8 @@
 <?php
 $origin_url = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'];
-$allowed_origins = ['alexsblog.de', 'localhost:8100', 'polan.sk', 'http://localhost:8100/login', 'http://localhost:8100', 'localhost']; // replace with query for domains.
+$allowed_origins = ['alexsblog.de', 'localhost:8100', 'polan.sk', 'http://localhost:8100/login', 'http://localhost:8100', 'localhost'];
 $request_host = parse_url($origin_url, PHP_URL_HOST);
 $host_domain = implode('.', array_slice(explode('.', $request_host), -2));
-//echo $host_domain;
-//if (! in_array($host_domain, $allowed_origins, false)) {
-//  header('HTTP/1.0 403 Forbidden');
-//  die('You are not allowed to access this.');     
-//}
 session_start();
 ini_set('display_errors', true);
 header('Access-Control-Allow-Origin: *');
@@ -28,8 +23,7 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
     $password = escape_string($_POST['password']);
     $select = query("SELECT * FROM control_center_users WHERE email='$email'");
 
-    if ($select) {
-        //echo 1;
+    if ($select && mysqli_num_rows($select) > 0) {
         $data = fetch_assoc($select);
 
         if (password_verify($password, $data['password'])) {
@@ -39,19 +33,17 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
             if (mysqli_num_rows($check) > 0) {
 
 
-                // JWT generieren
                 $payload = [
                     'sub' => $data['userID'],
                     'email' => $data['email'],
                     'firstname' => $data['firstname'],
                     'iat' => time(),
-                    'exp' => time() + 60 * 60 * 24 * 7 // 7 Tage gültig
+                    'exp' => time() + 60 * 60 * 24 * 7
                 ];
                 $jwt = SimpleJWT::encode($payload, $jwt_secret);
                 $json['token'] = $jwt;
                 $json['firstname'] = $data['firstname'];
 
-                // Check for project assignment
                 $assignmentQuery = query("SELECT project_link FROM user_project_assignments WHERE user_id='{$data['userID']}'");
                 if ($assignmentQuery && mysqli_num_rows($assignmentQuery) > 0) {
                     $assignment = fetch_assoc($assignmentQuery);
@@ -95,7 +87,7 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
     $email = escape_string($_POST['email']);
     $select = query("SELECT * FROM control_center_users WHERE email='$email'");
 
-    if ($select) {
+    if ($select && mysqli_num_rows($select) > 0) {
         $data = fetch_assoc($select);
 
         if ($data["login_with_google"] == "true") {
@@ -116,7 +108,6 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 $json['token'] = $jwt;
                 $json['firstname'] = $data['firstname'];
 
-                // Check for project assignment
                 $assignmentQuery = query("SELECT project_link FROM user_project_assignments WHERE user_id='{$data['userID']}'");
                 if ($assignmentQuery && mysqli_num_rows($assignmentQuery) > 0) {
                     $assignment = fetch_assoc($assignmentQuery);
@@ -160,7 +151,7 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
     $email = escape_string($_POST['email']);
     $select = query("SELECT * FROM control_center_users WHERE email='$email'");
 
-    if ($select) {
+    if ($select && mysqli_num_rows($select) > 0) {
         $data = fetch_assoc($select);
 
         if (strtolower($data["login_with_google"]) == "microsoft") {
@@ -181,7 +172,6 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 $json['token'] = $jwt;
                 $json['firstname'] = $data['firstname'];
 
-                // Check for project assignment
                 $assignmentQuery = query("SELECT project_link FROM user_project_assignments WHERE user_id='{$data['userID']}'");
                 if ($assignmentQuery && mysqli_num_rows($assignmentQuery) > 0) {
                     $assignment = fetch_assoc($assignmentQuery);
@@ -225,4 +215,3 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
 }
 
 echo json_encode($json, JSON_PRETTY_PRINT);
-?>

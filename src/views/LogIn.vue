@@ -123,7 +123,7 @@
             </form>
             <div class="footer-section">
               <p class="footer-text">
-                © 2025 {{ isCustomLogin ? companyName : 'Fringelo' }}. All rights reserved.
+                © 2026 {{ isCustomLogin ? companyName : 'Fringelo' }}. All rights reserved.
               </p>
             </div>
           </div>
@@ -498,7 +498,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-:root {
+:global(:root) {
   --brand-orange: #f97316;
   --brand-orange-light: #fb923c;
   --brand-orange-dark: #ea580c;
@@ -886,5 +886,76 @@ export default defineComponent({
   margin-bottom: 0 !important;
   transition: color 0.2s ease;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  .login-content {
+    background: linear-gradient(135deg, #0f0f0f 0%, #161616 100%);
+  }
+
+  .background-pattern {
+    background-image:
+      radial-gradient(circle at 20% 50%, rgba(249, 115, 22, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.07) 0%, transparent 50%),
+      radial-gradient(circle at 40% 80%, rgba(249, 115, 22, 0.05) 0%, transparent 50%);
+  }
+
+  .login-card {
+    background: #1c1c1e;
+    border: 1px solid #2c2c2e;
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.4),
+      0 10px 30px -12px rgba(0, 0, 0, 0.6);
+  }
+
+  .welcome-title {
+    color: #f4f5f8;
+  }
+
+  .welcome-subtitle {
+    color: #98999f;
+  }
+
+  .input-label {
+    color: #d1d5db;
+  }
+
+  .custom-input {
+    background: #2c2c2e;
+    border-color: #3a3a3c;
+    color: #f4f5f8;
+  }
+
+  .custom-input::placeholder {
+    color: #7c7c82;
+  }
+
+  .custom-input:hover {
+    border-color: #48484a;
+  }
+
+  .custom-input:focus {
+    background: #2c2c2e;
+  }
+
+  .secondary-button {
+    background: #1c1c1e;
+  }
+
+  .social-button {
+    background: #2c2c2e;
+    border-color: #3a3a3c;
+    color: #f4f5f8;
+  }
+
+  .social-button:hover {
+    border-color: #48484a;
+    background: #333335;
+  }
+
+  .divider::before,
+  .divider::after {
+    background: #3a3a3c;
+  }
 }
 </style>

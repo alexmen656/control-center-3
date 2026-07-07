@@ -6,11 +6,6 @@ $origin_url = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'];
 $allowed_origins = ['alexsblog.de', 'localhost:8100', 'polan.sk', 'http://localhost:8100/login', 'http://localhost:8100', 'localhost'];
 $request_host = parse_url($origin_url, PHP_URL_HOST);
 $host_domain = implode('.', array_slice(explode('.', $request_host), -2));
-//echo $host_domain;
-//if (! in_array($host_domain, $allowed_origins, false)) {
-//  header('HTTP/1.0 403 Forbidden');
-//  die('You are not allowed to access this.');     
-//}
 ini_set('display_errors', true);
 session_start();
 
@@ -42,11 +37,25 @@ if (isset($headers['Authorization'])) {
     if (mysqli_num_rows($data) == 1) {
         $data = fetch_assoc($data);
         if (isset($_REQUEST['firstName'])) {
-            $firstName = escape_string($_REQUEST['firstName']);
-            $lastName = escape_string($_REQUEST['lastName']);
-            $email = escape_string($_REQUEST['email']);
-            query("UPDATE control_center_users SET email='$email', firstname='$firstName', lastname='$lastName' WHERE userID='$userID'");
-            echo "Profile updated";
+            $updateFields = [];
+            $firstName = escape_string(trim($_REQUEST['firstName'] ?? ''));
+            if ($firstName !== '') {
+                $updateFields[] = "firstname='$firstName'";
+            }
+            $lastName = escape_string(trim($_REQUEST['lastName'] ?? ''));
+            if ($lastName !== '') {
+                $updateFields[] = "lastname='$lastName'";
+            }
+            $email = escape_string(trim($_REQUEST['email'] ?? ''));
+            if ($email !== '') {
+                $updateFields[] = "email='$email'";
+            }
+            if (!empty($updateFields)) {
+                query("UPDATE control_center_users SET " . implode(', ', $updateFields) . " WHERE userID='$userID'");
+                echo "Profile updated";
+            } else {
+                echo "No fields to update";
+            }
         } elseif (isset($_REQUEST['updateProfileImage']) && isset($_REQUEST['data']) && isset($_REQUEST['name'])) {
             $baseData = escape_string($_REQUEST['data']);
             $fileName = escape_string($_REQUEST['name']);
@@ -88,7 +97,6 @@ if (isset($headers['Authorization'])) {
         echo "No valid token";
     }
 } else if (isset($_POST['email'])) {
-    // Fallback: check if email exists (for registration, password reset, etc.)
     $email = escape_string($_POST['email']);
     $data = query("SELECT * FROM control_center_users WHERE email='$email'");
     if (mysqli_num_rows($data) > 0) {
