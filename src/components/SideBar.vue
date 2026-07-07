@@ -124,6 +124,7 @@ export default defineComponent({
       version: import.meta.env.VITE_APP_VERSION ?? "0.0.0",
       tools: [
         { icon: "apps-outline", name: "Projects" },
+        { icon: "rocket-outline", name: "Deployments" },
         { icon: "people-outline", name: "Users" },
       ],
       dev_tools: [

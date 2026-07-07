@@ -34,6 +34,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/ManageUsers.vue"),
   },
   {
+    path: "/deployments",
+    component: () => import("../views/AllDeployments.vue"),
+  },
+  {
     path: "/access-log",
     component: () => import("../views/AccessLog.vue"),
   },
