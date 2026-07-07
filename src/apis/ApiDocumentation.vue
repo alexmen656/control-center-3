@@ -1,23 +1,16 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle v-if="true" icon="cloud-outline" title="API Documentation" />
+      <SiteTitle icon="cloud-outline" :title="api.name || 'API Documentation'" />
 
       <div class="page-container">
-        <div class="nav-header">
-          <button class="back-btn" @click="$router.go(-1)">
-            <ion-icon name="arrow-back-outline"></ion-icon>
-            <span>Back to APIs</span>
-          </button>
-
-          <div class="api-info">
-            <div class="api-details">
-              <PageTitle :icon="api.icon" :title="api.name" />
-              <div class="api-meta">
-                <ion-badge :color="getStatusColor('active')" class="status-badge">Active</ion-badge>
-                <span class="version">v{{ api.version }}</span>
-                <span class="category">{{ api.category }}</span>
-              </div>
+        <div class="page-header">
+          <div class="header-content">
+            <PageTitle :icon="api.icon" :title="api.name" />
+            <div class="api-meta">
+              <ion-badge :color="getStatusColor('active')" class="status-badge">Active</ion-badge>
+              <span class="version">v{{ api.version }}</span>
+              <span class="category">{{ api.category }}</span>
             </div>
           </div>
 
@@ -313,7 +306,7 @@
                     <div class="activity-path">{{ activity.path }}</div>
                     <div class="activity-meta">
                       <span class="activity-status" :class="getStatusClass(activity.status)">{{ activity.status
-                        }}</span>
+                      }}</span>
                       <span class="activity-time">{{ activity.response_time }}ms</span>
                       <span class="activity-timestamp">{{ formatDate(activity.timestamp) }}</span>
                     </div>
@@ -615,6 +608,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import axios from 'axios';
 import { useRoute, useRouter } from 'vue-router';
 import {
   IonPage, IonContent, IonButton, IonIcon, IonBadge,
@@ -643,39 +637,39 @@ export default defineComponent({
     const testResults = ref(null);
 
     const api = ref({
-      id: 1,
-      name: 'User Management API',
-      slug: 'user-management',
-      description: 'Create, read, update and delete users in your project',
-      icon: 'people-outline',
-      category: 'user',
+      id: 0,
+      name: '',
+      slug: '',
+      description: '',
+      icon: 'cloud-outline',
+      category: '',
       version: '1.0',
-      endpoint_base: '/api/v1/users',
+      endpoint_base: '',
       endpoints: []
     });
 
     const subscription = ref({
-      id: 1,
-      api_key: 'cms_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6_123',
-      rate_limit: 100,
-      usage_count: 1547,
-      last_used: '2025-08-05T14:30:00Z',
+      id: 0,
+      api_key: '',
+      rate_limit: 0,
+      usage_count: 0,
+      last_used: '',
       is_enabled: true
     });
 
     const settings = ref({
-      rate_limit: 100,
+      rate_limit: 0,
       is_enabled: true
     });
 
     const usageStats = ref({
-      totalRequests: 1547,
-      avgResponseTime: 245,
-      successRate: 99.2,
-      requestsToday: 47
+      totalRequests: 0,
+      avgResponseTime: 0,
+      successRate: 0,
+      requestsToday: 0
     });
 
-    const currentUsage = ref(23);
+    const currentUsage = ref(0);
     const recentActivity = ref([]);
 
     const callLogs = ref<any[]>([]);
@@ -718,7 +712,6 @@ export default defineComponent({
     const loadCallLogs = async () => {
       logLoading.value = callLogs.value.length === 0;
       try {
-        const token = localStorage.getItem('authToken');
         const body: Record<string, string> = {
           getApiCallLogs: '1',
           project: (route.params.project as string) || '',
@@ -733,27 +726,17 @@ export default defineComponent({
           body.subscription_id = subscription.value.id.toString();
         }
 
-        const response = await fetch('/backend/apis.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': token || ''
-          },
-          body: new URLSearchParams(body)
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          callLogs.value = data.logs || [];
-          logPagination.value = {
-            page: data.page || 1,
-            total: data.total || 0,
-            totalPages: data.totalPages || 1,
-            limit: data.limit || logFilters.value.limit
-          };
-          if (data.stats) {
-            logStats.value = data.stats;
-          }
+        const response = await axios.post('apis.php', new URLSearchParams(body));
+        const data = response.data;
+        callLogs.value = data.logs || [];
+        logPagination.value = {
+          page: data.page || 1,
+          total: data.total || 0,
+          totalPages: data.totalPages || 1,
+          limit: data.limit || logFilters.value.limit
+        };
+        if (data.stats) {
+          logStats.value = data.stats;
         }
       } catch (error) {
         console.error('Error loading call logs:', error);
@@ -871,25 +854,13 @@ export default defineComponent({
 
     const loadApiData = async () => {
       try {
-        const token = localStorage.getItem('authToken');
         const apiSlug = route.params.apiSlug as string;
         const project = route.params.project as string;
 
-        const response = await fetch('/backend/apis.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': token
-          },
-          body: new URLSearchParams({
-            'getApiDetails': '1',
-            'api_slug': apiSlug,
-            'project': project
-          })
-        });
+        const response = await axios.get(`v2/apis/${apiSlug}?project=${encodeURIComponent(project)}`);
+        const data = response.data;
 
-        if (response.ok) {
-          const data = await response.json();
+        if (data && !data.error) {
           api.value = data;
           subscription.value = {
             id: data.subscription_id,
@@ -915,86 +886,8 @@ export default defineComponent({
         }
       } catch (error) {
         console.error('Error loading API data:', error);
-        loadMockData();
+        showToast('Failed to load API details', 'danger');
       }
-    };
-
-    const loadMockData = () => {
-      api.value = {
-        id: 1,
-        name: 'User Management API',
-        slug: 'user-management',
-        description: 'Create, read, update and delete users in your project',
-        icon: 'people-outline',
-        category: 'user',
-        version: '1.0',
-        endpoint_base: '/api/v1/users',
-        endpoints: [
-          {
-            id: 1,
-            name: 'List Users',
-            method: 'GET',
-            endpoint: '/list',
-            description: 'Get all users with optional filtering and pagination',
-            parameters: {
-              'limit': { type: 'integer', default: 10, description: 'Number of users to return' },
-              'offset': { type: 'integer', default: 0, description: 'Number of users to skip' },
-              'search': { type: 'string', optional: true, description: 'Search term for user names or emails' }
-            },
-            response_schema: {
-              'users': { type: 'array', description: 'Array of user objects' },
-              'total': { type: 'integer', description: 'Total number of users' },
-              'pagination': { type: 'object', description: 'Pagination information' }
-            },
-            example_request: { limit: 10, search: 'john' },
-            example_response: {
-              users: [{ id: 1, name: 'John Doe', email: 'john@example.com' }],
-              total: 1,
-              pagination: { limit: 10, offset: 0 }
-            }
-          },
-          {
-            id: 2,
-            name: 'Create User',
-            method: 'POST',
-            endpoint: '/create',
-            description: 'Create a new user in the system',
-            parameters: {
-              'name': { type: 'string', required: true, description: 'Full name of the user' },
-              'email': { type: 'string', required: true, description: 'Email address (must be unique)' },
-              'password': { type: 'string', required: true, description: 'Password (min 8 characters)' }
-            },
-            response_schema: {
-              'user': { type: 'object', description: 'Created user object' },
-              'success': { type: 'boolean', description: 'Whether the operation was successful' }
-            },
-            example_request: { name: 'Jane Doe', email: 'jane@example.com', password: 'secret123' },
-            example_response: {
-              user: { id: 2, name: 'Jane Doe', email: 'jane@example.com' },
-              success: true
-            }
-          }
-        ]
-      };
-
-      recentActivity.value = [
-        {
-          id: 1,
-          method: 'GET',
-          path: '/api/v1/users/list',
-          status: 200,
-          response_time: 156,
-          timestamp: '2025-08-05T14:25:00Z'
-        },
-        {
-          id: 2,
-          method: 'POST',
-          path: '/api/v1/users/create',
-          status: 201,
-          response_time: 234,
-          timestamp: '2025-08-05T14:20:00Z'
-        }
-      ];
     };
 
     const getStatusColor = (status: string) => {
@@ -1094,26 +987,13 @@ export default defineComponent({
 
     const performRegenerateKey = async () => {
       try {
-        const token = localStorage.getItem('authToken');
+        const response = await axios.post(`v2/apis/subscriptions/${subscription.value.id}/regenerate-key`);
 
-        const response = await fetch('/backend/apis.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': token
-          },
-          body: new URLSearchParams({
-            'regenerateApiKey': '1',
-            'subscription_id': subscription.value.id.toString()
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          subscription.value.api_key = data.api_key;
+        if (response.data && response.data.success) {
+          subscription.value.api_key = response.data.api_key;
           showToast('API key regenerated successfully', 'success');
         } else {
-          showToast('Failed to regenerate API key', 'danger');
+          showToast(response.data.error || 'Failed to regenerate API key', 'danger');
         }
       } catch (error) {
         console.error('Error regenerating API key:', error);
@@ -1143,37 +1023,33 @@ export default defineComponent({
 
     const performUnsubscribe = async () => {
       try {
-        showToast('Successfully unsubscribed from API', 'success');
-        router.push(`/project/${route.params.project}/manage/apis`);
+        const response = await axios.delete(`v2/apis/subscriptions/${subscription.value.id}`);
+
+        if (response.data && response.data.success) {
+          showToast('Successfully unsubscribed from API', 'success');
+          router.push(`/project/${route.params.project}/manage/apis`);
+        } else {
+          showToast(response.data.error || 'Failed to unsubscribe from API', 'danger');
+        }
       } catch (error) {
+        console.error('Error unsubscribing from API:', error);
         showToast('Failed to unsubscribe from API', 'danger');
       }
     };
 
     const saveSettings = async () => {
       try {
-        const token = localStorage.getItem('authToken');
-
-        const response = await fetch('/backend/apis.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': token
-          },
-          body: new URLSearchParams({
-            'updateApiSettings': '1',
-            'subscription_id': subscription.value.id.toString(),
-            'rate_limit': settings.value.rate_limit.toString(),
-            'is_enabled': settings.value.is_enabled.toString()
-          })
+        const response = await axios.put(`v2/apis/subscriptions/${subscription.value.id}/settings`, {
+          rate_limit: settings.value.rate_limit.toString(),
+          is_enabled: settings.value.is_enabled ? 'true' : 'false'
         });
 
-        if (response.ok) {
+        if (response.data && response.data.success) {
           subscription.value.rate_limit = settings.value.rate_limit;
           subscription.value.is_enabled = settings.value.is_enabled;
           showToast('Settings saved successfully', 'success');
         } else {
-          showToast('Failed to save settings', 'danger');
+          showToast(response.data.error || 'Failed to save settings', 'danger');
         }
       } catch (error) {
         console.error('Error saving settings:', error);
@@ -1279,68 +1155,20 @@ export default defineComponent({
   background: var(--background);
 }
 
-.nav-header {
+.page-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 24px;
   margin-bottom: 32px;
-  padding: 24px;
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
-.back-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: var(--background);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.back-btn:hover {
-  background: var(--border);
-  transform: translateY(-1px);
-}
-
-.api-info {
+.header-content {
   display: flex;
   align-items: center;
   gap: 16px;
-  flex: 1;
-}
-
-.api-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius);
-  background: var(--primary-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-}
-
-.api-details h1 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.api-details p {
-  margin: 0 0 12px 0;
-  color: var(--text-secondary);
-  font-size: 14px;
+  flex-wrap: wrap;
 }
 
 .api-meta {
@@ -2579,16 +2407,15 @@ export default defineComponent({
     padding: 16px;
   }
 
-  .nav-header {
+  .page-header {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
   }
 
-  .api-info {
+  .header-content {
     flex-direction: column;
-    align-items: center;
-    text-align: center;
+    align-items: flex-start;
   }
 
   .header-actions {
@@ -2657,10 +2484,6 @@ export default defineComponent({
 }
 
 @media (max-width: 480px) {
-  .api-details h1 {
-    font-size: 20px;
-  }
-
   .tab-btn {
     padding: 8px 12px;
     font-size: 12px;
