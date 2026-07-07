@@ -25,17 +25,17 @@
         <!-- Loading State -->
         <div v-if="isLoading" class="loading-section">
           <ion-spinner></ion-spinner>
-          <p>Environment Variables werden geladen...</p>
+          <p>Loading environment variables...</p>
         </div>
 
         <!-- No Variables State -->
         <div v-else-if="envVariables.length === 0" class="empty-state">
           <ion-icon name="server-outline" class="empty-icon"></ion-icon>
-          <h3>Keine Environment Variables</h3>
-          <p>Dieser Codespace hat noch keine Environment Variables.</p>
+          <h3>No Environment Variables</h3>
+          <p>This codespace doesn't have any environment variables yet.</p>
           <button @click="openAddModal" class="primary-button">
             <ion-icon name="add-outline"></ion-icon>
-            Erste Variable hinzufügen
+            Add first variable
           </button>
         </div>
 
@@ -59,12 +59,12 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="envVar in envVariables" :key="envVar.id" class="env-row">
+                  <tr v-for="envVar in envVariables" :key="envVar.key" class="env-row">
                     <td class="key-column">
                       <span class="env-key">{{ envVar.key }}</span>
                     </td>
                     <td class="value-column">
-                      <code class="env-value">{{ envVar.showValue ? envVar.decryptedValue : '••••••••' }}</code>
+                      <code class="env-value">{{ envVar.showValue ? envVar.value : '••••••••' }}</code>
                       <button @click="toggleValueVisibility(envVar)" class="toggle-value-btn">
                         <ion-icon :name="envVar.showValue ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
                       </button>
@@ -96,12 +96,12 @@
           <!-- Code Examples Section -->
           <div v-if="envVariables.length > 0" class="env-section">
             <div class="section-header">
-              <h3>Code-Beispiele</h3>
+              <h3>Code Examples</h3>
             </div>
 
             <div class="code-examples">
               <div class="example-block">
-                <h5>.env Datei:</h5>
+                <h5>.env file:</h5>
                 <div class="code-block" @click="copyToClipboard(getEnvFileExample())">
                   <code>{{ getEnvFileExample() }}</code>
                   <ion-icon name="copy-outline" class="copy-icon"></ion-icon>
@@ -109,7 +109,7 @@
               </div>
 
               <div class="example-block">
-                <h5>JavaScript Verwendung:</h5>
+                <h5>JavaScript usage:</h5>
                 <div class="code-block" @click="copyToClipboard(getJavaScriptExample())">
                   <code>{{ getJavaScriptExample() }}</code>
                   <ion-icon name="copy-outline" class="copy-icon"></ion-icon>
@@ -125,7 +125,7 @@
     <div v-if="addModal.isOpen" class="modal-overlay" @click="closeAddModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h3>Environment Variable hinzufügen</h3>
+          <h3>Add Environment Variable</h3>
           <button @click="closeAddModal" class="close-btn">
             <ion-icon name="close-outline"></ion-icon>
           </button>
@@ -144,33 +144,28 @@
           </div>
 
           <div class="form-group">
-            <label>Target Environments</label>
+            <label>Available in</label>
             <div class="checkbox-group">
               <label class="checkbox-item">
-                <input type="checkbox" value="production" v-model="newEnvVar.target" />
+                <input type="checkbox" value="build" v-model="newEnvVar.target" />
                 <span class="checkmark"></span>
-                Production
+                Build
               </label>
               <label class="checkbox-item">
-                <input type="checkbox" value="preview" v-model="newEnvVar.target" />
+                <input type="checkbox" value="runtime" v-model="newEnvVar.target" />
                 <span class="checkmark"></span>
-                Preview
-              </label>
-              <label class="checkbox-item">
-                <input type="checkbox" value="development" v-model="newEnvVar.target" />
-                <span class="checkmark"></span>
-                Development
+                Runtime
               </label>
             </div>
           </div>
         </div>
 
         <div class="modal-footer">
-          <button @click="closeAddModal" class="secondary-button">Abbrechen</button>
+          <button @click="closeAddModal" class="secondary-button">Cancel</button>
           <button @click="addEnvironmentVariable" :disabled="!newEnvVar.key || !newEnvVar.value || isLoading"
             class="primary-button">
             <ion-spinner v-if="isLoading" name="crescent"></ion-spinner>
-            {{ isLoading ? 'Wird hinzugefügt...' : 'Variable hinzufügen' }}
+            {{ isLoading ? 'Adding...' : 'Add variable' }}
           </button>
         </div>
       </div>
@@ -180,7 +175,7 @@
     <div v-if="editModal.isOpen" class="modal-overlay" @click="closeEditModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h3>Environment Variable bearbeiten</h3>
+          <h3>Edit Environment Variable</h3>
           <button @click="closeEditModal" class="close-btn">
             <ion-icon name="close-outline"></ion-icon>
           </button>
@@ -199,33 +194,28 @@
           </div>
 
           <div class="form-group">
-            <label>Target Environments</label>
+            <label>Available in</label>
             <div class="checkbox-group">
               <label class="checkbox-item">
-                <input type="checkbox" value="production" v-model="editModal.target" />
+                <input type="checkbox" value="build" v-model="editModal.target" />
                 <span class="checkmark"></span>
-                Production
+                Build
               </label>
               <label class="checkbox-item">
-                <input type="checkbox" value="preview" v-model="editModal.target" />
+                <input type="checkbox" value="runtime" v-model="editModal.target" />
                 <span class="checkmark"></span>
-                Preview
-              </label>
-              <label class="checkbox-item">
-                <input type="checkbox" value="development" v-model="editModal.target" />
-                <span class="checkmark"></span>
-                Development
+                Runtime
               </label>
             </div>
           </div>
         </div>
 
         <div class="modal-footer">
-          <button @click="closeEditModal" class="secondary-button">Abbrechen</button>
+          <button @click="closeEditModal" class="secondary-button">Cancel</button>
           <button @click="updateEnvironmentVariable" :disabled="!editModal.key || !editModal.value || isLoading"
             class="primary-button">
             <ion-spinner v-if="isLoading" name="crescent"></ion-spinner>
-            {{ isLoading ? 'Wird aktualisiert...' : 'Variable aktualisieren' }}
+            {{ isLoading ? 'Updating...' : 'Update variable' }}
           </button>
         </div>
       </div>
@@ -236,7 +226,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-import qs from 'qs'
 import { ToastService } from '@/services/ToastService'
 
 // Props
@@ -254,7 +243,6 @@ const props = defineProps({
 // State
 const isLoading = ref(true)
 const envVariables = ref([])
-const selectedProject = ref(null)
 
 // Modals
 const addModal = ref({
@@ -263,18 +251,32 @@ const addModal = ref({
 
 const editModal = ref({
   isOpen: false,
-  id: '',
+  originalKey: '',
   key: '',
   value: '',
-  target: ['production', 'preview', 'development']
+  target: ['build', 'runtime']
 })
 
 // Form data
 const newEnvVar = ref({
   key: '',
   value: '',
-  target: ['production', 'preview', 'development']
+  target: ['build', 'runtime']
 })
+
+const normalizeTarget = (target) => {
+  if (target === 'both' || !target) return ['build', 'runtime']
+  return [target]
+}
+
+const serializeTarget = (target) => {
+  const hasBuild = target.includes('build')
+  const hasRuntime = target.includes('runtime')
+  if (hasBuild && hasRuntime) return 'both'
+  if (hasBuild) return 'build'
+  if (hasRuntime) return 'runtime'
+  return 'both'
+}
 
 // Methods
 const refreshEnvVars = async () => {
@@ -284,48 +286,28 @@ const refreshEnvVars = async () => {
 const loadEnvironmentVariables = async () => {
   isLoading.value = true
   try {
-    // First check if we have a connected Vercel project for this codespace
-    const projectResponse = await axios.post('codespace_vercel.php', qs.stringify({
-      action: 'get',
-      project: props.projectName,
-      codespace: props.codespace
-    }))
+    const response = await axios.get(`vercel_api.php?project=${encodeURIComponent(props.projectName)}&codespace=${encodeURIComponent(props.codespace)}&action=env`)
 
-    if (projectResponse.data.vercel_project_id) {
-      selectedProject.value = {
-        id: projectResponse.data.vercel_project_id,
-        name: projectResponse.data.vercel_project_name
-      }
-
-      // Load environment variables from Vercel with codespace context
-      const envResponse = await axios.get(`vercel_api.php?project=${props.projectName}&codespace=${props.codespace}&action=env`)
-
-      if (envResponse.data.success) {
-        envVariables.value = (envResponse.data.envVars.envs || []).map(env => ({
-          ...env,
-          showValue: false
-        }))
-      } else {
-        envVariables.value = []
-      }
+    if (response.data.success) {
+      envVariables.value = (response.data.envVars || []).map(env => ({
+        key: env.key,
+        value: env.value,
+        target: normalizeTarget(env.target),
+        showValue: false
+      }))
     } else {
       envVariables.value = []
-      ToastService.warning('Kein Vercel-Projekt für diesen Codespace verbunden. Bitte verbinden Sie zuerst ein Projekt.')
     }
   } catch (error) {
     console.error('Failed to load environment variables:', error)
     envVariables.value = []
-    ToastService.error('Fehler beim Laden der Environment Variables')
+    ToastService.error('Failed to load environment variables')
   } finally {
     isLoading.value = false
   }
 }
 
 const openAddModal = () => {
-  if (!selectedProject.value) {
-    ToastService.warning('Kein Vercel-Projekt für diesen Codespace verbunden')
-    return
-  }
   addModal.value.isOpen = true
 }
 
@@ -334,40 +316,35 @@ const closeAddModal = () => {
   newEnvVar.value = {
     key: '',
     value: '',
-    target: ['production', 'preview', 'development']
+    target: ['build', 'runtime']
   }
 }
 
 const addEnvironmentVariable = async () => {
   if (!newEnvVar.value.key || !newEnvVar.value.value) {
-    ToastService.error('Key und Value sind erforderlich')
-    return
-  }
-
-  if (!selectedProject.value) {
-    ToastService.error('Kein Codespace-Projekt ausgewählt')
+    ToastService.error('Key and value are required')
     return
   }
 
   isLoading.value = true
   try {
-    const response = await axios.post(`vercel_api.php?project=${props.projectName}&codespace=${props.codespace}`, {
+    const response = await axios.post(`vercel_api.php?project=${encodeURIComponent(props.projectName)}&codespace=${encodeURIComponent(props.codespace)}`, {
       action: 'create_env',
       key: newEnvVar.value.key,
       value: newEnvVar.value.value,
-      target: newEnvVar.value.target
+      target: serializeTarget(newEnvVar.value.target)
     })
 
     if (response.data.success) {
-      ToastService.success('Environment Variable erfolgreich hinzugefügt')
+      ToastService.success('Environment variable added successfully')
       closeAddModal()
       await loadEnvironmentVariables()
     } else {
-      ToastService.error(response.data.message || 'Fehler beim Hinzufügen der Variable')
+      ToastService.error(response.data.error || 'Failed to add variable')
     }
   } catch (error) {
     console.error('Failed to add environment variable:', error)
-    ToastService.error('Fehler beim Hinzufügen der Environment Variable')
+    ToastService.error('Failed to add environment variable')
   } finally {
     isLoading.value = false
   }
@@ -376,75 +353,75 @@ const addEnvironmentVariable = async () => {
 const editEnvironmentVariable = (envVar) => {
   editModal.value = {
     isOpen: true,
-    id: envVar.id,
+    originalKey: envVar.key,
     key: envVar.key,
-    value: envVar.decryptedValue,
-    target: envVar.target || ['production', 'preview', 'development']
+    value: envVar.value,
+    target: [...envVar.target]
   }
 }
 
 const closeEditModal = () => {
   editModal.value = {
     isOpen: false,
-    id: '',
+    originalKey: '',
     key: '',
     value: '',
-    target: ['production', 'preview', 'development']
+    target: ['build', 'runtime']
   }
 }
 
 const updateEnvironmentVariable = async () => {
   if (!editModal.value.key || !editModal.value.value) {
-    ToastService.error('Key und Value sind erforderlich')
+    ToastService.error('Key and value are required')
     return
   }
 
   isLoading.value = true
   try {
-    const response = await axios.post(`vercel_api.php?project=${props.projectName}&codespace=${props.codespace}`, {
+    const response = await axios.post(`vercel_api.php?project=${encodeURIComponent(props.projectName)}&codespace=${encodeURIComponent(props.codespace)}`, {
       action: 'update_env',
-      envId: editModal.value.id,
+      oldKey: editModal.value.originalKey,
       key: editModal.value.key,
       value: editModal.value.value,
-      target: editModal.value.target
+      target: serializeTarget(editModal.value.target)
     })
 
     if (response.data.success) {
-      ToastService.success('Environment Variable erfolgreich aktualisiert')
+      ToastService.success('Environment variable updated successfully')
       closeEditModal()
       await loadEnvironmentVariables()
     } else {
-      ToastService.error(response.data.message || 'Fehler beim Aktualisieren der Variable')
+      ToastService.error(response.data.error || 'Failed to update variable')
     }
   } catch (error) {
     console.error('Failed to update environment variable:', error)
-    ToastService.error('Fehler beim Aktualisieren der Environment Variable')
+    ToastService.error('Failed to update environment variable')
   } finally {
     isLoading.value = false
   }
 }
 
 const deleteEnvironmentVariable = async (envVar) => {
-  if (!confirm(`Sind Sie sicher, dass Sie die Environment Variable "${envVar.key}" löschen möchten?`)) {
+  if (!confirm(`Are you sure you want to delete the environment variable "${envVar.key}"?`)) {
     return
   }
 
   isLoading.value = true
   try {
-    const response = await axios.post(`vercel_api.php?project=${props.projectName}&codespace=${props.codespace}`, {
+    const response = await axios.post(`vercel_api.php?project=${encodeURIComponent(props.projectName)}&codespace=${encodeURIComponent(props.codespace)}`, {
       action: 'delete_env',
-      envId: envVar.id
+      key: envVar.key
     })
 
     if (response.data.success) {
-      ToastService.success('Environment Variable erfolgreich gelöscht')
+      ToastService.success('Environment variable deleted successfully')
       await loadEnvironmentVariables()
     } else {
-      ToastService.error(response.data.message || 'Fehler beim Löschen der Variable')
+      ToastService.error(response.data.error || 'Failed to delete variable')
     }
   } catch (error) {
     console.error('Failed to delete environment variable:', error)
-    ToastService.error('Fehler beim Löschen der Environment Variable')
+    ToastService.error('Failed to delete environment variable')
   } finally {
     isLoading.value = false
   }
@@ -452,17 +429,12 @@ const deleteEnvironmentVariable = async (envVar) => {
 
 const toggleValueVisibility = (envVar) => {
   envVar.showValue = !envVar.showValue
-  if (envVar.showValue && !envVar.decryptedValue) {
-    // Load the actual value if not already loaded
-    envVar.decryptedValue = envVar.value
-  }
 }
 
 const getTargetClass = (target) => {
   switch (target) {
-    case 'production': return 'production'
-    case 'preview': return 'preview'
-    case 'development': return 'development'
+    case 'build': return 'preview'
+    case 'runtime': return 'production'
     default: return 'default'
   }
 }
@@ -475,14 +447,14 @@ const getJavaScriptExample = () => {
   if (envVariables.value.length === 0) return ''
 
   const firstVar = envVariables.value[0]
-  return `// Environment Variable abrufen\nconst ${firstVar.key.toLowerCase()} = process.env.${firstVar.key};\n\n// Verwendung\nconsole.log('${firstVar.key}:', ${firstVar.key.toLowerCase()});`
+  return `// Read environment variable\nconst ${firstVar.key.toLowerCase()} = process.env.${firstVar.key};\n\n// Usage\nconsole.log('${firstVar.key}:', ${firstVar.key.toLowerCase()});`
 }
 
 const copyToClipboard = (text) => {
   navigator.clipboard.writeText(text).then(() => {
-    ToastService.success('In Zwischenablage kopiert!')
+    ToastService.success('Copied to clipboard!')
   }).catch(() => {
-    ToastService.error('Fehler beim Kopieren')
+    ToastService.error('Failed to copy')
   })
 }
 

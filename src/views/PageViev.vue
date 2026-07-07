@@ -375,7 +375,7 @@ export default defineComponent({
   color: var(--text-secondary);
 }
 
-.empty-state ion-icon {
+.empty-state > ion-icon {
   font-size: 56px;
   color: var(--text-muted);
   margin-bottom: 16px;

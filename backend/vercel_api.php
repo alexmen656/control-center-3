@@ -38,10 +38,14 @@ if ($method === 'GET') {
             break;
         case 'env':
             $vars = [];
-            $res = query("SELECT var_key, target FROM codespace_env_vars WHERE codespace_id='$codespaceId'");
+            $res = query("SELECT var_key, value_encrypted, target FROM codespace_env_vars WHERE codespace_id='$codespaceId' ORDER BY var_key");
             if ($res) {
                 while ($row = mysqli_fetch_assoc($res)) {
-                    $vars[] = ['key' => $row['var_key'], 'target' => $row['target']];
+                    $vars[] = [
+                        'key' => $row['var_key'],
+                        'value' => deploy_decrypt($row['value_encrypted']),
+                        'target' => $row['target'],
+                    ];
                 }
             }
             echo json_encode(['success' => true, 'envVars' => $vars]);
@@ -105,6 +109,31 @@ if ($method === 'POST') {
 
             if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $key)) {
                 deploy_api_fail('invalid env key');
+            }
+
+            $k = escape_string($key);
+            $enc = escape_string(deploy_encrypt($value));
+            $t = escape_string($target);
+
+            query("INSERT INTO codespace_env_vars (codespace_id, var_key, value_encrypted, target)
+                   VALUES ('$codespaceId', '$k', '$enc', '$t')
+                   ON DUPLICATE KEY UPDATE value_encrypted='$enc', target='$t'");
+            echo json_encode(['success' => true, 'result' => ['key' => $key]]);
+            break;
+
+        case 'update_env':
+            $key = trim($input['key'] ?? '');
+            $oldKey = trim($input['oldKey'] ?? $key);
+            $value = (string) ($input['value'] ?? '');
+            $target = in_array($input['target'] ?? 'both', ['build', 'runtime', 'both'], true) ? $input['target'] : 'both';
+
+            if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $key)) {
+                deploy_api_fail('invalid env key');
+            }
+
+            if ($oldKey !== '' && $oldKey !== $key) {
+                $ok = escape_string($oldKey);
+                query("DELETE FROM codespace_env_vars WHERE codespace_id='$codespaceId' AND var_key='$ok'");
             }
 
             $k = escape_string($key);
