@@ -1,12 +1,11 @@
 <template>
   <div class="apis-container">
-    <SiteTitle icon="cloud-outline" title="CMS APIs" />
-    <!-- Professional APIs Management Screen -->
+    <SiteTitle icon="cloud-outline" title="Fringelo APIs" />
     <div class="apis-screen">
       <div class="apis-header">
         <div class="header-left">
           <div class="title-section">
-            <PageTitle icon="cloud-outline" title="CMS APIs" />
+            <PageTitle icon="cloud-outline" title="Fringelo APIs" />
           </div>
         </div>
         <div class="header-actions">
@@ -16,15 +15,11 @@
           </button>
         </div>
       </div>
-      
       <div class="apis-content">
-        <!-- Loading State -->
         <div v-if="isLoading" class="loading-section">
           <ion-spinner></ion-spinner>
           <p>APIs werden geladen...</p>
         </div>
-
-        <!-- No APIs State -->
         <div v-else-if="availableAPIs.length === 0" class="empty-state">
           <ion-icon name="server-outline" class="empty-icon"></ion-icon>
           <h3>Keine APIs verfügbar</h3>
@@ -34,43 +29,32 @@
             Fringelo öffnen
           </button>
         </div>
-
-        <!-- APIs Management -->
         <div v-else class="apis-management">
-          <!-- Active APIs Section -->
           <div class="apis-section">
             <div class="section-header">
               <h3>Aktive APIs</h3>
               <span class="count-badge">{{ activeAPIs.length }}</span>
             </div>
-            
+
             <div v-if="activeAPIs.length === 0" class="no-active-apis">
               <p>Keine APIs aktiviert. Aktivieren Sie APIs unten, um sie zu nutzen.</p>
             </div>
-            
+
             <div v-else class="apis-grid">
-              <div 
-                v-for="api in activeAPIs" 
-                :key="api.subscription_id"
-                class="api-card active"
-              >
+              <div v-for="api in activeAPIs" :key="api.subscription_id" class="api-card active">
                 <div class="api-card-header">
                   <ion-icon :name="api.icon || 'server-outline'" class="api-icon"></ion-icon>
                   <div class="api-info">
                     <h4 class="api-name">{{ api.name }}</h4>
                     <span class="api-category">{{ api.category }}</span>
                   </div>
-                  <ion-toggle 
-                    :checked="true" 
-                    @ionChange="toggleAPI(api)"
-                    :disabled="api.isToggling"
-                    color="success"
-                  ></ion-toggle>
+                  <ion-toggle :checked="true" @ionChange="toggleAPI(api)" :disabled="api.isToggling"
+                    color="success"></ion-toggle>
                 </div>
-                
+
                 <div class="api-card-content">
                   <p class="api-description">{{ api.description || 'Keine Beschreibung verfügbar.' }}</p>
-                  
+
                   <div class="api-usage">
                     <h5>Verwendung:</h5>
                     <div class="code-example" @click="copyToClipboard(getAPIImportExample(api))">
@@ -79,7 +63,7 @@
                     </div>
                   </div>
                 </div>
-                
+
                 <div class="api-card-actions">
                   <button @click="openAPIDocumentation(api)" class="secondary-button">
                     <ion-icon name="book-outline"></ion-icon>
@@ -94,38 +78,30 @@
             </div>
           </div>
 
-          <!-- Available APIs Section -->
           <div class="apis-section">
             <div class="section-header">
               <h3>Verfügbare APIs</h3>
               <span class="count-badge">{{ inactiveAPIs.length }}</span>
             </div>
-            
-          <div v-if="inactiveAPIs.length === 0" class="no-inactive-apis">
-            <p>All available APIs are already activated.</p>
-          </div>            <div v-else class="apis-grid">
-              <div 
-                v-for="api in inactiveAPIs" 
-                :key="api.subscription_id"
-                class="api-card inactive"
-              >
+
+            <div v-if="inactiveAPIs.length === 0" class="no-inactive-apis">
+              <p>All available APIs are already activated.</p>
+            </div>
+            <div v-else class="apis-grid">
+              <div v-for="api in inactiveAPIs" :key="api.subscription_id" class="api-card inactive">
                 <div class="api-card-header">
                   <ion-icon :name="api.icon || 'server-outline'" class="api-icon"></ion-icon>
                   <div class="api-info">
                     <h4 class="api-name">{{ api.name }}</h4>
                     <span class="api-category">{{ api.category }}</span>
                   </div>
-                  <ion-toggle 
-                    :checked="false" 
-                    @ionChange="toggleAPI(api)"
-                    :disabled="api.isToggling"
-                  ></ion-toggle>
+                  <ion-toggle :checked="false" @ionChange="toggleAPI(api)" :disabled="api.isToggling"></ion-toggle>
                 </div>
-                
+
                 <div class="api-card-content">
                   <p class="api-description">{{ api.description || 'Keine Beschreibung verfügbar.' }}</p>
                 </div>
-                
+
                 <div class="api-card-actions">
                   <button @click="openAPIDocumentation(api)" class="secondary-button">
                     <ion-icon name="book-outline"></ion-icon>
@@ -136,12 +112,11 @@
             </div>
           </div>
 
-          <!-- Code Examples Section -->
           <div v-if="activeAPIs.length > 0" class="apis-section">
             <div class="section-header">
               <h3>Code-Beispiele</h3>
             </div>
-            
+
             <div class="code-examples">
               <div class="example-block">
                 <h5>Alle APIs importieren:</h5>
@@ -150,7 +125,7 @@
                   <ion-icon name="copy-outline" class="copy-icon"></ion-icon>
                 </div>
               </div>
-              
+
               <div class="example-block">
                 <h5>Verwendungsbeispiel:</h5>
                 <div class="code-block" @click="copyToClipboard(getUsageExample())">
@@ -222,9 +197,9 @@ const loadAvailableAPIs = async () => {
 
 const toggleAPI = async (api) => {
   if (api.isToggling) return
-  
+
   api.isToggling = true
-  
+
   try {
     const body = {
       project: props.projectName,
@@ -270,17 +245,17 @@ const getAPIImportExample = (api) => {
 
 const getAllImportsExample = () => {
   if (activeAPIs.value.length === 0) return ''
-  
+
   const imports = activeAPIs.value.map(api => getAPIClassName(api.slug)).join(', ')
   return `import { ${imports} } from 'apis';`
 }
 
 const getUsageExample = () => {
   if (activeAPIs.value.length === 0) return ''
-  
+
   const firstAPI = activeAPIs.value[0]
   const className = getAPIClassName(firstAPI.slug)
-  
+
   switch (firstAPI.slug) {
     case 'user-management':
       return `// Alle Benutzer abrufen\nconst users = await ${className}.getAll();\n\n// Neuen Benutzer erstellen\nconst user = await ${className}.create({ name: 'John', email: 'john@example.com' });`
@@ -706,27 +681,27 @@ onMounted(() => {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .apis-header {
     padding: 12px 16px;
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .header-actions {
     width: 100%;
     justify-content: stretch;
   }
-  
+
   .refresh-button {
     flex: 1;
     justify-content: center;
   }
-  
+
   .apis-content {
     padding: 16px;
   }
-  
+
   .apis-section {
     padding: 16px;
   }
@@ -737,15 +712,15 @@ onMounted(() => {
     grid-template-columns: 1fr;
     gap: 12px;
   }
-  
+
   .apis-header {
     padding: 8px 12px;
   }
-  
+
   .apis-content {
     padding: 12px;
   }
-  
+
   .api-card {
     padding: 12px;
   }

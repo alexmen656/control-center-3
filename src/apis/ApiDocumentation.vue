@@ -7,11 +7,6 @@
         <div class="page-header">
           <div class="header-content">
             <PageTitle :icon="api.icon" :title="api.name" />
-            <div class="api-meta">
-              <ion-badge :color="getStatusColor('active')" class="status-badge">Active</ion-badge>
-              <span class="version">v{{ api.version }}</span>
-              <span class="category">{{ api.category }}</span>
-            </div>
           </div>
 
           <div class="header-actions">
@@ -60,14 +55,16 @@
               <div class="card-content">
                 <div class="info-grid">
                   <div class="info-item">
-                    <div class="info-label">Base URL</div>
-                    <div class="info-value">
-                      <code>{{ api.endpoint_base }}</code>
-                    </div>
-                  </div>
-                  <div class="info-item">
                     <div class="info-label">Version</div>
                     <div class="info-value">{{ api.version }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">Category</div>
+                    <div class="info-value">{{ api.category }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">Active</div>
+                    <div class="info-value">{{ subscription.is_enabled ? 'Yes' : 'No' }}</div>
                   </div>
                   <div class="info-item">
                     <div class="info-label">Rate Limit</div>
@@ -91,10 +88,18 @@
 
             <div class="card modern-card">
               <div class="card-header">
-                <h3>Authentication</h3>
+                <h3>SDK Usage</h3>
               </div>
               <div class="card-content">
                 <div class="auth-section">
+                  <div class="api-key-section">
+                    <div class="key-label">Import</div>
+                    <div class="code-example">{{ usageImport }}</div>
+                  </div>
+                  <div class="api-key-section">
+                    <div class="key-label">Example</div>
+                    <div class="code-example">{{ firstExample }}</div>
+                  </div>
                   <div class="api-key-section">
                     <div class="key-label">API Key</div>
                     <div class="key-display">
@@ -109,13 +114,7 @@
                         </button>
                       </div>
                     </div>
-                  </div>
-                  <div class="auth-example">
-                    <div class="example-label">Usage Example</div>
-                    <div class="code-example">
-                      curl -H "Authorization: Bearer {{ subscription.api_key }}" \
-                      {{ api.endpoint_base }}/endpoint
-                    </div>
+                    <div class="sdk-note">Injected automatically as an environment variable when you activate this SDK for a codespace.</div>
                   </div>
                 </div>
               </div>
@@ -124,44 +123,32 @@
 
           <div class="card modern-card">
             <div class="card-header">
-              <h3>Quick Start Guide</h3>
+              <h3>Quick Start</h3>
             </div>
             <div class="card-content">
               <div class="quick-start">
                 <div class="step">
                   <div class="step-number">1</div>
                   <div class="step-content">
-                    <h4>Set up your API key</h4>
-                    <div class="code-example">
-                      const API_KEY = '{{ subscription.api_key }}';
-                      const BASE_URL = '{{ api.endpoint_base }}';
-                    </div>
+                    <h4>Activate the SDK for your codespace</h4>
+                    <p>Activate this API on a codespace — its key is injected automatically as an environment variable on
+                      the next deploy.</p>
                   </div>
                 </div>
 
                 <div class="step">
                   <div class="step-number">2</div>
                   <div class="step-content">
-                    <h4>Make your first request</h4>
-                    <div class="code-example">
-                      fetch(`${BASE_URL}/endpoint`, {
-                      headers: {
-                      'Authorization': `Bearer ${API_KEY}`,
-                      'Content-Type': 'application/json'
-                      }
-                      })
-                      .then(response => response.json())
-                      .then(data => console.log(data));
-                    </div>
+                    <h4>Import the SDK</h4>
+                    <div class="code-example">{{ usageImport }}</div>
                   </div>
                 </div>
 
                 <div class="step">
                   <div class="step-number">3</div>
                   <div class="step-content">
-                    <h4>Handle responses</h4>
-                    <p>All API responses follow a consistent format. Check the Documentation tab for detailed endpoint
-                      specifications.</p>
+                    <h4>Call a method</h4>
+                    <div class="code-example">{{ firstExample }}</div>
                   </div>
                 </div>
               </div>
@@ -172,18 +159,28 @@
         <div v-if="selectedTab === 'docs'" class="tab-content">
           <div class="card modern-card">
             <div class="card-header">
-              <h3>API Endpoints</h3>
+              <h3>Usage</h3>
+            </div>
+            <div class="card-content">
+              <p class="sdk-intro">This API is a JavaScript SDK that is auto-injected into your codespace when you
+                activate it. Import it and call its methods:</p>
+              <div class="code-example">{{ usageImport }}</div>
+              <p class="sdk-note">The API key is injected automatically as an environment variable — no manual setup
+                needed.</p>
+            </div>
+          </div>
+
+          <div class="card modern-card">
+            <div class="card-header">
+              <h3>SDK Methods <span class="count-inline" v-if="api.endpoints">({{ api.endpoints.length }})</span></h3>
             </div>
             <div class="card-content">
               <div v-if="api.endpoints && api.endpoints.length > 0" class="endpoints-documentation">
                 <div v-for="endpoint in api.endpoints" :key="endpoint.id" class="endpoint-doc">
                   <div class="endpoint-header">
-                    <div class="method-badge" :class="getMethodColor(endpoint.method)">
-                      {{ endpoint.method }}
-                    </div>
                     <div class="endpoint-info">
                       <h4>{{ endpoint.name }}</h4>
-                      <div class="endpoint-path">{{ api.endpoint_base }}{{ endpoint.endpoint }}</div>
+                      <code class="endpoint-signature">{{ importName }}.{{ endpoint.endpoint }}</code>
                     </div>
                   </div>
 
@@ -202,33 +199,13 @@
                           <span v-if="param.required" class="param-required">required</span>
                         </div>
                         <div v-if="param.description" class="param-description">{{ param.description }}</div>
-                        <div v-if="param.default" class="param-default">Default: {{ param.default }}</div>
                       </div>
                     </div>
                   </div>
 
-                  <div v-if="endpoint.example_request && Object.keys(endpoint.example_request).length > 0"
-                    class="example-section">
-                    <h5>Example Request</h5>
-                    <div class="code-example">{{ formatJson(endpoint.example_request) }}</div>
-                  </div>
-
-                  <div v-if="endpoint.example_response && Object.keys(endpoint.example_response).length > 0"
-                    class="example-section">
-                    <h5>Example Response</h5>
-                    <div class="code-example">{{ formatJson(endpoint.example_response) }}</div>
-                  </div>
-
-                  <div v-if="endpoint.response_schema && Object.keys(endpoint.response_schema).length > 0"
-                    class="schema-section">
-                    <h5>Response Schema</h5>
-                    <div class="schema-list">
-                      <div v-for="(field, fieldName) in endpoint.response_schema" :key="fieldName" class="schema-item">
-                        <code class="field-name">{{ fieldName }}</code>
-                        <span class="field-type">{{ field.type }}</span>
-                        <span v-if="field.description" class="field-description">{{ field.description }}</span>
-                      </div>
-                    </div>
+                  <div v-if="endpoint.example_request && endpoint.example_request.code" class="example-section">
+                    <h5>Example</h5>
+                    <div class="code-example">{{ endpoint.example_request.code }}</div>
                   </div>
                 </div>
               </div>
@@ -236,7 +213,7 @@
                 <div class="empty-state">
                   <ion-icon name="document-outline" size="large"></ion-icon>
                   <h4>No Documentation Available</h4>
-                  <p>No documentation available for this API yet.</p>
+                  <p>No documentation available for this SDK yet.</p>
                 </div>
               </div>
             </div>
@@ -852,6 +829,24 @@ export default defineComponent({
       return Math.min((currentUsage.value / subscription.value.rate_limit) * 100, 100);
     });
 
+    const importName = computed(() => {
+      const slug = api.value.slug || '';
+      const special = { 'user-management': 'UsersAPI', 'file-storage': 'FilesAPI' };
+      if (special[slug]) return special[slug];
+      if (!slug) return 'Api';
+      return slug.charAt(0).toUpperCase() + slug.slice(1) + 'API';
+    });
+
+    const usageImport = computed(() => `import { ${importName.value} } from 'apis';`);
+
+    const firstExample = computed(() => {
+      const eps = api.value.endpoints || [];
+      for (const e of eps) {
+        if (e.example_request && e.example_request.code) return e.example_request.code;
+      }
+      return `await ${importName.value}.someMethod();`;
+    });
+
     const loadApiData = async () => {
       try {
         const apiSlug = route.params.apiSlug as string;
@@ -1089,6 +1084,9 @@ export default defineComponent({
       recentActivity,
       maskedKey,
       usagePercentage,
+      importName,
+      usageImport,
+      firstExample,
       callLogs,
       logLoading,
       logStats,
@@ -1571,6 +1569,37 @@ export default defineComponent({
 .endpoint-path {
   font-family: 'Courier New', monospace;
   color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.endpoint-signature {
+  display: inline-block;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: var(--primary-color);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  word-break: break-word;
+}
+
+.sdk-intro {
+  margin: 0 0 12px 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.sdk-note {
+  margin: 10px 0 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.count-inline {
+  color: var(--text-muted);
+  font-weight: 500;
   font-size: 14px;
 }
 

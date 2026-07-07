@@ -229,7 +229,7 @@
     <div class="sidebar-section">
       <div class="section-header">
         <ion-icon name="server-outline"></ion-icon>
-        <span>CMS APIs</span>
+        <span>Fringelo APIs</span>
         <ion-button fill="clear" size="small" @click="refreshAvailableAPIs">
           <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
         </ion-button>

@@ -195,6 +195,20 @@ export const apiTools = [
       },
       required: ['project']
     }
+  },
+  {
+    name: 'api_sdk_docs',
+    description: 'Get JavaScript SDK usage docs for Fringelo APIs so you know EXACTLY how to use one inside a codespace. Fringelo APIs are pre-built JS SDKs that are auto-injected into a codespace and imported from \'apis\' — they are NOT REST endpoints you fetch by URL. ALWAYS call this before writing codespace code that uses an API. Without a slug it returns the list of available SDKs (slug, import name, description); with a slug it returns the import line plus every method with its signature, parameters and a runnable usage example.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        slug: {
+          type: 'string',
+          description: 'API slug to get full method docs for (e.g. "weather", "stripe", "github"). Omit to list all available SDKs.'
+        }
+      },
+      required: []
+    }
   }
 ];
 
@@ -226,7 +240,10 @@ export async function handleApiTool(toolName, args, context) {
       
     case 'api_generate_key':
       return await generateApiKey(args, context);
-      
+
+    case 'api_sdk_docs':
+      return await getSdkDocs(args, context);
+
     default:
       return formatError(`Unknown API tool: ${toolName}`);
   }
@@ -405,11 +422,72 @@ async function generateApiKey(args, context) {
         project: args.project
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       apiKey: data.apiKey,
       message: 'API key generated successfully'
+    });
+  } catch (error) {
+    return formatError(error.message);
+  }
+}
+
+function sdkImportName(slug) {
+  const special = { 'user-management': 'UsersAPI', 'file-storage': 'FilesAPI' };
+  if (special[slug]) return special[slug];
+  if (!slug) return 'Api';
+  return slug.charAt(0).toUpperCase() + slug.slice(1) + 'API';
+}
+
+async function getSdkDocs(args, context) {
+  try {
+    const list = await cmsRequest('v2/apis/available', { method: 'GET' }, context);
+    const apis = Array.isArray(list) ? list : (list.apis || []);
+
+    if (!args.slug) {
+      return formatResponse({
+        success: true,
+        note: "Fringelo APIs are JavaScript SDKs auto-injected into a codespace. Import them from 'apis' and call their methods — do NOT fetch them by URL. Call api_sdk_docs again with a specific slug to get that SDK's methods and examples.",
+        sdks: apis.map(a => ({
+          slug: a.slug,
+          name: a.name,
+          importName: sdkImportName(a.slug),
+          description: a.description
+        }))
+      });
+    }
+
+    const api = apis.find(a => a.slug === args.slug);
+    if (!api) {
+      return formatError(`No SDK found for slug '${args.slug}'. Call api_sdk_docs without a slug to list available SDKs.`);
+    }
+
+    const detail = await cmsRequest(`v2/apis/by-id/${api.id}`, { method: 'GET' }, context);
+    const importName = sdkImportName(api.slug);
+    const methods = (detail.endpoints || []).map(e => ({
+      name: e.name,
+      signature: `${importName}.${e.endpoint}`,
+      description: e.description,
+      params: (e.parameters && Object.keys(e.parameters).length)
+        ? Object.entries(e.parameters).map(([name, p]) => ({
+          name,
+          type: p.type,
+          required: !!p.required,
+          description: p.description
+        }))
+        : [],
+      example: (e.example_request && e.example_request.code) ? e.example_request.code : ''
+    }));
+
+    return formatResponse({
+      success: true,
+      slug: api.slug,
+      name: api.name,
+      importName,
+      import: `import { ${importName} } from 'apis';`,
+      note: "This SDK is auto-injected into the codespace once activated for it; its API key is injected automatically as an environment variable. Import it as shown and call the methods below on the imported object.",
+      methods
     });
   } catch (error) {
     return formatError(error.message);

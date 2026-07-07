@@ -1,11 +1,11 @@
 <template>
   <ion-page>
     <ion-content class="apis-modern">
-      <SiteTitle icon="cloud-outline" title="CMS APIs" />
+      <SiteTitle icon="cloud-outline" title="Fringelo APIs" />
       <div class="apis-container">
         <div class="page-header">
           <div class="header-content">
-            <PageTitle icon="cloud-outline" title="CMS APIs" />
+            <PageTitle icon="cloud-outline" title="Fringelo APIs" />
           </div>
         </div>
 
@@ -103,12 +103,8 @@
           </div>
 
           <div v-if="subscribedApis.length > 0" class="apis-grid">
-            <article
-              v-for="api in subscribedApis"
-              :key="api.subscription_id"
-              class="api-tile subscribed"
-              @click="openApiDetail(api)"
-            >
+            <article v-for="api in subscribedApis" :key="api.subscription_id" class="api-tile subscribed"
+              @click="openApiDetail(api)">
               <div class="tile-top">
                 <div class="tile-icon">
                   <ion-icon :name="api.icon || 'cloud-outline'"></ion-icon>
@@ -175,7 +171,8 @@
           <div v-if="selectedCodespace && codespaceAPIs.length > 0">
             <div class="codespace-info">
               <ion-icon name="information-circle-outline"></ion-icon>
-              <span>Toggle APIs on/off for this codespace. Only activated APIs have their SDKs available in the .monaco_apis folder.</span>
+              <span>Toggle APIs on/off for this codespace. Only activated APIs have their SDKs available in the
+                .monaco_apis folder.</span>
             </div>
 
             <div class="apis-grid">
@@ -184,10 +181,7 @@
                   <div class="tile-icon">
                     <ion-icon :name="api.icon || 'cloud-outline'"></ion-icon>
                   </div>
-                  <ion-toggle
-                    :checked="api.is_active"
-                    @ionChange="toggleCodespaceAPI(api)"
-                    :disabled="api.isToggling">
+                  <ion-toggle :checked="api.is_active" @ionChange="toggleCodespaceAPI(api)" :disabled="api.isToggling">
                   </ion-toggle>
                 </div>
                 <h3 class="tile-title">{{ api.name }}</h3>
@@ -766,6 +760,7 @@ export default defineComponent({
 
     onMounted(() => {
       loadAvailableApis();
+      loadSubscribedApis();
     });
 
     return {
@@ -1017,12 +1012,44 @@ export default defineComponent({
   border: 1px solid var(--border);
 }
 
-.cat-auth { background: #eef2ff; color: #4f46e5; border-color: transparent; }
-.cat-storage, .cat-file { background: #f0fdfa; color: #0d9488; border-color: transparent; }
-.cat-data, .cat-database { background: #fff7ed; color: #f97316; border-color: transparent; }
-.cat-communication, .cat-notification { background: #ecfdf5; color: #059669; border-color: transparent; }
-.cat-analytics { background: #fffbeb; color: #d97706; border-color: transparent; }
-.cat-user { background: #fdf4ff; color: #a21caf; border-color: transparent; }
+.cat-auth {
+  background: #eef2ff;
+  color: #4f46e5;
+  border-color: transparent;
+}
+
+.cat-storage,
+.cat-file {
+  background: #f0fdfa;
+  color: #0d9488;
+  border-color: transparent;
+}
+
+.cat-data,
+.cat-database {
+  background: #fff7ed;
+  color: #f97316;
+  border-color: transparent;
+}
+
+.cat-communication,
+.cat-notification {
+  background: #ecfdf5;
+  color: #059669;
+  border-color: transparent;
+}
+
+.cat-analytics {
+  background: #fffbeb;
+  color: #d97706;
+  border-color: transparent;
+}
+
+.cat-user {
+  background: #fdf4ff;
+  color: #a21caf;
+  border-color: transparent;
+}
 
 .tile-title {
   margin: 0 0 6px 0;
@@ -1329,8 +1356,14 @@ export default defineComponent({
   font-size: 14px;
 }
 
-.api-details-content { max-width: 800px; }
-.api-overview { margin-bottom: 32px; }
+.api-details-content {
+  max-width: 800px;
+}
+
+.api-overview {
+  margin-bottom: 32px;
+}
+
 .api-meta {
   display: grid;
   gap: 8px;
@@ -1339,14 +1372,23 @@ export default defineComponent({
   padding: 16px;
   border-radius: 8px;
 }
-.api-meta div { display: flex; justify-content: space-between; }
+
+.api-meta div {
+  display: flex;
+  justify-content: space-between;
+}
+
 .api-meta code {
   background: var(--ion-color-step-100, #e9eaed);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: monospace;
 }
-.endpoints-section { margin-bottom: 32px; }
+
+.endpoints-section {
+  margin-bottom: 32px;
+}
+
 .endpoint-card {
   border: 1px solid var(--ion-color-step-200, #d7d8da);
   border-radius: 8px;
@@ -1354,12 +1396,14 @@ export default defineComponent({
   margin-bottom: 12px;
   background: var(--ion-color-step-50, #f4f5f8);
 }
+
 .endpoint-header {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
 }
+
 .endpoint-path {
   font-family: monospace;
   background: var(--ion-color-step-100, #e9eaed);
@@ -1367,8 +1411,17 @@ export default defineComponent({
   border-radius: 4px;
   font-size: 0.9rem;
 }
-.endpoint-description { color: var(--ion-color-medium); margin: 8px 0; }
-.parameters ul { margin: 8px 0; padding-left: 20px; }
+
+.endpoint-description {
+  color: var(--ion-color-medium);
+  margin: 8px 0;
+}
+
+.parameters ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
 .parameters code {
   background: var(--ion-color-primary-tint);
   color: var(--ion-color-primary-contrast);
@@ -1376,8 +1429,15 @@ export default defineComponent({
   border-radius: 4px;
   font-size: 0.8rem;
 }
-.required { color: var(--ion-color-danger); font-weight: bold; }
-.documentation-link { margin-top: 24px; }
+
+.required {
+  color: var(--ion-color-danger);
+  font-weight: bold;
+}
+
+.documentation-link {
+  margin-top: 24px;
+}
 
 @media (prefers-color-scheme: dark) {
   .apis-modern {
@@ -1388,16 +1448,42 @@ export default defineComponent({
     --text-secondary: #cbd5e1;
     --text-muted: #64748b;
   }
-  .codespace-info { background: rgba(249, 115, 22, 0.12); border-color: rgba(249, 115, 22, 0.3); color: #fed7aa; }
-  .status-tag.on { background: rgba(5, 150, 105, 0.2); }
+
+  .codespace-info {
+    background: rgba(249, 115, 22, 0.12);
+    border-color: rgba(249, 115, 22, 0.3);
+    color: #fed7aa;
+  }
+
+  .status-tag.on {
+    background: rgba(5, 150, 105, 0.2);
+  }
 }
 
 @media (max-width: 768px) {
-  .apis-container { padding: 16px; }
-  .apis-tabs { flex-wrap: wrap; }
-  .apis-tab { flex: 1 1 45%; }
-  .apis-grid { grid-template-columns: 1fr; }
-  .filter-bar { flex-direction: column; }
-  .filter-select { min-width: 0; width: 100%; }
+  .apis-container {
+    padding: 16px;
+  }
+
+  .apis-tabs {
+    flex-wrap: wrap;
+  }
+
+  .apis-tab {
+    flex: 1 1 45%;
+  }
+
+  .apis-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-bar {
+    flex-direction: column;
+  }
+
+  .filter-select {
+    min-width: 0;
+    width: 100%;
+  }
 }
 </style>
