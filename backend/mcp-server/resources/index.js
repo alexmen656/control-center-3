@@ -32,14 +32,6 @@ export async function getResources(user, backendUrl) {
         mimeType: 'application/json'
       });
       
-      // Add project pages resource
-      resources.push({
-        uri: `cms://projects/${project.link || project.projectID}/pages`,
-        name: `${project.name} - Pages`,
-        description: `Pages in project ${project.name}`,
-        mimeType: 'application/json'
-      });
-      
       // Add project files resource
       resources.push({
         uri: `cms://projects/${project.link || project.projectID}/files`,
@@ -80,22 +72,7 @@ export async function getResources(user, backendUrl) {
       description: 'APIs available for subscription',
       mimeType: 'application/json'
     });
-    
-    // Add Web Builder resources
-    resources.push({
-      uri: 'cms://webbuilder/projects',
-      name: 'Web Builder Projects',
-      description: 'All Web Builder projects',
-      mimeType: 'application/json'
-    });
-    
-    resources.push({
-      uri: 'cms://webbuilder/domains',
-      name: 'Web Builder Domains',
-      description: 'Configured Web Builder domains',
-      mimeType: 'application/json'
-    });
-    
+
   } catch (error) {
     console.error('Error fetching resources:', error);
   }
@@ -120,9 +97,7 @@ export async function readResource(uri, user, backendUrl) {
     
     switch (type) {
       case 'projects':
-        if (subResource === 'pages') {
-          data = await fetchProjectPages(id, backendUrl);
-        } else if (subResource === 'files') {
+        if (subResource === 'files') {
           data = await fetchProjectFiles(id, backendUrl);
         } else {
           data = await fetchProject(id, backendUrl);
@@ -146,19 +121,7 @@ export async function readResource(uri, user, backendUrl) {
           data = await fetchAvailableApis(backendUrl);
         }
         break;
-      
-      case 'webbuilder':
-        if (id === 'projects') {
-          data = await fetchWebBuilderProjects(backendUrl, user);
-        } else if (id === 'domains') {
-          data = await fetchWebBuilderDomains(backendUrl);
-        } else if (id && subResource === 'pages') {
-          data = await fetchWebBuilderPages(id, backendUrl, user);
-        } else if (id && subResource === 'components') {
-          data = await fetchWebBuilderComponents(id, backendUrl, user);
-        }
-        break;
-        
+
       default:
         throw new Error(`Unknown resource type: ${type}`);
     }
@@ -207,18 +170,6 @@ async function fetchProject(projectLink, backendUrl) {
   return response.json();
 }
 
-async function fetchProjectPages(projectLink, backendUrl) {
-  const response = await fetch(`${backendUrl}/web_pages.php`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      getPagesByProject: 'true',
-      project: projectLink
-    })
-  });
-  return response.json();
-}
-
 async function fetchProjectFiles(projectLink, backendUrl) {
   const response = await fetch(
     `${backendUrl}/file_api.php?project=${encodeURIComponent(projectLink)}&action=list&path=/`
@@ -251,64 +202,3 @@ async function fetchAvailableApis(backendUrl) {
   return response.json();
 }
 
-// ============================================
-// Web Builder Fetch Functions
-// ============================================
-
-async function fetchWebBuilderProjects(backendUrl, user) {
-  try {
-    const response = await fetch(`${backendUrl}/web-builder/projects.php`, {
-      method: 'GET',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': user?.token || ''
-      }
-    });
-    return response.json();
-  } catch (error) {
-    return { error: error.message };
-  }
-}
-
-async function fetchWebBuilderDomains(backendUrl) {
-  try {
-    const response = await fetch(`${backendUrl}/web_builder_domains.php`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ action: 'list' })
-    });
-    return response.json();
-  } catch (error) {
-    return { error: error.message };
-  }
-}
-
-async function fetchWebBuilderPages(projectId, backendUrl, user) {
-  try {
-    const response = await fetch(`${backendUrl}/web-builder/pages.php?project_id=${projectId}`, {
-      method: 'GET',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': user?.token || ''
-      }
-    });
-    return response.json();
-  } catch (error) {
-    return { error: error.message };
-  }
-}
-
-async function fetchWebBuilderComponents(pageId, backendUrl, user) {
-  try {
-    const response = await fetch(`${backendUrl}/web-builder/components.php?page_id=${pageId}`, {
-      method: 'GET',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': user?.token || ''
-      }
-    });
-    return response.json();
-  } catch (error) {
-    return { error: error.message };
-  }
-}

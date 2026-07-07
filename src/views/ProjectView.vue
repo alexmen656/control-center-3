@@ -33,51 +33,6 @@
             </ion-card>
             <ion-card>
               <h2 class="info-card-heading">
-                Components
-                <div style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                  ">
-                  <ion-icon @click="openWebBuilder()" name="globe-outline" style="margin-right: 8px;" />
-                  <ion-icon @click="exportWeb()" name="download-outline" />
-                  <ion-icon @click="viewWWW()" name="earth-outline" />
-                </div>
-              </h2>
-
-              <a v-if="downloadLink" :href="'https://api.fringelo.com/website_builder/exports/' +
-                downloadLink
-                " download>{{ downloadLink }}</a>
-              <ion-list v-if="components && components.length > 0">
-                <ion-item v-for="component in components" :key="component.id">
-                  <ion-icon v-if="component.type == 'script'" name="code-slash-outline"></ion-icon>
-                  <ion-icon v-if="component.type == 'image'" name="image-outline"></ion-icon>
-                  <ion-label>
-                    <h2>
-                      {{
-                        component.name.charAt(0).toUpperCase() +
-                        component.name.slice(1)
-                      }}
-                    </h2>
-                    <p>
-                      Type:
-                      {{
-                        component.type.charAt(0).toUpperCase() +
-                        component.type.slice(1)
-                      }}
-                    </p>
-                  </ion-label>
-                </ion-item>
-              </ion-list>
-              <ion-item v-else>
-                <ion-label>
-                  <h2>No components yet</h2>
-                </ion-label>
-              </ion-item>
-            </ion-card>
-
-            <ion-card>
-              <h2 class="info-card-heading">
                 Users
                 <div style="
                     display: flex;
@@ -248,9 +203,7 @@ export default {
   data() {
     return {
       tools: [],
-      components: [],
       users: [],
-      downloadLink: "",
       email: "",
       availableRoles: [],
       selectedRoleId: null,
@@ -290,7 +243,6 @@ export default {
       .get("sidebar.php?getSideBarByProjectName=" + this.$route.params.project)
       .then((response) => {
         this.tools = response.data.tools;
-        this.components = response.data.components;
       });
     this.$axios
       .post(
@@ -409,21 +361,6 @@ export default {
       } catch (error) {
         console.error("Failed to load users:", error);
       }
-    },
-    viewWWW() {
-      window
-        .open("https://alex.polan.sk/" + this.$route.params.project, "_blank")
-        .focus();
-    },
-    openWebBuilder() {
-      const project = this.$route.params.project;
-      const url = `https://web-builder.control-center.eu/project/${project}`;
-      window.open(url, '_blank').focus();
-    },
-    exportWeb() {
-      this.$axios.post("website_builder/export.php").then((response) => {
-        this.downloadLink = response.data;
-      });
     },
     cancel() {
       this.setOpen(false);

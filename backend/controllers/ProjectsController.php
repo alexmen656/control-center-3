@@ -116,24 +116,6 @@ class ProjectsController
     }
 
     /**
-     * GET /v2/projects/{link}/web-builder
-     */
-    public function openWebBuilder(Request $request, Response $response): void
-    {
-        $project = getProjectByLink(escape_string($request->params['link']));
-        if (!$project) {
-            $response->error('No project found', 404);
-            return;
-        }
-
-        $response->success([
-            'url' => getWebBuilderUrl($project['link']),
-            'projectID' => $project['projectID'],
-            'projectName' => $project['name']
-        ]);
-    }
-
-    /**
      * POST /v2/projects
      */
     public function create(Request $request, Response $response): void
@@ -163,8 +145,6 @@ class ProjectsController
             ['', 'Project Dashboard', '', 'true'],
             ['new/tool', 'Create new tool', '', 'true'],
             ['manage/tools', 'Manage Tools', '', 'true'],
-            ['manage/pages', 'Manage Pages', '', 'true'],
-            ['new/wb', 'Create New Web Builder Project', '', 'true'],
             ['info', 'Project Info', '', 'true'],
             ['page/main', 'Main', '', 'true'],
             ['module-store', 'Module Store', '', 'false'],

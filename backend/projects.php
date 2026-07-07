@@ -26,8 +26,6 @@ function handleCreateProject($userID)
         ['', 'Project Dashboard', '', 'true'],
         ['new/tool', 'Create new tool', '', 'true'],
         ['manage/tools', 'Manage Tools', '', 'true'],
-        ['manage/pages', 'Manage Pages', '', 'true'],
-        ['new/wb', 'Create New Web Builder Project', '', 'true'],
         ['info', 'Project Info', '', 'true'],
         ['page/main', 'Main', '', 'true'],
         ['module-store', 'Module Store', '', 'false'],
@@ -246,23 +244,6 @@ function handleCheckPermissions($userID)
         : jsonResponse(["error" => "permission"], false);
 }
 
-function handleOpenWebBuilder()
-{
-    if (!isset($_POST['project']))
-        return;
-
-    $project = getProjectByLink(escape_string($_POST['project']));
-    if (!$project) {
-        echo jsonResponse("No project found", false);
-        exit;
-    }
-
-    echo jsonResponse([
-        "url" => getWebBuilderUrl($project['link']),
-        "projectID" => $project['projectID'],
-        "projectName" => $project['name']
-    ]);
-}
 
 function handleGetAllProjects()
 {
@@ -318,8 +299,6 @@ elseif (isset($_POST['addUserToProject']))
     handleAddUserToProject();
 elseif (isset($_POST['checkUserPermissions']))
     handleCheckPermissions($userID);
-elseif (isset($_POST['openWebBuilder']))
-    handleOpenWebBuilder();
 elseif (isset($_POST['getAllProjects']))
     handleGetAllProjects();
 elseif (isset($_POST['get_projects_for_import']))

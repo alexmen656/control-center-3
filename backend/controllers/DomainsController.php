@@ -218,32 +218,6 @@ class DomainsController
         $subdomains = [];
         $seen = [];
 
-        $wbResult = query("
-            SELECT wbd.subdomain, wbd.domain, wbd.projectID AS project_link, wbd.is_enabled, wbd.ssl_status,
-                   p.name AS project_name
-            FROM web_builder_domains wbd
-            LEFT JOIN projects p ON p.link = wbd.projectID
-            WHERE wbd.domain LIKE '%.$escapedMain'
-            ORDER BY wbd.domain ASC
-        ");
-
-        while ($wbResult && $row = fetch_assoc($wbResult)) {
-            $full = $row['domain'];
-            $seen[$full] = true;
-            $label = $row['subdomain'] !== '' && $row['subdomain'] !== null
-                ? $row['subdomain']
-                : rtrim(substr($full, 0, -$suffixLen), '.');
-            $subdomains[] = [
-                'subdomain' => $label !== '' ? $label : $full,
-                'domain' => $full,
-                'project_link' => $row['project_link'],
-                'project_name' => $row['project_name'] ?: $row['project_link'],
-                'is_enabled' => (bool) $row['is_enabled'],
-                'ssl_status' => $row['ssl_status'],
-                'source' => 'web_builder'
-            ];
-        }
-
         $pdResult = query("
             SELECT pd.domain, pd.project AS project_link, p.name AS project_name
             FROM control_center_project_domains pd

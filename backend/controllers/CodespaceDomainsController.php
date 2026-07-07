@@ -61,14 +61,6 @@ class CodespaceDomainsController
                 return;
             }
 
-            $webBuilderCheck = query("
-                SELECT id FROM web_builder_domains
-                WHERE projectID = '$project_link' AND domain = '$base_domain'
-            ");
-            if (mysqli_num_rows($webBuilderCheck) > 0) {
-                $response->error('Die Main Domain wird bereits vom Web Builder verwendet. Bitte zuerst dort die Main Domain entfernen.', 409);
-                return;
-            }
         } else {
             $full_domain = $subdomain . '.' . $base_domain;
         }

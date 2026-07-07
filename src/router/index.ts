@@ -94,10 +94,6 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/NewProject.vue"),
   },
   {
-    path: "/pages/",
-    component: () => import("../views/ManagePages.vue"),
-  },
-  {
     path: "/manage-store/",
     component: () => import("../views/ManageStore.vue"),
   },
@@ -157,30 +153,6 @@ const routes: Array<RouteRecordRaw> = [
     path: '/project/:project/:url(.*)',
     component: () => import('../views/ProjectView.vue'),
   },*/
-  /*{
-    path: '/project/:project/pages',
-    component: () => import('../views/PagesView.vue'),
-  },*/
-  {
-    path: "/project/:project/manage/pages",
-    component: () => import("../views/PagesView.vue"),
-  },
-  {
-    path: "/project/:project/new/wb",
-    component: () => import("../views/NewComponent.vue"),
-  },
-  {
-    path: "/project/:project/page/:page",
-    component: () => import("../views/PageView.vue"),
-  },
-  {
-    path: "/project/:project/page/:page/config",
-    component: () => import("../views/ComponentSettings.vue"),
-  },
-  {
-    path: "/project/:project/page/:page/:component",
-    component: () => import("../views/PageComponent.vue"),
-  },
   {
     path: "/project/:project",
     component: () => import("../views/ProjectView_new.vue"),
@@ -255,22 +227,6 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/project/:project/chat-app/config",
     component: () => import("../views/ChatAppConfig.vue"),
-  },
-  /*{
-    path: "/project/:project/web-builder",
-    component: () => import("../views/WebBuilderView.vue"),
-  },*/
-  {
-    path: "/project/:project/wb/:wb_project",
-    component: () => import("../views/WebBuilderView.vue"),
-  },
-  {
-    path: "/project/:project/wb/:wb_project/overview",
-    component: () => import("../views/WebBuilderView.vue"),
-  },
-  {
-    path: "/project/:project/wb/:wb_project/:page",
-    component: () => import("../views/WebBuilderPageView.vue"),
   },
   {
     path: "/no-permission",

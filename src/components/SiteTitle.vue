@@ -91,8 +91,6 @@ export default {
       const LISTS = {
         forms: "manage/forms",
         apis: "manage/apis",
-        page: "manage/pages",
-        pages: "manage/pages",
         codespaces: "manage/codespaces",
       };
 

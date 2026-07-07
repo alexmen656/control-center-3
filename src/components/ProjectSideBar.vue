@@ -118,79 +118,6 @@
     </ion-reorder-group>
   </ion-list>
   <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed && isAdminOrOwner">
-    <h4 v-if="!isCollapsed">Web Builder</h4>
-    <div v-if="!isCollapsed">
-      <router-link v-for="(action, idx) in webBuilderActions" :key="idx" :to="action.to">
-        <ion-icon style="color: var(--ion-color-medium-shade)" :name="action.icon" />
-      </router-link>
-    </div>
-  </ion-note>
-  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }" v-if="isAdminOrOwner">
-    <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
-      <template v-for="(component, i) in filteredComponents" :key="i">
-        <ion-menu-toggle auto-hide="false">
-          <ion-item @dblclick="
-            goToConfig(
-              '/project/' +
-              $route.params.project +
-              '/wb/' +
-              formatToolLink(component.name) +
-              '/config'
-            )
-            " @click="toggleComponentExpanded(component.id)" lines="none" detail="false" :router-link="'/project/' +
-              $route.params.project +
-              '/wb/' +
-              component.slug + '/overview'
-              " class="hydrated menu-item parent-component" :class="{
-                selected: selectedIndex === Number(i) + Number(tools.length) + Number(forms.length) + 1,
-                collapsed: isCollapsed,
-                hasToBeDarkmode: hasToBeDarkmode
-              }" :data-tooltip="isCollapsed ? component.name : ''">
-            <ion-icon slot="start" name="cube-outline" />
-            <ion-label v-if="!isCollapsed">
-              {{ component.name[0].toUpperCase() }}{{ component.name.substring(1) }}
-            </ion-label>
-            <ion-icon v-if="!isCollapsed"
-              :name="isComponentExpanded(component.id) ? 'chevron-down-outline' : 'chevron-forward-outline'"
-              slot="end"></ion-icon>
-            <ion-reorder v-if="!isCollapsed" slot="end">
-              <ion-icon v-if="component.hasConfig == 1 || component.type == 'menu'"
-                style="cursor: pointer; z-index: 1000" name="cog-outline" />
-              <pre v-else></pre>
-            </ion-reorder>
-          </ion-item>
-        </ion-menu-toggle>
-        <div v-if="isComponentExpanded(component.id) && !isCollapsed" class="sub-components">
-          <ion-menu-toggle auto-hide="false" v-for="(subComp, j) in getSubComponents(component.id)" :key="`${i}-${j}`"
-            class="sub-item-container">
-            <div class="horizontal-tree-line"></div>
-            <ion-item
-              @click="selectedIndex = Number(i) + Number(tools.length) + Number(forms.length) + 1 + Number(j) + 0.1"
-              lines="none" detail="false" :router-link="'/project/' +
-                $route.params.project +
-                '/wb/' +
-                component.slug
-                + '/' +
-                subComp.slug
-                  .toLowerCase()
-                  .replaceAll(' ', '-')" class="hydrated menu-item sub-component-item" :class="{
-                    selected: selectedIndex === Number(i) + Number(tools.length) + 1 + Number(j) + 0.1, hasToBeDarkmode: hasToBeDarkmode
-                  }">
-              <!--  <ion-icon :name="getIcon(subComp.type)" /><--slot="start"---->
-              <ion-label>{{ subComp.name }}</ion-label>
-            </ion-item>
-          </ion-menu-toggle>
-        </div>
-      </template>
-      <ion-menu-toggle auto-hide="false" v-if="filteredComponents.length === 0 && !isCollapsed && isAdminOrOwner">
-        <ion-item lines="none" detail="false" class="no-webbuilder-item">
-          <ion-icon slot="start" name="cube-outline" color="medium" />
-          <ion-label color="medium">No Web Builder yet</ion-label>
-        </ion-item>
-      </ion-menu-toggle>
-    </ion-reorder-group>
-  </ion-list>
-  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed && isAdminOrOwner">
     <h4>APIs</h4>
     <div>
       <router-link v-for="(action, idx) in apiActions" :key="idx" :to="action.to">
@@ -312,9 +239,6 @@ export default defineComponent({
     const route = useRoute();
     const ionRouter = useIonRouter();
     const list = {} as any;
-    const componentsExpanded = ref(true);
-    const expandedComponents = ref<{ [key: string]: boolean }>({});
-    const componentSubItems = ref<{ [key: string]: any[] }>({});
     const userPermissions = ref<any>(null);
     const userRole = ref<any>(null);
 
@@ -355,15 +279,10 @@ export default defineComponent({
       return [];
     });
 
-    const filteredComponents = computed(() => {
-      if (isAdminOrOwner.value) return components.value;
-      return [];
-    });
-
     const shouldShowSection = (sectionName: string) => {
       if (isAdminOrOwner.value) return true;
 
-      const adminOnlySections = ['APIs', 'Codespaces', 'Web Builder'];
+      const adminOnlySections = ['APIs', 'Codespaces'];
       return !adminOnlySections.includes(sectionName);
     };
 
@@ -523,11 +442,9 @@ export default defineComponent({
         .then((response) => {
           sections.value = response.data.sections || [];
           tools.value = response.data.tools || [];
-          components.value = response.data.components || [];
           apis.value = response.data.apis || [];
           codespaces.value = response.data.codespaces || [];
           forms.value = response.data.forms || [];
-          componentSubItems.value = response.data.componentSubItems || {};
 
           // Build list for legacy tools
           tools.value.forEach((element: any) => {
@@ -542,27 +459,6 @@ export default defineComponent({
     function goToConfig(route: string) {
       ionRouter.push(route);
     }
-
-    function toggleComponentExpanded(componentId: number) {
-      expandedComponents.value[componentId] = !expandedComponents.value[componentId];
-    }
-
-    function isComponentExpanded(componentId: number) {
-      return !!expandedComponents.value[componentId];
-    }
-
-    function getSubComponents(componentId: number) {
-      return componentSubItems.value[componentId] || [];
-    }
-
-    const webBuilderActions = computed(() => {
-      const projectPath = '/project/' + route.params.project;
-      return [
-        { to: projectPath + '/manage/pages', icon: 'ellipsis-horizontal-circle-outline' },
-        { to: '/info/pages/', icon: 'information-circle-outline' },
-        { to: projectPath + '/new/wb', icon: 'add-circle-outline' }
-      ];
-    });
 
     const codespaceActions = computed(() => {
       const projectPath = '/project/' + route.params.project;
@@ -601,10 +497,6 @@ export default defineComponent({
       layersOutline,
       gridOutline,
       documentsOutline,
-      componentsExpanded,
-      toggleComponentExpanded,
-      isComponentExpanded,
-      getSubComponents,
       isCollapsed: computed(() => props.isCollapsed),
       toggleSidebar,
       formatToolLink,
@@ -616,7 +508,6 @@ export default defineComponent({
       selectSectionItem,
       isSectionItemSelected,
       loadSidebarData,
-      webBuilderActions,
       codespaceActions,
       apiActions,
       userPermissions,
@@ -624,7 +515,6 @@ export default defineComponent({
       isAdminOrOwner,
       filteredApis,
       filteredCodespaces,
-      filteredComponents,
       shouldShowSection,
     };
   },

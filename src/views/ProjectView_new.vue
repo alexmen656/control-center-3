@@ -63,77 +63,6 @@
           <div class="content-section">
             <div class="section-header">
               <div class="section-title">
-                <ion-icon name="cube-outline" class="section-icon" />
-                <h2>Web Builder</h2>
-              </div>
-              <div class="section-actions">
-                <button class="add-btn" @click="openWebBuilder()">
-                  <ion-icon name="add" />
-                  <span>New Project</span>
-                </button>
-              </div>
-            </div>
-            <div class="web-builder-content" v-if="webBuilderProjects && webBuilderProjects.length > 0">
-              <div v-for="project in webBuilderProjects" :key="project.id" class="wb-project-section">
-                <div class="wb-project-header">
-                  <div class="wb-project-info">
-                    <h3 class="wb-project-title">{{ project.name }}</h3>
-                    <p class="wb-project-description" v-if="project.description">{{ project.description }}</p>
-                  </div>
-                  <div class="wb-project-actions">
-                    <button class="icon-btn" @click="openWebBuilderProject(project.id)" title="Edit in Web Builder">
-                      <ion-icon name="create-outline" />
-                    </button>
-                    <button class="icon-btn" @click="viewWebBuilderProject(project)" title="Preview Website"
-                      v-if="webBuilderDomain">
-                      <ion-icon name="eye-outline" />
-                    </button>
-                  </div>
-                </div>
-                <div class="pages-list" v-if="project.pages && project.pages.length > 0">
-                  <div v-for="page in project.pages" :key="page.id" class="page-item">
-                    <div class="page-icon">
-                      <ion-icon name="document-outline" />
-                    </div>
-                    <div class="page-info">
-                      <span class="page-name">{{ page.name }}</span>
-                      <span class="page-slug">/{{ page.slug }}</span>
-                      <span v-if="page.is_home" class="page-badge">Home</span>
-                    </div>
-                    <div class="page-actions">
-                      <button class="page-action-btn" @click="editWebBuilderPage(project.id, page.id)"
-                        title="Edit Page">
-                        <ion-icon name="create-outline" />
-                      </button>
-                      <button class="page-action-btn" @click="viewWebBuilderPage(page)" title="Preview Page"
-                        v-if="webBuilderDomain">
-                        <ion-icon name="eye-outline" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div v-else class="no-pages">
-                  <span>No pages yet</span>
-                  <button class="text-btn" @click="openWebBuilderProject(project.id)">
-                    <ion-icon name="add" />
-                    Add Page
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div v-else class="empty-state">
-              <ion-icon name="cube-outline" class="empty-icon" />
-              <h3>No Web Builder Projects</h3>
-              <p>Create your first website with the Web Builder</p>
-              <button class="empty-action-btn" @click="openWebBuilder()">
-                <ion-icon name="add" />
-                Create Project
-              </button>
-            </div>
-          </div>
-          <div class="content-section">
-            <div class="section-header">
-              <div class="section-title">
                 <ion-icon name="people-outline" class="section-icon" />
                 <h2>Team Members</h2>
               </div>
@@ -270,8 +199,6 @@ export default {
       tools: [],
       components: [],
       users: [],
-      webBuilderProjects: [],
-      webBuilderDomain: null,
       projectBanner: null,
       email: "",
       selectedPermission: "write",
@@ -437,50 +364,7 @@ export default {
           console.error("Error response:", error.response);
         });
 
-      this.loadWebBuilderProjects();
-      this.loadWebBuilderDomain();
       this.loadProjectBanner();
-    },
-
-    async loadWebBuilderProjects() {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await this.$axios.get(
-          "web-builder/projects.php",
-          {
-            headers: {
-              Authorization: token
-            }
-          }
-        );
-
-        if (response.data && Array.isArray(response.data.data)) {
-          this.webBuilderProjects = response.data.data.filter(p =>
-            p.control_center_project.link === this.$route.params.project
-          );
-        }
-      } catch (error) {
-        console.error("Failed to load web builder projects:", error);
-        this.webBuilderProjects = [];
-      }
-    },
-
-    async loadWebBuilderDomain() {
-      try {
-        const response = await this.$axios.post(
-          "web_builder_domains.php",
-          this.$qs.stringify({
-            action: "get",
-            project: this.$route.params.project
-          })
-        );
-
-        if (response.data.success && response.data.data) {
-          this.webBuilderDomain = response.data.data;
-        }
-      } catch (error) {
-        console.error("Failed to load web builder domain:", error);
-      }
     },
 
     async loadProjectBanner() {
@@ -539,42 +423,6 @@ export default {
 
     checkDarkMode() {
       this.isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    },
-
-    /*viewWWW() {
-      if (this.webBuilderDomain && this.webBuilderDomain.domain) {
-        window.open(`https://${this.webBuilderDomain.domain}`, "_blank").focus();
-      } else {
-        alert("No domain configured for this project.");
-      }
-    },*/
-
-    openWebBuilder() {
-      const project = this.$route.params.project;
-      this.$router.push(`/project/${project}/new/wb`);
-    },
-
-    openWebBuilderProject(projectId) {
-      const url = `https://web-builder.control-center.eu/projects/${projectId}`;
-      window.open(url, '_blank').focus();
-    },
-
-    viewWebBuilderProject(project) {
-      if (this.webBuilderDomain && this.webBuilderDomain.domain) {
-        window.open(`https://${this.webBuilderDomain.domain}`, "_blank").focus();
-      }
-    },
-
-    editWebBuilderPage(projectId, pageId) {
-      const url = `https://web-builder.control-center.eu/projects/${projectId}/pages/${pageId}`;
-      window.open(url, '_blank').focus();
-    },
-
-    viewWebBuilderPage(page) {
-      if (this.webBuilderDomain && this.webBuilderDomain.domain) {
-        const pageUrl = page.is_home ? '' : page.slug;
-        window.open(`https://${this.webBuilderDomain.domain}/${pageUrl}`, "_blank").focus();
-      }
     },
 
     openSettings() {

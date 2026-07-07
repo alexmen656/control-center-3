@@ -17,13 +17,11 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 
 import { projectTools, handleProjectTool } from './tools/projects.js';
-import { pageTools, handlePageTool } from './tools/pages.js';
 import { apiTools, handleApiTool } from './tools/apis.js';
 import { contentTools, handleContentTool } from './tools/content.js';
 import { fileTools, handleFileTool } from './tools/files.js';
 import { codespaceTools, handleCodespaceTool } from './tools/codespaces.js';
 import { userTools, handleUserTool } from './tools/users.js';
-import { webBuilderTools, handleWebBuilderTool } from './tools/webbuilder.js';
 import { domainTools, handleDomainTool } from './tools/domains.js';
 import { getResources, readResource } from './resources/index.js';
 
@@ -39,13 +37,11 @@ const DATA_DIR = process.env.MCP_DATA_DIR || path.join(__dirname, '.data');
 
 const ALL_TOOLS = [
   ...projectTools,
-  ...pageTools,
   ...apiTools,
   ...contentTools,
   ...fileTools,
   ...codespaceTools,
   ...userTools,
-  ...webBuilderTools,
   ...domainTools,
 ];
 
@@ -72,13 +68,11 @@ Notes:
 
 function routeTool(name, args, context) {
   if (name.startsWith('project_')) return handleProjectTool(name, args, context);
-  if (name.startsWith('page_')) return handlePageTool(name, args, context);
   if (name.startsWith('api_')) return handleApiTool(name, args, context);
   if (name.startsWith('content_')) return handleContentTool(name, args, context);
   if (name.startsWith('file_')) return handleFileTool(name, args, context);
   if (name.startsWith('codespace_')) return handleCodespaceTool(name, args, context);
   if (name.startsWith('user_')) return handleUserTool(name, args, context);
-  if (name.startsWith('webbuilder_')) return handleWebBuilderTool(name, args, context);
   if (name.startsWith('domain_')) return handleDomainTool(name, args, context);
   return Promise.resolve({
     content: [{ type: 'text', text: `Unknown tool: ${name}` }],

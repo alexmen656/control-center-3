@@ -57,26 +57,6 @@ function applyTemplate($templateId, $projectName, $projectIcon, $headers) {
             }
         }
         
-        // Check if user exists in web builder users table
-        $webBuilderUserQuery = query("SELECT * FROM control_center_web_builder_users WHERE email='$userEmail'");
-        $webBuilderUserId = 0;
-        
-        if (mysqli_num_rows($webBuilderUserQuery) == 1) {
-            $webBuilderUserId = fetch_assoc($webBuilderUserQuery)['id'];
-        } else {
-            // Create a new web builder user with required fields from schema
-            $safeUsername = preg_replace('/[^a-z0-9]/', '_', strtolower($userName)) . '_' . $userId;
-            $defaultPassword = password_hash('changeMe' . $userId, PASSWORD_DEFAULT);
-            
-            query("INSERT INTO control_center_web_builder_users (username, password, email, created_at) VALUES ('$safeUsername', '$defaultPassword', '$userEmail', NOW())");
-            $webBuilderUserId = mysqli_insert_id($con);
-        }
-        
-        // Create web builder project and link to Fringelo project
-        $projectDesc = "Project created from template (Fringelo Project ID: $projectID)";
-        query("INSERT INTO control_center_web_builder_projects (user_id, name, description, created_at) VALUES ('$webBuilderUserId', '$projectName', '$projectDesc', NOW())");
-        $webBuilderProjectId = mysqli_insert_id($con);
-                
         // Get template components
         $componentsQuery = query("SELECT * FROM project_template_components WHERE template_id = '$templateId' ORDER BY component_order");
         $pageComponents = [];
@@ -153,18 +133,6 @@ function applyTemplate($templateId, $projectName, $projectIcon, $headers) {
                 'isVisible' => 'true'
             ],
             [
-                'path' => 'manage/pages',
-                'title' => 'Manage Pages',
-                'icon' => '',
-                'isVisible' => 'true'
-            ],
-            [
-                'path' => 'new/page',
-                'title' => 'Create New Component',
-                'icon' => '',
-                'isVisible' => 'true'
-            ],
-            [
                 'path' => 'info',
                 'title' => 'Project Info',
                 'icon' => '',
@@ -186,12 +154,6 @@ function applyTemplate($templateId, $projectName, $projectIcon, $headers) {
                 'path' => 'filesystem',
                 'title' => 'Filesystem',
                 'icon' => 'file-tray-full-outlinepr',
-                'isVisible' => 'true'
-            ],
-            [
-                'path' => 'web-builder',
-                'title' => 'Web Builder',
-                'icon' => 'globe-outline',
                 'isVisible' => 'true'
             ]
         ]);
@@ -228,40 +190,6 @@ function applyTemplate($templateId, $projectName, $projectIcon, $headers) {
                     $pageID = $page['id'];
                     query("INSERT INTO control_center_project_views VALUES (0, $pageID, '$projectID')");
                 }
-            }
-        }
-        
-        // Now process page components since we have the web builder project ID
-        foreach ($pageComponents as $pageComponent) {
-            $componentName = $pageComponent['name'];
-            $config = $pageComponent['config'];
-            
-            $slug = strtolower(str_replace(' ', '-', $componentName));
-            $isHome = isset($config['is_home']) && $config['is_home'] ? 1 : 0;
-            $title = isset($config['title']) ? $config['title'] : $componentName;
-            $metaDescription = isset($config['meta_description']) ? $config['meta_description'] : '';
-            
-            // Now insert with the correct web builder project ID
-            query("INSERT INTO control_center_web_builder_pages (project_id, name, slug, title, meta_description, is_home, created_at) 
-                   VALUES ('$webBuilderProjectId', '$componentName', '$slug', '$title', '$metaDescription', '$isHome', NOW())");
-            
-            // Create a default component for this page
-            $pageId = mysqli_insert_id($con);
-            if ($pageId) {
-                // Generate UUID for the component
-                $uuid = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-                  mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-                  mt_rand(0, 0xffff),
-                  mt_rand(0, 0x0fff) | 0x4000,
-                  mt_rand(0, 0x3fff) | 0x8000,
-                  mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-                );
-                
-                $defaultHTML = "<section><div class=\"container mt-5\"><h1>$componentName</h1><p>This is your $componentName page. Start editing to customize it!</p></div></section>";
-                
-                query("INSERT INTO control_center_web_builder_components 
-                      (page_id, component_id, original_template_id, html_code, position, created_at, updated_at) 
-                      VALUES ('$pageId', '$uuid', 15, '$defaultHTML', 0, NOW(), NOW())");
             }
         }
         

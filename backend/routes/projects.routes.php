@@ -37,9 +37,6 @@ $router->group('/v2/projects', function ($router) {
     // GET /v2/projects/{link}/permissions
     $router->get('/{link}/permissions', [ProjectsController::class, 'checkPermissions']);
 
-    // GET /v2/projects/{link}/web-builder
-    $router->get('/{link}/web-builder', [ProjectsController::class, 'openWebBuilder']);
-
     // POST /v2/projects/{link}/users
     $router->post('/{link}/users', [ProjectsController::class, 'addUser']);
 
