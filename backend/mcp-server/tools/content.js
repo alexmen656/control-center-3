@@ -1,17 +1,8 @@
-/**
- * Content Management Tools
- * 
- * Tools for managing dynamic content, forms, and data
- */
-
 import { cmsRequest, formatResponse, formatError } from '../utils/api.js';
 
-/**
- * Tool definitions for content
- */
 export const contentTools = [
   {
-    name: 'content_form_list',
+    name: 'content_table_list',
     description: 'List all forms in a project',
     inputSchema: {
       type: 'object',
@@ -25,7 +16,7 @@ export const contentTools = [
     }
   },
   {
-    name: 'content_form_create',
+    name: 'content_table_create',
     description: 'Create a new form/data collection',
     inputSchema: {
       type: 'object',
@@ -61,7 +52,7 @@ export const contentTools = [
     }
   },
   {
-    name: 'content_form_submissions',
+    name: 'content_table_submissions',
     description: 'Get form submissions/data entries',
     inputSchema: {
       type: 'object',
@@ -70,16 +61,16 @@ export const contentTools = [
           type: 'string',
           description: 'Project link/slug'
         },
-        formName: {
+        tableName: {
           type: 'string',
           description: 'Form name'
         }
       },
-      required: ['project', 'formName']
+      required: ['project', 'tableName']
     }
   },
   {
-    name: 'content_form_submit',
+    name: 'content_table_submit',
     description: 'Submit/add data to a form',
     inputSchema: {
       type: 'object',
@@ -88,7 +79,7 @@ export const contentTools = [
           type: 'string',
           description: 'Project link/slug'
         },
-        formName: {
+        tableName: {
           type: 'string',
           description: 'Form name'
         },
@@ -97,11 +88,11 @@ export const contentTools = [
           description: 'Form data as key-value pairs (field name: value)'
         }
       },
-      required: ['project', 'formName', 'data']
+      required: ['project', 'tableName', 'data']
     }
   },
   {
-    name: 'content_form_update',
+    name: 'content_table_update',
     description: 'Update a form data entry',
     inputSchema: {
       type: 'object',
@@ -110,7 +101,7 @@ export const contentTools = [
           type: 'string',
           description: 'Project link/slug'
         },
-        formName: {
+        tableName: {
           type: 'string',
           description: 'Form name'
         },
@@ -123,11 +114,11 @@ export const contentTools = [
           description: 'Updated form data as key-value pairs'
         }
       },
-      required: ['project', 'formName', 'entryId', 'data']
+      required: ['project', 'tableName', 'entryId', 'data']
     }
   },
   {
-    name: 'content_form_delete',
+    name: 'content_table_delete',
     description: 'Delete a form data entry',
     inputSchema: {
       type: 'object',
@@ -136,7 +127,7 @@ export const contentTools = [
           type: 'string',
           description: 'Project link/slug'
         },
-        formName: {
+        tableName: {
           type: 'string',
           description: 'Form name'
         },
@@ -145,7 +136,7 @@ export const contentTools = [
           description: 'Entry ID to delete'
         }
       },
-      required: ['project', 'formName', 'entryId']
+      required: ['project', 'tableName', 'entryId']
     }
   },
   {
@@ -190,32 +181,29 @@ export const contentTools = [
   }
 ];
 
-/**
- * Handle content tool calls
- */
 export async function handleContentTool(toolName, args, context) {
   switch (toolName) {
-    case 'content_form_list':
+    case 'content_table_list':
       return await listForms(args, context);
-      
-    case 'content_form_create':
+
+    case 'content_table_create':
       return await createForm(args, context);
-      
-    case 'content_form_submissions':
+
+    case 'content_table_submissions':
       return await getFormSubmissions(args, context);
-      
-    case 'content_form_submit':
+
+    case 'content_table_submit':
       return await submitFormData(args, context);
-      
-    case 'content_form_update':
+
+    case 'content_table_update':
       return await updateFormData(args, context);
-      
-    case 'content_form_delete':
+
+    case 'content_table_delete':
       return await deleteFormData(args, context);
-      
+
     case 'content_newsletter_list':
       return await listNewsletterSubscribers(args, context);
-      
+
     case 'content_newsletter_send':
       return await sendNewsletter(args, context);
 
@@ -230,13 +218,13 @@ export async function handleContentTool(toolName, args, context) {
 
 async function listForms(args, context) {
   try {
-    const data = await cmsRequest('form.php', {
+    const data = await cmsRequest('table.php', {
       body: {
         getForms: 'true',
         project: args.project
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       forms: data.forms || data
@@ -248,7 +236,6 @@ async function listForms(args, context) {
 
 async function createForm(args, context) {
   try {
-    // Convert fields to the format expected by backend
     const formJson = {
       title: args.name,
       inputs: args.fields.map(field => ({
@@ -259,22 +246,22 @@ async function createForm(args, context) {
         options: field.options || []
       }))
     };
-    
-    const data = await cmsRequest('form.php', {
+
+    const data = await cmsRequest('table.php', {
       method: 'POST',
       body: {
-        create_form: '1',
+        create_table: '1',
         project: args.project,
         name: args.name,
-        form: JSON.stringify(formJson)
+        table: JSON.stringify(formJson)
       },
       expectJson: false
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: data || 'Form created successfully',
-      formName: args.name
+      tableName: args.name
     });
   } catch (error) {
     return formatError(error.message);
@@ -283,14 +270,14 @@ async function createForm(args, context) {
 
 async function getFormSubmissions(args, context) {
   try {
-    const data = await cmsRequest('form.php', {
+    const data = await cmsRequest('table.php', {
       body: {
-        get_form_data: '1',
+        get_table_data: '1',
         project: args.project,
-        form: args.formName
+        table: args.tableName
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       data: data,
@@ -303,16 +290,16 @@ async function getFormSubmissions(args, context) {
 
 async function submitFormData(args, context) {
   try {
-    const data = await cmsRequest('form.php', {
+    const data = await cmsRequest('table.php', {
       body: {
-        submit_form: '1',
+        submit_table: '1',
         project: args.project,
-        form_name: args.formName,
-        form: JSON.stringify(args.data)
+        table_name: args.tableName,
+        table: JSON.stringify(args.data)
       },
       expectJson: false
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: data || 'Form data submitted successfully'
@@ -324,17 +311,17 @@ async function submitFormData(args, context) {
 
 async function updateFormData(args, context) {
   try {
-    const data = await cmsRequest('form.php', {
+    const data = await cmsRequest('table.php', {
       body: {
         update_entry: '1',
         project: args.project,
-        form_name: args.formName,
+        table_name: args.tableName,
         entry_id: args.entryId,
-        form: JSON.stringify(args.data)
+        table: JSON.stringify(args.data)
       },
       expectJson: false
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: data || 'Entry updated successfully'
@@ -346,16 +333,16 @@ async function updateFormData(args, context) {
 
 async function deleteFormData(args, context) {
   try {
-    const data = await cmsRequest('form.php', {
+    const data = await cmsRequest('table.php', {
       body: {
         delete_entry: '1',
         project: args.project,
-        form_name: args.formName,
+        table_name: args.tableName,
         entry_id: args.entryId
       },
       expectJson: false
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: data || 'Entry deleted successfully'
@@ -373,7 +360,7 @@ async function listNewsletterSubscribers(args, context) {
         project: args.project
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       subscribers: data.subscribers || data

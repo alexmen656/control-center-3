@@ -9,12 +9,12 @@ if (isset($_POST['getTables']) && $_POST['getTables']) {
         $json[$i][0] = $t['Tables_in_control_center'];
         $i++;
     }
-} elseif (isset($_POST['getDataById']) && isset($_POST['id']) && isset($_POST['project']) && isset($_POST['form'])) {
+} elseif (isset($_POST['getDataById']) && isset($_POST['id']) && isset($_POST['project']) && isset($_POST['table'])) {
     $project = escape_string($_POST['project']);
-    $form_name = escape_string($_POST['form']);
+    $table_name = escape_string($_POST['table']);
     $id = escape_string($_POST['id']);
 
-    $tableName = createTableName($project . "_" . $form_name);
+    $tableName = createTableName($project . "_" . $table_name);
     $columns_query = "SHOW COLUMNS FROM $tableName";
     $columns_result = query($columns_query);
 

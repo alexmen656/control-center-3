@@ -77,16 +77,16 @@ if (isset($headers['Authorization'])) {
                 }
                 
                 // Get forms for this section
-                $sectionForms = query("SELECT * FROM form_settings WHERE project='$projectName' AND section_id='$sectionId' ORDER BY order_index ASC");
+                $sectionForms = query("SELECT * FROM table_settings WHERE project='$projectName' AND section_id='$sectionId' ORDER BY order_index ASC");
                 if (mysqli_num_rows($sectionForms) > 0) {
                     foreach ($sectionForms as $form) {
                         $items[] = [
-                            'id' => 'form_' . $form['form_id'],
-                            'form_id' => $form['form_id'],
-                            'item_type' => 'form',
+                            'id' => 'table_' . $form['table_id'],
+                            'table_id' => $form['table_id'],
+                            'item_type' => 'table',
                             'icon' => $form['icon'] ?? 'list-outline',
-                            'name' => $form['form_name'],
-                            'link' => 'forms/' . $form['form_name'],
+                            'name' => $form['table_name'],
+                            'link' => 'forms/' . $form['table_name'],
                             'hasConfig' => 0,
                             'order' => (int)($form['order_index'] ?? 999),
                             'section_id' => $sectionId
@@ -125,17 +125,17 @@ if (isset($headers['Authorization'])) {
             }
         }
 
-        // Get forms for this project from form_settings table
-        $forms = query("SELECT * FROM form_settings WHERE project='$projectName' ORDER BY order_index ASC, created_at DESC");
+        // Get forms for this project from table_settings table
+        $forms = query("SELECT * FROM table_settings WHERE project='$projectName' ORDER BY order_index ASC, created_at DESC");
 
         if (mysqli_num_rows($forms) == 0) {
             $json['forms'] = [];
         } else {
             $f = 0;
             foreach ($forms as $form) {
-                $json['forms'][$f]["form_id"] = $form['form_id'];
-                $json['forms'][$f]["form_name"] = $form['form_name'];
-                $json['forms'][$f]["name"] = $form['form_name'];
+                $json['forms'][$f]["table_id"] = $form['table_id'];
+                $json['forms'][$f]["table_name"] = $form['table_name'];
+                $json['forms'][$f]["name"] = $form['table_name'];
                 $json['forms'][$f]["icon"] = $form['icon'] ?? "list-outline";
                 $sectionId = $form['section_id'];
                 $json['forms'][$f]["section_id"] = ($sectionId === null || $sectionId === '' || $sectionId === '0' || $sectionId === 0) ? null : (int)$sectionId;

@@ -1,4 +1,6 @@
 <template>
+  <div class="project-sidebar" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
+  <div class="project-sidebar__scroll">
   <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
     <ion-menu-toggle auto-hide="false">
       <ion-item @click="this.selectedIndex = 0" lines="none" detail="false"
@@ -60,8 +62,8 @@
               <pre v-else></pre>
             </ion-reorder>
           </ion-item>
-          <ion-item v-else-if="item.item_type === 'form'" @click="selectSectionItem(section.id, itemIndex)" lines="none"
-            detail="false" :router-link="'/project/' + $route.params.project + '/forms/' + item.name"
+          <ion-item v-else-if="item.item_type === 'table'" @click="selectSectionItem(section.id, itemIndex)" lines="none"
+            detail="false" :router-link="'/project/' + $route.params.project + '/tables/' + item.name"
             class="hydrated menu-item" :class="{
               selected: isSectionItemSelected(section.id, itemIndex),
               collapsed: isCollapsed,
@@ -137,13 +139,6 @@
           }" :data-tooltip="isCollapsed ? api.name : ''">
           <ion-icon slot="start" :name="api.icon || 'code-outline'" />
           <ion-label v-if="!isCollapsed">{{ api.name }}</ion-label>
-          <!--  <ion-badge v-if="!isCollapsed && api.category" color="medium" class="api-category-badge">{{ api.category
-            }}</ion-badge>
-          <span v-if="!isCollapsed" class="api-status-indicator"
-            :class="{ 'status-active': api.status === 'active', 'status-inactive': api.status === 'inactive' }"></span>
-          <ion-reorder v-if="!isCollapsed" slot="end">
-            <ion-icon style="cursor: pointer; z-index: 1000" name="settings-outline" />
-          </ion-reorder>-->
         </ion-item>
       </ion-menu-toggle>
       <ion-menu-toggle auto-hide="false" v-if="filteredApis.length === 0 && !isCollapsed && isAdminOrOwner">
@@ -154,6 +149,40 @@
       </ion-menu-toggle>
     </ion-reorder-group>
   </ion-list>
+  </div>
+  <footer class="sidebar-footer" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
+    <button type="button" class="footer-btn footer-toggle" @click="toggleSidebar"
+      :data-tooltip="isCollapsed ? 'Expand menu' : ''"
+      :aria-label="isCollapsed ? 'Expand menu' : 'Collapse menu'">
+      <ion-icon :name="isCollapsed ? 'chevron-forward-outline' : 'chevron-back-outline'" />
+      <span v-if="!isCollapsed">Minimize</span>
+    </button>
+    <button type="button" id="sidebar-notif-trigger" class="footer-btn footer-notif"
+      :data-tooltip="isCollapsed ? 'Notifications' : ''" aria-label="Notifications">
+      <ion-icon name="notifications-outline" />
+      <span v-if="!isCollapsed">Notifications</span>
+      <span v-if="unreadCount > 0" class="notif-dot">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+    </button>
+  </footer>
+  <ion-popover trigger="sidebar-notif-trigger" side="top" alignment="end" show-backdrop="false"
+    :class="{ hasToBeDarkmode: hasToBeDarkmode }" @didPresent="markAllRead">
+    <ion-content class="notif-popover">
+      <div class="notif-header">
+        <h4>Notifications</h4>
+      </div>
+      <div v-if="notifications.length === 0" class="notif-empty">
+        <ion-icon name="notifications-off-outline" />
+        <span>You're all caught up</span>
+      </div>
+      <ul v-else class="notif-list">
+        <li v-for="n in notifications" :key="n.id" class="notif-item" :class="{ unread: n.read_status == 0 }">
+          <strong>{{ n.title }}</strong>
+          <p>{{ n.message }}</p>
+        </li>
+      </ul>
+    </ion-content>
+  </ion-popover>
+  </div>
 </template>
 
 <script lang="ts">
@@ -184,8 +213,8 @@ interface SidebarItem {
   hasConfig?: number;
   order: number;
   section_id?: number;
-  item_type: 'tool' | 'form';
-  form_id?: number;
+  item_type: 'tool' | 'table';
+  table_id?: number;
 }
 
 interface SidebarSection {
@@ -205,7 +234,7 @@ interface SidebarSection {
 }
 
 interface SidebarForm {
-  form_id: number;
+  table_id: number;
   name: string;
   icon?: string;
   section_id?: number;
@@ -236,6 +265,8 @@ export default defineComponent({
     const apis = ref([]);
     const codespaces = ref([]);
     const forms = ref<SidebarForm[]>([]);
+    const notifications = ref<any[]>([]);
+    const unreadCount = ref(0);
     const route = useRoute();
     const ionRouter = useIonRouter();
     const list = {} as any;
@@ -252,7 +283,7 @@ export default defineComponent({
           })
         );
 
-        if (response.data.role) {//response.data.success &&
+        if (response.data.role) {
           userRole.value = response.data.role;
           userPermissions.value = response.data.role.permissions;
         }
@@ -264,8 +295,6 @@ export default defineComponent({
     const isAdminOrOwner = computed(() => {
       console.log('role ' + userRole.value);
       if (!userRole.value) return false;
-      //console.log(1);
-      //console.log(userRole.value.slug);
       return ['admin', 'owner'].includes(userRole.value.slug);
     });
 
@@ -308,9 +337,8 @@ export default defineComponent({
         const movedItem = section.items.splice(from, 1)[0];
         section.items.splice(to, 0, movedItem);
 
-        // Build order data for backend
         const itemOrder = section.items.map((item, index) => ({
-          id: item.item_type === 'tool' ? item.id : item.form_id,
+          id: item.item_type === 'tool' ? item.id : item.table_id,
           type: item.item_type,
           order: index
         }));
@@ -332,7 +360,10 @@ export default defineComponent({
       emit('sidebarToggled', !props.isCollapsed);
     };
 
-    // Helper function to format tool link (handles special characters)
+    const markAllRead = () => {
+      unreadCount.value = 0;
+    };
+
     const formatToolLink = (name: string): string => {
       return name
         .toLowerCase()
@@ -345,7 +376,6 @@ export default defineComponent({
         .replaceAll('ü', 'u');
     };
 
-    // Helper to capitalize first letter
     const capitalizeFirst = (str: string): string => {
       return str.charAt(0).toUpperCase() + str.slice(1);
     };
@@ -435,7 +465,6 @@ export default defineComponent({
       event.detail.complete();
     };
 
-    // Load sidebar data
     const loadSidebarData = () => {
       axios
         .get("sidebar.php?getSideBarByProjectName=" + route.params.project)
@@ -446,7 +475,6 @@ export default defineComponent({
           codespaces.value = response.data.codespaces || [];
           forms.value = response.data.forms || [];
 
-          // Build list for legacy tools
           tools.value.forEach((element: any) => {
             list[element.id] = element.order;
           });
@@ -489,6 +517,9 @@ export default defineComponent({
       apis,
       codespaces,
       forms,
+      notifications,
+      unreadCount,
+      markAllRead,
       goToConfig,
       handleReorder,
       handleFrontReorder,
@@ -535,6 +566,199 @@ export default defineComponent({
     --background: #eff3f6;
     background: #eff3f6;
   }
+}
+
+.project-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  --footer-bg: var(--ion-background-color, #fff);
+}
+
+@media (prefers-color-scheme: light) {
+  .project-sidebar {
+    --footer-bg: #eff3f6;
+  }
+}
+
+.project-sidebar.hasToBeDarkmode {
+  --footer-bg: #1e1e1e;
+}
+
+.project-sidebar__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar-footer {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border-top: 1px solid var(--ion-color-step-150, #d7d8da);
+  background: var(--footer-bg);
+}
+
+.sidebar-footer::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -16px;
+  height: 16px;
+  pointer-events: none;
+  background: linear-gradient(to top, var(--footer-bg), transparent);
+}
+
+.sidebar-footer.collapsed {
+  flex-direction: column;
+  gap: 2px;
+  padding: 3px 0;
+  align-items: center;
+  max-width: 76px;
+}
+
+.footer-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--ion-color-medium-shade);
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.footer-btn:hover {
+  background: var(--ion-color-step-100, #f1f1f1);
+  color: var(--ion-color-primary);
+}
+
+.footer-btn ion-icon {
+  font-size: 17px;
+}
+
+.footer-notif {
+  margin-left: auto;
+  position: relative;
+}
+
+.sidebar-footer.collapsed .footer-btn {
+  margin-left: 0;
+  justify-content: center;
+  width: 40px;
+}
+
+.sidebar-footer.hasToBeDarkmode .footer-btn:hover {
+  background: #2a2a2a;
+}
+
+.notif-dot {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: var(--ion-color-primary, #f97316);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-footer.collapsed .notif-dot {
+  top: 4px;
+  right: 10px;
+}
+
+.footer-btn:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--ion-color-dark, #222);
+  color: var(--ion-color-light, #fff);
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 1001;
+  margin-left: 12px;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.footer-btn[data-tooltip='']:hover::after {
+  content: none;
+}
+
+.notif-popover {
+  --width: 280px;
+}
+
+.notif-header {
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid var(--ion-color-step-150, #d7d8da);
+}
+
+.notif-header h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 16px;
+  color: var(--ion-color-medium-shade);
+  font-size: 13px;
+}
+
+.notif-empty ion-icon {
+  font-size: 26px;
+}
+
+.notif-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+}
+
+.notif-item {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--ion-color-step-100, #f1f1f1);
+}
+
+.notif-item strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.notif-item p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ion-color-medium-shade);
+}
+
+.notif-item.unread {
+  background: rgba(var(--ion-color-primary-rgb), 0.08);
 }
 
 ion-item.new-tool {

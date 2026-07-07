@@ -142,11 +142,11 @@
                     </ion-card-header>
                     <ion-card-content>
                         <ion-list>
-                            <ion-item v-for="form in uncategorizedForms" :key="form.form_id">
+                            <ion-item v-for="form in uncategorizedForms" :key="form.table_id">
                                 <ion-icon slot="start" :name="form.icon || 'list-outline'"></ion-icon>
-                                <ion-label>{{ form.form_name }}</ion-label>
+                                <ion-label>{{ form.table_name }}</ion-label>
                                 <ion-select slot="end" placeholder="Move to..."
-                                    @ionChange="assignFormToSection(form.form_id, $event)">
+                                    @ionChange="assignTableToSection(form.table_id, $event)">
                                     <ion-select-option v-for="section in sections" :key="section.id"
                                         :value="section.id">
                                         {{ section.name }}
@@ -206,8 +206,8 @@ interface Tool {
 }
 
 interface Form {
-    form_id: number;
-    form_name: string;
+    table_id: number;
+    table_name: string;
     icon?: string;
     section_id?: number;
     order_index?: number;
@@ -521,7 +521,7 @@ export default defineComponent({
 
         const updateFormIcon = async (form: any) => {
             try {
-                await axios.put(`v2/sidebar/forms/${form.form_id}`, {
+                await axios.put(`v2/sidebar/tables/${form.table_id}`, {
                     project: route.params.project,
                     icon: form.icon
                 });
@@ -535,7 +535,7 @@ export default defineComponent({
         const updateItem = async (item: any) => {
             if (item.item_type === 'tool') {
                 await updateTool(item);
-            } else if (item.item_type === 'form') {
+            } else if (item.item_type === 'table') {
                 await updateFormIcon(item);
             }
         };
@@ -565,9 +565,9 @@ export default defineComponent({
                         text: 'Move',
                         handler: async (sectionId) => {
                             try {
-                                const path = item.item_type === 'tool' ? 'assign-tool' : 'assign-form';
-                                const idField = item.item_type === 'tool' ? 'tool_id' : 'form_id';
-                                const itemId = item.item_type === 'tool' ? item.id : item.form_id;
+                                const path = item.item_type === 'tool' ? 'assign-tool' : 'assign-table';
+                                const idField = item.item_type === 'tool' ? 'tool_id' : 'table_id';
+                                const itemId = item.item_type === 'tool' ? item.id : item.table_id;
 
                                 await axios.post(`v2/sidebar/${path}`, {
                                     project: route.params.project,
@@ -598,7 +598,7 @@ export default defineComponent({
 
                 // Build order data for backend
                 const itemOrder = items.map((item: any, index: number) => ({
-                    id: item.item_type === 'tool' ? item.id : item.form_id,
+                    id: item.item_type === 'tool' ? item.id : item.table_id,
                     type: item.item_type || 'tool',
                     order: index
                 }));
@@ -637,12 +637,12 @@ export default defineComponent({
         };
 
         // Assign form to section (from uncategorized list)
-        const assignFormToSection = async (formId: number, event: CustomEvent) => {
+        const assignTableToSection = async (formId: number, event: CustomEvent) => {
             const sectionId = event.detail.value;
             try {
-                await axios.post("v2/sidebar/assign-form", {
+                await axios.post("v2/sidebar/assign-table", {
                     project: route.params.project,
-                    form_id: formId,
+                    table_id: formId,
                     section_id: sectionId
                 });
                 await loadData();
@@ -675,7 +675,7 @@ export default defineComponent({
             updateItem,
             moveItemToSection,
             assignToolToSection,
-            assignFormToSection,
+            assignTableToSection,
             getSectionItems,
             getSectionItemCount
         };

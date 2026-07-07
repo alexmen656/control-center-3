@@ -210,8 +210,8 @@ class SidebarController
 
             if ($type === 'tool') {
                 query("UPDATE project_tools SET `order`='$order' WHERE id='$itemId' AND projectID='$projectID'");
-            } else if ($type === 'form') {
-                query("UPDATE form_settings SET order_index='$order' WHERE form_id='$itemId' AND project='$projectName'");
+            } else if ($type === 'table') {
+                query("UPDATE table_settings SET order_index='$order' WHERE table_id='$itemId' AND project='$projectName'");
             }
         }
 
@@ -273,14 +273,14 @@ class SidebarController
         $response->json(['success' => (bool) $result]);
     }
 
-    public function assignFormToSection(Request $request, Response $response): void
+    public function assignTableToSection(Request $request, Response $response): void
     {
         $projectID = $this->resolveProject($request, $response);
         if (!$projectID)
             return;
 
         $projectName = escape_string($request->input('project', ''));
-        $formId = (int) $request->input('form_id', 0);
+        $formId = (int) $request->input('table_id', 0);
         $sectionId = (int) $request->input('section_id', 0);
 
         if (!$formId) {
@@ -288,7 +288,7 @@ class SidebarController
             return;
         }
 
-        $form = query("SELECT form_id FROM form_settings WHERE form_id='$formId' AND project='$projectName'");
+        $form = query("SELECT table_id FROM table_settings WHERE table_id='$formId' AND project='$projectName'");
         if (mysqli_num_rows($form) == 0) {
             $response->error('Form not found in this project', 404);
             return;
@@ -303,7 +303,7 @@ class SidebarController
         }
 
         $sectionValue = $sectionId > 0 ? "'$sectionId'" : "NULL";
-        $result = query("UPDATE form_settings SET section_id=$sectionValue WHERE form_id='$formId' AND project='$projectName'");
+        $result = query("UPDATE table_settings SET section_id=$sectionValue WHERE table_id='$formId' AND project='$projectName'");
 
         $response->json(['success' => (bool) $result]);
     }
@@ -337,7 +337,7 @@ class SidebarController
         }
 
         $updateStr = implode(', ', $updates);
-        $result = query("UPDATE form_settings SET $updateStr WHERE form_id='$formId' AND project='$projectName'");
+        $result = query("UPDATE table_settings SET $updateStr WHERE table_id='$formId' AND project='$projectName'");
 
         $response->json(['success' => (bool) $result]);
     }

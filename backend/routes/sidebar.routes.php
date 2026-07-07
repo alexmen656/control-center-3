@@ -16,8 +16,8 @@ $router->group('/v2/sidebar', function ($router) {
     $router->delete('/sections/{id}', [SidebarController::class, 'deleteSection']);
 
     $router->post('/assign-tool', [SidebarController::class, 'assignToolToSection']);
-    $router->post('/assign-form', [SidebarController::class, 'assignFormToSection']);
-    $router->put('/forms/{formId}', [SidebarController::class, 'updateFormSidebar']);
+    $router->post('/assign-table', [SidebarController::class, 'assignTableToSection']);
+    $router->put('/tables/{formId}', [SidebarController::class, 'updateFormSidebar']);
 
     $router->post('/tools/update', [SidebarController::class, 'updateTool']);
 

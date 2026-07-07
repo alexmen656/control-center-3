@@ -1,12 +1,12 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle v-if="true" icon="list-outline" :title="form2.title || 'Form'" />
+      <SiteTitle v-if="true" icon="list-outline" :title="form2.title || 'Table'" />
       <div class="page-container">
         <div class="page-header">
           <div class="header-content">
-            <h1>{{ form2.title || 'Form Data' }}</h1>
-            <p>Manage and view form entries</p>
+            <h1>{{ form2.title || 'Table Data' }}</h1>
+            <p>Manage and view table entries</p>
           </div>
         </div>
         <div class="action-bar">
@@ -44,11 +44,11 @@
               <div class="dropdown-menu" :class="{ active: dropdownOpen }">
                 <a @click="openRenameModal()" class="dropdown-item">
                   <ion-icon name="create-outline"></ion-icon>
-                  Rename Form
+                  Rename Table
                 </a>
                 <a @click="openEditModal()" class="dropdown-item">
                   <ion-icon name="settings-outline"></ion-icon>
-                  Edit Form
+                  Edit Table
                 </a>
               </div>
             </div>
@@ -130,7 +130,7 @@
               </button>
             </div>
             <div class="form-content">
-              <DisplayForm @submit="handleSubmit" />
+              <DisplayTable @submit="handleSubmit" />
             </div>
           </div>
         </div>
@@ -184,9 +184,9 @@
           </div>
         </div>
       </div>
-      <TriggerManager v-if="triggerModalOpen" :project="$route.params.project" :form="$route.params.form"
+      <TriggerManager v-if="triggerModalOpen" :project="$route.params.project" :table="$route.params.table"
         @close="triggerModalOpen = false" />
-      <RenameForm v-if="renameModalOpen" :project="$route.params.project" :form="$route.params.form"
+      <RenameTable v-if="renameModalOpen" :project="$route.params.project" :table="$route.params.table"
         @close="renameModalOpen = false" @success="handleRenameSuccess" @sidebarRefresh="refreshSidebar" />
     </ion-content>
   </ion-page>
@@ -194,18 +194,18 @@
 
 <script>
 //lang="ts"
-import DisplayForm from "@/components/DisplayForm.vue";
+import DisplayTable from "@/components/DisplayTable.vue";
 import TriggerManager from "@/components/TriggerManager.vue";
-import RenameForm from "@/components/RenameForm.vue";
+import RenameTable from "@/components/RenameTable.vue";
 import { defineComponent, ref } from "vue";
 import SiteTitle from "@/components/SiteTitle.vue";
 
 export default defineComponent({
-  name: "FormDisplay",
+  name: "TableDisplay",
   components: {
-    DisplayForm,
+    DisplayTable,
     TriggerManager,
-    RenameForm,
+    RenameTable,
     SiteTitle,
   },
   data() {
@@ -326,10 +326,10 @@ export default defineComponent({
     handleSubmit(data) {
       this.$axios
         .post(
-          "v2/forms/submit",
+          "v2/tables/submit",
           {
-            form: JSON.stringify(data),
-            form_name: this.$route.params.form,
+            table: JSON.stringify(data),
+            table_name: this.$route.params.table,
             project: this.$route.params.project,
           }
         )
@@ -341,20 +341,20 @@ export default defineComponent({
     async loadEditFormData() {
       try {
         const formResponse = await this.$axios.get(
-          "v2/forms/schema", {
+          "v2/tables/schema", {
             params:
             {
-              form_name: this.$route.params.form,
+              table_name: this.$route.params.table,
               project: this.$route.params.project,
             }
         }
         );
 
         const entryResponse = await this.$axios.get(
-          `v2/forms/entry/${this.edit_id}`, {
+          `v2/tables/entry/${this.edit_id}`, {
             params:
             {
-              form_name: this.$route.params.form,
+              table_name: this.$route.params.table,
               project: this.$route.params.project,
             }
         }
@@ -388,11 +388,11 @@ export default defineComponent({
     saveEdit() {
       this.$axios
         .put(
-          `v2/forms/entry/${this.edit_id}`,
+          `v2/tables/entry/${this.edit_id}`,
           {
             entry_id: this.edit_id,
-            form: JSON.stringify(this.editFormValues),
-            form_name: this.$route.params.form,
+            table: JSON.stringify(this.editFormValues),
+            table_name: this.$route.params.table,
             project: this.$route.params.project,
           }
         )
@@ -409,10 +409,10 @@ export default defineComponent({
     deletee(id) {
       this.$axios
         .delete(
-          `v2/forms/entry/${id}`,
+          `v2/tables/entry/${id}`,
           {
             params: {
-              form_name: this.$route.params.form,
+              table_name: this.$route.params.table,
               project: this.$route.params.project
             }
           }
@@ -425,13 +425,13 @@ export default defineComponent({
       this.exportDropdownOpen = false;
 
       const url = format === 'csv'
-        ? `v2/forms/export/csv`
-        : `v2/forms/export/excel`;
+        ? `v2/tables/export/csv`
+        : `v2/tables/export/excel`;
 
       try {
         const response = await this.$axios.get(url, {
           params: {
-            form_name: this.$route.params.form,
+            table_name: this.$route.params.table,
             project: this.$route.params.project
           },
           responseType: 'blob'
@@ -448,7 +448,7 @@ export default defineComponent({
         const link = document.createElement('a');
         link.href = downloadUrl;
 
-        const fileName = `${this.$route.params.form}_export_${new Date().toISOString().split('T')[0]}.${format === 'csv' ? 'csv' : 'xls'}`;
+        const fileName = `${this.$route.params.table}_export_${new Date().toISOString().split('T')[0]}.${format === 'csv' ? 'csv' : 'xls'}`;
         link.setAttribute('download', fileName);
 
         document.body.appendChild(link);
@@ -470,16 +470,16 @@ export default defineComponent({
     },
     openEditModal() {
       this.$router.push({
-        path: `/project/${this.$route.params.project}/forms/${this.$route.params.form}/edit`
+        path: `/project/${this.$route.params.project}/tables/${this.$route.params.table}/edit`
       });
     },
-    handleRenameSuccess(newFormName) {
+    handleRenameSuccess(newTableName) {
       this.renameModalOpen = false;
       this.$router.push({
-        name: 'FormDisplay',
+        name: 'TableDisplay',
         params: {
           project: this.$route.params.project,
-          form: newFormName
+          table: newTableName
         }
       });
     },
@@ -487,7 +487,7 @@ export default defineComponent({
       this.emitter.emit("updateSidebar");
     },
     loadData() {
-      const table_name = `${this.$route.params.project.replaceAll("-", "_")}_${this.$route.params.form.replaceAll("-", "_")}`;
+      const table_name = `${this.$route.params.project.replaceAll("-", "_")}_${this.$route.params.table.replaceAll("-", "_")}`;
       this.$axios
         .post(
           `mysql.php`,
@@ -502,10 +502,10 @@ export default defineComponent({
 
       this.$axios
         .get(
-          `v2/forms/info`,
+          `v2/tables/info`,
           {
             params: {
-              form_name: this.$route.params.form,
+              table_name: this.$route.params.table,
               project: this.$route.params.project,
             }
           }
@@ -515,7 +515,7 @@ export default defineComponent({
         });
     },
     loadMore() {
-      const table_name = `${this.$route.params.project.replaceAll("-", "_")}_${this.$route.params.form}`;
+      const table_name = `${this.$route.params.project.replaceAll("-", "_")}_${this.$route.params.table}`;
       this.$axios.post("mysql.php", this.$qs.stringify({ load_more: "load_more", current_limit: this.current_limit, table: table_name })).then((res) => {
         this.current_limit = this.current_limit + 1;
 

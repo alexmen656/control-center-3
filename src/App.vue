@@ -8,7 +8,7 @@
           <ion-menu v-if="token && account_active" content-id="main-content"
             :class="['ion-menu', { 'collapsed-menu': isMenuCollapsed, 'hasToBeDarkmode': hasToBeDarkmode }]"
             type="overlay">
-            <ion-content :class="hasToBeDarkmode ? 'hasToBeDarkmode' : ''">
+            <ion-content class="menu-scroll-content" :class="hasToBeDarkmode ? 'hasToBeDarkmode' : ''">
               <SideBar :projects="projects" :tools="tools" :bookmarks="bookmarks" :isCollapsed="isMenuCollapsed"
                 v-if="showSideBar" @sidebarToggled="onSidebarToggled"></SideBar>
               <ProjectSideBar :isCollapsed="isMenuCollapsed" :hasToBeDarkmode="hasToBeDarkmode"
@@ -573,6 +573,11 @@ ion-content.hasToBeDarkmode {
   --background: #1e1e1e;
   /*#121212;*/
   border-color: #1e1e1e;
+}
+
+.menu-scroll-content::part(scroll) {
+  display: flex;
+  flex-direction: column;
 }
 
 .error404 {

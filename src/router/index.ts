@@ -114,8 +114,8 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/NewTool.vue"),
   },
   {
-    path: "/project/:project/new/form",
-    component: () => import("../views/NewForm.vue"),
+    path: "/project/:project/new/table",
+    component: () => import("../views/NewTable.vue"),
   },
   {
     path: "/project/:project/filesystem",
@@ -258,20 +258,20 @@ for (const path in modules) {
 
 routes.push(
   {
-    path: "/project/:project/forms/:form/edit",
+    path: "/project/:project/tables/:table/edit",
     component: () => import("../views/EditTool.vue"),
   },
   {
-    path: "/project/:project/forms/:form/config",
-    component: () => import("../views/FormConfig.vue"),
+    path: "/project/:project/tables/:table/config",
+    component: () => import("../views/TableConfig.vue"),
   },
   {
-    path: "/project/:project/forms/:form",
-    name: "FormDisplay",
-    component: () => import("../views/FormDisplay.vue"),
+    path: "/project/:project/tables/:table",
+    name: "TableDisplay",
+    component: () => import("../views/TableDisplay.vue"),
   },
   {
-    path: "/project/:project/manage/forms",
+    path: "/project/:project/manage/tables",
     name: "ManageTables",
     component: () => import("../views/ManageTables.vue"),
   },

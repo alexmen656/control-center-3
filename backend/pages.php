@@ -58,25 +58,25 @@ foreach ($pages as $p) {
     $i++;
 }
 
-// Get all forms from form_settings and add them as pages
-$forms = query("SELECT * FROM form_settings ORDER BY project, form_name");
+// Get all forms from table_settings and add them as pages
+$forms = query("SELECT * FROM table_settings ORDER BY project, table_name");
 foreach ($forms as $form) {
-    $json[$i]['id'] = 'form_' . $form['form_id'];
-    $json[$i]['url'] = 'project/' . $form['project'] . '/forms/' . $form['form_name'];
+    $json[$i]['id'] = 'table_' . $form['table_id'];
+    $json[$i]['url'] = 'project/' . $form['project'] . '/tables/' . $form['table_name'];
     $json[$i]['showTitle'] = true;
     $json[$i]['icon'] = 'list-outline';
-    $json[$i]['title'] = $form['form_name'];
+    $json[$i]['title'] = $form['table_name'];
     $json[$i]['html'] = '';
-    $json[$i]['pageID'] = 'form_' . $form['form_id'];
+    $json[$i]['pageID'] = 'table_' . $form['table_id'];
     $i++;
 
-    $json[$i]['id'] = 'form_' . $form['form_id'] . '_edit';
-    $json[$i]['url'] = 'project/' . $form['project'] . '/forms/' . $form['form_name'] . '/edit';
+    $json[$i]['id'] = 'table_' . $form['table_id'] . '_edit';
+    $json[$i]['url'] = 'project/' . $form['project'] . '/tables/' . $form['table_name'] . '/edit';
     $json[$i]['showTitle'] = true;
     $json[$i]['icon'] = 'list-outline';
-    $json[$i]['title'] = $form['form_name'];
+    $json[$i]['title'] = $form['table_name'];
     $json[$i]['html'] = '';
-    $json[$i]['pageID'] = 'form_' . $form['form_id'] . '_edit';
+    $json[$i]['pageID'] = 'table_' . $form['table_id'] . '_edit';
     $i++;
 }
 
@@ -104,24 +104,24 @@ foreach ($projects as $project) {
     $json[$i]['pageID'] = 'new_codespace_' . $projectID;
     $i++;
 
-    // Forms
-    $json[$i]['id'] = 'manage_forms_' . $projectID;
-    $json[$i]['url'] = 'project/' . $projectLink . '/manage/forms';
+    // Tables
+    $json[$i]['id'] = 'manage_tables_' . $projectID;
+    $json[$i]['url'] = 'project/' . $projectLink . '/manage/tables';
     $json[$i]['showTitle'] = false; //true
     $json[$i]['icon'] = 'document-outline';
-    $json[$i]['title'] = 'Manage Forms - ' . $projectName;
+    $json[$i]['title'] = 'Manage Tables - ' . $projectName;
     $json[$i]['html'] = '';
-    $json[$i]['pageID'] = 'manage_forms_' . $projectID;
+    $json[$i]['pageID'] = 'manage_tables_' . $projectID;
     $i++;
 
-    // Forms
-    $json[$i]['id'] = 'new_form_' . $projectID;
-    $json[$i]['url'] = 'project/' . $projectLink . '/new/form';
+    // Tables
+    $json[$i]['id'] = 'new_table_' . $projectID;
+    $json[$i]['url'] = 'project/' . $projectLink . '/new/table';
     $json[$i]['showTitle'] = false; //true
     $json[$i]['icon'] = 'document-outline';
-    $json[$i]['title'] = 'New Form - ' . $projectName;
+    $json[$i]['title'] = 'New Table - ' . $projectName;
     $json[$i]['html'] = '';
-    $json[$i]['pageID'] = 'new_form_' . $projectID;
+    $json[$i]['pageID'] = 'new_table_' . $projectID;
     $i++;
 
     //APIS

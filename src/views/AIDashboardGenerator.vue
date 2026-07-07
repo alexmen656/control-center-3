@@ -43,7 +43,7 @@
       <ion-card v-if="loading">
         <ion-card-content style="text-align: center; padding: 40px;">
           <ion-spinner name="crescent" style="width: 48px; height: 48px;"></ion-spinner>
-          <p style="margin-top: 16px;">AI analysiert Ihre Formulare und erstellt passendes Dashboard...</p>
+          <p style="margin-top: 16px;">AI analysiert Ihre Tabellen und erstellt passendes Dashboard...</p>
         </ion-card-content>
       </ion-card>
       
@@ -127,21 +127,21 @@
         </ion-card-content>
       </ion-card>
       
-      <!-- Verfügbare Formulare anzeigen -->
-      <ion-card v-if="step === 1 && availableForms.length > 0">
+      <!-- Verfügbare Tabellen anzeigen -->
+      <ion-card v-if="step === 1 && availableTables.length > 0">
         <ion-card-header>
           <ion-card-title>Verfügbare Datenquellen</ion-card-title>
-          <ion-card-subtitle>{{ availableForms.length }} Formulare gefunden</ion-card-subtitle>
+          <ion-card-subtitle>{{ availableTables.length }} Tabellen gefunden</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
-          <div v-for="form in availableForms.slice(0, 3)" :key="form.form.title" style="margin-bottom: 8px;">
+          <div v-for="form in availableTables.slice(0, 3)" :key="form.table.title" style="margin-bottom: 8px;">
             <ion-chip>
               <ion-icon name="document-text" style="margin-right: 4px;"></ion-icon>
-              {{ form.form.title }} ({{ form.form.inputs.length }} Felder)
+              {{ form.table.title }} ({{ form.table.inputs.length }} Felder)
             </ion-chip>
           </div>
-          <p v-if="availableForms.length > 3" style="margin-top: 8px; color: var(--ion-color-medium);">
-            +{{ availableForms.length - 3 }} weitere Formulare
+          <p v-if="availableTables.length > 3" style="margin-top: 8px; color: var(--ion-color-medium);">
+            +{{ availableTables.length - 3 }} weitere Tabellen
           </p>
         </ion-card-content>
       </ion-card>
@@ -174,23 +174,23 @@ export default defineComponent({
       error: null,
       generatedDashboard: null,
       dashboardCreated: null,
-      availableForms: []
+      availableTables: []
     };
   },
   async created() {
-    await this.loadAvailableForms();
+    await this.loadAvailableTables();
   },
   methods: {
-    async loadAvailableForms() {
+    async loadAvailableTables() {
       try {
-        const response = await this.$axios.post('form.php', this.$qs.stringify({
-          get_forms: 'get_forms',
+        const response = await this.$axios.post('table.php', this.$qs.stringify({
+          get_tables: 'get_tables',
           project: this.$route.params.project
         }));
         
-        this.availableForms = response.data || [];
+        this.availableTables = response.data || [];
       } catch (error) {
-        console.error('Fehler beim Laden der Formulare:', error);
+        console.error('Fehler beim Laden der Tabellen:', error);
       }
     },
     

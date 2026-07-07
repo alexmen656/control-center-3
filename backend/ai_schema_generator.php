@@ -30,7 +30,7 @@ class AISchemaGenerator
             'messages' => [
                 [
                     'role' => 'system',
-                    'content' => 'Du bist ein Experte für Datenbankdesign und Formularerstellung. Analysiere die Benutzerbeschreibung und erstelle ein passendes Datenbankschema mit sinnvollen Feldern, Typen und Optionen.'
+                    'content' => 'Du bist ein Experte für Datenbankdesign und Tabellenerstellung. Analysiere die Benutzerbeschreibung und erstelle ein passendes Datenbankschema mit sinnvollen Feldern, Typen und Optionen.'
                 ],
                 [
                     'role' => 'user',
@@ -47,11 +47,11 @@ class AISchemaGenerator
                         'properties' => [
                             'title' => [
                                 'type' => 'string',
-                                'description' => 'Der Titel des Formulars'
+                                'description' => 'Der Titel des Tabellen'
                             ],
                             'description' => [
                                 'type' => 'string',
-                                'description' => 'Beschreibung was das Formular macht'
+                                'description' => 'Beschreibung was das Tabelle macht'
                             ],
                             'inputs' => [
                                 'type' => 'array',
@@ -65,7 +65,7 @@ class AISchemaGenerator
                                         'type' => [
                                             'type' => 'string',
                                             'enum' => ['text', 'email', 'number', 'textarea', 'select', 'select2', 'checkbox', 'date', 'time'],
-                                            'description' => 'Feldtyp - select2 für Referenzen zu anderen Formularen'
+                                            'description' => 'Feldtyp - select2 für Referenzen zu anderen Tabellen'
                                         ],
                                         'label' => [
                                             'type' => 'string',
@@ -155,7 +155,7 @@ WICHTIGE REGELN:
 FELDTYPEN VERSTEHEN:
 - text, email, number, textarea, date, time = Standard-Eingabefelder
 - select = Dropdown mit festen Optionen (z.B. Kategorien: Elektronik, Kleidung, Bücher)
-- select2 = Referenz zu einem anderen Formular (Foreign Key) - VERWENDE DAS für Verknüpfungen!
+- select2 = Referenz zu einem anderen Tabelle (Foreign Key) - VERWENDE DAS für Verknüpfungen!
 - checkbox = Ja/Nein Felder
 
 SELECT2 BEISPIELE (nur wenn passende Tabelle existiert):
@@ -191,7 +191,7 @@ Sei großzügig mit nützlichen Feldern - lieber zu viele als zu wenige!
 
 Feldtypen: text, email, number, textarea, select, select2, checkbox, date, time
 
-WICHTIG: Wenn bestehende Formulare vorhanden sind, verwende SELECT2 für Verknüpfungen!
+WICHTIG: Wenn bestehende Tabellen vorhanden sind, verwende SELECT2 für Verknüpfungen!
 Beispiel: Lagerbestand braucht Produktreferenz → verwende select2 statt alle Produktdaten zu duplizieren";
     }
 
@@ -270,9 +270,9 @@ Beispiel: Lagerbestand braucht Produktreferenz → verwende select2 statt alle P
     {
         // Validiere und bereinige das Schema
         if (!isset($schema['title']))
-            $schema['title'] = 'Neues Formular';
+            $schema['title'] = 'Neues Tabelle';
         if (!isset($schema['description']))
-            $schema['description'] = 'ChatGPT-generiertes Formular';
+            $schema['description'] = 'ChatGPT-generiertes Tabelle';
         if (!isset($schema['inputs']) || !is_array($schema['inputs'])) {
             $schema['inputs'] = [];
         }
@@ -302,7 +302,7 @@ Beispiel: Lagerbestand braucht Produktreferenz → verwende select2 statt alle P
                     $referenced_form = $input['options'][0] ?? '';
                     $referenced_field = $input['options'][1] ?? '';
 
-                    if (!$this->formExists($referenced_form)) {
+                    if (!$this->tableExists($referenced_form)) {
                         error_log("Schema Validation: select2 referenziert nicht-existierende Form '$referenced_form' → konvertiert zu text");
                         $input['type'] = 'text';
                         $input['options'] = [];
@@ -323,7 +323,7 @@ Beispiel: Lagerbestand braucht Produktreferenz → verwende select2 statt alle P
         return $schema;
     }
 
-    private function formExists($formName)
+    private function tableExists($tableName)
     {
         // Implementiere Form-Existenz-Check
         // Für jetzt return true, kann später erweitert werden
@@ -332,12 +332,12 @@ Beispiel: Lagerbestand braucht Produktreferenz → verwende select2 statt alle P
 
     private function getExistingForms($project)
     {
-        $formsQuery = "SELECT * FROM form_settings WHERE project = '" . escape_string($project) . "'";
+        $formsQuery = "SELECT * FROM table_settings WHERE project = '" . escape_string($project) . "'";
         $formsResult = query($formsQuery);
 
         $existingForms = [];
         while ($row = fetch_assoc($formsResult)) {
-            $formData = json_decode($row['form_json'], true);
+            $formData = json_decode($row['table_json'], true);
             if ($formData && isset($formData['title']) && isset($formData['inputs'])) {
                 $existingForms[] = $formData;
             }
@@ -401,7 +401,7 @@ Beispiel: Lagerbestand braucht Produktreferenz → verwende select2 statt alle P
         if (strpos($description, 'aufgabe') !== false)
             return 'Aufgabenverwaltung';
 
-        return 'Formularverwaltung';
+        return 'Tabellenverwaltung';
     }
 }
 
@@ -438,7 +438,7 @@ if (isset($_POST['generate_ai_schema'])) {
 
 if (isset($_POST['create_ai_form']) && isset($_POST['schema']) && isset($_POST['name']) && isset($_POST['project'])) {
     $schema = json_decode($_POST['schema'], true);
-    $formName = escape_string($_POST['name']);
+    $tableName = escape_string($_POST['name']);
     $project = escape_string($_POST['project']);
 
     if (!$schema || !isset($schema['inputs'])) {
@@ -449,10 +449,10 @@ if (isset($_POST['create_ai_form']) && isset($_POST['schema']) && isset($_POST['
         exit;
     }
 
-    $formJSON = json_encode($schema);
+    $tableJSON = json_encode($schema);
 
-    if (query("INSERT INTO form_settings (form_name, form_json, project) VALUES ('$formName', '$formJSON', '$project')")) {
-        $tableName = createTableName($project . "_" . $formName);
+    if (query("INSERT INTO table_settings (table_name, table_json, project) VALUES ('$tableName', '$tableJSON', '$project')")) {
+        $tableName = createTableName($project . "_" . $tableName);
         $sql = "CREATE TABLE $tableName (id INT AUTO_INCREMENT PRIMARY KEY";
 
         foreach ($schema['inputs'] as $field) {
@@ -465,9 +465,9 @@ if (isset($_POST['create_ai_form']) && isset($_POST['schema']) && isset($_POST['
         if (query($sql)) {
             echo json_encode([
                 'success' => true,
-                'message' => 'ChatGPT-generiertes Formular erfolgreich erstellt!',
+                'message' => 'ChatGPT-generiertes Tabelle erfolgreich erstellt!',
                 'table_name' => $tableName,
-                'form_name' => $formName
+                'table_name' => $tableName
             ]);
         } else {
             echo json_encode([
@@ -478,7 +478,7 @@ if (isset($_POST['create_ai_form']) && isset($_POST['schema']) && isset($_POST['
     } else {
         echo json_encode([
             'success' => false,
-            'message' => 'Fehler beim Speichern des Formulars'
+            'message' => 'Fehler beim Speichern des Tabellen'
         ]);
     }
 }

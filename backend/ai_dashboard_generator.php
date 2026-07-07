@@ -15,20 +15,20 @@ class AIDashboardGenerator
     /**
      * Generiert Dashboard mit OpenAI GPT
      */
-    public function generateDashboard($description, $availableForms, $project)
+    public function generateDashboard($description, $availableTables, $project)
     {
         if (empty($this->openaiApiKey)) {
-            return $this->generateSimpleDashboard($availableForms);
+            return $this->generateSimpleDashboard($availableTables);
         }
 
-        $prompt = $this->buildPrompt($description, $availableForms);
+        $prompt = $this->buildPrompt($description, $availableTables);
 
         $data = [
             'model' => 'gpt-4o-mini',
             'messages' => [
                 [
                     'role' => 'system',
-                    'content' => 'Du bist ein Dashboard-Experte. Analysiere verfügbare Formulare und erstelle ein relevantes Dashboard mit passenden Charts basierend auf der Benutzerbeschreibung.'
+                    'content' => 'Du bist ein Dashboard-Experte. Analysiere verfügbare Tabellen und erstelle ein relevantes Dashboard mit passenden Charts basierend auf der Benutzerbeschreibung.'
                 ],
                 [
                     'role' => 'user',
@@ -84,26 +84,26 @@ class AIDashboardGenerator
             return $this->parseResponse($response);
         }
 
-        return $this->generateSimpleDashboard($availableForms);
+        return $this->generateSimpleDashboard($availableTables);
     }
 
-    private function buildPrompt($description, $availableForms)
+    private function buildPrompt($description, $availableTables)
     {
         $formsInfo = "";
-        foreach ($availableForms as $form) {
+        foreach ($availableTables as $form) {
             // Prüfe verschiedene mögliche Strukturen
-            $formData = $form;
-            if (isset($form['form'])) {
-                $formData = $form['form'];
+            $tableData = $form;
+            if (isset($form['table'])) {
+                $tableData = $form['table'];
             }
 
-            if (!isset($formData['title']) || !isset($formData['inputs'])) {
+            if (!isset($tableData['title']) || !isset($tableData['inputs'])) {
                 continue; // Überspringe ungültige Form-Daten
             }
 
-            $formsInfo .= "FORMULAR: " . $formData['title'] . "\n";
+            $formsInfo .= "FORMULAR: " . $tableData['title'] . "\n";
             $formsInfo .= "FELDER: ";
-            foreach ($formData['inputs'] as $field) {
+            foreach ($tableData['inputs'] as $field) {
                 if (isset($field['name']) && isset($field['type']) && isset($field['label'])) {
                     $formsInfo .= $field['name'] . " (" . $field['type'] . ", " . $field['label'] . "), ";
                 }
@@ -133,9 +133,9 @@ class AIDashboardGenerator
  - Wenn KEIN Number-Feld: data = label (System zählt automatisch Einträge)
 
  WICHTIG:
- - Verwende nur EXISTIERENDE Feldnamen aus den verfügbaren Formularen
+ - Verwende nur EXISTIERENDE Feldnamen aus den verfügbaren Tabellen
  - Erstelle 2-4 sinnvolle Charts
- - Jeder Chart muss ein anderes Formular oder andere Felder nutzen
+ - Jeder Chart muss ein anderes Tabelle oder andere Felder nutzen
  - Denke praktisch: Was würde ein Business Owner sehen wollen?
 
  BEISPIEL DASHBOARD für 'Auto-Datenbank':
@@ -165,7 +165,7 @@ CHART-LOGIK:
 - Wenn KEIN Number-Feld: data = label (System zählt automatisch Einträge)
 
 WICHTIG:
-- Verwende nur EXISTIERENDE Feldnamen aus den verfügbaren Formularen
+- Verwende nur EXISTIERENDE Feldnamen aus den verfügbaren Tabellen
 - Erstelle 2-4 sinnvolle Charts
 - Denke praktisch: Was würde ein Business Owner sehen wollen?
 
@@ -190,7 +190,7 @@ BEISPIELE WAS ERLAUBT IST:
 REGEL: data-Feld MUSS IMMER anders sein als label-Feld!";
 
         /*
-        - Jeder Chart muss ein anderes Formular oder andere Felder nutzen
+        - Jeder Chart muss ein anderes Tabelle oder andere Felder nutzen
         - WICHTIG: Wenn kein Number-Feld vorhanden ist, dann zähle die Einträge (data = label, aber trotzdem wird gezählt)
 
         NOCHMAL WICHTIG: 
@@ -260,28 +260,28 @@ REGEL: data-Feld MUSS IMMER anders sein als label-Feld!";
         return $decoded;
     }
 
-    private function generateSimpleDashboard($availableForms)
+    private function generateSimpleDashboard($availableTables)
     {
-        if (empty($availableForms)) {
+        if (empty($availableTables)) {
             return null;
         }
 
         $charts = [];
 
-        // Erstelle einfache Charts für die ersten 3 Formulare
-        foreach (array_slice($availableForms, 0, 3) as $form) {
+        // Erstelle einfache Charts für die ersten 3 Tabellen
+        foreach (array_slice($availableTables, 0, 3) as $form) {
             // Prüfe verschiedene mögliche Strukturen
-            $formData = $form;
-            if (isset($form['form'])) {
-                $formData = $form['form'];
+            $tableData = $form;
+            if (isset($form['table'])) {
+                $tableData = $form['table'];
             }
 
-            if (!isset($formData['title']) || !isset($formData['inputs'])) {
+            if (!isset($tableData['title']) || !isset($tableData['inputs'])) {
                 continue; // Überspringe ungültige Form-Daten
             }
 
-            $formName = $this->toName($formData['title']);
-            $fields = $formData['inputs'];
+            $tableName = $this->toName($tableData['title']);
+            $fields = $tableData['inputs'];
 
             if (empty($fields))
                 continue;
@@ -306,7 +306,7 @@ REGEL: data-Feld MUSS IMMER anders sein als label-Feld!";
             if ($textField) {
                 $charts[] = [
                     'chart_type' => count($charts) % 2 === 0 ? 'pie_chart' : 'bar_chart',
-                    'form' => $formName,
+                    'form' => $tableName,
                     'label' => $textField,
                     'data' => $numberField ?: $textField
                 ];
@@ -330,27 +330,27 @@ if (isset($_POST['generate_dashboard']) && isset($_POST['project'])) {
     $description = escape_string($_POST['description'] ?? '');
     $project = escape_string($_POST['project']);
 
-    // Lade verfügbare Formulare - verwende dieselbe Query wie form.php
-    $formsQuery = "SELECT * FROM form_settings WHERE project = '$project'";
+    // Lade verfügbare Tabellen - verwende dieselbe Query wie table.php
+    $formsQuery = "SELECT * FROM table_settings WHERE project = '$project'";
     $formsResult = query($formsQuery);
 
-    $availableForms = [];
+    $availableTables = [];
     $i = 0;
     while ($row = fetch_assoc($formsResult)) {
-        $availableForms[$i]['id'] = $row['form_id'];
-        $availableForms[$i]['form'] = json_decode($row['form_json'], true);
-        $availableForms[$i]['createdOn'] = $row['created_at'];
+        $availableTables[$i]['id'] = $row['table_id'];
+        $availableTables[$i]['table'] = json_decode($row['table_json'], true);
+        $availableTables[$i]['createdOn'] = $row['created_at'];
         $i++;
     }
 
     // Debug: Log wie viele Forms gefunden wurden und deren Struktur
-    error_log("Dashboard Generator Debug - Found " . count($availableForms) . " forms");
-    if (!empty($availableForms)) {
-        error_log("Dashboard Generator Debug - First form structure: " . json_encode($availableForms[0]));
+    error_log("Dashboard Generator Debug - Found " . count($availableTables) . " forms");
+    if (!empty($availableTables)) {
+        error_log("Dashboard Generator Debug - First form structure: " . json_encode($availableTables[0]));
     }
 
     $generator = new AIDashboardGenerator();
-    $dashboard = $generator->generateDashboard($description, $availableForms, $project);
+    $dashboard = $generator->generateDashboard($description, $availableTables, $project);
 
     if ($dashboard) {
         echo json_encode($dashboard);

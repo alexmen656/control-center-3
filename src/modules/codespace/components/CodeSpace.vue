@@ -1,6 +1,6 @@
 <template>
   <div class="monaco-container">
-    <MonacoSidebar class="sidebar" />
+    <CodeSpaceSidebar class="sidebar" />
 
     <div v-if="showWelcome" class="welcome-screen">
       <div class="welcome-header">
@@ -59,8 +59,8 @@
       </div>
     </div>
 
-    <MonacoAPIsView v-if="showAPIsView" :project-name="projectName" :codespace="codespaceName" />
-    <MonacoEnvView v-if="showEnvView" :project-name="projectName" :codespace="codespaceName" />
+    <CodeSpaceAPIsView v-if="showAPIsView" :project-name="projectName" :codespace="codespaceName" />
+    <CodeSpaceEnvView v-if="showEnvView" :project-name="projectName" :codespace="codespaceName" />
 
     <div v-if="!showAPIsView && !showEnvView && !showWelcome" class="monaco-editor-container">
       <vue-monaco-editor v-model:value="code" :language="language" theme="vs-dark" :options="editorOptions" width="100%"
@@ -135,7 +135,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { VueMonacoEditor } from '@guolao/vue-monaco-editor'
-import MonacoSidebar from './MonacoSidebar.vue'
+import CodeSpaceSidebar from './CodeSpaceSidebar.vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { ToastService } from "@/services/ToastService";
@@ -144,8 +144,8 @@ import { useCodespace } from '@/composables/useCodespace'
 import {
   IonIcon
 } from '@ionic/vue'
-import MonacoAPIsView from './MonacoAPIsView.vue'
-import MonacoEnvView from './MonacoEnvView.vue'
+import CodeSpaceAPIsView from './CodeSpaceAPIsView.vue'
+import CodeSpaceEnvView from './CodeSpaceEnvView.vue'
 
 const toast = ToastService
 

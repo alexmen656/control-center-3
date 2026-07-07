@@ -6,7 +6,7 @@
         <div class="modal-header">
           <div class="header-content">
             <h2>Trigger Management</h2>
-            <p>Manage notifications for form events</p>
+            <p>Manage notifications for table events</p>
           </div>
           <button class="close-btn" @click="closeModal">
             <ion-icon name="close-outline"></ion-icon>
@@ -19,7 +19,7 @@
           <div class="section-card">
             <div class="section-header">
               <h3>Create New Trigger</h3>
-              <p>Set up automatic notifications for form events</p>
+              <p>Set up automatic notifications for table events</p>
             </div>
             
             <div class="form-grid">
@@ -85,7 +85,7 @@
                   rows="4"
                   placeholder="Use {field_name} for dynamic values. Example: New entry with ID {id} was created."
                 ></textarea>
-                <span class="input-hint">Use {field_name} to insert dynamic values from your form</span>
+                <span class="input-hint">Use {field_name} to insert dynamic values from your table</span>
               </div>
 
               <div class="form-group full-width">
@@ -112,7 +112,7 @@
             <div v-if="triggers.length === 0" class="empty-state">
               <ion-icon name="notifications-off-outline" class="empty-icon"></ion-icon>
               <h4>No triggers yet</h4>
-              <p>Create your first trigger above to get automatic notifications when form events occur.</p>
+              <p>Create your first trigger above to get automatic notifications when table events occur.</p>
             </div>
 
             <div v-else class="triggers-list">
@@ -174,7 +174,7 @@ export default defineComponent({
   name: 'TriggerManager',
   props: {
     project: String,
-    form: String
+    table: String
   },
   data() {
     return {
@@ -233,7 +233,7 @@ export default defineComponent({
           this.$qs.stringify({
             get_triggers: true,
             project: this.project,
-            form_name: this.form
+            table_name: this.table
           })
         );
         this.triggers = response.data;
@@ -254,7 +254,7 @@ export default defineComponent({
           this.$qs.stringify({
             create_trigger: true,
             project: this.project,
-            form_name: this.form,
+            table_name: this.table,
             trigger_event: this.newTrigger.event,
             notification_type: this.newTrigger.type,
             notification_target: this.newTrigger.target,

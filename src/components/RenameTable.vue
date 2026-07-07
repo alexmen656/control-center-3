@@ -5,8 +5,8 @@
         <!-- Modal Header -->
         <div class="modal-header">
           <div class="header-content">
-            <h2>Rename Form</h2>
-            <p>Change the name of your form "{{ form }}"</p>
+            <h2>Rename Table</h2>
+            <p>Change the name of your table "{{ table }}"</p>
           </div>
           <button class="close-btn" @click="$emit('close')">
             <ion-icon name="close-outline"></ion-icon>
@@ -20,7 +20,7 @@
               <label class="form-label">Current Name</label>
               <div class="current-name-display">
                 <ion-icon name="document-text-outline" class="form-icon"></ion-icon>
-                <span class="current-name">{{ form }}</span>
+                <span class="current-name">{{ table }}</span>
               </div>
             </div>
 
@@ -28,23 +28,23 @@
               <label class="form-label">New Name *</label>
               <div class="input-container">
                 <input 
-                  v-model="newFormName"
+                  v-model="newTableName"
                   type="text"
                   class="modern-input"
                   :class="{ 'error': showError && !isValidName }"
-                  placeholder="Enter new form name"
+                  placeholder="Enter new table name"
                   @input="validateName"
-                  @keyup.enter="renameForm"
+                  @keyup.enter="renameTable"
                   ref="nameInput"
                 >
                 <div class="input-status">
                   <ion-icon 
-                    v-if="newFormName && isValidName && !formExists" 
+                    v-if="newTableName && isValidName && !tableExists" 
                     name="checkmark-circle-outline" 
                     class="status-icon success"
                   ></ion-icon>
                   <ion-icon 
-                    v-else-if="showError && (!isValidName || formExists)" 
+                    v-else-if="showError && (!isValidName || tableExists)" 
                     name="close-circle-outline" 
                     class="status-icon error"
                   ></ion-icon>
@@ -56,7 +56,7 @@
                   <ion-icon name="information-circle-outline"></ion-icon>
                   Only letters, numbers, and hyphens allowed
                 </div>
-                <div v-else-if="!newFormName" class="error-message">
+                <div v-else-if="!newTableName" class="error-message">
                   <ion-icon name="alert-circle-outline"></ion-icon>
                   Form name is required
                 </div>
@@ -64,9 +64,9 @@
                   <ion-icon name="alert-circle-outline"></ion-icon>
                   Invalid name. Use only letters, numbers, and hyphens
                 </div>
-                <div v-else-if="formExists" class="error-message">
+                <div v-else-if="tableExists" class="error-message">
                   <ion-icon name="alert-circle-outline"></ion-icon>
-                  A form with this name already exists
+                  A table with this name already exists
                 </div>
                 <div v-else-if="isValidName" class="success-message">
                   <ion-icon name="checkmark-circle-outline"></ion-icon>
@@ -76,19 +76,19 @@
             </div>
 
             <!-- Preview Section -->
-            <div v-if="newFormName && isValidName" class="preview-section">
+            <div v-if="newTableName && isValidName" class="preview-section">
               <h4>Preview</h4>
               <div class="preview-card">
                 <div class="preview-item">
                   <span class="preview-label">Old URL:</span>
-                  <code class="preview-url old">/project/{{ project }}/form/{{ form }}</code>
+                  <code class="preview-url old">/project/{{ project }}/tables/{{ table }}</code>
                 </div>
                 <div class="arrow-down">
                   <ion-icon name="arrow-down-outline"></ion-icon>
                 </div>
                 <div class="preview-item">
                   <span class="preview-label">New URL:</span>
-                  <code class="preview-url new">/project/{{ project }}/form/{{ newFormName }}</code>
+                  <code class="preview-url new">/project/{{ project }}/tables/{{ newTableName }}</code>
                 </div>
               </div>
             </div>
@@ -101,13 +101,13 @@
               </button>
               <button 
                 class="primary-btn"
-                @click="renameForm"
+                @click="renameTable"
                 :disabled="!canRename"
                 :class="{ 'loading': isLoading }"
               >
                 <ion-icon v-if="!isLoading" name="create-outline"></ion-icon>
                 <div v-else class="spinner"></div>
-                {{ isLoading ? 'Renaming...' : 'Rename Form' }}
+                {{ isLoading ? 'Renaming...' : 'Rename Table' }}
               </button>
             </div>
           </div>
@@ -127,7 +127,7 @@ export default defineComponent({
       type: String,
       required: true
     },
-    form: {
+    table: {
       type: String,
       required: true
     }
@@ -135,21 +135,21 @@ export default defineComponent({
   emits: ['close', 'success', 'sidebarRefresh'],
   data() {
     return {
-      newFormName: '',
+      newTableName: '',
       isLoading: false,
       showError: false,
-      formExists: false
+      tableExists: false
     };
   },
   computed: {
     isValidName() {
-      if (!this.newFormName) return false;
+      if (!this.newTableName) return false;
       // Allow letters, numbers, hyphens and underscores
       const nameRegex = /^[a-zA-Z0-9-_]+$/;
-      return nameRegex.test(this.newFormName) && this.newFormName !== this.form;
+      return nameRegex.test(this.newTableName) && this.newTableName !== this.table;
     },
     canRename() {
-      return this.isValidName && !this.formExists && !this.isLoading;
+      return this.isValidName && !this.tableExists && !this.isLoading;
     }
   },
   mounted() {
@@ -163,9 +163,9 @@ export default defineComponent({
   methods: {
     validateName() {
       this.showError = false;
-      this.formExists = false;
+      this.tableExists = false;
       
-      if (this.newFormName && this.isValidName) {
+      if (this.newTableName && this.isValidName) {
         this.checkFormExists();
       }
     },
@@ -173,24 +173,24 @@ export default defineComponent({
     async checkFormExists() {
       try {
         const response = await this.$axios.post(
-          'form.php',
+          'table.php',
           this.$qs.stringify({
-            check_form_exists: 'check_form_exists',
-            form_name: this.newFormName,
+            check_table_exists: 'check_table_exists',
+            table_name: this.newTableName,
             project: this.project
           })
         );
-        this.formExists = response.data.exists === true;
+        this.tableExists = response.data.exists === true;
       } catch (error) {
-        console.error('Error checking form existence:', error);
-        this.formExists = false;
+        console.error('Error checking table existence:', error);
+        this.tableExists = false;
       }
     },
     
-    async renameForm() {
+    async renameTable() {
       this.showError = false;
       
-      if (!this.newFormName) {
+      if (!this.newTableName) {
         this.showError = true;
         return;
       }
@@ -202,7 +202,7 @@ export default defineComponent({
       
       // Check if form exists one more time
       await this.checkFormExists();
-      if (this.formExists) {
+      if (this.tableExists) {
         this.showError = true;
         return;
       }
@@ -211,11 +211,11 @@ export default defineComponent({
       
       try {
         const response = await this.$axios.post(
-          'form.php',
+          'table.php',
           this.$qs.stringify({
-            rename_form: 'rename_form',
-            old_form_name: this.form,
-            new_form_name: this.newFormName,
+            rename_table: 'rename_table',
+            old_table_name: this.table,
+            new_table_name: this.newTableName,
             project: this.project
           })
         );
@@ -223,14 +223,14 @@ export default defineComponent({
         if (response.data.success) {
           // Emit events to update the parent components
           this.$emit('sidebarRefresh');
-          this.$emit('success', this.newFormName);
+          this.$emit('success', this.newTableName);
         } else {
           console.error('Rename failed:', response.data.message);
-          alert('Error renaming form: ' + (response.data.message || 'Unknown error'));
+          alert('Error renaming table: ' + (response.data.message || 'Unknown error'));
         }
       } catch (error) {
-        console.error('Error renaming form:', error);
-        alert('Error renaming form. Please try again.');
+        console.error('Error renaming table:', error);
+        alert('Error renaming table. Please try again.');
       } finally {
         this.isLoading = false;
       }

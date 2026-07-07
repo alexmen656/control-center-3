@@ -134,16 +134,16 @@
                           <option value="">Select Form</option>
                           <option
                             v-for="form in forms"
-                            :key="form.form.title"
-                            :value="toName(form.form.title)"
+                            :key="form.table.title"
+                            :value="toName(form.table.title)"
                           >
-                            {{ form.form.title }}
+                            {{ form.table.title }}
                           </option>
                         </select>
                       </div>
                       <div v-for="form in forms" :key="form">
                         <div
-                          v-if="toName(form.form.title) == input.optionList[0].value"
+                          v-if="toName(form.table.title) == input.optionList[0].value"
                           class="form-group"
                         >
                           <select
@@ -152,7 +152,7 @@
                           >
                             <option value="">Select Field</option>
                             <option
-                              v-for="formInput in form.form.inputs"
+                              v-for="formInput in form.table.inputs"
                               :key="formInput.name"
                               :value="formInput.name"
                             >
@@ -291,15 +291,15 @@ export default defineComponent({
     async loadExistingFormData() {
       try {
         const response = await this.$axios.post(
-          'form.php',
+          'table.php',
           this.$qs.stringify({
-            get_form: 'get_form',
-            form: this.$route.params.form,
+            get_table: 'get_table',
+            table: this.$route.params.table,
             project: this.$route.params.project
           })
         );
         
-        const formData = response.data.form;
+        const formData = response.data.table;
         this.title = formData.title;
         
         // Convert existing inputs to the format expected by the form editor
@@ -322,9 +322,9 @@ export default defineComponent({
     async loadForms() {
       try {
         const response = await this.$axios.post(
-          "form.php",
+          "table.php",
           this.$qs.stringify({
-            get_forms: "get_forms",
+            get_tables: "get_tables",
             project: this.$route.params.project,
           })
         );
@@ -394,11 +394,11 @@ export default defineComponent({
 
       try {
         const response = await this.$axios.post(
-          "form.php",
+          "table.php",
           this.$qs.stringify({
-            update_form_structure: "update_form_structure",
-            form: JSON.stringify(formData),
-            form_name: this.$route.params.form,
+            update_table_structure: "update_table_structure",
+            table: JSON.stringify(formData),
+            table_name: this.$route.params.table,
             project: this.$route.params.project,
           })
         );
@@ -423,7 +423,7 @@ export default defineComponent({
     },
     
     goBack() {
-      this.$router.push(`/project/${this.$route.params.project}/${this.$route.params.form}`);
+      this.$router.push(`/project/${this.$route.params.project}/${this.$route.params.table}`);
     },
     
     handleSuccess() {

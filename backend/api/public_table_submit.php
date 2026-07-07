@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     ]));
 }
 
-function logFormSubmit($message, $data = null)
+function logTableSubmit($message, $data = null)
 {
     $logFile = '/var/log/cc_public_form_submit.log';
     $timestamp = date('Y-m-d H:i:s');
@@ -35,7 +35,7 @@ $input = json_decode($rawInput, true);
 if (!$input) {
     $input = [
         'project' => $_POST['project'] ?? null,
-        'form_name' => $_POST['form_name'] ?? null,
+        'table_name' => $_POST['table_name'] ?? null,
         'data' => $_POST['data'] ?? $_POST,
         'source' => $_POST['source'] ?? 'unknown'
     ];
@@ -46,10 +46,10 @@ if (!$input) {
     }
 
     // Filtere system felder aus data
-    unset($input['data']['project'], $input['data']['form_name'], $input['data']['source']);
+    unset($input['data']['project'], $input['data']['table_name'], $input['data']['source']);
 }
 
-logFormSubmit("Received submission", ['project' => $input['project'] ?? 'none', 'form' => $input['form_name'] ?? 'none']);
+logTableSubmit("Received submission", ['project' => $input['project'] ?? 'none', 'form' => $input['table_name'] ?? 'none']);
 
 // Validierung
 if (empty($input['project'])) {
@@ -60,11 +60,11 @@ if (empty($input['project'])) {
     ]));
 }
 
-if (empty($input['form_name'])) {
+if (empty($input['table_name'])) {
     http_response_code(400);
     die(json_encode([
         'success' => false,
-        'error' => 'Missing required field: form_name'
+        'error' => 'Missing required field: table_name'
     ]));
 }
 
@@ -132,13 +132,13 @@ function sanitizeFieldName($name)
 }
 
 $project = sanitizeInput($input['project']);
-$formName = sanitizeInput($input['form_name']);
+$tableName = sanitizeInput($input['table_name']);
 $formData = $input['data'];
 $source = sanitizeInput($input['source'] ?? 'web-builder');
 
 // Rate Limiting (einfache Version basierend auf IP)
 $clientIP = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-$rateLimitFile = "/tmp/form_ratelimit_" . md5($clientIP . $project . $formName);
+$rateLimitFile = "/tmp/form_ratelimit_" . md5($clientIP . $project . $tableName);
 $rateLimitWindow = 60;
 $rateLimitMax = 10;
 
@@ -147,7 +147,7 @@ if (file_exists($rateLimitFile)) {
     if ($rateLimitData && time() - $rateLimitData['start'] < $rateLimitWindow) {
         if ($rateLimitData['count'] >= $rateLimitMax) {
             http_response_code(429);
-            logFormSubmit("Rate limit exceeded", ['ip' => $clientIP]);
+            logTableSubmit("Rate limit exceeded", ['ip' => $clientIP]);
             die(json_encode([
                 'success' => false,
                 'error' => 'Too many requests. Please wait a moment.'
@@ -178,25 +178,25 @@ try {
     require_once "../functions.php";
 
     $projectClean = mysqli_real_escape_string($GLOBALS['con'], $project);
-    $formNameClean = mysqli_real_escape_string($GLOBALS['con'], $formName);
-    $formCheck = query("SELECT * FROM form_settings WHERE project='$projectClean' AND form_name='$formNameClean'");
+    $tableNameClean = mysqli_real_escape_string($GLOBALS['con'], $tableName);
+    $tableCheck = query("SELECT * FROM table_settings WHERE project='$projectClean' AND table_name='$tableNameClean'");
 
-    if (mysqli_num_rows($formCheck) === 0) {
+    if (mysqli_num_rows($tableCheck) === 0) {
         http_response_code(404);
-        logFormSubmit("Form not found", ['project' => $project, 'form' => $formName]);
+        logTableSubmit("Form not found", ['project' => $project, 'form' => $tableName]);
         die(json_encode([
             'success' => false,
-            'error' => "Form '$formName' not found in project '$project'"
+            'error' => "Form '$tableName' not found in project '$project'"
         ]));
     }
 
-    $formSettings = mysqli_fetch_assoc($formCheck);
-    $formJson = json_decode($formSettings['form_json'], true);
+    $formSettings = mysqli_fetch_assoc($tableCheck);
+    $tableJson = json_decode($formSettings['table_json'], true);
 
-    // Generiere Tabellennamen (gleiche Logik wie form.php)
+    // Generiere Tabellennamen (gleiche Logik wie table.php)
     $tableProject = sanitizeFieldName($project);
-    $tableForm = sanitizeFieldName($formName);
-    $tableName = "{$tableProject}_{$tableForm}";
+    $tableField = sanitizeFieldName($tableName);
+    $tableName = "{$tableProject}_{$tableField}";
 
     // Bereite Daten für Insert vor
     $columns = [];
@@ -205,8 +205,8 @@ try {
 
     // Validiere Felder gegen Form-Definition (optional)
     $allowedFields = [];
-    if (isset($formJson['inputs']) && is_array($formJson['inputs'])) {
-        foreach ($formJson['inputs'] as $input) {
+    if (isset($tableJson['inputs']) && is_array($tableJson['inputs'])) {
+        foreach ($tableJson['inputs'] as $input) {
             $allowedFields[] = sanitizeFieldName($input['name']);
         }
     }
@@ -216,7 +216,7 @@ try {
 
         // Skip wenn Feld nicht in Form definiert (Sicherheit)
         if (!empty($allowedFields) && !in_array($cleanFieldName, $allowedFields)) {
-            logFormSubmit("Skipping unknown field: $cleanFieldName");
+            logTableSubmit("Skipping unknown field: $cleanFieldName");
             continue;
         }
 
@@ -248,15 +248,15 @@ try {
     if (query($sql)) {
         $newId = mysqli_insert_id($GLOBALS['con']);
 
-        logFormSubmit("Form submitted successfully", [
+        logTableSubmit("Form submitted successfully", [
             'project' => $project,
-            'form' => $formName,
+            'form' => $tableName,
             'id' => $newId,
             'source' => $source
         ]);
 
         // Trigger System aufrufen (wenn vorhanden)
-        $triggerFile = __DIR__ . '/../form_triggers.php';
+        $triggerFile = __DIR__ . '/../table_triggers.php';
         if (file_exists($triggerFile)) {
             require_once $triggerFile;
             if (class_exists('FormTriggers')) {
@@ -265,7 +265,7 @@ try {
                 $triggerData['id'] = $newId;
                 $triggerData['table'] = $tableName;
                 $triggerData['_source'] = $source;
-                $triggerSystem->executeTriggers($project, $formName, 'insert', $triggerData);
+                $triggerSystem->executeTriggers($project, $tableName, 'insert', $triggerData);
             }
         }
 
@@ -277,7 +277,7 @@ try {
 
     } else {
         $error = mysqli_error($GLOBALS['con']);
-        logFormSubmit("Database error", ['error' => $error, 'sql' => $sql]);
+        logTableSubmit("Database error", ['error' => $error, 'sql' => $sql]);
 
         http_response_code(500);
         die(json_encode([
@@ -287,7 +287,7 @@ try {
     }
 
 } catch (Exception $e) {
-    logFormSubmit("Exception", ['error' => $e->getMessage()]);
+    logTableSubmit("Exception", ['error' => $e->getMessage()]);
     http_response_code(500);
     die(json_encode([
         'success' => false,

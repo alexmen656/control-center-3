@@ -109,7 +109,7 @@
               </div>
 
               <div class="toggle-row">
-                <FloatingCheckbox v-model="checkForms" label="Consider other forms" />
+                <FloatingCheckbox v-model="checkTables" label="Consider other forms" />
               </div>
 
               <div class="ai-buttons">
@@ -258,7 +258,7 @@ export default defineComponent({
       importTableName: "",
       isImporting: false,
 
-      checkForms: false,
+      checkTables: false,
       formInputs: [
         {
           label: "",
@@ -311,9 +311,9 @@ export default defineComponent({
 
     this.$axios
       .post(
-        "form.php",
+        "table.php",
         this.$qs.stringify({
-          get_forms: "get_forms",
+          get_tables: "get_tables",
           project: this.$route.params.project,
         })
       )
@@ -345,7 +345,7 @@ export default defineComponent({
 
       try {
         const response = await this.$axios.post(
-          "form.php",
+          "table.php",
           this.$qs.stringify({
             get_tables_from_project: "get_tables_from_project",
             source_project: this.selectedSourceProject,
@@ -370,7 +370,7 @@ export default defineComponent({
         const newTableName = this.importTableName || `project_${this.selectedTable.name}`;
 
         const response = await this.$axios.post(
-          "form.php",
+          "table.php",
           this.$qs.stringify({
             import_table: "import_table",
             source_project: this.selectedSourceProject,
@@ -461,10 +461,10 @@ export default defineComponent({
       this.jsonData = JSON.stringify(formData, null, 2);
       this.$axios
         .post(
-          "form.php",
+          "table.php",
           this.$qs.stringify({
-            create_form: "create_form",
-            form: this.jsonData,
+            create_table: "create_table",
+            table: this.jsonData,
             name: this.title.toLowerCase().replace(/\s+/g, "-"),
             project: this.$route.params.project,
           })
@@ -486,7 +486,7 @@ export default defineComponent({
         const response = await this.$axios.post('v2/ai-schema/generate', {
           description: this.aiDescription,
           context: this.aiContext,
-          checkForms: this.checkForms,
+          checkTables: this.checkTables,
           project: this.$route.params.project || ''
         });
 

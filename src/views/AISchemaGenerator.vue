@@ -16,7 +16,7 @@
           <ion-card-header>
             <ion-card-title>
               <ion-icon name="brain-outline"></ion-icon>
-              Beschreibe dein gewünschtes Formular
+              Beschreibe dein gewünschtes Tabelle
             </ion-card-title>
             <ion-card-subtitle>
               Die AI analysiert deine Beschreibung und erstellt automatisch ein passendes Datenbankschema
@@ -174,20 +174,20 @@
           </ion-card-content>
         </ion-card>
         
-        <!-- Formular erstellen -->
+        <!-- Tabelle erstellen -->
         <ion-card v-if="generatedSchema" class="create-form-card">
           <ion-card-header>
             <ion-card-title>
               <ion-icon name="create-outline"></ion-icon>
-              Formular erstellen
+              Tabelle erstellen
             </ion-card-title>
           </ion-card-header>
           
           <ion-card-content>
             <ion-item>
-              <ion-label position="stacked">Formularname *</ion-label>
+              <ion-label position="stacked">Tabellename *</ion-label>
               <ion-input 
-                v-model="formName" 
+                v-model="tableName" 
                 placeholder="z.B. Produktverwaltung"
                 maxlength="50"
               ></ion-input>
@@ -196,12 +196,12 @@
             <ion-button 
               expand="block" 
               @click="createForm"
-              :disabled="!formName.trim() || isCreating"
+              :disabled="!tableName.trim() || isCreating"
               color="success"
               class="create-btn"
             >
               <ion-icon name="checkmark-circle" slot="start"></ion-icon>
-              {{ isCreating ? 'Erstelle Formular...' : 'Formular erstellen' }}
+              {{ isCreating ? 'Erstelle Tabelle...' : 'Tabelle erstellen' }}
               <ion-spinner v-if="isCreating" slot="end"></ion-spinner>
             </ion-button>
           </ion-card-content>
@@ -313,7 +313,7 @@ export default defineComponent({
       context: '',
       selectedProvider: 'local',
       generatedSchema: null,
-      formName: '',
+      tableName: '',
       isGenerating: false,
       isCreating: false,
       examples: [
@@ -343,7 +343,7 @@ export default defineComponent({
         
         if (response.data.success) {
           this.generatedSchema = response.data.schema;
-          this.formName = this.generatedSchema.title || '';
+          this.tableName = this.generatedSchema.title || '';
           
           await this.showToast('Schema erfolgreich generiert!', 'success');
         } else {
@@ -358,30 +358,30 @@ export default defineComponent({
     },
     
     async createForm() {
-      if (!this.formName.trim() || !this.generatedSchema) return;
+      if (!this.tableName.trim() || !this.generatedSchema) return;
       
       this.isCreating = true;
       
       try {
         const response = await this.$axios.post('v2/ai-schema/create-form', {
           schema: JSON.stringify(this.generatedSchema),
-          name: this.formName,
+          name: this.tableName,
           project: this.$route.params.project
         });
         
         if (response.data.success) {
-          await this.showToast('Formular erfolgreich erstellt!', 'success');
+          await this.showToast('Tabelle erfolgreich erstellt!', 'success');
           
           // Navigate to form management or created form
           setTimeout(() => {
             this.$router.push(`/project/${this.$route.params.project}/forms`);
           }, 1500);
         } else {
-          await this.showToast(response.data.message || 'Fehler beim Erstellen des Formulars', 'danger');
+          await this.showToast(response.data.message || 'Fehler beim Erstellen des Tabellen', 'danger');
         }
       } catch (error) {
         console.error('Error creating form:', error);
-        await this.showToast('Netzwerkfehler beim Erstellen des Formulars', 'danger');
+        await this.showToast('Netzwerkfehler beim Erstellen des Tabellen', 'danger');
       } finally {
         this.isCreating = false;
       }

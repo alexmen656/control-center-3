@@ -35,26 +35,26 @@ class PagesController
             return;
         }
 
-        // 2. Check form pages: project/{link}/forms/{form_name} or .../edit
-        if (preg_match('#^project/([^/]+)/forms/([^/]+?)(/edit)?$#', $url, $m)) {
+        // 2. Check form pages: project/{link}/tables/{table_name} or .../edit
+        if (preg_match('#^project/([^/]+)/tables/([^/]+?)(/edit)?$#', $url, $m)) {
             $projectLink = escape_string($m[1]);
-            $formName = escape_string($m[2]);
+            $tableName = escape_string($m[2]);
             $isEdit = !empty($m[3]);
 
-            $form = query("SELECT fs.* FROM form_settings fs JOIN projects p ON fs.project = p.link WHERE p.link='$projectLink' AND fs.form_name='$formName'");
+            $form = query("SELECT fs.* FROM table_settings fs JOIN projects p ON fs.project = p.link WHERE p.link='$projectLink' AND fs.table_name='$tableName'");
             if ($form && mysqli_num_rows($form) > 0) {
                 $f = fetch_assoc($form);
                 $suffix = $isEdit ? '_edit' : '';
                 $response->json([
                     'exists' => true,
                     'page' => [
-                        'id' => 'form_' . $f['form_id'] . $suffix,
+                        'id' => 'table_' . $f['table_id'] . $suffix,
                         'url' => $url,
                         'showTitle' => true,
                         'icon' => 'list-outline',
-                        'title' => $f['form_name'],
+                        'title' => $f['table_name'],
                         'html' => '',
-                        'pageID' => 'form_' . $f['form_id'] . $suffix,
+                        'pageID' => 'table_' . $f['table_id'] . $suffix,
                     ]
                 ]);
                 return;
@@ -62,15 +62,15 @@ class PagesController
         }
 
         // 6. Check project management routes
-        if (preg_match('#^project/([^/]+)/(manage|new)/(codespaces|codespace|forms|form|apis)$#', $url, $m)) {
+        if (preg_match('#^project/([^/]+)/(manage|new)/(codespaces|codespace|tables|table|apis)$#', $url, $m)) {
             $projectLink = escape_string($m[1]);
             $action = $m[2];
             $type = $m[3];
             $project = query("SELECT projectID, name FROM projects WHERE link='$projectLink'");
             if ($project && mysqli_num_rows($project) > 0) {
                 $p = fetch_assoc($project);
-                $icons = ['codespaces' => 'code-outline', 'codespace' => 'add-circle-outline', 'forms' => 'document-outline', 'form' => 'document-outline', 'apis' => 'albums-outline'];
-                $titles = ['codespaces' => 'Manage Codespaces', 'codespace' => 'New Codespace', 'forms' => 'Manage Forms', 'form' => 'New Form', 'apis' => 'Manage APIs'];
+                $icons = ['codespaces' => 'code-outline', 'codespace' => 'add-circle-outline', 'tables' => 'document-outline', 'table' => 'document-outline', 'apis' => 'albums-outline'];
+                $titles = ['codespaces' => 'Manage Codespaces', 'codespace' => 'New Codespace', 'tables' => 'Manage Tables', 'table' => 'New Table', 'apis' => 'Manage APIs'];
                 $response->json([
                     'exists' => true,
                     'page' => [

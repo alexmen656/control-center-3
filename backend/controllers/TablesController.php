@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/../triggers.php';
 
-class FormsController
+class TablesController
 {
     private static function sanitizeName(string $name): string
     {
@@ -13,9 +13,9 @@ class FormsController
         );
     }
 
-    private static function buildTableName(string $project, string $formName): string
+    private static function buildTableName(string $project, string $tableName): string
     {
-        return self::sanitizeName($project) . '_' . self::sanitizeName($formName);
+        return self::sanitizeName($project) . '_' . self::sanitizeName($tableName);
     }
 
     private static function mapFieldType(string $type): string
@@ -41,16 +41,16 @@ class FormsController
     }
 
     /**
-     * POST /v2/forms
+     * POST /v2/tables
      * Create a new form
      */
     public function create(Request $request, Response $response): void
     {
-        $formJSON = $request->input('form');
-        $formName = escape_string($request->input('name'));
+        $tableJSON = $request->input('table');
+        $tableName = escape_string($request->input('name'));
         $project = escape_string($request->input('project'));
 
-        if (!$formJSON || !$formName || !$project) {
+        if (!$tableJSON || !$tableName || !$project) {
             $response->error('form, name and project are required', 400);
             return;
         }
@@ -64,12 +64,12 @@ class FormsController
             }
         }
 
-        if (!query("INSERT INTO form_settings (form_name, form_json, project, section_id, icon) VALUES ('$formName', '$formJSON', '$project', " . ($tablesSectionId ? "'$tablesSectionId'" : "NULL") . ", 'list-outline')")) {
+        if (!query("INSERT INTO table_settings (table_name, table_json, project, section_id, icon) VALUES ('$tableName', '$tableJSON', '$project', " . ($tablesSectionId ? "'$tablesSectionId'" : "NULL") . ", 'list-outline')")) {
             $response->error('Failed to create form', 500);
             return;
         }
 
-        $data = json_decode($formJSON, true);
+        $data = json_decode($tableJSON, true);
 
         if ($data && isset($data['title'], $data['inputs'])) {
             $title = self::sanitizeName($data['title']);
@@ -87,7 +87,7 @@ class FormsController
             $sql .= ");";
 
             if (query($sql)) {
-                $response->json(['success' => true, 'message' => $formName . ' Created Successfully']);
+                $response->json(['success' => true, 'message' => $tableName . ' Created Successfully']);
                 return;
             }
         }
@@ -96,25 +96,25 @@ class FormsController
     }
 
     /**
-     * GET /v2/forms/single
+     * GET /v2/tables/single
      * Get a single form definition
      */
     public function get(Request $request, Response $response): void
     {
-        $formName = escape_string($request->input('form'));
+        $tableName = escape_string($request->input('table'));
         $project = escape_string($request->input('project'));
 
-        if (!$formName || !$project) {
+        if (!$tableName || !$project) {
             $response->error('form and project are required', 400);
             return;
         }
 
-        $query = query("SELECT * FROM form_settings WHERE form_name='$formName' AND project='$project'");
+        $query = query("SELECT * FROM table_settings WHERE table_name='$tableName' AND project='$project'");
         if (mysqli_num_rows($query) > 0) {
             $form = fetch_assoc($query);
             $response->json([
-                'id' => $form['form_id'],
-                'form' => json_decode($form['form_json'], true),
+                'id' => $form['table_id'],
+                'form' => json_decode($form['table_json'], true),
                 'createdOn' => $form['created_at'],
             ]);
         } else {
@@ -123,14 +123,14 @@ class FormsController
     }
 
     /**
-     * GET /v2/forms/data
+     * GET /v2/tables/data
      * Get form table data
      */
     public function getData(Request $request, Response $response): void
     {
-        $formName = self::sanitizeName(escape_string($request->input('form')));
+        $tableName = self::sanitizeName(escape_string($request->input('table')));
         $projectName = self::sanitizeName(escape_string($request->input('project')));
-        $tableName = $projectName . '_' . $formName;
+        $tableName = $projectName . '_' . $tableName;
 
         $data = query("SELECT * FROM `$tableName` LIMIT 100");
         $json = [];
@@ -155,7 +155,7 @@ class FormsController
     }
 
     /**
-     * GET /v2/forms/list
+     * GET /v2/tables/list
      * Get all forms for a project
      */
     public function list(Request $request, Response $response): void
@@ -167,12 +167,12 @@ class FormsController
             return;
         }
 
-        $forms = query("SELECT * FROM form_settings WHERE project='$project'");
+        $forms = query("SELECT * FROM table_settings WHERE project='$project'");
         $json = [];
         $i = 0;
         foreach ($forms as $form) {
-            $json[$i]['id'] = $form['form_id'];
-            $json[$i]['form'] = json_decode($form['form_json'], true);
+            $json[$i]['id'] = $form['table_id'];
+            $json[$i]['table'] = json_decode($form['table_json'], true);
             $json[$i]['createdOn'] = $form['created_at'];
             $i++;
         }
@@ -181,21 +181,21 @@ class FormsController
     }
 
     /**
-     * POST /v2/forms/submit
+     * POST /v2/tables/submit
      * Submit form data
      */
     public function submit(Request $request, Response $response): void
     {
-        $form = json_decode($request->input('form'), true);
-        $formName = escape_string($request->input('form_name'));
+        $form = json_decode($request->input('table'), true);
+        $tableName = escape_string($request->input('table_name'));
         $project = escape_string($request->input('project'));
 
-        if (!$form || !$formName || !$project) {
-            $response->error('form, form_name and project are required', 400);
+        if (!$form || !$tableName || !$project) {
+            $response->error('form, table_name and project are required', 400);
             return;
         }
 
-        $tableName = self::buildTableName($project, $formName);
+        $tableName = self::buildTableName($project, $tableName);
 
         $columns = [];
         $values = [];
@@ -214,11 +214,11 @@ class FormsController
         if (query($sql)) {
             $newId = mysqli_insert_id($GLOBALS['con']);
 
-            $triggerSystem = new FormTriggers();
+            $triggerSystem = new TableTriggers();
             $triggerData = $form;
             $triggerData['id'] = $newId;
             $triggerData['table'] = $tableName;
-            $triggerSystem->executeTriggers($project, $formName, 'insert', $triggerData);
+            $triggerSystem->executeTriggers($project, $tableName, 'insert', $triggerData);
 
             $response->json(['success' => true, 'message' => 'Form data submitted successfully']);
         } else {
@@ -227,27 +227,27 @@ class FormsController
     }
 
     /**
-     * DELETE /v2/forms/entry/{id}
+     * DELETE /v2/tables/entry/{id}
      * Delete a form entry
      */
     public function deleteEntry(Request $request, Response $response): void
     {
         $id = escape_string($request->params['id']);
-        $formName = escape_string($request->input('form_name'));
+        $tableName = escape_string($request->input('table_name'));
         $project = escape_string($request->input('project'));
 
-        if (!$id || !$formName || !$project) {
-            $response->error('id, form_name and project are required', 400);
+        if (!$id || !$tableName || !$project) {
+            $response->error('id, table_name and project are required', 400);
             return;
         }
 
-        $tableName = self::buildTableName($project, $formName);
+        $tableName = self::buildTableName($project, $tableName);
 
         $sql = "DELETE FROM $tableName WHERE id='$id'";
         if (query($sql)) {
-            $triggerSystem = new FormTriggers();
+            $triggerSystem = new TableTriggers();
             $triggerData = ['id' => $id, 'table' => $tableName];
-            $triggerSystem->executeTriggers($project, $formName, 'delete', $triggerData);
+            $triggerSystem->executeTriggers($project, $tableName, 'delete', $triggerData);
 
             $response->json(['success' => true, 'message' => 'Entry deleted successfully']);
         } else {
@@ -256,22 +256,22 @@ class FormsController
     }
 
     /**
-     * PUT /v2/forms/entry/{id}
+     * PUT /v2/tables/entry/{id}
      * Update a form entry
      */
     public function updateEntry(Request $request, Response $response): void
     {
         $id = escape_string($request->params['id']);
-        $form = json_decode($request->input('form'), true);
-        $formName = escape_string($request->input('form_name'));
+        $form = json_decode($request->input('table'), true);
+        $tableName = escape_string($request->input('table_name'));
         $project = escape_string($request->input('project'));
 
-        if (!$id || !$form || !$formName || !$project) {
-            $response->error('id, form, form_name and project are required', 400);
+        if (!$id || !$form || !$tableName || !$project) {
+            $response->error('id, form, table_name and project are required', 400);
             return;
         }
 
-        $tableName = self::buildTableName($project, $formName);
+        $tableName = self::buildTableName($project, $tableName);
         $updates = [];
 
         foreach ($form as $fieldName => $fieldValue) {
@@ -284,11 +284,11 @@ class FormsController
         $sql = "UPDATE $tableName SET $updatesStr WHERE id='$id'";
 
         if (query($sql)) {
-            $triggerSystem = new FormTriggers();
+            $triggerSystem = new TableTriggers();
             $triggerData = $form;
             $triggerData['id'] = $id;
             $triggerData['table'] = $tableName;
-            $triggerSystem->executeTriggers($project, $formName, 'update', $triggerData);
+            $triggerSystem->executeTriggers($project, $tableName, 'update', $triggerData);
 
             $response->json(['success' => true, 'message' => 'Entry updated successfully']);
         } else {
@@ -297,64 +297,64 @@ class FormsController
     }
 
     /**
-     * GET /v2/forms/exists
+     * GET /v2/tables/exists
      * Check if a form exists
      */
     public function exists(Request $request, Response $response): void
     {
-        $formName = escape_string($request->input('form_name'));
+        $tableName = escape_string($request->input('table_name'));
         $project = escape_string($request->input('project'));
 
-        if (!$formName || !$project) {
-            $response->error('form_name and project are required', 400);
+        if (!$tableName || !$project) {
+            $response->error('table_name and project are required', 400);
             return;
         }
 
-        $query = query("SELECT * FROM form_settings WHERE form_name='$formName' AND project='$project'");
+        $query = query("SELECT * FROM table_settings WHERE table_name='$tableName' AND project='$project'");
         $exists = mysqli_num_rows($query) > 0;
 
         $response->json(['exists' => $exists]);
     }
 
     /**
-     * POST /v2/forms/rename
+     * POST /v2/tables/rename
      * Rename a form
      */
     public function rename(Request $request, Response $response): void
     {
-        $oldFormName = escape_string($request->input('old_form_name'));
-        $newFormName = escape_string($request->input('new_form_name'));
+        $oldTableName = escape_string($request->input('old_table_name'));
+        $newTableName = escape_string($request->input('new_table_name'));
         $project = escape_string($request->input('project'));
 
-        if (!$oldFormName || !$newFormName || !$project) {
-            $response->error('old_form_name, new_form_name and project are required', 400);
+        if (!$oldTableName || !$newTableName || !$project) {
+            $response->error('old_table_name, new_table_name and project are required', 400);
             return;
         }
 
-        if (!preg_match('/^[a-zA-Z0-9-_]+$/', $newFormName)) {
+        if (!preg_match('/^[a-zA-Z0-9-_]+$/', $newTableName)) {
             $response->json(['success' => false, 'error' => 'Ungültiger Formname. Verwenden Sie nur Buchstaben, Zahlen, Bindestriche und Unterstriche.']);
             return;
         }
 
-        $checkQuery = query("SELECT * FROM form_settings WHERE form_name='$newFormName' AND project='$project'");
+        $checkQuery = query("SELECT * FROM table_settings WHERE table_name='$newTableName' AND project='$project'");
         if (mysqli_num_rows($checkQuery) > 0) {
             $response->json(['success' => false, 'error' => 'Eine Form mit diesem Namen existiert bereits.']);
             return;
         }
 
-        $oldFormQuery = query("SELECT * FROM form_settings WHERE form_name='$oldFormName' AND project='$project'");
+        $oldFormQuery = query("SELECT * FROM table_settings WHERE table_name='$oldTableName' AND project='$project'");
         if (mysqli_num_rows($oldFormQuery) == 0) {
             $response->json(['success' => false, 'error' => 'Ursprüngliche Form nicht gefunden.']);
             return;
         }
 
-        $oldTableName = self::buildTableName($project, $oldFormName);
-        $newTableName = self::buildTableName($project, $newFormName);
+        $oldTableName = self::buildTableName($project, $oldTableName);
+        $newTableName = self::buildTableName($project, $newTableName);
 
         mysqli_autocommit($GLOBALS['con'], false);
 
         try {
-            $updateFormQuery = "UPDATE form_settings SET form_name='$newFormName' WHERE form_name='$oldFormName' AND project='$project'";
+            $updateFormQuery = "UPDATE table_settings SET table_name='$newTableName' WHERE table_name='$oldTableName' AND project='$project'";
             if (!query($updateFormQuery)) {
                 throw new Exception('Fehler beim Aktualisieren der Form-Einstellungen');
             }
@@ -367,9 +367,9 @@ class FormsController
                 }
             }
 
-            if (class_exists('FormTriggers')) {
-                $triggerSystem = new FormTriggers();
-                $triggerSystem->renameFormTriggers($project, $oldFormName, $newFormName);
+            if (class_exists('TableTriggers')) {
+                $triggerSystem = new TableTriggers();
+                $triggerSystem->renameTableTriggers($project, $oldTableName, $newTableName);
             }
 
             mysqli_commit($GLOBALS['con']);
@@ -383,21 +383,21 @@ class FormsController
     }
 
     /**
-     * PUT /v2/forms/structure
+     * PUT /v2/tables/structure
      * Update form structure
      */
     public function updateStructure(Request $request, Response $response): void
     {
-        $formJSON = $request->input('form');
-        $formName = escape_string($request->input('form_name'));
+        $tableJSON = $request->input('table');
+        $tableName = escape_string($request->input('table_name'));
         $project = escape_string($request->input('project'));
 
-        if (!$formJSON || !$formName || !$project) {
-            $response->error('form, form_name and project are required', 400);
+        if (!$tableJSON || !$tableName || !$project) {
+            $response->error('form, table_name and project are required', 400);
             return;
         }
 
-        $formData = json_decode($formJSON, true);
+        $formData = json_decode($tableJSON, true);
         if (!$formData || !isset($formData['title'], $formData['inputs'])) {
             $response->json(['success' => false, 'error' => 'Ungültiges JSON-Format']);
             return;
@@ -406,12 +406,12 @@ class FormsController
         mysqli_autocommit($GLOBALS['con'], false);
 
         try {
-            $updateFormQuery = "UPDATE form_settings SET form_json='$formJSON' WHERE form_name='$formName' AND project='$project'";
+            $updateFormQuery = "UPDATE table_settings SET table_json='$tableJSON' WHERE table_name='$tableName' AND project='$project'";
             if (!query($updateFormQuery)) {
                 throw new Exception('Fehler beim Aktualisieren der Form-Einstellungen');
             }
 
-            $tableName = createTableName($project . "_" . $formName);
+            $tableName = createTableName($project . "_" . $tableName);
 
             $tableExistsQuery = query("SHOW TABLES LIKE '$tableName'");
             if (mysqli_num_rows($tableExistsQuery) > 0) {
@@ -445,23 +445,23 @@ class FormsController
     }
 
     /**
-     * GET /v2/forms/schema
+     * GET /v2/tables/schema
      * Get form schema
      */
     public function getSchema(Request $request, Response $response): void
     {
-        $formName = escape_string($request->input('form_name'));
+        $tableName = escape_string($request->input('table_name'));
         $project = escape_string($request->input('project'));
 
-        if (!$formName || !$project) {
-            $response->error('form_name and project are required', 400);
+        if (!$tableName || !$project) {
+            $response->error('table_name and project are required', 400);
             return;
         }
 
-        $query = query("SELECT form_json FROM form_settings WHERE form_name='$formName' AND project='$project'");
+        $query = query("SELECT table_json FROM table_settings WHERE table_name='$tableName' AND project='$project'");
         if (mysqli_num_rows($query) > 0) {
             $form = fetch_assoc($query);
-            $formData = json_decode($form['form_json'], true);
+            $formData = json_decode($form['table_json'], true);
 
             if ($formData && isset($formData['inputs'])) {
                 $schema = [];
@@ -484,21 +484,21 @@ class FormsController
     }
 
     /**
-     * GET /v2/forms/entry/{id}
+     * GET /v2/tables/entry/{id}
      * Get a single form entry
      */
     public function getEntry(Request $request, Response $response): void
     {
         $entryId = escape_string($request->params['id']);
-        $formName = escape_string($request->input('form_name'));
+        $tableName = escape_string($request->input('table_name'));
         $project = escape_string($request->input('project'));
 
-        if (!$entryId || !$formName || !$project) {
-            $response->error('id, form_name and project are required', 400);
+        if (!$entryId || !$tableName || !$project) {
+            $response->error('id, table_name and project are required', 400);
             return;
         }
 
-        $tableName = self::buildTableName($project, $formName);
+        $tableName = self::buildTableName($project, $tableName);
 
         $query = query("SELECT * FROM `$tableName` WHERE id='$entryId'");
         if (mysqli_num_rows($query) > 0) {
@@ -510,7 +510,7 @@ class FormsController
     }
 
     /**
-     * GET /v2/forms/tables
+     * GET /v2/tables/tables
      * Get all tables for a project
      */
     public function getTables(Request $request, Response $response): void
@@ -522,11 +522,11 @@ class FormsController
             return;
         }
 
-        $formsQuery = query("SELECT form_name, form_json, created_at FROM form_settings WHERE project='$project' ORDER BY created_at DESC");
+        $tablesQuery = query("SELECT table_name, table_json, created_at FROM table_settings WHERE project='$project' ORDER BY created_at DESC");
         $tables = [];
 
-        while ($form = fetch_assoc($formsQuery)) {
-            $tableName = self::buildTableName($project, $form['form_name']);
+        while ($form = fetch_assoc($tablesQuery)) {
+            $tableName = self::buildTableName($project, $form['table_name']);
 
             $tableExistsQuery = query("SHOW TABLES LIKE '$tableName'");
             $exists = mysqli_num_rows($tableExistsQuery) > 0;
@@ -540,11 +540,11 @@ class FormsController
                 }
             }
 
-            $formData = json_decode($form['form_json'], true);
+            $formData = json_decode($form['table_json'], true);
             $fieldCount = isset($formData['inputs']) ? count($formData['inputs']) : 0;
 
             $tables[] = [
-                'name' => $form['form_name'],
+                'name' => $form['table_name'],
                 'table_name' => $tableName,
                 'exists' => $exists,
                 'row_count' => $rowCount,
@@ -557,20 +557,20 @@ class FormsController
     }
 
     /**
-     * DELETE /v2/forms/table
+     * DELETE /v2/tables/table
      * Drop a form table
      */
     public function dropTable(Request $request, Response $response): void
     {
-        $formName = escape_string($request->input('form_name'));
+        $tableName = escape_string($request->input('table_name'));
         $project = escape_string($request->input('project'));
 
-        if (!$formName || !$project) {
-            $response->error('form_name and project are required', 400);
+        if (!$tableName || !$project) {
+            $response->error('table_name and project are required', 400);
             return;
         }
 
-        $tableName = self::buildTableName($project, $formName);
+        $tableName = self::buildTableName($project, $tableName);
 
         mysqli_autocommit($GLOBALS['con'], false);
 
@@ -580,7 +580,7 @@ class FormsController
                 throw new Exception('Fehler beim Löschen der Tabelle');
             }
 
-            $deleteFormQuery = "DELETE FROM form_settings WHERE form_name='$formName' AND project='$project'";
+            $deleteFormQuery = "DELETE FROM table_settings WHERE table_name='$tableName' AND project='$project'";
             if (!query($deleteFormQuery)) {
                 throw new Exception('Fehler beim Löschen der Form-Einstellungen');
             }
@@ -596,7 +596,7 @@ class FormsController
     }
 
     /**
-     * GET /v2/forms/tables-from-project
+     * GET /v2/tables/tables-from-project
      * Get tables from a source project for import
      */
     public function getTablesFromProject(Request $request, Response $response): void
@@ -609,14 +609,14 @@ class FormsController
         }
 
         $tables = [];
-        $result = query("SELECT form_name, form_json FROM form_settings WHERE project = '$sourceProject'");
+        $result = query("SELECT table_name, table_json FROM table_settings WHERE project = '$sourceProject'");
 
         if ($result) {
             while ($row = mysqli_fetch_assoc($result)) {
-                $formData = json_decode($row['form_json'], true);
+                $formData = json_decode($row['table_json'], true);
                 $tables[] = [
-                    'name' => $row['form_name'],
-                    'display_name' => $formData['title'] ?? $row['form_name'],
+                    'name' => $row['table_name'],
+                    'display_name' => $formData['title'] ?? $row['table_name'],
                     'description' => $formData['description'] ?? ''
                 ];
             }
@@ -626,7 +626,7 @@ class FormsController
     }
 
     /**
-     * POST /v2/forms/import
+     * POST /v2/tables/import
      * Import table from another project
      */
     public function importTable(Request $request, Response $response): void
@@ -643,24 +643,24 @@ class FormsController
 
         try {
             mysqli_autocommit($GLOBALS['con'], false);
-            $result = query("SELECT form_json FROM form_settings WHERE project = '$sourceProject' AND form_name = '$sourceTable'");
+            $result = query("SELECT table_json FROM table_settings WHERE project = '$sourceProject' AND table_name = '$sourceTable'");
 
             if (!$result || mysqli_num_rows($result) == 0) {
                 throw new Exception("Source table configuration not found");
             }
 
             $row = mysqli_fetch_assoc($result);
-            $formJSON = $row['form_json'];
-            $formData = json_decode($formJSON, true);
+            $tableJSON = $row['table_json'];
+            $formData = json_decode($tableJSON, true);
 
             if (!$formData) {
                 throw new Exception("Invalid form configuration");
             }
 
             $formData['title'] = str_replace('project_', '', $newTableName);
-            $updatedFormJSON = json_encode($formData);
+            $updatedTableJSON = json_encode($formData);
 
-            if (!query("INSERT INTO form_settings (form_name, form_json, project) VALUES ('$newTableName', '$updatedFormJSON', '$targetProject')")) {
+            if (!query("INSERT INTO table_settings (table_name, table_json, project) VALUES ('$newTableName', '$updatedTableJSON', '$targetProject')")) {
                 throw new Exception("Failed to create form configuration");
             }
 
@@ -714,20 +714,20 @@ class FormsController
 
     public function getInfo(Request $request, Response $response): void
     {
-        $formName = escape_string($request->input('form_name'));
+        $tableName = escape_string($request->input('table_name'));
         $project = escape_string($request->input('project'));
 
-        if (!$formName || !$project) {
-            $response->error('form_name and project are required', 400);
+        if (!$tableName || !$project) {
+            $response->error('table_name and project are required', 400);
             return;
         }
 
-        $query = query("SELECT * FROM form_settings WHERE form_name='$formName' AND project='$project'");
+        $query = query("SELECT * FROM table_settings WHERE table_name='$tableName' AND project='$project'");
         if (mysqli_num_rows($query) > 0) {
             $form = fetch_assoc($query);
             $response->json([
-                'id' => $form['form_id'],
-                'title' => json_decode($form['form_json'], true)['title'] ?? '',
+                'id' => $form['table_id'],
+                'title' => json_decode($form['table_json'], true)['title'] ?? '',
                 'createdOn' => $form['created_at'],
             ]);
         } else {
@@ -736,20 +736,20 @@ class FormsController
     }
 
     /**
-     * GET /v2/forms/export/csv
+     * GET /v2/tables/export/csv
      * Export form data as CSV
      */
     public function exportCSV(Request $request, Response $response): void
     {
-        $formName = escape_string($request->input('form_name'));
+        $tableName = escape_string($request->input('table_name'));
         $project = escape_string($request->input('project'));
 
-        if (!$formName || !$project) {
-            $response->error('form_name and project are required', 400);
+        if (!$tableName || !$project) {
+            $response->error('table_name and project are required', 400);
             return;
         }
 
-        $tableName = self::buildTableName($project, $formName);
+        $tableName = self::buildTableName($project, $tableName);
 
         $tableCheck = query("SHOW TABLES LIKE '$tableName'");
         if (!$tableCheck || mysqli_num_rows($tableCheck) === 0) {
@@ -787,24 +787,24 @@ class FormsController
         fclose($output);
         $content = ob_get_clean();
 
-        $response->download($content, $formName . '_export_' . date('Y-m-d') . '.csv', 'text/csv; charset=utf-8');
+        $response->download($content, $tableName . '_export_' . date('Y-m-d') . '.csv', 'text/csv; charset=utf-8');
     }
 
     /**
-     * GET /v2/forms/export/excel
+     * GET /v2/tables/export/excel
      * Export form data as Excel (XLSX)
      */
     public function exportExcel(Request $request, Response $response): void
     {
-        $formName = escape_string($request->input('form_name'));
+        $tableName = escape_string($request->input('table_name'));
         $project = escape_string($request->input('project'));
 
-        if (!$formName || !$project) {
-            $response->error('form_name and project are required', 400);
+        if (!$tableName || !$project) {
+            $response->error('table_name and project are required', 400);
             return;
         }
 
-        $tableName = self::buildTableName($project, $formName);
+        $tableName = self::buildTableName($project, $tableName);
 
         $tableCheck = query("SHOW TABLES LIKE '$tableName'");
         if (!$tableCheck || mysqli_num_rows($tableCheck) === 0) {
@@ -869,7 +869,7 @@ class FormsController
                 }
 
                 header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-                header('Content-Disposition: attachment; filename="' . $formName . '_export_' . date('Y-m-d') . '.xlsx"');
+                header('Content-Disposition: attachment; filename="' . $tableName . '_export_' . date('Y-m-d') . '.xlsx"');
                 header('Cache-Control: max-age=0');
                 header('Pragma: public');
 
@@ -885,7 +885,7 @@ class FormsController
         }
 
         header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="' . $formName . '_export_' . date('Y-m-d') . '.csv"');
+        header('Content-Disposition: attachment; filename="' . $tableName . '_export_' . date('Y-m-d') . '.csv"');
 
         $output = fopen('php://output', 'w');
         fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));

@@ -52,16 +52,16 @@ export default {
   created() {
     this.$axios
       .get(
-        "v2/forms/single",
+        "v2/tables/single",
         {
           params: {
             project: this.$route.params.project,
-            form: this.$route.params.form,
+            table: this.$route.params.table,
           }
         }
       )
       .then((res) => {
-        this.form = res.data.form;
+        this.form = res.data.table;
         this.inputss = this.form.inputs;
         this.inputss.forEach(async (input) => {
           if (input.type == "select2") {
@@ -69,11 +69,11 @@ export default {
             const inputInstance = { ...input }; // Create a copy of the input object
             await this.$axios
               .get(
-                "v2/forms/data",
+                "v2/tables/data",
                 {
                   params: {
                     project: this.$route.params.project,
-                    form: input.options[0].value,
+                    table: input.options[0].value,
                   }
                 }
               )
@@ -154,11 +154,11 @@ export default {
     /*async select2(form, field) {
       try {
         const response = await this.$axios.post(
-          "/control-center/form.php",
+          "/control-center/table.php",
           this.$qs.stringify({
-            get_form_data: "get_form_data",
+            get_table_data: "get_table_data",
             project: this.$route.params.project,
-            form: form,
+            table: form,
           })
         )
        

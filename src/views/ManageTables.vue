@@ -60,7 +60,7 @@
         <!-- Tables List -->
         <div class="tables-card">
           <div class="card-header">
-            <h2>Form Tables</h2>
+            <h2>Tables</h2>
             <div class="search-box">
               <ion-icon name="search-outline"></ion-icon>
               <input 
@@ -80,7 +80,7 @@
             <div v-else-if="filteredTables.length === 0" class="no-data-state">
               <ion-icon name="layers-outline" class="no-data-icon"></ion-icon>
               <h3>No Tables Found</h3>
-              <p>{{ searchTerm ? 'No tables match your search criteria.' : 'No form tables exist for this project yet.' }}</p>
+              <p>{{ searchTerm ? 'No tables match your search criteria.' : 'No tables exist for this project yet.' }}</p>
             </div>
 
             <div v-else class="tables-grid">
@@ -113,7 +113,7 @@
                     <button 
                       class="icon-btn edit-btn" 
                       @click="editForm(table.name)"
-                      title="Edit Form"
+                      title="Edit Table"
                     >
                       <ion-icon name="create-outline"></ion-icon>
                     </button>
@@ -148,7 +148,7 @@
 
                 <div v-if="!table.exists" class="table-warning">
                   <ion-icon name="warning-outline"></ion-icon>
-                  <span>Database table missing - form exists but no data table found</span>
+                  <span>Database table missing - table exists but no data table found</span>
                 </div>
               </div>
             </div>
@@ -169,7 +169,7 @@
             <div class="warning-content">
               <ion-icon name="warning-outline" class="warning-icon"></ion-icon>
               <h4>Are you sure?</h4>
-              <p>This will permanently delete the form <strong>"{{ deleteModal.table?.name }}"</strong> and all its data ({{ deleteModal.table?.row_count }} records).</p>
+              <p>This will permanently delete the table <strong>"{{ deleteModal.table?.name }}"</strong> and all its data ({{ deleteModal.table?.row_count }} records).</p>
               <p class="warning-text">This action cannot be undone!</p>
             </div>
             <div class="form-actions">
@@ -239,7 +239,7 @@ export default defineComponent({
       this.loading = true;
       try {
         const response = await this.$axios.post(
-          "form.php",
+          "table.php",
           this.$qs.stringify({
             get_all_tables: "get_all_tables",
             project: this.$route.params.project,
@@ -262,14 +262,14 @@ export default defineComponent({
     refreshTables() {
       this.loadTables();
     },
-    viewTable(formName) {
+    viewTable(tableName) {
       this.$router.push({
-        path: `/project/${this.$route.params.project}/forms/${formName}`
+        path: `/project/${this.$route.params.project}/tables/${tableName}`
       });
     },
-    editForm(formName) {
+    editForm(tableName) {
       this.$router.push({
-        path: `/project/${this.$route.params.project}/forms/${formName}/edit`
+        path: `/project/${this.$route.params.project}/tables/${tableName}/edit`
       });
     },
     confirmDelete(table) {
@@ -281,10 +281,10 @@ export default defineComponent({
       
       try {
         const response = await this.$axios.post(
-          "form.php",
+          "table.php",
           this.$qs.stringify({
             drop_table: "drop_table",
-            form_name: this.deleteModal.table.name,
+            table_name: this.deleteModal.table.name,
             project: this.$route.params.project,
           })
         );

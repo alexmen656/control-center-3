@@ -59,7 +59,7 @@ function handleCreateProject($userID)
 
     query("INSERT INTO project_sidebar_sections 
         (projectID, name, slug, icon, order_index, is_default, is_collapsible, show_add_button, add_button_route, info_route, manage_route) 
-        VALUES ('$projectID', 'Tables', 'tables', 'list-outline', 1, 1, 1, 1, '/project/$href/new/form', '/info/forms/', '/project/$href/manage/forms')");
+        VALUES ('$projectID', 'Tables', 'tables', 'list-outline', 1, 1, 1, 1, '/project/$href/new/table', '/info/tables/', '/project/$href/manage/tables')");
 
     if (!addUserToProject($userID, $projectID)) {
         echo jsonResponse("Failed to add user to project", false);

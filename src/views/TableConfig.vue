@@ -107,8 +107,8 @@ export default defineComponent({
         this.save();
         const options = [];
         this.forms.forEach((form) => {
-          if (this.toName(form.form.title) == this.form) {
-            form.form.inputs.forEach((element) => {
+          if (this.toName(form.table.title) == this.form) {
+            form.table.inputs.forEach((element) => {
               options.push({ value: element.name, label: element.label });
             });
           }
@@ -121,9 +121,9 @@ export default defineComponent({
   created() {
     /* this.$axios
       .post(
-        "form.php",
+        "table.php",
         this.$qs.stringify({
-          get_forms: "get_forms",
+          get_tables: "get_tables",
           project: this.$route.params.project,
         })
       )
@@ -131,8 +131,8 @@ export default defineComponent({
         this.forms = res.data;
         res.data.forEach((form) => {
           this.select.options.push({
-            value: this.toName(form.form.title),
-            label: form.form.title,
+            value: this.toName(form.table.title),
+            label: form.table.title,
           });
           console.log(this.select);
         });
@@ -144,7 +144,7 @@ export default defineComponent({
         this.$qs.stringify({
           getToolConfig: "getToolConfig",
           project: this.$route.params.project,
-          tool: this.$route.params.form,
+          tool: this.$route.params.table,
         })
       )
       .then((res) => {
@@ -181,7 +181,7 @@ export default defineComponent({
           newToolConfig: "newToolConfig",
           config: JSON.stringify(config),
           project: this.$route.params.project,
-          tool: this.$route.params.form,
+          tool: this.$route.params.table,
         })
       );
     },

@@ -123,7 +123,7 @@
 
               <div v-if="form" class="form-group">
                 <label class="form-label">Datenfeld</label>
-                <select v-model="form_data" class="modern-select">
+                <select v-model="table_data" class="modern-select">
                   <option value="">Datenfeld auswählen</option>
                   <option v-for="opt in data_select.options" :key="opt.value" :value="opt.value">
                     {{ opt.label }}
@@ -131,7 +131,7 @@
                 </select>
               </div>
 
-              <div v-if="form_data" class="form-group">
+              <div v-if="table_data" class="form-group">
                 <label class="form-label">Label</label>
                 <select v-model="form_label" class="modern-select">
                   <option value="">Label auswählen</option>
@@ -324,7 +324,7 @@ export default defineComponent({
           },
         ],
       },
-      form_data: "",
+      table_data: "",
       form_label: "",
 
       forms: [],
@@ -343,9 +343,9 @@ export default defineComponent({
 
     this.$axios
       .post(
-        "form.php",
+        "table.php",
         this.$qs.stringify({
-          get_forms: "get_forms",
+          get_tables: "get_tables",
           project: this.$route.params.project,
         })
       )
@@ -353,8 +353,8 @@ export default defineComponent({
         this.forms = res.data;
         res.data.forEach((form) => {
           this.select.options.push({
-            value: this.toName(form.form.title),
-            label: form.form.title,
+            value: this.toName(form.table.title),
+            label: form.table.title,
           });
         });
       });
@@ -418,8 +418,8 @@ export default defineComponent({
       () => {
         const options = [];
         this.forms.forEach((form) => {
-          if (this.toName(form.form.title) == this.form) {
-            form.form.inputs.forEach((element) => {
+          if (this.toName(form.table.title) == this.form) {
+            form.table.inputs.forEach((element) => {
               options.push({ value: element.name, label: element.label });
             });
           }
@@ -505,7 +505,7 @@ export default defineComponent({
             chart_type: this.chart_type,
             form: this.form,
             label: this.form_label,
-            data: this.form_data,
+            data: this.table_data,
             date_stamps: this.date_stamps,
             method: this.date_bar_method,
           };
@@ -515,7 +515,7 @@ export default defineComponent({
             chart_type: this.chart_type,
             form: this.form,
             label: this.form_label,
-            data: this.form_data,
+            data: this.table_data,
           };
         }
         let chartsData = localStorage.getItem("charts");
@@ -541,7 +541,7 @@ export default defineComponent({
         this.chart_type = "";
         this.form = "";
         this.form_label = "";
-        this.form_data = "";
+        this.table_data = "";
       } else if (this.comp === "card") {
         const viewObject = this.views.find((view) => view.id === this.view);
         if (viewObject) {
@@ -677,9 +677,9 @@ export default defineComponent({
         ) {
           await this.$axios
             .post(
-              "form.php",
+              "table.php",
               this.$qs.stringify({
-                get_form_data: "get_form_data",
+                get_table_data: "get_table_data",
                 form: chart.form
                   .replaceAll("ä", "a")
                   .replaceAll("ö", "o")

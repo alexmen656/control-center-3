@@ -1,18 +1,20 @@
 <?php
 require_once "head.php";
 
-// Trigger System für Form Events
-class FormTriggers {
-    
-    public function __construct() {
+class TableTriggers
+{
+
+    public function __construct()
+    {
         $this->initTriggerTable();
     }
-    
-    private function initTriggerTable() {
-        $sql = "CREATE TABLE IF NOT EXISTS form_triggers (
+
+    private function initTriggerTable()
+    {
+        $sql = "CREATE TABLE IF NOT EXISTS table_triggers (
             id INT AUTO_INCREMENT PRIMARY KEY,
             project VARCHAR(255) NOT NULL,
-            form_name VARCHAR(255) NOT NULL,
+            table_name VARCHAR(255) NOT NULL,
             trigger_event ENUM('insert', 'update', 'delete') NOT NULL,
             notification_type ENUM('email', 'discord', 'sms') NOT NULL,
             notification_target TEXT NOT NULL,
@@ -22,28 +24,29 @@ class FormTriggers {
         )";
         query($sql);
     }
-    
-    public function executeTriggers($project, $formName, $event, $data = []) {
+
+    public function executeTriggers($project, $tableName, $event, $data = [])
+    {
         $project = escape_string($project);
-        $formName = escape_string($formName);
+        $tableName = escape_string($tableName);
         $event = escape_string($event);
-        
-        // Get all active triggers for this form and event
-        $triggers = query("SELECT * FROM form_triggers 
+
+        $triggers = query("SELECT * FROM table_triggers 
                           WHERE project='$project' 
-                          AND form_name='$formName' 
+                          AND table_name='$tableName' 
                           AND trigger_event='$event' 
                           AND is_active=1");
-        
+
         while ($trigger = fetch_assoc($triggers)) {
             $this->sendNotification($trigger, $data);
         }
     }
-    
-    private function sendNotification($trigger, $data) {
+
+    private function sendNotification($trigger, $data)
+    {
         $message = $this->replacePlaceholders($trigger['message_template'], $data);
-        
-        switch($trigger['notification_type']) {
+
+        switch ($trigger['notification_type']) {
             case 'discord':
                 $this->sendDiscord($trigger['notification_target'], $message);
                 break;
@@ -55,21 +58,23 @@ class FormTriggers {
                 break;
         }
     }
-    
-    private function replacePlaceholders($template, $data) {
+
+    private function replacePlaceholders($template, $data)
+    {
         $message = $template;
         foreach ($data as $key => $value) {
             $message = str_replace("{" . $key . "}", $value, $message);
         }
         return $message;
     }
-    
-    private function sendDiscord($webhookUrl, $message) {
+
+    private function sendDiscord($webhookUrl, $message)
+    {
         $postData = json_encode([
             'content' => $message,
             'username' => 'Form Trigger Bot'
         ]);
-        
+
         $context = stream_context_create([
             'http' => [
                 'method' => 'POST',
@@ -77,47 +82,46 @@ class FormTriggers {
                 'content' => $postData
             ]
         ]);
-        
+
         return file_get_contents($webhookUrl, false, $context);
     }
-    
-    private function sendEmail($email, $message) {
+
+    private function sendEmail($email, $message)
+    {
         $subject = "Form Trigger Notification";
         $result = sendMail($email, $subject, $message);
         return $result['success'];
     }
-    
-    private function sendSMS($phoneNumber, $message) {
-        // Placeholder für SMS API (z.B. Twilio)
-        // Implementierung je nach gewähltem SMS-Provider
+
+    private function sendSMS($phoneNumber, $message)
+    {
         return true;
     }
-    
-    // Rename form triggers when a form is renamed
-    public function renameFormTriggers($project, $oldFormName, $newFormName) {
+
+    public function renameTableTriggers($project, $oldTableName, $newTableName)
+    {
         $project = escape_string($project);
-        $oldFormName = escape_string($oldFormName);
-        $newFormName = escape_string($newFormName);
-        
-        $sql = "UPDATE form_triggers SET form_name='$newFormName' 
-                WHERE project='$project' AND form_name='$oldFormName'";
-        
+        $oldTableName = escape_string($oldTableName);
+        $newTableName = escape_string($newTableName);
+
+        $sql = "UPDATE table_triggers SET table_name='$newTableName' 
+                WHERE project='$project' AND table_name='$oldTableName'";
+
         return query($sql);
     }
 }
 
-// API Endpoints
 if (isset($_POST['create_trigger'])) {
     $project = escape_string($_POST['project']);
-    $formName = escape_string($_POST['form_name']);
+    $tableName = escape_string($_POST['table_name']);
     $event = escape_string($_POST['trigger_event']);
     $type = escape_string($_POST['notification_type']);
     $target = escape_string($_POST['notification_target']);
     $template = escape_string($_POST['message_template']);
-    
-    $sql = "INSERT INTO form_triggers (project, form_name, trigger_event, notification_type, notification_target, message_template) 
-            VALUES ('$project', '$formName', '$event', '$type', '$target', '$template')";
-    
+
+    $sql = "INSERT INTO table_triggers (project, table_name, trigger_event, notification_type, notification_target, message_template) 
+            VALUES ('$project', '$tableName', '$event', '$type', '$target', '$template')";
+
     if (query($sql)) {
         echo json_encode(['success' => true, 'message' => 'Trigger created successfully']);
     } else {
@@ -127,24 +131,24 @@ if (isset($_POST['create_trigger'])) {
 
 if (isset($_POST['get_triggers'])) {
     $project = escape_string($_POST['project']);
-    $formName = escape_string($_POST['form_name']);
-    
-    $triggers = query("SELECT * FROM form_triggers 
-                      WHERE project='$project' AND form_name='$formName' 
+    $tableName = escape_string($_POST['table_name']);
+
+    $triggers = query("SELECT * FROM table_triggers 
+                      WHERE project='$project' AND table_name='$tableName' 
                       ORDER BY created_at DESC");
-    
+
     $result = [];
     while ($trigger = fetch_assoc($triggers)) {
         $result[] = $trigger;
     }
-    
+
     echo json_encode($result);
 }
 
 if (isset($_POST['delete_trigger'])) {
-    $triggerId = (int)$_POST['trigger_id'];
-    
-    if (query("DELETE FROM form_triggers WHERE id=$triggerId")) {
+    $triggerId = (int) $_POST['trigger_id'];
+
+    if (query("DELETE FROM table_triggers WHERE id=$triggerId")) {
         echo json_encode(['success' => true]);
     } else {
         echo json_encode(['success' => false]);
@@ -152,49 +156,40 @@ if (isset($_POST['delete_trigger'])) {
 }
 
 if (isset($_POST['toggle_trigger'])) {
-    $triggerId = (int)$_POST['trigger_id'];
-    $isActive = (int)$_POST['is_active'];
-    
-    if (query("UPDATE form_triggers SET is_active=$isActive WHERE id=$triggerId")) {
+    $triggerId = (int) $_POST['trigger_id'];
+    $isActive = (int) $_POST['is_active'];
+
+    if (query("UPDATE table_triggers SET is_active=$isActive WHERE id=$triggerId")) {
         echo json_encode(['success' => true]);
     } else {
         echo json_encode(['success' => false]);
     }
 }
 
-// CSV Export functionality
 if (isset($_POST['export_csv'])) {
     $project = escape_string($_POST['project']);
-    $formName = escape_string($_POST['form_name']);
-    
-    $tableName = createTableName($project . "_" . $formName);
-    
-    // Get table structure
+    $tableName = escape_string($_POST['table_name']);
+    $tableName = createTableName($project . "_" . $tableName);
     $columns = query("SHOW COLUMNS FROM `$tableName`");
     $headers = [];
+
     while ($column = fetch_assoc($columns)) {
         $headers[] = $column['Field'];
     }
-    
-    // Get data
+
     $data = query("SELECT * FROM `$tableName`");
-    
-    // Generate CSV
-    $filename = $project . "_" . $formName . "_" . date('Y-m-d_H-i-s') . ".csv";
-    
+    $filename = $project . "_" . $tableName . "_" . date('Y-m-d_H-i-s') . ".csv";
+
     header('Content-Type: text/csv');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
-    
+
     $output = fopen('php://output', 'w');
-    
-    // Write headers
     fputcsv($output, $headers);
-    
-    // Write data
+
     while ($row = fetch_assoc($data)) {
         fputcsv($output, array_values($row));
     }
-    
+
     fclose($output);
     exit;
 }

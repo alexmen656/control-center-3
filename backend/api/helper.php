@@ -10,9 +10,9 @@ function echoJson($json)
     return json_encode($json, JSON_PRETTY_PRINT);
 }
 
-function getData($project, $form_name, $id)
+function getData($project, $table_name, $id)
 {
-    $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($form_name));
+    $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($table_name));
 
     $columns_query = "SHOW COLUMNS FROM $tableName";
     $columns_result = query($columns_query);
@@ -89,7 +89,7 @@ function getTableByName($tbName)
 }
 
 
-function get_form_data($form_name, $project_name, $table_name)
+function get_table_data($table, $project_name, $table_name)
 {
     $data = query("SELECT * FROM `$table_name` LIMIT 100");
     $json = array();
@@ -118,7 +118,7 @@ function get_form_data($form_name, $project_name, $table_name)
     }
 }
 
-function delete_entry($id, $form_name, $project, $tableName)
+function delete_entry($id, $table_name, $project, $tableName)
 {
     $sql = "DELETE FROM $tableName WHERE id='$id'";
     if (query($sql)) {
@@ -129,10 +129,10 @@ function delete_entry($id, $form_name, $project, $tableName)
     return $json;
 }
 
-function update_entry($id, $form, $form_name, $project)
+function update_entry($id, $form, $table_name, $project)
 {
     if ($form) {
-        $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($form_name));
+        $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($table_name));
         $updates = array();
 
         foreach ($form as $fieldName => $fieldValue) {
