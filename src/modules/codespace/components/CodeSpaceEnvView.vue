@@ -1,6 +1,5 @@
 <template>
   <div class="env-container">
-    <!-- Professional Environment Variables Management Screen -->
     <div class="env-screen">
       <div class="env-header">
         <div class="header-left">
@@ -22,13 +21,11 @@
       </div>
 
       <div class="env-content">
-        <!-- Loading State -->
         <div v-if="isLoading" class="loading-section">
           <ion-spinner></ion-spinner>
           <p>Loading environment variables...</p>
         </div>
 
-        <!-- No Variables State -->
         <div v-else-if="envVariables.length === 0" class="empty-state">
           <ion-icon name="server-outline" class="empty-icon"></ion-icon>
           <h3>No Environment Variables</h3>
@@ -39,9 +36,7 @@
           </button>
         </div>
 
-        <!-- Environment Variables Management -->
         <div v-else class="env-management">
-          <!-- Environment Variables Table -->
           <div class="env-section">
             <div class="section-header">
               <h3>Environment Variables</h3>
@@ -93,7 +88,6 @@
             </div>
           </div>
 
-          <!-- Code Examples Section -->
           <div v-if="envVariables.length > 0" class="env-section">
             <div class="section-header">
               <h3>Code Examples</h3>
@@ -121,7 +115,6 @@
       </div>
     </div>
 
-    <!-- Add Variable Modal -->
     <div v-if="addModal.isOpen" class="modal-overlay" @click="closeAddModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
@@ -171,7 +164,6 @@
       </div>
     </div>
 
-    <!-- Edit Variable Modal -->
     <div v-if="editModal.isOpen" class="modal-overlay" @click="closeEditModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">

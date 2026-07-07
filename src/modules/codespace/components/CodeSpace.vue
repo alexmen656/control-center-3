@@ -2,7 +2,6 @@
   <div class="monaco-container">
     <MonacoSidebar class="sidebar" />
 
-    <!-- Professional Welcome Screen -->
     <div v-if="showWelcome" class="welcome-screen">
       <div class="welcome-header">
         <h1 class="welcome-title">Codespaces</h1>
@@ -60,13 +59,9 @@
       </div>
     </div>
 
-    <!-- APIs Management View -->
-    <MonacoAPIsView v-if="showAPIsView" :project-name="projectName" :codespace="codespaceName"/>
+    <MonacoAPIsView v-if="showAPIsView" :project-name="projectName" :codespace="codespaceName" />
+    <MonacoEnvView v-if="showEnvView" :project-name="projectName" :codespace="codespaceName" />
 
-    <!-- Environment Variables Management View -->
-    <MonacoEnvView v-if="showEnvView" :project-name="projectName" :codespace="codespaceName"/>
-
-    <!-- Editor Container -->
     <div v-if="!showAPIsView && !showEnvView && !showWelcome" class="monaco-editor-container">
       <vue-monaco-editor v-model:value="code" :language="language" theme="vs-dark" :options="editorOptions" width="100%"
         height="100%" />
@@ -74,13 +69,11 @@
 
     <div class="markdown-preview" v-html="renderedMarkdown" v-if="language === 'markdown'"></div>
 
-    <!-- Floating AI Assistant Button -->
     <div class="ai-assistant-button" @click="toggleAssistant" :class="{ active: showAssistant }">
       <i class="ai-icon">AI</i>
       <span v-if="unreadMessages > 0" class="notification-badge">{{ unreadMessages }}</span>
     </div>
 
-    <!-- AI Assistant Chat Modal -->
     <div v-if="showAssistant" class="ai-chat-modal">
       <div class="chat-header">
         <h3>AI Assistant</h3>
@@ -182,7 +175,7 @@ const editorOptions = {
 // Load file content
 const loadFile = async (filename = 'index.html') => {
   try {
-        const languageMap = {
+    const languageMap = {
       'js': 'javascript',
       'ts': 'typescript',
       'py': 'python',
