@@ -19,42 +19,10 @@
           </div>
         </div>
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="people-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ data.length }}</h3>
-              <p>Total Users</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ activeUsers }}</h3>
-              <p>Active Users</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="time-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ pendingUsers }}</h3>
-              <p>Pending Verification</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="business-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ assignedUsers }}</h3>
-              <p>Project Assigned</p>
-            </div>
-          </div>
+          <StatCard icon="people-outline" color="primary" :value="data.length" label="Total Users" />
+          <StatCard icon="checkmark-circle-outline" color="success" :value="activeUsers" label="Active Users" />
+          <StatCard icon="time-outline" color="warning" :value="pendingUsers" label="Pending Verification" />
+          <StatCard icon="business-outline" color="info" :value="assignedUsers" label="Project Assigned" />
         </div>
         <div class="data-card">
           <div class="card-header">
@@ -359,6 +327,7 @@
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
 import PageTitle from "@/components/PageTitle.vue";
+import StatCard from "@/components/StatCard.vue";
 import { defineComponent, ref, getCurrentInstance } from "vue";
 
 export default defineComponent({
@@ -366,6 +335,7 @@ export default defineComponent({
   components: {
     SiteTitle,
     PageTitle,
+    StatCard,
   },
   setup() {
     const { appContext } = getCurrentInstance();
@@ -852,53 +822,6 @@ export default defineComponent({
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
-}
-
-.stat-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow);
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  /*color: white;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);*/
-  color: var(--primary-color);
-  background: rgba(249, 115, 22, 0.1);
-  flex-shrink: 0;
-}
-
-.stat-content h3 {
-  margin: 0 0 4px 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1;
-}
-
-.stat-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
 }
 
 .action-bar {

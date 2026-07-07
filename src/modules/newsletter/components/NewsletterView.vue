@@ -22,47 +22,11 @@
           </div>
         </div>
 
-        <!-- Stats Cards -->
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon" style="background: rgba(249, 115, 22, 0.1); color: #f97316;">
-              <ion-icon name="mail-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ stats.totalSent || 0 }}</h3>
-              <p>Gesendete Newsletter</p>
-            </div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="stat-icon" style="background: rgba(5, 150, 105, 0.1); color: #059669;">
-              <ion-icon name="people-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ stats.totalSubscribers || 0 }}</h3>
-              <p>Abonnenten</p>
-            </div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="stat-icon" style="background: rgba(217, 119, 6, 0.1); color: #d97706;">
-              <ion-icon name="eye-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ stats.openRate || 0 }}%</h3>
-              <p>Öffnungsrate</p>
-            </div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="stat-icon" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">
-              <ion-icon name="hand-left-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ stats.clickRate || 0 }}%</h3>
-              <p>Klickrate</p>
-            </div>
-          </div>
+          <StatCard icon="mail-outline" color="primary" :value="stats.totalSent || 0" label="Gesendete Newsletter" />
+          <StatCard icon="people-outline" color="success" :value="stats.totalSubscribers || 0" label="Abonnenten" />
+          <StatCard icon="eye-outline" color="warning" :value="(stats.openRate || 0) + '%'" label="Öffnungsrate" />
+          <StatCard icon="hand-left-outline" color="info" :value="(stats.clickRate || 0) + '%'" label="Klickrate" />
         </div>
 
         <!-- Newsletter Form Card -->
@@ -279,6 +243,7 @@
 import { defineComponent } from 'vue';
 import SiteTitle from '@/components/SiteTitle.vue';
 import PageTitle from '@/components/PageTitle.vue';
+import StatCard from '@/components/StatCard.vue';
 import { IonPage, IonContent, IonIcon, toastController, alertController } from '@ionic/vue';
 
 export default defineComponent({
@@ -288,7 +253,8 @@ export default defineComponent({
     IonContent,
     IonIcon,
     SiteTitle,
-    PageTitle
+    PageTitle,
+    StatCard
   },
   data() {
     return {
@@ -616,46 +582,6 @@ export default defineComponent({
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
   margin-bottom: 24px;
-}
-
-.stat-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  transition: all 0.2s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-}
-
-.stat-content h3 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.stat-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
 }
 
 /* Data Card */

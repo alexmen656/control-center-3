@@ -21,33 +21,9 @@
         </div>
 
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="globe-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ domains.length }}</h3>
-              <p>Total Domains</p>
-            </div>
-          </div>
-          <div class="stat-card warning" v-if="expiringDomains.length > 0">
-            <div class="stat-icon">
-              <ion-icon name="warning-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ expiringDomains.length }}</h3>
-              <p>Expiring Soon</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="cloud-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ cloudflareDomains }}</h3>
-              <p>Cloudflare</p>
-            </div>
-          </div>
+          <StatCard icon="globe-outline" color="primary" :value="domains.length" label="Total Domains" />
+          <StatCard v-if="expiringDomains.length > 0" icon="warning-outline" color="warning" :value="expiringDomains.length" label="Expiring Soon" />
+          <StatCard icon="cloud-outline" color="info" :value="cloudflareDomains" label="Cloudflare" />
         </div>
         <div v-if="expiringDomains.length > 0" class="alert-card warning">
           <ion-icon name="warning-outline" class="alert-icon"></ion-icon>
@@ -260,6 +236,7 @@ import { ref, computed, onMounted } from 'vue';
 import { IonPage, IonContent, IonIcon, IonModal } from '@ionic/vue';
 import SiteTitle from '../components/SiteTitle.vue';
 import PageTitle from '@/components/PageTitle.vue';
+import StatCard from "@/components/StatCard.vue";
 import axios from 'axios';
 import { alertController, toastController } from '@ionic/vue';
 
@@ -680,62 +657,6 @@ async function showToast(message: string, color: string = 'primary') {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
-}
-
-.stat-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow);
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.stat-card.warning {
-  background: var(--surface);
-  border-left: 4px solid var(--warning-color);
-}
-
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  /*color: white;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);*/
-  background: rgba(249, 115, 22, 0.1);
-  color: var(--primary-color);
-  flex-shrink: 0;
-}
-
-.stat-card.warning .stat-icon {
-  background: linear-gradient(135deg, var(--warning-color) 0%, #ea580c 100%);
-}
-
-.stat-content h3 {
-  margin: 0 0 4px 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1;
-}
-
-.stat-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
 }
 
 /* Alert Card */

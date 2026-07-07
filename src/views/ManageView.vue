@@ -1,10 +1,8 @@
 <template>
   <ion-page>
     <ion-content class="modern-content">
-      <SiteTitle icon="folder-outline" title="Manage Projects"/>
-
+      <SiteTitle icon="folder-outline" title="Manage Projects" />
       <div class="page-container">
-        <!-- Header -->
         <div class="page-header">
           <div class="header-content">
             <PageTitle icon="folder-outline" title="Project Management" />
@@ -20,58 +18,38 @@
             </button>
           </div>
         </div>
-
-        <!-- Stats Cards -->
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="folder-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ totalProjects }}</h3>
-              <p>Total Projects</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="eye-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ visibleProjects }}</h3>
-              <p>Visible in Sidebar</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="eye-off-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ hiddenProjects }}</h3>
-              <p>Hidden Projects</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="calendar-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ recentProjects }}</h3>
-              <p>Created this week</p>
-            </div>
-          </div>
+          <StatCard
+            icon="folder-outline"
+            color="primary"
+            :value="totalProjects"
+            label="Total Projects"
+          />
+          <StatCard
+            icon="eye-outline"
+            color="success"
+            :value="visibleProjects"
+            label="Visible in Sidebar"
+          />
+          <StatCard
+            icon="eye-off-outline"
+            color="warning"
+            :value="hiddenProjects"
+            label="Hidden Projects"
+          />
+          <StatCard
+            icon="calendar-outline"
+            color="info"
+            :value="recentProjects"
+            label="Created this week"
+          />
         </div>
-
-        <!-- Projects List -->
         <div class="projects-card">
           <div class="card-header">
             <h2>Your Projects</h2>
             <div class="search-box">
               <ion-icon name="search-outline"></ion-icon>
-              <input 
-                type="text" 
-                placeholder="Search projects..." 
-                v-model="searchTerm"
-              >
+              <input type="text" placeholder="Search projects..." v-model="searchTerm">
             </div>
           </div>
 
@@ -84,7 +62,8 @@
             <div v-else-if="filteredProjects.length === 0" class="no-data-state">
               <ion-icon name="folder-outline" class="no-data-icon"></ion-icon>
               <h3>No Projects Found</h3>
-              <p>{{ searchTerm ? 'No projects match your search criteria.' : 'You haven\'t created any projects yet.' }}</p>
+              <p>{{ searchTerm ? 'No projects match your search criteria.' : 'You haven\'t created any projects yet.' }}
+              </p>
               <button class="action-btn primary" @click="showCreateModal = true">
                 <ion-icon name="add-outline"></ion-icon>
                 Create Your First Project
@@ -92,14 +71,9 @@
             </div>
 
             <div v-else class="projects-grid">
-              <div 
-                v-for="project in filteredProjects" 
-                :key="project.id"
-                class="project-card"
-                :class="{
-                  'project-hidden': project.hidden
-                }"
-              >
+              <div v-for="project in filteredProjects" :key="project.id" class="project-card" :class="{
+                'project-hidden': project.hidden
+              }">
                 <div class="project-header">
                   <div class="project-info">
                     <div class="project-icon">
@@ -111,10 +85,7 @@
                     </div>
                   </div>
                   <div class="project-status">
-                    <span 
-                      class="status-badge"
-                      :class="project.hidden ? 'status-hidden' : 'status-visible'"
-                    >
+                    <span class="status-badge" :class="project.hidden ? 'status-hidden' : 'status-visible'">
                       <ion-icon :name="project.hidden ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
                       {{ project.hidden ? 'Hidden' : 'Visible' }}
                     </span>
@@ -122,32 +93,17 @@
                 </div>
 
                 <div class="project-actions">
-                  <button 
-                    class="icon-btn info-btn" 
-                    @click="info(project)"
-                    title="Project Info"
-                  >
+                  <button class="icon-btn info-btn" @click="info(project)" title="Project Info">
                     <ion-icon name="information-circle-outline"></ion-icon>
                   </button>
-                  <button 
-                    class="icon-btn toggle-btn"
-                    @click="toggleProjectVisibility(project)"
-                    :title="project.hidden ? 'Show in Sidebar' : 'Hide from Sidebar'"
-                  >
+                  <button class="icon-btn toggle-btn" @click="toggleProjectVisibility(project)"
+                    :title="project.hidden ? 'Show in Sidebar' : 'Hide from Sidebar'">
                     <ion-icon :name="project.hidden ? 'eye-outline' : 'eye-off-outline'"></ion-icon>
                   </button>
-                  <button 
-                    class="icon-btn edit-btn"
-                    @click="editProject(project)"
-                    title="Edit Project"
-                  >
+                  <button class="icon-btn edit-btn" @click="editProject(project)" title="Edit Project">
                     <ion-icon name="pencil-outline"></ion-icon>
                   </button>
-                  <button 
-                    class="icon-btn delete-btn"
-                    @click="confirmDelete(project)"
-                    title="Delete Project"
-                  >
+                  <button class="icon-btn delete-btn" @click="confirmDelete(project)" title="Delete Project">
                     <ion-icon name="trash-outline"></ion-icon>
                   </button>
                 </div>
@@ -156,8 +112,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Create Project Modal -->
       <div v-if="showCreateModal" class="custom-modal-overlay" @click="showCreateModal = false">
         <div class="custom-modal-content" @click.stop>
           <div class="custom-modal-header">
@@ -169,23 +123,13 @@
           <div class="custom-modal-body">
             <div class="form-group">
               <label for="project-name">Project Name</label>
-              <input 
-                id="project-name"
-                type="text" 
-                v-model="newProject.name"
-                placeholder="Enter project name"
-                class="form-input"
-              >
+              <input id="project-name" type="text" v-model="newProject.name" placeholder="Enter project name"
+                class="form-input">
             </div>
             <div class="form-group">
               <label for="project-icon">Icon</label>
-              <input 
-                id="project-icon"
-                type="text" 
-                v-model="newProject.icon"
-                placeholder="Enter Ionic icon name (e.g., folder-outline)"
-                class="form-input"
-              >
+              <input id="project-icon" type="text" v-model="newProject.icon"
+                placeholder="Enter Ionic icon name (e.g., folder-outline)" class="form-input">
               <div class="icon-preview" v-if="newProject.icon">
                 <ion-icon :name="newProject.icon"></ion-icon>
                 <span>Preview</span>
@@ -202,8 +146,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Edit Project Modal -->
       <div v-if="showEditModal" class="custom-modal-overlay" @click="showEditModal = false">
         <div class="custom-modal-content" @click.stop>
           <div class="custom-modal-header">
@@ -215,23 +157,13 @@
           <div class="custom-modal-body">
             <div class="form-group">
               <label for="edit-project-name">Project Name</label>
-              <input 
-                id="edit-project-name"
-                type="text" 
-                v-model="editingProject.name"
-                placeholder="Enter project name"
-                class="form-input"
-              >
+              <input id="edit-project-name" type="text" v-model="editingProject.name" placeholder="Enter project name"
+                class="form-input">
             </div>
             <div class="form-group">
               <label for="edit-project-icon">Icon</label>
-              <input 
-                id="edit-project-icon"
-                type="text" 
-                v-model="editingProject.icon"
-                placeholder="Enter Ionic icon name"
-                class="form-input"
-              >
+              <input id="edit-project-icon" type="text" v-model="editingProject.icon"
+                placeholder="Enter Ionic icon name" class="form-input">
               <div class="icon-preview" v-if="editingProject.icon">
                 <ion-icon :name="editingProject.icon"></ion-icon>
                 <span>Preview</span>
@@ -248,8 +180,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Delete Confirmation Modal -->
       <div v-if="deleteModal.show" class="custom-modal-overlay" @click="deleteModal.show = false">
         <div class="custom-modal-content" @click.stop>
           <div class="custom-modal-header">
@@ -262,7 +192,8 @@
             <div class="warning-content">
               <ion-icon name="warning-outline" class="warning-icon"></ion-icon>
               <h4>Are you sure?</h4>
-              <p>This will permanently delete the project <strong>"{{ deleteModal.project?.name }}"</strong> and all its data.</p>
+              <p>This will permanently delete the project <strong>"{{ deleteModal.project?.name }}"</strong> and all its
+                data.</p>
               <p class="warning-text">This action cannot be undone!</p>
             </div>
             <div class="form-actions">
@@ -283,6 +214,7 @@
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
 import PageTitle from "@/components/PageTitle.vue";
+import StatCard from "@/components/StatCard.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
@@ -290,6 +222,7 @@ export default defineComponent({
   components: {
     SiteTitle,
     PageTitle,
+    StatCard,
   },
   data() {
     return {
@@ -318,7 +251,7 @@ export default defineComponent({
       if (!this.searchTerm.trim()) {
         return this.projects;
       }
-      
+
       const searchLower = this.searchTerm.toLowerCase();
       return this.projects.filter(project =>
         project.name.toLowerCase().includes(searchLower) ||
@@ -381,7 +314,7 @@ export default defineComponent({
             projectIcon: this.newProject.icon,
           })
         );
-        
+
         alert("Project created successfully");
         this.showCreateModal = false;
         this.newProject = { name: '', icon: '' };
@@ -413,7 +346,7 @@ export default defineComponent({
             projectIcon: this.editingProject.icon,
           })
         );
-        
+
         alert("Project updated successfully");
         this.showEditModal = false;
         await this.loadProjects();
@@ -435,7 +368,7 @@ export default defineComponent({
             hidden: !project.hidden,
           })
         );
-        
+
         project.hidden = !project.hidden;
         //this.$emit("updateSidebar");
         this.emitter.emit("updateSidebar");
@@ -450,7 +383,7 @@ export default defineComponent({
     },
     async deleteProject() {
       if (!this.deleteModal.project) return;
-      
+
       try {
         await this.$axios.post(
           "projects.php",
@@ -459,7 +392,7 @@ export default defineComponent({
             projectID: this.deleteModal.project.id,
           })
         );
-        
+
         alert("Project deleted successfully");
         this.projects = this.projects.filter(p => p.id !== this.deleteModal.project.id);
         this.deleteModal.show = false;
@@ -492,6 +425,7 @@ export default defineComponent({
   --success-color: #059669;
   --danger-color: #dc2626;
   --warning-color: #d97706;
+  --info-color: #2563eb;
   --background: #f8fafc;
   --surface: #ffffff;
   --border: #e2e8f0;
@@ -601,44 +535,8 @@ export default defineComponent({
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
+  gap: 24px;
   margin-bottom: 32px;
-}
-
-.stat-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius);
-  background: var(--primary-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-}
-
-.stat-content h3 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 24px;
-  font-weight: 700;
-}
-
-.stat-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
 }
 
 /* Projects Card */
@@ -780,11 +678,11 @@ export default defineComponent({
   width: 40px;
   height: 40px;
   border-radius: var(--radius);
-  background: var(--primary-color);
+  background: rgba(249, 115, 22, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--primary-color);
   font-size: 20px;
   flex-shrink: 0;
 }
@@ -1036,13 +934,23 @@ export default defineComponent({
 
 /* Animations */
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes modalFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modalSlideIn {
@@ -1050,6 +958,7 @@ export default defineComponent({
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1061,45 +970,46 @@ export default defineComponent({
   .page-container {
     padding: 16px;
   }
-  
+
   .page-header {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .card-header {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-box input {
     min-width: 100%;
   }
-  
+
   .projects-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .custom-modal-content {
     width: 95vw;
     margin: 20px;
   }
-  
+
   .project-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .project-status {
     align-self: flex-start;
   }
 }
 
+@media (prefers-color-scheme: dark) {
   .modern-content {
     --background: #121212;
     --surface: #1a1a1a;
@@ -1108,4 +1018,5 @@ export default defineComponent({
     --text-secondary: #b0b0b0;
     --text-muted: #707070;
   }
+}
 </style>

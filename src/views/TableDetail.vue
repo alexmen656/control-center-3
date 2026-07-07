@@ -25,35 +25,10 @@
           </div>
         </div>
 
-        <!-- Stats Cards -->
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="list-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ data.length }}</h3>
-              <p>Total Rows</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="grid-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ labels.length }}</h3>
-              <p>Columns</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="search-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ filteredData.length }}</h3>
-              <p>Filtered Rows</p>
-            </div>
-          </div>
+          <StatCard icon="list-outline" color="primary" :value="data.length" label="Total Rows" />
+          <StatCard icon="grid-outline" color="info" :value="labels.length" label="Columns" />
+          <StatCard icon="search-outline" color="success" :value="filteredData.length" label="Filtered Rows" />
         </div>
 
         <!-- Data Table Card -->
@@ -201,6 +176,7 @@
 import { defineComponent, ref, getCurrentInstance, computed } from "vue";
 import SiteTitle from "@/components/SiteTitle.vue";
 import PageTitle from "@/components/PageTitle.vue";
+import StatCard from "@/components/StatCard.vue";
 import { useRoute } from "vue-router";
 
 export default defineComponent({
@@ -208,6 +184,7 @@ export default defineComponent({
   components: {
     SiteTitle,
     PageTitle,
+    StatCard,
   },
   setup() {
     const labels = ref([]);
@@ -482,53 +459,6 @@ export default defineComponent({
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
-}
-
-.stat-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow);
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  /*color: white;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);*/
-  background: rgba(249, 115, 22, 0.1);
-  color: var(--primary-color);
-  flex-shrink: 0;
-}
-
-.stat-content h3 {
-  margin: 0 0 4px 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1;
-}
-
-.stat-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
 }
 
 /* Action Buttons */

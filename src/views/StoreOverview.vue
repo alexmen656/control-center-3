@@ -16,35 +16,10 @@
           </div>
         </div>
 
-        <!-- Stats Grid -->
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="cube-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ modules.length }}</h3>
-              <p>Total Modules</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ addedCount }}</h3>
-              <p>Added</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="download-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ availableCount }}</h3>
-              <p>Available</p>
-            </div>
-          </div>
+          <StatCard icon="cube-outline" color="primary" :value="modules.length" label="Total Modules" />
+          <StatCard icon="checkmark-circle-outline" color="success" :value="addedCount" label="Added" />
+          <StatCard icon="download-outline" color="info" :value="availableCount" label="Available" />
         </div>
 
         <!-- Modules Card -->
@@ -125,12 +100,14 @@
 import lunr from "lunr";
 import SiteTitle from "@/components/SiteTitle.vue";
 import PageTitle from "@/components/PageTitle.vue";
+import StatCard from "@/components/StatCard.vue";
 
 export default {
   name: "StoreOverview",
   components: {
     SiteTitle,
     PageTitle,
+    StatCard,
   },
   data() {
     return {
@@ -425,47 +402,6 @@ export default {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
   margin-bottom: 32px;
-}
-
-.stat-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  transition: all 0.2s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius);
-  background: rgba(249, 115, 22, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary-color);
-  font-size: 24px;
-}
-
-.stat-content h3 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.stat-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 13px;
 }
 
 /* Data Card */

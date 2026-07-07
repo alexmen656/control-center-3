@@ -8,7 +8,6 @@
             <PageTitle icon="folder-outline" title="Files" />
           </div>
           <div class="header-actions">
-            <!-- New Folder Input Moved Here -->
             <div class="folder-creation-bar" style="margin-right: 12px;">
               <input type="text" v-model="newFolderName" placeholder="New folder..." class="folder-input"
                 @keyup.enter="createFolder" />
@@ -29,37 +28,13 @@
           </div>
         </div>
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="folder-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ folderCount }}</h3>
-              <p>Folders</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="document-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ fileCount }}</h3>
-              <p>Files</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="cloud-upload-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ uploadPercentage > 0 ? uploadPercentage + '%' : 'Idle' }}</h3>
-              <p>Upload Status</p>
-            </div>
-          </div>
+          <StatCard icon="folder-outline" color="primary" :value="folderCount" label="Folders" />
+          <StatCard icon="document-outline" color="info" :value="fileCount" label="Files" />
+          <StatCard icon="cloud-upload-outline" color="success"
+            :value="uploadPercentage > 0 ? uploadPercentage + '%' : 'Idle'" label="Upload Status" />
         </div>
 
 
-        <!-- File Upload Area -->
         <div v-if="showUpload" class="upload-card">
           <div class="upload-header">
             <h4>Upload Files to {{ currentFolderName }}</h4>
@@ -79,15 +54,12 @@
             </button>
           </div>
 
-          <!-- Upload Progress -->
           <div v-if="uploadPercentage > 0" class="upload-progress">
             <div class="progress-bar">
               <div class="progress-fill" :style="{ width: uploadPercentage + '%' }"></div>
             </div>
             <span class="progress-text">{{ uploadPercentage }}%</span>
           </div>
-
-          <!-- File Preview List -->
           <div v-if="files.length > 0" class="file-preview-list">
             <h5>Selected Files:</h5>
             <div v-for="(file, index) in files" :key="index" class="file-preview-item">
@@ -100,8 +72,6 @@
             <button class="action-btn primary full-width" @click="submit">Upload Now</button>
           </div>
         </div>
-
-        <!-- Files Content -->
         <div class="data-card" :class="{ 'drag-over-card': isDragOver }" @dragover.prevent="handleDragOver"
           @drop="handleDrop" @dragenter.prevent="handleDragEnter" @dragleave="handleDragLeave">
           <div class="card-header">
@@ -109,10 +79,8 @@
               <div class="header-title-row">
                 <h3>{{ currentFolderName }}</h3>
                 <span class="entry-count">{{ displayedItems.length }} item{{ displayedItems.length !== 1 ? 's' : ''
-                }}</span>
+                  }}</span>
               </div>
-
-              <!-- Breadcrumbs Moved Here -->
               <div class="header-breadcrumbs">
                 <div v-for="(crumb, index) in breadcrumbs" :key="crumb.id" class="breadcrumb-item small"
                   :class="{ 'active': index === breadcrumbs.length - 1 }" @click="navigateToFolder(crumb.id)"
@@ -144,7 +112,6 @@
             </div>
           </div>
 
-          <!-- Empty State -->
           <div v-if="displayedItems.length === 0" class="no-data-state" @dragover.prevent="handleDragOver"
             @drop="handleDrop">
             <div class="no-data-content">
@@ -212,7 +179,7 @@
                     <span v-if="item.type === 'folder'" class="cell-content text-secondary">{{ item.children ?
                       item.children.length : 0 }} items</span>
                     <span v-else class="cell-content text-secondary">{{ getFileExtension(item.name).toUpperCase()
-                    }}</span>
+                      }}</span>
                   </div>
                   <div class="table-cell actions-cell" style="flex: 0 0 100px;" @click.stop>
                     <div class="action-buttons">
@@ -277,12 +244,14 @@ import {
 } from "@ionic/vue";
 import SiteTitle from "@/components/SiteTitle.vue";
 import PageTitle from "@/components/PageTitle.vue";
+import StatCard from "@/components/StatCard.vue";
 import axios from "axios";
 
 export default defineComponent({
   name: "ProjectFileSystem",
   components: {
     PageTitle,
+    StatCard,
     IonPage,
     IonContent,
     IonIcon,
@@ -851,49 +820,6 @@ export default defineComponent({
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 20px;
   margin-bottom: 24px;
-}
-
-.stat-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: #fff7ed;
-  color: var(--primary-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-}
-
-.stat-content h3 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.2;
-}
-
-.stat-content p {
-  margin: 4px 0 0;
-  color: var(--text-secondary);
-  font-size: 14px;
 }
 
 /* Navigation Bar */
@@ -1520,10 +1446,6 @@ export default defineComponent({
     --text-primary: #f1f5f9;
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
-  }
-
-  .stat-icon {
-    background: rgba(249, 115, 22, 0.2);
   }
 
   .table-header,

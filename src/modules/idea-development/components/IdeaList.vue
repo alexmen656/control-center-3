@@ -21,44 +21,11 @@
           </div>
         </div>
 
-        <!-- Stats Grid -->
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="bulb-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ ideas.length }}</h3>
-              <p>Gesamt Ideen</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon warning">
-              <ion-icon name="time-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ ideas.filter(i => i.status === 'in_progress').length }}</h3>
-              <p>In Bearbeitung</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon success">
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ ideas.filter(i => i.status === 'completed').length }}</h3>
-              <p>Abgeschlossen</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="document-text-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ ideas.filter(i => i.status === 'draft').length }}</h3>
-              <p>Entwürfe</p>
-            </div>
-          </div>
+          <StatCard icon="bulb-outline" color="primary" :value="ideas.length" label="Gesamt Ideen" />
+          <StatCard icon="time-outline" color="warning" :value="ideas.filter(i => i.status === 'in_progress').length" label="In Bearbeitung" />
+          <StatCard icon="checkmark-circle-outline" color="success" :value="ideas.filter(i => i.status === 'completed').length" label="Abgeschlossen" />
+          <StatCard icon="document-text-outline" color="info" :value="ideas.filter(i => i.status === 'draft').length" label="Entwürfe" />
         </div>
 
         <!-- Ideas List/Table -->
@@ -158,12 +125,13 @@ import {
 } from 'ionicons/icons';
 import SiteTitle from "@/components/SiteTitle.vue";
 import PageTitle from "@/components/PageTitle.vue";
+import StatCard from "@/components/StatCard.vue";
 import { ideaService, type Idea } from '../services/IdeaService';
 
 export default defineComponent({
   name: 'IdeaList',
   components: {
-    IonPage, IonContent, IonIcon, SiteTitle, PageTitle
+    IonPage, IonContent, IonIcon, SiteTitle, PageTitle, StatCard
   },
   setup() {
     const route = useRoute();
@@ -346,50 +314,6 @@ export default defineComponent({
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 20px;
   margin-bottom: 32px;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: var(--ion-color-primary-tint);
-  color: var(--ion-color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-}
-
-.stat-icon.warning {
-  background: var(--ion-color-warning-tint);
-  color: var(--ion-color-warning);
-}
-
-.stat-icon.success {
-  background: var(--ion-color-success-tint);
-  color: var(--ion-color-success);
-}
-
-.stat-content h3 {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--ion-text-color);
-}
-
-.stat-content p {
-  margin: 4px 0 0 0;
-  color: var(--ion-color-medium);
 }
 
 .data-card {

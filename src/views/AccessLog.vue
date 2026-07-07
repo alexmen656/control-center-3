@@ -57,67 +57,13 @@
           </div>
         </div>
 
-        <!-- Stats Grid -->
         <div class="stats-grid">
-          <div class="stat-card primary">
-            <div class="stat-icon">
-              <ion-icon name="pulse-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ stats.total.toLocaleString() }}</h3>
-              <p>Total Attempts</p>
-            </div>
-          </div>
-          
-          <div class="stat-card success">
-            <div class="stat-icon">
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ stats.success.toLocaleString() }}</h3>
-              <p>Successful Logins</p>
-            </div>
-          </div>
-          
-          <div class="stat-card danger">
-            <div class="stat-icon">
-              <ion-icon name="close-circle-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ stats.failed.toLocaleString() }}</h3>
-              <p>Failed Attempts</p>
-            </div>
-          </div>
-          
-          <div class="stat-card info">
-            <div class="stat-icon">
-              <ion-icon name="people-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ stats.unique_users.toLocaleString() }}</h3>
-              <p>Unique Users</p>
-            </div>
-          </div>
-          
-          <div class="stat-card warning">
-            <div class="stat-icon">
-              <ion-icon name="globe-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ stats.unique_ips.toLocaleString() }}</h3>
-              <p>Unique IPs</p>
-            </div>
-          </div>
-          
-          <div class="stat-card accent">
-            <div class="stat-icon">
-              <ion-icon name="trending-up-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ stats.success_rate }}%</h3>
-              <p>Success Rate</p>
-            </div>
-          </div>
+          <StatCard icon="pulse-outline" color="primary" :value="stats.total.toLocaleString()" label="Total Attempts" />
+          <StatCard icon="checkmark-circle-outline" color="success" :value="stats.success.toLocaleString()" label="Successful Logins" />
+          <StatCard icon="close-circle-outline" color="danger" :value="stats.failed.toLocaleString()" label="Failed Attempts" />
+          <StatCard icon="people-outline" color="info" :value="stats.unique_users.toLocaleString()" label="Unique Users" />
+          <StatCard icon="globe-outline" color="warning" :value="stats.unique_ips.toLocaleString()" label="Unique IPs" />
+          <StatCard icon="trending-up-outline" color="accent" :value="stats.success_rate + '%'" label="Success Rate" />
         </div>
 
         <!-- Charts Row -->
@@ -389,12 +335,13 @@ import { defineComponent } from 'vue';
 import { Chart, registerables } from 'chart.js';
 import PageTitle from "@/components/PageTitle.vue";
 import SiteTitle from "@/components/SiteTitle.vue";
+import StatCard from "@/components/StatCard.vue";
 
 Chart.register(...registerables);
 
 export default defineComponent({
   name: 'AccessLog',
-  components: { PageTitle, SiteTitle },
+  components: { PageTitle, SiteTitle, StatCard },
   data() {
     return {
       loading: false,
@@ -865,74 +812,6 @@ export default defineComponent({
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 20px;
   margin-bottom: 24px;
-}
-
-.stat-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow);
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  color: white;
-  flex-shrink: 0;
-}
-
-.stat-card.primary .stat-icon {
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-}
-
-.stat-card.success .stat-icon {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-}
-
-.stat-card.danger .stat-icon {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-}
-
-.stat-card.info .stat-icon {
-  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-}
-
-.stat-card.warning .stat-icon {
-  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-}
-
-.stat-card.accent .stat-icon {
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-}
-
-.stat-content h3 {
-  margin: 0 0 4px 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1;
-}
-
-.stat-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
 }
 
 /* Charts Row */

@@ -12,7 +12,6 @@
           <div class="vm-brand-text">
             <h1>Fringelo</h1>
             <div class="vm-version-badge">
-              <span class="vm-dot"></span>
               v{{ appVersion }}
             </div>
           </div>
@@ -232,14 +231,6 @@ export default defineComponent({
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.3px;
-}
-
-.vm-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #4ade80;
-  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.3);
 }
 
 .vm-tagline {

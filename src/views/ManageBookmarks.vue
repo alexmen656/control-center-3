@@ -21,44 +21,11 @@
           </div>
         </div>
 
-        <!-- Stats Cards -->
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="bookmarks-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ totalBookmarks }}</h3>
-              <p>Total Bookmarks</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="globe-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ externalBookmarks }}</h3>
-              <p>External Links</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="folder-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ internalBookmarks }}</h3>
-              <p>Internal Pages</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="calendar-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ recentBookmarks }}</h3>
-              <p>Added this week</p>
-            </div>
-          </div>
+          <StatCard icon="bookmarks-outline" color="primary" :value="totalBookmarks" label="Total Bookmarks" />
+          <StatCard icon="globe-outline" color="info" :value="externalBookmarks" label="External Links" />
+          <StatCard icon="folder-outline" color="success" :value="internalBookmarks" label="Internal Pages" />
+          <StatCard icon="calendar-outline" color="warning" :value="recentBookmarks" label="Added this week" />
         </div>
 
         <!-- Bookmarks List -->
@@ -250,6 +217,7 @@
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
 import PageTitle from "@/components/PageTitle.vue";
+import StatCard from "@/components/StatCard.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
@@ -257,6 +225,7 @@ export default defineComponent({
   components: {
     SiteTitle,
     PageTitle,
+    StatCard,
   },
   data() {
     return {
@@ -572,42 +541,6 @@ export default defineComponent({
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
   margin-bottom: 32px;
-}
-
-.stat-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius);
-  background: var(--primary-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-}
-
-.stat-content h3 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 24px;
-  font-weight: 700;
-}
-
-.stat-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
 }
 
 /* Bookmarks Card */
@@ -1084,12 +1017,14 @@ export default defineComponent({
   }
 }
 
-.modern-content {
-  --background: #121212;
-  --surface: #1a1a1a;
-  --border: #2a2a2a;
-  --text-primary: #f1f5f9;
-  --text-secondary: #b0b0b0;
-  --text-muted: #707070;
+@media (prefers-color-scheme: dark) {
+  .modern-content {
+    --background: #121212;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
+    --text-primary: #f1f5f9;
+    --text-secondary: #b0b0b0;
+    --text-muted: #707070;
+  }
 }
 </style>

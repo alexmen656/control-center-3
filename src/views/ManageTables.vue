@@ -17,44 +17,11 @@
           </div>
         </div>
 
-        <!-- Stats Cards -->
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="layers-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ tables.length }}</h3>
-              <p>Total Tables</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="document-text-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ totalRows }}</h3>
-              <p>Total Records</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ activeTables }}</h3>
-              <p>Active Tables</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <ion-icon name="alert-circle-outline"></ion-icon>
-            </div>
-            <div class="stat-content">
-              <h3>{{ inactiveTables }}</h3>
-              <p>Missing Tables</p>
-            </div>
-          </div>
+          <StatCard icon="layers-outline" color="primary" :value="tables.length" label="Total Tables" />
+          <StatCard icon="document-text-outline" color="info" :value="totalRows" label="Total Records" />
+          <StatCard icon="checkmark-circle-outline" color="success" :value="activeTables" label="Active Tables" />
+          <StatCard icon="alert-circle-outline" color="warning" :value="inactiveTables" label="Missing Tables" />
         </div>
 
         <!-- Tables List -->
@@ -190,6 +157,7 @@
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
 import PageTitle from "@/components/PageTitle.vue";
+import StatCard from "@/components/StatCard.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
@@ -197,6 +165,7 @@ export default defineComponent({
   components: {
     SiteTitle,
     PageTitle,
+    StatCard,
   },
   data() {
     return {
@@ -410,48 +379,11 @@ export default defineComponent({
   border-color: #b91c1c;
 }
 
-/* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
   margin-bottom: 32px;
-}
-
-.stat-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius);
-  background: var(--primary-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-}
-
-.stat-content h3 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 24px;
-  font-weight: 700;
-}
-
-.stat-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
 }
 
 /* Tables Card */

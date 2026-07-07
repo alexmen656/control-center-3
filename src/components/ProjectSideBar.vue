@@ -1,187 +1,187 @@
 <template>
   <div class="project-sidebar" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
-  <div class="project-sidebar__scroll">
-  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
-    <ion-menu-toggle auto-hide="false">
-      <ion-item @click="this.selectedIndex = 0" lines="none" detail="false"
-        :router-link="'/project/' + $route.params.project + '/'" class="hydrated menu-item"
-        :class="{ selected: this.selectedIndex === 0, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
-        :data-tooltip="isCollapsed ? 'Overview' : ''">
-        <ion-icon slot="start" name="apps-outline" />
-        <ion-label v-if="!isCollapsed">Overview</ion-label>
-      </ion-item>
-    </ion-menu-toggle>
-    <ion-reorder-group v-if="tools.length > 0" :disabled="false" @ionItemReorder="handleReorder($event)">
-      <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
-        <ion-item @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(p.link) + '/config')"
-          @click="this.selectedIndex = i + 1" lines="none" detail="false"
-          :router-link="'/project/' + $route.params.project + '/' + formatToolLink(p.link)" class="hydrated menu-item"
-          :class="{ selected: this.selectedIndex === i + 1, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
-          :data-tooltip="isCollapsed ? capitalizeFirst(p.name) : ''">
-          <ion-icon slot="start" :name="p.icon" />
-          <ion-label v-if="!isCollapsed">{{ capitalizeFirst(p.name) }}</ion-label>
-          <ion-reorder v-if="!isCollapsed" slot="end">
-            <ion-icon v-if="p.hasConfig == 1" style="cursor: pointer; z-index: 1000" name="cog-outline" />
-            <pre v-else></pre>
-          </ion-reorder>
-        </ion-item>
-      </ion-menu-toggle>
-    </ion-reorder-group>
-  </ion-list>
-  <template v-for="section in sections" :key="`section-${section.id}`">
-    <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
-      <h4>{{ section.name }}</h4>
-      <div>
-        <router-link v-if="section.manage_route" :to="section.manage_route">
-          <ion-icon style="color: var(--ion-color-medium-shade)" name="ellipsis-horizontal-circle-outline" />
-        </router-link>
-        <router-link v-if="section.info_route" :to="section.info_route">
-          <ion-icon style="color: var(--ion-color-medium-shade)" name="information-circle-outline" />
-        </router-link>
-        <router-link v-if="section.show_add_button && section.add_button_route" :to="section.add_button_route">
-          <ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline" />
-        </router-link>
-      </div>
-    </ion-note>
-    <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
-      <ion-reorder-group :disabled="false" @ionItemReorder="handleSectionItemReorder($event, section.id)">
-        <ion-menu-toggle auto-hide="false" v-for="(item, itemIndex) in getSectionItems(section)"
-          :key="`section-${section.id}-item-${item.id}`">
-          <ion-item v-if="item.item_type === 'tool'"
-            @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(item.name) + '/config')"
-            @click="selectSectionItem(section.id, itemIndex)" lines="none" detail="false"
-            :router-link="getToolRoute(item)" class="hydrated menu-item" :class="{
-              selected: isSectionItemSelected(section.id, itemIndex),
-              collapsed: isCollapsed,
-              hasToBeDarkmode: hasToBeDarkmode
-            }" :data-tooltip="isCollapsed ? capitalizeFirst(item.name) : ''">
-            <ion-icon slot="start" :name="item.icon" />
-            <ion-label v-if="!isCollapsed">{{ capitalizeFirst(item.name) }}</ion-label>
-            <ion-reorder v-if="!isCollapsed" slot="end">
-              <ion-icon v-if="item.hasConfig == 1" style="cursor: pointer; z-index: 1000" name="cog-outline" />
-              <pre v-else></pre>
-            </ion-reorder>
-          </ion-item>
-          <ion-item v-else-if="item.item_type === 'table'" @click="selectSectionItem(section.id, itemIndex)" lines="none"
-            detail="false" :router-link="'/project/' + $route.params.project + '/tables/' + item.name"
-            class="hydrated menu-item" :class="{
-              selected: isSectionItemSelected(section.id, itemIndex),
-              collapsed: isCollapsed,
-              hasToBeDarkmode: hasToBeDarkmode
-            }" :data-tooltip="isCollapsed ? capitalizeFirst(item.name) : ''">
-            <ion-icon slot="start" :name="item.icon || 'list-outline'" />
-            <ion-label v-if="!isCollapsed">{{ capitalizeFirst(item.name) }}</ion-label>
-            <ion-reorder v-if="!isCollapsed" slot="end">
-              <pre></pre>
-            </ion-reorder>
+    <div class="project-sidebar__scroll">
+      <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
+        <ion-menu-toggle auto-hide="false">
+          <ion-item @click="this.selectedIndex = 0" lines="none" detail="false"
+            :router-link="'/project/' + $route.params.project + '/'" class="hydrated menu-item"
+            :class="{ selected: this.selectedIndex === 0, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
+            :data-tooltip="isCollapsed ? 'Overview' : ''">
+            <ion-icon slot="start" name="apps-outline" />
+            <ion-label v-if="!isCollapsed">Overview</ion-label>
           </ion-item>
         </ion-menu-toggle>
-        <ion-menu-toggle auto-hide="false" v-if="getSectionItems(section).length === 0 && !isCollapsed">
-          <ion-item lines="none" detail="false" class="empty-section-item">
-            <ion-icon slot="start" name="folder-open-outline" color="medium" />
-            <ion-label color="medium">No items in this section</ion-label>
-          </ion-item>
-        </ion-menu-toggle>
-      </ion-reorder-group>
-    </ion-list>
-  </template>
-  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed && isAdminOrOwner">
-    <h4>Codespaces</h4>
-    <div>
-      <router-link v-for="(action, idx) in codespaceActions" :key="idx" :to="action.to">
-        <ion-icon style="color: var(--ion-color-medium-shade)" :name="action.icon" />
-      </router-link>
+        <ion-reorder-group v-if="tools.length > 0" :disabled="false" @ionItemReorder="handleReorder($event)">
+          <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
+            <ion-item
+              @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(p.link) + '/config')"
+              @click="this.selectedIndex = i + 1" lines="none" detail="false"
+              :router-link="'/project/' + $route.params.project + '/' + formatToolLink(p.link)"
+              class="hydrated menu-item"
+              :class="{ selected: this.selectedIndex === i + 1, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
+              :data-tooltip="isCollapsed ? capitalizeFirst(p.name) : ''">
+              <ion-icon slot="start" :name="p.icon" />
+              <ion-label v-if="!isCollapsed">{{ capitalizeFirst(p.name) }}</ion-label>
+              <ion-reorder v-if="!isCollapsed" slot="end">
+                <ion-icon v-if="p.hasConfig == 1" style="cursor: pointer; z-index: 1000" name="cog-outline" />
+                <pre v-else></pre>
+              </ion-reorder>
+            </ion-item>
+          </ion-menu-toggle>
+        </ion-reorder-group>
+      </ion-list>
+      <template v-for="section in sections" :key="`section-${section.id}`">
+        <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
+          <h4>{{ section.name }}</h4>
+          <div>
+            <router-link v-if="section.manage_route" :to="section.manage_route">
+              <ion-icon style="color: var(--ion-color-medium-shade)" name="ellipsis-horizontal-circle-outline" />
+            </router-link>
+            <router-link v-if="section.show_add_button && section.add_button_route" :to="section.add_button_route">
+              <ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline" />
+            </router-link>
+          </div>
+        </ion-note>
+        <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
+          <ion-reorder-group :disabled="false" @ionItemReorder="handleSectionItemReorder($event, section.id)">
+            <ion-menu-toggle auto-hide="false" v-for="(item, itemIndex) in getSectionItems(section)"
+              :key="`section-${section.id}-item-${item.id}`">
+              <ion-item v-if="item.item_type === 'tool'"
+                @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(item.name) + '/config')"
+                @click="selectSectionItem(section.id, itemIndex)" lines="none" detail="false"
+                :router-link="getToolRoute(item)" class="hydrated menu-item" :class="{
+                  selected: isSectionItemSelected(section.id, itemIndex),
+                  collapsed: isCollapsed,
+                  hasToBeDarkmode: hasToBeDarkmode
+                }" :data-tooltip="isCollapsed ? capitalizeFirst(item.name) : ''">
+                <ion-icon slot="start" :name="item.icon" />
+                <ion-label v-if="!isCollapsed">{{ capitalizeFirst(item.name) }}</ion-label>
+                <ion-reorder v-if="!isCollapsed" slot="end">
+                  <ion-icon v-if="item.hasConfig == 1" style="cursor: pointer; z-index: 1000" name="cog-outline" />
+                  <pre v-else></pre>
+                </ion-reorder>
+              </ion-item>
+              <ion-item v-else-if="item.item_type === 'table'" @click="selectSectionItem(section.id, itemIndex)"
+                lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/tables/' + item.name"
+                class="hydrated menu-item" :class="{
+                  selected: isSectionItemSelected(section.id, itemIndex),
+                  collapsed: isCollapsed,
+                  hasToBeDarkmode: hasToBeDarkmode
+                }" :data-tooltip="isCollapsed ? capitalizeFirst(item.name) : ''">
+                <ion-icon slot="start" :name="item.icon || 'list-outline'" />
+                <ion-label v-if="!isCollapsed">{{ capitalizeFirst(item.name) }}</ion-label>
+                <ion-reorder v-if="!isCollapsed" slot="end">
+                  <pre></pre>
+                </ion-reorder>
+              </ion-item>
+            </ion-menu-toggle>
+            <ion-menu-toggle auto-hide="false" v-if="getSectionItems(section).length === 0 && !isCollapsed">
+              <ion-item lines="none" detail="false" class="empty-section-item">
+                <ion-icon slot="start" name="folder-open-outline" color="medium" />
+                <ion-label color="medium">No items in this section</ion-label>
+              </ion-item>
+            </ion-menu-toggle>
+          </ion-reorder-group>
+        </ion-list>
+      </template>
+      <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed && isAdminOrOwner">
+        <h4>Codespaces</h4>
+        <div>
+          <router-link v-for="(action, idx) in codespaceActions" :key="idx" :to="action.to">
+            <ion-icon style="color: var(--ion-color-medium-shade)" :name="action.icon" />
+          </router-link>
+        </div>
+      </ion-note>
+      <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
+        v-if="isAdminOrOwner">
+        <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
+          <ion-menu-toggle auto-hide="false" v-for="(codespace, i) in filteredCodespaces" :key="`codespace-${i}`">
+            <ion-item
+              @click="this.selectedIndex = Number(tools.length) + Number(forms.length) + Number(components.length) + Number(i) + 1"
+              lines="none" detail="false"
+              :router-link="'/project/' + $route.params.project + '/codespace/' + codespace.slug"
+              class="hydrated menu-item" :class="{
+                selected: this.selectedIndex === Number(tools.length) + Number(forms.length) + Number(components.length) + Number(i) + 1,
+                collapsed: isCollapsed,
+                hasToBeDarkmode: hasToBeDarkmode
+              }" :data-tooltip="isCollapsed ? codespace.name : ''">
+              <ion-icon slot="start" :name="codespace.icon || 'code-outline'" />
+              <ion-label v-if="!isCollapsed">{{ codespace.name }}</ion-label>
+              <span v-if="!isCollapsed" class="codespace-status-indicator"
+                :class="{ 'status-active': codespace.status === 'active', 'status-inactive': codespace.status === 'inactive' }"></span>
+            </ion-item>
+          </ion-menu-toggle>
+          <ion-menu-toggle auto-hide="false" v-if="filteredCodespaces.length === 0 && !isCollapsed && isAdminOrOwner">
+            <ion-item lines="none" detail="false" class="no-codespaces-item">
+              <ion-icon slot="start" name="code-slash-outline" color="medium" />
+              <ion-label color="medium">No Codespaces yet</ion-label>
+            </ion-item>
+          </ion-menu-toggle>
+        </ion-reorder-group>
+      </ion-list>
+      <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed && isAdminOrOwner">
+        <h4>APIs</h4>
+        <div>
+          <router-link v-for="(action, idx) in apiActions" :key="idx" :to="action.to">
+            <ion-icon style="color: var(--ion-color-medium-shade)" :name="action.icon" />
+          </router-link>
+        </div>
+      </ion-note>
+      <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
+        v-if="isAdminOrOwner">
+        <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
+          <ion-menu-toggle auto-hide="false" v-for="(api, i) in filteredApis" :key="`api-${i}`">
+            <ion-item @click="this.selectedIndex = Number(tools.length) + Number(components.length) + Number(i) + 1"
+              lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/apis/' + api.slug"
+              class="hydrated menu-item" :class="{
+                selected: this.selectedIndex === Number(tools.length) + Number(components.length) + Number(i) + 1,
+                collapsed: isCollapsed,
+                hasToBeDarkmode: hasToBeDarkmode
+              }" :data-tooltip="isCollapsed ? api.name : ''">
+              <ion-icon slot="start" :name="api.icon || 'code-outline'" />
+              <ion-label v-if="!isCollapsed">{{ api.name }}</ion-label>
+            </ion-item>
+          </ion-menu-toggle>
+          <ion-menu-toggle auto-hide="false" v-if="filteredApis.length === 0 && !isCollapsed && isAdminOrOwner">
+            <ion-item lines="none" detail="false" class="no-apis-item">
+              <ion-icon slot="start" name="code-slash-outline" color="medium" />
+              <ion-label color="medium">No APIs subscribed</ion-label>
+            </ion-item>
+          </ion-menu-toggle>
+        </ion-reorder-group>
+      </ion-list>
     </div>
-  </ion-note>
-  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }" v-if="isAdminOrOwner">
-    <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
-      <ion-menu-toggle auto-hide="false" v-for="(codespace, i) in filteredCodespaces" :key="`codespace-${i}`">
-        <ion-item
-          @click="this.selectedIndex = Number(tools.length) + Number(forms.length) + Number(components.length) + Number(i) + 1"
-          lines="none" detail="false"
-          :router-link="'/project/' + $route.params.project + '/codespace/' + codespace.slug" class="hydrated menu-item"
-          :class="{
-            selected: this.selectedIndex === Number(tools.length) + Number(forms.length) + Number(components.length) + Number(i) + 1,
-            collapsed: isCollapsed,
-            hasToBeDarkmode: hasToBeDarkmode
-          }" :data-tooltip="isCollapsed ? codespace.name : ''">
-          <ion-icon slot="start" :name="codespace.icon || 'code-outline'" />
-          <ion-label v-if="!isCollapsed">{{ codespace.name }}</ion-label>
-          <span v-if="!isCollapsed" class="codespace-status-indicator"
-            :class="{ 'status-active': codespace.status === 'active', 'status-inactive': codespace.status === 'inactive' }"></span>
-        </ion-item>
-      </ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false" v-if="filteredCodespaces.length === 0 && !isCollapsed && isAdminOrOwner">
-        <ion-item lines="none" detail="false" class="no-codespaces-item">
-          <ion-icon slot="start" name="code-slash-outline" color="medium" />
-          <ion-label color="medium">No Codespaces yet</ion-label>
-        </ion-item>
-      </ion-menu-toggle>
-    </ion-reorder-group>
-  </ion-list>
-  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed && isAdminOrOwner">
-    <h4>APIs</h4>
-    <div>
-      <router-link v-for="(action, idx) in apiActions" :key="idx" :to="action.to">
-        <ion-icon style="color: var(--ion-color-medium-shade)" :name="action.icon" />
-      </router-link>
-    </div>
-  </ion-note>
-  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }" v-if="isAdminOrOwner">
-    <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
-      <ion-menu-toggle auto-hide="false" v-for="(api, i) in filteredApis" :key="`api-${i}`">
-        <ion-item @click="this.selectedIndex = Number(tools.length) + Number(components.length) + Number(i) + 1"
-          lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/apis/' + api.slug"
-          class="hydrated menu-item" :class="{
-            selected: this.selectedIndex === Number(tools.length) + Number(components.length) + Number(i) + 1,
-            collapsed: isCollapsed,
-            hasToBeDarkmode: hasToBeDarkmode
-          }" :data-tooltip="isCollapsed ? api.name : ''">
-          <ion-icon slot="start" :name="api.icon || 'code-outline'" />
-          <ion-label v-if="!isCollapsed">{{ api.name }}</ion-label>
-        </ion-item>
-      </ion-menu-toggle>
-      <ion-menu-toggle auto-hide="false" v-if="filteredApis.length === 0 && !isCollapsed && isAdminOrOwner">
-        <ion-item lines="none" detail="false" class="no-apis-item">
-          <ion-icon slot="start" name="code-slash-outline" color="medium" />
-          <ion-label color="medium">No APIs subscribed</ion-label>
-        </ion-item>
-      </ion-menu-toggle>
-    </ion-reorder-group>
-  </ion-list>
-  </div>
-  <footer class="sidebar-footer" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
-    <button type="button" class="footer-btn footer-toggle" @click="toggleSidebar"
-      :data-tooltip="isCollapsed ? 'Expand menu' : ''"
-      :aria-label="isCollapsed ? 'Expand menu' : 'Collapse menu'">
-      <ion-icon :name="isCollapsed ? 'chevron-forward-outline' : 'chevron-back-outline'" />
-      <span v-if="!isCollapsed">Minimize</span>
-    </button>
-    <button type="button" id="sidebar-notif-trigger" class="footer-btn footer-notif"
-      :data-tooltip="isCollapsed ? 'Notifications' : ''" aria-label="Notifications">
-      <ion-icon name="notifications-outline" />
-      <span v-if="!isCollapsed">Notifications</span>
-      <span v-if="unreadCount > 0" class="notif-dot">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
-    </button>
-  </footer>
-  <ion-popover trigger="sidebar-notif-trigger" side="top" alignment="end" show-backdrop="false"
-    :class="{ hasToBeDarkmode: hasToBeDarkmode }" @didPresent="markAllRead">
-    <ion-content class="notif-popover">
-      <div class="notif-header">
-        <h4>Notifications</h4>
-      </div>
-      <div v-if="notifications.length === 0" class="notif-empty">
-        <ion-icon name="notifications-off-outline" />
-        <span>You're all caught up</span>
-      </div>
-      <ul v-else class="notif-list">
-        <li v-for="n in notifications" :key="n.id" class="notif-item" :class="{ unread: n.read_status == 0 }">
-          <strong>{{ n.title }}</strong>
-          <p>{{ n.message }}</p>
-        </li>
-      </ul>
-    </ion-content>
-  </ion-popover>
+    <footer class="sidebar-footer" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
+      <button type="button" class="footer-btn footer-toggle" @click="toggleSidebar"
+        :data-tooltip="isCollapsed ? 'Expand menu' : ''" :aria-label="isCollapsed ? 'Expand menu' : 'Collapse menu'">
+        <ion-icon :name="isCollapsed ? 'chevron-forward-outline' : 'chevron-back-outline'" />
+        <span v-if="!isCollapsed">Minimize</span>
+      </button>
+      <button type="button" id="sidebar-notif-trigger" class="footer-btn footer-notif"
+        :data-tooltip="isCollapsed ? 'Notifications' : ''" aria-label="Notifications">
+        <ion-icon name="notifications-outline" />
+        <span v-if="!isCollapsed">Notifications</span>
+        <span v-if="unreadCount > 0" class="notif-dot">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+      </button>
+    </footer>
+    <ion-popover trigger="sidebar-notif-trigger" side="top" alignment="end" show-backdrop="false"
+      :class="{ hasToBeDarkmode: hasToBeDarkmode }" @didPresent="markAllRead">
+      <ion-content class="notif-popover">
+        <div class="notif-header">
+          <h4>Notifications</h4>
+        </div>
+        <div v-if="notifications.length === 0" class="notif-empty">
+          <ion-icon name="notifications-off-outline" />
+          <span>You're all caught up</span>
+        </div>
+        <ul v-else class="notif-list">
+          <li v-for="n in notifications" :key="n.id" class="notif-item" :class="{ unread: n.read_status == 0 }">
+            <strong>{{ n.title }}</strong>
+            <p>{{ n.message }}</p>
+          </li>
+        </ul>
+      </ion-content>
+    </ion-popover>
   </div>
 </template>
 
@@ -227,7 +227,6 @@ interface SidebarSection {
   is_collapsible: boolean;
   show_add_button: boolean;
   add_button_route: string | null;
-  info_route: string | null;
   manage_route: string | null;
   tools: SidebarTool[];
   items?: SidebarItem[];
@@ -492,7 +491,6 @@ export default defineComponent({
       const projectPath = '/project/' + route.params.project;
       return [
         { to: projectPath + '/manage/codespaces', icon: 'ellipsis-horizontal-circle-outline' },
-        { to: '/info/codespaces/', icon: 'information-circle-outline' },
         { to: projectPath + '/new/codespace', icon: 'add-circle-outline' }
       ];
     });
@@ -501,7 +499,6 @@ export default defineComponent({
       const projectPath = '/project/' + route.params.project;
       return [
         { to: projectPath + '/manage/apis', icon: 'ellipsis-horizontal-circle-outline' },
-        { to: '/info/apis/', icon: 'information-circle-outline' },
         { to: projectPath + '/manage/apis', icon: 'add-circle-outline' }
       ];
     });
