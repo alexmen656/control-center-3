@@ -57,15 +57,6 @@ export async function getResources(user, backendUrl) {
       mimeType: 'application/json'
     });
     
-    // Add templates resource
-    resources.push({
-      uri: 'cms://templates',
-      name: 'Project Templates',
-      description: 'Available project templates',
-      mimeType: 'application/json'
-    });
-    
-    // Add available APIs resource
     resources.push({
       uri: 'cms://apis/available',
       name: 'Available APIs',
@@ -110,10 +101,6 @@ export async function readResource(uri, user, backendUrl) {
         } else if (id === 'bookmarks') {
           data = await fetchBookmarks(backendUrl);
         }
-        break;
-        
-      case 'templates':
-        data = await fetchTemplates(backendUrl, user);
         break;
         
       case 'apis':
@@ -182,13 +169,6 @@ async function fetchBookmarks(backendUrl) {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     //body: new URLSearchParams({ getBookmarks: 'true' })
-  });
-  return response.json();
-}
-
-async function fetchTemplates(backendUrl, user) {
-  const response = await fetch(`${backendUrl}/v2/project-templates`, {
-    headers: { 'Authorization': user?.token || '' }
   });
   return response.json();
 }

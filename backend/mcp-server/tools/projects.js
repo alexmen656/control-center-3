@@ -1,14 +1,5 @@
-/**
- * Project Management Tools
- * 
- * Tools for managing CMS projects
- */
-
 import { cmsRequest, formatResponse, formatError } from '../utils/api.js';
 
-/**
- * Tool definitions for projects
- */
 export const projectTools = [
   {
     name: 'project_list',
@@ -119,73 +110,32 @@ export const projectTools = [
       },
       required: ['project', 'email']
     }
-  },
-  {
-    name: 'project_apply_template',
-    description: 'Create a new project from a template',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        templateId: {
-          type: 'string',
-          description: 'ID of the template to use'
-        },
-        projectName: {
-          type: 'string',
-          description: 'Name for the new project'
-        },
-        projectIcon: {
-          type: 'string',
-          description: 'Icon for the new project',
-          default: 'folder-outline'
-        }
-      },
-      required: ['templateId', 'projectName']
-    }
-  },
-  {
-    name: 'project_list_templates',
-    description: 'List available project templates',
-    inputSchema: {
-      type: 'object',
-      properties: {},
-      required: []
-    }
   }
 ];
 
-/**
- * Handle project tool calls
- */
 export async function handleProjectTool(toolName, args, context) {
   switch (toolName) {
     case 'project_list':
       return await listProjects(context);
-      
+
     case 'project_create':
       return await createProject(args, context);
-      
+
     case 'project_get':
       return await getProject(args, context);
-      
+
     case 'project_update':
       return await updateProject(args, context);
-      
+
     case 'project_delete':
       return await deleteProject(args, context);
-      
+
     case 'project_get_users':
       return await getProjectUsers(args, context);
-      
+
     case 'project_add_user':
       return await addUserToProject(args, context);
-      
-    case 'project_apply_template':
-      return await applyTemplate(args, context);
-      
-    case 'project_list_templates':
-      return await listTemplates(context);
-      
+
     default:
       return formatError(`Unknown project tool: ${toolName}`);
   }
@@ -200,7 +150,7 @@ async function listProjects(context) {
     const data = await cmsRequest('projects.php', {
       body: { getUserProjects: 'true' }
     }, context);
-    
+
     return formatResponse({
       success: true,
       projects: data.projects || data
@@ -244,7 +194,7 @@ async function getProject(args, context) {
         project: args.project
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       project: data
@@ -260,12 +210,12 @@ async function updateProject(args, context) {
       updateProject: 'updateProject',
       projectID: args.projectId
     };
-    
+
     if (args.name) body.projectName = args.name;
     if (args.icon) body.projectIcon = args.icon;
-    
+
     const data = await cmsRequest('projects.php', { body }, context);
-    
+
     return formatResponse({
       success: true,
       message: data.message || 'Project updated successfully'
@@ -283,7 +233,7 @@ async function deleteProject(args, context) {
         projectID: args.projectId
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: data.message || 'Project deleted successfully'
@@ -301,7 +251,7 @@ async function getProjectUsers(args, context) {
         project: args.project
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       users: data.users || data
@@ -320,45 +270,10 @@ async function addUserToProject(args, context) {
         email: args.email
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: data.message || 'User added to project'
-    });
-  } catch (error) {
-    return formatError(error.message);
-  }
-}
-
-async function applyTemplate(args, context) {
-  try {
-    const data = await cmsRequest('v2/project-templates/apply', {
-      method: 'POST',
-      contentType: 'application/json',
-      body: {
-        template_id: args.templateId,
-        project_name: args.projectName,
-        project_icon: args.projectIcon || 'folder-outline'
-      }
-    }, context);
-    
-    return formatResponse({
-      success: data.success,
-      message: data.message,
-      project: data.project
-    });
-  } catch (error) {
-    return formatError(error.message);
-  }
-}
-
-async function listTemplates(context) {
-  try {
-    const data = await cmsRequest('v2/project-templates', { method: 'GET' }, context);
-
-    return formatResponse({
-      success: true,
-      templates: data.templates || data
     });
   } catch (error) {
     return formatError(error.message);

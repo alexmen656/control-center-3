@@ -16,5 +16,4 @@ require_once __DIR__ . '/codespace-apis.routes.php';
 require_once __DIR__ . '/sidebar.routes.php';
 require_once __DIR__ . '/marketing.routes.php';
 require_once __DIR__ . '/newsletter.routes.php';
-require_once __DIR__ . '/project-templates.routes.php';
 require_once __DIR__ . '/deployments.routes.php';
