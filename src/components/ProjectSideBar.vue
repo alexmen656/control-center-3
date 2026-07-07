@@ -154,8 +154,16 @@
     <footer class="sidebar-footer" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
       <button type="button" class="footer-btn footer-toggle" @click="toggleSidebar"
         :data-tooltip="isCollapsed ? 'Expand menu' : ''" :aria-label="isCollapsed ? 'Expand menu' : 'Collapse menu'">
-        <ion-icon :name="isCollapsed ? 'chevron-forward-outline' : 'chevron-back-outline'" />
-        <span v-if="!isCollapsed">Minimize</span>
+        <svg v-if="isCollapsed" class="sidebar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+          <path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2H6a2 2 0 0 1 -2 -2z" stroke-width="2"></path>
+          <path d="M15 4v16" stroke-width="2"></path>
+          <path d="m9 10 2 2 -2 2" stroke-width="2"></path>
+        </svg>
+        <svg v-else class="sidebar-toggle-icon" viewBox="-0.5 -0.5 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+          <path d="M12.7769375 14.284625H2.2230625c-0.8326875 0 -1.5076875 -0.675 -1.5076875 -1.5076875l0 -10.553875c0 -0.8326875 0.675 -1.5076875 1.5076875 -1.5076875h10.553875c0.8326875 0 1.5076875 0.675 1.5076875 1.5076875v10.553875c0 0.8326875 -0.675 1.5076875 -1.5076875 1.5076875Z" stroke-width="1"></path>
+          <path d="M3.9192500000000003 5.9923125 2.6 7.5l1.3192499999999998 1.5076875" stroke-width="1"></path>
+          <path d="M5.615375 14.284625V0.7153750000000001" stroke-width="1"></path>
+        </svg>
       </button>
       <button type="button" id="sidebar-notif-trigger" class="footer-btn footer-notif"
         :data-tooltip="isCollapsed ? 'Notifications' : ''" aria-label="Notifications">
