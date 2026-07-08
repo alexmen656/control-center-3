@@ -9,9 +9,7 @@
               <img :src="customLoginConfig.logo_url" :alt="companyName + ' Logo'" class="logo-image custom-logo" />
             </template>
             <template v-else>
-              <span class="logo">
-                Fringelo
-              </span>
+              <img src="/assets/brand/fringelo-wordmark.svg" alt="Fringelo" class="logo-wordmark" />
             </template>
             <p class="welcome-subtitle" v-if="!createPasswordView">
               {{ isCustomLogin ? 'Sign in to ' + companyName : 'Sign in to your account' }}
@@ -876,16 +874,11 @@ export default defineComponent({
   }
 }
 
-.logo {
-  display: block;
-  font-weight: 700;
-  font-size: 48px;
-  color: var(--brand-orange);
-  letter-spacing: -0.8px;
-  line-height: 1.2;
-  margin-bottom: 0 !important;
-  transition: color 0.2s ease;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+.logo-wordmark {
+  display: inline-block;
+  height: 50px;
+  width: auto;
+  margin-bottom: 0;
 }
 
 @media (prefers-color-scheme: dark) {

@@ -7,9 +7,7 @@
         <div class="signup-card">
 
           <div class="logo-section">
-            <span class="logo">
-              Fringelo
-            </span>
+            <img src="/assets/brand/fringelo-wordmark.svg" alt="Fringelo" class="logo-wordmark" />
             <h1 class="welcome-title" v-if="!createPasswordView">Create Account</h1>
             <h1 class="welcome-title" v-else>Complete Setup</h1>
             <p class="welcome-subtitle" v-if="!createPasswordView">Join Fringelo today</p>
@@ -572,9 +570,11 @@ export default defineComponent({
   margin-bottom: 1.5rem;
 }
 
-.logo {
+.logo-wordmark {
   display: inline-block;
-  margin-bottom: 1.5rem;
+  height: 44px;
+  width: auto;
+  margin-bottom: 2rem;
 }
 
 .welcome-title {
@@ -848,8 +848,8 @@ export default defineComponent({
     max-width: 100%;
   }
 
-  .logo {
-    font-size: 36px;
+  .logo-wordmark {
+    height: 38px;
   }
 
   .welcome-title {
@@ -873,8 +873,8 @@ export default defineComponent({
     margin-bottom: 2rem;
   }
 
-  .logo {
-    font-size: 36px;
+  .logo-wordmark {
+    height: 38px;
     margin-bottom: 1rem;
   }
 
@@ -900,15 +900,4 @@ export default defineComponent({
   }
 }
 
-.logo {
-  display: block;
-  font-weight: 700;
-  font-size: 42px;
-  color: var(--brand-orange);
-  letter-spacing: -0.8px;
-  line-height: 1.2;
-  margin-bottom: 2rem;
-  transition: color 0.2s ease;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
 </style>
