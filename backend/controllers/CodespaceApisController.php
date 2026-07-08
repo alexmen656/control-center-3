@@ -160,6 +160,9 @@ class CodespaceApisController
         $key = api_decrypt_key($sub);
         deploy_set_env_var($codespaceId, $envName, $key, 'both');
         deploy_set_env_var($codespaceId, 'FRINGELO_API_URL', 'https://gw.fringelo.com', 'both');
+        if ($sub['slug'] === 'database') {
+            deploy_set_env_var($codespaceId, 'DATABASE_API_URL', 'http://172.31.241.1:8088/api/v1/database.php', 'both');
+        }
 
         $response->json(['success' => true, 'message' => 'API activated; key injected as ' . $envName . ' on next deploy', 'env_var' => $envName]);
     }
@@ -212,6 +215,9 @@ class CodespaceApisController
             $envName = api_env_name($sub['slug']);
             deploy_set_env_var($codespaceId, $envName, api_decrypt_key($sub), 'both');
             $synced[] = $envName;
+            if ($sub['slug'] === 'database') {
+                deploy_set_env_var($codespaceId, 'DATABASE_API_URL', 'http://172.31.241.1:8088/api/v1/database.php', 'both');
+            }
         }
         deploy_set_env_var($codespaceId, 'FRINGELO_API_URL', 'https://gw.fringelo.com', 'both');
 

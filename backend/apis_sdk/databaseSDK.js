@@ -1,70 +1,82 @@
-// CMS Database API SDK
-class DatabaseAPI {
+class DatabaseClient {
   constructor() {
-    this.baseUrl = 'https://api.fringelo.com/api/v1/database.php';
-    this.apiKey = process.env.[{[apiKey]}] || 'cms_demo_api_key';
+    this.baseUrl = process.env.DATABASE_API_URL || 'http://172.31.241.1:8088/api/v1/database.php';
+    this.apiKey = process.env['[{[apiKey]}]'] || '';
   }
 
   async listTables() {
-    const response = await fetch(`${this.baseUrl}?action=tables`, {
-      method: 'GET',
-      headers: this.getHeaders()
-    });
-    return this.handleResponse(response);
+    return this._request('GET', 'tables');
   }
 
-  async query(table, conditions = {}, options = {}) {
-    const response = await fetch(`${this.baseUrl}?action=query`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify({ table, conditions, options })
-    });
-    return this.handleResponse(response);
+  async query(table, where = {}, options = {}) {
+    return this._request('POST', 'query', { table, where, options });
+  }
+
+  async get(table, id) {
+    const res = await this.query(table, { id }, { limit: 1 });
+    return res.records && res.records.length ? res.records[0] : null;
+  }
+
+  async count(table, where = {}) {
+    const res = await this._request('POST', 'count', { table, where });
+    return res.count;
   }
 
   async insert(table, data) {
-    const response = await fetch(`${this.baseUrl}?action=insert`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify({ table, data })
-    });
-    return this.handleResponse(response);
+    return this._request('POST', 'insert', { table, data });
   }
 
-  async update(table, id, data) {
-    const response = await fetch(`${this.baseUrl}?action=update`, {
-      method: 'PUT',
-      headers: this.getHeaders(),
-      body: JSON.stringify({ table, id, data })
-    });
-    return this.handleResponse(response);
+  async update(table, target, data) {
+    const body = { table, data };
+    if (target !== null && typeof target === 'object') {
+      body.where = target;
+    } else {
+      body.id = target;
+    }
+    return this._request('PUT', 'update', body);
   }
 
-  async delete(table, id) {
-    const response = await fetch(`${this.baseUrl}?action=delete`, {
-      method: 'DELETE',
-      headers: this.getHeaders(),
-      body: JSON.stringify({ table, id })
-    });
-    return this.handleResponse(response);
+  async delete(table, target) {
+    const body = { table };
+    if (target !== null && typeof target === 'object') {
+      body.where = target;
+    } else {
+      body.id = target;
+    }
+    return this._request('DELETE', 'delete', body);
   }
 
-  getHeaders() {
+  async _request(method, action, body) {
+    const options = { method, headers: this._headers() };
+    if (body !== undefined) {
+      options.body = JSON.stringify(body);
+    }
+    const response = await fetch(`${this.baseUrl}?action=${action}`, options);
+    return this._handle(response);
+  }
+
+  _headers() {
     return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.apiKey}`
     };
   }
 
-  async handleResponse(response) {
-    const data = await response.json();
-    
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || `Database API Error: ${response.status} ${response.statusText}`);
+  async _handle(response) {
+    let payload;
+    try {
+      payload = await response.json();
+    } catch (e) {
+      throw new Error(`Database API: invalid response (HTTP ${response.status})`);
     }
-    
-    return data;
+    if (!response.ok || !payload.success) {
+      throw new Error(payload && payload.message ? payload.message : `Database API error (HTTP ${response.status})`);
+    }
+    return payload.data !== undefined ? payload.data : payload;
   }
 }
 
-export default new DatabaseAPI();
+const DatabaseAPI = new DatabaseClient();
+
+export { DatabaseAPI };
+export default DatabaseAPI;

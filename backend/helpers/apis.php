@@ -411,7 +411,7 @@ class ApisHelper
         }
 
         $content = file_get_contents($targetFile);
-        $content = str_replace('[{[apiKey]}]', strtoupper($apiSlug).'_'.strtoupper($codespaceSlug).'_API_KEY', $content);
+        $content = str_replace('[{[apiKey]}]', strtoupper(preg_replace('/[^A-Za-z0-9]+/', '_', $apiSlug)) . '_API_KEY', $content);
 
         file_put_contents($targetFile, $content);
 
