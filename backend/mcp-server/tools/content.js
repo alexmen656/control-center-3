@@ -138,46 +138,6 @@ export const contentTools = [
       },
       required: ['project', 'tableName', 'entryId']
     }
-  },
-  {
-    name: 'content_newsletter_list',
-    description: 'List newsletter subscribers',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        }
-      },
-      required: ['project']
-    }
-  },
-  {
-    name: 'content_newsletter_send',
-    description: 'Send a newsletter to subscribers',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        },
-        subject: {
-          type: 'string',
-          description: 'Email subject'
-        },
-        content: {
-          type: 'string',
-          description: 'Email content (HTML)'
-        },
-        testEmail: {
-          type: 'string',
-          description: 'Send test email to this address first (optional)'
-        }
-      },
-      required: ['project', 'subject', 'content']
-    }
   }
 ];
 
@@ -200,12 +160,6 @@ export async function handleContentTool(toolName, args, context) {
 
     case 'content_table_delete':
       return await deleteFormData(args, context);
-
-    case 'content_newsletter_list':
-      return await listNewsletterSubscribers(args, context);
-
-    case 'content_newsletter_send':
-      return await sendNewsletter(args, context);
 
     default:
       return formatError(`Unknown content tool: ${toolName}`);
@@ -346,53 +300,6 @@ async function deleteFormData(args, context) {
     return formatResponse({
       success: true,
       message: data || 'Entry deleted successfully'
-    });
-  } catch (error) {
-    return formatError(error.message);
-  }
-}
-
-async function listNewsletterSubscribers(args, context) {
-  try {
-    const data = await cmsRequest('newsletter.php', {
-      body: {
-        getSubscribers: 'true',
-        project: args.project
-      }
-    }, context);
-
-    return formatResponse({
-      success: true,
-      subscribers: data.subscribers || data
-    });
-  } catch (error) {
-    return formatError(error.message);
-  }
-}
-
-async function sendNewsletter(args, context) {
-  try {
-    const body = {
-      project: args.project,
-      subject: args.subject,
-      email: args.content
-    };
-
-    if (args.testEmail) {
-      body.recipients = args.testEmail;
-      body.test_mode = true;
-    }
-
-    const data = await cmsRequest('v2/newsletter/send', {
-      method: 'POST',
-      contentType: 'application/json',
-      body
-    }, context);
-
-    return formatResponse({
-      success: true,
-      message: data.message || 'Newsletter sent successfully',
-      sentCount: data.sent
     });
   } catch (error) {
     return formatError(error.message);

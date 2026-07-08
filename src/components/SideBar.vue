@@ -1,109 +1,112 @@
 <template>
   <div class="sidebar-shell" :class="{ collapsed: isCollapsed }">
-  <div class="sidebar-shell__scroll">
-  <ion-list id="inbox-list" :class="{ collapsed: isCollapsed }">
-    <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
-      <ion-item button @click="this.selectedIndex = i" lines="none" detail="false"
-        :router-link="'/' + p.name.toLowerCase().replaceAll(' ', '-') + '/'" class="hydrated menu-item"
-        :class="{ selected: this.selectedIndex === i, collapsed: isCollapsed }"
-        :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''">
-        <ion-icon slot="start" :name="p.icon"></ion-icon>
-        <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
-      </ion-item>
-    </ion-menu-toggle>
-    <ion-menu-toggle auto-hide="false" v-for="(p, i) in dev_tools" :key="i">
-      <ion-item button @click="this.selectedIndex = i + tools.length" lines="none" detail="false"
-        :router-link="'/' + p.name.toLowerCase().replaceAll(' ', '-') + '/'" class="hydrated menu-item"
-        :class="{ selected: this.selectedIndex === i + tools.length, collapsed: isCollapsed }"
-        :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''">
-        <ion-icon slot="start" :name="p.icon"></ion-icon>
-        <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
-      </ion-item>
-    </ion-menu-toggle>
-  </ion-list>
-  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
-    <h4 v-if="!isCollapsed">Bookmarks</h4>
-    <div v-if="!isCollapsed">
-      <router-link to="/manage/bookmarks/"><ion-icon style="color: var(--ion-color-medium-shade)"
-          name="ellipsis-horizontal-circle-outline" /></router-link>
-    </div>
-  </ion-note>
-  <ion-list v-if="bookmarks.length > 0" :class="{ collapsed: isCollapsed }">
-    <ion-menu-toggle auto-hide="false" v-for="(p, i) in bookmarks" :key="i">
-      <ion-item button @click="this.selectedIndex = i + 2 + tools.length + dev_tools.length; goToBookmark(p.location)"
-        lines="none" detail="false" class="hydrated menu-item"
-        :class="{ collapsed: isCollapsed, selected: this.selectedIndex === i + 2 + tools.length + dev_tools.length }"
-        :data-tooltip="isCollapsed ? (p.title[0].toUpperCase() + p.title.substring(1)) : ''"
-        v-if="p.title">
-        <ion-icon slot="start" :name="p.icon ? p.icon : 'help-circle-outline'"></ion-icon>
-        <ion-label v-if="!isCollapsed">{{ p.title[0].toUpperCase() }}{{ p.title.substring(1) }}</ion-label>
-      </ion-item>
-    </ion-menu-toggle>
-  </ion-list>
+    <div class="sidebar-shell__scroll">
+      <ion-list id="inbox-list" :class="{ collapsed: isCollapsed }">
+        <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
+          <ion-item button @click="this.selectedIndex = i" lines="none" detail="false"
+            :router-link="'/' + p.name.toLowerCase().replaceAll(' ', '-') + '/'" class="hydrated menu-item"
+            :class="{ selected: this.selectedIndex === i, collapsed: isCollapsed }"
+            :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''">
+            <ion-icon slot="start" :name="p.icon"></ion-icon>
+            <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
+          </ion-item>
+        </ion-menu-toggle>
+        <ion-menu-toggle auto-hide="false" v-for="(p, i) in dev_tools" :key="i">
+          <ion-item button @click="this.selectedIndex = i + tools.length" lines="none" detail="false"
+            :router-link="'/' + p.name.toLowerCase().replaceAll(' ', '-') + '/'" class="hydrated menu-item"
+            :class="{ selected: this.selectedIndex === i + tools.length, collapsed: isCollapsed }"
+            :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''">
+            <ion-icon slot="start" :name="p.icon"></ion-icon>
+            <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
+          </ion-item>
+        </ion-menu-toggle>
+      </ion-list>
+      <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
+        <h4 v-if="!isCollapsed">Bookmarks</h4>
+        <div v-if="!isCollapsed">
+          <router-link to="/manage/bookmarks/"><ion-icon style="color: var(--ion-color-medium-shade)"
+              name="ellipsis-horizontal-circle-outline" /></router-link>
+        </div>
+      </ion-note>
+      <ion-list v-if="bookmarks.length > 0" :class="{ collapsed: isCollapsed }">
+        <ion-menu-toggle auto-hide="false" v-for="(p, i) in bookmarks" :key="i">
+          <ion-item button
+            @click="this.selectedIndex = i + 2 + tools.length + dev_tools.length; goToBookmark(p.location)" lines="none"
+            detail="false" class="hydrated menu-item"
+            :class="{ collapsed: isCollapsed, selected: this.selectedIndex === i + 2 + tools.length + dev_tools.length }"
+            :data-tooltip="isCollapsed ? (p.title[0].toUpperCase() + p.title.substring(1)) : ''" v-if="p.title">
+            <ion-icon slot="start" :name="p.icon ? p.icon : 'help-circle-outline'"></ion-icon>
+            <ion-label v-if="!isCollapsed">{{ p.title[0].toUpperCase() }}{{ p.title.substring(1) }}</ion-label>
+          </ion-item>
+        </ion-menu-toggle>
+      </ion-list>
 
-  <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
-    <h4 v-if="!isCollapsed">Projects</h4>
-    <div v-if="!isCollapsed">
-      <router-link to="/manage/projects/"><ion-icon style="color: var(--ion-color-medium-shade)"
-          name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/new/project/"><ion-icon
-          style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>
+      <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }">
+        <h4 v-if="!isCollapsed">Projects</h4>
+        <div v-if="!isCollapsed">
+          <router-link to="/manage/projects/"><ion-icon style="color: var(--ion-color-medium-shade)"
+              name="ellipsis-horizontal-circle-outline" /></router-link><router-link to="/new/project/"><ion-icon
+              style="color: var(--ion-color-medium-shade)" name="add-circle-outline"></ion-icon></router-link>
+        </div>
+      </ion-note>
+      <ion-list :class="{ collapsed: isCollapsed }">
+        <ion-menu-toggle auto-hide="false" v-for="(p, i) in projects" :key="i">
+          <ion-item button lines="none" detail="false" @click="goToProject(p.link)" class="hydrated menu-item"
+            :class="{ collapsed: isCollapsed }"
+            :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''">
+            <ion-icon slot="start" :name="p.icon ? p.icon : 'folder-outline'"></ion-icon>
+            <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
+          </ion-item>
+        </ion-menu-toggle>
+      </ion-list>
+      <div v-if="!isCollapsed" class="version-footer" @click="isVersionModalOpen = true">
+        <ion-icon name="information-circle-outline"></ion-icon>
+        <span>v{{ version }}</span>
+      </div>
     </div>
-  </ion-note>
-  <ion-list :class="{ collapsed: isCollapsed }">
-    <ion-menu-toggle auto-hide="false" v-for="(p, i) in projects" :key="i">
-      <ion-item button lines="none" detail="false" @click="goToProject(p.link)" class="hydrated menu-item"
-        :class="{ collapsed: isCollapsed }"
-        :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''">
-        <ion-icon slot="start" :name="p.icon ? p.icon : 'folder-outline'"></ion-icon>
-        <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
-      </ion-item>
-    </ion-menu-toggle>
-  </ion-list>
-  <div v-if="!isCollapsed" class="version-footer" @click="isVersionModalOpen = true">
-    <ion-icon name="information-circle-outline"></ion-icon>
-    <span>v{{ version }}</span>
-  </div>
-  </div>
-  <footer class="sidebar-footer" :class="{ collapsed: isCollapsed }">
-    <button type="button" class="footer-btn footer-toggle" @click="toggleSidebar"
-      :data-tooltip="isCollapsed ? 'Expand menu' : ''"
-      :aria-label="isCollapsed ? 'Expand menu' : 'Collapse menu'">
-      <svg v-if="isCollapsed" class="sidebar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
-        <path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2H6a2 2 0 0 1 -2 -2z" stroke-width="2"></path>
-        <path d="M15 4v16" stroke-width="2"></path>
-        <path d="m9 10 2 2 -2 2" stroke-width="2"></path>
-      </svg>
-      <svg v-else class="sidebar-toggle-icon" viewBox="-0.5 -0.5 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
-        <path d="M12.7769375 14.284625H2.2230625c-0.8326875 0 -1.5076875 -0.675 -1.5076875 -1.5076875l0 -10.553875c0 -0.8326875 0.675 -1.5076875 1.5076875 -1.5076875h10.553875c0.8326875 0 1.5076875 0.675 1.5076875 1.5076875v10.553875c0 0.8326875 -0.675 1.5076875 -1.5076875 1.5076875Z" stroke-width="1"></path>
-        <path d="M3.9192500000000003 5.9923125 2.6 7.5l1.3192499999999998 1.5076875" stroke-width="1"></path>
-        <path d="M5.615375 14.284625V0.7153750000000001" stroke-width="1"></path>
-      </svg>
-    </button>
-    <button type="button" id="main-sidebar-notif-trigger" class="footer-btn footer-notif"
-      :data-tooltip="isCollapsed ? 'Notifications' : ''" aria-label="Notifications">
-      <ion-icon name="notifications-outline" />
-      <span v-if="!isCollapsed">Notifications</span>
-      <span v-if="unreadCount > 0" class="notif-dot">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
-    </button>
-  </footer>
-  <ion-popover trigger="main-sidebar-notif-trigger" side="top" alignment="end" show-backdrop="false"
-    @didPresent="markAllRead">
-    <ion-content class="notif-popover">
-      <div class="notif-header">
-        <h4>Notifications</h4>
-      </div>
-      <div v-if="notifications.length === 0" class="notif-empty">
-        <ion-icon name="notifications-off-outline" />
-        <span>You're all caught up</span>
-      </div>
-      <ul v-else class="notif-list">
-        <li v-for="n in notifications" :key="n.id" class="notif-item" :class="{ unread: n.read_status == 0 }">
-          <strong>{{ n.title }}</strong>
-          <p>{{ n.message }}</p>
-        </li>
-      </ul>
-    </ion-content>
-  </ion-popover>
+    <footer class="sidebar-footer" :class="{ collapsed: isCollapsed }">
+      <button type="button" class="footer-btn footer-toggle" @click="toggleSidebar"
+        :data-tooltip="isCollapsed ? 'Expand menu' : ''" :aria-label="isCollapsed ? 'Expand menu' : 'Collapse menu'">
+        <svg v-if="isCollapsed" class="sidebar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+          <path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2H6a2 2 0 0 1 -2 -2z" stroke-width="2"></path>
+          <path d="M15 4v16" stroke-width="2"></path>
+          <path d="m9 10 2 2 -2 2" stroke-width="2"></path>
+        </svg>
+        <svg v-else class="sidebar-toggle-icon" viewBox="-0.5 -0.5 16 16" fill="none" stroke="currentColor"
+          stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+          <path
+            d="M12.7769375 14.284625H2.2230625c-0.8326875 0 -1.5076875 -0.675 -1.5076875 -1.5076875l0 -10.553875c0 -0.8326875 0.675 -1.5076875 1.5076875 -1.5076875h10.553875c0.8326875 0 1.5076875 0.675 1.5076875 1.5076875v10.553875c0 0.8326875 -0.675 1.5076875 -1.5076875 1.5076875Z"
+            stroke-width="1"></path>
+          <path d="M3.9192500000000003 5.9923125 2.6 7.5l1.3192499999999998 1.5076875" stroke-width="1"></path>
+          <path d="M5.615375 14.284625V0.7153750000000001" stroke-width="1"></path>
+        </svg>
+      </button>
+      <button type="button" id="main-sidebar-notif-trigger" class="footer-btn footer-notif"
+        :data-tooltip="isCollapsed ? 'Notifications' : ''" aria-label="Notifications">
+        <ion-icon name="notifications-outline" />
+        <span v-if="!isCollapsed">Notifications</span>
+        <span v-if="unreadCount > 0" class="notif-dot">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+      </button>
+    </footer>
+    <ion-popover trigger="main-sidebar-notif-trigger" side="top" alignment="end" show-backdrop="false"
+      @didPresent="markAllRead">
+      <ion-content class="notif-popover">
+        <div class="notif-header">
+          <h4>Notifications</h4>
+        </div>
+        <div v-if="notifications.length === 0" class="notif-empty">
+          <ion-icon name="notifications-off-outline" />
+          <span>You're all caught up</span>
+        </div>
+        <ul v-else class="notif-list">
+          <li v-for="n in notifications" :key="n.id" class="notif-item" :class="{ unread: n.read_status == 0 }">
+            <strong>{{ n.title }}</strong>
+            <p>{{ n.message }}</p>
+          </li>
+        </ul>
+      </ion-content>
+    </ion-popover>
   </div>
 
   <VersionInfoModal :is-open="isVersionModalOpen" @close="isVersionModalOpen = false" />
@@ -136,9 +139,9 @@ export default defineComponent({
         { icon: "people-outline", name: "Users" },
       ],
       dev_tools: [
-        { icon: "key-outline", name: "Access Log" },
-        { icon: "server-outline", name: "Databases" },
-        { icon: "cloud-outline", name: "Pages" },
+        //{ icon: "key-outline", name: "Access Log" },
+        { icon: "server-outline", name: "Database" },
+        // { icon: "cloud-outline", name: "Pages" },
         { icon: "globe-outline", name: "Domains" },
       ],
     };
