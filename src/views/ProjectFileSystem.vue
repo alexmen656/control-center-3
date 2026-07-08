@@ -3,11 +3,8 @@
     <ion-content class="modern-content">
       <SiteTitle v-if="true" icon="folder-outline" title="File System" />
       <div class="page-container">
-        <div class="page-header">
-          <div class="header-content">
-            <PageTitle icon="folder-outline" title="Files" />
-          </div>
-          <div class="header-actions">
+        <PageHeader icon="folder-outline" title="Files">
+          <template #actions>
             <div class="folder-creation-bar" style="margin-right: 12px;">
               <input type="text" v-model="newFolderName" placeholder="New folder..." class="folder-input"
                 @keyup.enter="createFolder" />
@@ -17,16 +14,11 @@
               </button>
             </div>
 
-            <button class="action-btn secondary" @click="refreshFiles">
-              <ion-icon name="refresh-outline"></ion-icon>
-              Refresh
-            </button>
-            <button class="action-btn primary" @click="showUploadArea">
-              <ion-icon name="cloud-upload-outline"></ion-icon>
-              Upload Files
-            </button>
-          </div>
-        </div>
+            <ActionButton variant="secondary" icon="refresh-outline" @click="refreshFiles">Refresh</ActionButton>
+            <ActionButton variant="primary" icon="cloud-upload-outline" @click="showUploadArea">Upload Files
+            </ActionButton>
+          </template>
+        </PageHeader>
         <div class="stats-grid">
           <StatCard icon="folder-outline" color="primary" :value="folderCount" label="Folders" />
           <StatCard icon="document-outline" color="info" :value="fileCount" label="Files" />
@@ -79,7 +71,7 @@
               <div class="header-title-row">
                 <h3>{{ currentFolderName }}</h3>
                 <span class="entry-count">{{ displayedItems.length }} item{{ displayedItems.length !== 1 ? 's' : ''
-                  }}</span>
+                }}</span>
               </div>
               <div class="header-breadcrumbs">
                 <div v-for="(crumb, index) in breadcrumbs" :key="crumb.id" class="breadcrumb-item small"
@@ -95,10 +87,7 @@
             </div>
 
             <div class="header-right-group">
-              <div class="search-box">
-                <ion-icon name="search-outline"></ion-icon>
-                <input type="text" placeholder="Search files..." v-model="searchTerm">
-              </div>
+              <SearchBox v-model="searchTerm" placeholder="Search files..." />
               <div class="view-toggle">
                 <button class="action-btn icon-only" :class="{ 'active': viewMode === 'grid' }"
                   @click="viewMode = 'grid'" title="Grid View">
@@ -112,15 +101,11 @@
             </div>
           </div>
 
-          <div v-if="displayedItems.length === 0" class="no-data-state" @dragover.prevent="handleDragOver"
-            @drop="handleDrop">
-            <div class="no-data-content">
-              <ion-icon name="folder-open-outline" class="no-data-icon"></ion-icon>
-              <h4>Folder is empty</h4>
-              <p v-if="searchTerm">No files match your search criteria</p>
-              <p v-else>Drag files here or upload to populate this folder</p>
-            </div>
-          </div>
+          <EmptyState v-if="displayedItems.length === 0" icon="folder-open-outline" title="Folder is empty"
+            @dragover.prevent="handleDragOver" @drop="handleDrop">
+            <p v-if="searchTerm">No files match your search criteria</p>
+            <p v-else>Drag files here or upload to populate this folder</p>
+          </EmptyState>
 
           <div v-if="viewMode === 'grid' && displayedItems.length > 0" class="files-wrapper">
             <div class="files-grid" @dragover.prevent="handleDragOver" @drop="handleDrop"
@@ -179,7 +164,7 @@
                     <span v-if="item.type === 'folder'" class="cell-content text-secondary">{{ item.children ?
                       item.children.length : 0 }} items</span>
                     <span v-else class="cell-content text-secondary">{{ getFileExtension(item.name).toUpperCase()
-                      }}</span>
+                    }}</span>
                   </div>
                   <div class="table-cell actions-cell" style="flex: 0 0 100px;" @click.stop>
                     <div class="action-buttons">
@@ -243,14 +228,20 @@ import {
   IonSpinner
 } from "@ionic/vue";
 import SiteTitle from "@/components/SiteTitle.vue";
-import PageTitle from "@/components/PageTitle.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import SearchBox from "@/components/SearchBox.vue";
+import EmptyState from "@/components/EmptyState.vue";
 import StatCard from "@/components/StatCard.vue";
 import axios from "axios";
 
 export default defineComponent({
   name: "ProjectFileSystem",
   components: {
-    PageTitle,
+    PageHeader,
+    ActionButton,
+    SearchBox,
+    EmptyState,
     StatCard,
     IonPage,
     IonContent,
@@ -541,9 +532,11 @@ export default defineComponent({
     handleFileSelect(event) {
       this.files.push(...event.target.files);
     },
+
     removeFile(index) {
       this.files.splice(index, 1);
     },
+
     submit() {
       if (this.files.length > 0) {
         const formData = new FormData();
@@ -570,9 +563,7 @@ export default defineComponent({
       }
     },
 
-    // ---- Drag and Drop ----
     determineDragAndDropCapable() {
-      // Simple check
       return (('draggable' in document.createElement('span')) && ('FileReader' in window));
     },
 
@@ -605,9 +596,7 @@ export default defineComponent({
       if (dragData) {
         // Internal move logic...
       } else if (event.dataTransfer.files.length > 0) {
-        // External upload - Immediate
         this.files.push(...event.dataTransfer.files);
-        // this.showUpload = true; // Disable UI opening
         this.submit(); // Immediate upload
       }
     },
@@ -716,54 +705,12 @@ export default defineComponent({
 
 
 <style scoped>
-/* Modern Design System */
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1600px;
   margin: 0 auto;
   padding: 20px;
   min-height: 100vh;
   background: var(--background);
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.header-content h1 {
-  margin: 0;
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 
 .action-btn {
@@ -1018,39 +965,6 @@ export default defineComponent({
 
 /* Ensure inner wrappers don't block drop if they are effectively the same zone */
 /* But we added drop handlers to card, so bubbling should work or capture */
-
-/* Search Box matching ManageUsers */
-.search-box {
-  position: relative;
-  width: 300px;
-}
-
-.search-box ion-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-secondary);
-  font-size: 18px;
-  pointer-events: none;
-}
-
-.search-box input {
-  width: 100%;
-  padding: 10px 16px 10px 40px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 14px;
-  color: var(--text-primary);
-  background: var(--surface);
-  transition: all 0.2s;
-}
-
-.search-box input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
-}
 
 .files-wrapper {
   padding: 24px;
@@ -1364,35 +1278,6 @@ export default defineComponent({
   margin-top: 12px;
 }
 
-.no-data-state {
-  padding: 60px;
-  text-align: center;
-}
-
-.no-data-content {
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-.no-data-icon {
-  font-size: 64px;
-  color: var(--text-muted);
-  opacity: 0.5;
-  margin-bottom: 16px;
-}
-
-.no-data-content h4 {
-  margin: 0 0 8px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.no-data-content p {
-  color: var(--text-secondary);
-  margin: 0;
-}
-
 .image-preview-modal {
   --width: 90%;
   --max-width: 800px;
@@ -1439,14 +1324,6 @@ export default defineComponent({
 }
 
 @media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #121212;
-    --surface: #1e1e1e;
-    --border: #2e2e2e;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-  }
 
   .table-header,
   .table-row:hover {

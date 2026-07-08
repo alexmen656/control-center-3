@@ -4,25 +4,18 @@
       <SiteTitle icon="globe-outline" title="Domain Management" />
 
       <div class="page-container">
-        <div class="page-header">
-          <div class="header-content">
-            <PageTitle icon="globe-outline" title="Domain Management" />
-          </div>
-          <div class="header-actions">
-            <button class="action-btn secondary" @click="fetchCloudflare">
-              <ion-icon name="cloud-download-outline"></ion-icon>
-              Cloudflare Sync
-            </button>
-            <button class="action-btn primary" @click="openModal()">
-              <ion-icon name="add-outline"></ion-icon>
-              New Domain
-            </button>
-          </div>
-        </div>
+        <PageHeader icon="globe-outline" title="Domain Management">
+          <template #actions>
+            <ActionButton variant="secondary" icon="cloud-download-outline" @click="fetchCloudflare">Cloudflare Sync
+            </ActionButton>
+            <ActionButton variant="primary" icon="add-outline" @click="openModal()">New Domain</ActionButton>
+          </template>
+        </PageHeader>
 
         <div class="stats-grid">
           <StatCard icon="globe-outline" color="primary" :value="domains.length" label="Total Domains" />
-          <StatCard v-if="expiringDomains.length > 0" icon="warning-outline" color="warning" :value="expiringDomains.length" label="Expiring Soon" />
+          <StatCard v-if="expiringDomains.length > 0" icon="warning-outline" color="warning"
+            :value="expiringDomains.length" label="Expiring Soon" />
           <StatCard icon="cloud-outline" color="info" :value="cloudflareDomains" label="Cloudflare" />
         </div>
         <div v-if="expiringDomains.length > 0" class="alert-card warning">
@@ -37,32 +30,17 @@
             </div>
           </div>
         </div>
-        <div class="data-card">
-          <div class="card-header">
-            <div class="header-left">
-              <h3>Alle Domains</h3>
-              <span class="entry-count">{{ filteredDomains.length }} domain{{ filteredDomains.length !== 1 ? 's' : ''
-              }}</span>
-            </div>
-            <div class="search-box">
-              <ion-icon name="search-outline"></ion-icon>
-              <input type="text" placeholder="Domain suchen..." v-model="searchTerm">
-            </div>
-          </div>
+        <DataCard title="Alle Domains"
+          :subtitle="filteredDomains.length + ' domain' + (filteredDomains.length !== 1 ? 's' : '')" noPadding>
+          <template #actions>
+            <SearchBox v-model="searchTerm" placeholder="Domain suchen..." />
+          </template>
 
           <div class="table-wrapper">
-            <div v-if="loading" class="loading-state">
-              <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
-              <p>Loading domains...</p>
-            </div>
+            <LoadingState v-if="loading" message="Loading domains..." />
 
-            <div v-else-if="filteredDomains.length === 0" class="no-data-state">
-              <div class="no-data-content">
-                <ion-icon name="globe-outline" class="no-data-icon"></ion-icon>
-                <h4>No Domains Found</h4>
-                <p>{{ searchTerm ? 'No domains match your search.' : 'No domains available.' }}</p>
-              </div>
-            </div>
+            <EmptyState v-else-if="filteredDomains.length === 0" icon="globe-outline" title="No Domains Found"
+              :description="searchTerm ? 'No domains match your search.' : 'No domains available.'" />
 
             <div v-else class="modern-table">
               <div class="table-header">
@@ -170,7 +148,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </DataCard>
       </div>
 
       <!-- Modal for Add/Edit Domain -->
@@ -237,6 +215,12 @@ import { IonPage, IonContent, IonIcon, IonModal } from '@ionic/vue';
 import SiteTitle from '../components/SiteTitle.vue';
 import PageTitle from '@/components/PageTitle.vue';
 import StatCard from "@/components/StatCard.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import DataCard from "@/components/DataCard.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import SearchBox from "@/components/SearchBox.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import EmptyState from "@/components/EmptyState.vue";
 import axios from 'axios';
 import { alertController, toastController } from '@ionic/vue';
 
@@ -269,7 +253,6 @@ const loading = ref(false);
 const searchTerm = ref('');
 const showModal = ref(false);
 const editingDomain = ref<Domain | null>(null);
-
 const expandedDomains = ref<Set<number>>(new Set());
 const loadingSubdomains = ref<Set<number>>(new Set());
 const subdomainsByDomain = ref<Record<number, Subdomain[]>>({});
@@ -347,7 +330,6 @@ async function toggleSubdomains(domain: Domain) {
   expandedDomains.value.add(domain.id);
   expandedDomains.value = new Set(expandedDomains.value);
 
-  // Lazy-load subdomains only once per domain
   if (subdomainsByDomain.value[domain.id]) {
     return;
   }
@@ -541,114 +523,12 @@ async function showToast(message: string, color: string = 'primary') {
 </script>
 
 <style scoped>
-/* Modern Design System - Same as ManageUsers */
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1600px;
   margin: 0 auto;
   padding: 20px;
   min-height: 100vh;
   background: var(--background);
-}
-
-/* Page Header */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.header-content h1 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.header-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-}
-
-.action-btn.secondary {
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-}
-
-.action-btn.secondary:hover {
-  background: var(--background);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-}
-
-.action-btn ion-icon {
-  font-size: 16px;
 }
 
 /* Stats Grid */
@@ -714,99 +594,8 @@ async function showToast(message: string, color: string = 'primary') {
   font-weight: 600;
 }
 
-/* Data Card */
-.data-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  margin-bottom: 24px;
-}
-
-.card-header {
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-left h3 {
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0;
-  color: var(--text-primary);
-}
-
-.entry-count {
-  padding: 4px 12px;
-  background: var(--background);
-  border-radius: 12px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
-}
-
-.search-box {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-box ion-icon {
-  position: absolute;
-  left: 12px;
-  color: var(--text-muted);
-  font-size: 16px;
-  z-index: 1;
-}
-
-.search-box input {
-  padding: 10px 16px 10px 40px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 14px;
-  background: var(--surface);
-  color: var(--text-primary);
-  min-width: 300px;
-  transition: all 0.2s ease;
-}
-
-.search-box input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
-}
-
-/* Table */
 .table-wrapper {
   overflow-x: auto;
-}
-
-.loading-state,
-.no-data-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-  background: var(--surface);
-}
-
-.loading-icon {
-  font-size: 48px;
-  color: var(--primary-color);
-  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
@@ -817,25 +606,6 @@ async function showToast(message: string, color: string = 'primary') {
   to {
     transform: rotate(360deg);
   }
-}
-
-.no-data-icon {
-  font-size: 64px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.no-data-content h4 {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 8px 0;
-}
-
-.no-data-content p {
-  color: var(--text-secondary);
-  margin: 0;
 }
 
 .modern-table {
@@ -1021,7 +791,6 @@ async function showToast(message: string, color: string = 'primary') {
   transform: scale(1.05);
 }
 
-/* Expand toggle */
 .expand-header {
   flex: 0 0 56px;
   min-width: 56px;
@@ -1369,21 +1138,8 @@ async function showToast(message: string, color: string = 'primary') {
     padding: 16px;
   }
 
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .header-actions {
-    flex-direction: column;
-  }
-
   .stats-grid {
     grid-template-columns: 1fr;
-  }
-
-  .search-box input {
-    min-width: auto;
   }
 
   .modern-table {
@@ -1392,17 +1148,6 @@ async function showToast(message: string, color: string = 'primary') {
 
   .form-row {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #121212;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #b0b0b0;
-    --text-muted: #707070;
   }
 }
 </style>

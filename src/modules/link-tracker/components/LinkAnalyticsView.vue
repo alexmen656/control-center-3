@@ -4,13 +4,9 @@
       <SiteTitle :icon="'analytics-outline'" :title="`Analytics: ${linkData.title}`" bg="transparent"/>
 
       <div class="page-container">
-        <!-- Back Button & Link Info -->
         <div class="action-bar">
           <div class="action-group-left">
-            <button class="action-btn" @click="$router.go(-1)">
-              <ion-icon name="arrow-back"></ion-icon>
-              Zurück
-            </button>
+            <ActionButton icon="arrow-back" @click="$router.go(-1)">Zurück</ActionButton>
             <div class="link-info">
               <h3>{{ linkData.title }}</h3>
               <p class="link-url">{{ linkData.short_url }}</p>
@@ -34,7 +30,6 @@
           </div>
         </div>
 
-        <!-- Stats Cards -->
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-value">{{ linkStats.totalClicks }}</div>
@@ -62,7 +57,6 @@
           </div>
         </div>
 
-        <!-- Timeline Chart -->
         <div class="data-card">
           <div class="card-header">
             <h3>Klicks Timeline</h3>
@@ -72,9 +66,7 @@
           </div>
         </div>
 
-        <!-- Analytics Grid -->
         <div class="analytics-grid">
-          <!-- Countries -->
           <div class="data-card">
             <div class="card-header">
               <h3>Länder</h3>
@@ -91,7 +83,6 @@
             </div>
           </div>
 
-          <!-- Devices -->
           <div class="data-card">
             <div class="card-header">
               <h3>Geräte</h3>
@@ -108,7 +99,6 @@
             </div>
           </div>
 
-          <!-- Browsers -->
           <div class="data-card">
             <div class="card-header">
               <h3>Browser</h3>
@@ -125,7 +115,6 @@
             </div>
           </div>
 
-          <!-- Platforms -->
           <div class="data-card">
             <div class="card-header">
               <h3>Betriebssysteme</h3>
@@ -143,17 +132,12 @@
           </div>
         </div>
 
-        <!-- Custom Domains -->
         <div class="data-card">
           <div class="card-header">
             <h3>Custom Domains</h3>
-            <button class="action-btn primary" @click="showDomainForm = !showDomainForm">
-              <ion-icon name="add"></ion-icon>
-              Domain hinzufügen
-            </button>
+            <ActionButton variant="primary" icon="add" @click="showDomainForm = !showDomainForm">Domain hinzufügen</ActionButton>
           </div>
 
-          <!-- Domain Form -->
           <div v-if="showDomainForm" class="domain-form">
             <form @submit.prevent="createCustomDomain">
               <div class="form-row">
@@ -161,12 +145,11 @@
                   required />
                 <span class="domain-separator">.</span>
                 <span class="base-domain">{{ baseDomain }}</span>
-                <button type="submit" class="action-btn primary">Erstellen</button>
+                <ActionButton type="submit" variant="primary">Erstellen</ActionButton>
               </div>
             </form>
           </div>
 
-          <!-- Domain List -->
           <div class="domain-list">
             <div v-for="domain in customDomains" :key="domain.id" class="domain-item">
               <div class="domain-url">
@@ -185,7 +168,6 @@
           </div>
         </div>
 
-        <!-- Recent Visits Table -->
         <div class="data-card">
           <div class="card-header">
             <h3>Letzte Besuche</h3>
@@ -199,10 +181,9 @@
                 <div class="header-cell">Browser</div>
                 <div class="header-cell">Referer</div>
                 <div class="header-cell">Bot</div>
-                <!--<div class="header-cell">Angefragt</div>-->
               </div>
               <div class="table-body">
-                                <div class="table-row" v-for="visit in recentVisits" :key="visit.id">
+                <div class="table-row" v-for="visit in recentVisits" :key="visit.id">
                   <div class="table-cell">{{ formatDateTime(visit.visited_at) }}</div>
                   <div class="table-cell">
                     <span class="country-flag">{{ getCountryFlag(visit.country) }}</span>
@@ -221,9 +202,6 @@
                       {{ Number(visit.is_bot) == 1 ? 'Bot' : 'Human' }}
                     </span>
                   </div>
-                <!-- <div class="table-cell">
-                    <span class="requested-url">{{ visit.requested_url || '/' }}</span>
-                  </div>--> 
                 </div>
               </div>
             </div>
@@ -236,6 +214,7 @@
 
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
+import ActionButton from "@/components/ActionButton.vue";
 import CountryService from "@/services/countryService.js"
 import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
@@ -243,7 +222,8 @@ Chart.register(...registerables);
 export default {
   name: "LinkAnalyticsView",
   components: {
-    SiteTitle
+    SiteTitle,
+    ActionButton
   },
   data() {
     return {
@@ -368,7 +348,6 @@ export default {
       });
     },
 
-    // Helper methods
     formatDate(dateStr) {
       return new Date(dateStr).toLocaleDateString('de-DE');
     },
@@ -387,23 +366,10 @@ export default {
     },
 
     getCountryName(code) {
-      /*const countries = {
-        'DE': 'Deutschland', 'US': 'USA', 'GB': 'Großbritannien',
-        'FR': 'Frankreich', 'AT': 'Österreich', 'CH': 'Schweiz',
-        'IT': 'Italien', 'ES': 'Spanien', 'NL': 'Niederlande',
-        'BE': 'Belgien', 'XX': 'Unbekannt'
-      };
-      return countries[code] || code;*/
       return CountryService.getCountryName(code)
     },
 
     getCountryFlag(code) {
-      /*  const flags = {
-          'DE': '🇩🇪', 'US': '🇺🇸', 'GB': '🇬🇧', 'FR': '🇫🇷',
-          'AT': '🇦🇹', 'CH': '🇨🇭', 'IT': '🇮🇹', 'ES': '🇪🇸',
-          'NL': '🇳🇱', 'BE': '🇧🇪', 'XX': '🌍'
-        };
-        return flags[code] || '🌍';*/
       return CountryService.getCountryFlag(code) || '🌍'
     },
 
@@ -481,7 +447,6 @@ export default {
           this.showDomainForm = false;
           this.newDomain.subdomain = '';
           this.loadCustomDomains();
-          // Success message
         } else {
           alert(response.data.message || 'Fehler beim Erstellen der Domain');
         }
@@ -522,39 +487,6 @@ export default {
 </script>
 
 <style scoped>
-/* Same modern styling as FormDisplay */
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #1e1e1e;
-    --surface: #2a2a2a;
-    --border: #404040;
-    --text-primary: #e2e8f0;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-  }
-}
-
 ion-content.modern-content {
   --background: var(--background);
 }
@@ -580,25 +512,6 @@ ion-content.modern-content {
   display: flex;
   align-items: center;
   gap: 16px;
-}
-
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 14px;
-  text-decoration: none;
-}
-
-.action-btn:hover {
-  background: var(--background);
 }
 
 .link-info h3 {
@@ -808,7 +721,6 @@ ion-content.modern-content {
   font-style: italic;
 }
 
-/* Domain Management */
 .domain-form {
   padding: 20px;
   border-bottom: 1px solid var(--border);
@@ -900,7 +812,6 @@ ion-content.modern-content {
   transform: scale(1.05);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;

@@ -4,26 +4,13 @@
       <SiteTitle :icon="'grid-outline'" :title="`Table: ${$route.params.name}`" />
 
       <div class="page-container">
-        <!-- Page Header -->
-        <div class="page-header">
-          <div class="header-content">
-            <PageTitle icon="server-outline" :title="$route.params.name" />
-          </div>
-          <div class="header-actions">
-            <button class="action-btn secondary" @click="refreshData">
-              <ion-icon name="refresh-outline"></ion-icon>
-              Refresh
-            </button>
-            <button class="action-btn secondary" @click="exportData">
-              <ion-icon name="download-outline"></ion-icon>
-              Export
-            </button>
-            <button class="action-btn primary" @click="addNewRow">
-              <ion-icon name="add-outline"></ion-icon>
-              Add Row
-            </button>
-          </div>
-        </div>
+        <PageHeader icon="server-outline" :title="$route.params.name">
+          <template #actions>
+            <ActionButton variant="secondary" icon="refresh-outline" @click="refreshData">Refresh</ActionButton>
+            <ActionButton variant="secondary" icon="download-outline" @click="exportData">Export</ActionButton>
+            <ActionButton variant="primary" icon="add-outline" @click="addNewRow">Add Row</ActionButton>
+          </template>
+        </PageHeader>
 
         <div class="stats-grid">
           <StatCard icon="list-outline" color="primary" :value="data.length" label="Total Rows" />
@@ -31,96 +18,46 @@
           <StatCard icon="search-outline" color="success" :value="filteredData.length" label="Filtered Rows" />
         </div>
 
-        <!-- Data Table Card -->
-        <div class="data-card">
-          <div class="card-header">
-            <div class="header-left">
-              <h3>Table Data</h3>
-              <span class="entry-count">{{ filteredData.length }} row{{ filteredData.length !== 1 ? 's' : '' }}</span>
-            </div>
-            <div class="header-right">
-              <div class="search-box">
-                <ion-icon name="search-outline"></ion-icon>
-                <input 
-                  type="text" 
-                  placeholder="Search table data..." 
-                  v-model="searchTerm"
-                >
-              </div>
-            </div>
-          </div>
+        <DataCard title="Table Data" :subtitle="`${filteredData.length} row${filteredData.length !== 1 ? 's' : ''}`"
+          noPadding>
+          <template #actions>
+            <SearchBox v-model="searchTerm" placeholder="Search table data..." />
+          </template>
 
           <div class="table-wrapper">
-            <div v-if="loading" class="loading-state">
-              <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
-              <p>Loading table data...</p>
-            </div>
+            <LoadingState v-if="loading" message="Loading table data..." />
 
-            <div v-else-if="data.length === 0" class="no-data-state">
-              <div class="no-data-content">
-                <ion-icon name="grid-outline" class="no-data-icon"></ion-icon>
-                <h4>No Data Found</h4>
-                <p>This table is empty or no data matches your search.</p>
-                <button @click="addNewRow" class="action-btn primary">
-                  <ion-icon name="add-outline"></ion-icon>
-                  Add First Row
-                </button>
-              </div>
-            </div>
+            <EmptyState v-else-if="data.length === 0" icon="grid-outline" title="No Data Found"
+              description="This table is empty or no data matches your search.">
+              <ActionButton variant="primary" icon="add-outline" @click="addNewRow">Add First Row</ActionButton>
+            </EmptyState>
 
             <div v-else class="modern-table">
-              <!-- Table Header -->
               <div class="table-header">
-                <div 
-                  v-for="(label, index) in labels" 
-                  :key="label"
-                  class="header-cell"
-                  @click="sortBy(index)"
-                >
+                <div v-for="(label, index) in labels" :key="label" class="header-cell" @click="sortBy(index)">
                   <span class="header-text">{{ label }}</span>
                   <div class="sort-indicator">
-                    <ion-icon 
-                      v-if="sortColumn === index && sortDirection === 'asc'" 
-                      name="chevron-up-outline"
-                      class="sort-active"
-                    ></ion-icon>
-                    <ion-icon 
-                      v-else-if="sortColumn === index && sortDirection === 'desc'" 
-                      name="chevron-down-outline"
-                      class="sort-active"
-                    ></ion-icon>
-                    <ion-icon 
-                      v-else 
-                      name="swap-vertical-outline" 
-                      class="sort-default"
-                    ></ion-icon>
+                    <ion-icon v-if="sortColumn === index && sortDirection === 'asc'" name="chevron-up-outline"
+                      class="sort-active"></ion-icon>
+                    <ion-icon v-else-if="sortColumn === index && sortDirection === 'desc'" name="chevron-down-outline"
+                      class="sort-active"></ion-icon>
+                    <ion-icon v-else name="swap-vertical-outline" class="sort-default"></ion-icon>
                   </div>
                 </div>
                 <div class="header-cell actions-header">Actions</div>
               </div>
 
-              <!-- Table Body -->
               <div class="table-body">
                 <div v-for="(row, rowIndex) in sortedData" :key="rowIndex" class="table-row">
-                  <div 
-                    v-for="(cell, colIndex) in row" 
-                    :key="colIndex"
-                    class="table-cell"
-                    @click="editCell(rowIndex, colIndex)"
-                  >
+                  <div v-for="(cell, colIndex) in row" :key="colIndex" class="table-cell"
+                    @click="editCell(rowIndex, colIndex)">
                     <div v-if="editingCell?.row === rowIndex && editingCell?.col === colIndex" class="cell-edit">
-                      <input 
-                        v-model="editValue"
-                        @blur="saveEdit"
-                        @keyup.enter="saveEdit"
-                        @keyup.escape="cancelEdit"
-                        class="cell-input"
-                        autofocus
-                      />
+                      <input v-model="editValue" @blur="saveEdit" @keyup.enter="saveEdit" @keyup.escape="cancelEdit"
+                        class="cell-input" autofocus />
                     </div>
                     <div v-else class="cell-content">
-                      <span v-if="searchTerm && String(cell).toLowerCase().includes(searchTerm.toLowerCase())" 
-                            v-html="highlightMatch(cell, searchTerm)"></span>
+                      <span v-if="searchTerm && String(cell).toLowerCase().includes(searchTerm.toLowerCase())"
+                        v-html="highlightMatch(cell, searchTerm)"></span>
                       <span v-else>{{ cell }}</span>
                     </div>
                   </div>
@@ -138,16 +75,9 @@
               </div>
             </div>
           </div>
-        </div>
+        </DataCard>
 
-        <!-- Table Schema Info -->
-        <div class="schema-card">
-          <div class="card-header">
-            <div class="header-left">
-              <h3>Table Schema</h3>
-              <span class="entry-count">{{ labels.length }} column{{ labels.length !== 1 ? 's' : '' }}</span>
-            </div>
-          </div>
+        <DataCard title="Table Schema" :subtitle="`${labels.length} column${labels.length !== 1 ? 's' : ''}`" noPadding>
           <div class="schema-grid">
             <div v-for="(label, index) in labels" :key="label" class="schema-item">
               <div class="schema-icon">
@@ -160,10 +90,9 @@
               </div>
             </div>
           </div>
-        </div>
+        </DataCard>
       </div>
 
-      <!-- Success Message -->
       <div v-if="successMessage" class="success-toast">
         <ion-icon name="checkmark-circle-outline"></ion-icon>
         {{ successMessage }}
@@ -175,16 +104,26 @@
 <script>
 import { defineComponent, ref, getCurrentInstance, computed } from "vue";
 import SiteTitle from "@/components/SiteTitle.vue";
-import PageTitle from "@/components/PageTitle.vue";
 import StatCard from "@/components/StatCard.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import DataCard from "@/components/DataCard.vue";
+import SearchBox from "@/components/SearchBox.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import EmptyState from "@/components/EmptyState.vue";
 import { useRoute } from "vue-router";
 
 export default defineComponent({
   name: "TableDetailView",
   components: {
     SiteTitle,
-    PageTitle,
     StatCard,
+    PageHeader,
+    ActionButton,
+    DataCard,
+    SearchBox,
+    LoadingState,
+    EmptyState,
   },
   setup() {
     const labels = ref([]);
@@ -196,7 +135,7 @@ export default defineComponent({
     const editingCell = ref(null);
     const editValue = ref('');
     const successMessage = ref('');
-    
+
     const route = useRoute();
     const { appContext } = getCurrentInstance();
     const axios = appContext.config.globalProperties.$axios;
@@ -227,10 +166,10 @@ export default defineComponent({
 
     const filteredData = computed(() => {
       if (!searchTerm.value.trim()) return data.value;
-      
+
       const searchLower = searchTerm.value.toLowerCase();
       return data.value.filter(row =>
-        row.some(cell => 
+        row.some(cell =>
           String(cell).toLowerCase().includes(searchLower)
         )
       );
@@ -238,21 +177,21 @@ export default defineComponent({
 
     const sortedData = computed(() => {
       if (sortColumn.value === null) return filteredData.value;
-      
+
       const sorted = [...filteredData.value].sort((a, b) => {
         const aVal = a[sortColumn.value];
         const bVal = b[sortColumn.value];
-        
+
         // Check if values are numbers
         const aNum = parseFloat(aVal);
         const bNum = parseFloat(bVal);
-        
+
         if (!isNaN(aNum) && !isNaN(bNum)) {
           return sortDirection.value === 'asc' ? aNum - bNum : bNum - aNum;
         } else {
           const aStr = String(aVal).toLowerCase();
           const bStr = String(bVal).toLowerCase();
-          
+
           if (sortDirection.value === 'asc') {
             return aStr.localeCompare(bStr);
           } else {
@@ -260,7 +199,7 @@ export default defineComponent({
           }
         }
       });
-      
+
       return sorted;
     });
 
@@ -282,7 +221,7 @@ export default defineComponent({
             }
           }
         );
-        
+
         showSuccessMessage('Field updated successfully');
         await loadData(); // Reload data after update
       } catch (error) {
@@ -326,7 +265,7 @@ export default defineComponent({
 
     const deleteRow = async (rowIndex) => {
       if (!confirm('Are you sure you want to delete this row?')) return;
-      
+
       try {
         // Implement row deletion
         console.log('Delete row:', rowIndex);
@@ -392,27 +331,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* Modern Design System - Same as FormDisplay and ManageUsers */
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1600px;
   margin: 0 auto;
@@ -421,39 +339,6 @@ export default defineComponent({
   background: var(--background);
 }
 
-/* Page Header */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.header-content h1 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.header-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-/* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -461,175 +346,10 @@ export default defineComponent({
   margin-bottom: 32px;
 }
 
-/* Action Buttons */
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-}
-
-.action-btn ion-icon {
-  font-size: 16px;
-}
-
-/* Data Card */
-.data-card, .schema-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  margin-bottom: 24px;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.header-left h3 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.entry-count {
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.search-box {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-box ion-icon {
-  position: absolute;
-  left: 12px;
-  color: var(--text-muted);
-  font-size: 16px;
-  z-index: 1;
-}
-
-.search-box input {
-  padding: 10px 16px 10px 40px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 14px;
-  background: var(--surface);
-  color: var(--text-primary);
-  min-width: 250px;
-  transition: all 0.2s ease;
-}
-
-.search-box input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
-}
-
-/* Table Wrapper */
 .table-wrapper {
   overflow-x: auto;
 }
 
-/* Loading State */
-.loading-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-secondary);
-}
-
-.loading-icon {
-  font-size: 32px;
-  color: var(--primary-color);
-  margin-bottom: 12px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.loading-state p {
-  margin: 0;
-  font-size: 14px;
-}
-
-/* No Data State */
-.no-data-state {
-  padding: 60px 20px;
-  text-align: center;
-  background: var(--surface);
-}
-
-.no-data-content {
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-.no-data-icon {
-  font-size: 64px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.no-data-content h4 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.no-data-content p {
-  margin: 0 0 24px 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-/* Modern Table */
 .modern-table {
   width: 100%;
   min-width: 800px;
@@ -883,6 +603,7 @@ export default defineComponent({
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -895,21 +616,8 @@ export default defineComponent({
     padding: 16px;
   }
 
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .header-actions {
-    justify-content: center;
-  }
-
   .stats-grid {
     grid-template-columns: 1fr;
-  }
-
-  .search-box input {
-    min-width: 100%;
   }
 
   .header-cell,
@@ -929,17 +637,6 @@ export default defineComponent({
 
   .schema-grid {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #121212;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #b0b0b0;
-    --text-muted: #707070;
   }
 }
 </style>

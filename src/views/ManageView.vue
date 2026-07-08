@@ -3,226 +3,170 @@
     <ion-content class="modern-content">
       <SiteTitle icon="folder-outline" title="Manage Projects" />
       <div class="page-container">
-        <div class="page-header">
-          <div class="header-content">
-            <PageTitle icon="folder-outline" title="Project Management" />
-          </div>
-          <div class="header-actions">
-            <button class="action-btn secondary" @click="refreshProjects">
-              <ion-icon name="refresh-outline"></ion-icon>
+        <PageHeader icon="folder-outline" title="Project Management">
+          <template #actions>
+            <ActionButton icon="refresh-outline" @click="refreshProjects">
               Refresh
-            </button>
-            <button class="action-btn primary" @click="showCreateModal = true">
-              <ion-icon name="add-outline"></ion-icon>
+            </ActionButton>
+            <ActionButton variant="primary" icon="add-outline" @click="showCreateModal = true">
               New Project
-            </button>
-          </div>
-        </div>
+            </ActionButton>
+          </template>
+        </PageHeader>
         <div class="stats-grid">
-          <StatCard
-            icon="folder-outline"
-            color="primary"
-            :value="totalProjects"
-            label="Total Projects"
-          />
-          <StatCard
-            icon="eye-outline"
-            color="success"
-            :value="visibleProjects"
-            label="Visible in Sidebar"
-          />
-          <StatCard
-            icon="eye-off-outline"
-            color="warning"
-            :value="hiddenProjects"
-            label="Hidden Projects"
-          />
-          <StatCard
-            icon="calendar-outline"
-            color="info"
-            :value="recentProjects"
-            label="Created this week"
-          />
+          <StatCard icon="folder-outline" color="primary" :value="totalProjects" label="Total Projects" />
+          <StatCard icon="eye-outline" color="success" :value="visibleProjects" label="Visible in Sidebar" />
+          <StatCard icon="eye-off-outline" color="warning" :value="hiddenProjects" label="Hidden Projects" />
+          <StatCard icon="calendar-outline" color="info" :value="recentProjects" label="Created this week" />
         </div>
-        <div class="projects-card">
-          <div class="card-header">
-            <h2>Your Projects</h2>
-            <div class="search-box">
-              <ion-icon name="search-outline"></ion-icon>
-              <input type="text" placeholder="Search projects..." v-model="searchTerm">
-            </div>
-          </div>
+        <DataCard title="Your Projects">
+          <template #actions>
+            <SearchBox v-model="searchTerm" placeholder="Search projects..." />
+          </template>
 
-          <div class="projects-container">
-            <div v-if="loading" class="loading-state">
-              <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
-              <p>Loading projects...</p>
-            </div>
+          <LoadingState v-if="loading" message="Loading projects..." />
 
-            <div v-else-if="filteredProjects.length === 0" class="no-data-state">
-              <ion-icon name="folder-outline" class="no-data-icon"></ion-icon>
-              <h3>No Projects Found</h3>
-              <p>{{ searchTerm ? 'No projects match your search criteria.' : 'You haven\'t created any projects yet.' }}
-              </p>
-              <button class="action-btn primary" @click="showCreateModal = true">
-                <ion-icon name="add-outline"></ion-icon>
-                Create Your First Project
-              </button>
-            </div>
+          <EmptyState v-else-if="filteredProjects.length === 0" icon="folder-outline" title="No Projects Found"
+            :description="searchTerm ? 'No projects match your search criteria.' : 'You haven\'t created any projects yet.'">
+            <ActionButton variant="primary" icon="add-outline" @click="showCreateModal = true">
+              Create Your First Project
+            </ActionButton>
+          </EmptyState>
 
-            <div v-else class="projects-grid">
-              <div v-for="project in filteredProjects" :key="project.id" class="project-card" :class="{
-                'project-hidden': project.hidden
-              }">
-                <div class="project-header">
-                  <div class="project-info">
-                    <div class="project-icon">
-                      <ion-icon :name="project.icon || 'folder-outline'"></ion-icon>
-                    </div>
-                    <div class="project-details">
-                      <h3 class="project-name">{{ project.name }}</h3>
-                      <p class="project-link">{{ project.link }}</p>
-                    </div>
+          <div v-else class="projects-grid">
+            <div v-for="project in filteredProjects" :key="project.id" class="project-card" :class="{
+              'project-hidden': project.hidden
+            }">
+              <div class="project-header">
+                <div class="project-info">
+                  <div class="project-icon">
+                    <ion-icon :name="project.icon || 'folder-outline'"></ion-icon>
                   </div>
-                  <div class="project-status">
-                    <span class="status-badge" :class="project.hidden ? 'status-hidden' : 'status-visible'">
-                      <ion-icon :name="project.hidden ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
-                      {{ project.hidden ? 'Hidden' : 'Visible' }}
-                    </span>
+                  <div class="project-details">
+                    <h3 class="project-name">{{ project.name }}</h3>
+                    <p class="project-link">{{ project.link }}</p>
                   </div>
                 </div>
-
-                <div class="project-actions">
-                  <button class="icon-btn info-btn" @click="info(project)" title="Project Info">
-                    <ion-icon name="information-circle-outline"></ion-icon>
-                  </button>
-                  <button class="icon-btn toggle-btn" @click="toggleProjectVisibility(project)"
-                    :title="project.hidden ? 'Show in Sidebar' : 'Hide from Sidebar'">
-                    <ion-icon :name="project.hidden ? 'eye-outline' : 'eye-off-outline'"></ion-icon>
-                  </button>
-                  <button class="icon-btn edit-btn" @click="editProject(project)" title="Edit Project">
-                    <ion-icon name="pencil-outline"></ion-icon>
-                  </button>
-                  <button class="icon-btn delete-btn" @click="confirmDelete(project)" title="Delete Project">
-                    <ion-icon name="trash-outline"></ion-icon>
-                  </button>
+                <div class="project-status">
+                  <span class="status-badge" :class="project.hidden ? 'status-hidden' : 'status-visible'">
+                    <ion-icon :name="project.hidden ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+                    {{ project.hidden ? 'Hidden' : 'Visible' }}
+                  </span>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div v-if="showCreateModal" class="custom-modal-overlay" @click="showCreateModal = false">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>Create New Project</h3>
-            <button class="modal-close-btn" @click="showCreateModal = false">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
-          </div>
-          <div class="custom-modal-body">
-            <div class="form-group">
-              <label for="project-name">Project Name</label>
-              <input id="project-name" type="text" v-model="newProject.name" placeholder="Enter project name"
-                class="form-input">
-            </div>
-            <div class="form-group">
-              <label for="project-icon">Icon</label>
-              <input id="project-icon" type="text" v-model="newProject.icon"
-                placeholder="Enter Ionic icon name (e.g., folder-outline)" class="form-input">
-              <div class="icon-preview" v-if="newProject.icon">
-                <ion-icon :name="newProject.icon"></ion-icon>
-                <span>Preview</span>
+
+              <div class="project-actions">
+                <button class="icon-btn info-btn" @click="info(project)" title="Project Info">
+                  <ion-icon name="information-circle-outline"></ion-icon>
+                </button>
+                <button class="icon-btn toggle-btn" @click="toggleProjectVisibility(project)"
+                  :title="project.hidden ? 'Show in Sidebar' : 'Hide from Sidebar'">
+                  <ion-icon :name="project.hidden ? 'eye-outline' : 'eye-off-outline'"></ion-icon>
+                </button>
+                <button class="icon-btn edit-btn" @click="editProject(project)" title="Edit Project">
+                  <ion-icon name="pencil-outline"></ion-icon>
+                </button>
+                <button class="icon-btn delete-btn" @click="confirmDelete(project)" title="Delete Project">
+                  <ion-icon name="trash-outline"></ion-icon>
+                </button>
               </div>
             </div>
-            <div class="form-actions">
-              <button class="action-btn secondary" @click="showCreateModal = false">
-                Cancel
-              </button>
-              <button class="action-btn primary" @click="createProject" :disabled="!newProject.name.trim()">
-                Create Project
-              </button>
-            </div>
+          </div>
+        </DataCard>
+      </div>
+      <AppModal v-model="showCreateModal" title="Create New Project">
+        <div class="form-group">
+          <label for="project-name">Project Name</label>
+          <input id="project-name" type="text" v-model="newProject.name" placeholder="Enter project name"
+            class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="project-icon">Icon</label>
+          <input id="project-icon" type="text" v-model="newProject.icon"
+            placeholder="Enter Ionic icon name (e.g., folder-outline)" class="form-input">
+          <div class="icon-preview" v-if="newProject.icon">
+            <ion-icon :name="newProject.icon"></ion-icon>
+            <span>Preview</span>
           </div>
         </div>
-      </div>
-      <div v-if="showEditModal" class="custom-modal-overlay" @click="showEditModal = false">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>Edit Project</h3>
-            <button class="modal-close-btn" @click="showEditModal = false">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
-          </div>
-          <div class="custom-modal-body">
-            <div class="form-group">
-              <label for="edit-project-name">Project Name</label>
-              <input id="edit-project-name" type="text" v-model="editingProject.name" placeholder="Enter project name"
-                class="form-input">
-            </div>
-            <div class="form-group">
-              <label for="edit-project-icon">Icon</label>
-              <input id="edit-project-icon" type="text" v-model="editingProject.icon"
-                placeholder="Enter Ionic icon name" class="form-input">
-              <div class="icon-preview" v-if="editingProject.icon">
-                <ion-icon :name="editingProject.icon"></ion-icon>
-                <span>Preview</span>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button class="action-btn secondary" @click="showEditModal = false">
-                Cancel
-              </button>
-              <button class="action-btn primary" @click="updateProject">
-                Update Project
-              </button>
-            </div>
+        <template #footer>
+          <ActionButton @click="showCreateModal = false">
+            Cancel
+          </ActionButton>
+          <ActionButton variant="primary" @click="createProject" :disabled="!newProject.name.trim()">
+            Create Project
+          </ActionButton>
+        </template>
+      </AppModal>
+      <AppModal v-model="showEditModal" title="Edit Project">
+        <div class="form-group">
+          <label for="edit-project-name">Project Name</label>
+          <input id="edit-project-name" type="text" v-model="editingProject.name" placeholder="Enter project name"
+            class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="edit-project-icon">Icon</label>
+          <input id="edit-project-icon" type="text" v-model="editingProject.icon" placeholder="Enter Ionic icon name"
+            class="form-input">
+          <div class="icon-preview" v-if="editingProject.icon">
+            <ion-icon :name="editingProject.icon"></ion-icon>
+            <span>Preview</span>
           </div>
         </div>
-      </div>
-      <div v-if="deleteModal.show" class="custom-modal-overlay" @click="deleteModal.show = false">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>Delete Project</h3>
-            <button class="modal-close-btn" @click="deleteModal.show = false">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
-          </div>
-          <div class="custom-modal-body">
-            <div class="warning-content">
-              <ion-icon name="warning-outline" class="warning-icon"></ion-icon>
-              <h4>Are you sure?</h4>
-              <p>This will permanently delete the project <strong>"{{ deleteModal.project?.name }}"</strong> and all its
-                data.</p>
-              <p class="warning-text">This action cannot be undone!</p>
-            </div>
-            <div class="form-actions">
-              <button class="action-btn secondary" @click="deleteModal.show = false">
-                Cancel
-              </button>
-              <button class="action-btn danger" @click="deleteProject()">
-                Delete Permanently
-              </button>
-            </div>
-          </div>
+        <template #footer>
+          <ActionButton @click="showEditModal = false">
+            Cancel
+          </ActionButton>
+          <ActionButton variant="primary" @click="updateProject">
+            Update Project
+          </ActionButton>
+        </template>
+      </AppModal>
+      <AppModal v-model="deleteModal.show" title="Delete Project">
+        <div class="warning-content">
+          <ion-icon name="warning-outline" class="warning-icon"></ion-icon>
+          <h4>Are you sure?</h4>
+          <p>This will permanently delete the project <strong>"{{ deleteModal.project?.name }}"</strong> and all its
+            data.</p>
+          <p class="warning-text">This action cannot be undone!</p>
         </div>
-      </div>
+        <template #footer>
+          <ActionButton @click="deleteModal.show = false">
+            Cancel
+          </ActionButton>
+          <ActionButton variant="danger" @click="deleteProject()">
+            Delete Permanently
+          </ActionButton>
+        </template>
+      </AppModal>
     </ion-content>
   </ion-page>
 </template>
 
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
-import PageTitle from "@/components/PageTitle.vue";
 import StatCard from "@/components/StatCard.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import DataCard from "@/components/DataCard.vue";
+import SearchBox from "@/components/SearchBox.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import EmptyState from "@/components/EmptyState.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import AppModal from "@/components/AppModal.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "ManageView",
   components: {
     SiteTitle,
-    PageTitle,
     StatCard,
+    PageHeader,
+    DataCard,
+    SearchBox,
+    LoadingState,
+    EmptyState,
+    ActionButton,
+    AppModal,
   },
   data() {
     return {
@@ -417,28 +361,6 @@ export default defineComponent({
 });
 </script>
 <style scoped>
-/* Modern Design System */
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --info-color: #2563eb;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1600px;
   margin: 0 auto;
@@ -447,91 +369,6 @@ export default defineComponent({
   background: var(--background);
 }
 
-/* Page Header */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.header-content h1 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.header-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 16px;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-}
-
-.action-btn.secondary {
-  background: var(--surface);
-  color: var(--text-primary);
-}
-
-.action-btn.danger {
-  background: var(--danger-color);
-  color: white;
-  border-color: var(--danger-color);
-}
-
-.action-btn.danger:hover {
-  background: #b91c1c;
-  border-color: #b91c1c;
-}
-
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -539,102 +376,6 @@ export default defineComponent({
   margin-bottom: 32px;
 }
 
-/* Projects Card */
-.projects-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  overflow: hidden;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.card-header h2 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.search-box {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-box ion-icon {
-  position: absolute;
-  left: 12px;
-  color: var(--text-muted);
-  font-size: 16px;
-  z-index: 1;
-}
-
-.search-box input {
-  padding: 10px 16px 10px 40px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 14px;
-  background: var(--background);
-  color: var(--text-primary);
-  min-width: 250px;
-  transition: all 0.2s ease;
-}
-
-.search-box input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
-}
-
-/* Projects Container */
-.projects-container {
-  padding: 24px;
-}
-
-.loading-state,
-.no-data-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-secondary);
-}
-
-.loading-icon {
-  font-size: 48px;
-  color: var(--primary-color);
-  margin-bottom: 16px;
-  animation: spin 1s linear infinite;
-}
-
-.no-data-icon {
-  font-size: 64px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.no-data-state h3 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.no-data-state p {
-  margin: 0 0 16px 0;
-  font-size: 14px;
-}
-
-/* Projects Grid */
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -781,75 +522,6 @@ export default defineComponent({
   background: rgba(235, 68, 90, 0.22);
 }
 
-/* Modal Styles */
-.custom-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  animation: modalFadeIn 0.2s ease;
-}
-
-.custom-modal-content {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border);
-  max-width: 90vw;
-  max-height: 90vh;
-  width: 500px;
-  display: flex;
-  flex-direction: column;
-  animation: modalSlideIn 0.3s ease;
-}
-
-.custom-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--background);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
-
-.custom-modal-header h3 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.modal-close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.modal-close-btn:hover {
-  background: var(--border);
-  color: var(--text-primary);
-}
-
-.custom-modal-body {
-  padding: 24px;
-}
-
 .form-group {
   margin-bottom: 20px;
 }
@@ -926,76 +598,17 @@ export default defineComponent({
   font-weight: 600;
 }
 
-.form-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-/* Animations */
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
   }
 
   .stats-grid {
     grid-template-columns: 1fr;
   }
 
-  .card-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .search-box input {
-    min-width: 100%;
-  }
-
   .projects-grid {
     grid-template-columns: 1fr;
-  }
-
-  .custom-modal-content {
-    width: 95vw;
-    margin: 20px;
   }
 
   .project-header {
@@ -1006,17 +619,6 @@ export default defineComponent({
 
   .project-status {
     align-self: flex-start;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #121212;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #b0b0b0;
-    --text-muted: #707070;
   }
 }
 </style>

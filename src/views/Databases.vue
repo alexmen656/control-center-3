@@ -4,31 +4,20 @@
       <SiteTitle icon="server-outline" title="Database Tables" />
 
       <div class="page-container">
-        <!-- Page Header -->
-        <div class="page-header">
-          <div class="header-content">
-            <PageTitle icon="server-outline" title="Database Management" />
-          </div>
-          <div class="header-actions">
-            <button class="action-btn secondary" @click="refreshTables">
-              <ion-icon name="refresh-outline"></ion-icon>
-              Refresh
-            </button>
-            <button class="action-btn secondary" @click="toggleSearch">
-              <ion-icon name="search-outline"></ion-icon>
-              {{ showSearch ? 'Hide Search' : 'Search' }}
-            </button>
-          </div>
-        </div>
+        <PageHeader icon="server-outline" title="Database Management">
+          <template #actions>
+            <ActionButton variant="secondary" icon="refresh-outline" @click="refreshTables">Refresh</ActionButton>
+            <ActionButton variant="secondary" icon="search-outline" @click="toggleSearch">{{ showSearch ? 'Hide Search'
+              : 'Search' }}</ActionButton>
+          </template>
+        </PageHeader>
 
-        <!-- Stats Cards -->
         <div class="stats-grid">
           <StatCard icon="server-outline" color="primary" :value="tables.length" label="Total Tables" />
           <StatCard icon="search-outline" color="info" :value="filteredTables.length" label="Filtered Results" />
           <StatCard icon="grid-outline" color="success" :value="search ? 'Active' : 'Inactive'" label="Search Filter" />
         </div>
 
-        <!-- Search Bar -->
         <div v-if="showSearch" class="search-container">
           <div class="search-box">
             <ion-icon name="search-outline"></ion-icon>
@@ -39,32 +28,15 @@
           </div>
         </div>
 
-        <!-- Tables Grid -->
-        <div class="data-card">
-          <div class="card-header">
-            <div class="header-left">
-              <h3>Tables</h3>
-              <span class="entry-count">{{ filteredTables.length }} table{{ filteredTables.length !== 1 ? 's' : ''
-                }}</span>
-            </div>
-          </div>
-
+        <DataCard title="Tables" :subtitle="`${filteredTables.length} table${filteredTables.length !== 1 ? 's' : ''}`"
+          noPadding>
           <div class="table-wrapper">
-            <div v-if="tables.length === 0" class="loading-state">
-              <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
-              <p>Loading tables...</p>
-            </div>
+            <LoadingState v-if="tables.length === 0" message="Loading tables..." />
 
-            <div v-else-if="filteredTables.length === 0" class="no-data-state">
-              <div class="no-data-content">
-                <ion-icon name="server-outline" class="no-data-icon"></ion-icon>
-                <h4>No Tables Found</h4>
-                <p>{{ search ? 'No tables match your search criteria.' : 'No database tables available.' }}</p>
-                <button v-if="search" @click="search = ''" class="action-btn primary">
-                  Clear Search
-                </button>
-              </div>
-            </div>
+            <EmptyState v-else-if="filteredTables.length === 0" icon="server-outline" title="No Tables Found"
+              :description="search ? 'No tables match your search criteria.' : 'No database tables available.'">
+              <ActionButton v-if="search" variant="primary" @click="search = ''">Clear Search</ActionButton>
+            </EmptyState>
 
             <div v-else class="tables-grid">
               <div v-for="table in filteredTables" :key="table[0]" class="table-card" @click="openTable(table[0])">
@@ -82,9 +54,8 @@
               </div>
             </div>
           </div>
-        </div>
+        </DataCard>
 
-        <!-- Quick Actions -->
         <div class="quick-actions">
           <div class="quick-action-card">
             <div class="quick-action-icon">
@@ -122,15 +93,23 @@
 <script>
 import { defineComponent, ref, getCurrentInstance, computed, onMounted, onUnmounted } from "vue";
 import SiteTitle from "@/components/SiteTitle.vue";
-import PageTitle from "@/components/PageTitle.vue";
 import StatCard from "@/components/StatCard.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import DataCard from "@/components/DataCard.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import EmptyState from "@/components/EmptyState.vue";
 
 export default defineComponent({
   name: "DatabasesView",
   components: {
     SiteTitle,
-    PageTitle,
     StatCard,
+    PageHeader,
+    DataCard,
+    ActionButton,
+    LoadingState,
+    EmptyState,
   },
   data() {
     return {
@@ -229,27 +208,6 @@ export default defineComponent({
 });
 </script>
 <style scoped>
-/* Modern Design System - Same as FormDisplay */
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1600px;
   margin: 0 auto;
@@ -258,39 +216,6 @@ export default defineComponent({
   background: var(--background);
 }
 
-/* Page Header */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.header-content h1 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.header-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-/* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -298,7 +223,6 @@ export default defineComponent({
   margin-bottom: 32px;
 }
 
-/* Search Container */
 .search-container {
   margin-bottom: 24px;
 }
@@ -353,145 +277,10 @@ export default defineComponent({
   color: var(--text-primary);
 }
 
-/* Action Buttons */
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-}
-
-.action-btn ion-icon {
-  font-size: 16px;
-}
-
-/* Data Card */
-.data-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  margin-bottom: 24px;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.header-left h3 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.entry-count {
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-/* Table Wrapper */
 .table-wrapper {
   overflow-x: auto;
 }
 
-/* Loading State */
-.loading-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-secondary);
-}
-
-.loading-icon {
-  font-size: 32px;
-  color: var(--primary-color);
-  margin-bottom: 12px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.loading-state p {
-  margin: 0;
-  font-size: 14px;
-}
-
-/* No Data State */
-.no-data-state {
-  padding: 60px 20px;
-  text-align: center;
-  background: var(--surface);
-}
-
-.no-data-content {
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-.no-data-icon {
-  font-size: 64px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.no-data-content h4 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.no-data-content p {
-  margin: 0 0 24px 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-/* Tables Grid */
 .tables-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -553,7 +342,6 @@ export default defineComponent({
   font-size: 20px;
 }
 
-/* Quick Actions */
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -607,7 +395,6 @@ export default defineComponent({
   line-height: 1.4;
 }
 
-/* Highlight Match */
 .highlight {
   background: #ffe082;
   color: #d32f2f;
@@ -616,7 +403,6 @@ export default defineComponent({
   font-weight: 600;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
@@ -646,18 +432,6 @@ export default defineComponent({
 
   .search-box {
     max-width: 100%;
-  }
-}
-
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #121212;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #b0b0b0;
-    --text-muted: #707070;
   }
 }
 </style>

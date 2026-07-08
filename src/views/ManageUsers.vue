@@ -3,53 +3,28 @@
     <ion-content class="modern-content">
       <SiteTitle icon="people-outline" title="User Management" />
       <div class="page-container">
-        <div class="page-header">
-          <div class="header-content">
-            <PageTitle icon="people-outline" title="User Management" />
-          </div>
-          <div class="header-actions">
-            <button class="action-btn secondary" @click="refreshUsers">
-              <ion-icon name="refresh-outline"></ion-icon>
-              Refresh
-            </button>
-            <button class="action-btn primary" @click="showCreateModal = true">
-              <ion-icon name="add-outline"></ion-icon>
-              New User
-            </button>
-          </div>
-        </div>
+        <PageHeader icon="people-outline" title="User Management">
+          <template #actions>
+            <ActionButton variant="secondary" icon="refresh-outline" @click="refreshUsers">Refresh</ActionButton>
+            <ActionButton variant="primary" icon="add-outline" @click="showCreateModal = true">New User</ActionButton>
+          </template>
+        </PageHeader>
         <div class="stats-grid">
           <StatCard icon="people-outline" color="primary" :value="data.length" label="Total Users" />
           <StatCard icon="checkmark-circle-outline" color="success" :value="activeUsers" label="Active Users" />
           <StatCard icon="time-outline" color="warning" :value="pendingUsers" label="Pending Verification" />
           <StatCard icon="business-outline" color="info" :value="assignedUsers" label="Project Assigned" />
         </div>
-        <div class="data-card">
-          <div class="card-header">
-            <div class="header-left">
-              <h3>All Users</h3>
-              <span class="entry-count">{{ filteredUsers.length }} user{{ filteredUsers.length !== 1 ? 's' : ''
-                }}</span>
-            </div>
-            <div class="search-box">
-              <ion-icon name="search-outline"></ion-icon>
-              <input type="text" placeholder="Search users..." v-model="searchTerm">
-            </div>
-          </div>
-
+        <DataCard title="All Users" :subtitle="`${filteredUsers.length} user${filteredUsers.length !== 1 ? 's' : ''}`"
+          noPadding>
+          <template #actions>
+            <SearchBox v-model="searchTerm" placeholder="Search users..." />
+          </template>
           <div class="table-wrapper">
-            <div v-if="loading" class="loading-state">
-              <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
-              <p>Loading users...</p>
-            </div>
+            <LoadingState v-if="loading" message="Loading users..." />
 
-            <div v-else-if="filteredUsers.length === 0" class="no-data-state">
-              <div class="no-data-content">
-                <ion-icon name="people-outline" class="no-data-icon"></ion-icon>
-                <h4>No Users Found</h4>
-                <p>{{ searchTerm ? 'No users match your search criteria.' : 'No users have been created yet.' }}</p>
-              </div>
-            </div>
+            <EmptyState v-else-if="filteredUsers.length === 0" icon="people-outline" title="No Users Found"
+              :description="searchTerm ? 'No users match your search criteria.' : 'No users have been created yet.'" />
 
             <div v-else class="modern-table">
               <div class="table-header">
@@ -121,15 +96,10 @@
               </div>
             </div>
           </div>
-        </div>
-        <div v-if="pendingVerificationEntries.length > 0" class="data-card">
-          <div class="card-header">
-            <div class="header-left">
-              <h3>Pending Verification</h3>
-              <span class="entry-count">{{ pendingVerificationEntries.length }} user{{ pendingVerificationEntries.length
-                !== 1 ? 's' : '' }} waiting</span>
-            </div>
-          </div>
+        </DataCard>
+        <DataCard v-if="pendingVerificationEntries.length > 0" title="Pending Verification"
+          :subtitle="`${pendingVerificationEntries.length} user${pendingVerificationEntries.length !== 1 ? 's' : ''} waiting`"
+          noPadding>
           <div class="pending-users">
             <div v-for="user in pendingVerificationEntries" :key="user[0]" class="pending-user-card">
               <div class="pending-user-info">
@@ -145,177 +115,131 @@
                   <p>{{ user[4] }}</p>
                 </div>
               </div>
-              <button class="action-btn primary" @click="approve(user[0])">
-                <ion-icon name="checkmark-outline"></ion-icon>
-                Approve
-              </button>
+              <ActionButton variant="primary" icon="checkmark-outline" @click="approve(user[0])">Approve</ActionButton>
             </div>
+          </div>
+        </DataCard>
+      </div>
+      <AppModal v-model="showCreateModal" title="Create New User">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">First Name *</label>
+            <input type="text" v-model="newUser.first_name" class="modern-input" placeholder="Enter first name" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input type="text" v-model="newUser.last_name" class="modern-input" placeholder="Enter last name" />
           </div>
         </div>
-      </div>
-      <div v-if="showCreateModal" class="custom-modal-overlay" @click="showCreateModal = false">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>Create New User</h3>
-            <button class="modal-close-btn" @click="showCreateModal = false">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          <input type="email" v-model="newUser.email_adress" class="modern-input" placeholder="Enter email address" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <input type="password" v-model="newUser.password" class="modern-input" placeholder="Enter password" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assign to Project</label>
+          <select v-model="newUser.assigned_project" class="modern-select">
+            <option value="">No Project Assignment</option>
+            <option v-for="project in availableProjects" :key="project.link" :value="project.link">
+              {{ project.name }}
+            </option>
+          </select>
+        </div>
+        <template #footer>
+          <ActionButton variant="secondary" @click="showCreateModal = false">Cancel</ActionButton>
+          <ActionButton variant="primary" @click="createUser()">Create User</ActionButton>
+        </template>
+      </AppModal>
+      <AppModal v-model="showAssignModal" title="Assign Project">
+        <div class="assign-user-info">
+          <div class="user-avatar" :class="{ 'avatar-initials': selectedUser?.image === 'avatar' }"
+            :style="selectedUser?.image === 'avatar' ? { backgroundColor: getAvatarColor(selectedUser.id) } : {}">
+            <img
+              v-if="selectedUser?.image && selectedUser?.image !== 'null' && selectedUser?.image !== 'avatar' && selectedUser?.image !== 'google'"
+              :src="selectedUser.image" alt="Profile" />
+            <span v-else-if="selectedUser?.image === 'avatar'" class="initials">{{
+              getInitialsFromName(selectedUser.name) }}</span>
+            <ion-icon v-else name="person-outline"></ion-icon>
           </div>
-          <div class="custom-modal-body">
-            <div class="form-grid">
-              <div class="form-group">
-                <label class="form-label">First Name *</label>
-                <input type="text" v-model="newUser.first_name" class="modern-input" placeholder="Enter first name" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">Last Name</label>
-                <input type="text" v-model="newUser.last_name" class="modern-input" placeholder="Enter last name" />
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Email Address *</label>
-              <input type="email" v-model="newUser.email_adress" class="modern-input"
-                placeholder="Enter email address" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Password *</label>
-              <input type="password" v-model="newUser.password" class="modern-input" placeholder="Enter password" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Assign to Project</label>
-              <select v-model="newUser.assigned_project" class="modern-select">
-                <option value="">No Project Assignment</option>
-                <option v-for="project in availableProjects" :key="project.link" :value="project.link">
-                  {{ project.name }}
-                </option>
-              </select>
-            </div>
-            <div class="form-actions">
-              <button class="action-btn secondary" @click="showCreateModal = false">
-                Cancel
-              </button>
-              <button class="action-btn primary" @click="createUser()">
-                Create User
-              </button>
-            </div>
+          <div class="user-details">
+            <h4>{{ selectedUser?.name }}</h4>
+            <p>{{ selectedUser?.email }}</p>
           </div>
         </div>
-      </div>
-      <div v-if="showAssignModal" class="custom-modal-overlay" @click="showAssignModal = false">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>Assign Project</h3>
-            <button class="modal-close-btn" @click="showAssignModal = false">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
+        <div class="form-group">
+          <label class="form-label">Select Project</label>
+          <select v-model="assignmentData.project" class="modern-select">
+            <option value="">Remove Project Assignment</option>
+            <option v-for="project in availableProjects" :key="project.link" :value="project.link">
+              {{ project.name }}
+            </option>
+          </select>
+          <p class="form-help">Users assigned to a project will be automatically redirected to that project upon
+            login</p>
+        </div>
+        <template #footer>
+          <ActionButton variant="secondary" @click="showAssignModal = false">Cancel</ActionButton>
+          <ActionButton variant="primary" @click="assignProject()">Assign Project</ActionButton>
+        </template>
+      </AppModal>
+      <AppModal v-model="showEditModal" title="Edit User">
+        <div class="assign-user-info">
+          <div class="user-avatar" :class="{ 'avatar-initials': editUserData.image === 'avatar' }"
+            :style="editUserData.image === 'avatar' ? { backgroundColor: getAvatarColor(editUserData.id) } : {}">
+            <img
+              v-if="editUserData.image && editUserData.image !== 'null' && editUserData.image !== 'avatar' && editUserData.image !== 'google'"
+              :src="editUserData.image" alt="Profile" />
+            <span v-else-if="editUserData.image === 'avatar'" class="initials">{{
+              getInitials(editUserData.first_name, editUserData.last_name) }}</span>
+            <ion-icon v-else name="person-outline"></ion-icon>
           </div>
-          <div class="custom-modal-body">
-            <div class="assign-user-info">
-              <div class="user-avatar" :class="{ 'avatar-initials': selectedUser?.image === 'avatar' }"
-                :style="selectedUser?.image === 'avatar' ? { backgroundColor: getAvatarColor(selectedUser.id) } : {}">
-                <img
-                  v-if="selectedUser?.image && selectedUser?.image !== 'null' && selectedUser?.image !== 'avatar' && selectedUser?.image !== 'google'"
-                  :src="selectedUser.image" alt="Profile" />
-                <span v-else-if="selectedUser?.image === 'avatar'" class="initials">{{
-                  getInitialsFromName(selectedUser.name) }}</span>
-                <ion-icon v-else name="person-outline"></ion-icon>
-              </div>
-              <div class="user-details">
-                <h4>{{ selectedUser?.name }}</h4>
-                <p>{{ selectedUser?.email }}</p>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Select Project</label>
-              <select v-model="assignmentData.project" class="modern-select">
-                <option value="">Remove Project Assignment</option>
-                <option v-for="project in availableProjects" :key="project.link" :value="project.link">
-                  {{ project.name }}
-                </option>
-              </select>
-              <p class="form-help">Users assigned to a project will be automatically redirected to that project upon
-                login</p>
-            </div>
-            <div class="form-actions">
-              <button class="action-btn secondary" @click="showAssignModal = false">
-                Cancel
-              </button>
-              <button class="action-btn primary" @click="assignProject()">
-                Assign Project
-              </button>
-            </div>
+          <div class="user-details">
+            <h4>Editing User ID: {{ editUserData.id }}</h4>
+            <p>{{ editUserData.original_email }}</p>
           </div>
         </div>
-      </div>
-      <div v-if="showEditModal" class="custom-modal-overlay" @click="showEditModal = false">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>Edit User</h3>
-            <button class="modal-close-btn" @click="showEditModal = false">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">First Name *</label>
+            <input type="text" v-model="editUserData.first_name" class="modern-input" placeholder="Enter first name" />
           </div>
-          <div class="custom-modal-body">
-            <div class="assign-user-info">
-              <div class="user-avatar" :class="{ 'avatar-initials': editUserData.image === 'avatar' }"
-                :style="editUserData.image === 'avatar' ? { backgroundColor: getAvatarColor(editUserData.id) } : {}">
-                <img
-                  v-if="editUserData.image && editUserData.image !== 'null' && editUserData.image !== 'avatar' && editUserData.image !== 'google'"
-                  :src="editUserData.image" alt="Profile" />
-                <span v-else-if="editUserData.image === 'avatar'" class="initials">{{
-                  getInitials(editUserData.first_name, editUserData.last_name) }}</span>
-                <ion-icon v-else name="person-outline"></ion-icon>
-              </div>
-              <div class="user-details">
-                <h4>Editing User ID: {{ editUserData.id }}</h4>
-                <p>{{ editUserData.original_email }}</p>
-              </div>
-            </div>
-            <div class="form-grid">
-              <div class="form-group">
-                <label class="form-label">First Name *</label>
-                <input type="text" v-model="editUserData.first_name" class="modern-input"
-                  placeholder="Enter first name" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">Last Name</label>
-                <input type="text" v-model="editUserData.last_name" class="modern-input"
-                  placeholder="Enter last name" />
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Email Address *</label>
-              <input type="email" v-model="editUserData.email" class="modern-input" placeholder="Enter email address" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Status</label>
-              <select v-model="editUserData.status" class="modern-select">
-                <option value="active">Active</option>
-                <option value="pending_verification">Pending Verification</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">New Password</label>
-              <input type="password" v-model="editUserData.password" class="modern-input"
-                placeholder="Leave empty to keep current password" />
-              <div class="form-help">
-                Only enter a new password if you want to change it. Leave empty to keep the current password.
-              </div>
-            </div>
-            <div class="form-actions">
-              <button class="action-btn secondary" @click="showEditModal = false">
-                Cancel
-              </button>
-              <button class="action-btn primary" @click="saveUserEdit" :disabled="loading">
-                <ion-spinner v-if="loading" name="crescent"></ion-spinner>
-                <ion-icon v-else name="save-outline"></ion-icon>
-                <span v-if="!loading">Save Changes</span>
-              </button>
-            </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input type="text" v-model="editUserData.last_name" class="modern-input" placeholder="Enter last name" />
           </div>
         </div>
-      </div>
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          <input type="email" v-model="editUserData.email" class="modern-input" placeholder="Enter email address" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select v-model="editUserData.status" class="modern-select">
+            <option value="active">Active</option>
+            <option value="pending_verification">Pending Verification</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">New Password</label>
+          <input type="password" v-model="editUserData.password" class="modern-input"
+            placeholder="Leave empty to keep current password" />
+          <div class="form-help">
+            Only enter a new password if you want to change it. Leave empty to keep the current password.
+          </div>
+        </div>
+        <template #footer>
+          <ActionButton variant="secondary" @click="showEditModal = false">Cancel</ActionButton>
+          <ActionButton variant="primary" @click="saveUserEdit" :disabled="loading">
+            <ion-spinner v-if="loading" name="crescent"></ion-spinner>
+            <ion-icon v-else name="save-outline"></ion-icon>
+            <span v-if="!loading">Save Changes</span>
+          </ActionButton>
+        </template>
+      </AppModal>
       <div v-if="successMessage" class="success-toast">
         <ion-icon name="checkmark-circle-outline"></ion-icon>
         {{ successMessage }}
@@ -326,16 +250,28 @@
 
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
-import PageTitle from "@/components/PageTitle.vue";
 import StatCard from "@/components/StatCard.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import SearchBox from "@/components/SearchBox.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import EmptyState from "@/components/EmptyState.vue";
+import DataCard from "@/components/DataCard.vue";
+import AppModal from "@/components/AppModal.vue";
 import { defineComponent, ref, getCurrentInstance } from "vue";
 
 export default defineComponent({
   name: "ManageUsers",
   components: {
     SiteTitle,
-    PageTitle,
     StatCard,
+    PageHeader,
+    ActionButton,
+    SearchBox,
+    LoadingState,
+    EmptyState,
+    DataCard,
+    AppModal,
   },
   setup() {
     const { appContext } = getCurrentInstance();
@@ -479,10 +415,10 @@ export default defineComponent({
 
       const searchLower = this.searchTerm.toLowerCase();
       return this.data.filter(user =>
-        user[2]?.toLowerCase().includes(searchLower) || // first name
-        user[3]?.toLowerCase().includes(searchLower) || // last name
-        user[4]?.toLowerCase().includes(searchLower) || // email
-        user[7]?.toLowerCase().includes(searchLower)    // status
+        user[2]?.toLowerCase().includes(searchLower) ||
+        user[3]?.toLowerCase().includes(searchLower) ||
+        user[4]?.toLowerCase().includes(searchLower) ||
+        user[7]?.toLowerCase().includes(searchLower)
       );
     },
     sortedUsers() {
@@ -758,63 +694,12 @@ export default defineComponent({
 });
 </script>
 <style scoped>
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1600px;
   margin: 0 auto;
   padding: 20px;
   min-height: 100vh;
   background: var(--background);
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.header-content h1 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.header-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
 }
 
 .stats-grid {
@@ -851,75 +736,6 @@ export default defineComponent({
   margin: 0;
   color: var(--text-secondary);
   font-size: 14px;
-}
-
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-}
-
-.action-btn ion-icon {
-  font-size: 16px;
-}
-
-.search-box {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-box ion-icon {
-  position: absolute;
-  left: 12px;
-  color: var(--text-muted);
-  font-size: 16px;
-  z-index: 1;
-}
-
-.search-box input {
-  padding: 10px 16px 10px 40px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 14px;
-  background: var(--surface);
-  color: var(--text-primary);
-  min-width: 250px;
-  transition: all 0.2s ease;
-}
-
-.search-box input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
 .stats-grid {
@@ -983,99 +799,8 @@ export default defineComponent({
   margin: 0;
 }
 
-.data-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  margin-bottom: 24px;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.header-left h3 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.entry-count {
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
 .table-wrapper {
   overflow-x: auto;
-}
-
-.loading-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-secondary);
-}
-
-.loading-icon {
-  font-size: 32px;
-  color: var(--primary-color);
-  margin-bottom: 12px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.loading-state p {
-  margin: 0;
-  font-size: 14px;
-}
-
-.no-data-state {
-  padding: 60px 20px;
-  text-align: center;
-  background: var(--surface);
-}
-
-.no-data-content {
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-.no-data-icon {
-  font-size: 64px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.no-data-content h4 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.no-data-content p {
-  margin: 0 0 24px 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-  line-height: 1.5;
 }
 
 .modern-table {
@@ -1384,77 +1109,6 @@ export default defineComponent({
   font-size: 14px;
 }
 
-.custom-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  animation: modalFadeIn 0.2s ease;
-}
-
-.custom-modal-content {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border);
-  max-width: 90vw;
-  max-height: 90vh;
-  width: 600px;
-  display: flex;
-  flex-direction: column;
-  animation: modalSlideIn 0.3s ease;
-}
-
-.custom-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--background);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
-
-.custom-modal-header h3 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.modal-close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.modal-close-btn:hover {
-  background: var(--border);
-  color: var(--text-primary);
-}
-
-.custom-modal-body {
-  flex: 1;
-  padding: 24px;
-  overflow-y: auto;
-  min-height: 0;
-}
-
 .modern-edit-form {
   width: 100%;
 }
@@ -1528,15 +1182,6 @@ export default defineComponent({
   font-size: 14px;
 }
 
-.form-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border);
-}
-
 .success-toast {
   position: fixed;
   bottom: 24px;
@@ -1553,28 +1198,6 @@ export default defineComponent({
   backdrop-filter: blur(8px);
   box-shadow: var(--shadow-lg);
   animation: slideInRight 0.3s ease;
-}
-
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
 
 @keyframes slideInRight {
@@ -1605,16 +1228,6 @@ export default defineComponent({
     justify-content: center;
   }
 
-  .card-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-
-  .search-box input {
-    min-width: 100%;
-  }
-
   .header-cell,
   .table-cell {
     min-width: 100px;
@@ -1628,12 +1241,6 @@ export default defineComponent({
 
   .form-grid {
     grid-template-columns: 1fr;
-  }
-
-  .custom-modal-content {
-    width: 95vw;
-    max-width: none;
-    margin: 20px;
   }
 
   .pending-user-card {
@@ -1652,26 +1259,10 @@ export default defineComponent({
     max-width: 80px;
   }
 
-  .custom-modal-header,
-  .custom-modal-body {
-    padding: 20px;
-  }
-
   .success-toast {
     bottom: 16px;
     right: 16px;
     left: 16px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #121212;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #b0b0b0;
-    --text-muted: #707070;
   }
 }
 </style>

@@ -3,41 +3,22 @@
     <ion-content class="modern-content">
       <SiteTitle icon="code-outline" title="Codespaces" />
       <div class="page-container">
-        <div class="page-header">
-          <div class="header-content">
-            <PageTitle icon="code-outline" title="Codespaces" />
-          </div>
-          <div class="header-actions">
-            <button class="action-btn primary" @click="createNewCodespace">
-              <ion-icon name="add-outline"></ion-icon>
-              Neuer Codespace
-            </button>
-          </div>
-        </div>
-        <div class="data-card">
-          <div class="card-header">
-            <div class="header-left">
-              <h3>Alle Codespaces</h3>
-              <span class="entry-count">{{ codespaces.length }} Codespace{{ codespaces.length !== 1 ? 's' : '' }}</span>
-            </div>
-            <div class="search-box">
-              <ion-icon name="search-outline"></ion-icon>
-              <input type="text" placeholder="Codespaces durchsuchen..." v-model="searchTerm">
-            </div>
-          </div>
+        <PageHeader icon="code-outline" title="Codespaces">
+          <template #actions>
+            <ActionButton variant="primary" icon="add-outline" @click="createNewCodespace">Neuer Codespace
+            </ActionButton>
+          </template>
+        </PageHeader>
+        <DataCard title="Alle Codespaces"
+          :subtitle="`${codespaces.length} Codespace${codespaces.length !== 1 ? 's' : ''}`" noPadding>
+          <template #actions>
+            <SearchBox v-model="searchTerm" placeholder="Codespaces durchsuchen..." />
+          </template>
           <div class="table-wrapper">
-            <div v-if="loading" class="loading-state">
-              <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
-              <p>Codespaces werden geladen...</p>
-            </div>
-            <div v-else-if="filteredCodespaces.length === 0" class="no-data-state">
-              <div class="no-data-content">
-                <ion-icon name="code-slash-outline" class="no-data-icon"></ion-icon>
-                <h4>Keine Codespaces gefunden</h4>
-                <p>{{ searchTerm ? 'Keine Codespaces entsprechen Ihrer Suche.' : `Erstellen Sie Ihren ersten Codespace,
-                  um mit der Entwicklung zu beginnen.` }}</p>
-              </div>
-            </div>
+            <LoadingState v-if="loading" message="Codespaces werden geladen..." />
+            <EmptyState v-else-if="filteredCodespaces.length === 0" icon="code-slash-outline"
+              title="Keine Codespaces gefunden"
+              :description="searchTerm ? 'Keine Codespaces entsprechen Ihrer Suche.' : 'Erstellen Sie Ihren ersten Codespace, um mit der Entwicklung zu beginnen.'" />
             <div v-else class="modern-table">
               <div class="table-header">
                 <div class="header-cell" @click="sortBy('name')">
@@ -127,242 +108,198 @@
               </div>
             </div>
           </div>
-        </div>
-        <div v-if="showModal" class="custom-modal-overlay" @click="closeModal">
-          <div class="custom-modal-content" @click.stop>
-            <div class="custom-modal-header">
-              <h3>{{ editingCodespace ? 'Codespace bearbeiten' : 'Neuer Codespace' }}</h3>
-              <button class="modal-close-btn" @click="closeModal">
-                <ion-icon name="close-outline"></ion-icon>
-              </button>
+        </DataCard>
+        <AppModal v-model="showModal" :title="editingCodespace ? 'Codespace bearbeiten' : 'Neuer Codespace'"
+          @close="closeModal">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label class="form-label">Name *</label>
+              <input type="text" class="form-input" v-model="formData.name" placeholder="z.B. Frontend App">
             </div>
-            <div class="custom-modal-body">
-              <div class="form-grid">
-                <div class="form-group full-width">
-                  <label class="form-label">Name *</label>
-                  <input type="text" class="form-input" v-model="formData.name" placeholder="z.B. Frontend App">
-                </div>
-                <div class="form-group full-width">
-                  <label class="form-label">Beschreibung</label>
-                  <textarea class="form-input" v-model="formData.description" placeholder="Beschreibung des Codespaces"
-                    rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Sprache</label>
-                  <select class="form-input" v-model="formData.language">
-                    <option value="javascript">JavaScript</option>
-                    <option value="typescript">TypeScript</option>
-                    <option value="python">Python</option>
-                    <option value="php">PHP</option>
-                    <option value="html">HTML</option>
-                    <option value="css">CSS</option>
-                    <option value="vue">Vue.js</option>
-                    <option value="react">React</option>
-                    <option value="angular">Angular</option>
-                    <option value="other">Andere</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Icon</label>
-                  <select class="form-input" v-model="formData.icon">
-                    <option value="code-outline">Code</option>
-                    <option value="globe-outline">Web</option>
-                    <option value="phone-portrait-outline">Mobile</option>
-                    <option value="server-outline">Server</option>
-                    <option value="library-outline">Library</option>
-                    <option value="build-outline">Build</option>
-                  </select>
-                </div>
-                <div class="form-group full-width">
-                  <label class="form-label">Template</label>
-                  <select class="form-input" v-model="formData.template">
-                    <option v-for="template in availableTemplates" :key="template.id" :value="template.id">
-                      {{ template.name }}
-                    </option>
-                  </select>
-                </div>
-                <div v-if="formData.template && getSelectedTemplate()" class="template-preview full-width">
-                  <div class="template-info">
-                    <ion-icon :name="getSelectedTemplate().icon" class="template-icon"></ion-icon>
-                    <div>
-                      <h4>{{ getSelectedTemplate().name }}</h4>
-                      <p>{{ getSelectedTemplate().description }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="form-actions">
-                <button class="action-btn secondary" @click="closeModal">
-                  Abbrechen
-                </button>
-                <button class="action-btn primary" @click="saveCodespace" :disabled="!formData.name">
-                  {{ editingCodespace ? 'Aktualisieren' : 'Erstellen' }}
-                </button>
-              </div>
+            <div class="form-group full-width">
+              <label class="form-label">Beschreibung</label>
+              <textarea class="form-input" v-model="formData.description" placeholder="Beschreibung des Codespaces"
+                rows="3"></textarea>
             </div>
-          </div>
-        </div>
-        <div v-if="showSettingsModal" class="custom-modal-overlay" @click="closeSettingsModal">
-          <div class="custom-modal-content large" @click.stop>
-            <div class="custom-modal-header">
-              <h3>Codespace Settings</h3>
-              <button class="modal-close-btn" @click="closeSettingsModal">
-                <ion-icon name="close-outline"></ion-icon>
-              </button>
+            <div class="form-group">
+              <label class="form-label">Sprache</label>
+              <select class="form-input" v-model="formData.language">
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="python">Python</option>
+                <option value="php">PHP</option>
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+                <option value="vue">Vue.js</option>
+                <option value="react">React</option>
+                <option value="angular">Angular</option>
+                <option value="other">Andere</option>
+              </select>
             </div>
-
-            <div class="custom-modal-body">
-              <div v-if="selectedCodespace" class="settings-content">
-                <div class="settings-header">
-                  <h2>{{ selectedCodespace.name }}</h2>
-                  <p>Verwalten Sie Domain-Verbindungen</p>
-                </div>
-
-                <div class="connection-section">
-                  <div class="section-header">
-                    <ion-icon name="globe-outline"></ion-icon>
-                    <h3>Domain</h3>
-                  </div>
-
-                  <div v-if="connections.domain" class="connected-item">
-                    <div class="connection-info">
-                      <h4>{{ connections.domain.domain }}</h4>
-                      <p v-if="connections.domain.is_main">Haupt-Domain</p>
-                      <p v-else>Subdomain</p>
-                    </div>
-                    <button class="action-btn danger" @click="disconnectDomain">
-                      <ion-icon name="unlink-outline"></ion-icon>
-                      Trennen
-                    </button>
-                  </div>
-
-                  <div v-else class="not-connected">
-                    <p>Keine Domain verbunden</p>
-                    <div v-if="domainInfo" class="domain-config">
-                      <div class="form-group full-width">
-                        <div class="radio-group">
-                          <label class="radio-label">
-                            <input type="radio" v-model="domainType" value="subdomain">
-                            <span>
-                              <strong>Subdomain</strong>
-                              <small>{{ domainInput || 'subdomain' }}.{{ domainInfo.base_domain }}</small>
-                            </span>
-                          </label>
-
-                          <label class="radio-label">
-                            <input type="radio" v-model="domainType" value="main"
-                              :disabled="domainInfo.main_domain_taken">
-                            <span>
-                              <strong>Haupt-Domain {{ domainInfo.main_domain_taken ? '(vergeben)' : '' }}</strong>
-                              <small>{{ domainInfo.base_domain }}</small>
-                              <small v-if="domainInfo.main_domain_taken" class="warning-text">
-                                Verwendet von: {{ domainInfo.main_domain_codespace }}
-                              </small>
-                              <small class="info-text">Die Main Domain kann nur von einem System (Codespace ODER Web
-                                Builder) gleichzeitig genutzt werden</small>
-                            </span>
-                          </label>
-                        </div>
-                      </div>
-
-                      <div v-if="domainType === 'subdomain'" class="form-group full-width">
-                        <label class="form-label">Subdomain</label>
-                        <input type="text" class="form-input" v-model="domainInput"
-                          placeholder="z.B. api, admin, staging" pattern="[a-z0-9-]+">
-                      </div>
-
-                      <div class="connection-actions">
-                        <button class="action-btn primary" @click="connectDomain"
-                          :disabled="(domainType === 'subdomain' && (!domainInput || domainInput.length < 2)) || (domainType === 'main' && domainInfo.main_domain_taken)">
-                          <ion-icon name="link-outline"></ion-icon>
-                          Domain verbinden
-                        </button>
-                      </div>
-                    </div>
-
-                    <div v-else-if="loadingDomainInfo" class="loading-container">
-                      <ion-spinner name="circular"></ion-spinner>
-                      <p>Domain-Informationen werden geladen...</p>
-                    </div>
-
-                    <div v-else>
-                      <p class="form-note warning">
-                        Keine Domain-Informationen verfügbar
-                      </p>
-                    </div>
-                  </div>
+            <div class="form-group">
+              <label class="form-label">Icon</label>
+              <select class="form-input" v-model="formData.icon">
+                <option value="code-outline">Code</option>
+                <option value="globe-outline">Web</option>
+                <option value="phone-portrait-outline">Mobile</option>
+                <option value="server-outline">Server</option>
+                <option value="library-outline">Library</option>
+                <option value="build-outline">Build</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label class="form-label">Template</label>
+              <select class="form-input" v-model="formData.template">
+                <option v-for="template in availableTemplates" :key="template.id" :value="template.id">
+                  {{ template.name }}
+                </option>
+              </select>
+            </div>
+            <div v-if="formData.template && getSelectedTemplate()" class="template-preview full-width">
+              <div class="template-info">
+                <ion-icon :name="getSelectedTemplate().icon" class="template-icon"></ion-icon>
+                <div>
+                  <h4>{{ getSelectedTemplate().name }}</h4>
+                  <p>{{ getSelectedTemplate().description }}</p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-
-        <div v-if="showTransferModal" class="custom-modal-overlay" @click="closeTransferModal">
-          <div class="custom-modal-content" @click.stop>
-            <div class="custom-modal-header">
-              <h3>Codespace übertragen</h3>
-              <button class="modal-close-btn" @click="closeTransferModal">
-                <ion-icon name="close-outline"></ion-icon>
-              </button>
+          <template #footer>
+            <ActionButton variant="secondary" @click="closeModal">Abbrechen</ActionButton>
+            <ActionButton variant="primary" @click="saveCodespace" :disabled="!formData.name">{{ editingCodespace ?
+              'Aktualisieren' : 'Erstellen' }}</ActionButton>
+          </template>
+        </AppModal>
+        <AppModal v-model="showSettingsModal" title="Codespace Settings" size="large" @close="closeSettingsModal">
+          <div v-if="selectedCodespace" class="settings-content">
+            <div class="settings-header">
+              <h2>{{ selectedCodespace.name }}</h2>
+              <p>Verwalten Sie Domain-Verbindungen</p>
             </div>
 
-            <div class="custom-modal-body">
-              <div v-if="transferCodespace" class="transfer-content">
-                <div class="transfer-header">
-                  <h2>{{ transferCodespace.name }}</h2>
-                  <p>Wählen Sie das Ziel-Projekt für die Übertragung</p>
+            <div class="connection-section">
+              <div class="section-header">
+                <ion-icon name="globe-outline"></ion-icon>
+                <h3>Domain</h3>
+              </div>
+
+              <div v-if="connections.domain" class="connected-item">
+                <div class="connection-info">
+                  <h4>{{ connections.domain.domain }}</h4>
+                  <p v-if="connections.domain.is_main">Haupt-Domain</p>
+                  <p v-else>Subdomain</p>
+                </div>
+                <ActionButton variant="danger" icon="unlink-outline" @click="disconnectDomain">Trennen</ActionButton>
+              </div>
+
+              <div v-else class="not-connected">
+                <p>Keine Domain verbunden</p>
+                <div v-if="domainInfo" class="domain-config">
+                  <div class="form-group full-width">
+                    <div class="radio-group">
+                      <label class="radio-label">
+                        <input type="radio" v-model="domainType" value="subdomain">
+                        <span>
+                          <strong>Subdomain</strong>
+                          <small>{{ domainInput || 'subdomain' }}.{{ domainInfo.base_domain }}</small>
+                        </span>
+                      </label>
+
+                      <label class="radio-label">
+                        <input type="radio" v-model="domainType" value="main" :disabled="domainInfo.main_domain_taken">
+                        <span>
+                          <strong>Haupt-Domain {{ domainInfo.main_domain_taken ? '(vergeben)' : '' }}</strong>
+                          <small>{{ domainInfo.base_domain }}</small>
+                          <small v-if="domainInfo.main_domain_taken" class="warning-text">
+                            Verwendet von: {{ domainInfo.main_domain_codespace }}
+                          </small>
+                          <small class="info-text">Die Main Domain kann nur von einem System (Codespace ODER Web
+                            Builder) gleichzeitig genutzt werden</small>
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div v-if="domainType === 'subdomain'" class="form-group full-width">
+                    <label class="form-label">Subdomain</label>
+                    <input type="text" class="form-input" v-model="domainInput" placeholder="z.B. api, admin, staging"
+                      pattern="[a-z0-9-]+">
+                  </div>
+
+                  <div class="connection-actions">
+                    <ActionButton variant="primary" icon="link-outline" @click="connectDomain"
+                      :disabled="(domainType === 'subdomain' && (!domainInput || domainInput.length < 2)) || (domainType === 'main' && domainInfo.main_domain_taken)">
+                      Domain verbinden</ActionButton>
+                  </div>
                 </div>
 
-                <div class="transfer-info">
-                  <h4>Was wird übertragen?</h4>
-                  <ul class="transfer-list">
-                    <li>
-                      <ion-icon name="folder-outline"></ion-icon>
-                      <span>Alle Dateien und Ordner</span>
-                    </li>
-                    <li v-if="transferCodespace.connections?.domain">
-                      <ion-icon name="globe-outline"></ion-icon>
-                      <span>Domain Verbindung</span>
-                    </li>
-                  </ul>
+                <div v-else-if="loadingDomainInfo" class="loading-container">
+                  <ion-spinner name="circular"></ion-spinner>
+                  <p>Domain-Informationen werden geladen...</p>
                 </div>
 
-                <div class="form-group full-width">
-                  <label class="form-label">Ziel-Projekt auswählen</label>
-                  <select class="form-input" v-model="selectedTargetProject">
-                    <option value="">Projekt auswählen</option>
-                    <option v-for="project in availableProjects" :key="project.id" :value="project.link">
-                      {{ project.name }}
-                    </option>
-                  </select>
-                </div>
-
-                <div class="checkbox-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" v-model="moveInsteadOfCopy">
-                    <span>
-                      <strong>Verschieben statt Kopieren</strong>
-                      <small>Löscht den ursprünglichen Codespace nach dem Transfer</small>
-                    </span>
-                  </label>
-                </div>
-
-                <div class="form-actions">
-                  <button class="action-btn secondary" @click="closeTransferModal">
-                    Abbrechen
-                  </button>
-                  <button class="action-btn primary" @click="executeTransfer"
-                    :disabled="!selectedTargetProject || transferInProgress">
-                    <ion-spinner v-if="transferInProgress" name="circular"></ion-spinner>
-                    <ion-icon v-else :name="moveInsteadOfCopy ? 'arrow-forward-outline' : 'copy-outline'"></ion-icon>
-                    {{ moveInsteadOfCopy ? 'Verschieben' : 'Kopieren' }}
-                  </button>
+                <div v-else>
+                  <p class="form-note warning">
+                    Keine Domain-Informationen verfügbar
+                  </p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </AppModal>
+        <AppModal v-model="showTransferModal" title="Codespace übertragen" @close="closeTransferModal">
+          <div v-if="transferCodespace" class="transfer-content">
+            <div class="transfer-header">
+              <h2>{{ transferCodespace.name }}</h2>
+              <p>Wählen Sie das Ziel-Projekt für die Übertragung</p>
+            </div>
+
+            <div class="transfer-info">
+              <h4>Was wird übertragen?</h4>
+              <ul class="transfer-list">
+                <li>
+                  <ion-icon name="folder-outline"></ion-icon>
+                  <span>Alle Dateien und Ordner</span>
+                </li>
+                <li v-if="transferCodespace.connections?.domain">
+                  <ion-icon name="globe-outline"></ion-icon>
+                  <span>Domain Verbindung</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="form-group full-width">
+              <label class="form-label">Ziel-Projekt auswählen</label>
+              <select class="form-input" v-model="selectedTargetProject">
+                <option value="">Projekt auswählen</option>
+                <option v-for="project in availableProjects" :key="project.id" :value="project.link">
+                  {{ project.name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" v-model="moveInsteadOfCopy">
+                <span>
+                  <strong>Verschieben statt Kopieren</strong>
+                  <small>Löscht den ursprünglichen Codespace nach dem Transfer</small>
+                </span>
+              </label>
+            </div>
+
+          </div>
+          <template #footer>
+            <ActionButton variant="secondary" @click="closeTransferModal">Abbrechen</ActionButton>
+            <ActionButton variant="primary" @click="executeTransfer"
+              :disabled="!selectedTargetProject || transferInProgress">
+              <ion-spinner v-if="transferInProgress" name="circular"></ion-spinner>
+              <ion-icon v-else :name="moveInsteadOfCopy ? 'arrow-forward-outline' : 'copy-outline'"></ion-icon>
+              {{ moveInsteadOfCopy ? 'Verschieben' : 'Kopieren' }}
+            </ActionButton>
+          </template>
+        </AppModal>
       </div>
     </ion-content>
   </ion-page>
@@ -375,7 +312,13 @@ import {
   IonPage, IonContent, IonIcon, IonSpinner, alertController
 } from '@ionic/vue'
 import SiteTitle from '@/components/SiteTitle.vue'
-import PageTitle from "@/components/PageTitle.vue"
+import PageHeader from '@/components/PageHeader.vue'
+import DataCard from '@/components/DataCard.vue'
+import ActionButton from '@/components/ActionButton.vue'
+import SearchBox from '@/components/SearchBox.vue'
+import LoadingState from '@/components/LoadingState.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import AppModal from '@/components/AppModal.vue'
 import axios from 'axios'
 import { ToastService } from '@/services/ToastService'
 
@@ -814,25 +757,6 @@ watch(() => formData.value.template, (newTemplate) => {
 </script>
 
 <style scoped>
-.modern-content {
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #f59e0b;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1600px;
   margin: 0 auto;
@@ -841,216 +765,8 @@ watch(() => formData.value.template, (newTemplate) => {
   background: var(--background);
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.header-content h1 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.header-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-}
-
-.action-btn.secondary {
-  background: var(--surface);
-  color: var(--text-primary);
-}
-
-.action-btn.danger {
-  background: var(--danger-color);
-  color: white;
-  border-color: var(--danger-color);
-}
-
-.action-btn.danger:hover {
-  background: #b91c1c;
-  border-color: #b91c1c;
-}
-
-.data-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.header-left h3 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.entry-count {
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.search-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--background);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 8px 12px;
-  min-width: 280px;
-  transition: all 0.2s ease;
-}
-
-.search-box:focus-within {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
-}
-
-.search-box ion-icon {
-  color: var(--text-secondary);
-  font-size: 18px;
-}
-
-.search-box input {
-  border: none;
-  outline: none;
-  background: transparent;
-  flex: 1;
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
 .table-wrapper {
   overflow-x: auto;
-}
-
-.loading-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-secondary);
-}
-
-.loading-icon {
-  font-size: 32px;
-  color: var(--primary-color);
-  margin-bottom: 12px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.loading-state p {
-  margin: 0;
-  font-size: 14px;
-}
-
-.no-data-state {
-  padding: 60px 20px;
-  text-align: center;
-  background: var(--surface);
-}
-
-.no-data-content {
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-.no-data-icon {
-  font-size: 64px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.no-data-content h4 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.no-data-content p {
-  margin: 0 0 24px 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-  line-height: 1.5;
 }
 
 .modern-table {
@@ -1285,79 +1001,6 @@ watch(() => formData.value.template, (newTemplate) => {
   background: rgba(220, 38, 38, 0.2);
 }
 
-.custom-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  padding: 20px;
-  animation: modalFadeIn 0.2s ease;
-}
-
-.custom-modal-content {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: var(--shadow-lg);
-  animation: modalSlideIn 0.3s ease;
-}
-
-.custom-modal-content.large {
-  max-width: 800px;
-}
-
-.custom-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border);
-}
-
-.custom-modal-header h3 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.modal-close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: transparent;
-  border-radius: var(--radius);
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
-}
-
-.modal-close-btn:hover {
-  background: var(--background);
-  color: var(--text-primary);
-}
-
-.custom-modal-body {
-  padding: 24px;
-  overflow-y: auto;
-  flex: 1;
-}
-
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1505,15 +1148,6 @@ select.form-input {
 }
 
 .auto-create-section {
-  padding-top: 20px;
-  border-top: 1px solid var(--border);
-}
-
-.form-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid var(--border);
 }
@@ -1678,52 +1312,13 @@ select.form-input {
   color: var(--primary-color);
 }
 
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
   }
 
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .header-actions {
-    flex-direction: column;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
   .form-grid {
     grid-template-columns: 1fr;
-  }
-
-  .search-box {
-    min-width: 100%;
   }
 
   .table-wrapper {
@@ -1742,28 +1337,6 @@ select.form-input {
   .action-buttons {
     flex-wrap: wrap;
     justify-content: center;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #121212;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #b0b0b0;
-    --text-muted: #707070;
   }
 }
 </style>

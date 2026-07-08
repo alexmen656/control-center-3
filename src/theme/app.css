@@ -15,7 +15,7 @@
 .btn-red {
   --background: var(--ion-color-primary) !important;
 }
-/* Menu styling */
+
 .ion-menu {
   width: 280px !important;
   transition: width 0.3s ease !important;
@@ -30,7 +30,6 @@
   overflow: hidden !important;
 }
 
-/* Force collapsed menu content to match width */
 .ion-menu.collapsed-menu ion-content {
   width: 76px !important;
   min-width: 76px !important;
@@ -38,7 +37,6 @@
   overflow: hidden !important;
 }
 
-/* Collapsed menu items - Fix selected state */
 .ion-menu.collapsed-menu .collapsed .menu-item.selected {
   --background: var(--ion-color-primary-tint) !important;
   background: var(--ion-color-primary-tint) !important;
@@ -48,7 +46,6 @@
   color: var(--ion-color-primary) !important;
 }
 
-/* Fix hover effect - override Ionic defaults */
 .ion-menu.collapsed-menu .collapsed .menu-item:hover {
   --background: var(--ion-color-step-100) !important;
   background: var(--ion-color-step-100) !important;
@@ -58,7 +55,6 @@
   color: var(--ion-color-primary) !important;
 }
 
-/* Fix padding consistency */
 .ion-menu.collapsed-menu .collapsed ion-item {
   --padding-start: 0 !important;
   --padding-end: 0 !important;
@@ -75,7 +71,6 @@
   text-align: center !important;
 }
 
-/* Ensure all collapsed items are centered */
 .ion-menu.collapsed-menu ion-item {
   --padding-start: 0 !important;
   --padding-end: 0 !important;
@@ -92,7 +87,6 @@
   text-align: center !important;
 }
 
-/* Ensure all collapsed items are centered */
 .ion-menu.collapsed-menu ion-item {
   --padding-start: 0 !important;
   --padding-end: 0 !important;
@@ -109,7 +103,6 @@
   text-align: center !important;
 }
 
-/* Section dividers instead of large spacing */
 .ion-menu.collapsed-menu .collapsed ion-list {
   border-bottom: 1px solid var(--ion-color-step-200) !important;
   margin-bottom: 8px !important;
@@ -123,7 +116,6 @@
   margin-bottom: 0 !important;
 }
 
-/* Force all ion-lists in collapsed mode to have dividers */
 .ion-menu.collapsed-menu ion-list {
   border-bottom: 1px solid var(--ion-color-step-200) !important;
   margin-bottom: 8px !important;
@@ -140,13 +132,11 @@
   margin-bottom: 0 !important;
 }
 
-/* Reduce horizontal spacing between icons in same group */
 .ion-menu.collapsed-menu .collapsed .menu-item {
   margin: 1px 0 !important;
   min-height: 48px !important;
 }
 
-/* Icon styling for collapsed menu */
 .ion-menu.collapsed-menu .collapsed ion-icon {
   font-size: 28px !important;
   margin: 0 auto !important;
@@ -189,14 +179,11 @@
   color: var(--ion-color-primary) !important;
 }
 
-/* Force collapsed lists to proper width */
 @media (prefers-color-scheme: light) {
   ion-menu ion-content {
-    /* --background: var(--ion-item-background, var(--ion-background-color, #fff));*/
     --background: #eff3f6;
   }
 
-  /* Also apply to the entire sidebar area */
   ion-menu {
     --background: #eff3f6;
   }
@@ -207,7 +194,6 @@
     --background: var(--ion-item-background, var(--ion-background-color, #fff));
   }
 
-  /* Dark mode sidebar */
   ion-menu {
     --background: #1e1e1e;
   }
@@ -215,7 +201,7 @@
 ion-menu.md ion-content {
   --padding-start: 8px;
   --padding-end: 8px;
-  --padding-top: 40px; /*46*/
+  --padding-top: 40px;
   --padding-bottom: 20px;
 }
 
@@ -255,7 +241,6 @@ ion-menu.md ion-item {
   border-radius: 4px;
 }
 
-/* Override Ionic defaults for collapsed menu */
 .ion-menu.collapsed-menu ion-item {
   --padding-start: 0 !important;
   --padding-end: 0 !important;
@@ -271,7 +256,6 @@ ion-menu.md ion-item {
   border-radius: 8px !important;
 }
 
-/* Fix rosa active effect - override all Ionic selected states */
 .ion-menu.collapsed-menu ion-item.selected {
   --background: var(--ion-color-step-100) !important;
   background: var(--ion-color-step-100) !important;
@@ -286,19 +270,15 @@ ion-menu.md ion-item.selected {
   --background: rgba(var(--ion-color-primary-rgb), 0.14) !important;
 }
 
-/* Completely override rosa tint for collapsed menu */
 .ion-menu.collapsed-menu ion-item.selected,
 .ion-menu.collapsed-menu .collapsed .menu-item.selected,
 .collapsed .menu-item.selected,
 ion-menu.md ion-item.selected {
   --background: rgba(var(--ion-color-primary-rgb), 0.14) !important;
-  /*background: rgba(var(--ion-color-primary-rgb), 0.14) !important;*/
 }
 
-/* Override specific Ionic selected states for collapsed menu */
 .ion-menu.collapsed-menu ion-menu.md ion-item.selected {
   --background: rgba(var(--ion-color-primary-rgb), 0.14) !important;
-  /*background: rgba(var(--ion-color-primary-rgb), 0.14) !important;*/
 }
 
 ion-menu.md ion-item.selected ion-icon {
@@ -391,7 +371,6 @@ a {
     display: none;
   }
 
-  /* Fix mobile header positioning and styling */
   ion-header {
     position: relative !important;
   }
@@ -405,7 +384,6 @@ a {
     box-shadow: 0;
   }
 
-  /* Dark mode mobile header */
   @media (prefers-color-scheme: dark) {
     ion-header ion-toolbar {
       --background: #1e1e1e !important;
@@ -413,11 +391,6 @@ a {
       border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
   }
-
-  /* Adjust padding for mobile */
-  /*#main-content {
-      padding: 8px 8px 0 8px;
-    }*/
 
   #main-content ion-router-outlet,
   #main-content .error404 {
@@ -453,10 +426,6 @@ a {
   text-decoration: none;
 }
 
-/*ion-menu.md ion-item.selected {
-    --background: rgba(255, 0, 0, 0.14) !important;
-  }*/
-
 ion-item.selected {
   --color: var(--ion-color-primary) !important;
 }
@@ -470,46 +439,41 @@ ion-menu ion-item.selected ion-icon {
 }
 
 #main-content {
-  /*padding-top: 100px !important;*/
   width: 100%;
-  background: #eff3f6; /* Same as header background */
+  background: #eff3f6;
   min-height: calc(100vh - 48px);
-  /*  padding: 16px 16px 0 16px; /* Add padding to create space around content */
 }
 
 #main-content.isNotLogin {
   margin-top: 48px !important;
 }
 
-/* Fix mobile header positioning */
 @media only screen and (max-width: 600px) {
   #main-content {
     padding-top: 0 !important;
   }
 }
 
-/* Content wrapper with rounded corners */
 #main-content ion-router-outlet,
 #main-content .error404 {
   background: var(--ion-background-color, #ffffff);
-  border-radius: 12px 0 0 0; /* Rounded top corners */
+  border-radius: 12px 0 0 0;
   border: var(--border);
   min-height: 100vh;
   overflow: hidden;
-  transition: all 0.3s ease; /* Smooth transitions */
+  transition: all 0.3s ease;
   position: relative;
   z-index: 1;
 }
 
 #main-content.isNotLogin ion-router-outlet,
 #main-content.isNotLogin .error404 {
-  min-height: calc(100vh - 48px); /* Adjust for padding */
+  min-height: calc(100vh - 48px);
 }
 
-/* Dark mode support */
 @media (prefers-color-scheme: dark) {
   #main-content {
-    background: #1e1e1e; /* Dark header color */
+    background: #1e1e1e;
   }
 
   #main-content ion-router-outlet,
@@ -520,10 +484,6 @@ ion-menu ion-item.selected ion-icon {
 h1 {
   z-index: 6666;
 }
-
-/*ion-router-outlet.showTitle {
-    margin-top: 48px;
-  }*/
 
 ion-router-outlet {
   width: 100%;
@@ -629,7 +589,6 @@ ion-header.hasToBeDarkmode .header {
   border-bottom: none !important;
 }
 
-/* Main content area + router outlet dark on codespace routes */
 #main-content.hasToBeDarkmode {
   background: #1e1e1e !important;
 }
@@ -645,4 +604,38 @@ ion-header.hasToBeDarkmode .header {
   --background: transparent !important;
   background: transparent !important;
   border-radius: 0 !important;
+}
+
+.modern-content {
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
+  --secondary-color: #64748b;
+  --success-color: #059669;
+  --danger-color: #dc2626;
+  --warning-color: #d97706;
+  --info-color: #0891b2;
+  --accent-color: #7c3aed;
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .modern-content {
+    --background: #121212;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
+    --text-primary: #f1f5f9;
+    --text-secondary: #b0b0b0;
+    --text-muted: #707070;
+  }
 }

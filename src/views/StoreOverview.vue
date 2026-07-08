@@ -4,17 +4,11 @@
       <SiteTitle icon="storefront-outline" title="Module Store" />
 
       <div class="page-container">
-        <div class="page-header">
-          <div class="header-content">
-            <PageTitle icon="storefront-outline" title="Module Store" />
-          </div>
-          <div class="header-actions">
-            <button class="action-btn secondary" @click="loadModules">
-              <ion-icon name="refresh-outline"></ion-icon>
-              Refresh
-            </button>
-          </div>
-        </div>
+        <PageHeader icon="storefront-outline" title="Module Store">
+          <template #actions>
+            <ActionButton variant="secondary" icon="refresh-outline" @click="loadModules">Refresh</ActionButton>
+          </template>
+        </PageHeader>
 
         <div class="stats-grid">
           <StatCard icon="cube-outline" color="primary" :value="modules.length" label="Total Modules" />
@@ -22,75 +16,54 @@
           <StatCard icon="download-outline" color="info" :value="availableCount" label="Available" />
         </div>
 
-        <!-- Modules Card -->
-        <div class="data-card">
-          <div class="card-header">
-            <div class="header-left">
-              <h3>Available Modules</h3>
-              <span class="entry-count">{{ filteredModules.length }} module{{ filteredModules.length !== 1 ? 's' : ''
-              }}</span>
-            </div>
-            <div class="search-box">
-              <ion-icon name="search-outline"></ion-icon>
-              <input type="text" placeholder="Search modules..." v-model="keyword" @input="handleSearch">
-            </div>
-          </div>
+        <DataCard title="Available Modules"
+          :subtitle="filteredModules.length + ' module' + (filteredModules.length !== 1 ? 's' : '')">
+          <template #actions>
+            <SearchBox v-model="keyword" placeholder="Search modules..." @update:modelValue="handleSearch" />
+          </template>
 
-          <div class="card-content">
-            <div v-if="loading" class="loading-state">
-              <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
-              <p>Loading modules...</p>
-            </div>
+          <LoadingState v-if="loading" message="Loading modules..." />
 
-            <div v-else-if="filteredModules.length === 0" class="no-data-state">
-              <div class="no-data-content">
-                <ion-icon name="cube-outline" class="no-data-icon"></ion-icon>
-                <h4>No Modules Found</h4>
-                <p>{{ keyword ? 'No modules match your search.' : 'No modules available.' }}</p>
+          <EmptyState v-else-if="filteredModules.length === 0" icon="cube-outline" title="No Modules Found"
+            :description="keyword ? 'No modules match your search.' : 'No modules available.'" />
+
+          <div v-else class="modules-grid">
+            <div v-for="module in filteredModules" :key="module.ref" class="module-card"
+              :class="{ 'is-added': module.status === 'added', 'is-adding': module.status === 'adding' }">
+              <div class="module-header">
+                <div class="module-icon-wrapper">
+                  <ion-icon v-if="module.icon" :name="module.icon" class="module-icon" alt="" />
+                  <ion-icon v-else name="cube-outline" class="module-icon"></ion-icon>
+                </div>
+
+                <div class="module-info">
+                  <h4 class="module-title">{{ module.display_name || module.name }}</h4>
+                  <p class="module-desc">{{ module.description || 'No description available' }}</p>
+                </div>
               </div>
-            </div>
 
-            <div v-else class="modules-grid">
-              <div v-for="module in filteredModules" :key="module.ref" class="module-card"
-                :class="{ 'is-added': module.status === 'added', 'is-adding': module.status === 'adding' }">
-                <div class="module-header">
-                  <div class="module-icon-wrapper">
-                    <ion-icon v-if="module.icon" :name="module.icon" class="module-icon" alt="" />
-                    <ion-icon v-else name="cube-outline" class="module-icon"></ion-icon>
-                  </div>
+              <div v-if="module.status === 'adding'" class="progress-wrapper">
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="{ width: module.progress + '%' }"></div>
+                </div>
+                <span class="progress-text">{{ module.progress }}%</span>
+              </div>
 
-                  <div class="module-info">
-                    <h4 class="module-title">{{ module.display_name || module.name }}</h4>
-                    <p class="module-desc">{{ module.description || 'No description available' }}</p>
-                  </div>
-                </div>
-                <!-- Progress for adding -->
-                <div v-if="module.status === 'adding'" class="progress-wrapper">
-                  <div class="progress-bar">
-                    <div class="progress-fill" :style="{ width: module.progress + '%' }"></div>
-                  </div>
-                  <span class="progress-text">{{ module.progress }}%</span>
-                </div>
-
-                <div class="module-actions">
-                  <button v-if="module.status === 'available'" class="action-btn primary" @click="addModule(module)">
-                    <ion-icon name="add-outline"></ion-icon>
-                    Add Module
-                  </button>
-                  <button v-else-if="module.status === 'added'" class="action-btn success"
-                    @click="removeModule(module)">
-                    <ion-icon name="checkmark-outline"></ion-icon>
-                    Added
-                  </button>
-                  <button v-else-if="module.status === 'adding'" class="action-btn disabled" disabled>
-                    <ion-icon name="sync-outline" class="spinning"></ion-icon>
-                    Adding...
-                  </button>
-                </div>
+              <div class="module-actions">
+                <ActionButton v-if="module.status === 'available'" variant="primary" icon="add-outline"
+                  @click="addModule(module)">Add Module</ActionButton>
+                <button v-else-if="module.status === 'added'" class="action-btn success" @click="removeModule(module)">
+                  <ion-icon name="checkmark-outline"></ion-icon>
+                  Added
+                </button>
+                <button v-else-if="module.status === 'adding'" class="action-btn disabled" disabled>
+                  <ion-icon name="sync-outline" class="spinning"></ion-icon>
+                  Adding...
+                </button>
               </div>
             </div>
           </div>
-        </div>
+        </DataCard>
       </div>
     </ion-content>
   </ion-page>
@@ -99,15 +72,25 @@
 <script>
 import lunr from "lunr";
 import SiteTitle from "@/components/SiteTitle.vue";
-import PageTitle from "@/components/PageTitle.vue";
 import StatCard from "@/components/StatCard.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import DataCard from "@/components/DataCard.vue";
+import SearchBox from "@/components/SearchBox.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import EmptyState from "@/components/EmptyState.vue";
 
 export default {
   name: "StoreOverview",
   components: {
     SiteTitle,
-    PageTitle,
     StatCard,
+    PageHeader,
+    ActionButton,
+    DataCard,
+    SearchBox,
+    LoadingState,
+    EmptyState,
   },
   data() {
     return {
@@ -146,7 +129,6 @@ export default {
       this.loading = true;
 
       try {
-        // Load added modules
         const addedResponse = await this.$axios.post(
           "tools.php",
           this.$qs.stringify({
@@ -159,7 +141,6 @@ export default {
           this.addedModuleNames = addedResponse.data.map(tool => tool.name);
         }
 
-        // Load available modules
         const modulesResponse = await this.$axios.post(
           "install.php",
           this.$qs.stringify({
@@ -174,7 +155,6 @@ export default {
             status: this.addedModuleNames.includes(module.display_name) ? 'added' : 'available'
           }));
 
-          // Build search index
           this.searchIndex = lunr(function () {
             this.ref("ref");
             this.field("name");
@@ -212,7 +192,6 @@ export default {
             }
           });
         } catch (e) {
-          // If search fails, show all modules
           this.searchResults = [];
         }
       }
@@ -233,7 +212,6 @@ export default {
         })
       ).then((response) => {
         if (response.data.includes("success")) {
-          // Simulate progress
           const intervalId = setInterval(() => {
             if (this.modules[moduleIndex].progress < 100) {
               this.modules[moduleIndex].progress += 5;
@@ -291,59 +269,12 @@ export default {
 </script>
 
 <style scoped>
-.modern-content {
-  --background: #f5f7fa;
-  --surface: #ffffff;
-  --border: #e1e4e8;
-  --text-primary: #24292f;
-  --text-secondary: #57606a;
-  --text-muted: #8c959f;
-  --primary-color: #f97316;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --radius: 8px;
-  --radius-lg: 12px;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
 .page-container {
   max-width: 1600px;
   margin: 0 auto;
   padding: 24px;
 }
 
-/* Header */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.header-content h1 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.header-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-/* Action Buttons */
 .action-btn {
   display: inline-flex;
   align-items: center;
@@ -356,28 +287,6 @@ export default {
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
-}
-
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-}
-
-.action-btn.primary:hover {
-  background: #ea580c;
-  transform: translateY(-1px);
-  /*box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);*/
-}
-
-.action-btn.secondary {
-  background: var(--surface);
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
-}
-
-.action-btn.secondary:hover {
-  background: var(--background);
-  color: var(--text-primary);
 }
 
 .action-btn.success {
@@ -396,7 +305,6 @@ export default {
   cursor: not-allowed;
 }
 
-/* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -404,120 +312,6 @@ export default {
   margin-bottom: 32px;
 }
 
-/* Data Card */
-.data-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  background: var(--background);
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-left h3 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.entry-count {
-  padding: 4px 12px;
-  background: rgba(249, 115, 22, 0.1);
-  color: var(--primary-color);
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-/* Search Box */
-.search-box {
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-width: 280px;
-}
-
-.search-box ion-icon {
-  position: absolute;
-  left: 12px;
-  color: var(--text-muted);
-  font-size: 18px;
-  pointer-events: none;
-}
-
-.search-box input {
-  width: 100%;
-  padding: 10px 16px 10px 40px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 14px;
-  background: var(--surface);
-  color: var(--text-primary);
-  transition: all 0.2s ease;
-}
-
-.search-box input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
-}
-
-/* Card Content */
-.card-content {
-  padding: 24px;
-}
-
-/* Loading & Empty States */
-.loading-state,
-.no-data-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-secondary);
-}
-
-.loading-icon {
-  font-size: 48px;
-  color: var(--primary-color);
-  margin-bottom: 16px;
-  animation: spin 1s linear infinite;
-}
-
-.no-data-icon {
-  font-size: 64px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-  opacity: 0.4;
-}
-
-.no-data-content h4 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.no-data-content p {
-  margin: 0;
-  font-size: 14px;
-}
-
-/* Modules Grid */
 .modules-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -535,7 +329,6 @@ export default {
 }
 
 .module-card:hover {
-  /*border-color: var(--primary-color);*/
   box-shadow: var(--shadow-lg);
 }
 
@@ -594,7 +387,6 @@ export default {
   overflow: hidden;
 }
 
-/* Progress */
 .progress-wrapper {
   margin-bottom: 16px;
   display: flex;
@@ -625,7 +417,6 @@ export default {
   text-align: right;
 }
 
-/* Module Actions */
 .module-actions {
   display: flex;
   gap: 8px;
@@ -636,7 +427,6 @@ export default {
   justify-content: center;
 }
 
-/* Spinning Animation */
 .spinning {
   animation: spin 1s linear infinite;
 }
@@ -647,17 +437,7 @@ export default {
   }
 }
 
-/* Dark Mode */
 @media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #121212;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #b0b0b0;
-    --text-muted: #707070;
-  }
-
   .module-card.is-added {
     background: rgba(5, 150, 105, 0.12);
   }
@@ -667,36 +447,13 @@ export default {
   }
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
   }
 
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .header-actions {
-    justify-content: stretch;
-  }
-
-  .header-actions .action-btn {
-    flex: 1;
-  }
-
   .stats-grid {
     grid-template-columns: 1fr;
-  }
-
-  .card-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .search-box {
-    min-width: 100%;
   }
 
   .modules-grid {

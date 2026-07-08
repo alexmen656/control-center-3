@@ -4,21 +4,14 @@
       <SiteTitle icon="mail-outline" title="Newsletter" bg="transparent"/>
       
       <div class="page-container">
-        <!-- Action Bar -->
         <div class="action-bar">
           <div class="action-group-left">
             <PageTitle icon="mail-outline" title="Newsletter versenden" />
           </div>
-          
+
           <div class="action-group-right">
-            <button class="action-btn" @click="goToConfig">
-              <ion-icon name="settings-outline"></ion-icon>
-              Einstellungen
-            </button>
-            <button class="action-btn" @click="viewHistory">
-              <ion-icon name="time-outline"></ion-icon>
-              Verlauf
-            </button>
+            <ActionButton icon="settings-outline" @click="goToConfig">Einstellungen</ActionButton>
+            <ActionButton icon="time-outline" @click="viewHistory">Verlauf</ActionButton>
           </div>
         </div>
 
@@ -29,18 +22,9 @@
           <StatCard icon="hand-left-outline" color="info" :value="(stats.clickRate || 0) + '%'" label="Klickrate" />
         </div>
 
-        <!-- Newsletter Form Card -->
-        <div class="data-card">
-          <div class="card-header">
-            <div class="header-left">
-              <h3>Newsletter erstellen</h3>
-              <p class="entry-count">Sende personalisierte Newsletter an deine Abonnenten</p>
-            </div>
-          </div>
-
+        <DataCard title="Newsletter erstellen" subtitle="Sende personalisierte Newsletter an deine Abonnenten" noPadding>
           <div class="form-container">
             <form @submit.prevent="sendNewsletter">
-              <!-- Subject Field -->
               <div class="form-group">
                 <label class="form-label">
                   <ion-icon name="text-outline"></ion-icon>
@@ -55,7 +39,6 @@
                 />
               </div>
 
-              <!-- Email Content Field -->
               <div class="form-group">
                 <label class="form-label">
                   <ion-icon name="document-text-outline"></ion-icon>
@@ -74,7 +57,6 @@
                 </div>
               </div>
 
-              <!-- Recipients Field -->
               <div class="form-group">
                 <label class="form-label">
                   <ion-icon name="people-outline"></ion-icon>
@@ -93,7 +75,6 @@
                 </div>
               </div>
 
-              <!-- Send Options -->
               <div class="form-group">
                 <label class="checkbox-container">
                   <input 
@@ -105,29 +86,23 @@
                 </label>
               </div>
 
-              <!-- Action Buttons -->
               <div class="form-actions">
-                <button 
-                  type="button" 
-                  class="action-btn secondary" 
+                <ActionButton
+                  variant="secondary"
+                  icon="close-outline"
+                  type="button"
                   @click="clearForm"
                   :disabled="sending"
-                >
-                  <ion-icon name="close-outline"></ion-icon>
-                  Zurücksetzen
-                </button>
-                <button 
-                  type="button" 
-                  class="action-btn" 
+                >Zurücksetzen</ActionButton>
+                <ActionButton
+                  icon="eye-outline"
+                  type="button"
                   @click="previewNewsletter"
                   :disabled="sending"
-                >
-                  <ion-icon name="eye-outline"></ion-icon>
-                  Vorschau
-                </button>
-                <button 
-                  type="submit" 
-                  class="action-btn primary" 
+                >Vorschau</ActionButton>
+                <button
+                  type="submit"
+                  class="action-btn primary"
                   :disabled="sending || !canSend"
                 >
                   <ion-icon v-if="!sending" name="send-outline"></ion-icon>
@@ -137,17 +112,9 @@
               </div>
             </form>
           </div>
-        </div>
+        </DataCard>
 
-        <!-- Recent Newsletters -->
-        <div v-if="recentNewsletters.length > 0" class="data-card">
-          <div class="card-header">
-            <div class="header-left">
-              <h3>Letzte Newsletter</h3>
-              <p class="entry-count">{{ recentNewsletters.length }} kürzlich gesendet</p>
-            </div>
-          </div>
-
+        <DataCard v-if="recentNewsletters.length > 0" title="Letzte Newsletter" :subtitle="recentNewsletters.length + ' kürzlich gesendet'" noPadding>
           <div class="table-wrapper">
             <div class="modern-table">
               <div class="table-header">
@@ -188,53 +155,31 @@
               </div>
             </div>
           </div>
-        </div>
+        </DataCard>
       </div>
 
-      <!-- Preview Modal -->
-      <div v-if="showPreview" class="custom-modal-overlay" @click="showPreview = false">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>
-              <ion-icon name="eye-outline"></ion-icon>
-              Newsletter Vorschau
-            </h3>
-            <button class="modal-close-btn" @click="showPreview = false">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
-          </div>
-          
-          <div class="custom-modal-body">
-            <div class="preview-container">
-              <div class="preview-meta">
-                <div class="preview-field">
-                  <strong>Betreff:</strong>
-                  <span>{{ subject }}</span>
-                </div>
-                <div class="preview-field">
-                  <strong>Empfänger:</strong>
-                  <span>{{ recipientCount }} Empfänger</span>
-                </div>
-              </div>
-              
-              <div class="preview-divider"></div>
-              
-              <div class="preview-content" v-html="email"></div>
+      <AppModal v-model="showPreview" title="Newsletter Vorschau" size="large">
+        <div class="preview-container">
+          <div class="preview-meta">
+            <div class="preview-field">
+              <strong>Betreff:</strong>
+              <span>{{ subject }}</span>
+            </div>
+            <div class="preview-field">
+              <strong>Empfänger:</strong>
+              <span>{{ recipientCount }} Empfänger</span>
             </div>
           </div>
-          
-          <div class="custom-modal-footer">
-            <button class="action-btn secondary" @click="showPreview = false">
-              <ion-icon name="close-outline"></ion-icon>
-              Schließen
-            </button>
-            <button class="action-btn primary" @click="sendNewsletter(); showPreview = false;">
-              <ion-icon name="send-outline"></ion-icon>
-              Jetzt senden
-            </button>
-          </div>
+
+          <div class="preview-divider"></div>
+
+          <div class="preview-content" v-html="email"></div>
         </div>
-      </div>
+        <template #footer>
+          <ActionButton variant="secondary" icon="close-outline" @click="showPreview = false">Schließen</ActionButton>
+          <ActionButton variant="primary" icon="send-outline" @click="sendNewsletter(); showPreview = false;">Jetzt senden</ActionButton>
+        </template>
+      </AppModal>
     </ion-content>
   </ion-page>
 </template>
@@ -244,6 +189,9 @@ import { defineComponent } from 'vue';
 import SiteTitle from '@/components/SiteTitle.vue';
 import PageTitle from '@/components/PageTitle.vue';
 import StatCard from '@/components/StatCard.vue';
+import ActionButton from '@/components/ActionButton.vue';
+import AppModal from '@/components/AppModal.vue';
+import DataCard from '@/components/DataCard.vue';
 import { IonPage, IonContent, IonIcon, toastController, alertController } from '@ionic/vue';
 
 export default defineComponent({
@@ -254,7 +202,10 @@ export default defineComponent({
     IonIcon,
     SiteTitle,
     PageTitle,
-    StatCard
+    StatCard,
+    ActionButton,
+    AppModal,
+    DataCard
   },
   data() {
     return {
@@ -474,28 +425,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* Modern Design System */
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --info-color: #6366f1;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1600px;
   margin: 0 auto;
@@ -504,7 +433,6 @@ export default defineComponent({
   background: var(--background);
 }
 
-/* Page Title */
 .page-title {
   margin: 0;
   color: var(--text-primary);
@@ -512,7 +440,6 @@ export default defineComponent({
   font-weight: 600;
 }
 
-/* Action Bar */
 .action-bar {
   display: flex;
   justify-content: space-between;
@@ -576,7 +503,6 @@ export default defineComponent({
   font-size: 18px;
 }
 
-/* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -584,36 +510,6 @@ export default defineComponent({
   margin-bottom: 24px;
 }
 
-/* Data Card */
-.data-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  margin-bottom: 24px;
-}
-
-.card-header {
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--background);
-}
-
-.header-left h3 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.entry-count {
-  color: var(--text-secondary);
-  font-size: 14px;
-  margin: 0;
-}
-
-/* Form Container */
 .form-container {
   padding: 32px;
 }
@@ -709,7 +605,6 @@ export default defineComponent({
   border-top: 1px solid var(--border);
 }
 
-/* Table Styles */
 .table-wrapper {
   overflow-x: auto;
 }
@@ -817,7 +712,6 @@ export default defineComponent({
   transform: scale(1.05);
 }
 
-/* Status Badge */
 .status-badge {
   padding: 4px 12px;
   border-radius: 12px;
@@ -846,90 +740,6 @@ export default defineComponent({
   color: #64748b;
 }
 
-/* Modal Styles */
-.custom-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  animation: modalFadeIn 0.2s ease;
-}
-
-.custom-modal-content {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border);
-  max-width: 90vw;
-  max-height: 90vh;
-  width: 800px;
-  display: flex;
-  flex-direction: column;
-  animation: modalSlideIn 0.3s ease;
-}
-
-.custom-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--background);
-}
-
-.custom-modal-header h3 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.modal-close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.modal-close-btn:hover {
-  background: var(--border);
-  color: var(--text-primary);
-}
-
-.custom-modal-body {
-  flex: 1;
-  padding: 24px;
-  overflow-y: auto;
-  min-height: 0;
-}
-
-.custom-modal-footer {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  padding: 24px;
-  border-top: 1px solid var(--border);
-  background: var(--background);
-}
-
-/* Preview Styles */
 .preview-container {
   background: var(--surface);
 }
@@ -978,27 +788,6 @@ export default defineComponent({
   line-height: 1.6;
 }
 
-/* Animations */
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 .spinning {
   animation: spin 1s linear infinite;
 }
@@ -1012,7 +801,6 @@ export default defineComponent({
   }
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
@@ -1038,24 +826,6 @@ export default defineComponent({
   .action-btn {
     width: 100%;
     justify-content: center;
-  }
-  
-  .custom-modal-content {
-    width: 95vw;
-    max-width: none;
-    margin: 20px;
-  }
-}
-
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
   }
 }
 </style>

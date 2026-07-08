@@ -4,24 +4,20 @@
       <SiteTitle icon="megaphone-outline" title="Marketing Campaigns"/>
 
       <div class="page-container">
-        <!-- Action Bar -->
         <div class="action-bar">
           <div class="action-group-left">
-            <button class="action-btn primary" @click="toggleCampaignForm">
-              <ion-icon name="add-outline"></ion-icon>
+            <ActionButton variant="primary" icon="add-outline" @click="toggleCampaignForm">
               <span>Neue Kampagne</span>
-            </button>
+            </ActionButton>
           </div>
-          
+
           <div class="action-group-right">
-            <button class="action-btn secondary" @click="exportCampaigns()">
-              <ion-icon name="download-outline"></ion-icon>
+            <ActionButton variant="secondary" icon="download-outline" @click="exportCampaigns()">
               <span>Export CSV</span>
-            </button>
-            <button class="action-btn secondary" @click="refreshCampaigns()">
-              <ion-icon name="refresh-outline"></ion-icon>
+            </ActionButton>
+            <ActionButton variant="secondary" icon="refresh-outline" @click="refreshCampaigns()">
               <span>Aktualisieren</span>
-            </button>
+            </ActionButton>
             <div class="dropdown">
               <button class="action-btn secondary dropdown-toggle" @click="toggleDropdown">
                 <ion-icon name="ellipsis-vertical-outline"></ion-icon>
@@ -40,7 +36,6 @@
           </div>
         </div>
 
-        <!-- KPI Cards -->
         <div class="kpi-grid">
           <div class="kpi-card">
             <div class="kpi-icon">
@@ -93,7 +88,6 @@
           </div>
         </div>
 
-        <!-- Filters and Search -->
         <div class="filter-bar">
           <div class="search-box">
             <ion-icon name="search-outline"></ion-icon>
@@ -126,7 +120,6 @@
           </div>
         </div>
 
-        <!-- Campaigns Data Table -->
         <div class="data-card">
           <div class="card-header">
             <div class="header-left">
@@ -147,7 +140,6 @@
 
           <div v-else class="table-wrapper">
             <div class="modern-table">
-              <!-- Table Header -->
               <div class="table-header">
                 <div class="header-cell" @click="sortBy('name')">
                   <span class="header-text">Kampagne</span>
@@ -188,23 +180,18 @@
                 <div class="actions-header">Aktionen</div>
               </div>
 
-              <!-- Table Body -->
               <div class="table-body">
-                <!-- No Data State -->
-                <div v-if="!filteredCampaigns || filteredCampaigns.length === 0" class="no-data-state">
-                  <div class="no-data-content">
-                    <ion-icon name="megaphone-outline" class="no-data-icon"></ion-icon>
-                    <h4>Keine Kampagnen gefunden</h4>
-                    <p>Erstellen Sie Ihre erste Marketing-Kampagne, um zu beginnen.</p>
-                    <button class="action-btn primary" @click="toggleCampaignForm">
-                      <ion-icon name="add-outline"></ion-icon>
-                      Erste Kampagne erstellen
-                    </button>
-                  </div>
-                </div>
-                
-                <!-- Campaign Rows -->
-                <div 
+                <EmptyState
+                  v-if="!filteredCampaigns || filteredCampaigns.length === 0"
+                  icon="megaphone-outline"
+                  title="Keine Kampagnen gefunden"
+                  description="Erstellen Sie Ihre erste Marketing-Kampagne, um zu beginnen.">
+                  <ActionButton variant="primary" icon="add-outline" @click="toggleCampaignForm">
+                    Erste Kampagne erstellen
+                  </ActionButton>
+                </EmptyState>
+
+                <div
                   v-for="campaign in paginatedCampaigns" 
                   :key="campaign.id" 
                   class="table-row"
@@ -291,7 +278,6 @@
             </div>
           </div>
 
-          <!-- Pagination -->
           <div class="pagination" v-if="totalPages > 1">
             <button 
               class="action-btn secondary" 
@@ -309,7 +295,6 @@
           </div>
         </div>
 
-        <!-- Campaign Form Section -->
         <div class="form-section" :class="{ 'form-visible': showCampaignForm }">
           <div class="form-card">
             <div class="form-header">
@@ -453,12 +438,12 @@
                 </div>
 
                 <div class="form-actions">
-                  <button type="button" class="action-btn secondary" @click="closeCampaignForm">
+                  <ActionButton type="button" variant="secondary" @click="closeCampaignForm">
                     Abbrechen
-                  </button>
-                  <button type="submit" class="action-btn primary" :disabled="saving">
+                  </ActionButton>
+                  <ActionButton type="submit" variant="primary" :disabled="saving">
                     {{ saving ? 'Speichern...' : (editingCampaign ? 'Aktualisieren' : 'Erstellen') }}
-                  </button>
+                  </ActionButton>
                 </div>
               </form>
             </div>
@@ -471,11 +456,15 @@
 
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import EmptyState from "@/components/EmptyState.vue";
 
 export default {
   name: "MarketingCampaigns",
   components: {
     SiteTitle,
+    ActionButton,
+    EmptyState,
   },
   data() {
     return {
@@ -495,7 +484,6 @@ export default {
       saving: false,
       dropdownOpen: false,
       
-      // Form data
       campaignForm: {
         name: '',
         description: '',
@@ -511,7 +499,6 @@ export default {
         goals: ''
       },
       
-      // Stats
       totalCampaigns: 0,
       activeCampaigns: 0,
       upcomingCampaigns: 0,
@@ -736,7 +723,6 @@ export default {
     },
     
     viewCampaignDetails(campaign) {
-      // Future implementation for detailed view
       console.log('View details for campaign:', campaign);
     },
     
@@ -745,13 +731,11 @@ export default {
     },
     
     openAnalyticsModal() {
-      // Future implementation
       console.log('Open analytics modal');
       this.dropdownOpen = false;
     },
     
     openTemplatesModal() {
-      // Future implementation
       console.log('Open templates modal');
       this.dropdownOpen = false;
     },
@@ -789,7 +773,6 @@ export default {
       this.loadCampaigns();
     },
     
-    // Helper methods
     formatDate(dateStr) {
       if (!dateStr) return '';
       return new Date(dateStr).toLocaleDateString('de-DE');
@@ -843,27 +826,6 @@ export default {
 </script>
 
 <style scoped>
-/* Modern Design System - inheriting from FormDisplay.vue */
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1600px;
   margin: 0 auto;
@@ -872,7 +834,6 @@ export default {
   background: var(--background);
 }
 
-/* Action Bar */
 .action-bar {
   display: flex;
   justify-content: space-between;
@@ -927,7 +888,6 @@ export default {
   font-size: 16px;
 }
 
-/* Dropdown */
 .dropdown {
   position: relative;
 }
@@ -983,7 +943,6 @@ export default {
   color: var(--text-secondary);
 }
 
-/* KPI Grid */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -1070,7 +1029,6 @@ export default {
   color: var(--text-muted);
 }
 
-/* Filter Bar */
 .filter-bar {
   display: flex;
   justify-content: space-between;
@@ -1136,7 +1094,6 @@ export default {
   box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
-/* Data Card */
 .data-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
@@ -1168,7 +1125,6 @@ export default {
   font-size: 14px;
 }
 
-/* Loading and Error States */
 .loading-container,
 .error-container {
   display: flex;
@@ -1189,7 +1145,6 @@ export default {
   margin-bottom: 16px;
 }
 
-/* Modern Table */
 .table-wrapper {
   overflow-x: auto;
 }
@@ -1267,7 +1222,6 @@ export default {
   opacity: 0.6;
 }
 
-/* Table Body */
 .table-body {
   background: var(--surface);
 }
@@ -1302,7 +1256,6 @@ export default {
   padding: 12px 16px;
 }
 
-/* Campaign specific cells */
 .campaign-info {
   flex-direction: column;
   align-items: flex-start;
@@ -1440,7 +1393,6 @@ export default {
   letter-spacing: 0.5px;
 }
 
-/* Action Buttons */
 .action-buttons {
   display: flex;
   gap: 8px;
@@ -1509,7 +1461,6 @@ export default {
   transform: scale(1.05);
 }
 
-/* Pagination */
 .pagination {
   display: flex;
   align-items: center;
@@ -1524,40 +1475,6 @@ export default {
   color: var(--text-primary);
 }
 
-/* No Data State */
-.no-data-state {
-  padding: 80px 20px;
-  text-align: center;
-  background: var(--surface);
-}
-
-.no-data-content {
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-.no-data-icon {
-  font-size: 64px;
-  color: var(--text-muted);
-  margin-bottom: 20px;
-  opacity: 0.5;
-}
-
-.no-data-content h4 {
-  margin: 0 0 12px 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.no-data-content p {
-  margin: 0 0 24px 0;
-  color: var(--text-secondary);
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-/* Form Section */
 .form-section {
   position: fixed;
   top: 0;
@@ -1622,7 +1539,6 @@ export default {
   overflow-y: auto;
 }
 
-/* Campaign Form */
 .campaign-form {
   display: flex;
   flex-direction: column;
@@ -1681,7 +1597,6 @@ export default {
   border-top: 1px solid var(--border);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
@@ -1752,17 +1667,7 @@ export default {
   }
 }
 
-/* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
-  }
-  
   .search-input,
   .modern-input,
   .modern-textarea,

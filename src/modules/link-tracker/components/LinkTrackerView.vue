@@ -4,21 +4,17 @@
       <SiteTitle icon="link-outline" title="Link Tracker" bg="transparent"/>
 
       <div class="page-container">
-        <!-- Action Bar -->
         <div class="action-bar">
           <div class="action-group-left">
-            <button class="action-btn primary" @click="showCreateForm = !showCreateForm">
-              <ion-icon name="add-circle"></ion-icon>
+            <ActionButton variant="primary" icon="add-circle" @click="showCreateForm = !showCreateForm">
               Neuer Link
-            </button>
-            <button class="action-btn" @click="loadLinks">
-              <ion-icon name="refresh"></ion-icon>
+            </ActionButton>
+            <ActionButton icon="refresh" @click="loadLinks">
               Aktualisieren
-            </button>
+            </ActionButton>
           </div>
 
           <div class="action-group-right">
-            <!-- Period Selector moved here -->
             <div class="period-selector">
               <button v-for="period in periods" :key="period.value"
                 :class="['period-btn', { active: selectedPeriod === period.value }]"
@@ -36,7 +32,6 @@
           </div>
         </div>
 
-        <!-- Stats Cards -->
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-value">{{ totalClicks }}</div>
@@ -56,9 +51,7 @@
           </div>
         </div>
 
-        <!-- Analytics Dashboard -->
         <div class="analytics-section" v-if="analyticsLoaded">
-          <!-- Timeline Chart -->
           <div class="data-card">
             <div class="card-header">
               <h3>Klicks Timeline</h3>
@@ -68,9 +61,7 @@
             </div>
           </div>
 
-          <!-- Analytics Grid -->
           <div class="analytics-grid">
-            <!-- Countries -->
             <div class="data-card">
               <div class="card-header">
                 <h3>Länder</h3>
@@ -84,7 +75,6 @@
               </div>
             </div>
 
-            <!-- Devices -->
             <div class="data-card">
               <div class="card-header">
                 <h3>Geräte</h3>
@@ -94,7 +84,6 @@
               </div>
             </div>
 
-            <!-- Browsers -->
             <div class="data-card">
               <div class="card-header">
                 <h3>Browser</h3>
@@ -108,7 +97,6 @@
               </div>
             </div>
 
-            <!-- Platforms -->
             <div class="data-card">
               <div class="card-header">
                 <h3>Betriebssysteme</h3>
@@ -124,7 +112,6 @@
           </div>
         </div>
 
-        <!-- Data Table Card -->
         <div class="data-card">
           <div class="card-header">
             <div class="header-left">
@@ -217,17 +204,11 @@
               </div>
             </div>
 
-            <div v-if="filteredLinks.length === 0" class="no-data-state">
-              <div class="no-data-content">
-                <ion-icon name="link" class="no-data-icon"></ion-icon>
-                <h4>Keine Links gefunden</h4>
-                <p>Erstelle deinen ersten Link mit dem Button oben.</p>
-              </div>
-            </div>
+            <EmptyState v-if="filteredLinks.length === 0" icon="link" title="Keine Links gefunden"
+              description="Erstelle deinen ersten Link mit dem Button oben." />
           </div>
         </div>
 
-        <!-- Create Form Section -->
         <div class="form-section" :class="{ 'form-visible': showCreateForm }">
           <div class="form-card">
             <div class="form-header">
@@ -256,12 +237,12 @@
                 </div>
 
                 <div class="form-actions">
-                  <button type="button" class="action-btn" @click="showCreateForm = false">
+                  <ActionButton type="button" @click="showCreateForm = false">
                     Abbrechen
-                  </button>
-                  <button type="submit" class="action-btn primary" :disabled="!newLink.title || !newLink.target_url">
+                  </ActionButton>
+                  <ActionButton type="submit" variant="primary" :disabled="!newLink.title || !newLink.target_url">
                     Link erstellen
-                  </button>
+                  </ActionButton>
                 </div>
               </form>
             </div>
@@ -274,6 +255,8 @@
 
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import EmptyState from "@/components/EmptyState.vue";
 import CountryService from "@/services/countryService.js"
 
 import {
@@ -285,7 +268,9 @@ Chart.register(...registerables);
 export default {
   name: "LinkTrackerView",
   components: {
-    SiteTitle
+    SiteTitle,
+    ActionButton,
+    EmptyState
   },
   data() {
     return {
@@ -381,7 +366,6 @@ export default {
           this.showCreateForm = false;
           this.resetForm();
           this.loadLinks();
-          // Show success toast here
         } else {
           alert(response.data.message || 'Fehler beim Erstellen des Links');
         }
@@ -469,7 +453,6 @@ export default {
 
     copyToClipboard(text) {
       navigator.clipboard.writeText(text).then(() => {
-        // Show success toast
         console.log('Link copied to clipboard');
       }).catch(err => {
         console.error('Failed to copy: ', err);
@@ -576,40 +559,11 @@ export default {
     },
 
     getCountryName(code) {
-      /*const countries = {
-        'DE': 'Deutschland',
-        'US': 'USA',
-        'GB': 'Großbritannien',
-        'FR': 'Frankreich',
-        'AT': 'Österreich',
-        'CH': 'Schweiz',
-        'IT': 'Italien',
-        'ES': 'Spanien',
-        'NL': 'Niederlande',
-        'BE': 'Belgien',
-        'XX': 'Unbekannt'
-      };
-      return countries[code] || code;*/
       return CountryService.getCountryName(code)
     },
 
     getCountryFlag(code) {
-      /* const flags = {
-         'DE': '🇩🇪',
-         'US': '🇺🇸',
-         'GB': '🇬🇧',
-         'FR': '🇫🇷',
-         'AT': '🇦🇹',
-         'CH': '🇨🇭',
-         'IT': '🇮🇹',
-         'ES': '🇪🇸',
-         'NL': '🇳🇱',
-         'BE': '🇧🇪',
-         'XX': '🌍'
-       };
-       return flags[code] || '🌍';*/
       return CountryService.getCountryFlag(code) || '🌍'
-
     },
 
     getBrowserIcon(browser) {
@@ -640,39 +594,6 @@ export default {
 </script>
 
 <style scoped>
-/* Use the same modern styling as FormDisplay.vue */
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #1e1e1e;
-    --surface: #2a2a2a;
-    --border: #404040;
-    --text-primary: #e2e8f0;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-  }
-}
-
 ion-content.modern-content {
   --background: var(--background);
 }
@@ -685,7 +606,6 @@ ion-content.modern-content {
   background: var(--background);
 }
 
-/* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -715,7 +635,6 @@ ion-content.modern-content {
   font-weight: 500;
 }
 
-/* Action Bar */
 .action-bar {
   display: flex;
   justify-content: space-between;
@@ -732,50 +651,6 @@ ion-content.modern-content {
   gap: 12px;
 }
 
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-}
-
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.action-btn:disabled:hover {
-  transform: none;
-}
-
-/* Search Box */
 .search-box {
   position: relative;
   display: flex;
@@ -807,7 +682,6 @@ ion-content.modern-content {
   box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
 }
 
-/* Data Card */
 .data-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
@@ -839,7 +713,6 @@ ion-content.modern-content {
   font-size: 14px;
 }
 
-/* Modern Table */
 .table-wrapper {
   overflow-x: auto;
 }
@@ -915,7 +788,6 @@ ion-content.modern-content {
   opacity: 0.6;
 }
 
-/* Table Body */
 .table-body {
   background: var(--surface);
 }
@@ -957,7 +829,6 @@ ion-content.modern-content {
   max-width: 200px;
 }
 
-/* Action Buttons */
 .action-buttons {
   display: flex;
   gap: 8px;
@@ -996,7 +867,6 @@ ion-content.modern-content {
   transform: scale(1.05);
 }
 
-/* Form Section */
 .form-section {
   position: fixed;
   top: 0;
@@ -1104,40 +974,6 @@ ion-content.modern-content {
   border-top: 1px solid var(--border);
 }
 
-/* No Data State */
-.no-data-state {
-  padding: 60px 20px;
-  text-align: center;
-  background: var(--surface);
-}
-
-.no-data-content {
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-.no-data-icon {
-  font-size: 64px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.no-data-content h4 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.no-data-content p {
-  margin: 0 0 24px 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-/* Period Selector */
 .period-selector {
   display: flex;
   gap: 8px;
@@ -1164,7 +1000,6 @@ ion-content.modern-content {
   border-color: var(--primary-color);
 }
 
-/* Toggle Container */
 .toggle-container {
   display: flex;
   align-items: center;
@@ -1216,7 +1051,6 @@ ion-content.modern-content {
   transform: translateX(20px);
 }
 
-/* Analytics Section */
 .analytics-section {
   margin-top: 32px;
 }
@@ -1272,7 +1106,6 @@ ion-content.modern-content {
   width: 24px;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;

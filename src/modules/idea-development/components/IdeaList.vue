@@ -4,22 +4,12 @@
       <SiteTitle icon="bulb-outline" title="Ideen Entwicklung" />
 
       <div class="page-container">
-        <!-- Header -->
-        <div class="page-header">
-          <div class="header-content">
-            <PageTitle icon="bulb-outline" title="Ideen Entwicklung" />
-          </div>
-          <div class="header-actions">
-            <button class="action-btn secondary" @click="loadIdeas">
-              <ion-icon name="refresh-outline"></ion-icon>
-              Refresh
-            </button>
-            <button class="action-btn primary" @click="createIdea">
-              <ion-icon name="add-outline"></ion-icon>
-              Neue Idee
-            </button>
-          </div>
-        </div>
+        <PageHeader icon="bulb-outline" title="Ideen Entwicklung">
+          <template #actions>
+            <ActionButton variant="secondary" icon="refresh-outline" @click="loadIdeas">Refresh</ActionButton>
+            <ActionButton variant="primary" icon="add-outline" @click="createIdea">Neue Idee</ActionButton>
+          </template>
+        </PageHeader>
 
         <div class="stats-grid">
           <StatCard icon="bulb-outline" color="primary" :value="ideas.length" label="Gesamt Ideen" />
@@ -28,32 +18,19 @@
           <StatCard icon="document-text-outline" color="info" :value="ideas.filter(i => i.status === 'draft').length" label="Entwürfe" />
         </div>
 
-        <!-- Ideas List/Table -->
         <div class="data-card">
           <div class="card-header">
             <div class="header-left">
               <h3>Alle Ideen</h3>
               <span class="entry-count">{{ filteredIdeas.length }} Ideen</span>
             </div>
-            <div class="search-box">
-              <ion-icon name="search-outline"></ion-icon>
-              <input type="text" placeholder="Suche..." v-model="searchTerm">
-            </div>
+            <SearchBox v-model="searchTerm" placeholder="Suche..." />
           </div>
 
           <div class="table-wrapper">
-            <div v-if="loading" class="loading-state">
-              <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
-              <p>Lade Ideen...</p>
-            </div>
+            <LoadingState v-if="loading" message="Lade Ideen..." />
 
-            <div v-else-if="filteredIdeas.length === 0" class="no-data-state">
-              <div class="no-data-content">
-                <ion-icon name="bulb-outline" class="no-data-icon"></ion-icon>
-                <h4>Keine Ideen gefunden</h4>
-                <p>Erstelle eine neue Idee um zu starten.</p>
-              </div>
-            </div>
+            <EmptyState v-else-if="filteredIdeas.length === 0" icon="bulb-outline" title="Keine Ideen gefunden" description="Erstelle eine neue Idee um zu starten." />
 
             <div v-else class="modern-table">
               <div class="table-header">
@@ -66,7 +43,6 @@
 
               <div class="table-body">
                 <div v-for="idea in filteredIdeas" :key="idea.id" class="table-row" @click="openIdea(idea)">
-                  <!-- Title & Desc -->
                   <div class="table-cell cell-name">
                     <div class="user-info">
                       <span class="user-name">{{ idea.title }}</span>
@@ -74,7 +50,6 @@
                     </div>
                   </div>
 
-                  <!-- Progress -->
                   <div class="table-cell">
                     <div class="progress-bar-container" v-if="idea.milestones && idea.milestones.length > 0">
                       <div class="progress-bar">
@@ -85,19 +60,16 @@
                     <span v-else class="text-muted">Keine Meilensteine</span>
                   </div>
 
-                  <!-- Status -->
                   <div class="table-cell">
                     <span class="status-badge" :class="getStatusClass(idea.status)">
                       {{ getStatusLabel(idea.status) }}
                     </span>
                   </div>
 
-                   <!-- Date -->
                   <div class="table-cell">
                     <span>{{ formatDate(idea.created_at) }}</span>
                   </div>
-                  
-                  <!-- Actions -->
+
                   <div class="table-cell cell-actions">
                      <button class="icon-btn" @click.stop="openIdea(idea)">
                         <ion-icon name="create-outline"></ion-icon>
@@ -124,14 +96,19 @@ import {
   searchOutline, syncOutline, createOutline
 } from 'ionicons/icons';
 import SiteTitle from "@/components/SiteTitle.vue";
-import PageTitle from "@/components/PageTitle.vue";
 import StatCard from "@/components/StatCard.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import SearchBox from "@/components/SearchBox.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import EmptyState from "@/components/EmptyState.vue";
 import { ideaService, type Idea } from '../services/IdeaService';
 
 export default defineComponent({
   name: 'IdeaList',
   components: {
-    IonPage, IonContent, IonIcon, SiteTitle, PageTitle, StatCard
+    IonPage, IonContent, IonIcon, SiteTitle, StatCard,
+    PageHeader, ActionButton, SearchBox, LoadingState, EmptyState
   },
   setup() {
     const route = useRoute();
@@ -181,7 +158,7 @@ export default defineComponent({
             });
             
             if (newIdea && newIdea.id) {
-                await loadIdeas(); // Verify list update
+                await loadIdeas();
                 openIdea(newIdea);
             } else {
                 console.error("Failed to create idea: No ID returned");
@@ -205,9 +182,9 @@ export default defineComponent({
 
     const getStatusClass = (status: string) => {
         const map: Record<string, string> = {
-            'draft': 'status-pending', // reusing pending style for draft
+            'draft': 'status-pending',
             'in_progress': 'status-active',
-            'completed': 'status-success', // hypothetical class
+            'completed': 'status-success',
             'archived': 'status-inactive'
         };
         return map[status] || '';
@@ -254,61 +231,6 @@ export default defineComponent({
   min-height: 100vh;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.header-content h1 {
-  margin: 0 0 8px 0;
-  color: var(--ion-text-color);
-  font-size: 32px;
-  font-weight: 700;
-}
-
-.header-content p {
-  margin: 0;
-  color: var(--ion-color-medium);
-  font-size: 16px;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-  font-size: 14px;
-}
-
-.action-btn.primary {
-  background: var(--ion-color-primary);
-  color: white;
-}
-
-.action-btn.secondary {
-  background: white;
-  color: var(--ion-text-color);
-  border: 1px solid #e0e0e0;
-}
-.action-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -346,23 +268,6 @@ export default defineComponent({
 .entry-count {
   color: var(--ion-color-medium);
   font-size: 14px;
-}
-
-.search-box {
-  display: flex;
-  align-items: center;
-  background: #f5f5f5;
-  padding: 8px 16px;
-  border-radius: 8px;
-  width: 300px;
-}
-
-.search-box input {
-  border: none;
-  background: transparent;
-  margin-left: 8px;
-  width: 100%;
-  outline: none;
 }
 
 .modern-table {
@@ -489,28 +394,4 @@ export default defineComponent({
     color: var(--ion-color-primary);
 }
 
-.loading-state, .no-data-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px;
-  color: var(--ion-color-medium);
-}
-
-.loading-icon {
-  font-size: 32px;
-  margin-bottom: 16px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  100% { transform: rotate(360deg); }
-}
-
-.no-data-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
 </style>

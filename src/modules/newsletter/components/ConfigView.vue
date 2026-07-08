@@ -4,15 +4,10 @@
       <SiteTitle icon="settings-outline" title="Newsletter - Einstellungen" bg="transparent"/>
       
       <div class="page-container">
-        <!-- Back Button -->
         <div class="action-bar">
-          <button class="action-btn" @click="goBack">
-            <ion-icon name="arrow-back-outline"></ion-icon>
-            Zurück
-          </button>
+          <ActionButton icon="arrow-back-outline" @click="goBack">Zurück</ActionButton>
         </div>
 
-        <!-- Info Card -->
         <div class="info-card">
           <div class="info-icon">
             <ion-icon name="information-circle-outline"></ion-icon>
@@ -23,17 +18,9 @@
           </div>
         </div>
 
-        <!-- Settings Card -->
-        <div class="data-card">
-          <div class="card-header">
-            <div class="header-left">
-              <h3>Allgemeine Einstellungen</h3>
-            </div>
-          </div>
-
+        <DataCard title="Allgemeine Einstellungen" :no-padding="true">
           <div class="form-container">
             <form @submit.prevent="saveSettings">
-              <!-- Sender Name -->
               <div class="form-group">
                 <label class="form-label">
                   <ion-icon name="person-outline"></ion-icon>
@@ -47,7 +34,6 @@
                 />
               </div>
 
-              <!-- Sender Email -->
               <div class="form-group">
                 <label class="form-label">
                   <ion-icon name="mail-outline"></ion-icon>
@@ -61,7 +47,6 @@
                 />
               </div>
 
-              <!-- Reply-To Email -->
               <div class="form-group">
                 <label class="form-label">
                   <ion-icon name="arrow-undo-outline"></ion-icon>
@@ -79,7 +64,6 @@
                 </div>
               </div>
 
-              <!-- Email Template -->
               <div class="form-group">
                 <label class="form-label">
                   <ion-icon name="document-text-outline"></ion-icon>
@@ -93,7 +77,6 @@
                 </select>
               </div>
 
-              <!-- Tracking -->
               <div class="form-group">
                 <h4 class="subsection-title">Tracking & Analytics</h4>
                 
@@ -116,7 +99,6 @@
                 </label>
               </div>
 
-              <!-- Unsubscribe -->
               <div class="form-group">
                 <h4 class="subsection-title">Abmeldung</h4>
                 
@@ -140,7 +122,6 @@
                 </div>
               </div>
 
-              <!-- Rate Limiting -->
               <div class="form-group">
                 <h4 class="subsection-title">Versandlimit</h4>
                 
@@ -162,43 +143,33 @@
                 </div>
               </div>
 
-              <!-- Action Buttons -->
               <div class="form-actions">
-                <button 
-                  type="button" 
-                  class="action-btn secondary" 
+                <ActionButton
+                  variant="secondary"
+                  icon="refresh-outline"
+                  type="button"
                   @click="resetSettings"
                   :disabled="saving"
                 >
-                  <ion-icon name="refresh-outline"></ion-icon>
                   Zurücksetzen
-                </button>
-                <button 
-                  type="submit" 
-                  class="action-btn primary" 
+                </ActionButton>
+                <ActionButton
+                  variant="primary"
+                  type="submit"
                   :disabled="saving"
                 >
                   <ion-icon v-if="!saving" name="save-outline"></ion-icon>
                   <ion-icon v-else name="hourglass-outline" class="spinning"></ion-icon>
                   {{ saving ? 'Wird gespeichert...' : 'Einstellungen speichern' }}
-                </button>
+                </ActionButton>
               </div>
             </form>
           </div>
-        </div>
+        </DataCard>
 
-        <!-- SMTP Settings Card -->
-        <div class="data-card">
-          <div class="card-header">
-            <div class="header-left">
-              <h3>SMTP Konfiguration</h3>
-              <p class="entry-count">Konfiguriere deinen E-Mail-Server</p>
-            </div>
-          </div>
-
+        <DataCard title="SMTP Konfiguration" subtitle="Konfiguriere deinen E-Mail-Server" :no-padding="true">
           <div class="form-container">
             <form @submit.prevent="saveSmtpSettings">
-              <!-- SMTP Host -->
               <div class="form-group">
                 <label class="form-label">
                   <ion-icon name="server-outline"></ion-icon>
@@ -212,7 +183,6 @@
                 />
               </div>
 
-              <!-- SMTP Port -->
               <div class="form-group">
                 <label class="form-label">
                   <ion-icon name="link-outline"></ion-icon>
@@ -226,7 +196,6 @@
                 />
               </div>
 
-              <!-- SMTP Username -->
               <div class="form-group">
                 <label class="form-label">
                   <ion-icon name="person-outline"></ion-icon>
@@ -240,7 +209,6 @@
                 />
               </div>
 
-              <!-- SMTP Password -->
               <div class="form-group">
                 <label class="form-label">
                   <ion-icon name="lock-closed-outline"></ion-icon>
@@ -254,7 +222,6 @@
                 />
               </div>
 
-              <!-- Encryption -->
               <div class="form-group">
                 <label class="form-label">
                   <ion-icon name="shield-outline"></ion-icon>
@@ -267,11 +234,10 @@
                 </select>
               </div>
 
-              <!-- Test Connection -->
               <div class="form-group">
-                <button 
-                  type="button" 
-                  class="action-btn secondary full-width" 
+                <button
+                  type="button"
+                  class="action-btn secondary full-width"
                   @click="testConnection"
                   :disabled="testing"
                 >
@@ -281,21 +247,20 @@
                 </button>
               </div>
 
-              <!-- Action Buttons -->
               <div class="form-actions">
-                <button 
-                  type="submit" 
-                  class="action-btn primary" 
+                <ActionButton
+                  variant="primary"
+                  type="submit"
                   :disabled="savingSmtp"
                 >
                   <ion-icon v-if="!savingSmtp" name="save-outline"></ion-icon>
                   <ion-icon v-else name="hourglass-outline" class="spinning"></ion-icon>
                   {{ savingSmtp ? 'Wird gespeichert...' : 'SMTP speichern' }}
-                </button>
+                </ActionButton>
               </div>
             </form>
           </div>
-        </div>
+        </DataCard>
       </div>
     </ion-content>
   </ion-page>
@@ -304,6 +269,8 @@
 <script>
 import { defineComponent } from 'vue';
 import SiteTitle from '@/components/SiteTitle.vue';
+import ActionButton from '@/components/ActionButton.vue';
+import DataCard from '@/components/DataCard.vue';
 import { IonPage, IonContent, IonIcon, toastController } from '@ionic/vue';
 
 export default defineComponent({
@@ -312,7 +279,9 @@ export default defineComponent({
     IonPage,
     IonContent,
     IonIcon,
-    SiteTitle
+    SiteTitle,
+    ActionButton,
+    DataCard
   },
   data() {
     return {
@@ -508,25 +477,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* Modern Design System */
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1000px;
   margin: 0 auto;
@@ -535,7 +485,6 @@ export default defineComponent({
   background: var(--background);
 }
 
-/* Action Bar */
 .action-bar {
   margin-bottom: 24px;
 }
@@ -591,7 +540,6 @@ export default defineComponent({
   font-size: 18px;
 }
 
-/* Info Card */
 .info-card {
   display: flex;
   gap: 16px;
@@ -620,36 +568,6 @@ export default defineComponent({
   font-size: 14px;
 }
 
-/* Data Card */
-.data-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  margin-bottom: 24px;
-}
-
-.card-header {
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--background);
-}
-
-.header-left h3 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.entry-count {
-  color: var(--text-secondary);
-  font-size: 14px;
-  margin: 0;
-}
-
-/* Form Container */
 .form-container {
   padding: 32px;
 }
@@ -745,7 +663,6 @@ export default defineComponent({
   border-top: 1px solid var(--border);
 }
 
-/* Animations */
 .spinning {
   animation: spin 1s linear infinite;
 }
@@ -759,7 +676,6 @@ export default defineComponent({
   }
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
@@ -779,17 +695,7 @@ export default defineComponent({
   }
 }
 
-/* Dark Mode */
 @media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
-  }
-  
   .info-card {
     background: #7c2d12;
     border-color: #9a3412;

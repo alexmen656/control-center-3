@@ -4,22 +4,13 @@
       <SiteTitle icon="bookmarks-outline" title="Manage Bookmarks" />
 
       <div class="page-container">
-        <!-- Header -->
-        <div class="page-header">
-          <div class="header-content">
-            <PageTitle icon="bookmarks-outline" title="Bookmark Management" />
-          </div>
-          <div class="header-actions">
-            <button class="action-btn secondary" @click="refreshBookmarks">
-              <ion-icon name="refresh-outline"></ion-icon>
-              Refresh
-            </button>
-            <button class="action-btn primary" @click="showCreateModal = true">
-              <ion-icon name="add-outline"></ion-icon>
-              New Bookmark
-            </button>
-          </div>
-        </div>
+        <PageHeader icon="bookmarks-outline" title="Bookmark Management">
+          <template #actions>
+            <ActionButton variant="secondary" icon="refresh-outline" @click="refreshBookmarks">Refresh</ActionButton>
+            <ActionButton variant="primary" icon="add-outline" @click="showCreateModal = true">New Bookmark
+            </ActionButton>
+          </template>
+        </PageHeader>
 
         <div class="stats-grid">
           <StatCard icon="bookmarks-outline" color="primary" :value="totalBookmarks" label="Total Bookmarks" />
@@ -28,32 +19,19 @@
           <StatCard icon="calendar-outline" color="warning" :value="recentBookmarks" label="Added this week" />
         </div>
 
-        <!-- Bookmarks List -->
-        <div class="bookmarks-card">
-          <div class="card-header">
-            <h2>Your Bookmarks</h2>
-            <div class="search-box">
-              <ion-icon name="search-outline"></ion-icon>
-              <input type="text" placeholder="Search bookmarks..." v-model="searchTerm">
-            </div>
-          </div>
+        <DataCard title="Your Bookmarks" :no-padding="true">
+          <template #actions>
+            <SearchBox v-model="searchTerm" placeholder="Search bookmarks..." />
+          </template>
 
           <div class="bookmarks-container">
-            <div v-if="loading" class="loading-state">
-              <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
-              <p>Loading bookmarks...</p>
-            </div>
+            <LoadingState v-if="loading" message="Loading bookmarks..." />
 
-            <div v-else-if="filteredBookmarks.length === 0" class="no-data-state">
-              <ion-icon name="bookmarks-outline" class="no-data-icon"></ion-icon>
-              <h3>No Bookmarks Found</h3>
-              <p>{{ searchTerm ? 'No bookmarks match your search criteria.' : 'You haven\'t saved any bookmarks yet.' }}
-              </p>
-              <button class="action-btn primary" @click="showCreateModal = true">
-                <ion-icon name="add-outline"></ion-icon>
-                Create Your First Bookmark
-              </button>
-            </div>
+            <EmptyState v-else-if="filteredBookmarks.length === 0" icon="bookmarks-outline" title="No Bookmarks Found"
+              :description="searchTerm ? 'No bookmarks match your search criteria.' : 'You haven\'t saved any bookmarks yet.'">
+              <ActionButton variant="primary" icon="add-outline" @click="showCreateModal = true">Create Your First
+                Bookmark</ActionButton>
+            </EmptyState>
 
             <div v-else class="bookmarks-grid">
               <div v-for="bookmark in filteredBookmarks" :key="bookmark.id" class="bookmark-card" :class="{
@@ -97,135 +75,102 @@
               </div>
             </div>
           </div>
-        </div>
+        </DataCard>
       </div>
 
-      <!-- Create Bookmark Modal -->
-      <div v-if="showCreateModal" class="custom-modal-overlay" @click="showCreateModal = false">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>Create New Bookmark</h3>
-            <button class="modal-close-btn" @click="showCreateModal = false">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
-          </div>
-          <div class="custom-modal-body">
-            <div class="form-group">
-              <label for="bookmark-title">Title</label>
-              <input id="bookmark-title" type="text" v-model="newBookmark.title" placeholder="Enter bookmark title"
-                class="form-input">
-            </div>
-            <div class="form-group">
-              <label for="bookmark-url">URL</label>
-              <input id="bookmark-url" type="text" v-model="newBookmark.location"
-                placeholder="Enter URL (e.g., https://example.com or /internal/path)" class="form-input">
-            </div>
-            <div class="form-group">
-              <label for="bookmark-icon">Icon</label>
-              <input id="bookmark-icon" type="text" v-model="newBookmark.icon"
-                placeholder="Enter Ionic icon name (e.g., bookmark-outline)" class="form-input">
-              <div class="icon-preview" v-if="newBookmark.icon">
-                <ion-icon :name="newBookmark.icon"></ion-icon>
-                <span>Preview</span>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button class="action-btn secondary" @click="showCreateModal = false">
-                Cancel
-              </button>
-              <button class="action-btn primary" @click="createBookmark"
-                :disabled="!newBookmark.title.trim() || !newBookmark.location.trim()">
-                Create Bookmark
-              </button>
-            </div>
+      <AppModal v-model="showCreateModal" title="Create New Bookmark">
+        <div class="form-group">
+          <label for="bookmark-title">Title</label>
+          <input id="bookmark-title" type="text" v-model="newBookmark.title" placeholder="Enter bookmark title"
+            class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="bookmark-url">URL</label>
+          <input id="bookmark-url" type="text" v-model="newBookmark.location"
+            placeholder="Enter URL (e.g., https://example.com or /internal/path)" class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="bookmark-icon">Icon</label>
+          <input id="bookmark-icon" type="text" v-model="newBookmark.icon"
+            placeholder="Enter Ionic icon name (e.g., bookmark-outline)" class="form-input">
+          <div class="icon-preview" v-if="newBookmark.icon">
+            <ion-icon :name="newBookmark.icon"></ion-icon>
+            <span>Preview</span>
           </div>
         </div>
-      </div>
+        <template #footer>
+          <ActionButton variant="secondary" @click="showCreateModal = false">Cancel</ActionButton>
+          <ActionButton variant="primary" @click="createBookmark"
+            :disabled="!newBookmark.title.trim() || !newBookmark.location.trim()">Create Bookmark</ActionButton>
+        </template>
+      </AppModal>
 
-      <!-- Edit Bookmark Modal -->
-      <div v-if="showEditModal" class="custom-modal-overlay" @click="showEditModal = false">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>Edit Bookmark</h3>
-            <button class="modal-close-btn" @click="showEditModal = false">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
-          </div>
-          <div class="custom-modal-body">
-            <div class="form-group">
-              <label for="edit-bookmark-title">Title</label>
-              <input id="edit-bookmark-title" type="text" v-model="editingBookmark.title"
-                placeholder="Enter bookmark title" class="form-input">
-            </div>
-            <div class="form-group">
-              <label for="edit-bookmark-url">URL</label>
-              <input id="edit-bookmark-url" type="text" v-model="editingBookmark.location" placeholder="Enter URL"
-                class="form-input">
-            </div>
-            <div class="form-group">
-              <label for="edit-bookmark-icon">Icon</label>
-              <input id="edit-bookmark-icon" type="text" v-model="editingBookmark.icon"
-                placeholder="Enter Ionic icon name" class="form-input">
-              <div class="icon-preview" v-if="editingBookmark.icon">
-                <ion-icon :name="editingBookmark.icon"></ion-icon>
-                <span>Preview</span>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button class="action-btn secondary" @click="showEditModal = false">
-                Cancel
-              </button>
-              <button class="action-btn primary" @click="updateBookmark">
-                Update Bookmark
-              </button>
-            </div>
+      <AppModal v-model="showEditModal" title="Edit Bookmark">
+        <div class="form-group">
+          <label for="edit-bookmark-title">Title</label>
+          <input id="edit-bookmark-title" type="text" v-model="editingBookmark.title" placeholder="Enter bookmark title"
+            class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="edit-bookmark-url">URL</label>
+          <input id="edit-bookmark-url" type="text" v-model="editingBookmark.location" placeholder="Enter URL"
+            class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="edit-bookmark-icon">Icon</label>
+          <input id="edit-bookmark-icon" type="text" v-model="editingBookmark.icon" placeholder="Enter Ionic icon name"
+            class="form-input">
+          <div class="icon-preview" v-if="editingBookmark.icon">
+            <ion-icon :name="editingBookmark.icon"></ion-icon>
+            <span>Preview</span>
           </div>
         </div>
-      </div>
+        <template #footer>
+          <ActionButton variant="secondary" @click="showEditModal = false">Cancel</ActionButton>
+          <ActionButton variant="primary" @click="updateBookmark">Update Bookmark</ActionButton>
+        </template>
+      </AppModal>
 
-      <!-- Delete Confirmation Modal -->
-      <div v-if="deleteModal.show" class="custom-modal-overlay" @click="deleteModal.show = false">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>Delete Bookmark</h3>
-            <button class="modal-close-btn" @click="deleteModal.show = false">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
-          </div>
-          <div class="custom-modal-body">
-            <div class="warning-content">
-              <ion-icon name="warning-outline" class="warning-icon"></ion-icon>
-              <h4>Are you sure?</h4>
-              <p>This will permanently delete the bookmark <strong>"{{ deleteModal.bookmark?.title }}"</strong>.</p>
-              <p class="warning-text">This action cannot be undone!</p>
-            </div>
-            <div class="form-actions">
-              <button class="action-btn secondary" @click="deleteModal.show = false">
-                Cancel
-              </button>
-              <button class="action-btn danger" @click="deleteBookmark()">
-                Delete Permanently
-              </button>
-            </div>
-          </div>
+      <AppModal v-model="deleteModal.show" title="Delete Bookmark">
+        <div class="warning-content">
+          <ion-icon name="warning-outline" class="warning-icon"></ion-icon>
+          <h4>Are you sure?</h4>
+          <p>This will permanently delete the bookmark <strong>"{{ deleteModal.bookmark?.title }}"</strong>.</p>
+          <p class="warning-text">This action cannot be undone!</p>
         </div>
-      </div>
+        <template #footer>
+          <ActionButton variant="secondary" @click="deleteModal.show = false">Cancel</ActionButton>
+          <ActionButton variant="danger" @click="deleteBookmark()">Delete Permanently</ActionButton>
+        </template>
+      </AppModal>
     </ion-content>
   </ion-page>
 </template>
 
 <script>
 import SiteTitle from "@/components/SiteTitle.vue";
-import PageTitle from "@/components/PageTitle.vue";
 import StatCard from "@/components/StatCard.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import DataCard from "@/components/DataCard.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import SearchBox from "@/components/SearchBox.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import EmptyState from "@/components/EmptyState.vue";
+import AppModal from "@/components/AppModal.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "ManageBookmarks",
   components: {
     SiteTitle,
-    PageTitle,
     StatCard,
+    PageHeader,
+    DataCard,
+    ActionButton,
+    SearchBox,
+    LoadingState,
+    EmptyState,
+    AppModal,
   },
   data() {
     return {
@@ -422,117 +367,12 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* Modern Design System */
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1600px;
   margin: 0 auto;
   padding: 20px;
   min-height: 100vh;
   background: var(--background);
-}
-
-/* Page Header */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.header-content h1 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.header-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 16px;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-}
-
-.action-btn.secondary {
-  background: var(--surface);
-  color: var(--text-primary);
-}
-
-.action-btn.danger {
-  background: var(--danger-color);
-  color: white;
-  border-color: var(--danger-color);
-}
-
-.action-btn.danger:hover {
-  background: #b91c1c;
-  border-color: #b91c1c;
-}
-
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
 }
 
 /* Stats Grid */
@@ -543,99 +383,9 @@ export default defineComponent({
   margin-bottom: 32px;
 }
 
-/* Bookmarks Card */
-.bookmarks-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  overflow: hidden;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.card-header h2 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.search-box {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-box ion-icon {
-  position: absolute;
-  left: 12px;
-  color: var(--text-muted);
-  font-size: 16px;
-  z-index: 1;
-}
-
-.search-box input {
-  padding: 10px 16px 10px 40px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 14px;
-  background: var(--background);
-  color: var(--text-primary);
-  min-width: 250px;
-  transition: all 0.2s ease;
-}
-
-.search-box input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
-}
-
 /* Bookmarks Container */
 .bookmarks-container {
   padding: 24px;
-}
-
-.loading-state,
-.no-data-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-secondary);
-}
-
-.loading-icon {
-  font-size: 48px;
-  color: var(--primary-color);
-  margin-bottom: 16px;
-  animation: spin 1s linear infinite;
-}
-
-.no-data-icon {
-  font-size: 64px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.no-data-state h3 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.no-data-state p {
-  margin: 0 0 16px 0;
-  font-size: 14px;
 }
 
 /* Bookmarks Grid */
@@ -789,75 +539,6 @@ export default defineComponent({
   background: rgba(235, 68, 90, 0.22);
 }
 
-/* Modal Styles */
-.custom-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  animation: modalFadeIn 0.2s ease;
-}
-
-.custom-modal-content {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border);
-  max-width: 90vw;
-  max-height: 90vh;
-  width: 500px;
-  display: flex;
-  flex-direction: column;
-  animation: modalSlideIn 0.3s ease;
-}
-
-.custom-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--background);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
-
-.custom-modal-header h3 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.modal-close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.modal-close-btn:hover {
-  background: var(--border);
-  color: var(--text-primary);
-}
-
-.custom-modal-body {
-  padding: 24px;
-}
-
 .form-group {
   margin-bottom: 20px;
 }
@@ -934,76 +615,18 @@ export default defineComponent({
   font-weight: 600;
 }
 
-.form-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-/* Animations */
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
   }
 
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .stats-grid {
     grid-template-columns: 1fr;
   }
 
-  .card-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .search-box input {
-    min-width: 100%;
-  }
-
   .bookmarks-grid {
     grid-template-columns: 1fr;
-  }
-
-  .custom-modal-content {
-    width: 95vw;
-    margin: 20px;
   }
 
   .bookmark-header {
@@ -1014,17 +637,6 @@ export default defineComponent({
 
   .bookmark-status {
     align-self: flex-start;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #121212;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #b0b0b0;
-    --text-muted: #707070;
   }
 }
 </style>

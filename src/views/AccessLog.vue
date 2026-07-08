@@ -3,26 +3,13 @@
     <ion-content class="modern-content">
       <SiteTitle icon="shield-checkmark-outline" title="Access Log" />
       <div class="page-container">
-        <!-- Page Header -->
-        <div class="page-header">
-          <div class="header-content">
-            <div class="header-info">
-              <PageTitle icon="shield-checkmark-outline" title="Access Log" />
-            </div>
-          </div>
-          <div class="header-actions">
-            <button class="action-btn secondary" @click="refreshData">
-              <ion-icon name="refresh-outline"></ion-icon>
-              Refresh
-            </button>
-            <button class="action-btn secondary" @click="exportLogs">
-              <ion-icon name="download-outline"></ion-icon>
-              Export
-            </button>
-          </div>
-        </div>
+        <PageHeader icon="shield-checkmark-outline" title="Access Log">
+          <template #actions>
+            <ActionButton variant="secondary" icon="refresh-outline" @click="refreshData">Refresh</ActionButton>
+            <ActionButton variant="secondary" icon="download-outline" @click="exportLogs">Export</ActionButton>
+          </template>
+        </PageHeader>
 
-        <!-- Filters -->
         <div class="filters-card">
           <div class="filters-grid">
             <div class="filter-group">
@@ -45,13 +32,8 @@
               <label class="filter-label">Search</label>
               <div class="search-box">
                 <ion-icon name="search-outline"></ion-icon>
-                <input 
-                  type="text" 
-                  v-model="filters.search" 
-                  @input="debounceSearch" 
-                  placeholder="Email, IP, User Agent..." 
-                  class="modern-input"
-                />
+                <input type="text" v-model="filters.search" @input="debounceSearch"
+                  placeholder="Email, IP, User Agent..." class="modern-input" />
               </div>
             </div>
           </div>
@@ -59,16 +41,18 @@
 
         <div class="stats-grid">
           <StatCard icon="pulse-outline" color="primary" :value="stats.total.toLocaleString()" label="Total Attempts" />
-          <StatCard icon="checkmark-circle-outline" color="success" :value="stats.success.toLocaleString()" label="Successful Logins" />
-          <StatCard icon="close-circle-outline" color="danger" :value="stats.failed.toLocaleString()" label="Failed Attempts" />
-          <StatCard icon="people-outline" color="info" :value="stats.unique_users.toLocaleString()" label="Unique Users" />
-          <StatCard icon="globe-outline" color="warning" :value="stats.unique_ips.toLocaleString()" label="Unique IPs" />
+          <StatCard icon="checkmark-circle-outline" color="success" :value="stats.success.toLocaleString()"
+            label="Successful Logins" />
+          <StatCard icon="close-circle-outline" color="danger" :value="stats.failed.toLocaleString()"
+            label="Failed Attempts" />
+          <StatCard icon="people-outline" color="info" :value="stats.unique_users.toLocaleString()"
+            label="Unique Users" />
+          <StatCard icon="globe-outline" color="warning" :value="stats.unique_ips.toLocaleString()"
+            label="Unique IPs" />
           <StatCard icon="trending-up-outline" color="accent" :value="stats.success_rate + '%'" label="Success Rate" />
         </div>
 
-        <!-- Charts Row -->
         <div class="charts-row">
-          <!-- Login Attempts Chart -->
           <div class="data-card chart-card">
             <div class="card-header">
               <div class="header-left">
@@ -89,107 +73,66 @@
             </div>
           </div>
 
-          <!-- Top Failed Attempts -->
-          <div class="data-card">
-            <div class="card-header">
-              <div class="header-left">
-                <h3>Top Failed Login Attempts</h3>
-                <span class="chart-description">Most frequent failed attempts</span>
-              </div>
-            </div>
-            <div class="card-content">
-              <div v-if="topFailedAttempts.length === 0" class="no-data-state">
-                <ion-icon name="checkmark-circle-outline" class="no-data-icon"></ion-icon>
-                <p>No failed attempts</p>
-              </div>
-              <div v-else class="failed-attempts-list">
-                <div 
-                  v-for="(attempt, index) in topFailedAttempts" 
-                  :key="index" 
-                  class="failed-attempt-item"
-                >
-                  <div class="attempt-rank">{{ index + 1 }}</div>
-                  <div class="attempt-info">
-                    <div class="attempt-email">{{ attempt.email }}</div>
-                    <div class="attempt-time">Last: {{ formatDate(attempt.last_attempt) }}</div>
-                  </div>
-                  <div class="attempt-count">
-                    <span class="count-badge">{{ attempt.attempt_count }}</span>
-                  </div>
+          <DataCard title="Top Failed Login Attempts" subtitle="Most frequent failed attempts">
+            <EmptyState v-if="topFailedAttempts.length === 0" icon="checkmark-circle-outline"
+              title="No failed attempts" />
+            <div v-else class="failed-attempts-list">
+              <div v-for="(attempt, index) in topFailedAttempts" :key="index" class="failed-attempt-item">
+                <div class="attempt-rank">{{ index + 1 }}</div>
+                <div class="attempt-info">
+                  <div class="attempt-email">{{ attempt.email }}</div>
+                  <div class="attempt-time">Last: {{ formatDate(attempt.last_attempt) }}</div>
+                </div>
+                <div class="attempt-count">
+                  <span class="count-badge">{{ attempt.attempt_count }}</span>
                 </div>
               </div>
             </div>
-          </div>
+          </DataCard>
         </div>
 
-        <!-- Top IPs Card -->
-        <div class="data-card">
-          <div class="card-header">
-            <div class="header-left">
-              <h3>Top IP Addresses</h3>
-              <span class="chart-description">Most active IP addresses</span>
-            </div>
-          </div>
-          <div class="card-content">
-            <div v-if="topIPs.length === 0" class="no-data-state">
-              <ion-icon name="globe-outline" class="no-data-icon"></ion-icon>
-              <p>No IP data available</p>
-            </div>
-            <div v-else class="ip-grid">
-              <div v-for="(ip, index) in topIPs" :key="index" class="ip-card">
-                <div class="ip-header">
-                  <div class="ip-rank">#{{ index + 1 }}</div>
-                  <div class="ip-address">{{ ip.ip_address }}</div>
+        <DataCard title="Top IP Addresses" subtitle="Most active IP addresses">
+          <EmptyState v-if="topIPs.length === 0" icon="globe-outline" title="No IP data available" />
+          <div v-else class="ip-grid">
+            <div v-for="(ip, index) in topIPs" :key="index" class="ip-card">
+              <div class="ip-header">
+                <div class="ip-rank">#{{ index + 1 }}</div>
+                <div class="ip-address">{{ ip.ip_address }}</div>
+              </div>
+              <div class="ip-stats">
+                <div class="ip-stat">
+                  <span class="stat-label">Total</span>
+                  <span class="stat-value">{{ ip.attempt_count }}</span>
                 </div>
-                <div class="ip-stats">
-                  <div class="ip-stat">
-                    <span class="stat-label">Total</span>
-                    <span class="stat-value">{{ ip.attempt_count }}</span>
-                  </div>
-                  <div class="ip-stat success">
-                    <span class="stat-label">Success</span>
-                    <span class="stat-value">{{ ip.success_count }}</span>
-                  </div>
-                  <div class="ip-stat danger">
-                    <span class="stat-label">Failed</span>
-                    <span class="stat-value">{{ ip.failed_count }}</span>
-                  </div>
+                <div class="ip-stat success">
+                  <span class="stat-label">Success</span>
+                  <span class="stat-value">{{ ip.success_count }}</span>
                 </div>
-                <div class="ip-footer">
-                  Last seen: {{ formatDate(ip.last_seen) }}
+                <div class="ip-stat danger">
+                  <span class="stat-label">Failed</span>
+                  <span class="stat-value">{{ ip.failed_count }}</span>
                 </div>
+              </div>
+              <div class="ip-footer">
+                Last seen: {{ formatDate(ip.last_seen) }}
               </div>
             </div>
           </div>
-        </div>
+        </DataCard>
 
-        <!-- Logs Table -->
-        <div class="data-card">
-          <div class="card-header">
-            <div class="header-left">
-              <h3>Access Logs</h3>
-              <span class="entry-count">{{ pagination.total_records.toLocaleString() }} entries found</span>
+        <DataCard title="Access Logs" :subtitle="pagination.total_records.toLocaleString() + ' entries found'"
+          noPadding>
+          <template #actions>
+            <div class="pagination-info">
+              Page {{ pagination.current_page }} of {{ pagination.total_pages }}
             </div>
-            <div class="header-right">
-              <div class="pagination-info">
-                Page {{ pagination.current_page }} of {{ pagination.total_pages }}
-              </div>
-            </div>
-          </div>
-          
+          </template>
+
           <div class="table-wrapper">
-            <div v-if="loading" class="loading-state">
-              <ion-icon name="hourglass-outline" class="loading-icon"></ion-icon>
-              <p>Loading access logs...</p>
-            </div>
+            <LoadingState v-if="loading" message="Loading access logs..." icon="hourglass-outline" />
 
-            <div v-else-if="logs.length === 0" class="no-data-state">
-              <div class="no-data-content">
-                <ion-icon name="document-outline" class="no-data-icon"></ion-icon>
-                <h4>No logs found</h4>
-                <p>No access logs match your current filters.</p>
-              </div>
-            </div>
+            <EmptyState v-else-if="logs.length === 0" icon="document-outline" title="No logs found"
+              description="No access logs match your current filters." />
 
             <div v-else class="modern-table">
               <div class="table-header">
@@ -218,37 +161,34 @@
                   <div class="table-cell" style="flex: 0.6;">
                     <span class="cell-content">#{{ log.id }}</span>
                   </div>
-                  
+
                   <div class="table-cell" style="flex: 1.5;">
                     <div class="email-cell">
                       <ion-icon name="mail-outline"></ion-icon>
                       <span class="cell-content">{{ log.email }}</span>
                     </div>
                   </div>
-                  
+
                   <div class="table-cell" style="flex: 1;">
-                    <span 
-                      class="status-badge" 
-                      :class="log.status === 'success' ? 'status-success' : 'status-failed'"
-                    >
+                    <span class="status-badge" :class="log.status === 'success' ? 'status-success' : 'status-failed'">
                       {{ log.status }}
                     </span>
                   </div>
-                  
+
                   <div class="table-cell" style="flex: 1.2;">
                     <div class="ip-cell">
                       <ion-icon name="globe-outline"></ion-icon>
                       <span class="cell-content">{{ log.ip_address }}</span>
                     </div>
                   </div>
-                  
+
                   <div class="table-cell" style="flex: 1.5;">
                     <div class="timestamp-cell">
                       <ion-icon name="time-outline"></ion-icon>
                       <span class="cell-content">{{ formatDate(log.timestamp) }}</span>
                     </div>
                   </div>
-                  
+
                   <div class="table-cell" style="flex: 0.8;">
                     <button class="icon-btn view-btn" @click="viewDetails(log)" title="View Details">
                       <ion-icon name="eye-outline"></ion-icon>
@@ -259,7 +199,6 @@
             </div>
           </div>
 
-          <!-- Pagination -->
           <div v-if="pagination.total_pages > 1" class="pagination-controls">
             <button class="pagination-btn" @click="prevPage" :disabled="pagination.current_page <= 1">
               <ion-icon name="chevron-back-outline"></ion-icon>
@@ -270,62 +209,49 @@
               <span class="page-separator">of</span>
               <span class="total-pages">{{ pagination.total_pages }}</span>
             </div>
-            <button class="pagination-btn" @click="nextPage" :disabled="pagination.current_page >= pagination.total_pages">
+            <button class="pagination-btn" @click="nextPage"
+              :disabled="pagination.current_page >= pagination.total_pages">
               Next
               <ion-icon name="chevron-forward-outline"></ion-icon>
             </button>
           </div>
-        </div>
+        </DataCard>
       </div>
 
-      <!-- Details Modal -->
-      <div v-if="showDetailsModal" class="custom-modal-overlay" @click="showDetailsModal = false">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>Access Log Details</h3>
-            <button class="modal-close-btn" @click="showDetailsModal = false">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
+      <AppModal v-model="showDetailsModal" title="Access Log Details">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Log ID</label>
+            <span>#{{ selectedLog.id }}</span>
           </div>
-          <div class="custom-modal-body">
-            <div class="detail-grid">
-              <div class="detail-item">
-                <label>Log ID</label>
-                <span>#{{ selectedLog.id }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Email</label>
-                <span>{{ selectedLog.email }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Status</label>
-                <span 
-                  class="status-badge" 
-                  :class="selectedLog.status === 'success' ? 'status-success' : 'status-failed'"
-                >
-                  {{ selectedLog.status }}
-                </span>
-              </div>
-              <div class="detail-item">
-                <label>IP Address</label>
-                <span>{{ selectedLog.ip_address }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Timestamp</label>
-                <span>{{ formatDate(selectedLog.timestamp) }}</span>
-              </div>
-              <div class="detail-item full-width">
-                <label>User Agent</label>
-                <span class="user-agent">{{ selectedLog.user_agent }}</span>
-              </div>
-              <div v-if="selectedLog.error_message" class="detail-item full-width">
-                <label>Error Message</label>
-                <span class="error-message">{{ selectedLog.error_message }}</span>
-              </div>
-            </div>
+          <div class="detail-item">
+            <label>Email</label>
+            <span>{{ selectedLog.email }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Status</label>
+            <span class="status-badge" :class="selectedLog.status === 'success' ? 'status-success' : 'status-failed'">
+              {{ selectedLog.status }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <label>IP Address</label>
+            <span>{{ selectedLog.ip_address }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Timestamp</label>
+            <span>{{ formatDate(selectedLog.timestamp) }}</span>
+          </div>
+          <div class="detail-item full-width">
+            <label>User Agent</label>
+            <span class="user-agent">{{ selectedLog.user_agent }}</span>
+          </div>
+          <div v-if="selectedLog.error_message" class="detail-item full-width">
+            <label>Error Message</label>
+            <span class="error-message">{{ selectedLog.error_message }}</span>
           </div>
         </div>
-      </div>
+      </AppModal>
     </ion-content>
   </ion-page>
 </template>
@@ -333,15 +259,20 @@
 <script>
 import { defineComponent } from 'vue';
 import { Chart, registerables } from 'chart.js';
-import PageTitle from "@/components/PageTitle.vue";
 import SiteTitle from "@/components/SiteTitle.vue";
 import StatCard from "@/components/StatCard.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import DataCard from "@/components/DataCard.vue";
+import EmptyState from "@/components/EmptyState.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import AppModal from "@/components/AppModal.vue";
 
 Chart.register(...registerables);
 
 export default defineComponent({
   name: 'AccessLog',
-  components: { PageTitle, SiteTitle, StatCard },
+  components: { SiteTitle, StatCard, PageHeader, ActionButton, DataCard, EmptyState, LoadingState, AppModal },
   data() {
     return {
       loading: false,
@@ -405,7 +336,7 @@ export default defineComponent({
             dateTo: this.filters.dateTo
           }
         });
-        
+
         if (response.data.status === 'success') {
           this.stats = response.data.stats;
         }
@@ -426,7 +357,7 @@ export default defineComponent({
             dateTo: this.filters.dateTo
           }
         });
-        
+
         if (response.data.status === 'success') {
           this.logs = response.data.data;
           this.pagination = response.data.pagination;
@@ -446,7 +377,7 @@ export default defineComponent({
             dateTo: this.filters.dateTo
           }
         });
-        
+
         if (response.data.status === 'success') {
           this.chartData = response.data.data;
           this.renderChart();
@@ -464,7 +395,7 @@ export default defineComponent({
             dateTo: this.filters.dateTo
           }
         });
-        
+
         if (response.data.status === 'success') {
           this.topFailedAttempts = response.data.data;
         }
@@ -481,7 +412,7 @@ export default defineComponent({
             dateTo: this.filters.dateTo
           }
         });
-        
+
         if (response.data.status === 'success') {
           this.topIPs = response.data.data;
         }
@@ -495,12 +426,12 @@ export default defineComponent({
       }
 
       const ctx = this.$refs.loginChart.getContext('2d');
-      
+
       const labels = this.chartData.map(d => {
         const date = new Date(d.date);
         return date.toLocaleDateString('de-DE', { month: 'short', day: 'numeric' });
       });
-      
+
       const successData = this.chartData.map(d => d.success);
       const failedData = this.chartData.map(d => d.failed);
 
@@ -584,12 +515,12 @@ export default defineComponent({
         log.user_agent || '',
         log.error_message || ''
       ]);
-      
+
       let csvContent = headers.join(',') + '\n';
       rows.forEach(row => {
         csvContent += row.map(cell => `"${cell}"`).join(',') + '\n';
       });
-      
+
       // Download
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
@@ -635,25 +566,6 @@ export default defineComponent({
 
 <style scoped>
 .modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --info-color: #0891b2;
-  --accent-color: #7c3aed;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
   background: var(--background);
 }
 
@@ -662,81 +574,6 @@ export default defineComponent({
   margin: 0 auto;
   padding: 20px;
   min-height: 100vh;
-}
-
-/* Page Header */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.header-content {
-  flex: 1;
-  min-width: 300px;
-}
-
-.page-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 32px;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-}
-
-.page-title ion-icon {
-  font-size: 36px;
-  color: var(--primary-color);
-}
-
-.page-subtitle {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn.secondary {
-  background: var(--surface);
-}
-
-.action-btn ion-icon {
-  font-size: 16px;
 }
 
 /* Filters Card */
@@ -850,8 +687,7 @@ export default defineComponent({
   font-weight: 600;
 }
 
-.chart-description,
-.entry-count {
+.chart-description {
   color: var(--text-secondary);
   font-size: 13px;
 }
@@ -1159,44 +995,6 @@ export default defineComponent({
   transform: scale(1.05);
 }
 
-/* Loading and No Data States */
-.loading-state,
-.no-data-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-secondary);
-}
-
-.loading-icon,
-.no-data-icon {
-  font-size: 48px;
-  color: var(--text-muted);
-  margin-bottom: 12px;
-  opacity: 0.5;
-}
-
-.loading-icon {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.no-data-content h4 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.no-data-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
 /* Pagination */
 .pagination-controls {
   display: flex;
@@ -1246,76 +1044,6 @@ export default defineComponent({
   color: var(--primary-color);
 }
 
-/* Modal */
-.custom-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  animation: fadeIn 0.2s ease;
-}
-
-.custom-modal-content {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border);
-  max-width: 90vw;
-  max-height: 90vh;
-  width: 600px;
-  display: flex;
-  flex-direction: column;
-  animation: slideIn 0.3s ease;
-}
-
-.custom-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--background);
-}
-
-.custom-modal-header h3 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.modal-close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.modal-close-btn:hover {
-  background: var(--border);
-  color: var(--text-primary);
-}
-
-.custom-modal-body {
-  flex: 1;
-  padding: 24px;
-  overflow-y: auto;
-}
-
 .detail-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1363,23 +1091,6 @@ export default defineComponent({
   border: 1px solid rgba(220, 38, 38, 0.2);
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 /* Responsive */
 @media (max-width: 1200px) {
   .charts-row {
@@ -1390,10 +1101,6 @@ export default defineComponent({
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
-  }
-
-  .page-header {
-    flex-direction: column;
   }
 
   .filters-grid {
@@ -1414,17 +1121,6 @@ export default defineComponent({
 
   .modern-table {
     min-width: 600px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
   }
 }
 </style>
