@@ -1,20 +1,16 @@
 <?php
 
-require_once __DIR__ . '/../project_helper.php';
+require_once __DIR__ . '/../helpers/project.php';
 
 class ProjectsController
 {
-    /**
-     * GET /v2/projects
-     */
+    
     public function getUserProjects(Request $request, Response $response): void
     {
         $response->json(getUserProjectsByUserID($request->userID));
     }
 
-    /**
-     * GET /v2/projects/all
-     */
+    
     public function getAll(Request $request, Response $response): void
     {
         $projects = query("SELECT projectID, icon, name, link FROM projects ORDER BY name ASC");
@@ -25,9 +21,7 @@ class ProjectsController
         $response->success(['projects' => $list]);
     }
 
-    /**
-     * GET /v2/projects/import
-     */
+    
     public function getForImport(Request $request, Response $response): void
     {
         $current = $request->input('current_project', '');
@@ -40,9 +34,7 @@ class ProjectsController
         $response->json($projects);
     }
 
-    /**
-     * GET /v2/projects/{link}
-     */
+    
     public function getByLink(Request $request, Response $response): void
     {
         $project = getProjectByLink(escape_string($request->params['link']));
@@ -53,9 +45,7 @@ class ProjectsController
         $response->success($project);
     }
 
-    /**
-     * GET /v2/projects/{link}/info
-     */
+    
     public function getInfo(Request $request, Response $response): void
     {
         $project = getProjectByLink(escape_string($request->params['link']));
@@ -71,9 +61,7 @@ class ProjectsController
         ]);
     }
 
-    /**
-     * GET /v2/projects/{link}/users
-     */
+    
     public function getUsers(Request $request, Response $response): void
     {
         $project = getProjectByLink(escape_string($request->params['link']));
@@ -84,9 +72,7 @@ class ProjectsController
         $response->success(['users' => getUsersByProjectID($project['projectID'])]);
     }
 
-    /**
-     * GET /v2/projects/{link}/views
-     */
+    
     public function getViews(Request $request, Response $response): void
     {
         $project = getProjectByLink(escape_string($request->params['link']));
@@ -97,9 +83,7 @@ class ProjectsController
         $response->success(['views' => getProjectViewsByProjectID($project['projectID'])]);
     }
 
-    /**
-     * GET /v2/projects/{link}/permissions
-     */
+    
     public function checkPermissions(Request $request, Response $response): void
     {
         $project = getProjectByLink(escape_string($request->params['link']));
@@ -111,13 +95,11 @@ class ProjectsController
         if (checkUserProjectPermission($request->userID, $project['projectID'])) {
             $response->success(['success' => 'authorized']);
         } else {
-            $response->error('permission', 200);//403
+            $response->error('permission', 200);
         }
     }
 
-    /**
-     * POST /v2/projects
-     */
+    
     public function create(Request $request, Response $response): void
     {
         $name = escape_string($request->input('projectName', ''));
@@ -192,9 +174,7 @@ class ProjectsController
         }
     }
 
-    /**
-     * PUT /v2/projects/{id}
-     */
+    
     public function update(Request $request, Response $response): void
     {
         $id = escape_string($request->params['id']);
@@ -231,9 +211,7 @@ class ProjectsController
         }
     }
 
-    /**
-     * DELETE /v2/projects/{id}
-     */
+    
     public function delete(Request $request, Response $response): void
     {
         $id = escape_string($request->params['id']);
@@ -245,9 +223,7 @@ class ProjectsController
         }
     }
 
-    /**
-     * PUT /v2/projects/{id}/visibility
-     */
+    
     public function toggleVisibility(Request $request, Response $response): void
     {
         $id = escape_string($request->params['id']);
@@ -278,9 +254,7 @@ class ProjectsController
         }
     }
 
-    /**
-     * POST /v2/projects/{link}/users
-     */
+    
     public function addUser(Request $request, Response $response): void
     {
         $project = getProjectByLink(escape_string($request->params['link']));

@@ -1,6 +1,6 @@
 <?php
 include 'head.php';
-include 'apis_helper.php';
+include 'helpers/apis.php';
 include 'api_keys.php';
 
 if (isset($_POST['getAvailableApis'])) {

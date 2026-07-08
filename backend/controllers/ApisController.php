@@ -1,12 +1,10 @@
 <?php
 
-require_once __DIR__ . '/../apis_helper.php';
+require_once __DIR__ . '/../helpers/apis.php';
 
 class ApisController
 {
-    /**
-     * GET /v2/apis/available
-     */
+    
     public function getAvailable(Request $request, Response $response): void
     {
         $apis = query("SELECT * FROM cms_apis WHERE is_active=1 ORDER BY category, name ASC");
@@ -17,9 +15,7 @@ class ApisController
         $response->json($json);
     }
 
-    /**
-     * GET /v2/apis/{slug}?project=...
-     */
+    
     public function getDetailsBySlug(Request $request, Response $response): void
     {
         $apiSlug = escape_string($request->params['slug']);
@@ -76,9 +72,7 @@ class ApisController
         $response->json($api);
     }
 
-    /**
-     * GET /v2/apis/by-id/{id}
-     */
+    
     public function getDetailsById(Request $request, Response $response): void
     {
         $apiId = escape_string($request->params['id']);
@@ -101,9 +95,7 @@ class ApisController
         $response->json($apiData);
     }
 
-    /**
-     * GET /v2/apis/project?project=...
-     */
+    
     public function getProjectApis(Request $request, Response $response): void
     {
         $projectName = escape_string($request->input('project', ''));
@@ -130,9 +122,7 @@ class ApisController
         $response->json($json);
     }
 
-    /**
-     * POST /v2/apis/subscribe
-     */
+    
     public function subscribe(Request $request, Response $response): void
     {
         $projectName = escape_string($request->input('project', ''));
@@ -172,9 +162,7 @@ class ApisController
         }
     }
 
-    /**
-     * DELETE /v2/apis/subscriptions/{id}
-     */
+    
     public function unsubscribe(Request $request, Response $response): void
     {
         $subscriptionId = escape_string($request->params['id']);
@@ -201,9 +189,7 @@ class ApisController
         }
     }
 
-    /**
-     * PUT /v2/apis/subscriptions/{id}
-     */
+    
     public function updateSubscription(Request $request, Response $response): void
     {
         $subscriptionId = escape_string($request->params['id']);
@@ -217,9 +203,7 @@ class ApisController
         }
     }
 
-    /**
-     * PUT /v2/apis/subscriptions/{id}/settings
-     */
+    
     public function updateSettings(Request $request, Response $response): void
     {
         $subscriptionId = intval($request->params['id']);
@@ -230,9 +214,7 @@ class ApisController
         $response->success([], 'Settings updated');
     }
 
-    /**
-     * GET /v2/apis/subscriptions/{id}/usage?days=30
-     */
+    
     public function getUsage(Request $request, Response $response): void
     {
         $subscriptionId = escape_string($request->params['id']);
@@ -258,9 +240,7 @@ class ApisController
         $response->json($usageData);
     }
 
-    /**
-     * POST /v2/apis/subscriptions/{id}/regenerate-key
-     */
+    
     public function regenerateKey(Request $request, Response $response): void
     {
         $subscriptionId = escape_string($request->params['id']);

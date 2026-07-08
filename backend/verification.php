@@ -1,5 +1,5 @@
 <?php
-require_once 'jwt_helper.php';
+require_once 'helpers/jwt.php';
 require_once 'config.php';
 ini_set('display_errors', '0');
 $origin_url = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'] ?? '';

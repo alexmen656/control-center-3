@@ -7,21 +7,19 @@ function generateApiKey()
 }
 
 if (isset($_POST['newTool']) && isset($_POST['projectName']) && isset($_POST['toolName'])) {
-    //echo 1;
     $projectName = escape_string($_POST['projectName']);
     $toolName = escape_string($_POST['toolName']);
     $toolIcon = escape_string($_POST['toolIcon']);
     $sectionId = isset($_POST['sectionId']) ? intval($_POST['sectionId']) : null;
     $link = strtolower(str_replace(['Ä', 'ä', 'Ü', 'ü', 'Ö', 'ö', ' '], ['a', 'a', 'u', 'u', 'o', 'o', '-'], $toolName));
-    //echo $tool;
     $projectID = query("SELECT * FROM projects WHERE link='$projectName'");
+
     if (mysqli_num_rows($projectID) == 1) {
         $projectID = fetch_assoc($projectID)['projectID'];
         $order = mysqli_num_rows(query("SELECT * FROM project_tools WHERE projectID='$projectID'")) + 1;
-        
-        // Insert with section_id if provided
         $sectionValue = $sectionId ? "'$sectionId'" : "NULL";
         $query = query("INSERT INTO project_tools (id, icon, name, link, hasConfig, `order`, projectID, section_id) VALUES (0,'$toolIcon','$toolName', '$link',0,'$order','$projectID', $sectionValue)");
+
         if ($query) {
             if ($toolName == "Chat App") {
                 $toolID = fetch_assoc(query("SELECT * FROM project_tools WHERE projectID='$projectID' AND link='$link'"))['id'];
@@ -35,13 +33,13 @@ if (isset($_POST['newTool']) && isset($_POST['projectName']) && isset($_POST['to
             $config_url = $url . "/config";
             $config_name = $toolName . " Config";
             $true = "true";
-            if($toolName == "Mail"){
+            if ($toolName == "Mail") {
                 $true = "false";
             }
             query("INSERT INTO control_center_pages VALUES (0,'$url', '$true','$toolIcon','$toolName', '', 0)");
             query("INSERT INTO control_center_pages VALUES (0,'$config_url', 'true','cog-outline','$config_name', '', 0)");
 
-            if($toolName == "Mail"){
+            if ($toolName == "Mail") {
                 $mail_url = $url . "/email";
                 query("INSERT INTO control_center_pages VALUES (0,'$mail_url', 'false','$toolIcon','$toolName', '', 0)");
             }

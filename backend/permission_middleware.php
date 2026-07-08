@@ -1,6 +1,6 @@
 <?php
 require_once "roles.php";
-require_once "project_helper.php";
+require_once "helpers/project.php";
 
 function requirePermission($userID, $projectIdentifier, $resource, $action)
 {

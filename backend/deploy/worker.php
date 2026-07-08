@@ -4,7 +4,7 @@ if (php_sapi_name() !== 'cli') {
     exit('cli only');
 }
 
-require_once __DIR__ . '/../deploy_helper.php';
+require_once __DIR__ . '/../helpers/deploy.php';
 require_once __DIR__ . '/framework.php';
 
 define('WORKER_BUILDER_IMAGE', 'fringelo/builder');

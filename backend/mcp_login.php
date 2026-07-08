@@ -13,7 +13,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
 }
 
 require_once 'db_connection.php';
-require_once 'jwt_helper.php';
+require_once 'helpers/jwt.php';
 require_once 'config.php';
 require_once 'functions.php';
 

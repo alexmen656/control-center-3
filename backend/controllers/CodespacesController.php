@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../project_helper.php';
+require_once __DIR__ . '/../helpers/project.php';
 require_once __DIR__ . '/../helpers/cloudflare.php';
 
 class CodespacesController

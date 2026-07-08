@@ -222,7 +222,7 @@ function handleGetUserRoleInProject($userID)
         return;
     }
 
-    require_once "project_helper.php";
+    require_once "helpers/project.php";
     $project = getProjectByLink(escape_string($_POST['project']));
 
     if (!$project) {
@@ -243,7 +243,7 @@ function handleCheckPermission($userID)
         return;
     }
 
-    require_once "project_helper.php";
+    require_once "helpers/project.php";
     $project = getProjectByLink(escape_string($_POST['project']));
 
     if (!$project) {
@@ -336,7 +336,7 @@ function handleAssignRole($userID)
         return;
     }
 
-    require_once "project_helper.php";
+    require_once "helpers/project.php";
     $project = getProjectByLink(escape_string($_POST['project']));
 
     if (!$project) {
@@ -367,7 +367,7 @@ function handleGetUsersWithRoles()
         return;
     }
 
-    require_once "project_helper.php";
+    require_once "helpers/project.php";
     $project = getProjectByLink(escape_string($_POST['project']));
 
     if (!$project) {

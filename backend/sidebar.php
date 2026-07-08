@@ -1,23 +1,23 @@
 <?php
-//$origin_url = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'];
-//$allowed_origins = ['alexsblog.de', 'localhost:8100', 'polan.sk', 'http://localhost:8100/login', 'http://localhost:8100', 'localhost']; // replace with query for domains.
-//$request_host = parse_url($origin_url, PHP_URL_HOST);
-//$host_domain = implode('.', array_slice(explode('.', $request_host), -2));
-//echo $host_domain;
-//if (! in_array($host_domain, $allowed_origins, false)) {
-//  header('HTTP/1.0 403 Forbidden');
-//die('You are not allowed to access this.');     
-//}
+
+
+
+
+
+
+
+
+
 session_start();
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Headers: *');
 header('Access-Control-Allow-Methods: *');
 header('Content-Type: application/json');
 include 'db_connection.php';
-include 'functions.php';require_once 'jwt_helper.php';
+include 'functions.php';
+require_once 'helpers/jwt.php';
 require_once 'config.php';
 
-// JWT prüfen
 $headers = getRequestHeaders();
 if (isset($headers['Authorization'])) {
     $token = $headers['Authorization'];
@@ -33,11 +33,10 @@ if (isset($headers['Authorization'])) {
         $projectName = $_REQUEST['getSideBarByProjectName'];
         $projectData = fetch_assoc(query("SELECT * FROM projects WHERE link='$projectName'"));
         $projectID = $projectData['projectID'];
-        
-        // Get custom sections for this project
+
         $sections = query("SELECT * FROM project_sidebar_sections WHERE projectID='$projectID' ORDER BY order_index ASC");
         $json['sections'] = [];
-        
+
         if (mysqli_num_rows($sections) > 0) {
             $sectionIndex = 0;
             foreach ($sections as $section) {
@@ -48,19 +47,19 @@ if (isset($headers['Authorization'])) {
                     'slug' => $section['slug'],
                     'icon' => $section['icon'],
                     'order_index' => $section['order_index'],
-                    'is_default' => (bool)$section['is_default'],
-                    'is_collapsible' => (bool)$section['is_collapsible'],
-                    'show_add_button' => (bool)$section['show_add_button'],
+                    'is_default' => (bool) $section['is_default'],
+                    'is_collapsible' => (bool) $section['is_collapsible'],
+                    'show_add_button' => (bool) $section['show_add_button'],
                     'add_button_route' => $section['add_button_route'],
                     'info_route' => $section['info_route'],
                     'manage_route' => $section['manage_route'],
-                    'items' => [] // Combined tools and forms
+                    'items' => [] 
                 ];
+
                 
-                // Get tools for this section
                 $sectionTools = query("SELECT *, 'tool' as item_type FROM project_tools WHERE projectID='$projectID' AND section_id='$sectionId' ORDER BY `order` ASC");
                 $items = [];
-                
+
                 if (mysqli_num_rows($sectionTools) > 0) {
                     foreach ($sectionTools as $t) {
                         $items[] = [
@@ -70,13 +69,13 @@ if (isset($headers['Authorization'])) {
                             'name' => $t['name'],
                             'link' => $t['link'],
                             'hasConfig' => $t['hasConfig'],
-                            'order' => (int)$t['order'],
+                            'order' => (int) $t['order'],
                             'section_id' => $sectionId
                         ];
                     }
                 }
+
                 
-                // Get forms for this section
                 $sectionForms = query("SELECT * FROM table_settings WHERE project='$projectName' AND section_id='$sectionId' ORDER BY order_index ASC");
                 if (mysqli_num_rows($sectionForms) > 0) {
                     foreach ($sectionForms as $form) {
@@ -88,27 +87,26 @@ if (isset($headers['Authorization'])) {
                             'name' => $form['table_name'],
                             'link' => 'forms/' . $form['table_name'],
                             'hasConfig' => 0,
-                            'order' => (int)($form['order_index'] ?? 999),
+                            'order' => (int) ($form['order_index'] ?? 999),
                             'section_id' => $sectionId
                         ];
                     }
                 }
+
                 
-                // Sort items by order
-                usort($items, function($a, $b) {
+                usort($items, function ($a, $b) {
                     return $a['order'] - $b['order'];
                 });
-                
+
                 $json['sections'][$sectionIndex]['items'] = $items;
-                // Keep 'tools' for backwards compatibility
+                
                 $json['sections'][$sectionIndex]['tools'] = array_filter($items, fn($item) => $item['item_type'] === 'tool');
                 $json['sections'][$sectionIndex]['tools'] = array_values($json['sections'][$sectionIndex]['tools']);
-                
+
                 $sectionIndex++;
             }
         }
-        
-        // Also get tools without a section (legacy support / uncategorized)
+
         $tools = query("SELECT * FROM project_tools WHERE projectID='$projectID' AND (section_id IS NULL OR section_id = 0) ORDER BY `project_tools`.`order` ASC");
         if (mysqli_num_rows($tools) == 0) {
             $json['tools'] = [];
@@ -125,7 +123,6 @@ if (isset($headers['Authorization'])) {
             }
         }
 
-        // Get forms for this project from table_settings table
         $forms = query("SELECT * FROM table_settings WHERE project='$projectName' ORDER BY order_index ASC, created_at DESC");
 
         if (mysqli_num_rows($forms) == 0) {
@@ -138,14 +135,13 @@ if (isset($headers['Authorization'])) {
                 $json['forms'][$f]["name"] = $form['table_name'];
                 $json['forms'][$f]["icon"] = $form['icon'] ?? "list-outline";
                 $sectionId = $form['section_id'];
-                $json['forms'][$f]["section_id"] = ($sectionId === null || $sectionId === '' || $sectionId === '0' || $sectionId === 0) ? null : (int)$sectionId;
+                $json['forms'][$f]["section_id"] = ($sectionId === null || $sectionId === '' || $sectionId === '0' || $sectionId === 0) ? null : (int) $sectionId;
                 $json['forms'][$f]["order_index"] = $form['order_index'] ?? 0;
                 $json['forms'][$f]["created_at"] = $form['created_at'];
                 $f++;
             }
         }
 
-        // Get subscribed APIs for this project
         $subscribed_apis = query("
             SELECT pas.*, ca.name, ca.slug, ca.icon, ca.category
             FROM project_api_subscriptions pas
@@ -171,7 +167,6 @@ if (isset($headers['Authorization'])) {
             }
         }
 
-        // Get codespaces for this project
         $codespaces = query("SELECT * FROM project_codespaces WHERE project_id='$projectID' ORDER BY order_index ASC");
 
         if (mysqli_num_rows($codespaces) == 0) {
@@ -201,7 +196,7 @@ if (isset($headers['Authorization'])) {
             $i++;
         }
 
-        // Projekte für den eingeloggten User (aus JWT)
+        
         $projects = query("SELECT * FROM control_center_user_projects WHERE userID='$userID'");
         $i = 0;
         foreach ($projects as $p) {

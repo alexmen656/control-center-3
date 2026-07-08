@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/deploy_helper.php';
+require_once __DIR__ . '/helpers/deploy.php';
 
 $deploymentId = (int) ($_GET['deployment'] ?? 0);
 $sig = $_GET['sig'] ?? '';

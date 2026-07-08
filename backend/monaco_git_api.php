@@ -1,6 +1,6 @@
 <?php
 require_once 'head.php';
-require_once 'git_helper.php';
+require_once 'helpers/git.php';
 
 function getUserIDFromToken()
 {

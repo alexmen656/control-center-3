@@ -1,14 +1,8 @@
 <?php
-/**
- * Custom Login Domains API
- * Verwaltet custom Login-Domains für Projekte
- */
-
 require_once "head.php";
-require_once "project_helper.php";
+require_once "helpers/project.php";
 require_once __DIR__ . '/helpers/cloudflare.php';
 
-// Tabelle erstellen falls nicht existiert
 function ensureCustomLoginDomainsTable() {
     $sql = "CREATE TABLE IF NOT EXISTS custom_login_domains (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -28,7 +22,7 @@ function ensureCustomLoginDomainsTable() {
     )";
     query($sql);
     
-    // Spalte domain_type hinzufügen falls nicht existiert (für bestehende Tabellen)
+    
     $checkColumn = query("SHOW COLUMNS FROM custom_login_domains LIKE 'domain_type'");
     if (mysqli_num_rows($checkColumn) == 0) {
         query("ALTER TABLE custom_login_domains ADD COLUMN domain_type ENUM('internal', 'external') DEFAULT 'internal' AFTER domain");
@@ -37,28 +31,18 @@ function ensureCustomLoginDomainsTable() {
 
 ensureCustomLoginDomainsTable();
 
-// Server IP für A-Record
 define('LOGIN_SERVER_IP', '92.5.112.145');
-
-// Interne Domain für automatisches Setup
 define('INTERNAL_BASE_DOMAIN', 'control-center.eu');
-
-// Webhook URL für Nginx Setup (auf dem Frontend Server)
 define('NGINX_WEBHOOK_URL', 'https://webhook.control-center.eu/custom_login_webhook.php');
 define('WEBHOOK_SECRET', 'cc_custom_login_webhook_secret_2025');
 
-/**
- * Prüft ob eine Domain eine interne Subdomain von control-center.eu ist
- */
+
 function isInternalDomain($domain) {
     return str_ends_with($domain, '.' . INTERNAL_BASE_DOMAIN);
 }
 
-/**
- * Webhook an Frontend Server senden für Nginx Setup (nur für interne Domains)
- */
 function triggerNginxWebhook($domain, $action = 'add') {
-    // Nur für interne Domains
+    
     if (!isInternalDomain($domain)) {
         return ['skipped' => true, 'message' => 'External domain - manual setup required'];
     }
@@ -94,38 +78,31 @@ function triggerNginxWebhook($domain, $action = 'add') {
     return null;
 }
 
-/**
- * Cloudflare A-Record erstellen für Custom Login Domain (nur für interne Domains)
- * Nutzt den zentralen Cloudflare Helper
- */
+
 function createCloudflareARecord($domain) {
-    // Nur für interne Domains
+    
     if (!isInternalDomain($domain)) {
         return ['success' => true, 'data' => ['id' => null], 'external' => true];
     }
     
-    return cloudflare_createARecord($domain, LOGIN_SERVER_IP, true); // proxied = true für SSL
+    return cloudflare_createARecord($domain, LOGIN_SERVER_IP, true); 
 }
 
-/**
- * Cloudflare DNS Record löschen
- * Nutzt den zentralen Cloudflare Helper
- */
 function deleteCloudflareRecord($recordId) {
     return cloudflare_deleteRecord($recordId);
 }
 
-// API Endpunkte
+
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
-// GET: Custom Login Config für eine Domain abrufen (öffentlich, ohne Auth)
+
 if ($action === 'getConfig' && isset($_GET['domain'])) {
     $domain = escape_string($_GET['domain']);
     
     $result = query("SELECT * FROM custom_login_domains WHERE domain='$domain' AND is_enabled=1");
     
     if ($row = fetch_assoc($result)) {
-        // Projekt-Info holen für zusätzliche Daten
+        
         $projectResult = query("SELECT name FROM projects WHERE projectID='{$row['projectID']}'");
         $project = fetch_assoc($projectResult);
         
@@ -145,13 +122,13 @@ if ($action === 'getConfig' && isset($_GET['domain'])) {
     exit;
 }
 
-// Alle anderen Aktionen benötigen Authentifizierung
+
 if (!$userID) {
     echo json_encode(['error' => 'Nicht authentifiziert']);
     exit;
 }
 
-// GET: Custom Login für ein Projekt abrufen
+
 if ($action === 'get' && isset($_POST['project'])) {
     $project = escape_string($_POST['project']);
     $projectData = getProjectByLink($project);
@@ -185,7 +162,7 @@ if ($action === 'get' && isset($_POST['project'])) {
             'created_at' => $row['created_at']
         ];
         
-        // Für externe Domains: Setup-Anweisungen hinzufügen
+        
         if (!$isInternal) {
             $responseData['setup_instructions'] = [
                 'dns' => [
@@ -209,7 +186,7 @@ if ($action === 'get' && isset($_POST['project'])) {
     exit;
 }
 
-// POST: Custom Login Domain erstellen/aktualisieren
+
 if ($action === 'save' && isset($_POST['project'])) {
     $project = escape_string($_POST['project']);
     $domain = escape_string($_POST['domain'] ?? '');
@@ -232,45 +209,45 @@ if ($action === 'save' && isset($_POST['project'])) {
     
     $projectID = $projectData['projectID'];
     
-    // Domain validieren
+    
     if (empty($domain)) {
         echo json_encode(['error' => 'Domain ist erforderlich']);
         exit;
     }
     
-    // Domain-Typ bestimmen
+    
     $isInternal = isInternalDomain($domain);
     $domainType = $isInternal ? 'internal' : 'external';
     $sslStatus = $isInternal ? 'pending' : 'manual';
     
-    // Prüfen ob Domain schon existiert (für anderes Projekt)
+    
     $existingDomain = query("SELECT * FROM custom_login_domains WHERE domain='$domain' AND projectID != '$projectID'");
     if (fetch_assoc($existingDomain)) {
         echo json_encode(['error' => 'Diese Domain wird bereits von einem anderen Projekt verwendet']);
         exit;
     }
     
-    // Existierende Konfiguration prüfen
+    
     $existing = query("SELECT * FROM custom_login_domains WHERE projectID='$projectID'");
     $existingRow = fetch_assoc($existing);
     
     if ($existingRow) {
-        // Domain hat sich geändert - alten DNS Record löschen und neuen erstellen
+        
         if ($existingRow['domain'] !== $domain) {
             $oldDomain = $existingRow['domain'];
             $wasInternal = isInternalDomain($oldDomain);
             
-            // Alten Cloudflare Record löschen (nur wenn interne Domain)
+            
             if ($wasInternal && $existingRow['cloudflare_record_id']) {
                 deleteCloudflareRecord($existingRow['cloudflare_record_id']);
             }
             
-            // Alte Nginx Config entfernen (nur für interne Domains)
+            
             if ($wasInternal) {
                 triggerNginxWebhook($oldDomain, 'remove');
             }
             
-            // Neuen Cloudflare A-Record erstellen (nur für interne Domains)
+            
             $cloudflareResult = createCloudflareARecord($domain);
             
             if (!$cloudflareResult['success']) {
@@ -281,7 +258,7 @@ if ($action === 'save' && isset($_POST['project'])) {
             $cloudflare_record_id = $cloudflareResult['data']['id'] ?? null;
             $cloudflare_record_id_sql = $cloudflare_record_id ? "'$cloudflare_record_id'" : "NULL";
             
-            // Update mit neuer Domain
+            
             $sql = "UPDATE custom_login_domains SET 
                 domain='$domain',
                 domain_type='$domainType',
@@ -294,7 +271,7 @@ if ($action === 'save' && isset($_POST['project'])) {
                 WHERE projectID='$projectID'";
             
             if (query($sql)) {
-                // Neue Nginx Config hinzufügen (nur für interne Domains)
+                
                 if ($isInternal) {
                     triggerNginxWebhook($domain, 'add');
                 }
@@ -306,7 +283,7 @@ if ($action === 'save' && isset($_POST['project'])) {
                     'is_internal' => $isInternal
                 ];
                 
-                // Setup-Anweisungen für externe Domains
+                
                 if (!$isInternal) {
                     $response['setup_instructions'] = [
                         'dns' => [
@@ -322,7 +299,7 @@ if ($action === 'save' && isset($_POST['project'])) {
                 echo json_encode(['error' => 'Fehler beim Aktualisieren']);
             }
         } else {
-            // Nur Design-Einstellungen aktualisieren
+            
             $sql = "UPDATE custom_login_domains SET 
                 is_enabled=$is_enabled, 
                 primary_color='$primary_color', 
@@ -341,8 +318,8 @@ if ($action === 'save' && isset($_POST['project'])) {
             }
         }
     } else {
-        // Neue Custom Login Domain erstellen
-        // Cloudflare A-Record erstellen (nur für interne Domains)
+        
+        
         $cloudflareResult = createCloudflareARecord($domain);
         
         if (!$cloudflareResult['success']) {
@@ -358,7 +335,7 @@ if ($action === 'save' && isset($_POST['project'])) {
             VALUES ('$projectID', '$domain', '$domainType', $is_enabled, '$primary_color', '$logo_url', '$company_name', $cloudflare_record_id_sql, '$sslStatus')";
         
         if (query($sql)) {
-            // Nginx Setup Webhook triggern (nur für interne Domains)
+            
             if ($isInternal) {
                 triggerNginxWebhook($domain, 'add');
             }
@@ -370,7 +347,7 @@ if ($action === 'save' && isset($_POST['project'])) {
                 'is_internal' => $isInternal
             ];
             
-            // Setup-Anweisungen für externe Domains
+            
             if (!$isInternal) {
                 $response['setup_instructions'] = [
                     'dns' => [
@@ -383,7 +360,7 @@ if ($action === 'save' && isset($_POST['project'])) {
             
             echo json_encode($response);
         } else {
-            // Rollback: Cloudflare Record löschen (nur wenn intern)
+            
             if ($cloudflare_record_id) {
                 deleteCloudflareRecord($cloudflare_record_id);
             }
@@ -393,7 +370,7 @@ if ($action === 'save' && isset($_POST['project'])) {
     exit;
 }
 
-// POST: Custom Login Domain löschen
+
 if ($action === 'delete' && isset($_POST['project'])) {
     $project = escape_string($_POST['project']);
     
@@ -411,7 +388,7 @@ if ($action === 'delete' && isset($_POST['project'])) {
     
     $projectID = $projectData['projectID'];
     
-    // Bestehenden Record holen
+    
     $existing = query("SELECT * FROM custom_login_domains WHERE projectID='$projectID'");
     $existingRow = fetch_assoc($existing);
     
@@ -419,17 +396,17 @@ if ($action === 'delete' && isset($_POST['project'])) {
         $domainToDelete = $existingRow['domain'];
         $wasInternal = isInternalDomain($domainToDelete);
         
-        // Cloudflare Record löschen (nur für interne Domains)
+        
         if ($wasInternal && $existingRow['cloudflare_record_id']) {
             deleteCloudflareRecord($existingRow['cloudflare_record_id']);
         }
         
-        // Nginx Config entfernen via Webhook (nur für interne Domains)
+        
         if ($wasInternal) {
             triggerNginxWebhook($domainToDelete, 'remove');
         }
         
-        // Aus DB löschen
+        
         query("DELETE FROM custom_login_domains WHERE projectID='$projectID'");
         
         echo json_encode(['success' => true, 'message' => 'Custom Login Domain gelöscht']);
@@ -439,7 +416,7 @@ if ($action === 'delete' && isset($_POST['project'])) {
     exit;
 }
 
-// POST: SSL Status aktualisieren (wird vom Nginx Setup Script aufgerufen)
+
 if ($action === 'updateSslStatus' && isset($_POST['domain']) && isset($_POST['status'])) {
     $domain = escape_string($_POST['domain']);
     $status = escape_string($_POST['status']);

@@ -1,6 +1,4 @@
 <?php
-// Minimalistisches JWT-Helper-File (nur für HS256, keine externen Abhängigkeiten)
-// Quelle: https://github.com/firebase/php-jwt (stark gekürzt)
 
 class SimpleJWT {
     public static function base64UrlEncode($data) {

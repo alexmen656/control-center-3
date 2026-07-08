@@ -1,5 +1,5 @@
 <?php
-require_once 'jwt_helper.php';
+require_once 'helpers/jwt.php';
 require_once 'config.php';
 include 'db_connection.php';
 include 'functions.php';
@@ -12,24 +12,29 @@ header('Content-Type: application/json');
 $headers = getallheaders();
 $auth = isset($headers['Authorization']) ? $headers['Authorization'] : null;
 
-function verify_jwt($jwt, $secret) {
-    if (!$jwt) return false;
+function verify_jwt($jwt, $secret)
+{
+    if (!$jwt)
+        return false;
     $parts = explode('.', $jwt);
-    if (count($parts) !== 3) return false;
+    if (count($parts) !== 3)
+        return false;
     list($header64, $payload64, $sig64) = $parts;
     $header = json_decode(base64_decode(strtr($header64, '-_', '+/')), true);
     $payload = json_decode(base64_decode(strtr($payload64, '-_', '+/')), true);
     $sig = base64_decode(strtr($sig64, '-_', '+/'));
-    if (!$header || !$payload || !$sig) return false;
-    if (empty($payload['exp']) || time() > $payload['exp']) return false;
+    if (!$header || !$payload || !$sig)
+        return false;
+    if (empty($payload['exp']) || time() > $payload['exp'])
+        return false;
     $valid_sig = SimpleJWT::sign("$header64.$payload64", $secret, $header['alg']);
-    if (!hash_equals($valid_sig, $sig)) return false;
+    if (!hash_equals($valid_sig, $sig))
+        return false;
     return true;
 }
 
 $valid = verify_jwt($auth, $jwt_secret);
 
-// If valid, also return user data for MCP server
 if ($valid && $auth) {
     $payload = SimpleJWT::verify($auth, $jwt_secret);
     if ($payload && !empty($payload['sub'])) {

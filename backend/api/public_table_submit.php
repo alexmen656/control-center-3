@@ -40,18 +40,18 @@ if (!$input) {
         'source' => $_POST['source'] ?? 'unknown'
     ];
 
-    // Wenn data als String kommt, JSON decodieren
+    
     if (isset($input['data']) && is_string($input['data'])) {
         $input['data'] = json_decode($input['data'], true) ?? [];
     }
 
-    // Filtere system felder aus data
+    
     unset($input['data']['project'], $input['data']['table_name'], $input['data']['source']);
 }
 
 logTableSubmit("Received submission", ['project' => $input['project'] ?? 'none', 'form' => $input['table_name'] ?? 'none']);
 
-// Validierung
+
 if (empty($input['project'])) {
     http_response_code(400);
     die(json_encode([
@@ -76,7 +76,7 @@ if (empty($input['data']) || !is_array($input['data'])) {
     ]));
 }
 
-// Sanitize inputs
+
 function sanitizeInput($data)
 {
     if (is_array($data)) {
@@ -89,7 +89,7 @@ function sanitizeInput($data)
 
 function sanitizeFieldName($name)
 {
-    // Ersetze Sonderzeichen für DB-Feldnamen
+    
     $replacements = [
         "-" => "_",
         "ä" => "a",
@@ -136,7 +136,7 @@ $tableName = sanitizeInput($input['table_name']);
 $formData = $input['data'];
 $source = sanitizeInput($input['source'] ?? 'web-builder');
 
-// Rate Limiting (einfache Version basierend auf IP)
+
 $clientIP = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 $rateLimitFile = "/tmp/form_ratelimit_" . md5($clientIP . $project . $tableName);
 $rateLimitWindow = 60;
@@ -163,7 +163,7 @@ if (file_exists($rateLimitFile)) {
 file_put_contents($rateLimitFile, json_encode($rateLimitData));
 
 try {
-    require_once '../jwt_helper.php';
+    require_once '../helpers/jwt.php';
     require_once 'config.php';
 
     $origin_url = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'];
@@ -193,17 +193,17 @@ try {
     $formSettings = mysqli_fetch_assoc($tableCheck);
     $tableJson = json_decode($formSettings['table_json'], true);
 
-    // Generiere Tabellennamen (gleiche Logik wie table.php)
+    
     $tableProject = sanitizeFieldName($project);
     $tableField = sanitizeFieldName($tableName);
     $tableName = "{$tableProject}_{$tableField}";
 
-    // Bereite Daten für Insert vor
+    
     $columns = [];
     $values = [];
     $placeholders = [];
 
-    // Validiere Felder gegen Form-Definition (optional)
+    
     $allowedFields = [];
     if (isset($tableJson['inputs']) && is_array($tableJson['inputs'])) {
         foreach ($tableJson['inputs'] as $input) {
@@ -214,7 +214,7 @@ try {
     foreach ($formData as $fieldName => $fieldValue) {
         $cleanFieldName = sanitizeFieldName($fieldName);
 
-        // Skip wenn Feld nicht in Form definiert (Sicherheit)
+        
         if (!empty($allowedFields) && !in_array($cleanFieldName, $allowedFields)) {
             logTableSubmit("Skipping unknown field: $cleanFieldName");
             continue;
@@ -225,12 +225,12 @@ try {
         $values[] = "'$cleanValue'";
     }
 
-    // Füge Metadaten hinzu
-    // $columns[] = '_submitted_from';
-    // $values[] = "'" . mysqli_real_escape_string($GLOBALS['con'], $source) . "'";
+    
+    
+    
 
-    // $columns[] = '_submitted_ip';
-    // $values[] = "'" . mysqli_real_escape_string($GLOBALS['con'], $clientIP) . "'";
+    
+    
 
     if (empty($columns)) {
         http_response_code(400);
@@ -240,7 +240,7 @@ try {
         ]));
     }
 
-    // Insert ausführen
+    
     $columnsStr = implode(', ', $columns);
     $valuesStr = implode(', ', $values);
     $sql = "INSERT INTO `$tableName` ($columnsStr) VALUES ($valuesStr)";
@@ -255,7 +255,7 @@ try {
             'source' => $source
         ]);
 
-        // Trigger System aufrufen (wenn vorhanden)
+        
         $triggerFile = __DIR__ . '/../table_triggers.php';
         if (file_exists($triggerFile)) {
             require_once $triggerFile;

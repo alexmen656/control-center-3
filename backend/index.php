@@ -9,13 +9,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     exit;
 }
 
-// Core dependencies
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db_connection.php';
 require_once __DIR__ . '/functions.php';
-require_once __DIR__ . '/jwt_helper.php';
-
-// Router framework
+require_once __DIR__ . '/helpers/jwt.php';
 require_once __DIR__ . '/router/Request.php';
 require_once __DIR__ . '/router/Response.php';
 require_once __DIR__ . '/router/Middleware.php';

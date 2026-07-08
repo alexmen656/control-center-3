@@ -1,6 +1,6 @@
 <?php
 require_once "head.php";
-require_once "project_helper.php";
+require_once "helpers/project.php";
 
 function handleCreateProject($userID)
 {

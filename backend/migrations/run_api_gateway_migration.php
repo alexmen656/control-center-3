@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../db_connection.php';
 require_once __DIR__ . '/../functions.php';
-require_once __DIR__ . '/../deploy_helper.php';
+require_once __DIR__ . '/../helpers/deploy.php';
 
 $alters = [
     "ALTER TABLE project_api_subscriptions ADD COLUMN IF NOT EXISTS key_prefix VARCHAR(16) DEFAULT NULL",
