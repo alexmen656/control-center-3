@@ -255,26 +255,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1000px;
   margin: 0 auto;
@@ -555,15 +535,6 @@ export default defineComponent({
 }
 
 @media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #121212;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #b0b0b0;
-    --text-muted: #707070;
-  }
-
   .theme-option.active {
     background: #1e293b;
   }

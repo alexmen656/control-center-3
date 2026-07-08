@@ -9,21 +9,12 @@
             <p>Configure form structure and field types</p>
           </div>
           <div class="header-actions">
-            <button class="action-btn secondary" @click="goBack">
-              <ion-icon name="arrow-back-outline"></ion-icon>
-              Back
-            </button>
-            <button class="action-btn primary" @click="updateForm" :disabled="saving">
-              <ion-icon name="save-outline"></ion-icon>
-              {{ saving ? 'Saving...' : 'Save Changes' }}
-            </button>
+            <ActionButton variant="secondary" icon="arrow-back-outline" @click="goBack">Back</ActionButton>
+            <ActionButton variant="primary" icon="save-outline" @click="updateForm" :disabled="saving">{{ saving ? 'Saving...' : 'Save Changes' }}</ActionButton>
           </div>
         </div>
 
-        <div v-if="loading" class="loading-state">
-          <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
-          <p>Loading form data...</p>
-        </div>
+        <LoadingState v-if="loading" message="Loading form data..." />
 
         <div v-else class="form-editor-container">
           <div class="form-title-card">
@@ -94,7 +85,6 @@
                     </div>
                   </div>
 
-                  <!-- Options for select fields -->
                   <div v-if="input.type === 'select'" class="options-section">
                     <div class="options-header">
                       <label class="form-label">Options</label>
@@ -122,7 +112,6 @@
                     </div>
                   </div>
 
-                  <!-- Select2 (Form pipeline) options -->
                   <div v-if="input.type === 'select2'" class="options-section">
                     <label class="form-label">Form Pipeline Configuration</label>
                     <div class="field-row">
@@ -164,7 +153,6 @@
                     </div>
                   </div>
 
-                  <!-- Operation type fields -->
                   <div v-if="input.type === 'operation'" class="options-section">
                     <label class="form-label">Mathematical Operation</label>
                     <div class="field-row">
@@ -215,15 +203,14 @@
                 </div>
               </div>
 
-              <div v-if="formInputs.length === 0" class="no-fields-state">
-                <ion-icon name="document-outline" class="no-data-icon"></ion-icon>
-                <h4>No Fields Yet</h4>
-                <p>Add your first field to get started</p>
-                <button class="action-btn primary" @click="addInput">
-                  <ion-icon name="add-outline"></ion-icon>
-                  Add First Field
-                </button>
-              </div>
+              <EmptyState
+                v-if="formInputs.length === 0"
+                icon="document-outline"
+                title="No Fields Yet"
+                description="Add your first field to get started"
+              >
+                <ActionButton variant="primary" icon="add-outline" @click="addInput">Add First Field</ActionButton>
+              </EmptyState>
             </div>
           </div>
         </div>
@@ -235,11 +222,17 @@
 <script>
 import { defineComponent } from "vue";
 import SiteTitle from "@/components/SiteTitle.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import EmptyState from "@/components/EmptyState.vue";
 
 export default defineComponent({
   name: "EditTool",
   components: {
     SiteTitle,
+    ActionButton,
+    LoadingState,
+    EmptyState,
   },
   data() {
     return {
@@ -436,26 +429,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1600px;
   margin: 0 auto;
@@ -541,29 +514,6 @@ export default defineComponent({
 
 .action-btn ion-icon {
   font-size: 16px;
-}
-
-.loading-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-secondary);
-}
-
-.loading-icon {
-  font-size: 48px;
-  color: var(--primary-color);
-  margin-bottom: 16px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.loading-state p {
-  margin: 0;
-  font-size: 14px;
 }
 
 .form-editor-container {
@@ -738,42 +688,6 @@ export default defineComponent({
 
 .option-item .icon-btn {
   flex-shrink: 0;
-}
-
-.no-fields-state {
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.no-data-icon {
-  font-size: 64px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.no-fields-state h4 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.no-fields-state p {
-  margin: 0 0 24px 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
-  }
 }
 
 @media (max-width: 768px) {

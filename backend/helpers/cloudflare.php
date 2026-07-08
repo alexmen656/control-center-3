@@ -17,9 +17,6 @@ class CloudflareHelper
         return !empty($this->zone_id) && !empty($this->api_token);
     }
 
-    /**
-     * Holt alle verfügbaren Cloudflare Zones
-     */
     public function getAllZones(): array
     {
         global $cloudflare_api_token;
@@ -57,9 +54,6 @@ class CloudflareHelper
         return ['success' => true, 'data' => $result['result'] ?? []];
     }
 
-    /**
-     * Findet die Zone-ID für eine gegebene Domain
-     */
     public function findZoneIdForDomain(string $domain): ?string
     {
         $zonesResult = $this->getAllZones();
@@ -69,15 +63,14 @@ class CloudflareHelper
 
         $zones = $zonesResult['data'];
         $domainParts = explode('.', $domain);
-        
-        // Versuche die längste passende Zone zu finden
-        usort($zones, function($a, $b) {
+
+        usort($zones, function ($a, $b) {
             return strlen($b['name']) - strlen($a['name']);
         });
 
         foreach ($zones as $zone) {
             $zoneName = $zone['name'];
-            // Prüfe ob Domain mit Zone endet oder Zone selbst ist
+
             if ($domain === $zoneName || str_ends_with($domain, '.' . $zoneName)) {
                 return $zone['id'];
             }
@@ -129,14 +122,6 @@ class CloudflareHelper
         return ['success' => true, 'data' => $result['result'] ?? null];
     }
 
-    /**
-     * Erstellt einen A-Record
-     * 
-     * @param string $domain Vollständiger Domain-Name
-     * @param string $ip IP-Adresse für den A-Record
-     * @param bool $proxied Cloudflare Proxy aktivieren (Orange Cloud)
-     * @param int $ttl TTL in Sekunden (1 = Auto wenn proxied)
-     */
     public function createARecord(string $domain, string $ip, bool $proxied = false, int $ttl = 300): array
     {
         $data = [
@@ -150,14 +135,6 @@ class CloudflareHelper
         return $this->request('/dns_records', 'POST', $data);
     }
 
-    /**
-     * Erstellt einen CNAME-Record
-     * 
-     * @param string $domain Vollständiger Domain-Name
-     * @param string $target Ziel für den CNAME
-     * @param bool $proxied Cloudflare Proxy aktivieren
-     * @param int $ttl TTL in Sekunden
-     */
     public function createCNAMERecord(string $domain, string $target, bool $proxied = false, int $ttl = 300): array
     {
         $data = [
@@ -180,12 +157,6 @@ class CloudflareHelper
         return $this->request("/dns_records/$recordId", 'DELETE');
     }
 
-    /**
-     * Findet DNS-Records anhand des Domain-Namens
-     * 
-     * @param string $domain Domain-Name
-     * @param string|null $type Optional: Record-Typ (A, CNAME, etc.)
-     */
     public function findRecords(string $domain, ?string $type = null): array
     {
         $query = "?name=" . urlencode($domain);
@@ -196,13 +167,6 @@ class CloudflareHelper
         return $this->request("/dns_records$query", 'GET');
     }
 
-    /**
-     * Löscht einen DNS-Record anhand des Domain-Namens
-     * Nützlich wenn keine Record-ID gespeichert wurde
-     * 
-     * @param string $domain Domain-Name
-     * @param string|null $type Optional: Record-Typ zum Filtern
-     */
     public function deleteRecordByDomain(string $domain, ?string $type = null): array
     {
         $findResult = $this->findRecords($domain, $type);
@@ -234,87 +198,60 @@ class CloudflareHelper
     }
 }
 
-// ============================================
-// Standalone Helper-Funktionen für Kompatibilität
-// ============================================
-
-/**
- * Erstellt einen Cloudflare A-Record mit automatischer Zone-Erkennung
- * 
- * @param string $domain Domain-Name
- * @param string $ip IP-Adresse
- * @param bool $proxied Cloudflare Proxy aktivieren
- */
 function cloudflare_createARecord(string $domain, string $ip, bool $proxied = false): array
 {
     $cf = new CloudflareHelper();
     $zoneId = $cf->findZoneIdForDomain($domain);
-    
+
     if (!$zoneId) {
         return ['success' => false, 'message' => "Keine passende Cloudflare Zone für Domain {$domain} gefunden"];
     }
-    
+
     $cf = new CloudflareHelper($zoneId);
     return $cf->createARecord($domain, $ip, $proxied);
 }
 
-/**
- * Erstellt einen Cloudflare CNAME-Record mit automatischer Zone-Erkennung
- * 
- * @param string $domain Domain-Name  
- * @param string $target CNAME-Ziel
- * @param bool $proxied Cloudflare Proxy aktivieren
- */
 function cloudflare_createCNAMERecord(string $domain, string $target, bool $proxied = false): array
 {
     $cf = new CloudflareHelper();
     $zoneId = $cf->findZoneIdForDomain($domain);
-    
+
     if (!$zoneId) {
         return ['success' => false, 'message' => "Keine passende Cloudflare Zone für Domain {$domain} gefunden"];
     }
-    
+
     $cf = new CloudflareHelper($zoneId);
     return $cf->createCNAMERecord($domain, $target, $proxied);
 }
 
-/**
- * Löscht einen Cloudflare DNS-Record anhand der ID
- */
 function cloudflare_deleteRecord(string $recordId, ?string $zoneId = null): array
 {
     $cf = new CloudflareHelper($zoneId);
     return $cf->deleteRecord($recordId);
 }
 
-/**
- * Löscht einen Cloudflare DNS-Record anhand des Domain-Namens mit automatischer Zone-Erkennung
- */
 function cloudflare_deleteRecordByDomain(string $domain, ?string $type = null): array
 {
     $cf = new CloudflareHelper();
     $zoneId = $cf->findZoneIdForDomain($domain);
-    
+
     if (!$zoneId) {
         return ['success' => false, 'message' => "Keine passende Cloudflare Zone für Domain {$domain} gefunden"];
     }
-    
+
     $cf = new CloudflareHelper($zoneId);
     return $cf->deleteRecordByDomain($domain, $type);
 }
 
-/**
- * Findet Cloudflare DNS-Records anhand des Domain-Namens mit automatischer Zone-Erkennung
- */
 function cloudflare_findRecords(string $domain, ?string $type = null): array
 {
     $cf = new CloudflareHelper();
     $zoneId = $cf->findZoneIdForDomain($domain);
-    
+
     if (!$zoneId) {
         return ['success' => false, 'message' => "Keine passende Cloudflare Zone für Domain {$domain} gefunden"];
     }
-    
+
     $cf = new CloudflareHelper($zoneId);
     return $cf->findRecords($domain, $type);
 }

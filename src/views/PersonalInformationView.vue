@@ -3,7 +3,6 @@
     <ion-content class="modern-content">
       <SiteTitle icon="person-outline" title="Personal Information" />
       <div class="page-container">
-        <!-- Header -->
         <div class="page-header">
           <div class="header-left">
             <button class="back-btn" @click="$router.go(-1)">
@@ -15,7 +14,6 @@
           </div>
         </div>
 
-        <!-- Profile Section -->
         <div class="profile-section">
           <div class="profile-card">
             <div class="profile-image-section">
@@ -35,7 +33,6 @@
               <h3>Basic Information</h3>
 
               <div class="form-grid">
-                <!-- First Name -->
                 <div class="form-group">
                   <label class="form-label">First Name</label>
                   <div class="input-group">
@@ -47,7 +44,6 @@
                   </div>
                 </div>
 
-                <!-- Last Name -->
                 <div class="form-group">
                   <label class="form-label">Last Name</label>
                   <div class="input-group">
@@ -59,7 +55,6 @@
                   </div>
                 </div>
 
-                <!-- Email -->
                 <div class="form-group full-width">
                   <label class="form-label">Email Address</label>
                   <div class="input-group">
@@ -72,7 +67,6 @@
                   <small class="field-note">Email changes require verification</small>
                 </div>
 
-                <!-- Phone -->
                 <div class="form-group">
                   <label class="form-label">Phone Number</label>
                   <div class="input-group">
@@ -84,7 +78,6 @@
                   </div>
                 </div>
 
-                <!-- Birthday -->
                 <div class="form-group">
                   <label class="form-label">Birthday</label>
                   <div class="input-group">
@@ -96,7 +89,6 @@
                   </div>
                 </div>
 
-                <!-- Address -->
                 <div class="form-group full-width">
                   <label class="form-label">Address</label>
                   <div class="input-group">
@@ -109,16 +101,9 @@
                 </div>
               </div>
 
-              <!-- Action Buttons -->
               <div class="form-actions">
-                <button class="action-btn secondary" @click="cancel">
-                  <ion-icon name="close-outline"></ion-icon>
-                  <span>Cancel</span>
-                </button>
-                <button class="action-btn primary" @click="save">
-                  <ion-icon name="checkmark-outline"></ion-icon>
-                  <span>Save Changes</span>
-                </button>
+                <ActionButton variant="secondary" icon="close-outline" @click="cancel">Cancel</ActionButton>
+                <ActionButton variant="primary" icon="checkmark-outline" @click="save">Save Changes</ActionButton>
               </div>
             </div>
           </div>
@@ -132,12 +117,13 @@
 import { defineComponent } from "vue";
 import PageTitle from "@/components/PageTitle.vue";
 import SiteTitle from "@/components/SiteTitle.vue";
-import { usePhotoGallery } from "@/composables/updateProfileImage";//, Photo
+import ActionButton from "@/components/ActionButton.vue";
+import { usePhotoGallery } from "@/composables/updateProfileImage";
 import { getUserData } from "@/userData";
 
 export default defineComponent({
   name: "PersonalInformation",
-  components: { PageTitle, SiteTitle },
+  components: { PageTitle, SiteTitle, ActionButton },
   data() {
     return {
       user: {
@@ -156,7 +142,6 @@ export default defineComponent({
       this.user[field].editable = true;
     },
     cancel() {
-      // Reset all fields to non-editable
       for (const field in this.user) {
         if (Object.prototype.propertyIsEnumerable.call(this.user, field)) {
           if (this.user[field] && typeof this.user[field] === 'object' && 'editable' in this.user[field]) {
@@ -164,7 +149,6 @@ export default defineComponent({
           }
         }
       }
-      // Optionally reload data to reset any unsaved changes
       this.loadUserData();
     },
     async loadUserData() {
@@ -174,7 +158,6 @@ export default defineComponent({
         this.user.firstName.value = data.firstName || "";
         this.user.lastName.value = data.lastName || "";
         this.user.profileImg = data.profileImg || "";
-        // Initialize other fields if they exist in userData
         this.user.phone.value = data.phone || "";
         this.user.birthday.value = data.birthday || "";
         this.user.address.value = data.address || "";
@@ -202,7 +185,6 @@ export default defineComponent({
         .then((response) => {
           console.log(response);
           console.log("API response:", response.data);
-          // Reset editable states on successful save
           for (const field in this.user) {
             if (Object.prototype.propertyIsEnumerable.call(this.user, field)) {
               if (this.user[field] && typeof this.user[field] === 'object' && 'editable' in this.user[field]) {
@@ -221,7 +203,6 @@ export default defineComponent({
       await this.loadUserData();
     } catch (error) {
       console.error('Error loading user data:', error);
-      // Set default values if loading fails
       this.user.firstName.value = '';
       this.user.lastName.value = '';
       this.user.email.value = '';
@@ -238,27 +219,6 @@ export default defineComponent({
 });
 </script>
 <style scoped>
-/* Modern Design System */
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1000px;
   margin: 0 auto;
@@ -267,7 +227,6 @@ export default defineComponent({
   background: var(--background);
 }
 
-/* Page Header */
 .page-header {
   margin-bottom: 32px;
 }
@@ -318,7 +277,6 @@ export default defineComponent({
   font-size: 16px;
 }
 
-/* Profile Section */
 .profile-section {
   background: var(--surface);
   border-radius: var(--radius-lg);
@@ -394,7 +352,6 @@ export default defineComponent({
   font-weight: 500;
 }
 
-/* Profile Form */
 .profile-form {
   flex: 1;
 }
@@ -499,7 +456,6 @@ export default defineComponent({
   font-size: 12px;
 }
 
-/* Form Actions */
 .form-actions {
   display: flex;
   gap: 12px;
@@ -508,64 +464,6 @@ export default defineComponent({
   border-top: 1px solid var(--border);
 }
 
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-}
-
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border: 1px solid var(--primary-color);
-  box-shadow: var(--shadow);
-}
-
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn.secondary {
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-
-.action-btn.secondary:hover {
-  background: var(--background);
-  border-color: var(--secondary-color);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn ion-icon {
-  font-size: 16px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #121212;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #b0b0b0;
-    --text-muted: #707070;
-  }
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
@@ -589,10 +487,6 @@ export default defineComponent({
 
   .form-actions {
     flex-direction: column-reverse;
-  }
-
-  .action-btn {
-    justify-content: center;
   }
 }
 

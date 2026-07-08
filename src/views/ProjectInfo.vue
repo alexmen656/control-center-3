@@ -4,289 +4,220 @@
       <SiteTitle icon="information-circle-outline" title="Project Information" />
 
       <div class="page-container">
-        <!-- Page Header -->
-        <div class="page-header">
-          <div class="header-content">
-            <PageTitle icon="information-circle-outline" title="Project Information" />
-          </div>
-        </div>
+        <PageHeader icon="information-circle-outline" title="Project Information" />
 
         <LoadingSpinner v-if="loading" />
 
         <div v-if="!loading">
-          <!-- General Information -->
-          <div class="data-card">
-            <div class="card-header">
-              <h3>General Information</h3>
-            </div>
-            <div class="card-body">
-              <div class="info-grid">
-                <div class="info-item">
-                  <label class="info-label">Project Name</label>
-                  <div class="info-value">{{ projectName }}</div>
-                </div>
-                <div class="info-item">
-                  <label class="info-label">Created On</label>
-                  <div class="info-value">{{ creationDate }}</div>
-                </div>
+          <DataCard title="General Information">
+            <div class="info-grid">
+              <div class="info-item">
+                <label class="info-label">Project Name</label>
+                <div class="info-value">{{ projectName }}</div>
+              </div>
+              <div class="info-item">
+                <label class="info-label">Created On</label>
+                <div class="info-value">{{ creationDate }}</div>
               </div>
             </div>
-          </div>
+          </DataCard>
 
-          <!-- Custom Login Domain -->
-          <div class="data-card">
-            <div class="card-header">
-              <div class="header-left">
-                <h3>Custom Login Domain</h3>
-                <p class="card-subtitle">Configure a branded login page for your project</p>
+          <DataCard title="Custom Login Domain" subtitle="Configure a branded login page for your project">
+            <div class="form-group">
+              <label class="form-label">Domain Type</label>
+              <select v-model="customLogin.domain_type" class="modern-select" :disabled="customLogin.id">
+                <option value="internal">Subdomain of control-center.eu (automatic)</option>
+                <option value="external">External Domain (manual setup)</option>
+              </select>
+            </div>
+
+            <div v-if="customLogin.domain_type === 'internal'" class="form-group">
+              <label class="form-label">Subdomain</label>
+              <div class="domain-input-wrapper">
+                <input v-model="customLogin.subdomain" placeholder="mycompany" class="modern-input subdomain-input"
+                  :disabled="loadingCustomLogin || customLogin.id" @input="updateInternalDomain" />
+                <span class="domain-suffix">.control-center.eu</span>
               </div>
             </div>
-            <div class="card-body">
-              <div class="form-group">
-                <label class="form-label">Domain Type</label>
-                <select v-model="customLogin.domain_type" class="modern-select" :disabled="customLogin.id">
-                  <option value="internal">Subdomain of control-center.eu (automatic)</option>
-                  <option value="external">External Domain (manual setup)</option>
-                </select>
-              </div>
 
-              <!-- Internal Domain Input -->
-              <div v-if="customLogin.domain_type === 'internal'" class="form-group">
-                <label class="form-label">Subdomain</label>
-                <div class="domain-input-wrapper">
-                  <input v-model="customLogin.subdomain" placeholder="mycompany" class="modern-input subdomain-input"
-                    :disabled="loadingCustomLogin || customLogin.id" @input="updateInternalDomain" />
-                  <span class="domain-suffix">.control-center.eu</span>
-                </div>
-              </div>
+            <div v-if="customLogin.domain_type === 'external'" class="form-group">
+              <label class="form-label">External Domain</label>
+              <input v-model="customLogin.domain" placeholder="login.mycompany.com" class="modern-input"
+                :disabled="loadingCustomLogin || customLogin.id" />
+            </div>
 
-              <!-- External Domain Input -->
-              <div v-if="customLogin.domain_type === 'external'" class="form-group">
-                <label class="form-label">External Domain</label>
-                <input v-model="customLogin.domain" placeholder="login.mycompany.com" class="modern-input"
-                  :disabled="loadingCustomLogin || customLogin.id" />
+            <div v-if="customLogin.domain_type === 'external' && customLogin.id" class="setup-instructions">
+              <div class="instruction-header">
+                <ion-icon name="warning-outline"></ion-icon>
+                <h4>Manual Setup Required</h4>
               </div>
-
-              <!-- Setup Instructions for External Domains -->
-              <div v-if="customLogin.domain_type === 'external' && customLogin.id" class="setup-instructions">
-                <div class="instruction-header">
-                  <ion-icon name="warning-outline"></ion-icon>
-                  <h4>Manual Setup Required</h4>
-                </div>
-                <div class="instruction-content">
-                  <div class="instruction-step">
-                    <h5>1. DNS Configuration</h5>
-                    <p>Create an A-Record with your DNS provider:</p>
-                    <div class="code-block">
-                      <div>Type: A</div>
-                      <div>Name: {{ customLogin.domain }}</div>
-                      <div>Value: 92.5.112.145</div>
-                    </div>
-                  </div>
-                  <div class="instruction-step">
-                    <h5>2. Nginx & SSL</h5>
-                    <p>Nginx and SSL must be manually configured on the server.</p>
+              <div class="instruction-content">
+                <div class="instruction-step">
+                  <h5>1. DNS Configuration</h5>
+                  <p>Create an A-Record with your DNS provider:</p>
+                  <div class="code-block">
+                    <div>Type: A</div>
+                    <div>Name: {{ customLogin.domain }}</div>
+                    <div>Value: 92.5.112.145</div>
                   </div>
                 </div>
-              </div>
-
-              <div class="form-group">
-                <div class="toggle-wrapper">
-                  <label class="form-label">Enabled</label>
-                  <label class="toggle-switch">
-                    <input type="checkbox" v-model="customLogin.is_enabled"
-                      :disabled="loadingCustomLogin || !customLogin.domain" />
-                    <span class="toggle-slider"></span>
-                  </label>
+                <div class="instruction-step">
+                  <h5>2. Nginx & SSL</h5>
+                  <p>Nginx and SSL must be manually configured on the server.</p>
                 </div>
               </div>
+            </div>
 
-              <div class="form-group">
-                <label class="form-label">Company Name</label>
-                <input v-model="customLogin.company_name" placeholder="e.g., My Company GmbH" class="modern-input" />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Primary Color</label>
-                <div class="color-picker-wrapper">
-                  <input type="color" v-model="customLogin.primary_color" class="color-input" />
-                  <input type="text" v-model="customLogin.primary_color" class="modern-input" placeholder="#e53e3e" />
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Logo URL</label>
-                <input v-model="customLogin.logo_url" placeholder="https://example.com/logo.png" class="modern-input" />
-              </div>
-
-              <div v-if="customLogin.logo_url" class="logo-preview">
-                <label class="form-label">Logo Preview</label>
-                <img :src="customLogin.logo_url" alt="Logo Preview" @error="customLogin.logo_url = ''" />
-              </div>
-
-              <div v-if="customLogin.ssl_status" class="form-group">
-                <label class="form-label">SSL Status</label>
-                <span :class="['status-badge', sslStatusColor]">
-                  {{ sslStatusText }}
-                </span>
-              </div>
-
-              <div v-if="customLoginError" class="alert alert-error">
-                <ion-icon name="alert-circle-outline"></ion-icon>
-                {{ customLoginError }}
-              </div>
-
-              <div v-if="customLoginSuccess" class="alert alert-success">
-                <ion-icon name="checkmark-circle-outline"></ion-icon>
-                {{ customLoginSuccess }}
-              </div>
-
-              <div class="form-actions">
-                <button class="action-btn secondary" @click="deleteCustomLogin"
-                  :disabled="!customLogin.id || savingCustomLogin" v-if="customLogin.id">
-                  <ion-icon name="trash-outline"></ion-icon>
-                  Delete
-                </button>
-                <button class="action-btn primary" @click="saveCustomLogin" :disabled="savingCustomLogin">
-                  <ion-icon name="save-outline"></ion-icon>
-                  {{ customLogin.id ? 'Update' : 'Save' }} Configuration
-                </button>
+            <div class="form-group">
+              <div class="toggle-wrapper">
+                <label class="form-label">Enabled</label>
+                <label class="toggle-switch">
+                  <input type="checkbox" v-model="customLogin.is_enabled"
+                    :disabled="loadingCustomLogin || !customLogin.domain" />
+                  <span class="toggle-slider"></span>
+                </label>
               </div>
             </div>
-          </div>
 
-          <!-- Project sidebar-->
+            <div class="form-group">
+              <label class="form-label">Company Name</label>
+              <input v-model="customLogin.company_name" placeholder="e.g., My Company GmbH" class="modern-input" />
+            </div>
 
-          <div class="data-card">
-            <div class="card-header">
-              <div class="header-left">
-                <h3>Project Sidebar</h3>
-                <p class="card-subtitle">Personalize your project's sidebar</p>
+            <div class="form-group">
+              <label class="form-label">Primary Color</label>
+              <div class="color-picker-wrapper">
+                <input type="color" v-model="customLogin.primary_color" class="color-input" />
+                <input type="text" v-model="customLogin.primary_color" class="modern-input" placeholder="#e53e3e" />
               </div>
             </div>
-            <div class="card-body">
-              <button class="action-btn primary" @click="openSidebarEditor">
-                Open Sidebar Editor
-              </button>
-            </div>
-          </div>
 
-          <!-- Project Banner -->
-          <div class="data-card">
-            <div class="card-header">
-              <div class="header-left">
-                <h3>Project Banner</h3>
-                <p class="card-subtitle">Upload a custom banner for your project header</p>
+            <div class="form-group">
+              <label class="form-label">Logo URL</label>
+              <input v-model="customLogin.logo_url" placeholder="https://example.com/logo.png" class="modern-input" />
+            </div>
+
+            <div v-if="customLogin.logo_url" class="logo-preview">
+              <label class="form-label">Logo Preview</label>
+              <img :src="customLogin.logo_url" alt="Logo Preview" @error="customLogin.logo_url = ''" />
+            </div>
+
+            <div v-if="customLogin.ssl_status" class="form-group">
+              <label class="form-label">SSL Status</label>
+              <span :class="['status-badge', sslStatusColor]">
+                {{ sslStatusText }}
+              </span>
+            </div>
+
+            <div v-if="customLoginError" class="alert alert-error">
+              <ion-icon name="alert-circle-outline"></ion-icon>
+              {{ customLoginError }}
+            </div>
+
+            <div v-if="customLoginSuccess" class="alert alert-success">
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+              {{ customLoginSuccess }}
+            </div>
+
+            <div class="form-actions">
+              <ActionButton variant="secondary" icon="trash-outline" @click="deleteCustomLogin"
+                :disabled="!customLogin.id || savingCustomLogin" v-if="customLogin.id">Delete</ActionButton>
+              <ActionButton variant="primary" icon="save-outline" @click="saveCustomLogin"
+                :disabled="savingCustomLogin">{{ customLogin.id ? 'Update' : 'Save' }} Configuration</ActionButton>
+            </div>
+          </DataCard>
+
+          <DataCard title="Project Sidebar" subtitle="Personalize your project's sidebar">
+            <ActionButton variant="primary" @click="openSidebarEditor">Open Sidebar Editor</ActionButton>
+          </DataCard>
+
+          <DataCard title="Project Banner" subtitle="Upload a custom banner for your project header">
+            <div v-if="projectBanner" class="banner-preview">
+              <label class="form-label">Current Banner</label>
+              <div class="banner-preview-container">
+                <img :src="projectBanner" alt="Project Banner" />
+                <ActionButton variant="danger" icon="trash-outline" @click="deleteBanner"
+                  :disabled="uploadingBanner">Remove Banner</ActionButton>
               </div>
             </div>
-            <div class="card-body">
-              <div v-if="projectBanner" class="banner-preview">
-                <label class="form-label">Current Banner</label>
-                <div class="banner-preview-container">
-                  <img :src="projectBanner" alt="Project Banner" />
-                  <button class="action-btn danger" @click="deleteBanner" :disabled="uploadingBanner">
+
+            <div class="form-group">
+              <label class="form-label">Upload New Banner</label>
+              <p class="form-hint">Recommended size: 1920x400px (JPG, PNG, max 5MB)</p>
+              <input type="file" ref="bannerInput" @change="handleBannerUpload" accept="image/*" class="file-input"
+                :disabled="uploadingBanner" />
+            </div>
+
+            <div v-if="bannerError" class="alert alert-error">
+              <ion-icon name="alert-circle-outline"></ion-icon>
+              {{ bannerError }}
+            </div>
+
+            <div v-if="bannerSuccess" class="alert alert-success">
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+              {{ bannerSuccess }}
+            </div>
+          </DataCard>
+
+          <DataCard title="Project Domain" subtitle="Configure your project's domain">
+            <LoadingState v-if="loadingDomain" message="Loading domain information..." />
+            <div v-else>
+              <div v-if="connectedDomain" class="connected-info">
+                <div class="connected-badge">
+                  <ion-icon name="checkmark-circle-outline"></ion-icon>
+                  <span>{{ connectedDomain }}</span>
+                  <button class="action-btn icon-only danger" @click="deleteDomain" title="Remove Domain">
                     <ion-icon name="trash-outline"></ion-icon>
-                    Remove Banner
                   </button>
                 </div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Upload New Banner</label>
-                <p class="form-hint">Recommended size: 1920x400px (JPG, PNG, max 5MB)</p>
-                <input type="file" ref="bannerInput" @change="handleBannerUpload" accept="image/*" class="file-input"
-                  :disabled="uploadingBanner" />
-              </div>
-
-              <div v-if="bannerError" class="alert alert-error">
-                <ion-icon name="alert-circle-outline"></ion-icon>
-                {{ bannerError }}
-              </div>
-
-              <div v-if="bannerSuccess" class="alert alert-success">
-                <ion-icon name="checkmark-circle-outline"></ion-icon>
-                {{ bannerSuccess }}
-              </div>
-            </div>
-          </div>
-
-          <!-- Project Domain -->
-          <div class="data-card">
-            <div class="card-header">
-              <div class="header-left">
-                <h3>Project Domain</h3>
-                <p class="card-subtitle">Configure your project's domain</p>
-              </div>
-            </div>
-            <div class="card-body">
-              <div v-if="loadingDomain" class="loading-state">
-                <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
-                <p>Loading domain information...</p>
               </div>
               <div v-else>
-                <div v-if="connectedDomain" class="connected-info">
-                  <div class="connected-badge">
-                    <ion-icon name="checkmark-circle-outline"></ion-icon>
-                    <span>{{ connectedDomain }}</span>
-                    <button class="action-btn icon-only danger" @click="deleteDomain" title="Remove Domain">
-                      <ion-icon name="trash-outline"></ion-icon>
-                    </button>
+                <div v-if="isSuperAdmin && availableDomains.length > 0" class="form-group">
+                  <label class="form-label">Select Domain</label>
+                  <select v-model="selectedDomainType" class="modern-select" @change="domainInput = ''">
+                    <option value="subdomain">Subdomain (sites.control-center.eu)</option>
+                    <option value="custom">Custom Domain from Domain Management</option>
+                  </select>
+                </div>
+
+                <div v-if="!isSuperAdmin || selectedDomainType === 'subdomain'" class="form-group">
+                  <label class="form-label">Subdomain</label>
+                  <div class="domain-input-wrapper">
+                    <input v-model="domainInput" placeholder="myproject" class="modern-input subdomain-input" />
+                    <span class="domain-suffix">.sites.control-center.eu</span>
                   </div>
                 </div>
-                <div v-else>
-                  <!-- Super Admin: Domain Selection -->
-                  <div v-if="isSuperAdmin && availableDomains.length > 0" class="form-group">
-                    <label class="form-label">Select Domain</label>
-                    <select v-model="selectedDomainType" class="modern-select" @change="domainInput = ''">
-                      <option value="subdomain">Subdomain (sites.control-center.eu)</option>
-                      <option value="custom">Custom Domain from Domain Management</option>
-                    </select>
-                  </div>
 
-                  <!-- Subdomain Input -->
-                  <div v-if="!isSuperAdmin || selectedDomainType === 'subdomain'" class="form-group">
-                    <label class="form-label">Subdomain</label>
-                    <div class="domain-input-wrapper">
-                      <input v-model="domainInput" placeholder="myproject" class="modern-input subdomain-input" />
-                      <span class="domain-suffix">.sites.control-center.eu</span>
-                    </div>
-                  </div>
-
-                  <!-- Custom Domain Selection (Super Admin only) -->
-                  <div v-if="isSuperAdmin && selectedDomainType === 'custom'" class="form-group">
-                    <label class="form-label">Select Custom Domain</label>
-                    <select v-model="selectedCustomDomain" class="modern-select" @change="domainInput = ''">
-                      <option value="">-- Select a domain --</option>
-                      <option v-for="domain in availableDomains" :key="domain.id" :value="domain.domain">
-                        {{ domain.domain }}
-                      </option>
-                    </select>
-                  </div>
-
-                  <!-- Subdomain Input for Custom Domain -->
-                  <div v-if="isSuperAdmin && selectedDomainType === 'custom' && selectedCustomDomain"
-                    class="form-group">
-                    <label class="form-label">Subdomain (optional)</label>
-                    <div class="domain-input-wrapper">
-                      <input v-model="domainInput" placeholder="blog" class="modern-input subdomain-input" />
-                      <span class="domain-suffix">.{{ selectedCustomDomain }}</span>
-                    </div>
-                    <small class="form-help">Leave empty to use the root domain</small>
-                  </div>
-
-                  <button class="action-btn primary" @click="connectDomain"
-                    :disabled="(selectedDomainType === 'custom' && !selectedCustomDomain) || (selectedDomainType === 'subdomain' && (!domainInput || domainInput.length < 3))"
-                    style="margin-top: 12px;">
-                    Connect Domain
-                  </button>
+                <div v-if="isSuperAdmin && selectedDomainType === 'custom'" class="form-group">
+                  <label class="form-label">Select Custom Domain</label>
+                  <select v-model="selectedCustomDomain" class="modern-select" @change="domainInput = ''">
+                    <option value="">-- Select a domain --</option>
+                    <option v-for="domain in availableDomains" :key="domain.id" :value="domain.domain">
+                      {{ domain.domain }}
+                    </option>
+                  </select>
                 </div>
-                <div v-if="domainError" class="alert alert-error">
-                  <ion-icon name="alert-circle-outline"></ion-icon>
-                  {{ domainError }}
+
+                <div v-if="isSuperAdmin && selectedDomainType === 'custom' && selectedCustomDomain"
+                  class="form-group">
+                  <label class="form-label">Subdomain (optional)</label>
+                  <div class="domain-input-wrapper">
+                    <input v-model="domainInput" placeholder="blog" class="modern-input subdomain-input" />
+                    <span class="domain-suffix">.{{ selectedCustomDomain }}</span>
+                  </div>
+                  <small class="form-help">Leave empty to use the root domain</small>
                 </div>
+
+                <ActionButton variant="primary" @click="connectDomain"
+                  :disabled="(selectedDomainType === 'custom' && !selectedCustomDomain) || (selectedDomainType === 'subdomain' && (!domainInput || domainInput.length < 3))"
+                  style="margin-top: 12px;">Connect Domain</ActionButton>
+              </div>
+              <div v-if="domainError" class="alert alert-error">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                {{ domainError }}
               </div>
             </div>
-          </div>
+          </DataCard>
         </div>
       </div>
     </ion-content>
@@ -298,7 +229,10 @@
 
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
 import SiteTitle from "@/components/SiteTitle.vue";
-import PageTitle from "@/components/PageTitle.vue";
+import PageHeader from "@/components/PageHeader.vue";
+import DataCard from "@/components/DataCard.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import LoadingState from "@/components/LoadingState.vue";
 import { getUserData } from "@/userData";
 
 export default {
@@ -306,7 +240,10 @@ export default {
   components: {
     LoadingSpinner,
     SiteTitle,
-    PageTitle
+    PageHeader,
+    DataCard,
+    ActionButton,
+    LoadingState
   },
   computed: {
     sslStatusColor() {
@@ -895,72 +832,9 @@ export default {
 </script>
 
 <style scoped>
-.modern-content {
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px;
-}
-
-.page-header {
-  margin-bottom: 32px;
-}
-
-.header-content h1 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 32px;
-  font-weight: 700;
-}
-
-.header-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 16px;
-}
-
-.data-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  margin-bottom: 24px;
-}
-
-.card-header {
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-}
-
-.card-header h3 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.card-subtitle {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.card-body {
   padding: 24px;
 }
 
@@ -1302,7 +1176,6 @@ export default {
   border: 1px solid #a7f3d0;
 }
 
-/* Form Actions */
 .form-actions {
   display: flex;
   gap: 12px;
@@ -1312,81 +1185,6 @@ export default {
   border-top: 1px solid var(--border);
 }
 
-/* Action Buttons */
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.action-btn.secondary {
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-
-.action-btn.secondary:hover:not(:disabled) {
-  background: var(--background);
-  border-color: var(--text-primary);
-}
-
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border: 1px solid var(--primary-color);
-  box-shadow: var(--shadow);
-}
-
-.action-btn.primary:hover:not(:disabled) {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.action-btn ion-icon {
-  font-size: 16px;
-}
-
-/* Loading State */
-.loading-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-secondary);
-}
-
-.loading-icon {
-  font-size: 32px;
-  color: var(--primary-color);
-  margin-bottom: 12px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Connected Info */
 .connected-info {
   padding: 16px;
   background: #d1fae5;
@@ -1418,6 +1216,8 @@ export default {
   align-items: center;
   justify-content: center;
   margin-left: auto;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .action-btn.icon-only.danger {
@@ -1468,15 +1268,4 @@ export default {
   }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #121212;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #b0b0b0;
-    --text-muted: #707070;
-  }
-}
 </style>

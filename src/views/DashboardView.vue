@@ -4,7 +4,6 @@
       <SiteTitle icon="stats-chart" title="Dashboard" bg="transparent" />
 
       <div class="page-container">
-        <!-- Action Bar -->
         <div class="action-bar">
           <div class="action-group-left">
             <div class="header-info">
@@ -13,162 +12,138 @@
             </div>
           </div>
           <div class="action-group-right">
-            <button class="action-btn" @click="edit()">
-              <ion-icon :icon="editView ? 'checkmark-outline' : 'create-outline'"></ion-icon>
+            <ActionButton :icon="editView ? 'checkmark-outline' : 'create-outline'" @click="edit()">
               {{ editView ? 'Fertig' : 'Bearbeiten' }}
-            </button>
-            <button class="action-btn primary" @click="setOpen(true)">
-              <ion-icon icon="add-outline"></ion-icon>
+            </ActionButton>
+            <ActionButton variant="primary" icon="add-outline" @click="setOpen(true)">
               Widget hinzufügen
-            </button>
+            </ActionButton>
           </div>
         </div>
 
-        <!-- Dashboard Display -->
         <DashboardDisplay :charts="charts" :editView="editView" @deleteChart="deleteChart"
           @updateCharts="updateCharts" />
 
-        <!-- Empty State -->
-        <div v-if="charts.length === 0" class="no-data-state">
-          <div class="no-data-content">
-            <ion-icon icon="stats-chart-outline" class="no-data-icon"></ion-icon>
-            <h4>Noch keine Widgets</h4>
-            <p>Füge dein erstes Widget hinzu, um mit der Dashboard-Visualisierung zu beginnen.</p>
-            <button class="action-btn primary" @click="setOpen(true)">
-              <ion-icon icon="add-outline"></ion-icon>
-              Widget hinzufügen
-            </button>
-          </div>
-        </div>
+        <EmptyState v-if="charts.length === 0" icon="stats-chart-outline" title="Noch keine Widgets"
+          description="Füge dein erstes Widget hinzu, um mit der Dashboard-Visualisierung zu beginnen.">
+          <ActionButton variant="primary" icon="add-outline" @click="setOpen(true)">
+            Widget hinzufügen
+          </ActionButton>
+        </EmptyState>
       </div>
 
-      <!-- Modal Overlay -->
-      <div v-if="isOpen" class="custom-modal-overlay" @click="cancel()">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>Neues Widget erstellen</h3>
-            <button class="modal-close-btn" @click="cancel()">
-              <ion-icon icon="close-outline"></ion-icon>
-            </button>
+      <AppModal v-model="isOpen" title="Neues Widget erstellen">
+        <div class="form-group">
+          <label class="form-label">Widget Typ</label>
+          <select v-model="comp" class="modern-select">
+            <option value="">Typ auswählen</option>
+            <option value="module_widget">Module Widget</option>
+            <option value="chart">Form Chart</option>
+            <option value="card">Card</option>
+          </select>
+        </div>
+
+        <div v-if="comp === 'module_widget'" class="widget-config">
+          <div class="form-group">
+            <label class="form-label">Modul</label>
+            <select v-model="module" class="modern-select">
+              <option value="">Modul auswählen</option>
+              <option v-for="opt in module_select.options" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
           </div>
 
-          <div class="custom-modal-body">
-            <div class="form-group">
-              <label class="form-label">Widget Typ</label>
-              <select v-model="comp" class="modern-select">
-                <option value="">Typ auswählen</option>
-                <option value="module_widget">Module Widget</option>
-                <option value="chart">Form Chart</option>
-                <option value="card">Card</option>
-              </select>
-            </div>
-
-            <!-- Module Widget Selects -->
-            <div v-if="comp === 'module_widget'" class="widget-config">
-              <div class="form-group">
-                <label class="form-label">Modul</label>
-                <select v-model="module" class="modern-select">
-                  <option value="">Modul auswählen</option>
-                  <option v-for="opt in module_select.options" :key="opt.value" :value="opt.value">
-                    {{ opt.label }}
-                  </option>
-                </select>
-              </div>
-
-              <div v-if="module" class="form-group">
-                <label class="form-label">Widget</label>
-                <select v-model="widget" class="modern-select">
-                  <option value="">Widget auswählen</option>
-                  <option v-for="opt in widget_select.options" :key="opt.value" :value="opt.value">
-                    {{ opt.label }}
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Card Selects -->
-            <div v-if="comp === 'card'" class="widget-config">
-              <div class="form-group">
-                <label class="form-label">View</label>
-                <select v-model="view" class="modern-select">
-                  <option value="">View auswählen</option>
-                  <option v-for="opt in view_select.options" :key="opt.value" :value="opt.value">
-                    {{ opt.label }}
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Chart Selects -->
-            <div v-if="comp === 'chart'" class="widget-config">
-              <div class="form-group">
-                <label class="form-label">Chart Typ</label>
-                <select v-model="chart_type" class="modern-select">
-                  <option value="">Chart Typ auswählen</option>
-                  <option v-for="opt in chart_select.options" :key="opt.value" :value="opt.value">
-                    {{ opt.label }}
-                  </option>
-                </select>
-              </div>
-
-              <div v-if="chart_type" class="form-group">
-                <label class="form-label">Form</label>
-                <select v-model="form" class="modern-select">
-                  <option value="">Form auswählen</option>
-                  <option v-for="opt in select.options" :key="opt.value" :value="opt.value">
-                    {{ opt.label }}
-                  </option>
-                </select>
-              </div>
-
-              <div v-if="form" class="form-group">
-                <label class="form-label">Datenfeld</label>
-                <select v-model="table_data" class="modern-select">
-                  <option value="">Datenfeld auswählen</option>
-                  <option v-for="opt in data_select.options" :key="opt.value" :value="opt.value">
-                    {{ opt.label }}
-                  </option>
-                </select>
-              </div>
-
-              <div v-if="table_data" class="form-group">
-                <label class="form-label">Label</label>
-                <select v-model="form_label" class="modern-select">
-                  <option value="">Label auswählen</option>
-                  <option v-for="opt in label_select.options" :key="opt.value" :value="opt.value">
-                    {{ opt.label }}
-                  </option>
-                </select>
-              </div>
-
-              <div v-if="form_label && chart_type == 'date_bar_chart'" class="form-group">
-                <label class="form-label">Zeitstempel</label>
-                <select v-model="date_stamps" class="modern-select">
-                  <option value="">Zeitstempel auswählen</option>
-                  <option v-for="opt in date_stamps_select.options" :key="opt.value" :value="opt.value">
-                    {{ opt.label }}
-                  </option>
-                </select>
-              </div>
-
-              <div v-if="date_stamps && chart_type == 'date_bar_chart'" class="form-group">
-                <label class="form-label">Methode</label>
-                <select v-model="date_bar_method" class="modern-select">
-                  <option value="">Methode auswählen</option>
-                  <option v-for="opt in date_bar_method_select.options" :key="opt.value" :value="opt.value">
-                    {{ opt.label }}
-                  </option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button class="action-btn" @click="cancel()">Abbrechen</button>
-            <button class="action-btn primary" @click="confirm()">Widget hinzufügen</button>
+          <div v-if="module" class="form-group">
+            <label class="form-label">Widget</label>
+            <select v-model="widget" class="modern-select">
+              <option value="">Widget auswählen</option>
+              <option v-for="opt in widget_select.options" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
           </div>
         </div>
-      </div>
+
+        <div v-if="comp === 'card'" class="widget-config">
+          <div class="form-group">
+            <label class="form-label">View</label>
+            <select v-model="view" class="modern-select">
+              <option value="">View auswählen</option>
+              <option v-for="opt in view_select.options" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div v-if="comp === 'chart'" class="widget-config">
+          <div class="form-group">
+            <label class="form-label">Chart Typ</label>
+            <select v-model="chart_type" class="modern-select">
+              <option value="">Chart Typ auswählen</option>
+              <option v-for="opt in chart_select.options" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
+
+          <div v-if="chart_type" class="form-group">
+            <label class="form-label">Form</label>
+            <select v-model="form" class="modern-select">
+              <option value="">Form auswählen</option>
+              <option v-for="opt in select.options" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
+
+          <div v-if="form" class="form-group">
+            <label class="form-label">Datenfeld</label>
+            <select v-model="table_data" class="modern-select">
+              <option value="">Datenfeld auswählen</option>
+              <option v-for="opt in data_select.options" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
+
+          <div v-if="table_data" class="form-group">
+            <label class="form-label">Label</label>
+            <select v-model="form_label" class="modern-select">
+              <option value="">Label auswählen</option>
+              <option v-for="opt in label_select.options" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
+
+          <div v-if="form_label && chart_type == 'date_bar_chart'" class="form-group">
+            <label class="form-label">Zeitstempel</label>
+            <select v-model="date_stamps" class="modern-select">
+              <option value="">Zeitstempel auswählen</option>
+              <option v-for="opt in date_stamps_select.options" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
+
+          <div v-if="date_stamps && chart_type == 'date_bar_chart'" class="form-group">
+            <label class="form-label">Methode</label>
+            <select v-model="date_bar_method" class="modern-select">
+              <option value="">Methode auswählen</option>
+              <option v-for="opt in date_bar_method_select.options" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <template #footer>
+          <ActionButton @click="cancel()">Abbrechen</ActionButton>
+          <ActionButton variant="primary" @click="confirm()">Widget hinzufügen</ActionButton>
+        </template>
+      </AppModal>
     </ion-content>
   </ion-page>
 </template>
@@ -177,6 +152,9 @@
 import { defineComponent, ref, watch } from "vue";
 import DashboardDisplay from "@/components/DashboardDisplay.vue";
 import SiteTitle from "@/components/SiteTitle.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import AppModal from "@/components/AppModal.vue";
+import EmptyState from "@/components/EmptyState.vue";
 import {
   useMagicKeys,
   //whenever
@@ -188,6 +166,9 @@ export default defineComponent({
   components: {
     DashboardDisplay,
     SiteTitle,
+    ActionButton,
+    AppModal,
+    EmptyState,
   },
   data() {
     return {
@@ -957,40 +938,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* Modern Design System - Same as FormDisplay & ManageUsers */
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --info-color: #0891b2;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
-/* Dark Mode */
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #121212;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #b0b0b0;
-    --text-muted: #707070;
-  }
-}
-
 ion-content.modern-content {
   --background: var(--background);
 }
@@ -1035,157 +982,6 @@ ion-content.modern-content {
   font-weight: 500;
 }
 
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-}
-
-.action-btn ion-icon {
-  font-size: 18px;
-}
-
-/* No Data State */
-.no-data-state {
-  padding: 80px 20px;
-  text-align: center;
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  margin: 20px 0;
-}
-
-.no-data-content {
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.no-data-icon {
-  font-size: 80px;
-  color: var(--text-muted);
-  margin-bottom: 24px;
-  opacity: 0.4;
-}
-
-.no-data-content h4 {
-  margin: 0 0 12px 0;
-  color: var(--text-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.no-data-content p {
-  margin: 0 0 32px 0;
-  color: var(--text-secondary);
-  font-size: 16px;
-  line-height: 1.6;
-}
-
-/* Custom Modal */
-.custom-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  animation: modalFadeIn 0.2s ease;
-}
-
-.custom-modal-content {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border);
-  max-width: 90vw;
-  max-height: 90vh;
-  width: 600px;
-  display: flex;
-  flex-direction: column;
-  animation: modalSlideIn 0.3s ease;
-  overflow: hidden;
-}
-
-.custom-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--background);
-}
-
-.custom-modal-header h3 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.modal-close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.modal-close-btn:hover {
-  background: var(--border);
-  color: var(--text-primary);
-}
-
-.modal-close-btn ion-icon {
-  font-size: 24px;
-}
-
-.custom-modal-body {
-  flex: 1;
-  padding: 24px;
-  overflow-y: auto;
-  min-height: 0;
-}
-
-/* Form Styling */
 .form-group {
   margin-bottom: 20px;
 }
@@ -1231,39 +1027,6 @@ ion-content.modern-content {
   margin-top: 16px;
 }
 
-.form-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  padding: 20px 24px;
-  border-top: 1px solid var(--border);
-  background: var(--background);
-}
-
-/* Animations */
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
@@ -1281,41 +1044,6 @@ ion-content.modern-content {
 
   .header-info h2 {
     font-size: 24px;
-  }
-
-  .custom-modal-content {
-    width: 95vw;
-    max-width: none;
-    margin: 20px;
-  }
-
-  .custom-modal-header,
-  .custom-modal-body,
-  .form-actions {
-    padding: 20px;
-  }
-
-  .no-data-icon {
-    font-size: 64px;
-  }
-
-  .no-data-content h4 {
-    font-size: 20px;
-  }
-
-  .no-data-content p {
-    font-size: 14px;
-  }
-}
-
-@media (max-width: 480px) {
-  .action-btn {
-    padding: 8px 14px;
-    font-size: 13px;
-  }
-
-  .action-btn ion-icon {
-    font-size: 16px;
   }
 }
 </style>

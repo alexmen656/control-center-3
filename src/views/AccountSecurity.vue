@@ -3,7 +3,6 @@
     <ion-content class="modern-content">
       <SiteTitle icon="shield-checkmark-outline" title="Account Security" />
       <div class="page-container">
-        <!-- Header -->
         <div class="page-header">
           <div class="header-left">
             <button class="back-btn" @click="$router.go(-1)">
@@ -15,9 +14,7 @@
           </div>
         </div>
 
-        <!-- Security Settings -->
         <div class="security-sections">
-          <!-- Login Methods -->
           <div class="security-card">
             <div class="card-header">
               <div class="header-icon">
@@ -31,7 +28,6 @@
 
             <div class="card-content">
               <div class="login-methods">
-                <!-- Google Login -->
                 <div class="login-method">
                   <div class="method-info">
                     <div class="method-icon google">
@@ -47,7 +43,6 @@
                   </div>
                 </div>
 
-                <!-- Microsoft Login -->
                 <div class="login-method">
                   <div class="method-info">
                     <div class="method-icon microsoft">
@@ -67,7 +62,6 @@
             </div>
           </div>
 
-          <!-- Connected Services -->
           <div class="security-card">
             <div class="card-header">
               <div class="header-icon">
@@ -81,7 +75,6 @@
 
             <div class="card-content">
               <div class="connected-services">
-                <!-- GitHub Connection -->
                 <div class="service-item">
                   <div class="service-info">
                     <div class="service-icon github">
@@ -102,7 +95,6 @@
                   </div>
                 </div>
 
-                <!-- Vercel Connection -->
                 <div class="service-item">
                   <div class="service-info">
                     <div class="service-icon vercel">
@@ -125,7 +117,6 @@
             </div>
           </div>
 
-          <!-- Security Actions -->
           <div class="security-card">
             <div class="card-header">
               <div class="header-icon">
@@ -139,22 +130,10 @@
 
             <div class="card-content">
               <div class="security-actions">
-                <button class="action-btn primary">
-                  <ion-icon name="key-outline"></ion-icon>
-                  <span>Change Password</span>
-                </button>
-                <button class="action-btn secondary">
-                  <ion-icon name="finger-print-outline"></ion-icon>
-                  <span>Two-Factor Authentication</span>
-                </button>
-                <button class="action-btn secondary">
-                  <ion-icon name="download-outline"></ion-icon>
-                  <span>Download Account Data</span>
-                </button>
-                <button class="action-btn danger">
-                  <ion-icon name="trash-outline"></ion-icon>
-                  <span>Delete Account</span>
-                </button>
+                <ActionButton variant="primary" icon="key-outline">Change Password</ActionButton>
+                <ActionButton variant="secondary" icon="finger-print-outline">Two-Factor Authentication</ActionButton>
+                <ActionButton variant="secondary" icon="download-outline">Download Account Data</ActionButton>
+                <ActionButton variant="danger" icon="trash-outline">Delete Account</ActionButton>
               </div>
             </div>
           </div>
@@ -168,10 +147,11 @@
 import { defineComponent } from "vue";
 import PageTitle from "@/components/PageTitle.vue";
 import SiteTitle from "@/components/SiteTitle.vue";
+import ActionButton from "@/components/ActionButton.vue";
 import { getUserData } from "@/userData";
 
 export default defineComponent({
-  components: { PageTitle, SiteTitle },
+  components: { PageTitle, SiteTitle, ActionButton },
   data() {
     return {
       user: {},
@@ -192,7 +172,6 @@ export default defineComponent({
       console.log("login with google");
       this.login_with_google = true;
     }
-    // GitHub Login Status & Info prüfen
     if (this.user.userID) {
       try {
         const res = await this.$axios.get(`github_token_status.php?userID=${this.user.userID}`);
@@ -207,7 +186,6 @@ export default defineComponent({
         } else {
           this.githubAccount = null;
         }
-        // Vercel Status
         const vercelRes = await this.$axios.get(`vercel_token_status.php?userID=${this.user.userID}`);
         this.vercelConnected = !!(vercelRes.data && vercelRes.data.connected);
       } catch (e) {
@@ -221,18 +199,14 @@ export default defineComponent({
     connectGithub(event) {
       this.login_with_github = event.detail.checked;
       if (event.detail.checked) {
-        // OAuth2-URL für GitHub (Client-ID und Redirect-URL anpassen!)
         const clientId = 'Ov23liwAe9al1YhVcwrK';
-        const redirectUri = encodeURIComponent('https://api.fringelo.com/github_oauth_callback.php');//control-center.eu
+        const redirectUri = encodeURIComponent('https://api.fringelo.com/github_oauth_callback.php');
         const scope = 'repo user';
-        // User-ID für state-Parameter
         const userId = this.user && this.user.userID ? this.user.userID : '';
         const state = userId ? `user_${userId}` : '';
         const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&state=${state}`;
         window.location.href = githubAuthUrl;
       } else {
-        // Optional: Logout/Token entfernen
-        // this.$axios.post('user.php', this.$qs.stringify({ updateLoginWithGithub: false }));
       }
     },
     connectVercel() {
@@ -243,18 +217,14 @@ export default defineComponent({
       window.location.href = vercelAuthUrl;
       this.login_with_github = event.detail.checked;
       if (event.detail.checked) {
-        // OAuth2-URL für GitHub (Client-ID und Redirect-URL anpassen!)
         const clientId = 'Ov23liwAe9al1YhVcwrK';
-        const redirectUri = encodeURIComponent('https://api.fringelo.com/github_oauth_callback.php');//control-center.eu
+        const redirectUri = encodeURIComponent('https://api.fringelo.com/github_oauth_callback.php');
         const scope = 'repo user';
-        // User-ID für state-Parameter
         const userId = this.user && this.user.userID ? this.user.userID : '';
         const state = userId ? `user_${userId}` : '';
         const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&state=${state}`;
         window.location.href = githubAuthUrl;
       } else {
-        // Optional: Logout/Token entfernen
-        // this.$axios.post('user.php', this.$qs.stringify({ updateLoginWithGithub: false }));
       }
     },
     update(event) {
@@ -301,27 +271,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* Modern Design System */
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1000px;
   margin: 0 auto;
@@ -330,7 +279,6 @@ export default defineComponent({
   background: var(--background);
 }
 
-/* Page Header */
 .page-header {
   margin-bottom: 32px;
 }
@@ -381,7 +329,6 @@ export default defineComponent({
   font-size: 16px;
 }
 
-/* Security Sections */
 .security-sections {
   display: flex;
   flex-direction: column;
@@ -437,7 +384,6 @@ export default defineComponent({
   padding: 24px;
 }
 
-/* Login Methods */
 .login-methods {
   display: flex;
   flex-direction: column;
@@ -505,7 +451,6 @@ export default defineComponent({
   flex-shrink: 0;
 }
 
-/* Connected Services */
 .connected-services {
   display: flex;
   flex-direction: column;
@@ -614,103 +559,19 @@ export default defineComponent({
   font-size: 16px;
 }
 
-/* Security Actions */
 .security-actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 16px;
 }
 
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 16px 20px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  justify-content: center;
-  text-align: center;
-}
-
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border: 1px solid var(--primary-color);
-  box-shadow: var(--shadow);
-}
-
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn.secondary {
-  background: var(--surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-
-.action-btn.secondary:hover {
-  background: var(--background);
-  border-color: var(--secondary-color);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn.danger {
-  background: #fef2f2;
-  color: var(--danger-color);
-  border: 1px solid #fecaca;
-  box-shadow: var(--shadow);
-}
-
-.action-btn.danger:hover {
-  background: #fee2e2;
-  border-color: var(--danger-color);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn ion-icon {
-  font-size: 16px;
-}
-
 @media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #121212;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #b0b0b0;
-    --text-muted: #707070;
-  }
-
   .status-badge.connected {
     background: #065f46;
     color: #10b981;
   }
-
-  .action-btn.danger {
-    background: #7f1d1d;
-    color: #f87171;
-    border-color: #991b1b;
-  }
-
-  .action-btn.danger:hover {
-    background: #991b1b;
-    border-color: #dc2626;
-  }
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;

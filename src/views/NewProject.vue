@@ -51,13 +51,13 @@
         </div>
 
         <div class="action-section">
-          <button
-            class="action-btn primary"
+          <ActionButton
+            variant="primary"
             @click="createWithoutTemplate"
             :disabled="!name"
           >
             Create Project
-          </button>
+          </ActionButton>
         </div>
       </div>
     </ion-content>
@@ -66,12 +66,14 @@
 
 <script>
 import SiteTitle from '@/components/SiteTitle.vue';
+import ActionButton from '@/components/ActionButton.vue';
 import { defineComponent } from 'vue';
 
 export default defineComponent({
   name: "NewProject",
   components: {
-    SiteTitle
+    SiteTitle,
+    ActionButton
   },
   data() {
     return {
@@ -143,22 +145,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.modern-content {
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 900px;
   margin: 0 auto;
@@ -291,38 +277,9 @@ export default defineComponent({
   margin-top: 32px;
 }
 
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.action-section :deep(.action-btn) {
   width: 100%;
-}
-
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border: 1px solid var(--primary-color);
-  box-shadow: var(--shadow);
-}
-
-.action-btn.primary:hover:not(:disabled) {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  justify-content: center;
 }
 
 @media (max-width: 768px) {
@@ -338,17 +295,6 @@ export default defineComponent({
   .icon-preview {
     width: 100%;
     height: 80px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #121212;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #b0b0b0;
-    --text-muted: #707070;
   }
 }
 </style>

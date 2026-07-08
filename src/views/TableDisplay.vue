@@ -11,10 +11,9 @@
         </div>
         <div class="action-bar">
           <div class="action-group-left">
-            <button class="action-btn primary" @click="toggleFormView">
-              <ion-icon name="add-outline"></ion-icon>
+            <ActionButton variant="primary" icon="add-outline" @click="toggleFormView">
               <span>Add Entry</span>
-            </button>
+            </ActionButton>
           </div>
           <div class="action-group-right">
             <div class="dropdown">
@@ -33,10 +32,9 @@
                 </a>
               </div>
             </div>
-            <button class="action-btn secondary" @click="openTriggerModal()">
-              <ion-icon name="notifications-outline"></ion-icon>
+            <ActionButton variant="secondary" icon="notifications-outline" @click="openTriggerModal()">
               <span>Triggers</span>
-            </button>
+            </ActionButton>
             <div class="dropdown">
               <button class="action-btn secondary dropdown-toggle" @click="toggleDropdown">
                 <ion-icon name="ellipsis-vertical-outline"></ion-icon>
@@ -54,19 +52,13 @@
             </div>
           </div>
         </div>
-        <div class="data-card">
-          <div class="card-header">
-            <div class="header-left">
-              <h3>Data Overview</h3>
-              <span class="entry-count">{{ data?.length || 0 }} entries</span>
+        <DataCard title="Data Overview" :subtitle="(data?.length || 0) + ' entries'" noPadding>
+          <template #actions>
+            <div class="search-box">
+              <ion-icon name="search-outline"></ion-icon>
+              <input type="text" placeholder="Search entries..." v-model="searchTerm" @input="handleSearch">
             </div>
-            <div class="header-right">
-              <div class="search-box">
-                <ion-icon name="search-outline"></ion-icon>
-                <input type="text" placeholder="Search entries..." v-model="searchTerm" @input="handleSearch">
-              </div>
-            </div>
-          </div>
+          </template>
           <div class="table-wrapper">
             <div class="modern-table">
               <div class="table-header">
@@ -83,18 +75,13 @@
                 <div class="header-cell actions-header">Actions</div>
               </div>
               <div class="table-body">
-                <div v-if="!sortedData || sortedData.length === 0" class="no-data-state">
-                  <div class="no-data-content">
-                    <ion-icon name="folder-open-outline" class="no-data-icon"></ion-icon>
-                    <h4>No Data Available</h4>
-                    <p>{{ searchTerm ? 'No entries match your search criteria.' : 'No entries have been created yet.' }}
-                    </p>
-                    <button v-if="!searchTerm" class="action-btn primary" @click="toggleFormView">
-                      <ion-icon name="add-outline"></ion-icon>
-                      Add First Entry
-                    </button>
-                  </div>
-                </div>
+                <EmptyState v-if="!sortedData || sortedData.length === 0" icon="folder-open-outline"
+                  title="No Data Available"
+                  :description="searchTerm ? 'No entries match your search criteria.' : 'No entries have been created yet.'">
+                  <ActionButton v-if="!searchTerm" variant="primary" icon="add-outline" @click="toggleFormView">
+                    Add First Entry
+                  </ActionButton>
+                </EmptyState>
                 <div v-for="(tr, rowIndex) in sortedData" :key="rowIndex" class="table-row"
                   :class="{ 'row-hover': true }">
                   <div v-for="(td, colIndex) in tr" :key="colIndex" class="table-cell">
@@ -120,7 +107,7 @@
               Load More Entries
             </button>
           </div>
-        </div>
+        </DataCard>
         <div class="form-section" :class="{ 'form-visible': showForm }">
           <div class="form-card">
             <div class="form-header">
@@ -135,55 +122,42 @@
           </div>
         </div>
       </div>
-      <div v-if="isOpenRef" class="custom-modal-overlay" @click="closeModal(false)">
-        <div class="custom-modal-content" @click.stop>
-          <div class="custom-modal-header">
-            <h3>Edit Entry</h3>
-            <button class="modal-close-btn" @click="closeModal(false)">
-              <ion-icon name="close-outline"></ion-icon>
-            </button>
-          </div>
-          <div class="custom-modal-body">
-            <div v-if="editFormData.length > 0" class="modern-edit-form">
-              <div v-for="field in editFormData" :key="field.name" class="form-group">
-                <label class="form-label">{{ field.label }}</label>
-                <input v-if="field.type === 'text' || field.type === 'email' || field.type === 'number'"
-                  v-model="editFormValues[field.name]" :type="field.type"
-                  :placeholder="field.placeholder || field.label" class="modern-input" />
-                <textarea v-else-if="field.type === 'textarea'" v-model="editFormValues[field.name]"
-                  :placeholder="field.placeholder || field.label" class="modern-textarea" rows="4"></textarea>
-                <select v-else-if="field.type === 'select'" v-model="editFormValues[field.name]" class="modern-select">
-                  <option value="">Select {{ field.label }}</option>
-                  <option v-for="option in field.options" :key="option.value" :value="option.value">
-                    {{ option.label }}
-                  </option>
-                </select>
-                <label v-else-if="field.type === 'checkbox'" class="checkbox-container">
-                  <input type="checkbox" v-model="editFormValues[field.name]" class="modern-checkbox" />
-                  <span class="checkmark"></span>
-                  {{ field.label }}
-                </label>
-                <input v-else-if="field.type === 'date'" v-model="editFormValues[field.name]" type="date"
-                  class="modern-input" />
-                <input v-else v-model="editFormValues[field.name]" type="text"
-                  :placeholder="field.placeholder || field.label" class="modern-input" />
-              </div>
-              <div class="form-actions">
-                <button class="action-btn secondary" @click="closeModal(false)">
-                  Cancel
-                </button>
-                <button class="action-btn primary" @click="saveEdit()">
-                  Save Changes
-                </button>
-              </div>
-            </div>
-            <div v-else class="loading-state">
-              <ion-icon name="sync-outline" class="loading-icon"></ion-icon>
-              <p>Loading entry data...</p>
-            </div>
+      <AppModal v-model="isOpenRef" title="Edit Entry">
+        <div v-if="editFormData.length > 0" class="modern-edit-form">
+          <div v-for="field in editFormData" :key="field.name" class="form-group">
+            <label class="form-label">{{ field.label }}</label>
+            <input v-if="field.type === 'text' || field.type === 'email' || field.type === 'number'"
+              v-model="editFormValues[field.name]" :type="field.type" :placeholder="field.placeholder || field.label"
+              class="modern-input" />
+            <textarea v-else-if="field.type === 'textarea'" v-model="editFormValues[field.name]"
+              :placeholder="field.placeholder || field.label" class="modern-textarea" rows="4"></textarea>
+            <select v-else-if="field.type === 'select'" v-model="editFormValues[field.name]" class="modern-select">
+              <option value="">Select {{ field.label }}</option>
+              <option v-for="option in field.options" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+            <label v-else-if="field.type === 'checkbox'" class="checkbox-container">
+              <input type="checkbox" v-model="editFormValues[field.name]" class="modern-checkbox" />
+              <span class="checkmark"></span>
+              {{ field.label }}
+            </label>
+            <input v-else-if="field.type === 'date'" v-model="editFormValues[field.name]" type="date"
+              class="modern-input" />
+            <input v-else v-model="editFormValues[field.name]" type="text"
+              :placeholder="field.placeholder || field.label" class="modern-input" />
           </div>
         </div>
-      </div>
+        <LoadingState v-else message="Loading entry data..." />
+        <template #footer>
+          <ActionButton v-if="editFormData.length > 0" variant="secondary" @click="closeModal(false)">
+            Cancel
+          </ActionButton>
+          <ActionButton v-if="editFormData.length > 0" variant="primary" @click="saveEdit()">
+            Save Changes
+          </ActionButton>
+        </template>
+      </AppModal>
       <TriggerManager v-if="triggerModalOpen" :project="$route.params.project" :table="$route.params.table"
         @close="triggerModalOpen = false" />
       <RenameTable v-if="renameModalOpen" :project="$route.params.project" :table="$route.params.table"
@@ -193,12 +167,16 @@
 </template>
 
 <script>
-//lang="ts"
 import DisplayTable from "@/components/DisplayTable.vue";
 import TriggerManager from "@/components/TriggerManager.vue";
 import RenameTable from "@/components/RenameTable.vue";
 import { defineComponent, ref } from "vue";
 import SiteTitle from "@/components/SiteTitle.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import DataCard from "@/components/DataCard.vue";
+import EmptyState from "@/components/EmptyState.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import AppModal from "@/components/AppModal.vue";
 
 export default defineComponent({
   name: "TableDisplay",
@@ -207,6 +185,11 @@ export default defineComponent({
     TriggerManager,
     RenameTable,
     SiteTitle,
+    ActionButton,
+    DataCard,
+    EmptyState,
+    LoadingState,
+    AppModal,
   },
   data() {
     return {
@@ -289,10 +272,10 @@ export default defineComponent({
     const edit = (id) => {
       isOpenRef.value = true;
       edit_id.value = id;
-    }; //: number
+    };
     const closeModal = (state) => {
       isOpenRef.value = state;
-    }; //: number
+    };
     return { isOpenRef, edit, closeModal, edit_id };
   },
   watch: {
@@ -342,21 +325,21 @@ export default defineComponent({
       try {
         const formResponse = await this.$axios.get(
           "v2/tables/schema", {
-            params:
-            {
-              table_name: this.$route.params.table,
-              project: this.$route.params.project,
-            }
+          params:
+          {
+            table_name: this.$route.params.table,
+            project: this.$route.params.project,
+          }
         }
         );
 
         const entryResponse = await this.$axios.get(
           `v2/tables/entry/${this.edit_id}`, {
-            params:
-            {
-              table_name: this.$route.params.table,
-              project: this.$route.params.project,
-            }
+          params:
+          {
+            table_name: this.$route.params.table,
+            project: this.$route.params.project,
+          }
         }
         );
 
@@ -437,7 +420,6 @@ export default defineComponent({
           responseType: 'blob'
         });
 
-        // Create download link
         const blob = new Blob([response.data], {
           type: format === 'csv'
             ? 'text/csv; charset=utf-8'
@@ -454,7 +436,6 @@ export default defineComponent({
         document.body.appendChild(link);
         link.click();
 
-        // Cleanup
         link.remove();
         window.URL.revokeObjectURL(downloadUrl);
       } catch (error) {
@@ -529,26 +510,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.modern-content {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #64748b;
-  --success-color: #059669;
-  --danger-color: #dc2626;
-  --warning-color: #d97706;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 8px;
-  --radius-lg: 12px;
-}
-
 .page-container {
   max-width: 1600px;
   margin: 0 auto;
@@ -618,17 +579,6 @@ export default defineComponent({
   box-shadow: var(--shadow-md);
 }
 
-.action-btn.primary {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.action-btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-}
-
 .action-btn ion-icon {
   font-size: 16px;
 }
@@ -686,37 +636,6 @@ export default defineComponent({
 .dropdown-item ion-icon {
   font-size: 16px;
   color: var(--text-secondary);
-}
-
-.data-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  margin-bottom: 24px;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.header-left h3 {
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.entry-count {
-  color: var(--text-secondary);
-  font-size: 14px;
 }
 
 .search-box {
@@ -993,15 +912,6 @@ export default defineComponent({
 }
 
 @media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
-  }
-
   .search-box input {
     background: var(--background);
     color: var(--text-primary);
@@ -1036,12 +946,6 @@ export default defineComponent({
     justify-content: center;
   }
 
-  .card-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-
   .search-box input {
     min-width: 100%;
   }
@@ -1071,144 +975,6 @@ export default defineComponent({
 
   .cell-content {
     max-width: 80px;
-  }
-}
-
-.no-data-state {
-  padding: 60px 20px;
-  text-align: center;
-  background: var(--surface);
-}
-
-.no-data-content {
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-.no-data-icon {
-  font-size: 64px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.no-data-content h4 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.no-data-content p {
-  margin: 0 0 24px 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.custom-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  animation: modalFadeIn 0.2s ease;
-}
-
-.custom-modal-content {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border);
-  max-width: 90vw;
-  max-height: 90vh;
-  width: 600px;
-  display: flex;
-  flex-direction: column;
-  animation: modalSlideIn 0.3s ease;
-}
-
-.custom-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--background);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
-
-.custom-modal-header h3 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.modal-close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.modal-close-btn:hover {
-  background: var(--border);
-  color: var(--text-primary);
-}
-
-.custom-modal-body {
-  flex: 1;
-  padding: 24px;
-  overflow-y: auto;
-  min-height: 0;
-}
-
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@media (max-width: 768px) {
-  .custom-modal-content {
-    width: 95vw;
-    max-width: none;
-    margin: 20px;
-  }
-
-  .custom-modal-header,
-  .custom-modal-body {
-    padding: 20px;
   }
 }
 
@@ -1273,53 +1039,5 @@ export default defineComponent({
   width: 18px;
   height: 18px;
   cursor: pointer;
-}
-
-.form-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border);
-}
-
-.loading-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-secondary);
-}
-
-.loading-icon {
-  font-size: 32px;
-  color: var(--primary-color);
-  margin-bottom: 12px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.loading-state p {
-  margin: 0;
-  font-size: 14px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .modern-content {
-    --background: #121212;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #b0b0b0;
-    --text-muted: #707070;
-  }
 }
 </style>

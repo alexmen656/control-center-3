@@ -5,7 +5,6 @@ import LogInVerification from "../views/LogInVerification.vue";
 import DatabasesView from "../views/Databases.vue";
 import TableDetail from "../views/TableDetail.vue";
 import MyAccount from "../views/MyAccount.vue";
-import PhotoView from "../views/PhotoView.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -71,10 +70,6 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/my-account/logout",
     component: () => import("../views/LogOutView.vue"),
-  },
-  {
-    path: "/photo",
-    component: PhotoView,
   },
   {
     path: "/new/site/",
