@@ -76,10 +76,6 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/NewProject.vue"),
   },
   {
-    path: "/new/doc/",
-    component: () => import("../views/CreatePage.vue"),
-  },
-  {
     path: "/new/project/",
     component: () => import("../views/NewProject.vue"),
   },
