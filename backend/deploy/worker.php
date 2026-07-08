@@ -94,6 +94,72 @@ function write_env_file($codespaceId, $target, $path)
     chmod($path, 0600);
 }
 
+function inject_codespace_apis($codespaceId, $workDir, $runtime)
+{
+    if ($runtime !== 'node') {
+        return;
+    }
+
+    $id = (int) $codespaceId;
+    $res = query("
+        SELECT ca.slug
+        FROM codespace_api_activations caa
+        JOIN project_api_subscriptions pas ON caa.subscription_id = pas.id
+        JOIN cms_apis ca ON pas.api_id = ca.id
+        WHERE caa.codespace_id = '$id' AND caa.is_active = 1
+    ");
+    if (!$res) {
+        return;
+    }
+
+    $slugs = [];
+    while ($row = mysqli_fetch_assoc($res)) {
+        $slugs[] = $row['slug'];
+    }
+    if (empty($slugs)) {
+        return;
+    }
+
+    $sdkSrcDir = __DIR__ . '/../apis_sdk';
+    $apisDir = $workDir . '/.monaco_apis';
+    @mkdir($apisDir, 0775, true);
+
+    $imports = '';
+    $names = [];
+    foreach ($slugs as $slug) {
+        $src = $sdkSrcDir . '/' . $slug . 'SDK.js';
+        if (!file_exists($src)) {
+            continue;
+        }
+        $envName = strtoupper(preg_replace('/[^A-Za-z0-9]+/', '_', $slug)) . '_API_KEY';
+        $content = str_replace('[{[apiKey]}]', $envName, file_get_contents($src));
+        file_put_contents($apisDir . '/' . $slug . 'SDK.js', $content);
+
+        $className = ucfirst($slug) . 'API';
+        $imports .= "import {$className} from './{$slug}SDK.js';\n";
+        $names[] = $className;
+    }
+
+    if (empty($names)) {
+        return;
+    }
+
+    $exportList = implode(', ', $names);
+    file_put_contents($apisDir . '/index.js', $imports . "\nexport { {$exportList} };\nexport default { {$exportList} };\n");
+    file_put_contents($apisDir . '/package.json', "{\n  \"name\": \"apis\",\n  \"version\": \"1.0.0\",\n  \"type\": \"module\",\n  \"main\": \"index.js\"\n}\n");
+
+    $pkgPath = $workDir . '/package.json';
+    $pkg = file_exists($pkgPath) ? json_decode(file_get_contents($pkgPath), true) : [];
+    if (!is_array($pkg)) {
+        $pkg = [];
+    }
+    if (!isset($pkg['dependencies']) || !is_array($pkg['dependencies'])) {
+        $pkg['dependencies'] = [];
+    }
+    $pkg['dependencies']['apis'] = 'file:./.monaco_apis';
+    file_put_contents($pkgPath, json_encode($pkg, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+}
+
 function build_deployment($dep)
 {
     $deploymentId = (int) $dep['id'];
@@ -133,6 +199,8 @@ function build_deployment($dep)
     $cfg = deploy_effective_config($codespaceId, $work);
     $runtime = $cfg['runtime'] === 'node' ? 'node' : 'static';
     wlog("deployment $deploymentId: framework={$cfg['framework']} runtime=$runtime");
+
+    inject_codespace_apis($codespaceId, $work, $runtime);
 
     $releaseDir = deploy_release_dir($codespaceId, $deploymentId);
     sh('rm -rf ' . escapeshellarg($releaseDir));

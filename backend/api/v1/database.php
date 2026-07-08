@@ -38,27 +38,30 @@ class DatabaseAPI extends BaseAPI
         }
     }
 
+    private function normalizeName($value)
+    {
+        $from = ['-', ' ', 'ä', 'Ä', 'ü', 'Ü', 'ö', 'Ö'];
+        $to = ['_', '_', 'a', 'a', 'u', 'u', 'o', 'o'];
+        return str_replace($from, $to, strtolower($value));
+    }
+
     private function loadAllowedTables()
     {
         $projectID = escape_string($this->projectID);
 
-        $result = query("
-            SELECT pt.link as table_link, p.link as project_name
-            FROM project_tools pt
-            JOIN projects p ON pt.projectID = p.projectID
-            WHERE pt.projectID = '$projectID'
-            AND pt.icon = 'document-text-outline'
-        ");
+        $projectRow = query("SELECT link FROM projects WHERE projectID = '$projectID' LIMIT 1");
+        if (!$projectRow || mysqli_num_rows($projectRow) === 0) {
+            $this->sendError('Project not found', 404);
+        }
+        $projectLink = fetch_assoc($projectRow)['link'];
+        $this->projectName = $this->normalizeName($projectLink);
 
+        $link = escape_string($projectLink);
+        $result = query("SELECT table_name FROM table_settings WHERE project = '$link'");
         if ($result) {
             while ($row = fetch_assoc($result)) {
-                $projectName = str_replace(['-', ' '], '_', strtolower($row['project_name']));
-                $tableLink = str_replace(['-', ' '], '_', strtolower($row['table_link']));
-                $this->allowedTables[] = $projectName . '_' . $tableLink;
-
-                if (empty($this->projectName)) {
-                    $this->projectName = $projectName;
-                }
+                $tableSlug = $this->normalizeName($row['table_name']);
+                $this->allowedTables[] = $this->projectName . '_' . $tableSlug;
             }
         }
 
