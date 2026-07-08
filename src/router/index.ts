@@ -25,10 +25,6 @@ const routes: Array<RouteRecordRaw> = [
     component: LogInVerification,
   },
   {
-    path: "/messages/new/group",
-    component: () => import("../views/NewGroup.vue"),
-  },
-  {
     path: "/users",
     component: () => import("../views/ManageUsers.vue"),
   },
@@ -104,10 +100,6 @@ const routes: Array<RouteRecordRaw> = [
     path: "/info/:function/",
     component: () => import("../views/InfoView.vue"),
   },
-  /*{
-    path: '/project/:project/',
-    component: () => import('../views/ProjectView.vue'),
-  },*/
   {
     path: "/project/:project/new/tool/",
     component: () => import("../views/NewTool.vue"),
@@ -120,20 +112,10 @@ const routes: Array<RouteRecordRaw> = [
     path: "/project/:project/filesystem",
     component: () => import("../views/ProjectFileSystem.vue"),
   },
-  /*{
-    path: '/project/:project/databases',
-    component: () => import('../views/ProjectView.vue'),
-  },*/
   {
     path: "/project/:project/manage/tools",
     component: () => import("../views/ManageTools.vue"),
   },
-  /*
-  {
-    path: '/project/:project/whatsapp-bot',
-    component: () => import('../views/ProjectView.vue'),
-  },
-  */
   {
     path: "/project/:project/info",
     component: () => import("../views/ProjectInfo.vue"),
@@ -147,11 +129,6 @@ const routes: Array<RouteRecordRaw> = [
     path: "/project/:project/ai-dashboard-generator",
     component: () => import("../views/AIDashboardGenerator.vue"),
   },
-  /*
-  {
-    path: '/project/:project/:url(.*)',
-    component: () => import('../views/ProjectView.vue'),
-  },*/
   {
     path: "/project/:project",
     component: () => import("../views/ProjectView_new.vue"),
@@ -160,10 +137,6 @@ const routes: Array<RouteRecordRaw> = [
     path: "/project/:project/info",
     component: () => import("../views/ProjectInfo.vue"),
   },
-  /*  {
-      path: '/drop',
-      component: () => import('../views/DropZone.vue'),
-    },*/
   {
     path: "/signup",
     component: () => import("../views/SignUp.vue"),
@@ -184,7 +157,6 @@ const routes: Array<RouteRecordRaw> = [
     path: "/project/:project/module-store",
     component: () => import("../views/StoreOverview.vue"),
   },
-  // Codespace Routes
   {
     path: "/project/:project/manage/codespaces",
     component: () => import("../views/ManageCodespaces.vue"),
@@ -193,7 +165,6 @@ const routes: Array<RouteRecordRaw> = [
     path: "/project/:project/new/codespace",
     component: () => import("../views/ManageCodespaces.vue"),
   },
-  // API Routes
   {
     path: "/project/:project/new/api",
     component: () => import("../apis/ManageApis.vue"),
@@ -209,19 +180,6 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/project/:project/apis/:apiSlug/settings",
     component: () => import("../apis/ApiSettings.vue"),
-  },
-  {
-    path: "/project/:project/chat-app",
-    component: () => import("../views/ChatApp.vue"),
-  },
-  {
-    path: "/project/:project/chat-app/chat/:id",
-    name: "ChatDetail",
-    component: () => import("../views/ChatDetail.vue"),
-  },
-  {
-    path: "/project/:project/chat-app/config",
-    component: () => import("../views/ChatAppConfig.vue"),
   },
   {
     path: "/no-permission",
