@@ -1,8 +1,7 @@
-// CMS Analytics API SDK
 class AnalyticsAPI {
   constructor() {
-    this.baseUrl = 'https://api.fringelo.com/backend/api/v1/analytics';
-    this.apiKey = 'demo-api-key-123';
+    this.baseUrl = (process.env.FRINGELO_API_URL || 'https://gw.fringelo.com') + '/analytics';
+    this.apiKey = process.env['[{[apiKey]}]'] || '';
   }
 
   async track(eventName, eventData = {}) {
@@ -42,7 +41,6 @@ class AnalyticsAPI {
   }
 
   getSessionId() {
-    // Erstelle oder hole Session-ID aus localStorage
     let sessionId = localStorage.getItem('analytics_session_id');
     if (!sessionId) {
       sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);

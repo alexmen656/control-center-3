@@ -1,9 +1,8 @@
-// Currency Exchange API SDK
 class CurrencyAPI {
   constructor() {
-    this.baseUrl = 'https://api.exchangerate-api.com/v4';
-    this.freebaseUrl = 'https://api.fxapi.com/v1'; // Alternative free API
-    this.apiKey = process.env.CURRENCY_API_KEY || '';
+    this.baseUrl = (process.env.FRINGELO_API_URL || 'https://gw.fringelo.com') + '/currency';
+    this.freebaseUrl = 'https://api.fxapi.com/v1';
+    this.apiKey = process.env['[{[apiKey]}]'] || '';
   }
 
   async getLatestRates(baseCurrency = 'USD') {
@@ -16,7 +15,7 @@ class CurrencyAPI {
   async convertCurrency(from, to, amount = 1) {
     const rates = await this.getLatestRates(from);
     const rate = rates.rates[to.toUpperCase()];
-    
+
     if (!rate) {
       throw new Error(`Currency ${to} not found`);
     }
@@ -32,7 +31,6 @@ class CurrencyAPI {
   }
 
   async getHistoricalRates(baseCurrency, date) {
-    // Format: YYYY-MM-DD
     const response = await fetch(`${this.baseUrl}/historical/${date}?base=${baseCurrency.toUpperCase()}`, {
       method: 'GET'
     });
@@ -44,7 +42,7 @@ class CurrencyAPI {
       method: 'GET'
     });
     const data = await this.handleResponse(response);
-    
+
     return {
       base: data.base,
       currencies: Object.keys(data.rates),
@@ -54,13 +52,11 @@ class CurrencyAPI {
   }
 
   async getTimeSeries(baseCurrency, symbols, startDate, endDate) {
-    // This would require a premium API, but we can simulate with multiple historical calls
     const currencies = Array.isArray(symbols) ? symbols : [symbols];
     const start = new Date(startDate);
     const end = new Date(endDate);
     const series = {};
 
-    // Limit to avoid too many API calls
     const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
     if (daysDiff > 30) {
       throw new Error('Date range too large. Maximum 30 days for time series.');
@@ -79,7 +75,6 @@ class CurrencyAPI {
           series[date][currency] = historicalData.rates[currency.toUpperCase()];
         }
       } catch (error) {
-        // Skip weekends/holidays where data might not be available
         continue;
       }
     }
@@ -92,7 +87,6 @@ class CurrencyAPI {
   }
 
   async getCurrencyInfo(currencyCode) {
-    // Static currency information
     const currencyData = {
       'USD': { name: 'US Dollar', symbol: '$', country: 'United States' },
       'EUR': { name: 'Euro', symbol: '€', country: 'European Union' },
@@ -107,10 +101,10 @@ class CurrencyAPI {
     };
 
     const code = currencyCode.toUpperCase();
-    return currencyData[code] || { 
-      name: `Unknown Currency (${code})`, 
-      symbol: code, 
-      country: 'Unknown' 
+    return currencyData[code] || {
+      name: `Unknown Currency (${code})`,
+      symbol: code,
+      country: 'Unknown'
     };
   }
 
@@ -131,11 +125,10 @@ class CurrencyAPI {
   }
 
   async getCryptoRates() {
-    // Using a free crypto API
     const response = await fetch('https://api.coinbase.com/v2/exchange-rates?currency=USD', {
       method: 'GET'
     });
-    
+
     const data = await response.json();
     if (!response.ok) {
       throw new Error(`Crypto API Error: ${response.status}`);
@@ -148,7 +141,6 @@ class CurrencyAPI {
     };
   }
 
-  // Utility methods
   formatCurrency(amount, currencyCode, locale = 'en-US') {
     return new Intl.NumberFormat(locale, {
       style: 'currency',
@@ -162,11 +154,11 @@ class CurrencyAPI {
 
   async handleResponse(response) {
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || `Currency API Error: ${response.status} ${response.statusText}`);
     }
-    
+
     return data;
   }
 }

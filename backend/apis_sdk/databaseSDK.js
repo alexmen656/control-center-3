@@ -23,7 +23,8 @@ class DatabaseClient {
   }
 
   async insert(table, data) {
-    return this._request('POST', 'insert', { table, data });
+    const res = await this._request('POST', 'insert', { table, data });
+    return Array.isArray(data) ? res.records : res.record;
   }
 
   async update(table, target, data) {

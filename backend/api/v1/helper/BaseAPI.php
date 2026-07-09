@@ -77,7 +77,11 @@ class BaseAPI
             while ($subscription = mysqli_fetch_assoc($result)) {
                 if (!empty($subscription['key_hash']) && hash_equals($subscription['key_hash'], $hash)) {
                     $this->projectID = $subscription['projectID'];
+                    $pid = escape_string($subscription['projectID']);
+                    $ur = query("SELECT userID FROM control_center_user_projects WHERE projectID='$pid' ORDER BY role ASC LIMIT 1");
+                    if ($ur && mysqli_num_rows($ur) > 0) { $this->userID = (int) mysqli_fetch_assoc($ur)['userID']; }
                     return true;
+
                 }
             }
         }
@@ -185,4 +189,6 @@ class BaseAPI
 
         return true;
     }
+
+    protected function logApiCall($service = '', $method = '') {}
 }

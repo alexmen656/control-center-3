@@ -1,8 +1,8 @@
 // CMS Users API SDK
 class UsersAPI {
   constructor() {
-    this.baseUrl = 'https://api.fringelo.com/backend/api/v1/users';
-    this.apiKey = 'demo-api-key-123'; // Will be set from project settings
+    this.baseUrl = (process.env.FRINGELO_API_URL || 'https://gw.fringelo.com') + '/user-management';
+    this.apiKey = process.env['[{[apiKey]}]'] || '';
   }
 
   async getAll(params = {}) {

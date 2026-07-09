@@ -1,23 +1,18 @@
 <?php
 
-/**
- * Analytics API - Analytics und Tracking für CMS Projekte
- * Handles analytics data collection and reporting
- */
 
 require_once 'helper/BaseAPI.php';
 
 class AnalyticsAPI extends BaseAPI {
 
     public function __construct() {
-        parent::__construct();
+        parent::__construct('5');
         $this->initDatabase();
     }
 
     private function initDatabase() {
-        // Include mysql.php für query() Funktionen
         if (file_exists('../../mysql.php')) {
-            require_once '../../mysql.php';
+            
         }
     }
 
@@ -26,7 +21,6 @@ class AnalyticsAPI extends BaseAPI {
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $pathParts = explode('/', trim($path, '/'));
         
-        // Log API call
         $this->logApiCall('analytics', $method);
 
         switch ($method) {
@@ -70,10 +64,9 @@ class AnalyticsAPI extends BaseAPI {
         $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '';
         $referer = $_SERVER['HTTP_REFERER'] ?? '';
         
-        // Event in analytics_events Tabelle speichern
         $sql = "INSERT INTO analytics_events 
                 (project_id, user_id, event_name, event_data, session_id, user_agent, ip_address, referer, created_at) 
-                VALUES ('{$this->projectID}', {$this->userID}, '$eventName', '$eventData', '$sessionId', 
+                VALUES ('{$this->projectID}', NULL, '$eventName', '$eventData', '$sessionId', 
                         '" . $this->sanitize($userAgent) . "', '" . $this->sanitize($ipAddress) . "', 
                         '" . $this->sanitize($referer) . "', NOW())";
         
@@ -97,7 +90,6 @@ class AnalyticsAPI extends BaseAPI {
                 FROM analytics_events 
                 WHERE project_id = '{$this->projectID}'";
         
-        // Filter anwenden
         if (isset($params['event_name'])) {
             $eventName = $this->sanitize($params['event_name']);
             $sql .= " AND event_name = '$eventName'";
@@ -113,10 +105,8 @@ class AnalyticsAPI extends BaseAPI {
             $sql .= " AND created_at <= '$toDate'";
         }
         
-        // Sortierung
         $sql .= " ORDER BY created_at DESC";
         
-        // Paginierung
         $page = isset($params['page']) ? max(1, (int)$params['page']) : 1;
         $limit = isset($params['limit']) ? max(1, min(1000, (int)$params['limit'])) : 100;
         $offset = ($page - 1) * $limit;
@@ -284,26 +274,20 @@ class AnalyticsAPI extends BaseAPI {
     }
 
     private function getStats() {
-        // Verschiedene Statistiken abrufen
         $stats = [];
         
-        // Heute
         $todayResult = query("SELECT COUNT(*) as count FROM analytics_events WHERE project_id = '{$this->projectID}' AND DATE(created_at) = CURDATE()");
         $stats['today'] = $todayResult ? (int)mysqli_fetch_assoc($todayResult)['count'] : 0;
         
-        // Diese Woche
         $weekResult = query("SELECT COUNT(*) as count FROM analytics_events WHERE project_id = '{$this->projectID}' AND YEARWEEK(created_at) = YEARWEEK(NOW())");
         $stats['this_week'] = $weekResult ? (int)mysqli_fetch_assoc($weekResult)['count'] : 0;
         
-        // Diesen Monat
         $monthResult = query("SELECT COUNT(*) as count FROM analytics_events WHERE project_id = '{$this->projectID}' AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())");
         $stats['this_month'] = $monthResult ? (int)mysqli_fetch_assoc($monthResult)['count'] : 0;
         
-        // Insgesamt
         $totalResult = query("SELECT COUNT(*) as count FROM analytics_events WHERE project_id = '{$this->projectID}'");
         $stats['total'] = $totalResult ? (int)mysqli_fetch_assoc($totalResult)['count'] : 0;
         
-        // Top Events (letzte 30 Tage)
         $topEventsResult = query("SELECT event_name, COUNT(*) as count FROM analytics_events WHERE project_id = '{$this->projectID}' AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) GROUP BY event_name ORDER BY count DESC LIMIT 5");
         $topEvents = [];
         if ($topEventsResult && mysqli_num_rows($topEventsResult) > 0) {
@@ -317,11 +301,9 @@ class AnalyticsAPI extends BaseAPI {
     }
 
     private function getOverview() {
-        // Allgemeine Übersicht
         $this->getStats();
     }
 }
 
-// Handle the request
 $api = new AnalyticsAPI();
 $api->handleRequest();

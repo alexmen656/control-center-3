@@ -24,7 +24,7 @@ function mapFieldType($type)
 }
 
 if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['name']) && isset($_POST['project'])) {
-    $tableJSON = $_POST['table']; //escape_string();
+    $tableJSON = $_POST['table'];
     $tableName = escape_string($_POST['name']);
     $project = escape_string($_POST['project']);
     
@@ -49,14 +49,13 @@ if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['nam
         id INT AUTO_INCREMENT PRIMARY KEY";
 
             foreach ($fields as $field) {
-                $name = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], strtolower($field['name']));
+                $name = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], $field['name']);
                 $type = mapFieldType($field['type']);
                 $sql .= ", $name $type";
             }
             $sql .= ", created_at DATETIME DEFAULT CURRENT_TIMESTAMP";
             $sql .= ");";
 
-            //echo $sql;
             if (query($sql)) {
                 echo $tableName . " Created Successfully!!!";
             }
@@ -70,9 +69,7 @@ if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['nam
     $project = escape_string($_POST['project']);
     $query = query("SELECT * FROM table_settings WHERE table_name='$table_name' AND project='$project'");
     if (mysqli_num_rows($query) > 0) {
-        //echo 1;
         $form = fetch_assoc($query);
-        //print_r($form);
         $json['id'] = $form['table_id'];
         $json['table'] = json_decode($form['table_json'], true);
         $json['createdOn'] = $form['created_at'];
@@ -82,7 +79,6 @@ if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['nam
     $table_name = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower(escape_string($_POST['table'])));
     $project_name = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower(escape_string($_POST['project'])));
     $table_name = $project_name . "_" . $table_name;
-    //echo $table_name;
 
     $data = query("SELECT * FROM `$table_name` LIMIT 100");
     $json = array();
@@ -99,9 +95,7 @@ if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['nam
             $formattedRow = array();
 
             foreach ($field_names as $field) {
-             //   if ($field != 'created_at') {
                     $formattedRow[$field] = $row[$field];
-               // }
             }
 
             $json[] = $formattedRow;
@@ -113,7 +107,6 @@ if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['nam
     }
 } elseif (isset($_POST['get_tables']) && isset($_POST['project'])) {
     $json = [];
-    // $table_name = escape_string($_POST['table']);
     $project = escape_string($_POST['project']);
     $forms = query("SELECT * FROM table_settings WHERE project='$project'");
     $i = 0;
@@ -137,7 +130,7 @@ if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['nam
         $values = array();
 
         foreach ($form as $fieldName => $fieldValue) {
-            $fieldName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], strtolower(escape_string($fieldName)));
+            $fieldName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], escape_string($fieldName));
             $fieldValue = escape_string($fieldValue);
             $columns[] = $fieldName;
             $values[] = "'$fieldValue'";
@@ -147,11 +140,9 @@ if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['nam
         $valuesStr = implode(', ', $values);
 
         $sql = "INSERT INTO $tableName ($columnsStr) VALUES ($valuesStr)";
-        //echo $sql;
         if (query($sql)) {
             $newId = mysqli_insert_id($GLOBALS['con']);
             
-            // Trigger execution für INSERT
             $triggerSystem = new TableTriggers();
             $triggerData = $form;
             $triggerData['id'] = $newId;
@@ -173,7 +164,6 @@ if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['nam
 
     $sql = "DELETE FROM $tableName WHERE id='$id'";
     if (query($sql)) {
-        // Trigger execution für DELETE
         $triggerSystem = new TableTriggers();
         $triggerData = ['id' => $id, 'table' => $tableName];
         $triggerSystem->executeTriggers($project, $table_name, 'delete', $triggerData);
@@ -199,7 +189,7 @@ if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['nam
         $updates = array();
 
         foreach ($form as $fieldName => $fieldValue) {
-            $fieldName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], strtolower(escape_string($fieldName)));
+            $fieldName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], escape_string($fieldName));
             $fieldValue = escape_string($fieldValue);
             $updates[] = "$fieldName = '$fieldValue'";
         }
@@ -209,7 +199,6 @@ if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['nam
         $sql = "UPDATE $tableName SET $updatesStr WHERE id='$id'";
 
         if (query($sql)) {
-            // Trigger execution für UPDATE
             $triggerSystem = new TableTriggers();
             $triggerData = $form;
             $triggerData['id'] = $id;
@@ -234,41 +223,34 @@ if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['nam
     $new_table_name = escape_string($_POST['new_table_name']);
     $project = escape_string($_POST['project']);
     
-    // Validate new form name
     if (!preg_match('/^[a-zA-Z0-9-_]+$/', $new_table_name)) {
         echo json_encode(['success' => false, 'error' => 'Ungültiger Formname. Verwenden Sie nur Buchstaben, Zahlen, Bindestriche und Unterstriche.']);
         exit;
     }
     
-    // Check if new form name already exists
     $check_query = query("SELECT * FROM table_settings WHERE table_name='$new_table_name' AND project='$project'");
     if (mysqli_num_rows($check_query) > 0) {
         echo json_encode(['success' => false, 'error' => 'Eine Form mit diesem Namen existiert bereits.']);
         exit;
     }
     
-    // Check if old form exists
     $old_form_query = query("SELECT * FROM table_settings WHERE table_name='$old_table_name' AND project='$project'");
     if (mysqli_num_rows($old_form_query) == 0) {
         echo json_encode(['success' => false, 'error' => 'Ursprüngliche Form nicht gefunden.']);
         exit;
     }
     
-    // Generate old and new table names
     $old_table_name = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($old_table_name));
     $new_table_name = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($new_table_name));
     
-    // Start transaction
     mysqli_autocommit($GLOBALS['con'], false);
     
     try {
-        // Update table_settings table
         $update_form_query = "UPDATE table_settings SET table_name='$new_table_name' WHERE table_name='$old_table_name' AND project='$project'";
         if (!query($update_form_query)) {
             throw new Exception('Fehler beim Aktualisieren der Form-Einstellungen');
         }
         
-        // Check if data table exists and rename it
         $table_exists_query = query("SHOW TABLES LIKE '$old_table_name'");
         if (mysqli_num_rows($table_exists_query) > 0) {
             $rename_table_query = "RENAME TABLE `$old_table_name` TO `$new_table_name`";
@@ -277,64 +259,52 @@ if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['nam
             }
         }
         
-        // Update triggers if they exist
         if (class_exists('TableTriggers')) {
             $triggerSystem = new TableTriggers();
             $triggerSystem->renameTableTriggers($project, $old_table_name, $new_table_name);
         }
         
-        // Commit transaction
         mysqli_commit($GLOBALS['con']);
         echo json_encode(['success' => true, 'message' => 'Form erfolgreich umbenannt']);
         
     } catch (Exception $e) {
-        // Rollback transaction
         mysqli_rollback($GLOBALS['con']);
         echo json_encode(['success' => false, 'error' => $e->getMessage()]);
     }
     
-    // Re-enable autocommit
     mysqli_autocommit($GLOBALS['con'], true);
 } elseif (isset($_POST['update_table_structure']) && isset($_POST['table']) && isset($_POST['table_name']) && isset($_POST['project'])) {
     $tableJSON = $_POST['table'];
     $tableName = escape_string($_POST['table_name']);
     $project = escape_string($_POST['project']);
     
-    // Validate JSON
     $formData = json_decode($tableJSON, true);
     if (!$formData || !isset($formData['title'], $formData['inputs'])) {
         echo json_encode(['success' => false, 'error' => 'Ungültiges JSON-Format']);
         exit;
     }
     
-    // Start transaction
     mysqli_autocommit($GLOBALS['con'], false);
     
     try {
-        // Update table_settings table
         $update_form_query = "UPDATE table_settings SET table_json='$tableJSON' WHERE table_name='$tableName' AND project='$project'";
         if (!query($update_form_query)) {
             throw new Exception('Fehler beim Aktualisieren der Form-Einstellungen');
         }
         
-        // Get current table structure
         $tableName = createTableName($project . "_" . $tableName);
         
-        // Check if table exists
         $table_exists_query = query("SHOW TABLES LIKE '$tableName'");
         if (mysqli_num_rows($table_exists_query) > 0) {
-            // Get existing columns
             $existing_columns_result = query("SHOW COLUMNS FROM `$tableName`");
             $existing_columns = [];
             while ($column = fetch_assoc($existing_columns_result)) {
                 $existing_columns[] = $column['Field'];
             }
             
-            // Add new columns for new fields
             foreach ($formData['inputs'] as $field) {
-                $fieldName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], strtolower($field['name']));
+                $fieldName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], $field['name']);
                 
-                // Check if column already exists
                 if (!in_array($fieldName, $existing_columns)) {
                     $fieldType = mapFieldType($field['type']);
                     $alter_sql = "ALTER TABLE `$tableName` ADD COLUMN `$fieldName` $fieldType";
@@ -345,23 +315,19 @@ if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['nam
             }
         }
         
-        // Commit transaction
         mysqli_commit($GLOBALS['con']);
         echo json_encode(['success' => true, 'message' => 'Form-Struktur erfolgreich aktualisiert']);
         
     } catch (Exception $e) {
-        // Rollback transaction
         mysqli_rollback($GLOBALS['con']);
         echo json_encode(['success' => false, 'error' => $e->getMessage()]);
     }
     
-    // Re-enable autocommit
     mysqli_autocommit($GLOBALS['con'], true);
 } elseif (isset($_POST['get_table_schema']) && isset($_POST['table_name']) && isset($_POST['project'])) {
     $table_name = escape_string($_POST['table_name']);
     $project = escape_string($_POST['project']);
     
-    // Get form schema from table_settings
     $query = query("SELECT table_json FROM table_settings WHERE table_name='$table_name' AND project='$project'");
     if (mysqli_num_rows($query) > 0) {
         $form = fetch_assoc($query);
@@ -371,7 +337,7 @@ if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['nam
             $schema = [];
             foreach ($formData['inputs'] as $input) {
                 $schema[] = [
-                    'name' => str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], strtolower($input['name'])),
+                    'name' => str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], $input['name']),
                     'label' => $input['label'] ?? $input['name'],
                     'type' => $input['type'] ?? 'text',
                     'placeholder' => $input['placeholder'] ?? '',
@@ -402,14 +368,12 @@ if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['nam
 } elseif (isset($_POST['get_all_tables']) && isset($_POST['project'])) {
     $project = escape_string($_POST['project']);
     
-    // Get all forms for this project
     $forms_query = query("SELECT table_name, table_json, created_at FROM table_settings WHERE project='$project' ORDER BY created_at DESC");
     $tables = [];
     
     while ($form = fetch_assoc($forms_query)) {
         $tableName = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($project)) . "_" . str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö"], ["_", "a", "a", "u", "u", "o", "o"], strtolower($form['table_name']));
         
-        // Check if table exists and get row count
         $table_exists_query = query("SHOW TABLES LIKE '$tableName'");
         $exists = mysqli_num_rows($table_exists_query) > 0;
         $row_count = 0;
@@ -465,7 +429,6 @@ if (isset($_POST['create_table']) && isset($_POST['table']) && isset($_POST['nam
     mysqli_autocommit($GLOBALS['con'], true);
 }
 
-// Get tables from a specific project for import
 if (isset($_POST['get_tables_from_project']) && isset($_POST['source_project'])) {
     $sourceProject = escape_string($_POST['source_project']);
     $excludeProject = escape_string($_POST['exclude_project']);
@@ -488,7 +451,6 @@ if (isset($_POST['get_tables_from_project']) && isset($_POST['source_project']))
     exit;
 }
 
-// Import table from another project
 if (isset($_POST['import_table']) && isset($_POST['source_project']) && isset($_POST['source_table']) && isset($_POST['target_project']) && isset($_POST['new_table_name'])) {
     $sourceProject = escape_string($_POST['source_project']);
     $sourceTable = escape_string($_POST['source_table']);
@@ -525,7 +487,7 @@ if (isset($_POST['import_table']) && isset($_POST['source_project']) && isset($_
             id INT AUTO_INCREMENT PRIMARY KEY";
         
         foreach ($formData['inputs'] as $field) {
-            $name = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], strtolower($field['name']));
+            $name = str_replace(["-", "ä", "Ä", "ü", "Ü", "ö", "Ö", "(", ")", " ", ".", ",", "!", "?", "@", "#", "$", "%", "^", "&", "*", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", "/"], ["_", "a", "a", "u", "u", "o", "o", "", "", "_", "_", "_", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], $field['name']);
             $type = mapFieldType($field['type']);
             $sql .= ", $name $type";
         }
@@ -540,7 +502,6 @@ if (isset($_POST['import_table']) && isset($_POST['source_project']) && isset($_
         $checkTable = query("SHOW TABLES LIKE '$sourceTableName'");
 
         if ($checkTable && mysqli_num_rows($checkTable) > 0) {
-            // Get column names from source table
             $columns = [];
             $columnsResult = query("SHOW COLUMNS FROM $sourceTableName");
             while ($col = mysqli_fetch_assoc($columnsResult)) {

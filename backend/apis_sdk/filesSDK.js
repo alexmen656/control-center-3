@@ -1,8 +1,8 @@
 // CMS Files API SDK
 class FilesAPI {
   constructor() {
-    this.baseUrl = 'https://api.fringelo.com/backend/api/v1/files';
-    this.apiKey = 'demo-api-key-123'; // Wird später durch echte API-Keys ersetzt
+    this.baseUrl = (process.env.FRINGELO_API_URL || 'https://gw.fringelo.com') + '/file-storage';
+    this.apiKey = process.env['[{[apiKey]}]'] || '';
   }
 
   async upload(file, folder = '') {

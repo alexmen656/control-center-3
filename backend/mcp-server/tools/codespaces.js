@@ -209,12 +209,13 @@ export const codespaceTools = [
   },
   {
     name: 'codespace_deploy',
-    description: 'Build and deploy the current codespace code. Returns the live app URL (https://cs-<id>.apps.fringelo.com) and a deployment id. Poll codespace_list_deployments for build status.',
+    description: 'Build and deploy the LAST COMMITTED code of a codespace — this deploys the last git commit, NOT the current working-directory files. Uncommitted changes (files written with codespace_create_file/codespace_update_file but not yet committed) are IGNORED by the build. Commit and push first with codespace_git_commit + codespace_git_push, or pass autoCommit:true to have this tool commit+push all pending changes before building. If there are uncommitted changes and autoCommit is not set, the deploy is refused with an error. Returns the live app URL (https://cs-<id>.apps.fringelo.com) and a deployment id. Poll codespace_list_deployments for build status.',
     inputSchema: {
       type: 'object',
       properties: {
         project: projectProp,
-        codespace: codespaceProp
+        codespace: codespaceProp,
+        autoCommit: { type: 'boolean', description: 'If true, automatically commit and push all pending changes before building so the working directory is what gets deployed. If false (default) the deploy is refused when there are uncommitted changes.', default: false }
       },
       required: ['project']
     }
@@ -260,8 +261,23 @@ export const codespaceTools = [
     }
   },
   {
+    name: 'codespace_activate_api',
+    description: 'Activate a subscribed API for a specific codespace so its SDK and API key get injected on the next deploy. This is the step that used to be only clickable in the Dashboard (Dashboard → Codespace → APIs). Full workflow: api_subscribe (subscribe the project to the API) -> codespace_activate_api (activate it for THIS codespace) -> codespace_deploy. Identify the API by its slug (recommended, e.g. "database", "weather") or apiId or subscriptionId. After activating, the key is injected as an environment variable on the next deploy.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project: projectProp,
+        codespace: codespaceProp,
+        slug: { type: 'string', description: 'Slug of the subscribed API to activate (e.g. "database", "weather"). The project must already be subscribed via api_subscribe.' },
+        apiId: { type: 'string', description: 'API id to activate (alternative to slug).' },
+        subscriptionId: { type: 'string', description: 'Subscription id to activate (alternative to slug/apiId; skips lookup).' }
+      },
+      required: ['project', 'codespace']
+    }
+  },
+  {
     name: 'codespace_sync_api_keys',
-    description: 'Re-inject the keys of all APIs activated for this codespace as environment variables on the next deploy.',
+    description: 'Re-inject the keys of all APIs already ACTIVATED for this codespace as environment variables on the next deploy. This only re-syncs APIs that were activated with codespace_activate_api (or in the Dashboard) — it does NOT activate anything. If it reports 0 keys injected, no API is activated for this codespace yet; activate one with codespace_activate_api first.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -342,6 +358,8 @@ export async function handleCodespaceTool(toolName, args, context) {
       return await publishAsApi(args, context);
     case 'codespace_unpublish_api':
       return await unpublishApi(args, context);
+    case 'codespace_activate_api':
+      return await activateApi(args, context);
     case 'codespace_sync_api_keys':
       return await syncApiKeys(args, context);
     default:
@@ -550,15 +568,53 @@ async function gitPull(args, context) {
   }
 }
 
+async function pendingChanges(args, context) {
+  const status = await cmsRequest(gitApi(args, '&action=status'), { method: 'GET' }, context);
+  const changes = Array.isArray(status?.changes) ? status.changes : [];
+  return changes.map((c) => c.file).filter(Boolean);
+}
+
 async function deployCodespace(args, context) {
   try {
+    let pending = [];
+    try {
+      pending = await pendingChanges(args, context);
+    } catch {
+      pending = [];
+    }
+
+    if (pending.length > 0) {
+      if (!args.autoCommit) {
+        return formatError(
+          `Uncommitted changes present (${pending.length}: ${pending.slice(0, 10).join(', ')}${pending.length > 10 ? ', …' : ''}). ` +
+          'codespace_deploy builds the LAST git commit, so these changes would NOT be deployed. ' +
+          'Commit and push first (codespace_git_commit + codespace_git_push), or call codespace_deploy again with autoCommit:true.'
+        );
+      }
+      await cmsRequest(gitApi(args), {
+        method: 'POST',
+        contentType: 'application/json',
+        body: { action: 'commit', message: 'Auto-commit before deploy', files: [] }
+      }, context);
+      await cmsRequest(gitApi(args), {
+        method: 'POST',
+        contentType: 'application/json',
+        body: { action: 'push' }
+      }, context);
+    }
+
     const data = await cmsRequest(deployApi(args, 'deploy'), {
       method: 'POST',
       contentType: 'application/json',
       body: {}
     }, context);
     const url = data.deployment?.url ? `https://${data.deployment.url}` : null;
-    return formatResponse({ success: true, url, deployment: data.deployment || data });
+    return formatResponse({
+      success: true,
+      url,
+      autoCommitted: pending.length > 0 && !!args.autoCommit,
+      deployment: data.deployment || data
+    });
   } catch (error) {
     return formatError(error.message);
   }
@@ -608,6 +664,52 @@ async function unpublishApi(args, context) {
   }
 }
 
+async function activateApi(args, context) {
+  try {
+    let subscriptionId = args.subscriptionId;
+
+    if (!subscriptionId) {
+      const list = await cmsRequest(
+        `v2/codespace-apis/?project=${enc(args.project)}&codespace=${enc(args.codespace)}`,
+        { method: 'GET' },
+        context
+      );
+      const apis = Array.isArray(list) ? list : (list.apis || []);
+      const match = apis.find((a) =>
+        (args.slug && a.slug === args.slug) ||
+        (args.apiId && String(a.api_id) === String(args.apiId))
+      );
+
+      if (!match) {
+        const available = apis.map((a) => a.slug).filter(Boolean);
+        return formatError(
+          `No subscribed API matching ${args.slug ? `slug "${args.slug}"` : `apiId "${args.apiId}"`} was found for this project. ` +
+          'Subscribe the project first with api_subscribe. ' +
+          (available.length ? `Subscribed APIs available to activate: ${available.join(', ')}.` : 'This project has no subscribed APIs yet.')
+        );
+      }
+      subscriptionId = match.subscription_id;
+    }
+
+    if (!subscriptionId) {
+      return formatError('Provide one of: slug, apiId, or subscriptionId to identify the API to activate.');
+    }
+
+    const data = await cmsRequest('v2/codespace-apis/activate', {
+      method: 'POST',
+      contentType: 'application/json',
+      body: {
+        project: args.project,
+        codespace: args.codespace,
+        subscription_id: subscriptionId
+      }
+    }, context);
+    return backendResult(data);
+  } catch (error) {
+    return formatError(error.message);
+  }
+}
+
 async function syncApiKeys(args, context) {
   try {
     const data = await cmsRequest('v2/codespace-apis/sync', {
@@ -618,6 +720,16 @@ async function syncApiKeys(args, context) {
         codespace: args.codespace
       }
     }, context);
+
+    if (data && typeof data === 'object' && data.success && Array.isArray(data.synced) && data.synced.length === 0) {
+      return formatResponse({
+        success: true,
+        synced: [],
+        reason: 'No API is activated for this codespace yet, so nothing was injected. Activate one with codespace_activate_api (or in Dashboard → Codespace → APIs), then deploy.',
+        result: data
+      });
+    }
+
     return backendResult(data);
   } catch (error) {
     return formatError(error.message);

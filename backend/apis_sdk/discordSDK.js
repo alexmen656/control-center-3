@@ -1,11 +1,9 @@
-// Discord Webhook & Bot API SDK
 class DiscordAPI {
   constructor() {
-    this.baseUrl = 'https://discord.com/api/v10';
-    this.botToken = process.env.DISCORD_BOT_TOKEN || '';
+    this.baseUrl = (process.env.FRINGELO_API_URL || 'https://gw.fringelo.com') + '/discord';
+    this.botToken = process.env['[{[apiKey]}]'] || '';
   }
 
-  // Webhook Methods (No authentication needed for webhooks)
   async sendWebhookMessage(webhookUrl, content, options = {}) {
     const requestBody = {
       content: content,
@@ -44,7 +42,6 @@ class DiscordAPI {
     return this.handleResponse(response);
   }
 
-  // Bot API Methods (Require bot token)
   async getGuilds() {
     const response = await fetch(`${this.baseUrl}/users/@me/guilds`, {
       method: 'GET',
@@ -218,7 +215,6 @@ class DiscordAPI {
     return this.handleResponse(response);
   }
 
-  // Utility method to create embeds
   createEmbed(options = {}) {
     return {
       title: options.title || null,
@@ -247,11 +243,11 @@ class DiscordAPI {
     }
 
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || `Discord API Error: ${response.status} ${response.statusText}`);
     }
-    
+
     return data;
   }
 }

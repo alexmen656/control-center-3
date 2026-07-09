@@ -1,20 +1,15 @@
 <?php
 
-/**
- * Files API - Dateimanagement für CMS Projekte
- * Handles file upload, listing, deletion and download URLs
- */
 
 require_once 'helper/BaseAPI.php';
 
 class FilesAPI extends BaseAPI {
     private $uploadDir;
     private $allowedTypes = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt', 'csv', 'zip'];
-    private $maxFileSize = 10 * 1024 * 1024; // 10MB
+    private $maxFileSize = 10 * 1024 * 1024;
 
     public function __construct() {
-        parent::__construct();
-        // Verwende das echte Projektverzeichnis des CMS
+        parent::__construct('2');
         $this->uploadDir = $this->getProjectDirectory();
         $this->ensureUploadDir();
     }
@@ -24,7 +19,6 @@ class FilesAPI extends BaseAPI {
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $pathParts = explode('/', trim($path, '/'));
         
-        // Log API call
         $this->logApiCall('files', $method);
 
         switch ($method) {
@@ -64,7 +58,6 @@ class FilesAPI extends BaseAPI {
         $file = $_FILES['file'];
         $folder = $_POST['folder'] ?? '';
 
-        // Validierung
         if ($file['error'] !== UPLOAD_ERR_OK) {
             $this->sendError('File upload error: ' . $file['error'], 400);
         }
@@ -78,7 +71,6 @@ class FilesAPI extends BaseAPI {
             $this->sendError('File type not allowed. Allowed types: ' . implode(', ', $this->allowedTypes), 400);
         }
 
-        // Zielverzeichnis und Dateiname
         $targetDir = $this->uploadDir;
         if ($folder) {
             $targetDir .= $this->sanitize($folder) . '/';
@@ -90,12 +82,10 @@ class FilesAPI extends BaseAPI {
         $fileName = uniqid() . '_' . $this->sanitize($file['name']);
         $targetPath = $targetDir . $fileName;
 
-        // Datei verschieben
         if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
             $this->sendError('Failed to save file', 500);
         }
 
-        // Datei-Info in DB speichern (falls verfügbar)
         $fileId = $this->saveFileInfo($fileName, $file['name'], $file['size'], $folder);
 
         $this->sendSuccess([
@@ -140,7 +130,6 @@ class FilesAPI extends BaseAPI {
     }
 
     private function deleteFile($fileId) {
-        // Einfache Implementierung - suche Datei nach ID
         $files = $this->findFileById($fileId);
         
         if (empty($files)) {
@@ -176,9 +165,8 @@ class FilesAPI extends BaseAPI {
     }
 
     private function getFileUrl($filename, $folder = '') {
-        // Projekt-Link abrufen für URL
         if (file_exists('../../mysql.php')) {
-            require_once '../../mysql.php';
+            
             $projectResult = query("SELECT link FROM projects WHERE projectID = '{$this->projectID}'");
             if ($projectResult && mysqli_num_rows($projectResult) > 0) {
                 $project = mysqli_fetch_assoc($projectResult);
@@ -188,35 +176,28 @@ class FilesAPI extends BaseAPI {
             }
         }
         
-        // Fallback
         $baseUrl = 'https://alex.polan.sk/data/uploads/project_' . $this->projectID . '/';
         return $baseUrl . ($folder ? $folder . '/' : '') . $filename;
     }
 
-    /**
-     * Holt das echte Projektverzeichnis basierend auf der projectID
-     */
     private function getProjectDirectory() {
         if (file_exists('../../mysql.php')) {
-            require_once '../../mysql.php';
+            
             $projectResult = query("SELECT link FROM projects WHERE projectID = '{$this->projectID}'");
             if ($projectResult && mysqli_num_rows($projectResult) > 0) {
                 $project = mysqli_fetch_assoc($projectResult);
                 $projectLink = $project['link'];
                 
-                // Verwende das echte CMS-Projektverzeichnis
                 return __DIR__ . '/../../../data/projects/1/' . $projectLink . '/';
             }
         }
         
-        // Fallback
         return $_SERVER['DOCUMENT_ROOT'] . '/data/uploads/project_' . $this->projectID . '/';
     }
 
     private function saveFileInfo($filename, $originalName, $size, $folder) {
         $fileId = uniqid();
         
-        // Speichere in JSON-Datei als Fallback
         $metaFile = $this->uploadDir . '.files_meta.json';
         $meta = [];
         
@@ -267,6 +248,5 @@ class FilesAPI extends BaseAPI {
     }
 }
 
-// Handle the request
 $api = new FilesAPI();
 $api->handleRequest();

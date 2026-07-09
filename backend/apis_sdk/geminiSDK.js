@@ -1,8 +1,8 @@
 // Google Gemini API SDK
 class GeminiAPI {
   constructor() {
-    this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-    this.apiKey = process.env.[{[apiKey]}] || 'cms_demo_api_key';
+    this.baseUrl = (process.env.FRINGELO_API_URL || 'https://gw.fringelo.com') + '/gemini';
+    this.apiKey = process.env['[{[apiKey]}]'] || '';
   }
 
   async listModels() {

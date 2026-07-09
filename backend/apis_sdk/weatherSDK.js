@@ -1,18 +1,15 @@
-// Weather API SDK (OpenWeatherMap)
 class WeatherAPI {
   constructor() {
-    this.baseUrl = 'https://api.openweathermap.org/data/2.5';
-    this.geoUrl = 'https://api.openweathermap.org/geo/1.0';
-    this.apiKey = process.env.OPENWEATHER_API_KEY || '';
+    this.baseUrl = (process.env.FRINGELO_API_URL || 'https://gw.fringelo.com') + '/weather';
+    this.geoUrl = (process.env.FRINGELO_API_URL || 'https://gw.fringelo.com') + '/weather/geo';
+    this.apiKey = process.env['[{[apiKey]}]'] || '';
   }
 
   async getCurrentWeather(location, options = {}) {
     let url;
     if (typeof location === 'string') {
-      // Location by city name
       url = `${this.baseUrl}/weather?q=${encodeURIComponent(location)}`;
     } else if (location.lat && location.lon) {
-      // Location by coordinates
       url = `${this.baseUrl}/weather?lat=${location.lat}&lon=${location.lon}`;
     } else {
       throw new Error('Location must be a city name or {lat, lon} object');
@@ -44,7 +41,7 @@ class WeatherAPI {
       appid: this.apiKey,
       units: options.units || 'metric',
       lang: options.lang || 'en',
-      cnt: options.cnt || '40' // Number of timestamps (max 40 for 5 days)
+      cnt: options.cnt || '40'
     });
 
     const response = await fetch(`${url}&${params}`, {
@@ -136,18 +133,17 @@ class WeatherAPI {
     return this.handleResponse(response);
   }
 
-  // Utility method to get weather icon URL
   getWeatherIconUrl(iconCode, size = '2x') {
     return `https://openweathermap.org/img/wn/${iconCode}@${size}.png`;
   }
 
   async handleResponse(response) {
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || `Weather API Error: ${response.status} ${response.statusText}`);
     }
-    
+
     return data;
   }
 }

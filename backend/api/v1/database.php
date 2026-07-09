@@ -45,6 +45,13 @@ class DatabaseAPI extends BaseAPI
         return str_replace($from, $to, strtolower($value));
     }
 
+    private function sanitizeField($value)
+    {
+        $from = ['-', 'ä', 'Ä', 'ü', 'Ü', 'ö', 'Ö', '(', ')', ' ', '.', ',', '!', '?', '@', '#', '$', '%', '^', '&', '*', '+', '=', '[', ']', '{', '}', '|', '\\', ':', ';', '"', "'", '<', '>', '/'];
+        $to = ['_', 'a', 'a', 'u', 'u', 'o', 'o', '', '', '_', '_', '_', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''];
+        return str_replace($from, $to, (string) $value);
+    }
+
     private function loadAllowedTables()
     {
         $projectID = escape_string($this->projectID);
@@ -113,6 +120,25 @@ class DatabaseAPI extends BaseAPI
         }
     }
 
+    private function resolveColumn($field, $columns)
+    {
+        if (in_array($field, $columns, true)) {
+            return $field;
+        }
+        foreach ($columns as $col) {
+            if (strcasecmp($col, $field) === 0) {
+                return $col;
+            }
+        }
+        $sanitized = $this->sanitizeField($field);
+        foreach ($columns as $col) {
+            if (strcasecmp($col, $sanitized) === 0) {
+                return $col;
+            }
+        }
+        $this->sendError('Unknown column: ' . $field, 400);
+    }
+
     private function isList($value)
     {
         if (!is_array($value)) {
@@ -145,8 +171,7 @@ class DatabaseAPI extends BaseAPI
 
         $parts = [];
         foreach ($where as $field => $spec) {
-            $this->assertColumn($field, $columns);
-            $col = '`' . $field . '`';
+            $col = '`' . $this->resolveColumn($field, $columns) . '`';
 
             if (is_array($spec) && $this->isList($spec)) {
                 if (empty($spec)) {
@@ -248,8 +273,7 @@ class DatabaseAPI extends BaseAPI
         }
         $parts = [];
         foreach ($options['select'] as $field) {
-            $this->assertColumn($field, $columns);
-            $parts[] = '`' . $field . '`';
+            $parts[] = '`' . $this->resolveColumn($field, $columns) . '`';
         }
         return $parts ? implode(', ', $parts) : '*';
     }
@@ -271,8 +295,7 @@ class DatabaseAPI extends BaseAPI
                     $direction = 'DESC';
                 }
             }
-            $field = trim($field);
-            $this->assertColumn($field, $columns);
+            $field = $this->resolveColumn(trim($field), $columns);
             $parts[] = "`$field` $direction";
         }
 
@@ -445,13 +468,13 @@ class DatabaseAPI extends BaseAPI
         if (empty($fields)) {
             $this->sendError('Record has no fields', 400);
         }
-        foreach ($fields as $field) {
-            $this->assertColumn($field, $columns);
-        }
+        $columnNames = array_map(function ($f) use ($columns) {
+            return $this->resolveColumn($f, $columns);
+        }, $fields);
 
         $columnSql = implode(', ', array_map(function ($f) {
             return '`' . $f . '`';
-        }, $fields));
+        }, $columnNames));
 
         $rowPlaceholder = '(' . implode(', ', array_fill(0, count($fields), '?')) . ')';
         $valueGroups = [];
@@ -466,12 +489,22 @@ class DatabaseAPI extends BaseAPI
         $sql = "INSERT INTO `$fullTableName` ($columnSql) VALUES " . implode(', ', $valueGroups);
         list($affected, $insertId) = $this->execWrite($sql, $params);
 
-        $this->sendSuccess([
-            'inserted' => $affected,
-            'id' => $insertId,
-            'batch' => $isBatch,
-            'table' => $data['table']
-        ], 'Record(s) inserted successfully');
+        $ids = range($insertId, $insertId + $affected - 1);
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $rows = $this->fetchAll("SELECT * FROM `$fullTableName` WHERE `id` IN ($placeholders)", $ids);
+
+        if ($isBatch) {
+            $this->sendSuccess([
+                'records' => $rows,
+                'inserted' => $affected,
+                'table' => $data['table']
+            ], 'Records inserted successfully');
+        } else {
+            $this->sendSuccess([
+                'record' => $rows[0] ?? null,
+                'table' => $data['table']
+            ], 'Record inserted successfully');
+        }
     }
 
     private function updateRecord()
@@ -492,8 +525,7 @@ class DatabaseAPI extends BaseAPI
         $setParts = [];
         $params = [];
         foreach ($updateData as $field => $value) {
-            $this->assertColumn($field, $columns);
-            $setParts[] = '`' . $field . '` = ?';
+            $setParts[] = '`' . $this->resolveColumn($field, $columns) . '` = ?';
             $params[] = $value;
         }
 

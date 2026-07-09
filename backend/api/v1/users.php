@@ -1,23 +1,18 @@
 <?php
 
-/**
- * Users API - Benutzermanagement für CMS Projekte
- * Zugriff auf echte control_center_users Tabelle
- */
 
 require_once 'helper/BaseAPI.php';
 
 class UsersAPI extends BaseAPI {
 
     public function __construct() {
-        parent::__construct();
+        parent::__construct('1');
         $this->initDatabase();
     }
 
     private function initDatabase() {
-        // Include mysql.php für query() und fetch_assoc() Funktionen
         if (file_exists('../../mysql.php')) {
-            require_once '../../mysql.php';
+            
         }
     }
 
@@ -26,7 +21,6 @@ class UsersAPI extends BaseAPI {
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $pathParts = explode('/', trim($path, '/'));
         
-        // Log API call
         $this->logApiCall('users', $method);
 
         switch ($method) {
@@ -60,20 +54,16 @@ class UsersAPI extends BaseAPI {
     private function getUsers() {
         $params = $_GET;
         
-        // SQL-Query für echte Benutzer aus control_center_users
         $sql = "SELECT userID as id, name, email, created_at, updated_at FROM control_center_users WHERE 1=1";
         
-        // Filter für Projekt-Benutzer (falls spezifiziert)
         if ($this->projectID) {
             $sql .= " AND userID IN (SELECT userID FROM control_center_user_projects WHERE projectID = '{$this->projectID}')";
         }
         
-        // Paginierung
         $page = isset($params['page']) ? max(1, (int)$params['page']) : 1;
         $limit = isset($params['limit']) ? max(1, min(100, (int)$params['limit'])) : 10;
         $offset = ($page - 1) * $limit;
         
-        // Count query für Gesamtanzahl
         $countSql = str_replace("SELECT userID as id, name, email, created_at, updated_at", "SELECT COUNT(*)", $sql);
         
         try {
@@ -112,7 +102,6 @@ class UsersAPI extends BaseAPI {
         $id = (int)$id;
         $sql = "SELECT userID as id, name, email, created_at, updated_at FROM control_center_users WHERE userID = $id";
         
-        // Prüfen ob Benutzer zu diesem Projekt gehört
         if ($this->projectID) {
             $sql .= " AND userID IN (SELECT userID FROM control_center_user_projects WHERE projectID = '{$this->projectID}')";
         }
@@ -132,12 +121,10 @@ class UsersAPI extends BaseAPI {
         
         $this->validateRequired($data, ['name', 'email']);
         
-        // Validate email
         if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
             $this->sendError('Invalid email format', 400);
         }
 
-        // Check if email already exists
         $email = $this->sanitize($data['email']);
         $checkResult = query("SELECT userID FROM control_center_users WHERE email = '$email'");
         
@@ -145,7 +132,6 @@ class UsersAPI extends BaseAPI {
             $this->sendError('Email already exists', 400);
         }
 
-        // Insert new user
         $name = $this->sanitize($data['name']);
         $password = isset($data['password']) ? password_hash($data['password'], PASSWORD_DEFAULT) : password_hash('defaultpass', PASSWORD_DEFAULT);
         $loginToken = bin2hex(random_bytes(32));
@@ -156,14 +142,12 @@ class UsersAPI extends BaseAPI {
         $result = query($sql);
         
         if ($result) {
-            // Get the new user ID
             $getUserResult = query("SELECT userID as id, name, email, created_at FROM control_center_users WHERE email = '$email' ORDER BY userID DESC LIMIT 1");
             
             if ($getUserResult && mysqli_num_rows($getUserResult) > 0) {
                 $newUser = mysqli_fetch_assoc($getUserResult);
                 $newId = $newUser['id'];
                 
-                // Benutzer zum Projekt hinzufügen falls projektspezifisch
                 if ($this->projectID) {
                     query("INSERT INTO control_center_user_projects (userID, projectID, active) VALUES ($newId, '{$this->projectID}', 1)");
                 }
@@ -181,7 +165,6 @@ class UsersAPI extends BaseAPI {
         $data = $this->getJsonInput();
         $id = (int)$id;
         
-        // Prüfen ob Benutzer existiert
         $checkResult = query("SELECT userID FROM control_center_users WHERE userID = $id");
         if (!$checkResult || mysqli_num_rows($checkResult) === 0) {
             $this->sendError('User not found', 404);
@@ -189,7 +172,6 @@ class UsersAPI extends BaseAPI {
 
         $updates = [];
         
-        // Update fields
         if (isset($data['name'])) {
             $name = $this->sanitize($data['name']);
             $updates[] = "name = '$name'";
@@ -200,7 +182,6 @@ class UsersAPI extends BaseAPI {
                 $this->sendError('Invalid email format', 400);
             }
             
-            // Check if email already exists (excluding current user)
             $email = $this->sanitize($data['email']);
             $emailCheck = query("SELECT userID FROM control_center_users WHERE email = '$email' AND userID != $id");
             
@@ -218,7 +199,6 @@ class UsersAPI extends BaseAPI {
             $result = query($sql);
             
             if ($result) {
-                // Aktualisierte Benutzer-Daten zurückgeben
                 $userResult = query("SELECT userID as id, name, email, created_at, updated_at FROM control_center_users WHERE userID = $id");
                 $user = mysqli_fetch_assoc($userResult);
                 
@@ -234,21 +214,16 @@ class UsersAPI extends BaseAPI {
     private function deleteUser($id) {
         $id = (int)$id;
         
-        // Prüfen ob Benutzer existiert
         $checkResult = query("SELECT userID, name FROM control_center_users WHERE userID = $id");
         if (!$checkResult || mysqli_num_rows($checkResult) === 0) {
             $this->sendError('User not found', 404);
         }
 
-        // TODO: Prüfen ob es der letzte Admin ist (falls role Feld existiert)
-        // Don't allow deleting important system users
         
-        // Benutzer aus Projekt-Zuordnungen entfernen
         if ($this->projectID) {
             query("DELETE FROM control_center_user_projects WHERE userID = $id AND projectID = '{$this->projectID}'");
         }
         
-        // Für vollständige Löschung (nur wenn nicht projektspezifisch)
         if (!$this->projectID) {
             query("DELETE FROM control_center_users WHERE userID = $id");
         }
@@ -258,6 +233,5 @@ class UsersAPI extends BaseAPI {
 
 }
 
-// Handle the request
 $api = new UsersAPI();
 $api->handleRequest();

@@ -1,8 +1,8 @@
 // Stripe Payment API SDK
 class StripeAPI {
   constructor() {
-    this.baseUrl = 'https://api.stripe.com/v1';
-    this.apiKey = process.env.STRIPE_SECRET_KEY || '';
+    this.baseUrl = (process.env.FRINGELO_API_URL || 'https://gw.fringelo.com') + '/stripe';
+    this.apiKey = process.env['[{[apiKey]}]'] || '';
   }
 
   async createCustomer(email, options = {}) {
@@ -279,11 +279,11 @@ class StripeAPI {
 
   async handleResponse(response) {
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.error?.message || `Stripe API Error: ${response.status} ${response.statusText}`);
     }
-    
+
     return data;
   }
 }

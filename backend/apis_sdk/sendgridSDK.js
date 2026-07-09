@@ -1,8 +1,7 @@
-// SendGrid Email API SDK
 class SendGridAPI {
   constructor() {
-    this.baseUrl = 'https://api.sendgrid.com/v3';
-    this.apiKey = process.env.SENDGRID_API_KEY || '';
+    this.baseUrl = (process.env.FRINGELO_API_URL || 'https://gw.fringelo.com') + '/sendgrid';
+    this.apiKey = process.env['[{[apiKey]}]'] || '';
   }
 
   async sendEmail(to, from, subject, content, options = {}) {
@@ -222,7 +221,6 @@ class SendGridAPI {
     return this.handleResponse(response);
   }
 
-  // Utility method to create HTML content
   createHtmlContent(html) {
     return {
       type: 'text/html',
@@ -230,10 +228,9 @@ class SendGridAPI {
     };
   }
 
-  // Utility method to create attachment
   createAttachment(content, filename, type = 'application/pdf', disposition = 'attachment') {
     return {
-      content: content, // Base64 encoded
+      content: content,
       filename: filename,
       type: type,
       disposition: disposition
@@ -253,11 +250,11 @@ class SendGridAPI {
     }
 
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.errors?.[0]?.message || `SendGrid API Error: ${response.status} ${response.statusText}`);
     }
-    
+
     return data;
   }
 }

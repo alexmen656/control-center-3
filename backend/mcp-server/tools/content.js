@@ -17,7 +17,7 @@ export const contentTools = [
   },
   {
     name: 'content_table_create',
-    description: 'Create a new form/data collection',
+    description: 'Create a new form/data collection (a database table). Field names keep their original casing as the column name — camelCase like "projectId" is preserved (only spaces and special characters are replaced, e.g. "First Name" becomes "First_Name"). The DatabaseAPI SDK matches columns case-insensitively, so you can read/write that column as projectId, projectid, or PROJECTID and it resolves to the same column.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -71,7 +71,7 @@ export const contentTools = [
   },
   {
     name: 'content_table_submit',
-    description: 'Submit/add data to a form',
+    description: 'Submit/add data to a form (insert a row). Field names are matched to columns case-insensitively — same as the DatabaseAPI SDK — so both paths accept e.g. "projectId" and target the same column; they are interchangeable for the same table.',
     inputSchema: {
       type: 'object',
       properties: {

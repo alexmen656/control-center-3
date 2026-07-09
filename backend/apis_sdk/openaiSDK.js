@@ -1,8 +1,7 @@
-// OpenAI API SDK
 class OpenAIAPI {
   constructor() {
-    this.baseUrl = 'https://api.openai.com/v1';
-    this.apiKey = process.env.[{[apiKey]}] || 'cms_demo_api_key';
+    this.baseUrl = (process.env.FRINGELO_API_URL || 'https://gw.fringelo.com') + '/openai';
+    this.apiKey = process.env['[{[apiKey]}]'] || '';
   }
 
   async listModels() {
@@ -75,8 +74,6 @@ class OpenAIAPI {
       n: options.n || 1,
       size: options.size || '1024x1024',
       response_format: options.response_format || 'url',
-      //quality: options.quality || 'standard',
-      //style: options.style || 'vivid'
     };
 
     const response = await fetch(`${this.baseUrl}/images/generations`, {
@@ -148,11 +145,11 @@ class OpenAIAPI {
 
   async handleResponse(response) {
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.error?.message || `OpenAI API Error: ${response.status} ${response.statusText}`);
     }
-    
+
     return data;
   }
 }

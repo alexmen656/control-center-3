@@ -159,7 +159,7 @@ class CodespaceApisController
         $envName = api_env_name($sub['slug']);
         $key = api_decrypt_key($sub);
         deploy_set_env_var($codespaceId, $envName, $key, 'both');
-        deploy_set_env_var($codespaceId, 'FRINGELO_API_URL', 'https://gw.fringelo.com', 'both');
+        deploy_set_env_var($codespaceId, 'FRINGELO_API_URL', 'http://172.31.241.1:8088/gw', 'both');
         if ($sub['slug'] === 'database') {
             deploy_set_env_var($codespaceId, 'DATABASE_API_URL', 'http://172.31.241.1:8088/api/v1/database.php', 'both');
         }
@@ -219,7 +219,7 @@ class CodespaceApisController
                 deploy_set_env_var($codespaceId, 'DATABASE_API_URL', 'http://172.31.241.1:8088/api/v1/database.php', 'both');
             }
         }
-        deploy_set_env_var($codespaceId, 'FRINGELO_API_URL', 'https://gw.fringelo.com', 'both');
+        deploy_set_env_var($codespaceId, 'FRINGELO_API_URL', 'http://172.31.241.1:8088/gw', 'both');
 
         $response->json(['success' => true, 'synced' => $synced, 'message' => count($synced) . ' API keys injected as env vars']);
     }
@@ -263,7 +263,7 @@ class CodespaceApisController
                VALUES ('$name', '$slug', '$description', 'codespace', 'v1', '/', 1, '$rateLimit', 1, 'codespace', '$codespaceId')
                ON DUPLICATE KEY UPDATE name='$name', description='$description', rate_limit_default='$rateLimit', is_active=1, source_type='codespace', codespace_id='$codespaceId'");
 
-        $response->json(['success' => true, 'slug' => $slug, 'gateway_url' => 'https://gw.fringelo.com/' . $slug]);
+        $response->json(['success' => true, 'slug' => $slug, 'gateway_url' => 'http://172.31.241.1:8088/gw/' . $slug]);
     }
 
     public function unpublish(Request $request, Response $response): void

@@ -1,8 +1,8 @@
 // CMS Notifications API SDK
 class NotificationsAPI {
   constructor() {
-    this.baseUrl = 'https://api.fringelo.com/backend/api/v1/notifications';
-    this.apiKey = 'demo-api-key-123';
+    this.baseUrl = (process.env.FRINGELO_API_URL || 'https://gw.fringelo.com') + '/notifications';
+    this.apiKey = process.env['[{[apiKey]}]'] || '';
   }
 
   async getAll(params = {}) {

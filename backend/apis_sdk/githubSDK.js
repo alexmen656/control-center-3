@@ -1,8 +1,7 @@
-// GitHub API SDK
 class GitHubAPI {
   constructor() {
-    this.baseUrl = 'https://api.github.com';
-    this.apiKey = process.env.GITHUB_TOKEN || '';
+    this.baseUrl = (process.env.FRINGELO_API_URL || 'https://gw.fringelo.com') + '/github';
+    this.apiKey = process.env['[{[apiKey]}]'] || '';
   }
 
   async getUser(username = null) {
@@ -71,7 +70,7 @@ class GitHubAPI {
   async createOrUpdateFile(owner, repo, path, content, message, options = {}) {
     const requestBody = {
       message: message,
-      content: btoa(content), // Base64 encode
+      content: btoa(content),
       branch: options.branch || 'main'
     };
 
@@ -133,14 +132,12 @@ class GitHubAPI {
   }
 
   async createBranch(owner, repo, branchName, fromBranch = 'main') {
-    // First get the SHA of the source branch
     const refResponse = await fetch(`${this.baseUrl}/repos/${owner}/${repo}/git/refs/heads/${fromBranch}`, {
       method: 'GET',
       headers: this.getHeaders()
     });
     const refData = await this.handleResponse(refResponse);
 
-    // Create new branch
     const requestBody = {
       ref: `refs/heads/${branchName}`,
       sha: refData.object.sha

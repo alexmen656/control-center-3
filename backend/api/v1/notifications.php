@@ -1,23 +1,18 @@
 <?php
 
-/**
- * Notifications API - Benachrichtigungsystem für CMS Projekte
- * Handles notifications sending and management
- */
 
 require_once 'helper/BaseAPI.php';
 
 class NotificationsAPI extends BaseAPI {
 
     public function __construct() {
-        parent::__construct();
+        parent::__construct('4');
         $this->initDatabase();
     }
 
     private function initDatabase() {
-        // Include mysql.php für query() Funktionen
         if (file_exists('../../mysql.php')) {
-            require_once '../../mysql.php';
+            
         }
     }
 
@@ -26,7 +21,6 @@ class NotificationsAPI extends BaseAPI {
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $pathParts = explode('/', trim($path, '/'));
         
-        // Log API call
         $this->logApiCall('notifications', $method);
 
         switch ($method) {
@@ -58,12 +52,10 @@ class NotificationsAPI extends BaseAPI {
     private function getNotifications() {
         $params = $_GET;
         
-        // SQL Query für Benachrichtigungen
         $sql = "SELECT id, title, message, type, read_status, created_at, updated_at 
                 FROM notifications 
                 WHERE user_id = {$this->userID}";
         
-        // Filter anwenden
         if (isset($params['unread_only']) && $params['unread_only'] === 'true') {
             $sql .= " AND read_status = 0";
         }
@@ -73,10 +65,8 @@ class NotificationsAPI extends BaseAPI {
             $sql .= " AND type = '$type'";
         }
         
-        // Sortierung
         $sql .= " ORDER BY created_at DESC";
         
-        // Paginierung
         $page = isset($params['page']) ? max(1, (int)$params['page']) : 1;
         $limit = isset($params['limit']) ? max(1, min(100, (int)$params['limit'])) : 20;
         $offset = ($page - 1) * $limit;
@@ -92,7 +82,6 @@ class NotificationsAPI extends BaseAPI {
             }
         }
         
-        // Anzahl ungelesener Benachrichtigungen
         $unreadResult = query("SELECT COUNT(*) as count FROM notifications WHERE user_id = {$this->userID} AND read_status = 0");
         $unreadCount = 0;
         if ($unreadResult && mysqli_num_rows($unreadResult) > 0) {
@@ -119,14 +108,12 @@ class NotificationsAPI extends BaseAPI {
         $type = $this->sanitize($data['type'] ?? 'info');
         $userId = isset($data['user_id']) ? (int)$data['user_id'] : $this->userID;
         
-        // Benachrichtigung in Datenbank speichern
         $sql = "INSERT INTO notifications (user_id, title, message, type, read_status, created_at) 
                 VALUES ($userId, '$title', '$message', '$type', 0, NOW())";
         
         $result = query($sql);
         
         if ($result) {
-            // Push-Benachrichtigung senden (falls Token verfügbar)
             $this->sendPushNotification($userId, $title, $message);
             
             $this->sendSuccess([
@@ -139,7 +126,6 @@ class NotificationsAPI extends BaseAPI {
     }
 
     private function createNotification() {
-        // Alias für sendNotification
         $this->sendNotification();
     }
 
@@ -174,18 +160,13 @@ class NotificationsAPI extends BaseAPI {
         }
     }
 
-    /**
-     * Sendet eine Push-Benachrichtigung an den Benutzer
-     */
     private function sendPushNotification($userId, $title, $message) {
-        // Push-Token des Benutzers abrufen
         $tokenResult = query("SELECT push_token FROM push_notifications_token WHERE userID = $userId AND active = 1");
         
         if ($tokenResult && mysqli_num_rows($tokenResult) > 0) {
             while ($tokenRow = mysqli_fetch_assoc($tokenResult)) {
                 $pushToken = $tokenRow['push_token'];
                 
-                // Push-Nachricht zusammenstellen
                 $payload = [
                     'to' => $pushToken,
                     'title' => $title,
@@ -197,15 +178,11 @@ class NotificationsAPI extends BaseAPI {
                     ]
                 ];
                 
-                // An Expo Push Service senden
                 $this->sendExpoPushNotification($payload);
             }
         }
     }
 
-    /**
-     * Sendet eine Push-Nachricht über Expo
-     */
     private function sendExpoPushNotification($payload) {
         $url = 'https://exp.host/--/api/v2/push/send';
         
@@ -224,13 +201,11 @@ class NotificationsAPI extends BaseAPI {
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         
-        // Response loggen (optional)
         if ($httpCode !== 200) {
             error_log("Push notification failed: HTTP $httpCode - $response");
         }
     }
 }
 
-// Handle the request
 $api = new NotificationsAPI();
 $api->handleRequest();

@@ -1,8 +1,7 @@
-// News API SDK
 class NewsAPI {
   constructor() {
-    this.baseUrl = 'https://newsapi.org/v2';
-    this.apiKey = process.env.NEWS_API_KEY || '';
+    this.baseUrl = (process.env.FRINGELO_API_URL || 'https://gw.fringelo.com') + '/news';
+    this.apiKey = process.env['[{[apiKey]}]'] || '';
   }
 
   async getTopHeadlines(options = {}) {
@@ -16,7 +15,6 @@ class NewsAPI {
       page: options.page || '1'
     });
 
-    // Remove empty parameters
     for (let [key, value] of params.entries()) {
       if (!value) params.delete(key);
     }
@@ -42,7 +40,6 @@ class NewsAPI {
       page: options.page || '1'
     });
 
-    // Remove empty parameters
     for (let [key, value] of params.entries()) {
       if (!value) params.delete(key);
     }
@@ -61,7 +58,6 @@ class NewsAPI {
       country: options.country || ''
     });
 
-    // Remove empty parameters
     for (let [key, value] of params.entries()) {
       if (!value) params.delete(key);
     }
@@ -117,7 +113,6 @@ class NewsAPI {
     });
   }
 
-  // Utility methods
   getAvailableCountries() {
     return ['ae', 'ar', 'at', 'au', 'be', 'bg', 'br', 'ca', 'ch', 'cn', 'co', 'cu', 'cz', 'de', 'eg', 'fr', 'gb', 'gr', 'hk', 'hu', 'id', 'ie', 'il', 'in', 'it', 'jp', 'kr', 'lt', 'lv', 'ma', 'mx', 'my', 'ng', 'nl', 'no', 'nz', 'ph', 'pl', 'pt', 'ro', 'rs', 'ru', 'sa', 'se', 'sg', 'si', 'sk', 'th', 'tr', 'tw', 'ua', 'us', 've', 'za'];
   }
