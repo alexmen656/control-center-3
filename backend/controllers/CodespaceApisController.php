@@ -9,7 +9,8 @@ class CodespaceApisController
     public function list(Request $request, Response $response): void
     {
         $ctx = $this->resolveCodespace($request, $response);
-        if (!$ctx) return;
+        if (!$ctx)
+            return;
         [$projectID, $codespaceId] = $ctx;
 
         $apis = query("
@@ -45,7 +46,8 @@ class CodespaceApisController
     public function details(Request $request, Response $response): void
     {
         $ctx = $this->resolveCodespace($request, $response);
-        if (!$ctx) return;
+        if (!$ctx)
+            return;
         [$projectID, $codespaceId] = $ctx;
 
         $apiSlug = escape_string($request->input('api_slug', ''));
@@ -122,7 +124,8 @@ class CodespaceApisController
     public function activate(Request $request, Response $response): void
     {
         $ctx = $this->resolveCodespace($request, $response);
-        if (!$ctx) return;
+        if (!$ctx)
+            return;
         [$projectID, $codespaceId] = $ctx;
 
         $subscriptionId = escape_string($request->input('subscription_id', ''));
@@ -160,9 +163,6 @@ class CodespaceApisController
         $key = api_decrypt_key($sub);
         deploy_set_env_var($codespaceId, $envName, $key, 'both');
         deploy_set_env_var($codespaceId, 'FRINGELO_API_URL', 'http://172.31.241.1:8088/gw', 'both');
-        if ($sub['slug'] === 'database') {
-            deploy_set_env_var($codespaceId, 'DATABASE_API_URL', 'http://172.31.241.1:8088/api/v1/database.php', 'both');
-        }
 
         $response->json(['success' => true, 'message' => 'API activated; key injected as ' . $envName . ' on next deploy', 'env_var' => $envName]);
     }
@@ -170,7 +170,8 @@ class CodespaceApisController
     public function deactivate(Request $request, Response $response): void
     {
         $ctx = $this->resolveCodespace($request, $response);
-        if (!$ctx) return;
+        if (!$ctx)
+            return;
         [$projectID, $codespaceId] = $ctx;
 
         $subscriptionId = escape_string($request->input('subscription_id', ''));
@@ -200,7 +201,8 @@ class CodespaceApisController
     public function sync(Request $request, Response $response): void
     {
         $ctx = $this->resolveCodespace($request, $response);
-        if (!$ctx) return;
+        if (!$ctx)
+            return;
         [$projectID, $codespaceId] = $ctx;
 
         $active = query("
@@ -215,9 +217,6 @@ class CodespaceApisController
             $envName = api_env_name($sub['slug']);
             deploy_set_env_var($codespaceId, $envName, api_decrypt_key($sub), 'both');
             $synced[] = $envName;
-            if ($sub['slug'] === 'database') {
-                deploy_set_env_var($codespaceId, 'DATABASE_API_URL', 'http://172.31.241.1:8088/api/v1/database.php', 'both');
-            }
         }
         deploy_set_env_var($codespaceId, 'FRINGELO_API_URL', 'http://172.31.241.1:8088/gw', 'both');
 
@@ -269,7 +268,8 @@ class CodespaceApisController
     public function unpublish(Request $request, Response $response): void
     {
         $ctx = $this->resolveCodespace($request, $response);
-        if (!$ctx) return;
+        if (!$ctx)
+            return;
         [$projectID, $codespaceId] = $ctx;
 
         query("UPDATE cms_apis SET is_active=0 WHERE source_type='codespace' AND codespace_id='$codespaceId'");

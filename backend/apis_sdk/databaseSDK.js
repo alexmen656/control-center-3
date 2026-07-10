@@ -1,6 +1,6 @@
 class DatabaseClient {
   constructor() {
-    this.baseUrl = process.env.DATABASE_API_URL || 'http://172.31.241.1:8088/api/v1/database.php';
+    this.baseUrl = (process.env.FRINGELO_API_URL || 'https://gw.fringelo.com') + '/database';
     this.apiKey = process.env['[{[apiKey]}]'] || '';
   }
 
