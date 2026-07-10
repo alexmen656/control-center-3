@@ -4,152 +4,77 @@ class OpenAIAPI {
     this.apiKey = process.env['[{[apiKey]}]'] || '';
   }
 
-  async listModels() {
-    const response = await fetch(`${this.baseUrl}/models`, {
-      method: 'GET',
-      headers: this.getHeaders()
-    });
-    return this.handleResponse(response);
+  async models() {
+    return this._get('/models');
   }
 
-  async createCompletion(prompt, options = {}) {
-    const requestBody = {
-      model: options.model || 'gpt-3.5-turbo-instruct',
-      prompt: prompt,
-      max_tokens: options.max_tokens || 150,
-      temperature: options.temperature || 0.7,
-      top_p: options.top_p || 1,
-      frequency_penalty: options.frequency_penalty || 0,
-      presence_penalty: options.presence_penalty || 0,
-      stop: options.stop || null
-    };
-
-    const response = await fetch(`${this.baseUrl}/completions`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(requestBody)
-    });
-    return this.handleResponse(response);
+  async chat(messages, options = {}) {
+    const body = { ...options, model: options.model || 'gpt-4o-mini', messages: this._messages(messages) };
+    return this._post('/chat/completions', body);
   }
 
-  async createChatCompletion(messages, options = {}) {
-    const requestBody = {
-      model: options.model || 'gpt-3.5-turbo',
-      messages: messages,
-      max_tokens: options.max_tokens || 150,
-      temperature: options.temperature || 0.7,
-      top_p: options.top_p || 1,
-      frequency_penalty: options.frequency_penalty || 0,
-      presence_penalty: options.presence_penalty || 0,
-      stop: options.stop || null,
-      stream: options.stream || false
-    };
-
-    const response = await fetch(`${this.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(requestBody)
-    });
-    return this.handleResponse(response);
+  async respond(input, options = {}) {
+    const body = { ...options, model: options.model || 'gpt-4o-mini', input };
+    return this._post('/responses', body);
   }
 
-  async createEmbedding(input, options = {}) {
-    const requestBody = {
-      model: options.model || 'text-embedding-ada-002',
-      input: input,
-      encoding_format: options.encoding_format || 'float'
-    };
-
-    const response = await fetch(`${this.baseUrl}/embeddings`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(requestBody)
-    });
-    return this.handleResponse(response);
+  async embed(input, options = {}) {
+    const body = { ...options, model: options.model || 'text-embedding-3-small', input };
+    return this._post('/embeddings', body);
   }
 
-  async createImage(prompt, options = {}) {
-    const requestBody = {
-      prompt: prompt,
-      n: options.n || 1,
-      size: options.size || '1024x1024',
-      response_format: options.response_format || 'url',
-    };
-
-    const response = await fetch(`${this.baseUrl}/images/generations`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(requestBody)
-    });
-    return this.handleResponse(response);
+  async image(prompt, options = {}) {
+    const body = { ...options, model: options.model || 'gpt-image-1', prompt };
+    return this._post('/images/generations', body);
   }
 
-  async transcribeAudio(audioFile, options = {}) {
-    const formData = new FormData();
-    formData.append('file', audioFile);
-    formData.append('model', options.model || 'whisper-1');
-    if (options.language) formData.append('language', options.language);
-    if (options.prompt) formData.append('prompt', options.prompt);
-    if (options.response_format) formData.append('response_format', options.response_format);
-    if (options.temperature) formData.append('temperature', options.temperature.toString());
-
-    const response = await fetch(`${this.baseUrl}/audio/transcriptions`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: formData
-    });
-    return this.handleResponse(response);
+  async moderate(input, options = {}) {
+    const body = { ...options, model: options.model || 'omni-moderation-latest', input };
+    return this._post('/moderations', body);
   }
 
-  async translateAudio(audioFile, options = {}) {
-    const formData = new FormData();
-    formData.append('file', audioFile);
-    formData.append('model', options.model || 'whisper-1');
-    if (options.prompt) formData.append('prompt', options.prompt);
-    if (options.response_format) formData.append('response_format', options.response_format);
-    if (options.temperature) formData.append('temperature', options.temperature.toString());
-
-    const response = await fetch(`${this.baseUrl}/audio/translations`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: formData
-    });
-    return this.handleResponse(response);
+  async speech(input, options = {}) {
+    const body = { ...options, model: options.model || 'gpt-4o-mini-tts', voice: options.voice || 'alloy', input };
+    const res = await fetch(`${this.baseUrl}/audio/speech`, { method: 'POST', headers: this._headers(), body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(await this._errorText(res));
+    return res.arrayBuffer();
   }
 
-  async moderateContent(input) {
-    const requestBody = {
-      input: input
-    };
-
-    const response = await fetch(`${this.baseUrl}/moderations`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(requestBody)
-    });
-    return this.handleResponse(response);
+  _messages(m) {
+    return typeof m === 'string' ? [{ role: 'user', content: m }] : m;
   }
 
-  getHeaders() {
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.apiKey}`
-    };
+  _headers() {
+    return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiKey}` };
   }
 
-  getAuthHeaders() {
-    return {
-      'Authorization': `Bearer ${this.apiKey}`
-    };
+  async _get(path) {
+    return this._handle(await fetch(`${this.baseUrl}${path}`, { headers: this._headers() }));
   }
 
-  async handleResponse(response) {
-    const data = await response.json();
+  async _post(path, body) {
+    return this._handle(await fetch(`${this.baseUrl}${path}`, { method: 'POST', headers: this._headers(), body: JSON.stringify(body) }));
+  }
 
-    if (!response.ok) {
-      throw new Error(data.error?.message || `OpenAI API Error: ${response.status} ${response.statusText}`);
+  async _errorText(res) {
+    try {
+      const j = await res.json();
+      return (j.error && j.error.message) || JSON.stringify(j);
+    } catch (e) {
+      return `OpenAI error (HTTP ${res.status})`;
     }
+  }
 
+  async _handle(res) {
+    let data;
+    try {
+      data = await res.json();
+    } catch (e) {
+      throw new Error(`OpenAI: invalid response (HTTP ${res.status})`);
+    }
+    if (!res.ok) {
+      throw new Error((data.error && data.error.message) || `OpenAI error (HTTP ${res.status})`);
+    }
     return data;
   }
 }
