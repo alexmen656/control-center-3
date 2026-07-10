@@ -68,8 +68,13 @@ if (isset($headers['Authorization'])) {
             if (query("UPDATE control_center_users SET login_with_google='$newValue' WHERE userID='$userID'")) {
                 echo "Success!";
             }
+        } elseif (isset($_REQUEST['updateEmail2FA']) && isset($_REQUEST['newValue'])) {
+            $newValue = $_REQUEST['newValue'] === 'true' ? '1' : '0';
+            if (query("UPDATE control_center_users SET email_2fa_enabled='$newValue' WHERE userID='$userID'")) {
+                echo "Success!";
+            }
         } else {
-            if ($data['profileImg'] != "avatar" && $data['profileImg'] != "google") {
+            if ($data['profileImg'] != "avatar" && $data['profileImg'] != "google" && $data['profileImg'] !== "" && is_file('images/profileImages/' . $data['profileImg'])) {
                 $data['profileImg'] = file_get_contents('images/profileImages/' . $data['profileImg']);
             } elseif ($data['profileImg'] == "google") {
                 $userID = $data['userID'];
@@ -91,6 +96,7 @@ if (isset($headers['Authorization'])) {
                 $json['login_with_google'] = $data['login_with_google'];
             }
             $json['accountStatus'] = $data['account_status'];
+            $json['email_2fa_enabled'] = $data['email_2fa_enabled'] != '0';
             echo preg_replace('/^\h*\v+/m', '', echoJson($json));
         }
     } else {

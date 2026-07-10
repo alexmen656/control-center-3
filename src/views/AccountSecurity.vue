@@ -120,6 +120,38 @@
           <div class="security-card">
             <div class="card-header">
               <div class="header-icon">
+                <ion-icon name="finger-print-outline"></ion-icon>
+              </div>
+              <div>
+                <h3>Two-Factor Authentication</h3>
+                <p>Extra protection when signing in</p>
+              </div>
+            </div>
+
+            <div class="card-content">
+              <div class="login-methods">
+                <div class="login-method">
+                  <div class="method-info">
+                    <div class="method-icon email">
+                      <ion-icon name="mail-outline"></ion-icon>
+                    </div>
+                    <div class="method-details">
+                      <h4>Email Verification</h4>
+                      <p>Require a one-time code sent to your email when signing in from a new device</p>
+                    </div>
+                  </div>
+                  <div class="method-toggle">
+                    <ion-toggle :checked="email_2fa_enabled" @ionChange="updateEmail2FA($event)"
+                      color="success"></ion-toggle>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="security-card">
+            <div class="card-header">
+              <div class="header-icon">
                 <ion-icon name="shield-checkmark-outline"></ion-icon>
               </div>
               <div>
@@ -131,7 +163,6 @@
             <div class="card-content">
               <div class="security-actions">
                 <ActionButton variant="primary" icon="key-outline">Change Password</ActionButton>
-                <ActionButton variant="secondary" icon="finger-print-outline">Two-Factor Authentication</ActionButton>
                 <ActionButton variant="secondary" icon="download-outline">Download Account Data</ActionButton>
                 <ActionButton variant="danger" icon="trash-outline">Delete Account</ActionButton>
               </div>
@@ -160,10 +191,19 @@ export default defineComponent({
       login_with_github: false,
       githubAccount: null,
       vercelConnected: false,
+      email_2fa_enabled: true,
     };
   },
   async created() {
     this.user = await getUserData();
+    try {
+      const userRes = await this.$axios.get("user.php");
+      if (userRes.data && typeof userRes.data.email_2fa_enabled !== "undefined") {
+        this.email_2fa_enabled = userRes.data.email_2fa_enabled;
+      }
+    } catch (e) {
+      this.email_2fa_enabled = true;
+    }
     const login_wg = this.user.login_with_google;
     if (typeof login_wg === 'string' && login_wg.toLowerCase() == "microsoft") {
       this.login_with_microsoft = true;
@@ -238,6 +278,18 @@ export default defineComponent({
         "user.php",
         this.$qs.stringify({
           updateLoginWithGoogle: "updateLoginWithGoogle",
+          newValue: event.detail.checked.toString(),
+        })
+      ).then((response) => {
+        console.log(response.data);
+      });
+    },
+    updateEmail2FA(event) {
+      this.email_2fa_enabled = event.detail.checked;
+      this.$axios.post(
+        "user.php",
+        this.$qs.stringify({
+          updateEmail2FA: "updateEmail2FA",
           newValue: event.detail.checked.toString(),
         })
       ).then((response) => {
@@ -428,6 +480,10 @@ export default defineComponent({
 
 .method-icon.microsoft {
   background: #00a1f1;
+}
+
+.method-icon.email {
+  background: #ea4335;
 }
 
 .method-icon ion-icon {

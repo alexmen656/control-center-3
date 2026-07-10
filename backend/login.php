@@ -16,6 +16,25 @@ require_once 'functions.php';
 $headers = getRequestHeaders();
 ini_set('display_errors', true);
 
+function loginSuccessResponse($data, $jwt_secret)
+{
+    $payload = [
+        'sub' => $data['userID'],
+        'email' => $data['email'],
+        'firstname' => $data['firstname'],
+        'iat' => time(),
+        'exp' => time() + 60 * 60 * 24 * 7
+    ];
+    $json = [
+        'token' => SimpleJWT::encode($payload, $jwt_secret),
+        'firstname' => $data['firstname']
+    ];
+    $assignmentQuery = query("SELECT project_link FROM user_project_assignments WHERE user_id='{$data['userID']}'");
+    if ($assignmentQuery && mysqli_num_rows($assignmentQuery) > 0) {
+        $json['assigned_project'] = fetch_assoc($assignmentQuery)['project_link'];
+    }
+    return $json;
+}
 
 if (isset($_POST['email']) && isset($_POST['password'])) {
 
@@ -50,6 +69,8 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                     $json['assigned_project'] = $assignment['project_link'];
                 }
 
+            } else if ($data['email_2fa_enabled'] == '0') {
+                $json = loginSuccessResponse($data, $jwt_secret);
             } else {
                 $verificationToken = bin2hex(random_bytes(48));
                 $json["command"] = 'verify-ip';
@@ -114,6 +135,8 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                     $json['assigned_project'] = $assignment['project_link'];
                 }
 
+            } else if ($data['email_2fa_enabled'] == '0') {
+                $json = loginSuccessResponse($data, $jwt_secret);
             } else {
                 $verificationToken = bin2hex(random_bytes(48));
                 $json["command"] = 'verify-ip';
@@ -178,6 +201,8 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                     $json['assigned_project'] = $assignment['project_link'];
                 }
 
+            } else if ($data['email_2fa_enabled'] == '0') {
+                $json = loginSuccessResponse($data, $jwt_secret);
             } else {
                 $verificationToken = bin2hex(random_bytes(48));
                 $json["command"] = 'verify-ip';
