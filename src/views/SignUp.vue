@@ -260,11 +260,11 @@ export default defineComponent({
           if (res.data.value == true) {
             axios
               .post(
-                "login.php",
-                qs.stringify({
+                "v2/auth/login",
+                {
                   email: this.user.email,
                   loginWithGoogle: "loginWithGoogle",
-                })
+                }
               )
               .then(
                 (res) => {
@@ -315,15 +315,15 @@ export default defineComponent({
 
       axios
         .post(
-          "sign_up.php",
-          qs.stringify({
+          "v2/auth/sign-up",
+          {
             first_name: this.user.givenName,
             last_name: this.user.familyName,
             profile_img: this.user.imageUrl.replace("s96", "s512"),
             email_adress: this.user.email,
             password: this.g_password,
             login_with_google: lwg,
-          })
+          }
         )
         .then((res) => {
           if (res.data.token) {
@@ -377,14 +377,14 @@ export default defineComponent({
     signUp() {
       this.$axios
         .post(
-          "sign_up.php",
-          this.$qs.stringify({
+          "v2/auth/sign-up",
+          {
             first_name: this.firstName,
             last_name: this.lastName,
             email_adress: this.email,
             password: this.password,
             login_with_google: false,
-          })
+          }
         )
         .then((res) => {
           if (res.data.token) {
@@ -434,11 +434,11 @@ export default defineComponent({
             if (res.data.value == true) {
               axios
                 .post(
-                  "login.php",
-                  qs.stringify({
+                  "v2/auth/login",
+                  {
                     email: this.user.email,
                     loginWithMicrosoft: "microsoft",
-                  })
+                  }
                 )
                 .then(
                   (res) => {

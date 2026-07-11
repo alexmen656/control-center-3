@@ -94,12 +94,11 @@ export default defineComponent({
     async createProject() {
       try {
         await this.$axios.post(
-          "projects.php",
-          this.$qs.stringify({
-            createProject: "createProject",
+          "v2/projects/",
+          {
             projectName: this.name,
             projectIcon: this.icon,
-          })
+          }
         );
 
         this.showSuccess("Project created successfully");

@@ -129,24 +129,20 @@ export default {
       this.loading = true;
 
       try {
-        const addedResponse = await this.$axios.post(
-          "tools.php",
-          this.$qs.stringify({
-            getProjectTools: "getProjectTools",
-            project: this.$route.params.project,
-          })
+        const addedResponse = await this.$axios.get(
+          "v2/tools/project",
+          {
+            params: {
+              project: this.$route.params.project,
+            },
+          }
         );
 
         if (addedResponse.data) {
           this.addedModuleNames = addedResponse.data.map(tool => tool.name);
         }
 
-        const modulesResponse = await this.$axios.post(
-          "install.php",
-          this.$qs.stringify({
-            getAvailableModules: "getAvailableModules"
-          })
-        );
+        const modulesResponse = await this.$axios.post("v2/install/list", {});
 
         if (modulesResponse.data) {
           this.modules = modulesResponse.data.map(module => ({
@@ -203,15 +199,11 @@ export default {
 
       this.modules[moduleIndex].status = "adding";
 
-      this.$axios.post(
-        "install.php",
-        this.$qs.stringify({
-          install: "install",
-          moduleID: module.id,
-          project: this.$route.params.project,
-        })
-      ).then((response) => {
-        if (response.data.includes("success")) {
+      this.$axios.post("v2/install/install", {
+        moduleID: module.id,
+        project: this.$route.params.project,
+      }).then((response) => {
+        if (response.data.success) {
           const intervalId = setInterval(() => {
             if (this.modules[moduleIndex].progress < 100) {
               this.modules[moduleIndex].progress += 5;
@@ -225,7 +217,7 @@ export default {
         } else {
           this.modules[moduleIndex].status = "available";
           this.modules[moduleIndex].progress = 0;
-          alert("Failed to add module: " + response.data);
+          alert("Failed to add module: " + response.data.message);
         }
       }).catch(() => {
         this.modules[moduleIndex].status = "available";
@@ -243,21 +235,17 @@ export default {
       }
 
       this.$axios
-        .post(
-          "install.php",
-          this.$qs.stringify({
-            deinstall: "deinstall",
-            moduleID: module.id,
-            project: this.$route.params.project,
-          })
-        )
+        .post("v2/install/uninstall", {
+          moduleID: module.id,
+          project: this.$route.params.project,
+        })
         .then((response) => {
-          if (response.data.includes("success")) {
+          if (response.data.success) {
             this.modules[moduleIndex].status = "available";
             this.modules[moduleIndex].progress = 0;
             this.emitter.emit("updateSidebar");
           } else {
-            alert("Failed to remove module: " + response.data);
+            alert("Failed to remove module: " + response.data.message);
           }
         })
         .catch(() => {

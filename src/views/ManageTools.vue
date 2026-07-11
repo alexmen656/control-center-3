@@ -62,7 +62,7 @@ export default defineComponent({
 
     $axios
       .get(
-        "sidebar.php?getSideBarByProjectName=" +
+        "v2/sidebar?project=" +
           route.params.project
       )
       .then((response) => {
@@ -72,15 +72,14 @@ export default defineComponent({
     function deleteee(tool) {
       if (confirm("Do you really want to delete the tool")) {
         $axios
-          .post(
-            "tools.php",
-            this.$qs.stringify({ deleteTool: "deleteTool", toolID: tool.id })
+          .delete(
+            "v2/tools/" + tool.id
           )
           .then(() => {//res
             alert("Tool deleted successfull");
             $axios
               .get(
-                "sidebar.php?getSideBarByProjectName=" +
+                "v2/sidebar?project=" +
                   route.params.project
               )
               .then((response) => {
@@ -96,9 +95,8 @@ export default defineComponent({
     function multi_delete(toolss) {
       if (confirm("Do you really want to delete the tool")) {
         toolss.forEach((tool) => {
-          $axios.post(
-            "tools.php",
-            this.$qs.stringify({ deleteTool: "deleteTool", toolID: tool })
+          $axios.delete(
+            "v2/tools/" + tool
           );
         });
 
@@ -107,7 +105,7 @@ export default defineComponent({
 
         $axios
           .get(
-            "sidebar.php?getSideBarByProjectName=" +
+            "v2/sidebar?project=" +
               route.params.project
           )
           .then((response) => {

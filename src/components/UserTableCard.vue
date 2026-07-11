@@ -1,6 +1,5 @@
 <template>
   <ion-card>
-    <!-- Search Bar -->
     <div class="search-container">
       <ion-item class="ion-no-padding" lines="none">
         <ion-icon name="search-outline" slot="start"></ion-icon>
@@ -126,16 +125,13 @@ export default defineComponent({
         result = [...result].sort((a, b) => {
           const aVal = a[this.sortColumn];
           const bVal = b[this.sortColumn];
-          
-          // Check if values are numbers
+
           const aNum = parseFloat(aVal);
           const bNum = parseFloat(bVal);
-          
+
           if (!isNaN(aNum) && !isNaN(bNum)) {
-            // Numeric sort
             return this.sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
           } else {
-            // String sort
             const aStr = String(aVal).toLowerCase();
             const bStr = String(bVal).toLowerCase();
             
@@ -154,10 +150,8 @@ export default defineComponent({
   methods: {
     sortBy(columnIndex) {
       if (this.sortColumn === columnIndex) {
-        // Toggle direction if same column
         this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
       } else {
-        // New column, start with ascending
         this.sortColumn = columnIndex;
         this.sortDirection = 'asc';
       }
@@ -175,24 +169,16 @@ export default defineComponent({
         return String(text);
       }
       
-      // Escape special regex characters in search term
       const escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      
-      // Create regex for case-insensitive search
+
       const regex = new RegExp(`(${escapedSearchTerm})`, 'gi');
-      
-      // Replace matches with highlighted version
+
       return String(text).replace(regex, '<mark class="search-highlight">$1</mark>');
     },
     async deactivateUser(userID) {
-     // if (!confirm('User wirklich deaktivieren?')) return;
       try {
-        await this.$root.$options.appContext.config.globalProperties.$axios.post(
-          'users.php',
-          this.$root.$options.appContext.config.globalProperties.$qs.stringify({
-            deactivateUser: '1',
-            userID: userID
-          })
+        await this.$root.$options.appContext.config.globalProperties.$axios.put(
+          `v2/users/${userID}/deactivate`
         );
         this.$emit('refresh');
       } catch (e) {
@@ -200,15 +186,12 @@ export default defineComponent({
       }
     },
     async changeStatus(userID, newStatus) {
-      //if (!confirm(`User wirklich auf ${newStatus} setzen?`)) return;
       try {
-        await this.$axios.post(
-          'users.php',
-          this.$qs.stringify({
-            updateAccountStatus: 'updateAccountStatus',
-            userID: userID,
+        await this.$axios.put(
+          `v2/users/${userID}/status`,
+          {
             newStatus: newStatus
-          })
+          }
         );
         this.$emit('refresh');
       } catch (e) {

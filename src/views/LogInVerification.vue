@@ -80,11 +80,11 @@ export default {
       const verification_token = localStorage.getItem("verification_token");
       this.$axios
         .post(
-          "verification.php",
-          this.$qs.stringify({
+          "v2/auth/verify-email",
+          {
             verificationToken: verification_token,
             verificationCode: otp,
-          })
+          }
         )
         .then((res) => {
           if (res.data.token) {

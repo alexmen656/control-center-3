@@ -139,13 +139,14 @@ export default defineComponent({
       });*/
 
     this.$axios
-      .post(
-        "tools.php",
-        this.$qs.stringify({
-          getToolConfig: "getToolConfig",
-          project: this.$route.params.project,
-          tool: this.$route.params.table,
-        })
+      .get(
+        "v2/tools/config",
+        {
+          params: {
+            project: this.$route.params.project,
+            tool: this.$route.params.table,
+          },
+        }
       )
       .then((res) => {
         if (res.data.apiEnabled) {
@@ -176,13 +177,12 @@ export default defineComponent({
         enabledMethods: this.enabledMethods,
       };
       this.$axios.post(
-        "tools.php",
-        this.$qs.stringify({
-          newToolConfig: "newToolConfig",
+        "v2/tools/config",
+        {
           config: JSON.stringify(config),
           project: this.$route.params.project,
           tool: this.$route.params.table,
-        })
+        }
       );
     },
     toName(name) {

@@ -147,7 +147,7 @@ app.post('/login', async (req, res) => {
   }
 
   try {
-    const response = await fetch(`${CMS_BACKEND_URL}/mcp_login.php`, {
+    const response = await fetch(`${CMS_BACKEND_URL}/v2/auth/mcp-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ email: email || '', password: password || '' }),

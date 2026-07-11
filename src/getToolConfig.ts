@@ -1,6 +1,5 @@
 import axios from "axios";
 import { ref } from "vue";
-import qs from "qs";
 //import store from "@/store";
 
 interface UserData {
@@ -14,8 +13,8 @@ const data = ref<UserData>({
 export async function getConfig(tool: string, project: string) {
   if (navigator.onLine) {
     try {
-      const response = await axios.post<UserData>(
-        "https://api.fringelo.com/tools.php", qs.stringify({getToolConfig: "getToolConfig", tool: tool, project: project})
+      const response = await axios.get<UserData>(
+        "v2/tools/config", { params: { tool: tool, project: project } }
       );
       data.value = response.data;
     /*  store.commit("updateUser", {

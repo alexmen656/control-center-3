@@ -326,12 +326,13 @@ export default defineComponent({
   methods: {
     async loadAvailableProjects() {
       try {
-        const response = await this.$axios.post(
-          "projects.php",
-          this.$qs.stringify({
-            get_projects_for_import: "get_projects_for_import",
-            current_project: this.$route.params.project,
-          })
+        const response = await this.$axios.get(
+          "v2/projects/import",
+          {
+            params: {
+              current_project: this.$route.params.project,
+            }
+          }
         );
         this.availableProjects = response.data;
       } catch (error) {
@@ -382,13 +383,12 @@ export default defineComponent({
 
         if (response.data.success) {
           await this.$axios.post(
-            "tools.php",
-            this.$qs.stringify({
-              newTool: "newTool",
+            "v2/tools/create",
+            {
               toolIcon: "document-text-outline",
               projectName: this.$route.params.project,
               toolName: this.selectedTable.display_name || this.selectedTable.name,
-            })
+            }
           );
 
           this.emitter.emit("updateSidebar");

@@ -279,7 +279,7 @@ export default defineComponent({
             try {
                 // Load sidebar data with sections
                 const sidebarResponse = await axios.get(
-                    `sidebar.php?getSideBarByProjectName=${route.params.project}`
+                    `v2/sidebar?project=${route.params.project}`
                 );
                 sections.value = sidebarResponse.data.sections || [];
                 uncategorizedTools.value = sidebarResponse.data.tools || [];

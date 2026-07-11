@@ -174,14 +174,8 @@ export default defineComponent({
           }
         }
       }
-      filteredUser["editData"] = "editData";
-
       this.$axios
-        .post("user.php?" + this.$qs.stringify(filteredUser), {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
+        .put("v2/users/me", this.$qs.stringify(filteredUser))
         .then((response) => {
           console.log(response);
           console.log("API response:", response.data);

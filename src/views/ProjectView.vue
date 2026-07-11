@@ -240,17 +240,13 @@ export default {
     this.loadUserPermissions();
     
     this.$axios
-      .get("sidebar.php?getSideBarByProjectName=" + this.$route.params.project)
+      .get("v2/sidebar?project=" + this.$route.params.project)
       .then((response) => {
         this.tools = response.data.tools;
       });
     this.$axios
-      .post(
-        "projects.php",
-        this.$qs.stringify({
-          getProjectUsers: "getProjectUsers",
-          project: this.$route.params.project,
-        })
+      .get(
+        `v2/projects/${this.$route.params.project}/users`
       )
       .then((response2) => {
         this.users = response2.data;
@@ -347,12 +343,8 @@ export default {
     },
     async loadUsers() {
       try {
-        const response = await this.$axios.post(
-          "projects.php",
-          this.$qs.stringify({
-            getProjectUsers: "getProjectUsers",
-            project: this.$route.params.project,
-          })
+        const response = await this.$axios.get(
+          `v2/projects/${this.$route.params.project}/users`
         );
         this.users = response.data;
       } catch (error) {
@@ -379,13 +371,11 @@ export default {
 
       try {
         const response = await this.$axios.post(
-          "projects.php",
-          this.$qs.stringify({
-            addUserToProject: "addUserToProject",
-            project: this.$route.params.project,
+          `v2/projects/${this.$route.params.project}/users`,
+          {
             email: this.email,
             roleId: this.selectedRoleId,
-          })
+          }
         );
 
         if (response.data.success) {

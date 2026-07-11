@@ -61,7 +61,7 @@ export default {
           loading.value = false;
           return;
         }
-        const res = await axios.get(`github_repos.php?userID=${user.userID}`);
+        const res = await axios.get('v2/github/repos');
         if (Array.isArray(res.data)) {
           repos.value = res.data;
         } else if (res.data && res.data.length === undefined && res.data.error) {

@@ -27,7 +27,7 @@ class SignedUrlGenerator
             $params['project'] = $projectID;
         }
 
-        $baseUrl = $this->getBaseUrl() . '/secure_file_provider.php';
+        $baseUrl = $this->getBaseUrl() . '/v2/secure-file';
         $signedUrl = $baseUrl . '?' . http_build_query($params);
 
         return [

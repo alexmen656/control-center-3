@@ -1,3 +1,5 @@
+import axios from "axios";
+
 export function checkPendingVerification(userData) {
   const allowedPaths2 = ["/pending_verification", "/pending_verification/"];
   if (
@@ -50,19 +52,10 @@ export async function checkProjectAccess() {
     const userInfo = JSON.parse(jsonPayload);
     const userID = userInfo.sub;
 
-    const response = await fetch("https://api.fringelo.com/users.php", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: token,
-      },
-      body: new URLSearchParams({
-        getUserAssignments: "true",
-      }),
-    });
+    const response = await axios.get("v2/users/assignments");
 
-    if (response.ok) {
-      const data = await response.json();
+    {
+      const data = response.data;
       if (data.success) {
         const userAssignment = data.assignments.find(
           (a) => a.user_id == userID,

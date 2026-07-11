@@ -329,7 +329,7 @@ export default {
 
     loadData() {
       this.$axios
-        .get("sidebar.php?getSideBarByProjectName=" + this.$route.params.project)
+        .get("v2/sidebar?project=" + this.$route.params.project)
         .then((response) => {
           this.tools = response.data.tools || [];
           this.components = response.data.components || [];
@@ -376,13 +376,12 @@ export default {
         const projectID = projectResponse.data.projectID;
 
         const fileQuery = await this.$axios.post(
-          "filesystem.php",
-          this.$qs.stringify({
-            action: "getFile",
+          "v2/filesystem/get-file",
+          {
             project: this.$route.params.project,
             name: "banner.jpg",
             directory: ".dev"
-          })
+          }
         );
 
         if (!fileQuery.data.success || !fileQuery.data.file || !fileQuery.data.file.location) {

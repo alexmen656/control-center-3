@@ -1,17 +1,15 @@
 import axios from "axios";
-import qs from "qs";
 
 export const ToolConfigService = {
   async saveToolConfig(project: string, tool: string, config: Record<string, any>) {
     try {
       const response = await axios.post(
-        "tools.php",
-        qs.stringify({
-          newToolConfig: "newToolConfig",
+        "v2/tools/config",
+        {
           config: JSON.stringify(config),
           project,
           tool,
-        })
+        }
       );
       return response.data;
     } catch (error) {
@@ -22,13 +20,14 @@ export const ToolConfigService = {
 
   async loadToolConfig(project: string, tool: string) {
     try {
-      const response = await axios.post(
-        "tools.php",
-        qs.stringify({
-          getToolConfig: "getToolConfig",
-          project,
-          tool,
-        })
+      const response = await axios.get(
+        "v2/tools/config",
+        {
+          params: {
+            project,
+            tool,
+          },
+        }
       );
       return response.data;
     } catch (error) {

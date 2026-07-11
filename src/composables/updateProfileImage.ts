@@ -84,15 +84,14 @@ export function usePhotoGallery(){
  const bodyFormData = new FormData();
  bodyFormData.append('name', fileName);
  bodyFormData.append('data', base64Data);
- bodyFormData.append('updateProfileImage', "updateProfileImage");
 
 
 
-        axios.post("https://api.fringelo.com/user.php", bodyFormData,  {
+        axios.post("https://api.fringelo.com/v2/users/me/profile-image", bodyFormData,  {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
-          }); 
+          });
         return {
             filepath: fileName,
             webviewPath: photo.webPath

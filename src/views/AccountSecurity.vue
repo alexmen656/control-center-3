@@ -197,7 +197,7 @@ export default defineComponent({
   async created() {
     this.user = await getUserData();
     try {
-      const userRes = await this.$axios.get("user.php");
+      const userRes = await this.$axios.get("v2/users/me");
       if (userRes.data && typeof userRes.data.email_2fa_enabled !== "undefined") {
         this.email_2fa_enabled = userRes.data.email_2fa_enabled;
       }
@@ -214,10 +214,10 @@ export default defineComponent({
     }
     if (this.user.userID) {
       try {
-        const res = await this.$axios.get(`github_token_status.php?userID=${this.user.userID}`);
+        const res = await this.$axios.get('v2/github/token-status');
         this.login_with_github = !!(res.data && res.data.connected);
         if (this.login_with_github) {
-          const infoRes = await this.$axios.get(`github_token_info.php?userID=${this.user.userID}`);
+          const infoRes = await this.$axios.get('v2/github/token-info');
           if (infoRes.data && infoRes.data.login) {
             this.githubAccount = infoRes.data;
           } else {
@@ -274,10 +274,9 @@ export default defineComponent({
         this.login_with_microsoft = false;
       }
 
-      this.$axios.post(
-        "user.php",
+      this.$axios.put(
+        "v2/users/me/login-with-google",
         this.$qs.stringify({
-          updateLoginWithGoogle: "updateLoginWithGoogle",
           newValue: event.detail.checked.toString(),
         })
       ).then((response) => {
@@ -286,10 +285,9 @@ export default defineComponent({
     },
     updateEmail2FA(event) {
       this.email_2fa_enabled = event.detail.checked;
-      this.$axios.post(
-        "user.php",
+      this.$axios.put(
+        "v2/users/me/email-2fa",
         this.$qs.stringify({
-          updateEmail2FA: "updateEmail2FA",
           newValue: event.detail.checked.toString(),
         })
       ).then((response) => {
@@ -301,18 +299,16 @@ export default defineComponent({
 
       if (event.detail.checked) {
         this.login_with_google = false;
-        this.$axios.post(
-          "user.php",
+        this.$axios.put(
+          "v2/users/me/login-with-google",
           this.$qs.stringify({
-            updateLoginWithGoogle: "updateLoginWithGoogle",
             newValue: "Microsoft",
           })
         );
       } else {
-        this.$axios.post(
-          "user.php",
+        this.$axios.put(
+          "v2/users/me/login-with-google",
           this.$qs.stringify({
-            updateLoginWithGoogle: "updateLoginWithGoogle",
             newValue: false,
           })
         );

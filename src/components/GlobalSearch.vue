@@ -190,7 +190,7 @@ export default defineComponent({
       if (this.projectsLoaded) return;
       this.loading = this.projects.length === 0;
       try {
-        const response = await this.$axios.get("projects.php");
+        const response = await this.$axios.get("v2/projects/");
         this.projects = Array.isArray(response.data) ? response.data : [];
         this.projectsLoaded = true;
       } catch (error) {

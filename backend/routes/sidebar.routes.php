@@ -4,6 +4,8 @@ require_once __DIR__ . '/../controllers/SidebarController.php';
 
 $router->group('/v2/sidebar', function ($router) {
 
+    $router->get('', [SidebarController::class, 'getSidebar']);
+    $router->get('/global', [SidebarController::class, 'getGlobal']);
     $router->get('/sections', [SidebarController::class, 'listSections']);
     $router->get('/section-templates', [SidebarController::class, 'templates']);
 

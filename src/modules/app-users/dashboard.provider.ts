@@ -1,22 +1,26 @@
-/**
- * Dashboard Provider für App Users Modul
- * 
- * Standardisierte Schnittstelle zum Bereitstellen von Daten für das Dashboard
- */
-
 import axios from 'axios';
 import type { ModuleDashboardProvider, DashboardWidget } from '@/types/dashboard.types';
 
-/**
- * App Users Dashboard Provider
- */
+async function fetchUsers(): Promise<any[]> {
+  const response = await axios.get('v2/users');
+  const payload = response.data || {};
+  const labels: string[] = payload.labels || [];
+  const rows: any[][] = payload.data || [];
+  return rows.map((row) => {
+    const obj: Record<string, any> = {};
+    labels.forEach((label, index) => {
+      obj[label] = row[index];
+    });
+    return obj;
+  });
+}
+
 export const appUsersDashboardProvider: ModuleDashboardProvider = {
   moduleId: 'app-users',
   moduleName: 'App User Management',
   moduleIcon: 'people-outline',
   
   widgets: [
-    // Stat Widgets
     {
       id: 'app-users-total',
       type: 'stat',
@@ -29,11 +33,7 @@ export const appUsersDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const response = await axios.post('users.php', {
-            getUsers: true
-          });
-          
-          const users = response.data || [];
+          const users = await fetchUsers();
           return {
             value: users.length || 0,
             label: 'Gesamte Benutzer'
@@ -57,11 +57,7 @@ export const appUsersDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const response = await axios.post('users.php', {
-            getUsers: true
-          });
-          
-          const users = response.data || [];
+          const users = await fetchUsers();
           const activeUsers = users.filter((u: any) => u.account_status === 'active');
           
           return {
@@ -87,11 +83,7 @@ export const appUsersDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const response = await axios.post('users.php', {
-            getUsers: true
-          });
-          
-          const users = response.data || [];
+          const users = await fetchUsers();
           const inactiveUsers = users.filter((u: any) => u.account_status === 'inactive');
           
           return {
@@ -117,14 +109,13 @@ export const appUsersDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const response = await axios.post('users.php', {
-            getProjectUsers: true,
-            project: params?.project
-          });
-          
-          const users = response.data || [];
+          const response = await axios.get('v2/users/assignments');
+          const assignments = response.data?.assignments || [];
+          const filtered = params?.project
+            ? assignments.filter((a: any) => a.project_link === params.project)
+            : assignments;
           return {
-            value: users.length || 0,
+            value: filtered.length || 0,
             label: 'Zugewiesene Benutzer'
           };
         } catch (error) {
@@ -134,7 +125,6 @@ export const appUsersDashboardProvider: ModuleDashboardProvider = {
       }
     },
     
-    // Chart Widgets
     {
       id: 'app-users-status-distribution',
       type: 'chart',
@@ -146,13 +136,8 @@ export const appUsersDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const response = await axios.post('users.php', {
-            getUsers: true
-          });
-          
-          const users = response.data || [];
-          
-          // Count by status
+          const users = await fetchUsers();
+
           const statusCounts: { [key: string]: number } = {};
           users.forEach((u: any) => {
             const status = u.account_status || 'unknown';
@@ -200,21 +185,14 @@ export const appUsersDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { period?: number }) => {
         try {
-          const response = await axios.post('users.php', {
-            getUsers: true
-          });
-          
-          const users = response.data || [];
-          
-          // Group by date (assuming there's a created_at or similar field)
+          const users = await fetchUsers();
+
           const dateCounts: { [key: string]: number } = {};
           users.forEach((u: any) => {
-            // If no date field exists, we'll use a dummy date
             const date = u.created_at?.split(' ')[0] || u.registration_date?.split(' ')[0] || new Date().toISOString().split('T')[0];
             dateCounts[date] = (dateCounts[date] || 0) + 1;
           });
           
-          // Sort by date
           const sortedDates = Object.keys(dateCounts).sort();
           const labels = sortedDates;
           const data = sortedDates.map(d => dateCounts[d]);
@@ -249,17 +227,24 @@ export const appUsersDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { limit?: number }) => {
         try {
-          const response = await axios.post('users.php', {
-            getUserProjectStats: true
+          const response = await axios.get('v2/users/assignments');
+          const assignments = response.data?.assignments || [];
+
+          const counts: { [key: string]: number } = {};
+          assignments.forEach((a: any) => {
+            const name = a.project_name || a.project_link || 'Unknown';
+            counts[name] = (counts[name] || 0) + 1;
           });
-          
-          const stats = response.data || [];
-          
-          // Sort by user count and take top N
+
+          const stats = Object.keys(counts).map((name) => ({
+            project_name: name,
+            user_count: counts[name]
+          }));
+
           const sorted = stats
             .sort((a: any, b: any) => (b.user_count || 0) - (a.user_count || 0))
             .slice(0, params?.limit || 10);
-          
+
           const labels = sorted.map((s: any) => s.project_name || 'Unknown');
           const data = sorted.map((s: any) => s.user_count || 0);
           
@@ -291,14 +276,8 @@ export const appUsersDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { project?: string }) => {
         try {
-          const response = await axios.post('users.php', {
-            getUserRoles: true,
-            project: params?.project
-          });
-          
-          const roles = response.data || [];
-          
-          // Count by role
+          const roles: any[] = [];
+
           const roleCounts: { [key: string]: number } = {};
           roles.forEach((r: any) => {
             const role = r.role_name || 'Unknown';
@@ -333,5 +312,4 @@ export const appUsersDashboardProvider: ModuleDashboardProvider = {
   }
 };
 
-// Export für einfachen Zugriff
 export default appUsersDashboardProvider;

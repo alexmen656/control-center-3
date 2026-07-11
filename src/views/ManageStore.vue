@@ -225,12 +225,7 @@ export default {
       this.loading = true;
 
       try {
-        const response = await this.$axios.post(
-          "install.php",
-          this.$qs.stringify({
-            getAvailableModules: "getAvailableModules"
-          })
-        );
+        const response = await this.$axios.post("v2/install/list", {});
 
         if (response.data) {
           this.modules = response.data.map(module => ({
@@ -253,17 +248,13 @@ export default {
       }
 
       try {
-        const response = await this.$axios.post(
-          "install.php",
-          this.$qs.stringify({
-            createModule: "createModule",
-            name: this.newModule.name,
-            display_name: this.newModule.display_name,
-            description: this.newModule.description,
-            icon: this.newModule.icon,
-            active: this.newModule.active
-          })
-        );
+        const response = await this.$axios.post("v2/install/modules/create", {
+          name: this.newModule.name,
+          display_name: this.newModule.display_name,
+          description: this.newModule.description,
+          icon: this.newModule.icon,
+          active: this.newModule.active
+        });
 
         if (response.data.success) {
           this.showSuccessMessage('Module created successfully');
@@ -298,18 +289,14 @@ export default {
       }
 
       try {
-        const response = await this.$axios.post(
-          "install.php",
-          this.$qs.stringify({
-            updateModule: "updateModule",
-            moduleID: this.editModuleData.id,
-            name: this.editModuleData.name,
-            display_name: this.editModuleData.display_name,
-            description: this.editModuleData.description,
-            icon: this.editModuleData.icon,
-            active: this.editModuleData.active
-          })
-        );
+        const response = await this.$axios.post("v2/install/modules/update", {
+          moduleID: this.editModuleData.id,
+          name: this.editModuleData.name,
+          display_name: this.editModuleData.display_name,
+          description: this.editModuleData.description,
+          icon: this.editModuleData.icon,
+          active: this.editModuleData.active
+        });
 
         if (response.data.success) {
           this.showSuccessMessage('Module updated successfully');
@@ -330,13 +317,9 @@ export default {
       }
 
       try {
-        const response = await this.$axios.post(
-          "install.php",
-          this.$qs.stringify({
-            deleteModule: "deleteModule",
-            moduleID: module.id
-          })
-        );
+        const response = await this.$axios.post("v2/install/modules/delete", {
+          moduleID: module.id
+        });
 
         if (response.data.success) {
           this.showSuccessMessage('Module deleted successfully');

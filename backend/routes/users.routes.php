@@ -10,6 +10,16 @@ $router->group('/v2/users', function ($router) {
     // GET /v2/users/assignments
     $router->get('/assignments', [UsersController::class, 'getAssignments']);
 
+    $router->get('/me', [UsersController::class, 'getMe']);
+
+    $router->put('/me', [UsersController::class, 'updateMe']);
+
+    $router->post('/me/profile-image', [UsersController::class, 'updateMyProfileImage']);
+
+    $router->put('/me/login-with-google', [UsersController::class, 'updateMyLoginWithGoogle']);
+
+    $router->put('/me/email-2fa', [UsersController::class, 'updateMyEmail2FA']);
+
     // POST /v2/users
     $router->post('/', [UsersController::class, 'create']);
 

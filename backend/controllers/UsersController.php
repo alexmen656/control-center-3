@@ -248,6 +248,119 @@ class UsersController
         $response->json(['success' => true, 'assignments' => $assignments]);
     }
 
+    public function getMe(Request $request, Response $response): void
+    {
+        $userID = intval($request->userID);
+
+        $result = query("SELECT * FROM control_center_users WHERE userID='$userID'");
+        if (!$result || mysqli_num_rows($result) !== 1) {
+            $response->error('User not found', 404);
+            return;
+        }
+
+        $data = fetch_assoc($result);
+
+        $json = [];
+        $json['profileImg'] = $this->resolveProfileImage($data);
+        $json['firstName'] = $data['firstname'];
+        $json['lastName'] = $data['lastname'];
+        $json['email'] = $data['email'];
+        $json['userID'] = $data['userID'];
+
+        if ($data['login_with_google'] == 'true') {
+            $json['login_with_google'] = true;
+        } elseif ($data['login_with_google'] == 'false') {
+            $json['login_with_google'] = false;
+        } else {
+            $json['login_with_google'] = $data['login_with_google'];
+        }
+
+        $json['accountStatus'] = $data['account_status'];
+        $json['email_2fa_enabled'] = $data['email_2fa_enabled'] != '0';
+
+        $response->json($json);
+    }
+
+    public function updateMe(Request $request, Response $response): void
+    {
+        $userID = intval($request->userID);
+
+        $updateFields = [];
+
+        $firstName = trim($request->input('firstName', ''));
+        if ($firstName !== '') {
+            $updateFields[] = "firstname='" . escape_string($firstName) . "'";
+        }
+
+        $lastName = trim($request->input('lastName', ''));
+        if ($lastName !== '') {
+            $updateFields[] = "lastname='" . escape_string($lastName) . "'";
+        }
+
+        $email = trim($request->input('email', ''));
+        if ($email !== '') {
+            $updateFields[] = "email='" . escape_string($email) . "'";
+        }
+
+        if (empty($updateFields)) {
+            $response->error('No fields to update', 400);
+            return;
+        }
+
+        $sql = "UPDATE control_center_users SET " . implode(', ', $updateFields) . " WHERE userID='$userID'";
+        if (query($sql)) {
+            $response->success([], 'Profile updated');
+        } else {
+            $response->error('Failed to update profile', 500);
+        }
+    }
+
+    public function updateMyProfileImage(Request $request, Response $response): void
+    {
+        $userID = intval($request->userID);
+
+        $baseData = $request->input('data');
+        $fileName = $request->input('name');
+
+        if (empty($baseData) || empty($fileName)) {
+            $response->error('data and name are required', 400);
+            return;
+        }
+
+        $safeName = escape_string($fileName);
+        query("UPDATE control_center_users SET profileImg='$safeName' WHERE userID='$userID'");
+
+        createFile(__DIR__ . '/../images/profileImages/' . $fileName, $baseData, 0777);
+
+        $response->success([], 'Profile image updated');
+    }
+
+    public function updateMyLoginWithGoogle(Request $request, Response $response): void
+    {
+        $userID = intval($request->userID);
+
+        $newValue = escape_string($request->input('newValue', ''));
+
+        if (query("UPDATE control_center_users SET login_with_google='$newValue' WHERE userID='$userID'")) {
+            $response->success([], 'Login with Google updated');
+        } else {
+            $response->error('Failed to update login with Google', 500);
+        }
+    }
+
+    public function updateMyEmail2FA(Request $request, Response $response): void
+    {
+        $userID = intval($request->userID);
+
+        $newValue = $request->input('newValue') === 'true' ? '1' : '0';
+
+        if (query("UPDATE control_center_users SET email_2fa_enabled='$newValue' WHERE userID='$userID'")) {
+            $response->success([], 'Email 2FA updated');
+        } else {
+            $response->error('Failed to update email 2FA', 500);
+        }
+    }
+
     // ── Private Helpers ─────────────────────────────────────
 
     private function resolveProfileImage(array $user): string

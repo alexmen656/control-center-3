@@ -29,8 +29,8 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { userId?: string }) => {
         try {
-          const response = await axios.get(`github_repos.php?user_id=${params?.userId || ''}`);
-          
+          const response = await axios.get('v2/github/repos');
+
           const repos = response.data || [];
           return {
             value: repos.length || 0,
@@ -56,7 +56,7 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
       getData: async (params?: { project?: string; repo?: string }) => {
         try {
           const token = localStorage.getItem('authToken');
-          const response = await axios.get('github_api.php', {
+          const response = await axios.get('v2/github/api', {
             params: {
               action: 'getCommits',
               project: params?.project
@@ -91,7 +91,7 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
       getData: async (params?: { project?: string }) => {
         try {
           const token = localStorage.getItem('authToken');
-          const response = await axios.get('github_api.php', {
+          const response = await axios.get('v2/github/api', {
             params: {
               action: 'getPullRequests',
               project: params?.project,
@@ -127,7 +127,7 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
       getData: async (params?: { project?: string }) => {
         try {
           const token = localStorage.getItem('authToken');
-          const response = await axios.get('github_api.php', {
+          const response = await axios.get('v2/github/api', {
             params: {
               action: 'getIssues',
               project: params?.project,
@@ -164,7 +164,7 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
       getData: async (params?: { project?: string; period?: number }) => {
         try {
           const token = localStorage.getItem('authToken');
-          const response = await axios.get('github_api.php', {
+          const response = await axios.get('v2/github/api', {
             params: {
               action: 'getCommits',
               project: params?.project,
@@ -220,7 +220,7 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
       getData: async (params?: { project?: string; limit?: number }) => {
         try {
           const token = localStorage.getItem('authToken');
-          const response = await axios.get('github_api.php', {
+          const response = await axios.get('v2/github/api', {
             params: {
               action: 'getCommits',
               project: params?.project,
@@ -276,10 +276,10 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
       },
       getData: async (params?: { userId?: string }) => {
         try {
-          const response = await axios.get(`github_repos.php?user_id=${params?.userId || ''}`);
-          
+          const response = await axios.get('v2/github/repos');
+
           const repos = response.data || [];
-          
+
           // Count by language
           const languageCounts: { [key: string]: number } = {};
           repos.forEach((repo: any) => {
@@ -324,7 +324,7 @@ export const githubDashboardProvider: ModuleDashboardProvider = {
       getData: async (params?: { project?: string }) => {
         try {
           const token = localStorage.getItem('authToken');
-          const response = await axios.get('github_api.php', {
+          const response = await axios.get('v2/github/api', {
             params: {
               action: 'getPullRequests',
               project: params?.project,

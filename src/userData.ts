@@ -25,8 +25,8 @@ const data = ref<UserData>({
 export async function loadUserData() {
   if (navigator.onLine) {
     try {
-      const response = await axios.post<UserData>(
-        "https://api.fringelo.com/user.php"
+      const response = await axios.get<UserData>(
+        "https://api.fringelo.com/v2/users/me"
       );
       data.value = response.data;
       store.commit("updateUser", {

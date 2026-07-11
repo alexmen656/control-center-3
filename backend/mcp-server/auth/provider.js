@@ -155,7 +155,7 @@ export class FringeloOAuthProvider {
   }
 
   async verifyAccessToken(token) {
-    const response = await fetch(`${this.backendUrl}/token_verify.php`, {
+    const response = await fetch(`${this.backendUrl}/v2/auth/verify-token`, {
       method: 'POST',
       headers: {
         Authorization: token,

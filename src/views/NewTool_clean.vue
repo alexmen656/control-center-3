@@ -62,10 +62,7 @@ export default defineComponent({
   },
   async created() {
     this.$axios
-      .post(
-        "modules.php",
-        this.$qs.stringify({ project: this.$route.params.project })
-      )
+      .post("v2/modules/list", { project: this.$route.params.project })
       .then((res) => {
         if (res.data && res.data.length > 0) {
           this.tools = res.data.map((tool, index) => ({
@@ -96,13 +93,12 @@ export default defineComponent({
         );
         this.$axios
           .post(
-            "tools.php",
-            this.$qs.stringify({
-              newTool: "newTool",
+            "v2/tools/create",
+            {
               toolIcon: selectedTool.icon,
               projectName: this.$route.params.project,
               toolName: selectedTool.name,
-            })
+            }
           )
           .then(() => {
             this.emitter.emit("updateSidebar");

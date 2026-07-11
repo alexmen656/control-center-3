@@ -475,7 +475,7 @@ export default defineComponent({
 
     const loadSidebarData = () => {
       axios
-        .get("sidebar.php?getSideBarByProjectName=" + route.params.project)
+        .get("v2/sidebar?project=" + route.params.project)
         .then((response) => {
           sections.value = response.data.sections || [];
           tools.value = response.data.tools || [];

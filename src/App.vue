@@ -267,7 +267,7 @@ export default defineComponent({
           });
 
           Promise.all([
-            axios.get("sidebar.php"),
+            axios.get("v2/sidebar/global"),
             axios.get("v2/bookmarks"),
           ])
             .then(([sidebarResponse, bookmarksResponse]) => {
@@ -380,7 +380,7 @@ export default defineComponent({
   async created() {
     if (this.token && this.$route.path !== "/login" && this.$route.path !== "/login/verification" && this.$route.path !== "/login/verification/") {
       try {
-        const res = await axios.post("token_verify.php", {}, {
+        const res = await axios.post("v2/auth/verify-token", {}, {
           headers: { Authorization: this.token }
         });
         if (!res.data.valid) {
@@ -553,7 +553,7 @@ export default defineComponent({
       const res = await axios.get("v2/bookmarks");
       this.bookmarks = res.data;
       localStorage.setItem("bookmarks", this.bookmarks);
-      const res2 = await axios.get("sidebar.php");
+      const res2 = await axios.get("v2/sidebar/global");
       this.projects = Object.values(res2.data.projects);
       localStorage.setItem("projects", this.projects);
       console.log("Sidebar updated");

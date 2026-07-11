@@ -230,7 +230,7 @@ class DeployHelper
                     'readyState' => deploy_status_to_ready_state($row['status']),
                     'meta' => ['githubCommitSha' => $row['commit_sha']],
                     'created' => strtotime($row['created_at']) * 1000,
-                    'inspectorUrl' => 'https://api.fringelo.com/deploy_logs.php?deployment=' . $row['id'] . '&sig=' . deploy_log_sig($row['id']),
+                    'inspectorUrl' => 'https://api.fringelo.com/v2/deploy-logs?deployment=' . $row['id'] . '&sig=' . deploy_log_sig($row['id']),
                 ];
             }
         }

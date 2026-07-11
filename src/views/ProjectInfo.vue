@@ -660,13 +660,12 @@ export default {
         const projectID = projectResponse.data.projectID;
 
         const fileQuery = await this.$axios.post(
-          "filesystem.php",
-          this.$qs.stringify({
-            action: "getFile",
+          "v2/filesystem/get-file",
+          {
             project: this.$route.params.project,
             name: "banner.jpg",
             directory: ".dev"
-          })
+          }
         );
 
         if (!fileQuery.data.success || !fileQuery.data.file || !fileQuery.data.file.location) {
@@ -778,13 +777,12 @@ export default {
 
       try {
         const response = await this.$axios.post(
-          "filesystem.php",
-          this.$qs.stringify({
-            action: "delete",
+          "v2/filesystem/delete",
+          {
             project: this.$route.params.project,
             name: "banner.jpg",
             directory: ".dev"
-          })
+          }
         );
 
         if (response.data.success) {

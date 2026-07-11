@@ -227,7 +227,7 @@ export default defineComponent({
     async loadProjects() {
       this.loading = true;
       try {
-        const response = await this.$axios.get("projects.php");
+        const response = await this.$axios.get("v2/projects/");
         // Add hidden property to each project (default false for now)
         this.projects = response.data.map(project => ({
           ...project,
@@ -251,12 +251,11 @@ export default defineComponent({
 
       try {
         await this.$axios.post(
-          "projects.php",
-          this.$qs.stringify({
-            createProject: "createProject",
+          "v2/projects/",
+          {
             projectName: this.newProject.name,
             projectIcon: this.newProject.icon,
-          })
+          }
         );
 
         alert("Project created successfully");
@@ -281,14 +280,12 @@ export default defineComponent({
     async updateProject() {
       try {
         // Note: We'll need to add this endpoint to the backend
-        await this.$axios.post(
-          "projects.php",
-          this.$qs.stringify({
-            updateProject: "updateProject",
-            projectID: this.editingProject.id,
+        await this.$axios.put(
+          `v2/projects/${this.editingProject.id}`,
+          {
             projectName: this.editingProject.name,
             projectIcon: this.editingProject.icon,
-          })
+          }
         );
 
         alert("Project updated successfully");
@@ -304,13 +301,11 @@ export default defineComponent({
     async toggleProjectVisibility(project) {
       try {
         // Note: We'll need to add this endpoint to the backend
-        await this.$axios.post(
-          "projects.php",
-          this.$qs.stringify({
-            toggleProjectVisibility: "toggleProjectVisibility",
-            projectID: project.id,
+        await this.$axios.put(
+          `v2/projects/${project.id}/visibility`,
+          {
             hidden: !project.hidden,
-          })
+          }
         );
 
         project.hidden = !project.hidden;
@@ -329,12 +324,8 @@ export default defineComponent({
       if (!this.deleteModal.project) return;
 
       try {
-        await this.$axios.post(
-          "projects.php",
-          this.$qs.stringify({
-            deleteProject: "deleteProject",
-            projectID: this.deleteModal.project.id,
-          })
+        await this.$axios.delete(
+          `v2/projects/${this.deleteModal.project.id}`
         );
 
         alert("Project deleted successfully");

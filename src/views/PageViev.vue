@@ -112,7 +112,7 @@ export default defineComponent({
     async loadProjects() {
       this.loading = true;
       try {
-        const response = await this.$axios.get("projects.php");
+        const response = await this.$axios.get("v2/projects/");
         this.projects = Array.isArray(response.data) ? response.data : [];
       } catch (error) {
         console.error("Error loading projects:", error);

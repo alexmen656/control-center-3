@@ -208,7 +208,7 @@ export default defineComponent({
       }
 
       try {
-        const res = await this.$axios.get(`custom_login_config.php?domain=${currentDomain}`);
+        const res = await this.$axios.get(`v2/custom-login-config?domain=${currentDomain}`);
         if (res.data.success && res.data.config) {
           this.customLoginConfig = res.data.config;
           this.isCustomLogin = true;
@@ -261,11 +261,11 @@ export default defineComponent({
           if (res.data.value == true) {
             axios
               .post(
-                "login.php",
-                qs.stringify({
+                "v2/auth/login",
+                {
                   email: this.user.email,
                   loginWithGoogle: "loginWithGoogle",
-                })
+                }
               )
               .then(
                 (res) => {
@@ -320,15 +320,15 @@ export default defineComponent({
 
       axios
         .post(
-          "sign_up.php",
-          qs.stringify({
+          "v2/auth/sign-up",
+          {
             first_name: this.user.givenName,
             last_name: this.user.familyName,
             profile_img: this.user.imageUrl.replace("s96", "s512"),
             email_adress: this.user.email,
             password: this.g_password,
             login_with_google: lwg,
-          })
+          }
         )
         .then((res) => {
           if (res.data.token) {
@@ -348,11 +348,11 @@ export default defineComponent({
       } else {
         await axios
           .post(
-            "login.php",
-            this.$qs.stringify({
+            "v2/auth/login",
+            {
               email: this.username,
               password: this.password,
-            })
+            }
           )
           .then(
             (res) => {
@@ -424,11 +424,11 @@ export default defineComponent({
             if (res.data.value == true) {
               axios
                 .post(
-                  "login.php",
-                  qs.stringify({
+                  "v2/auth/login",
+                  {
                     email: this.user.email,
                     loginWithMicrosoft: "microsoft",
-                  })
+                  }
                 )
                 .then(
                   (res) => {
