@@ -5,14 +5,9 @@
       <div class="login-container">
         <div class="login-card">
           <div class="logo-section">
-            <template v-if="isCustomLogin && customLoginConfig?.logo_url">
-              <img :src="customLoginConfig.logo_url" :alt="companyName + ' Logo'" class="logo-image custom-logo" />
-            </template>
-            <template v-else>
-              <img src="/assets/brand/fringelo-wordmark.svg" alt="Fringelo" class="logo-wordmark" />
-            </template>
+            <img src="/assets/brand/fringelo-wordmark.svg" alt="Fringelo" class="logo-wordmark" />
             <p class="welcome-subtitle" v-if="!createPasswordView">
-              {{ isCustomLogin ? 'Sign in to ' + companyName : 'Sign in to your account' }}
+              Sign in to your account
             </p>
           </div>
 
@@ -121,7 +116,7 @@
             </form>
             <div class="footer-section">
               <p class="footer-text">
-                © 2026 {{ isCustomLogin ? companyName : 'Fringelo' }}. All rights reserved.
+                © 2026 Fringelo. All rights reserved.
               </p>
             </div>
           </div>
@@ -149,22 +144,10 @@ try {
   console.log("error");
 }
 
-if (localStorage.getItem("token")) {
-  //location.href = "/projects";
-}
-
 interface VerificationData {
   verification_email: string;
   verification_name: string;
   verification_token: string;
-}
-
-interface CustomLoginConfig {
-  domain: string;
-  primary_color: string;
-  logo_url: string;
-  company_name: string;
-  project_name: string;
 }
 
 export default defineComponent({
@@ -183,65 +166,10 @@ export default defineComponent({
       g_password: "",
       g_confirmPassword: "",
       loginWith: "",
-      customLoginConfig: null as CustomLoginConfig | null,
-      isCustomLogin: false,
     };
-  },
-  computed: {
-    primaryColor(): string {
-      return this.customLoginConfig?.primary_color || '#f97316';
-    },
-    logoUrl(): string {
-      return this.customLoginConfig?.logo_url || '/assets/logo_inline_large.png';
-    },
-    companyName(): string {
-      return this.customLoginConfig?.company_name || 'Fringelo';
-    }
   },
   components: {},
   methods: {
-    async checkCustomLoginDomain() {
-      const currentDomain = window.location.hostname;
-
-      if (currentDomain === 'localhost') {
-        return;
-      }
-
-      try {
-        const res = await this.$axios.get(`v2/custom-login-config?domain=${currentDomain}`);
-        if (res.data.success && res.data.config) {
-          this.customLoginConfig = res.data.config;
-          this.isCustomLogin = true;
-          this.applyCustomStyles();
-        }
-      } catch (e) {
-        console.log('No custom login config found for domain:', currentDomain);
-      }
-    },
-    applyCustomStyles() {
-      if (!this.customLoginConfig) return;
-
-      const root = document.documentElement;
-      root.style.setProperty('--brand-orange', this.primaryColor);
-      root.style.setProperty('--brand-orange-light', this.lightenColor(this.primaryColor, 30));
-      root.style.setProperty('--brand-orange-dark', this.darkenColor(this.primaryColor, 20));
-    },
-    lightenColor(hex: string, percent: number): string {
-      const num = parseInt(hex.replace('#', ''), 16);
-      const amt = Math.round(2.55 * percent);
-      const R = Math.min(255, (num >> 16) + amt);
-      const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
-      const B = Math.min(255, (num & 0x0000FF) + amt);
-      return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
-    },
-    darkenColor(hex: string, percent: number): string {
-      const num = parseInt(hex.replace('#', ''), 16);
-      const amt = Math.round(2.55 * percent);
-      const R = Math.max(0, (num >> 16) - amt);
-      const G = Math.max(0, ((num >> 8) & 0x00FF) - amt);
-      const B = Math.max(0, (num & 0x0000FF) - amt);
-      return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
-    },
     async continueWithGoogle() {
       try {
         this.user = await GoogleAuth.signIn();
@@ -484,8 +412,6 @@ export default defineComponent({
     },
   },
   async mounted() {
-    await this.checkCustomLoginDomain();
-
     await msalInstance.initialize();
 
     if (!msalInstance.getAllAccounts().length) {
@@ -553,12 +479,6 @@ export default defineComponent({
 .logo-section {
   text-align: center;
   margin-bottom: 2.5rem;
-}
-
-.logo-image {
-  max-width: 220px;
-  height: auto;
-  margin-bottom: 1.5rem;
 }
 
 .welcome-title {
@@ -828,10 +748,6 @@ export default defineComponent({
     max-width: 100%;
   }
 
-  .logo-image {
-    max-width: 180px;
-  }
-
   .welcome-title {
     font-size: 1.7rem;
   }
@@ -845,11 +761,6 @@ export default defineComponent({
 
   .logo-section {
     margin-bottom: 2rem;
-  }
-
-  .logo-image {
-    max-width: 160px;
-    margin-bottom: 1rem;
   }
 
   .welcome-title {

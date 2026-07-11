@@ -22,111 +22,6 @@
             </div>
           </DataCard>
 
-          <DataCard title="Custom Login Domain" subtitle="Configure a branded login page for your project">
-            <div class="form-group">
-              <label class="form-label">Domain Type</label>
-              <select v-model="customLogin.domain_type" class="modern-select" :disabled="customLogin.id">
-                <option value="internal">Subdomain of control-center.eu (automatic)</option>
-                <option value="external">External Domain (manual setup)</option>
-              </select>
-            </div>
-
-            <div v-if="customLogin.domain_type === 'internal'" class="form-group">
-              <label class="form-label">Subdomain</label>
-              <div class="domain-input-wrapper">
-                <input v-model="customLogin.subdomain" placeholder="mycompany" class="modern-input subdomain-input"
-                  :disabled="loadingCustomLogin || customLogin.id" @input="updateInternalDomain" />
-                <span class="domain-suffix">.control-center.eu</span>
-              </div>
-            </div>
-
-            <div v-if="customLogin.domain_type === 'external'" class="form-group">
-              <label class="form-label">External Domain</label>
-              <input v-model="customLogin.domain" placeholder="login.mycompany.com" class="modern-input"
-                :disabled="loadingCustomLogin || customLogin.id" />
-            </div>
-
-            <div v-if="customLogin.domain_type === 'external' && customLogin.id" class="setup-instructions">
-              <div class="instruction-header">
-                <ion-icon name="warning-outline"></ion-icon>
-                <h4>Manual Setup Required</h4>
-              </div>
-              <div class="instruction-content">
-                <div class="instruction-step">
-                  <h5>1. DNS Configuration</h5>
-                  <p>Create an A-Record with your DNS provider:</p>
-                  <div class="code-block">
-                    <div>Type: A</div>
-                    <div>Name: {{ customLogin.domain }}</div>
-                    <div>Value: 92.5.112.145</div>
-                  </div>
-                </div>
-                <div class="instruction-step">
-                  <h5>2. Nginx & SSL</h5>
-                  <p>Nginx and SSL must be manually configured on the server.</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <div class="toggle-wrapper">
-                <label class="form-label">Enabled</label>
-                <label class="toggle-switch">
-                  <input type="checkbox" v-model="customLogin.is_enabled"
-                    :disabled="loadingCustomLogin || !customLogin.domain" />
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Company Name</label>
-              <input v-model="customLogin.company_name" placeholder="e.g., My Company GmbH" class="modern-input" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Primary Color</label>
-              <div class="color-picker-wrapper">
-                <input type="color" v-model="customLogin.primary_color" class="color-input" />
-                <input type="text" v-model="customLogin.primary_color" class="modern-input" placeholder="#e53e3e" />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Logo URL</label>
-              <input v-model="customLogin.logo_url" placeholder="https://example.com/logo.png" class="modern-input" />
-            </div>
-
-            <div v-if="customLogin.logo_url" class="logo-preview">
-              <label class="form-label">Logo Preview</label>
-              <img :src="customLogin.logo_url" alt="Logo Preview" @error="customLogin.logo_url = ''" />
-            </div>
-
-            <div v-if="customLogin.ssl_status" class="form-group">
-              <label class="form-label">SSL Status</label>
-              <span :class="['status-badge', sslStatusColor]">
-                {{ sslStatusText }}
-              </span>
-            </div>
-
-            <div v-if="customLoginError" class="alert alert-error">
-              <ion-icon name="alert-circle-outline"></ion-icon>
-              {{ customLoginError }}
-            </div>
-
-            <div v-if="customLoginSuccess" class="alert alert-success">
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-              {{ customLoginSuccess }}
-            </div>
-
-            <div class="form-actions">
-              <ActionButton variant="secondary" icon="trash-outline" @click="deleteCustomLogin"
-                :disabled="!customLogin.id || savingCustomLogin" v-if="customLogin.id">Delete</ActionButton>
-              <ActionButton variant="primary" icon="save-outline" @click="saveCustomLogin"
-                :disabled="savingCustomLogin">{{ customLogin.id ? 'Update' : 'Save' }} Configuration</ActionButton>
-            </div>
-          </DataCard>
-
           <DataCard title="Project Sidebar" subtitle="Personalize your project's sidebar">
             <ActionButton variant="primary" @click="openSidebarEditor">Open Sidebar Editor</ActionButton>
           </DataCard>
@@ -136,8 +31,8 @@
               <label class="form-label">Current Banner</label>
               <div class="banner-preview-container">
                 <img :src="projectBanner" alt="Project Banner" />
-                <ActionButton variant="danger" icon="trash-outline" @click="deleteBanner"
-                  :disabled="uploadingBanner">Remove Banner</ActionButton>
+                <ActionButton variant="danger" icon="trash-outline" @click="deleteBanner" :disabled="uploadingBanner">
+                  Remove Banner</ActionButton>
               </div>
             </div>
 
@@ -198,8 +93,7 @@
                   </select>
                 </div>
 
-                <div v-if="isSuperAdmin && selectedDomainType === 'custom' && selectedCustomDomain"
-                  class="form-group">
+                <div v-if="isSuperAdmin && selectedDomainType === 'custom' && selectedCustomDomain" class="form-group">
                   <label class="form-label">Subdomain (optional)</label>
                   <div class="domain-input-wrapper">
                     <input v-model="domainInput" placeholder="blog" class="modern-input subdomain-input" />
@@ -245,20 +139,6 @@ export default {
     ActionButton,
     LoadingState
   },
-  computed: {
-    sslStatusColor() {
-      const status = this.customLogin.ssl_status;
-      if (status === 'active') return 'success';
-      if (status === 'pending') return 'warning';
-      if (status === 'manual') return 'medium';
-      return 'danger';
-    },
-    sslStatusText() {
-      const status = this.customLogin.ssl_status;
-      if (status === 'manual') return 'Manuell (externe Domain)';
-      return status;
-    }
-  },
   data() {
     return {
       projectName: "",
@@ -282,23 +162,6 @@ export default {
       openVercelModal: false,
       vercelProjects: [],
       vercelError: '',
-      // Custom Login
-      loadingCustomLogin: true,
-      savingCustomLogin: false,
-      customLoginError: '',
-      customLoginSuccess: '',
-      customLogin: {
-        id: null,
-        domain: '',
-        domain_type: 'internal',
-        subdomain: '',
-        is_enabled: false,
-        primary_color: '#e53e3e',
-        logo_url: '',
-        company_name: '',
-        ssl_status: ''
-      },
-      // Banner
       projectBanner: null,
       uploadingBanner: false,
       bannerError: '',
@@ -309,249 +172,14 @@ export default {
     openSidebarEditor() {
       this.$router.push({ name: 'sidebar-editor', params: { project: this.$route.params.project } });
     },
-    updateInternalDomain() {
-      if (this.customLogin.domain_type === 'internal' && this.customLogin.subdomain) {
-        this.customLogin.domain = this.customLogin.subdomain + '.control-center.eu';
-      }
-    },
-    async fetchCustomLogin() {
-      this.loadingCustomLogin = true;
-      this.customLoginError = '';
-      try {
-        const res = await this.$axios.post('v2/custom-login-domains/get', {
-          project: this.$route.params.project,
-        });
-        if (res.data.success && res.data.data) {
-          const data = res.data.data;
-          const isInternal = data.is_internal || data.domain?.endsWith('.control-center.eu');
-
-          this.customLogin = {
-            id: data.id,
-            domain: data.domain,
-            domain_type: isInternal ? 'internal' : 'external',
-            subdomain: isInternal ? data.domain.replace('.control-center.eu', '') : '',
-            is_enabled: data.is_enabled,
-            primary_color: data.primary_color || '#e53e3e',
-            logo_url: data.logo_url || '',
-            company_name: data.company_name || '',
-            ssl_status: data.ssl_status || ''
-          };
-        }
-      } catch (e) {
-        console.error('Error fetching custom login:', e);
-      } finally {
-        this.loadingCustomLogin = false;
-      }
-    },
-    async saveCustomLogin() {
-      this.savingCustomLogin = true;
-      this.customLoginError = '';
-      this.customLoginSuccess = '';
-
-      // Domain zusammensetzen für interne Domains
-      if (this.customLogin.domain_type === 'internal') {
-        if (!this.customLogin.subdomain) {
-          this.customLoginError = 'Subdomain ist erforderlich';
-          this.savingCustomLogin = false;
-          return;
-        }
-        // Subdomain validieren
-        if (!/^[a-z0-9-]+$/.test(this.customLogin.subdomain)) {
-          this.customLoginError = 'Subdomain darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten';
-          this.savingCustomLogin = false;
-          return;
-        }
-        this.customLogin.domain = this.customLogin.subdomain + '.control-center.eu';
-      }
-
-      if (!this.customLogin.domain) {
-        this.customLoginError = 'Domain ist erforderlich';
-        this.savingCustomLogin = false;
-        return;
-      }
-
-      try {
-        const res = await this.$axios.post('v2/custom-login-domains/save', {
-          project: this.$route.params.project,
-          domain: this.customLogin.domain,
-          is_enabled: this.customLogin.is_enabled ? 'true' : 'false',
-          primary_color: this.customLogin.primary_color,
-          logo_url: this.customLogin.logo_url,
-          company_name: this.customLogin.company_name,
-        });
-
-        if (res.data.success) {
-          let message = res.data.message || 'Erfolgreich gespeichert';
-          if (res.data.is_internal === false) {
-            message += ' - Bitte DNS manuell konfigurieren (siehe Anleitung)';
-          }
-          this.customLoginSuccess = message;
-          this.fetchCustomLogin();
-          setTimeout(() => { this.customLoginSuccess = ''; }, 5000);
-        } else {
-          this.customLoginError = res.data.error || 'Fehler beim Speichern';
-        }
-      } catch (e) {
-        this.customLoginError = 'Fehler beim Speichern';
-      } finally {
-        this.savingCustomLogin = false;
-      }
-    },
-    async deleteCustomLogin() {
-      if (!confirm('Custom Login Domain wirklich löschen?')) return;
-
-      this.savingCustomLogin = true;
-      this.customLoginError = '';
-
-      try {
-        const res = await this.$axios.post('v2/custom-login-domains/delete', {
-          project: this.$route.params.project,
-        });
-
-        if (res.data.success) {
-          this.customLogin = {
-            id: null,
-            domain: '',
-            domain_type: 'internal',
-            subdomain: '',
-            is_enabled: false,
-            primary_color: '#e53e3e',
-            logo_url: '',
-            company_name: '',
-            ssl_status: ''
-          };
-          this.customLoginSuccess = 'Custom Login Domain gelöscht';
-          setTimeout(() => { this.customLoginSuccess = ''; }, 3000);
-        } else {
-          this.customLoginError = res.data.error || 'Fehler beim Löschen';
-        }
-      } catch (e) {
-        this.customLoginError = 'Fehler beim Löschen';
-      } finally {
-        this.savingCustomLogin = false;
-      }
-    },
-    /* onOpenVercelModal() {
-       this.openVercelModal = true;
-       this.fetchVercelProjects();
-     },
-     async fetchVercelProjects() {
-       this.vercelProjects = [];
-       this.vercelError = '';
-       try {
-         const user = getUserData();
-         if (!user || !user.userID) {
-           this.vercelError = 'Kein User.';
-           return;
-         }
-         const res = await this.$axios.get(`vercel_projects.php?user_id=${user.userID}`);
-         if (Array.isArray(res.data.projects)) {
-           this.vercelProjects = res.data.projects;
-         } else {
-           this.vercelError = 'Fehler beim Laden der Vercel-Projekte.';
-         }
-       } catch (e) {
-         this.vercelError = 'Fehler beim Laden der Vercel-Projekte.';
-       }
-     },
-     async fetchConnectedVercelProject() {
-       this.loadingVercelProject = true;
-       try {
-         const res = await this.$axios.post('project_vercel.php', this.$qs.stringify({
-           action: 'get',
-           project: this.$route.params.project,
-         }));
-         if (res.data && res.data.vercel_project_id) {
-           this.connectedVercelProject = { id: res.data.vercel_project_id, name: res.data.vercel_project_name };
-         } else {
-           this.connectedVercelProject = null;
-         }
-       } catch (e) {
-         this.connectedVercelProject = null;
-       } finally {
-         this.loadingVercelProject = false;
-       }
-     },
-     async connectVercelProject(project) {
-       this.vercelError = '';
-       try {
-         const user = getUserData();
-         if (!user || !user.userID) {
-           this.vercelError = 'Kein User.';
-           return;
-         }
-         const res = await this.$axios.post('project_vercel.php', this.$qs.stringify({
-           action: 'connect',
-           project: this.$route.params.project,
-           user_id: user.userID,
-           vercel_project_id: project.id,
-           vercel_project_name: project.name,
-         }));
-         if (res.data && res.data.success) {
-           this.openVercelModal = false;
-           this.fetchConnectedVercelProject();
-         } else {
-           this.vercelError = res.data && res.data.error ? res.data.error : 'Fehler beim Verbinden.';
-         }
-       } catch (e) {
-         this.vercelError = 'Fehler beim Verbinden.';
-       }
-     },
-     onOpenRepoModal() {
-       this.openRepoModal = true;
-       this.fetchRepos();
-     },
-     repoUrl(repo) {
-       if (repo && repo.repo_full_name) {
-         return `https://github.com/${repo.repo_full_name}`;
-       }
-       return '#';
-     },
-     async fetchRepos() {
-       this.repos = [];
-       this.repoError = '';
-       try {
-         const user = getUserData();
-         if (!user || !user.userID) {
-           this.repoError = 'Kein User.';
-           return;
-         }
-         const res = await this.$axios.get(`github_repos.php?userID=${user.userID}`);
-         if (Array.isArray(res.data)) {
-           this.repos = res.data;
-         } else if (res.data && res.data.error) {
-           this.repoError = res.data.error;
-         } else {
-           this.repoError = 'Fehler beim Laden der Repos.';
-         }
-       } catch (e) {
-         this.repoError = 'Fehler beim Laden der Repos.';
-       }
-     },
-     async fetchConnectedRepo() {
-       this.loadingRepo = true;
-       try {
-         const res = await this.$axios.post('project_repo.php', this.$qs.stringify({
-           action: 'get',
-           project: this.$route.params.project,
-         }));
-         this.connectedRepo = res.data.repo;
-       } catch (e) {
-         this.connectedRepo = null;
-       } finally {
-         this.loadingRepo = false;
-       }
-     },*/
     async fetchConnectedDomain() {
       this.loadingDomain = true;
       this.domainError = '';
       try {
         const user = getUserData();
 
-        // Check if user is super admin (userID 152)
         this.isSuperAdmin = user && user.userID == 152;
 
-        // Fetch available domains if super admin
         if (this.isSuperAdmin) {
           try {
             const domainsRes = await this.$axios.get('v2/domains/available');
@@ -591,18 +219,16 @@ export default {
         }
         customBaseDomain = this.selectedCustomDomain;
 
-        // Validate subdomain if provided
         if (this.domainInput) {
           if (!/^[a-z0-9-]+$/.test(this.domainInput)) {
             this.domainError = 'Subdomain: Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.';
             return;
           }
-          finalDomain = this.domainInput; // subdomain part only
+          finalDomain = this.domainInput;
         } else {
-          finalDomain = ''; // use root domain
+          finalDomain = '';
         }
       } else {
-        // For subdomain type, validate input
         if (!/^[a-z0-9-]+$/.test(this.domainInput)) {
           this.domainError = 'Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.';
           return;
@@ -817,7 +443,6 @@ export default {
       });
 
     this.fetchConnectedDomain();
-    this.fetchCustomLogin();
     this.loadProjectBanner();
   },
 };
@@ -919,96 +544,6 @@ export default {
   white-space: nowrap;
 }
 
-.toggle-wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 48px;
-  height: 26px;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--border);
-  transition: 0.3s;
-  border-radius: 26px;
-}
-
-.toggle-slider:before {
-  position: absolute;
-  content: "";
-  height: 20px;
-  width: 20px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: 0.3s;
-  border-radius: 50%;
-}
-
-.toggle-switch input:checked+.toggle-slider {
-  background-color: var(--primary-color);
-}
-
-.toggle-switch input:checked+.toggle-slider:before {
-  transform: translateX(22px);
-}
-
-.toggle-switch input:disabled+.toggle-slider {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.color-picker-wrapper {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.color-input {
-  width: 60px;
-  height: 44px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  cursor: pointer;
-  padding: 4px;
-}
-
-.color-picker-wrapper .modern-input {
-  max-width: 150px;
-}
-
-.logo-preview {
-  padding: 16px;
-  background: var(--background);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  text-align: center;
-}
-
-.logo-preview img {
-  max-height: 80px;
-  max-width: 200px;
-  object-fit: contain;
-  margin-top: 12px;
-}
-
 .banner-preview {
   margin-bottom: 20px;
 }
@@ -1051,96 +586,6 @@ export default {
   cursor: not-allowed;
 }
 
-.setup-instructions {
-  background: #fffbeb;
-  border: 1px solid #fbbf24;
-  border-radius: var(--radius);
-  padding: 20px;
-  margin: 20px 0;
-}
-
-.instruction-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.instruction-header ion-icon {
-  font-size: 24px;
-  color: #f59e0b;
-}
-
-.instruction-header h4 {
-  margin: 0;
-  color: #92400e;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.instruction-content {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.instruction-step h5 {
-  margin: 0 0 8px 0;
-  color: #78350f;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.instruction-step p {
-  margin: 0 0 12px 0;
-  color: #92400e;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.code-block {
-  background: #fef3c7;
-  border: 1px solid #fbbf24;
-  border-radius: var(--radius);
-  padding: 12px;
-  font-family: monospace;
-  font-size: 13px;
-  color: #78350f;
-  line-height: 1.6;
-}
-
-/* Status Badge */
-.status-badge {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.status-badge.success {
-  background: #d1fae5;
-  color: #059669;
-}
-
-.status-badge.warning {
-  background: #fed7aa;
-  color: #c2410c;
-}
-
-.status-badge.medium {
-  background: #ffedd5;
-  color: #4f46e5;
-}
-
-.status-badge.danger {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-/* Alerts */
 .alert {
   display: flex;
   align-items: center;
@@ -1166,15 +611,6 @@ export default {
   background: #d1fae5;
   color: #059669;
   border: 1px solid #a7f3d0;
-}
-
-.form-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border);
 }
 
 .connected-info {
@@ -1223,7 +659,6 @@ export default {
   border-color: #fca5a5;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
@@ -1231,10 +666,6 @@ export default {
 
   .info-grid {
     grid-template-columns: 1fr;
-  }
-
-  .form-actions {
-    flex-direction: column;
   }
 
   .action-btn {
@@ -1249,15 +680,5 @@ export default {
   .subdomain-input {
     max-width: 100%;
   }
-
-  .color-picker-wrapper {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .color-picker-wrapper .modern-input {
-    max-width: 100%;
-  }
 }
-
 </style>
