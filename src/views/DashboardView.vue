@@ -565,19 +565,13 @@ export default defineComponent({
       this.loadCharts();
     },
     async updateCharts(newCharts) {
-      // Update local charts array
       this.charts = newCharts;
 
-      // Save to backend
-      await this.$axios.post(
-        "dashboard.php",
-        this.$qs.stringify({
-          update_dashboard: "update_dashboard",
-          dashboard: this.$route.params.dashboard,
-          project: this.$route.params.project,
-          charts: JSON.stringify(newCharts),
-        })
-      );
+      await this.$axios.post("v2/dashboard/charts/update", {
+        dashboard: this.$route.params.dashboard,
+        project: this.$route.params.project,
+        charts: JSON.stringify(newCharts),
+      });
     },
     async loadCharts() {
       this.charts = [];

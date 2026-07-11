@@ -66,6 +66,30 @@ class DashboardController
         }
     }
 
+    public function updateCharts(Request $request, Response $response): void
+    {
+        $dashboardName = escape_string($request->input('dashboard', ''));
+        $projectName = escape_string($request->input('project', ''));
+        $chartData = $request->input('charts', '');
+
+        $newDataArray = json_decode($chartData, true);
+
+        if (!is_array($newDataArray)) {
+            $response->json("error invalid charts data");
+            return;
+        }
+
+        $updatedJson = escape_string(json_encode($newDataArray));
+        $updateJsonQuery = "UPDATE control_center_dashboards SET dashboard_json = '$updatedJson' WHERE dashboard_name = '$dashboardName' AND project = '$projectName'";
+        $updateResult = query($updateJsonQuery);
+
+        if ($updateResult) {
+            $response->json("success");
+        } else {
+            $response->json("error updating JSON data");
+        }
+    }
+
     public function deleteChart(Request $request, Response $response): void
     {
         $dashboardName = escape_string($request->input('dashboard', ''));

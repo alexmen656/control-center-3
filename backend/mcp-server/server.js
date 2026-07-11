@@ -101,11 +101,11 @@ function buildMcpServer(context) {
   });
 
   server.setRequestHandler(ListResourcesRequestSchema, async () => ({
-    resources: await getResources(context.user, context.backendUrl),
+    resources: await getResources(context.user, context.backendUrl, context.token),
   }));
 
   server.setRequestHandler(ReadResourceRequestSchema, async (request) =>
-    readResource(request.params.uri, context.user, context.backendUrl)
+    readResource(request.params.uri, context.user, context.backendUrl, context.token)
   );
 
   return server;

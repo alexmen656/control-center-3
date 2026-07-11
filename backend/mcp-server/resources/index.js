@@ -1,29 +1,17 @@
-/**
- * MCP Resources
- * 
- * Resources provide read-only access to CMS data
- */
-
-/**
- * Get available resources for a user
- */
-export async function getResources(user, backendUrl) {
+export async function getResources(user, backendUrl, token) {
   const resources = [];
-  
+
   try {
-    // Fetch user's projects
-    const response = await fetch(`${backendUrl}/projects.php`, {
-      method: 'POST',
+    const response = await fetch(`${backendUrl}/v2/projects`, {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: new URLSearchParams({ getUserProjects: 'true' })
+        'Authorization': token
+      }
     });
-    
+
     const data = await response.json();
-    const projects = data.projects || [];
-    
-    // Add project resources
+    const projects = Array.isArray(data) ? data : (data.projects || []);
+
     for (const project of projects) {
       resources.push({
         uri: `cms://projects/${project.link || project.projectID}`,
@@ -31,8 +19,7 @@ export async function getResources(user, backendUrl) {
         description: `Project: ${project.name}`,
         mimeType: 'application/json'
       });
-      
-      // Add project files resource
+
       resources.push({
         uri: `cms://projects/${project.link || project.projectID}/files`,
         name: `${project.name} - Files`,
@@ -40,23 +27,21 @@ export async function getResources(user, backendUrl) {
         mimeType: 'application/json'
       });
     }
-    
-    // Add user profile resource
+
     resources.push({
       uri: 'cms://user/profile',
       name: 'User Profile',
       description: 'Current user profile information',
       mimeType: 'application/json'
     });
-    
-    // Add bookmarks resource
+
     resources.push({
       uri: 'cms://user/bookmarks',
       name: 'Bookmarks',
       description: 'User bookmarks',
       mimeType: 'application/json'
     });
-    
+
     resources.push({
       uri: 'cms://apis/available',
       name: 'Available APIs',
@@ -71,30 +56,27 @@ export async function getResources(user, backendUrl) {
   return resources;
 }
 
-/**
- * Read a specific resource
- */
-export async function readResource(uri, user, backendUrl) {
+export async function readResource(uri, user, backendUrl, token) {
   const parsed = parseResourceUri(uri);
-  
+
   if (!parsed) {
     throw new Error(`Invalid resource URI: ${uri}`);
   }
-  
+
   const { type, id, subResource } = parsed;
-  
+
   try {
     let data;
-    
+
     switch (type) {
       case 'projects':
         if (subResource === 'files') {
           data = await fetchProjectFiles(id, backendUrl);
         } else {
-          data = await fetchProject(id, backendUrl);
+          data = await fetchProject(id, backendUrl, token);
         }
         break;
-        
+
       case 'user':
         if (id === 'profile') {
           data = { user };
@@ -102,7 +84,7 @@ export async function readResource(uri, user, backendUrl) {
           data = await fetchBookmarks(backendUrl);
         }
         break;
-        
+
       case 'apis':
         if (id === 'available') {
           data = await fetchAvailableApis(backendUrl);
@@ -112,7 +94,7 @@ export async function readResource(uri, user, backendUrl) {
       default:
         throw new Error(`Unknown resource type: ${type}`);
     }
-    
+
     return {
       contents: [{
         uri,
@@ -120,20 +102,17 @@ export async function readResource(uri, user, backendUrl) {
         text: JSON.stringify(data, null, 2)
       }]
     };
-    
+
   } catch (error) {
     throw new Error(`Error reading resource: ${error.message}`);
   }
 }
 
-/**
- * Parse resource URI
- */
 function parseResourceUri(uri) {
   const match = uri.match(/^cms:\/\/([^/]+)(?:\/([^/]+))?(?:\/(.+))?$/);
-  
+
   if (!match) return null;
-  
+
   return {
     type: match[1],
     id: match[2],
@@ -141,18 +120,10 @@ function parseResourceUri(uri) {
   };
 }
 
-// ============================================
-// Fetch Functions
-// ============================================
-
-async function fetchProject(projectLink, backendUrl) {
-  const response = await fetch(`${backendUrl}/projects.php`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      getProjectByLink: 'true',
-      project: projectLink
-    })
+async function fetchProject(projectLink, backendUrl, token) {
+  const response = await fetch(`${backendUrl}/v2/projects/${encodeURIComponent(projectLink)}`, {
+    method: 'GET',
+    headers: { 'Authorization': token }
   });
   return response.json();
 }

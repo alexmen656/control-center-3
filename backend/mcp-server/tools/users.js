@@ -238,12 +238,13 @@ async function updateProfile(args, context) {
 
 async function listUsersByProject(args, context) {
   try {
-    const data = await cmsRequest('projects.php', {
-      body: {
-        getProjectUsers: 'true',
-        project: args.project
-      }
+    const data = await cmsRequest(`v2/projects/${encodeURIComponent(args.project)}/users`, {
+      method: 'GET'
     }, context);
+
+    if (data && data.success === false) {
+      return formatError(data.error || 'Failed to list project users');
+    }
 
     return formatResponse({
       success: true,
@@ -256,17 +257,19 @@ async function listUsersByProject(args, context) {
 
 async function removeUserFromProject(args, context) {
   try {
-    const data = await cmsRequest('projects.php', {
-      body: {
-        removeUserFromProject: 'true',
-        project: args.project,
-        userId: args.userId
-      }
-    }, context);
+    const data = await cmsRequest(
+      `v2/projects/${encodeURIComponent(args.project)}/users/${encodeURIComponent(args.userId)}`,
+      { method: 'DELETE' },
+      context
+    );
+
+    if (data && data.success === false) {
+      return formatError(data.error || 'Failed to remove user from project');
+    }
 
     return formatResponse({
       success: true,
-      message: 'User removed from project'
+      message: data.message || 'User removed from project'
     });
   } catch (error) {
     return formatError(error.message);

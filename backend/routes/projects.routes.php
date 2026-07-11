@@ -40,6 +40,9 @@ $router->group('/v2/projects', function ($router) {
     // POST /v2/projects/{link}/users
     $router->post('/{link}/users', [ProjectsController::class, 'addUser']);
 
+    // DELETE /v2/projects/{link}/users/{userId}
+    $router->delete('/{link}/users/{userId}', [ProjectsController::class, 'removeUser']);
+
     // GET /v2/projects/{link}
     $router->get('/{link}', [ProjectsController::class, 'getByLink']);
 

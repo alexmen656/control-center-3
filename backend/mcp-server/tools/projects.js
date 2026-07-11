@@ -141,15 +141,13 @@ export async function handleProjectTool(toolName, args, context) {
   }
 }
 
-// ============================================
-// Tool Implementations
-// ============================================
-
 async function listProjects(context) {
   try {
-    const data = await cmsRequest('projects.php', {
-      body: { getUserProjects: 'true' }
-    }, context);
+    const data = await cmsRequest('v2/projects', { method: 'GET' }, context);
+
+    if (data && data.success === false) {
+      return formatError(data.error || 'Failed to list projects');
+    }
 
     return formatResponse({
       success: true,
@@ -162,16 +160,17 @@ async function listProjects(context) {
 
 async function createProject(args, context) {
   try {
-    const data = await cmsRequest('projects.php', {
+    const data = await cmsRequest('v2/projects', {
+      method: 'POST',
+      contentType: 'application/json',
       body: {
-        createProject: 'createProject',
         projectName: args.name,
         projectIcon: args.icon || 'folder-outline'
       }
     }, context);
 
-    if (data && typeof data === 'object' && data.success === false) {
-      return formatError(data.message || 'Failed to create project');
+    if (data && data.success === false) {
+      return formatError(data.error || data.message || 'Failed to create project');
     }
 
     return formatResponse({
@@ -188,12 +187,13 @@ async function createProject(args, context) {
 
 async function getProject(args, context) {
   try {
-    const data = await cmsRequest('projects.php', {
-      body: {
-        getProjectByLink: 'true',
-        project: args.project
-      }
+    const data = await cmsRequest(`v2/projects/${encodeURIComponent(args.project)}`, {
+      method: 'GET'
     }, context);
+
+    if (data && data.success === false) {
+      return formatError(data.error || 'Failed to get project');
+    }
 
     return formatResponse({
       success: true,
@@ -206,15 +206,19 @@ async function getProject(args, context) {
 
 async function updateProject(args, context) {
   try {
-    const body = {
-      updateProject: 'updateProject',
-      projectID: args.projectId
-    };
-
+    const body = {};
     if (args.name) body.projectName = args.name;
     if (args.icon) body.projectIcon = args.icon;
 
-    const data = await cmsRequest('projects.php', { body }, context);
+    const data = await cmsRequest(`v2/projects/${encodeURIComponent(args.projectId)}`, {
+      method: 'PUT',
+      contentType: 'application/json',
+      body
+    }, context);
+
+    if (data && data.success === false) {
+      return formatError(data.error || 'Failed to update project');
+    }
 
     return formatResponse({
       success: true,
@@ -227,12 +231,13 @@ async function updateProject(args, context) {
 
 async function deleteProject(args, context) {
   try {
-    const data = await cmsRequest('projects.php', {
-      body: {
-        deleteProject: 'deleteProject',
-        projectID: args.projectId
-      }
+    const data = await cmsRequest(`v2/projects/${encodeURIComponent(args.projectId)}`, {
+      method: 'DELETE'
     }, context);
+
+    if (data && data.success === false) {
+      return formatError(data.error || 'Failed to delete project');
+    }
 
     return formatResponse({
       success: true,
@@ -245,12 +250,13 @@ async function deleteProject(args, context) {
 
 async function getProjectUsers(args, context) {
   try {
-    const data = await cmsRequest('projects.php', {
-      body: {
-        getProjectUsers: 'true',
-        project: args.project
-      }
+    const data = await cmsRequest(`v2/projects/${encodeURIComponent(args.project)}/users`, {
+      method: 'GET'
     }, context);
+
+    if (data && data.success === false) {
+      return formatError(data.error || 'Failed to get project users');
+    }
 
     return formatResponse({
       success: true,
@@ -263,13 +269,15 @@ async function getProjectUsers(args, context) {
 
 async function addUserToProject(args, context) {
   try {
-    const data = await cmsRequest('projects.php', {
-      body: {
-        addUserToProject: 'true',
-        project: args.project,
-        email: args.email
-      }
+    const data = await cmsRequest(`v2/projects/${encodeURIComponent(args.project)}/users`, {
+      method: 'POST',
+      contentType: 'application/json',
+      body: { email: args.email }
     }, context);
+
+    if (data && data.success === false) {
+      return formatError(data.error || 'Failed to add user to project');
+    }
 
     return formatResponse({
       success: true,

@@ -297,4 +297,27 @@ class ProjectsController
             $response->error('Failed to add user to project', 500);
         }
     }
+
+    public function removeUser(Request $request, Response $response): void
+    {
+        $project = getProjectByLink(escape_string($request->params['link']));
+        if (!$project) {
+            $response->error('No project found', 404);
+            return;
+        }
+
+        if (!checkUserProjectPermission($request->userID, $project['projectID'])) {
+            $response->error('Permission denied', 403);
+            return;
+        }
+
+        $targetUserID = (int) $request->params['userId'];
+        $projectID = escape_string($project['projectID']);
+
+        if (query("DELETE FROM control_center_user_projects WHERE userID=$targetUserID AND projectID='$projectID'")) {
+            $response->success([], 'User removed from project successfully');
+        } else {
+            $response->error('Failed to remove user from project', 500);
+        }
+    }
 }
