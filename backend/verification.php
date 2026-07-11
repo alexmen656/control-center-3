@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
-include 'db_connection.php';
+include './helpers/db_connection.php';
 include 'functions.php';
 
 if (!empty($_POST['verificationToken'])) {

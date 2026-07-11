@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once "use_template_function.php";
-require_once "db_connection.php";
+require_once "./helpers/db_connection.php";
 require_once "functions.php";
 
 if (isset($_POST['first_name']) && isset($_POST['email_adress']) && isset($_POST['password']) && isset($_POST['login_with_google'])) {

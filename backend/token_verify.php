@@ -1,7 +1,7 @@
 <?php
 require_once 'helpers/jwt.php';
 require_once 'config.php';
-include 'db_connection.php';
+include './helpers/db_connection.php';
 include 'functions.php';
 
 header('Access-Control-Allow-Origin: *');
