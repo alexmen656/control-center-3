@@ -1,15 +1,5 @@
-/**
- * Domain Management Tools
- * 
- * Tools for managing domains with Cloudflare integration
- * Includes Super Admin features for userID 152
- */
-
 import { cmsRequest, formatResponse, formatError } from '../utils/api.js';
 
-/**
- * Tool definitions for domain management
- */
 export const domainTools = [
   {
     name: 'domain_list',
@@ -210,9 +200,6 @@ export const domainTools = [
   }
 ];
 
-/**
- * Handle domain tool calls
- */
 export async function handleDomainTool(toolName, args, context) {
   switch (toolName) {
     case 'domain_list':
@@ -240,19 +227,10 @@ export async function handleDomainTool(toolName, args, context) {
   }
 }
 
-// ============================================
-// Implementation
-// ============================================
-
 async function listDomains(args, context) {
   try {
-    const params = new URLSearchParams({
-      action: 'list'
-    });
-
-    const response = await cmsRequest('domains.php', {
-      method: 'POST',
-      body: params
+    const response = await cmsRequest('v2/domains', {
+      method: 'GET'
     }, context);
 
     if (!response.success) {
@@ -271,13 +249,8 @@ async function listDomains(args, context) {
 
 async function listAvailableDomains(args, context) {
   try {
-    const params = new URLSearchParams({
-      action: 'list_available'
-    });
-
-    const response = await cmsRequest('domains.php', {
-      method: 'POST',
-      body: params
+    const response = await cmsRequest('v2/domains/available', {
+      method: 'GET'
     }, context);
 
     if (!response.success) {
@@ -304,19 +277,19 @@ async function listAvailableDomains(args, context) {
 
 async function addDomain(args, context) {
   try {
-    const params = new URLSearchParams({
-      action: 'add',
+    const body = {
       domain: args.domain,
       registrar: args.registrar || '',
       buy_date: args.buyDate || '',
       expiry_date: args.expiryDate || '',
-      auto_renew: args.autoRenew ? '1' : '0',
+      auto_renew: args.autoRenew ? true : false,
       notes: args.notes || ''
-    });
+    };
 
-    const response = await cmsRequest('domains.php', {
+    const response = await cmsRequest('v2/domains', {
       method: 'POST',
-      body: params
+      contentType: 'application/json',
+      body
     }, context);
 
     if (!response.success) {
@@ -325,8 +298,7 @@ async function addDomain(args, context) {
 
     return formatResponse({
       success: true,
-      message: 'Domain added successfully',
-      domain: response.domain
+      message: response.message || 'Domain added successfully'
     });
   } catch (error) {
     return formatError(`Failed to add domain: ${error.message}`);
@@ -335,20 +307,20 @@ async function addDomain(args, context) {
 
 async function updateDomain(args, context) {
   try {
-    const params = new URLSearchParams({
-      action: 'update',
-      id: args.domainId.toString()
-    });
+    const body = {
+      id: args.domainId
+    };
 
-    if (args.registrar) params.append('registrar', args.registrar);
-    if (args.buyDate) params.append('buy_date', args.buyDate);
-    if (args.expiryDate) params.append('expiry_date', args.expiryDate);
-    if (args.autoRenew !== undefined) params.append('auto_renew', args.autoRenew ? '1' : '0');
-    if (args.notes !== undefined) params.append('notes', args.notes);
+    if (args.registrar !== undefined) body.registrar = args.registrar;
+    if (args.buyDate !== undefined) body.buy_date = args.buyDate;
+    if (args.expiryDate !== undefined) body.expiry_date = args.expiryDate;
+    if (args.autoRenew !== undefined) body.auto_renew = args.autoRenew ? true : false;
+    if (args.notes !== undefined) body.notes = args.notes;
 
-    const response = await cmsRequest('domains.php', {
+    const response = await cmsRequest('v2/domains', {
       method: 'POST',
-      body: params
+      contentType: 'application/json',
+      body
     }, context);
 
     if (!response.success) {
@@ -357,7 +329,7 @@ async function updateDomain(args, context) {
 
     return formatResponse({
       success: true,
-      message: 'Domain updated successfully'
+      message: response.message || 'Domain updated successfully'
     });
   } catch (error) {
     return formatError(`Failed to update domain: ${error.message}`);
@@ -366,14 +338,8 @@ async function updateDomain(args, context) {
 
 async function deleteDomain(args, context) {
   try {
-    const params = new URLSearchParams({
-      action: 'delete',
-      id: args.domainId.toString()
-    });
-
-    const response = await cmsRequest('domains.php', {
-      method: 'POST',
-      body: params
+    const response = await cmsRequest(`v2/domains/${args.domainId}`, {
+      method: 'DELETE'
     }, context);
 
     if (!response.success) {
@@ -382,7 +348,7 @@ async function deleteDomain(args, context) {
 
     return formatResponse({
       success: true,
-      message: 'Domain deleted successfully'
+      message: response.message || 'Domain deleted successfully'
     });
   } catch (error) {
     return formatError(`Failed to delete domain: ${error.message}`);
@@ -391,13 +357,10 @@ async function deleteDomain(args, context) {
 
 async function fetchCloudflare(args, context) {
   try {
-    const params = new URLSearchParams({
-      action: 'fetch_cloudflare'
-    });
-
-    const response = await cmsRequest('domains.php', {
+    const response = await cmsRequest('v2/domains/fetch-cloudflare', {
       method: 'POST',
-      body: params
+      contentType: 'application/json',
+      body: {}
     }, context);
 
     if (!response.success) {
@@ -406,10 +369,11 @@ async function fetchCloudflare(args, context) {
 
     return formatResponse({
       success: true,
-      message: 'Cloudflare domains fetched successfully',
-      added: response.added || 0,
-      updated: response.updated || 0,
-      domains: response.domains || []
+      message: response.message || 'Cloudflare domains fetched successfully',
+      imported: response.imported || [],
+      total_zones: response.total_zones || 0,
+      imported_count: response.imported_count || 0,
+      skipped_count: response.skipped_count || 0
     });
   } catch (error) {
     return formatError(`Failed to fetch Cloudflare domains: ${error.message}`);
