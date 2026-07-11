@@ -266,11 +266,8 @@ export default {
   methods: {
     async loadRoles() {
       try {
-        const response = await this.$axios.post(
-          "roles.php",
-          this.$qs.stringify({
-            getAllRoles: "getAllRoles"
-          })
+        const response = await this.$axios.get(
+          "v2/roles/"
         );
 
         if (response.data && response.data.roles) {
@@ -307,13 +304,12 @@ export default {
 
       try {
         const response = await this.$axios.post(
-          "roles.php",
-          this.$qs.stringify({
-            assignRole: "assignRole",
+          "v2/roles/assign",
+          {
             project: this.$route.params.project,
             targetUserId: this.editingUser.id,
             roleId: this.editingRoleId
-          })
+          }
         );
 
         if (response.data.success) {

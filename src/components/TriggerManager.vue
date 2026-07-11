@@ -229,12 +229,11 @@ export default defineComponent({
     async loadTriggers() {
       try {
         const response = await this.$axios.post(
-          'triggers.php',
-          this.$qs.stringify({
-            get_triggers: true,
+          'v2/triggers/list',
+          {
             project: this.project,
             table_name: this.table
-          })
+          }
         );
         this.triggers = response.data;
       } catch (error) {
@@ -250,16 +249,15 @@ export default defineComponent({
       
       try {
         const response = await this.$axios.post(
-          'triggers.php',
-          this.$qs.stringify({
-            create_trigger: true,
+          'v2/triggers/create',
+          {
             project: this.project,
             table_name: this.table,
             trigger_event: this.newTrigger.event,
             notification_type: this.newTrigger.type,
             notification_target: this.newTrigger.target,
             message_template: this.newTrigger.message
-          })
+          }
         );
         
         if (response.data.success) {
@@ -278,12 +276,11 @@ export default defineComponent({
     async toggleTrigger(triggerId, isActive) {
       try {
         await this.$axios.post(
-          'triggers.php',
-          this.$qs.stringify({
-            toggle_trigger: true,
+          'v2/triggers/toggle',
+          {
             trigger_id: triggerId,
             is_active: isActive ? 1 : 0
-          })
+          }
         );
         this.loadTriggers();
       } catch (error) {
@@ -298,11 +295,10 @@ export default defineComponent({
       
       try {
         const response = await this.$axios.post(
-          'triggers.php',
-          this.$qs.stringify({
-            delete_trigger: true,
+          'v2/triggers/delete',
+          {
             trigger_id: triggerId
-          })
+          }
         );
         
         if (response.data.success) {

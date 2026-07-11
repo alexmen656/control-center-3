@@ -274,13 +274,10 @@ export default {
   methods: {
     async loadRoles() {
       try {
-        const response = await this.$axios.post(
-          "roles.php",
-          this.$qs.stringify({
-            getAllRoles: "getAllRoles"
-          })
+        const response = await this.$axios.get(
+          "v2/roles/"
         );
-        if (response.data.success) {
+        if (response.data.roles) {
           this.availableRoles = response.data.roles;
           // Setze Standardrolle auf "Editor" falls vorhanden
           const editorRole = this.availableRoles.find(r => r.slug === 'editor');
@@ -294,14 +291,15 @@ export default {
     },
     async loadUserPermissions() {
       try {
-        const response = await this.$axios.post(
-          "roles.php",
-          this.$qs.stringify({
-            getUserRole: "getUserRole",
-            project: this.$route.params.project
-          })
+        const response = await this.$axios.get(
+          "v2/roles/me",
+          {
+            params: {
+              project: this.$route.params.project
+            }
+          }
         );
-        if (response.data.success && response.data.role) {
+        if (response.data.role) {
           this.userPermissions = response.data.role.permissions;
         }
       } catch (error) {
@@ -326,13 +324,12 @@ export default {
 
       try {
         const response = await this.$axios.post(
-          "roles.php",
-          this.$qs.stringify({
-            assignRole: "assignRole",
+          "v2/roles/assign",
+          {
             project: this.$route.params.project,
             targetUserId: this.editingUser.id,
             roleId: this.editingRoleId
-          })
+          }
         );
 
         if (response.data.success) {

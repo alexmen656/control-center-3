@@ -687,23 +687,21 @@ export default defineComponent({
     });
 
     const loadCallLogs = async () => {
+      if (!subscription.value.id) {
+        callLogs.value = [];
+        return;
+      }
       logLoading.value = callLogs.value.length === 0;
       try {
-        const body: Record<string, string> = {
-          getApiCallLogs: '1',
-          project: (route.params.project as string) || '',
-          api_slug: (route.params.apiSlug as string) || '',
-          method: logFilters.value.method,
-          status_group: logFilters.value.statusGroup,
-          search: logFilters.value.search,
-          page: logPagination.value.page.toString(),
-          limit: logFilters.value.limit.toString()
-        };
-        if (subscription.value.id) {
-          body.subscription_id = subscription.value.id.toString();
-        }
-
-        const response = await axios.post('apis.php', new URLSearchParams(body));
+        const response = await axios.get(`v2/apis/subscriptions/${subscription.value.id}/logs`, {
+          params: {
+            method: logFilters.value.method,
+            status_group: logFilters.value.statusGroup,
+            search: logFilters.value.search,
+            page: logPagination.value.page.toString(),
+            limit: logFilters.value.limit.toString()
+          }
+        });
         const data = response.data;
         callLogs.value = data.logs || [];
         logPagination.value = {

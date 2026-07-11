@@ -80,13 +80,9 @@ export default defineComponent({
     handleSubmit() {
       if (this.selectedTool == "dashboard") {
         this.$axios
-          .post(
-            "dashboard.php",
-            this.$qs.stringify({
-              new_dashboard: "new_dashboard",
-              project: this.$route.params.project,
-            })
-          )
+          .post("v2/dashboard/create", {
+            project: this.$route.params.project,
+          })
           .then(() => {
             this.emitter.emit("updateSidebar");
           });

@@ -199,11 +199,10 @@ export default defineComponent({
       this.error = null;
       
       try {
-        const response = await this.$axios.post('ai_dashboard_generator.php', this.$qs.stringify({
-          generate_dashboard: 'generate_dashboard',
+        const response = await this.$axios.post('v2/ai-dashboard/generate', {
           description: this.description,
           project: this.$route.params.project
-        }));
+        });
         
         if (response.data.error) {
           this.error = response.data.error;
@@ -223,11 +222,10 @@ export default defineComponent({
       this.error = null;
       
       try {
-        const response = await this.$axios.post('ai_dashboard_generator.php', this.$qs.stringify({
-          create_ai_dashboard: 'create_ai_dashboard',
+        const response = await this.$axios.post('v2/ai-dashboard/create', {
           project: this.$route.params.project,
           dashboard_config: JSON.stringify(this.generatedDashboard)
-        }));
+        });
         
         if (response.data.error) {
           this.error = response.data.error;

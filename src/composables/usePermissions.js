@@ -1,6 +1,5 @@
 import { ref, computed } from 'vue';
 import axios from 'axios';
-import qs from 'qs';
 
 export function usePermissions(project) {
     const userRole = ref(null);
@@ -12,12 +11,13 @@ export function usePermissions(project) {
         loading.value = true;
         error.value = null;
         try {
-            const response = await axios.post(
-                'roles.php',
-                qs.stringify({
-                    getUserRole: 'getUserRole',
-                    project: project.value || project
-                })
+            const response = await axios.get(
+                'v2/roles/me',
+                {
+                    params: {
+                        project: project.value || project
+                    }
+                }
             );
             if (response.data.role) {//response.data.success && 
                 userRole.value = response.data.role;

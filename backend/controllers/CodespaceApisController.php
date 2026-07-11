@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../helpers/apis.php';
-require_once __DIR__ . '/../api_keys.php';
+require_once __DIR__ . '/../helpers/api_keys.php';
 require_once __DIR__ . '/../helpers/deploy.php';
 
 class CodespaceApisController

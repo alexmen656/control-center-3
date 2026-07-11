@@ -318,10 +318,9 @@ export default {
       this.loadingCustomLogin = true;
       this.customLoginError = '';
       try {
-        const res = await this.$axios.post('custom_login_domains.php', this.$qs.stringify({
-          action: 'get',
+        const res = await this.$axios.post('v2/custom-login-domains/get', {
           project: this.$route.params.project,
-        }));
+        });
         if (res.data.success && res.data.data) {
           const data = res.data.data;
           const isInternal = data.is_internal || data.domain?.endsWith('.control-center.eu');
@@ -372,15 +371,14 @@ export default {
       }
 
       try {
-        const res = await this.$axios.post('custom_login_domains.php', this.$qs.stringify({
-          action: 'save',
+        const res = await this.$axios.post('v2/custom-login-domains/save', {
           project: this.$route.params.project,
           domain: this.customLogin.domain,
           is_enabled: this.customLogin.is_enabled ? 'true' : 'false',
           primary_color: this.customLogin.primary_color,
           logo_url: this.customLogin.logo_url,
           company_name: this.customLogin.company_name,
-        }));
+        });
 
         if (res.data.success) {
           let message = res.data.message || 'Erfolgreich gespeichert';
@@ -406,10 +404,9 @@ export default {
       this.customLoginError = '';
 
       try {
-        const res = await this.$axios.post('custom_login_domains.php', this.$qs.stringify({
-          action: 'delete',
+        const res = await this.$axios.post('v2/custom-login-domains/delete', {
           project: this.$route.params.project,
-        }));
+        });
 
         if (res.data.success) {
           this.customLogin = {
@@ -566,10 +563,9 @@ export default {
           }
         }
 
-        const res = await this.$axios.post('project_domain.php', this.$qs.stringify({
-          action: 'get',
+        const res = await this.$axios.post('v2/project-domain/get', {
           project: this.$route.params.project,
-        }));
+        });
         this.connectedDomain = res.data.domain;
       } catch (e) {
         this.connectedDomain = null;
@@ -614,14 +610,13 @@ export default {
       }
 
       try {
-        const res = await this.$axios.post('project_domain.php', this.$qs.stringify({
-          action: 'connect',
+        const res = await this.$axios.post('v2/project-domain/connect', {
           project: this.$route.params.project,
           user_id: user.userID,
           domain: finalDomain,
           domain_type: this.selectedDomainType,
           custom_base_domain: customBaseDomain
-        }));
+        });
         if (res.data && res.data.success) {
           this.connectedDomain = res.data.domain;
           this.domainInput = '';
@@ -638,10 +633,9 @@ export default {
 
       this.domainError = '';
       try {
-        const res = await this.$axios.post('project_domain.php', this.$qs.stringify({
-          action: 'delete',
+        const res = await this.$axios.post('v2/project-domain/delete', {
           project: this.$route.params.project
-        }));
+        });
 
         if (res.data && res.data.success) {
           this.connectedDomain = null;

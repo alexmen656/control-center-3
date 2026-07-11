@@ -282,12 +282,13 @@ export default defineComponent({
 
     const loadUserPermissions = async () => {
       try {
-        const response = await axios.post(
-          'roles.php',
-          qs.stringify({
-            getUserRole: 'getUserRole',
-            project: route.params.project
-          })
+        const response = await axios.get(
+          'v2/roles/me',
+          {
+            params: {
+              project: route.params.project
+            }
+          }
         );
 
         if (response.data.role) {

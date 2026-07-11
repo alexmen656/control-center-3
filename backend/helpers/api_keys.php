@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/helpers/deploy.php';
+require_once __DIR__ . '/deploy.php';
 
 function api_generate_key($projectID = null)
 {

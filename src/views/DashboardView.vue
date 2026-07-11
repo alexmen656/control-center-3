@@ -464,15 +464,11 @@ export default defineComponent({
           await localStorage.setItem("charts", JSON.stringify([widgetConfig]));
         }
 
-        await this.$axios.post(
-          "dashboard.php",
-          this.$qs.stringify({
-            new_chart: "new_chart",
-            json: JSON.stringify([widgetConfig]),
-            dashboard: this.$route.params.dashboard,
-            project: this.$route.params.project,
-          })
-        );
+        await this.$axios.post("v2/dashboard/charts", {
+          json: JSON.stringify([widgetConfig]),
+          dashboard: this.$route.params.dashboard,
+          project: this.$route.params.project,
+        });
 
         this.loadCharts();
 
@@ -507,15 +503,11 @@ export default defineComponent({
         } else {
           await localStorage.setItem("charts", JSON.stringify([json]));
         }
-        await this.$axios.post(
-          "dashboard.php",
-          this.$qs.stringify({
-            new_chart: "new_chart",
-            json: JSON.stringify([json]),
-            dashboard: this.$route.params.dashboard,
-            project: this.$route.params.project,
-          })
-        );
+        await this.$axios.post("v2/dashboard/charts", {
+          json: JSON.stringify([json]),
+          dashboard: this.$route.params.dashboard,
+          project: this.$route.params.project,
+        });
 
         this.loadCharts();
 
@@ -535,15 +527,11 @@ export default defineComponent({
           } else {
             await localStorage.setItem("charts", JSON.stringify([viewObject]));
           }
-          await this.$axios.post(
-            "dashboard.php",
-            this.$qs.stringify({
-              new_chart: "new_chart",
-              json: JSON.stringify([viewObject]),
-              dashboard: this.$route.params.dashboard,
-              project: this.$route.params.project,
-            })
-          );
+          await this.$axios.post("v2/dashboard/charts", {
+            json: JSON.stringify([viewObject]),
+            dashboard: this.$route.params.dashboard,
+            project: this.$route.params.project,
+          });
           this.loadCharts();
         }
       }
@@ -569,15 +557,11 @@ export default defineComponent({
         }
       });
       await localStorage.setItem("charts", JSON.stringify(new_charts));*/
-      await this.$axios.post(
-        "dashboard.php",
-        this.$qs.stringify({
-          delete_chart: "delete_chart",
-          dashboard: this.$route.params.dashboard,
-          project: this.$route.params.project,
-          chart_index: index,
-        })
-      );
+      await this.$axios.post("v2/dashboard/charts/delete", {
+        dashboard: this.$route.params.dashboard,
+        project: this.$route.params.project,
+        chart_index: index,
+      });
       this.loadCharts();
     },
     async updateCharts(newCharts) {
@@ -598,14 +582,10 @@ export default defineComponent({
     async loadCharts() {
       this.charts = [];
       //JSON.parse(localStorage.getItem("charts"))
-      const request = await this.$axios.post(
-        "dashboard.php",
-        this.$qs.stringify({
-          get_dashboard: "get_dashboard",
-          dashboard: this.$route.params.dashboard,
-          project: this.$route.params.project,
-        })
-      );
+      const request = await this.$axios.post("v2/dashboard/get", {
+        dashboard: this.$route.params.dashboard,
+        project: this.$route.params.project,
+      });
       request.data.forEach(async (chart) => {
         // Handle module widgets
         if (chart.chart_type === "module_widget") {

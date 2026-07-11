@@ -240,7 +240,28 @@ class ApisController
         $response->json($usageData);
     }
 
-    
+    public function getLogs(Request $request, Response $response): void
+    {
+        $subscriptionId = (int) $request->params['id'];
+
+        if (!$subscriptionId) {
+            $response->json(['error' => 'Subscription not found', 'logs' => [], 'total' => 0, 'page' => 1, 'limit' => 25, 'totalPages' => 0, 'stats' => calculateUsageStats(0)]);
+            return;
+        }
+
+        $result = getApiCallLogs($subscriptionId, [
+            'method' => $request->input('method', ''),
+            'statusGroup' => $request->input('status_group', ''),
+            'search' => $request->input('search', ''),
+            'page' => $request->input('page', 1),
+            'limit' => $request->input('limit', 25)
+        ]);
+
+        $result['stats'] = calculateUsageStats($subscriptionId);
+        $response->json($result);
+    }
+
+
     public function regenerateKey(Request $request, Response $response): void
     {
         $subscriptionId = escape_string($request->params['id']);

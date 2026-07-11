@@ -90,7 +90,6 @@ import { FirebaseMessaging } from "@capacitor-firebase/messaging";
 import { firebase_config } from "@/firebase_config";
 import { store } from "./theme/theme";
 import axios from "axios";
-import qs from "qs";
 import { saveLocal, loadFromLocalStorage } from "@/utils/localStorageHelpers";
 import {
   checkPendingVerification,
@@ -467,15 +466,10 @@ export default defineComponent({
       if (checkSupported() == true) {
         if (checkPermissions()) {
           getToken().then((token) => {
-            axios.post(
-              "push_notifications_token.php",
-              qs.stringify({
-                newToken: "newToken",
-                token: token,
-                platform: window.navigator.userAgent,
-                userID: this.userData.userID,
-              })
-            );
+            axios.post("v2/push-token/register", {
+              token: token,
+              platform: window.navigator.userAgent,
+            });
           });
         } else {
           requestPermissions();

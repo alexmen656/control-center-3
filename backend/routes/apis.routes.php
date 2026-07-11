@@ -28,6 +28,8 @@ $router->group('/v2/apis', function ($router) {
     // GET /v2/apis/subscriptions/{id}/usage?days=30
     $router->get('/subscriptions/{id}/usage', [ApisController::class, 'getUsage']);
 
+    $router->get('/subscriptions/{id}/logs', [ApisController::class, 'getLogs']);
+
     // POST /v2/apis/subscriptions/{id}/regenerate-key
     $router->post('/subscriptions/{id}/regenerate-key', [ApisController::class, 'regenerateKey']);
 
