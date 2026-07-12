@@ -573,7 +573,7 @@ const getFileIcon = (file) => {
 const refreshFiles = async () => {
   try {
     // Use file API to load files from specific codespace
-    const response = await axios.get(`file_api.php?project=${projectName}&codespace=${codespace}&action=list`)
+    const response = await axios.get(`v2/codespaces/files?project=${projectName}&codespace=${codespace}&action=list`)
     const allFiles = flattenFileTree(response.data || [])
 
     // Add virtual .env entry for Environment Variables management
@@ -630,7 +630,7 @@ const createNewFile = async () => {
   if (fileName) {
     try {
       // Use file API to create file in specific codespace
-      await axios.post(`file_api.php?project=${projectName}&codespace=${codespace}`, {
+      await axios.post(`v2/codespaces/files?project=${projectName}&codespace=${codespace}`, {
         action: 'create_file',
         path: fileName,
         content: ''
@@ -650,7 +650,7 @@ const createNewFolder = async () => {
   if (folderName) {
     try {
       // Create folder using the codespace API with codespace parameter
-      await axios.post(`file_api.php?project=${projectName}&codespace=${codespace}`, {
+      await axios.post(`v2/codespaces/files?project=${projectName}&codespace=${codespace}`, {
         action: 'create_folder',
         path: folderName
       })
@@ -667,7 +667,7 @@ const deleteFile = async (file) => {
   if (confirm(`Are you sure you want to delete ${file.name}?`)) {
     try {
       // Use file API to delete file from specific codespace
-      await axios.delete(`file_api.php?project=${projectName}&codespace=${codespace}`, {
+      await axios.delete(`v2/codespaces/files?project=${projectName}&codespace=${codespace}`, {
         data: { file: file.path }
       })
       await refreshFiles()
@@ -684,7 +684,7 @@ const deleteFile = async (file) => {
 const loadGitData = async () => {
   try {
     // Load real git changes for specific codespace
-    const changesResponse = await axios.get(`monaco_git_api.php?project=${projectName}&codespace=${codespace}&action=changes`)
+    const changesResponse = await axios.get(`v2/codespaces/git?project=${projectName}&codespace=${codespace}&action=changes`)
     if (changesResponse.data.success) {
       changedFiles.value = changesResponse.data.changes || []
     } else {
@@ -692,7 +692,7 @@ const loadGitData = async () => {
     }
 
     // Load commit history for specific codespace
-    const commitsResponse = await axios.get(`monaco_git_api.php?project=${projectName}&codespace=${codespace}&action=commits`)
+    const commitsResponse = await axios.get(`v2/codespaces/git?project=${projectName}&codespace=${codespace}&action=commits`)
     if (commitsResponse.data.success) {
       recentCommits.value = commitsResponse.data.commits.map(commit => ({
         hash: commit.sha || commit.hash,
@@ -762,7 +762,7 @@ const commitChanges = async () => {
       staged: f.staged
     }))
 
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespace}`, {
+    const response = await axios.post(`v2/codespaces/git?project=${projectName}&codespace=${codespace}`, {
       action: 'commit',
       message: commitMessage.value,
       files: filesToCommit,
@@ -804,7 +804,7 @@ const pullFromGitHub = async () => {
   isPulling.value = true
 
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespace}`, {
+    const response = await axios.post(`v2/codespaces/git?project=${projectName}&codespace=${codespace}`, {
       action: 'pull'
     })
 
@@ -835,7 +835,7 @@ const pushToGitHub = async () => {
   isPushing.value = true
 
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespace}`, {
+    const response = await axios.post(`v2/codespaces/git?project=${projectName}&codespace=${codespace}`, {
       action: 'push'
     })
 
@@ -888,7 +888,7 @@ const resolveConflict = async (filename) => {
 
 const autoResolveConflicts = async () => {
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespace}`, {
+    const response = await axios.post(`v2/codespaces/git?project=${projectName}&codespace=${codespace}`, {
       action: 'auto_resolve_conflicts',
       conflicts: mergeConflicts.value
     })
@@ -909,7 +909,7 @@ const autoResolveConflicts = async () => {
 const stageFile = async (filePath) => {
   console.log('Staging file:', filePath)
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespace}`, {
+    const response = await axios.post(`v2/codespaces/git?project=${projectName}&codespace=${codespace}`, {
       action: 'stage',
       file: filePath
     })
@@ -927,7 +927,7 @@ const stageFile = async (filePath) => {
 const unstageFile = async (filePath) => {
   console.log('Unstaging file:', filePath)
   try {
-    const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespace}`, {
+    const response = await axios.post(`v2/codespaces/git?project=${projectName}&codespace=${codespace}`, {
       action: 'unstage',
       file: filePath
     })
@@ -945,7 +945,7 @@ const unstageFile = async (filePath) => {
 const discardChanges = async (filePath) => {
   if (confirm(`Are you sure you want to discard changes to ${filePath}?`)) {
     try {
-      const response = await axios.post(`monaco_git_api.php?project=${projectName}&codespace=${codespace}`, {
+      const response = await axios.post(`v2/codespaces/git?project=${projectName}&codespace=${codespace}`, {
         action: 'discard',
         file: filePath
       })
@@ -992,7 +992,7 @@ const stopLiveGitUpdates = () => {
 const viewFileDiff = async (filePath) => {
   try {
     console.log('Loading diff for file:', filePath)
-    const response = await axios.get(`monaco_git_api.php?project=${projectName}&codespace=${codespace}&action=diff&file=${filePath}`)
+    const response = await axios.get(`v2/codespaces/git?project=${projectName}&codespace=${codespace}&action=diff&file=${filePath}`)
 
     if (response.data.success) {
       // Set diff data and show modal

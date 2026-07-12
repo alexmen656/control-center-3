@@ -2,6 +2,9 @@
 
 require_once __DIR__ . '/../controllers/CodespacesController.php';
 require_once __DIR__ . '/../controllers/CodespaceDomainsController.php';
+require_once __DIR__ . '/../controllers/CodespaceFilesController.php';
+require_once __DIR__ . '/../controllers/CodespaceGitController.php';
+require_once __DIR__ . '/../controllers/CodespaceEditorController.php';
 
 $router->group('/v2/codespaces', function ($router) {
 
@@ -11,6 +14,16 @@ $router->group('/v2/codespaces', function ($router) {
     $router->get('/templates', [CodespacesController::class, 'templates']);
     $router->get('/user-projects', [CodespacesController::class, 'userProjects']);
     $router->post('/reorder', [CodespacesController::class, 'reorder']);
+
+    $router->get('/files', [CodespaceFilesController::class, 'handleGet']);
+    $router->post('/files', [CodespaceFilesController::class, 'handlePost']);
+    $router->put('/files', [CodespaceFilesController::class, 'handlePut']);
+    $router->delete('/files', [CodespaceFilesController::class, 'handleDelete']);
+
+    $router->get('/git', [CodespaceGitController::class, 'handleGet']);
+    $router->post('/git', [CodespaceGitController::class, 'handlePost']);
+
+    $router->post('/editor', [CodespaceEditorController::class, 'handle']);
 
     $router->get('/{id}/domain-info', [CodespaceDomainsController::class, 'info']);
     $router->get('/{id}/domain', [CodespaceDomainsController::class, 'get']);

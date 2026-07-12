@@ -6,11 +6,11 @@ const CODESPACE_HINT =
   'A codespace is one deployable app inside a project. It must be created with codespace_create BEFORE any files can be written to it. A project can hold several codespaces, each identified by the slug returned by codespace_create. Pass that slug as "codespace"; never invent one. Do not assume a "main" codespace exists — a fresh project has no codespaces at all.';
 
 function fileApi(args, extra = '') {
-  return `file_api.php?project=${enc(args.project)}&codespace=${enc(args.codespace || 'main')}${extra}`;
+  return `v2/codespaces/files?project=${enc(args.project)}&codespace=${enc(args.codespace || 'main')}${extra}`;
 }
 
 function gitApi(args, extra = '') {
-  return `monaco_git_api.php?project=${enc(args.project)}&codespace=${enc(args.codespace || 'main')}${extra}`;
+  return `v2/codespaces/git?project=${enc(args.project)}&codespace=${enc(args.codespace || 'main')}${extra}`;
 }
 
 function deployApi(args, action) {

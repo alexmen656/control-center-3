@@ -71,7 +71,7 @@ export async function readResource(uri, user, backendUrl, token) {
     switch (type) {
       case 'projects':
         if (subResource === 'files') {
-          data = await fetchProjectFiles(id, backendUrl);
+          data = await fetchProjectFiles(id, backendUrl, token);
         } else {
           data = await fetchProject(id, backendUrl, token);
         }
@@ -128,9 +128,10 @@ async function fetchProject(projectLink, backendUrl, token) {
   return response.json();
 }
 
-async function fetchProjectFiles(projectLink, backendUrl) {
+async function fetchProjectFiles(projectLink, backendUrl, token) {
   const response = await fetch(
-    `${backendUrl}/file_api.php?project=${encodeURIComponent(projectLink)}&action=list&path=/`
+    `${backendUrl}/v2/codespaces/files?project=${encodeURIComponent(projectLink)}&codespace=main&action=list`,
+    { method: 'GET', headers: { 'Authorization': token } }
   );
   return response.json();
 }
