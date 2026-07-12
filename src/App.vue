@@ -7,16 +7,16 @@
         <ion-split-pane content-id="main-content" :class="{ 'collapsed-sidebar': isMenuCollapsed }">
           <ion-menu v-if="token && account_active" content-id="main-content"
             :class="['ion-menu', { 'collapsed-menu': isMenuCollapsed, 'hasToBeDarkmode': hasToBeDarkmode }]"
-            type="overlay">
+            type="overlay"
+            swipe-gesture="false">
             <ion-content class="menu-scroll-content" :class="hasToBeDarkmode ? 'hasToBeDarkmode' : ''">
-              <SideBar :projects="projects" :tools="tools" :bookmarks="bookmarks" :isCollapsed="isMenuCollapsed"
+              <SideBar :projects="projects" :bookmarks="bookmarks" :isCollapsed="isMenuCollapsed"
                 v-if="showSideBar" @sidebarToggled="onSidebarToggled"></SideBar>
               <ProjectSideBar :isCollapsed="isMenuCollapsed" :hasToBeDarkmode="hasToBeDarkmode"
                 v-if="showProjectSideBar" @sidebarToggled="onSidebarToggled"></ProjectSideBar>
             </ion-content>
           </ion-menu>
-          <div id="main-content" :class="{ 'has-touch-bar': showTouchBar, 'isNotLogin': isLoginPage, hasToBeDarkmode }">
-            <!--  <SiteTitle v-if="showSiteTitle" :icon="page.icon" :title="page.title" @updateSidebar="updateSidebar()" />-->
+          <div id="main-content" :class="{ 'split-pane-main': true, 'has-touch-bar': showTouchBar, 'isNotLogin': isLoginPage, hasToBeDarkmode }">
             <ion-router-outlet v-if="page.title" @updateSidebar="updateSidebar()" :class="{
               showTitle: showTitle,
             }"></ion-router-outlet>
@@ -50,12 +50,10 @@
 
           </div>
         </ion-split-pane>
-        <!-- TouchBar for mobile devices -->
         <TouchBar v-if="showTouchBar" />
 
 
       </ion-content>
-      <!--<div class="offline" v-if="!isOnline"><h6>You are offline!</h6></div>-->
       <ion-footer v-if="!isOnline" class="offline" collapse="fade">
         <ion-toolbar>
           <ion-title>
@@ -72,19 +70,16 @@ import { useIonRouter } from "@ionic/vue";
 import { defineComponent, ref, onMounted } from "vue";
 import SiteHeader from "@/components/Header.vue";
 import SideBar from "@/components/SideBar.vue";
-//import SiteTitle from "@/components/SiteTitle.vue";
 import ProjectSideBar from "@/components/ProjectSideBar.vue";
 import TouchBar from "@/components/TouchBar.vue";
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
 import { initializeApp } from "firebase/app";
 import { useRoute } from "vue-router";
-//import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import { loadUserData, getUserData } from "@/userData";
 import offlineTools from "@/offline/tools.json";
 import offlinePages from "@/offline/pages.json";
 import { SplashScreen } from "@capacitor/splash-screen";
 import { StatusBar, Style } from "@capacitor/status-bar";
-//import { Plugins } from "@capacitor/core";
 import { isPlatform } from "@ionic/vue";
 import { FirebaseMessaging } from "@capacitor-firebase/messaging";
 import { firebase_config } from "@/firebase_config";
@@ -97,7 +92,6 @@ import {
   checkProjectAccess,
 } from "@/utils/authHelpers";
 
-//const { FaceId } = Plugins;
 
 const fmg = FirebaseMessaging;
 
@@ -108,7 +102,6 @@ export default defineComponent({
     SideBar,
     ProjectSideBar,
     TouchBar,
-    //SiteTitle,
     LoadingSpinner,
   },
   data() {
@@ -136,7 +129,6 @@ export default defineComponent({
       store,
       isMenuCollapsed: false,
       hasToBeDarkmode: false,
-      // account_active: false
     };
   },
   computed: {
@@ -178,7 +170,6 @@ export default defineComponent({
       return this.page.showTitle === true || this.page.showTitle === "true";
     },
     showTouchBar() {
-      // Show TouchBar on mobile platforms when user is logged in and account is active
       return (
         (isPlatform('ios') || isPlatform('android') ||
           (isPlatform('mobile') && window.innerWidth <= 768)) &&
@@ -480,9 +471,7 @@ export default defineComponent({
     try {
       await SplashScreen.hide();
 
-      // Configure iOS Status Bar
       if (isPlatform('ios')) {
-        // Use Dark style (black text) for light mode header (#eff3f6)
         await StatusBar.setStyle({ style: Style.Dark });
         await StatusBar.setOverlaysWebView({ overlay: false });
         await StatusBar.setBackgroundColor({ color: '#eff3f6' });
@@ -501,17 +490,14 @@ export default defineComponent({
     this.loadPageData("Mounted");
     this.checkMonacoRoute();
 
-    // Watch for theme changes to update status bar
     if (isPlatform('ios')) {
       const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const updateStatusBar = async (e) => {
         try {
           if (e.matches) {
-            // Dark mode
             await StatusBar.setStyle({ style: Style.Light });
             await StatusBar.setBackgroundColor({ color: '#1e1e1e' });
           } else {
-            // Light mode
             await StatusBar.setStyle({ style: Style.Dark });
             await StatusBar.setBackgroundColor({ color: '#eff3f6' });
           }
@@ -520,7 +506,6 @@ export default defineComponent({
         }
       };
       darkModeQuery.addEventListener('change', updateStatusBar);
-      // Set initial state
       updateStatusBar(darkModeQuery);
     }
   },
@@ -532,7 +517,6 @@ export default defineComponent({
       this.isMenuCollapsed = !this.isMenuCollapsed;
     },
     checkMonacoRoute() {
-      // Auto-collapse sidebar for Monaco editor
       if (this.$route.path.includes('/codespace') && !this.$route.path.includes('new/codespace') && !this.$route.path.includes('manage/codespaces') && !this.$route.path.includes('table')) {
         this.isMenuCollapsed = true;
         this.hasToBeDarkmode = true;
@@ -545,7 +529,6 @@ export default defineComponent({
       this.$router.push(location);
     },
     setTheme(value) {
-      // @ts-ignore: Object is possibly 'null'.
       localStorage.setItem("themeSet", value);
       store.setItem();
     },

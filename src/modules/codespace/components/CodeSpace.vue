@@ -1,4 +1,5 @@
 <template>
+  <ion-page>
   <div class="monaco-container">
     <CodeSpaceSidebar class="sidebar" />
 
@@ -129,11 +130,12 @@
       </div>
     </div>
   </div>
+  </ion-page>
 </template>
 
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { VueMonacoEditor } from '@guolao/vue-monaco-editor'
 import CodeSpaceSidebar from './CodeSpaceSidebar.vue'
 import { useRoute } from 'vue-router'
@@ -141,9 +143,7 @@ import axios from 'axios'
 import { ToastService } from "@/services/ToastService";
 import { marked } from 'marked';
 import { useCodespace } from '@/composables/useCodespace'
-import {
-  IonIcon
-} from '@ionic/vue'
+import { IonIcon } from '@ionic/vue'
 import CodeSpaceAPIsView from './CodeSpaceAPIsView.vue'
 import CodeSpaceEnvView from './CodeSpaceEnvView.vue'
 
@@ -436,68 +436,60 @@ const getFileColor = (filename) => {
   return colorMap[ext] || 'medium'
 }
 
+const onOpenFile = (event) => loadFile(event.detail.path)
+const onRefreshFile = (event) => {
+  if (event.detail.path === currentFile.value) loadFile(currentFile.value)
+}
+const onOpenEnvView = () => {
+  showWelcome.value = false
+  showAPIsView.value = false
+  showEnvView.value = true
+}
+const onAddEnvVar = () => {
+  showWelcome.value = false
+  showAPIsView.value = false
+  showEnvView.value = true
+  setTimeout(() => { window.dispatchEvent(new CustomEvent('monaco-env-add-modal')) }, 100)
+}
+const onKeydown = async (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key === 's') {
+    event.preventDefault()
+    if (currentFile.value && !showWelcome.value) {
+      try {
+        await saveFile(currentFile.value, code.value, true)
+      } catch (error) {
+        toast.error(`Fehler beim Speichern von ${currentFile.value}: ${error.message}`, 30)
+      }
+    } else {
+      toast.warning('Keine Datei geöffnet zum Speichern', 30)
+    }
+  }
+  if ((event.metaKey || event.ctrlKey) && event.key === 'n' && !event.shiftKey) {
+    event.preventDefault()
+    if (showWelcome.value) {
+      createNewFile()
+    } else {
+      toast.info('Neue Datei: Nutze die Sidebar oder kehre zur Welcome-Seite zurück', 30)
+    }
+  }
+}
+
 onMounted(() => {
   initializeProject()
-
-  // Initialize AI Assistant with welcome message
   addAIMessage('Hallo! Ich bin dein AI Code-Assistent. Ich kann dir bei Fragen zu deinem Code helfen und im Agent-Modus sogar automatisch Änderungen vorschlagen. Wie kann ich dir helfen?');
+  window.addEventListener('monaco-open-file', onOpenFile)
+  window.addEventListener('monaco-refresh-file', onRefreshFile)
+  window.addEventListener('monaco-open-env-view', onOpenEnvView)
+  window.addEventListener('monaco-add-env-var', onAddEnvVar)
+  window.addEventListener('keydown', onKeydown)
+})
 
-  // Listen for file open events from sidebar
-  window.addEventListener('monaco-open-file', (event) => {
-    loadFile(event.detail.path)
-  })
-
-  // Listen for file refresh events from sidebar
-  window.addEventListener('monaco-refresh-file', (event) => {
-    if (event.detail.path === currentFile.value) {
-      loadFile(currentFile.value)
-    }
-  })
-
-  // Listen for ENV view events from sidebar
-  window.addEventListener('monaco-open-env-view', () => {
-    showWelcome.value = false
-    showAPIsView.value = false
-    showEnvView.value = true
-  })
-
-  window.addEventListener('monaco-add-env-var', () => {
-    showWelcome.value = false
-    showAPIsView.value = false
-    showEnvView.value = true
-    // Add a slight delay to ensure the view is mounted before triggering add modal
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('monaco-env-add-modal'))
-    }, 100)
-  })
-
-  // Prevent default action for Command + S and trigger save with toast notification
-  window.addEventListener('keydown', async (event) => {
-    if ((event.metaKey || event.ctrlKey) && event.key === 's') {
-      event.preventDefault()
-      if (currentFile.value && !showWelcome.value) {
-        try {
-          await saveFile(currentFile.value, code.value, true)
-          //toast.success(`${currentFile.value} erfolgreich gespeichert!`, 30)
-        } catch (error) {
-          toast.error(`Fehler beim Speichern von ${currentFile.value}: ${error.message}`, 30)
-        }
-      } else {
-        toast.warning('Keine Datei geöffnet zum Speichern', 30)
-      }
-      console.log('Command + S was pressed, file saved.')
-    }
-
-    // Ctrl+N für neue Datei
-    if ((event.metaKey || event.ctrlKey) && event.key === 'n' && !event.shiftKey) {
-      event.preventDefault()
-      if (showWelcome.value) {
-        createNewFile()
-      } else {
-        toast.info('Neue Datei: Nutze die Sidebar oder kehre zur Welcome-Seite zurück', 30)
-      }
-    }
-  })
+onUnmounted(() => {
+  window.removeEventListener('monaco-open-file', onOpenFile)
+  window.removeEventListener('monaco-refresh-file', onRefreshFile)
+  window.removeEventListener('monaco-open-env-view', onOpenEnvView)
+  window.removeEventListener('monaco-add-env-var', onAddEnvVar)
+  window.removeEventListener('keydown', onKeydown)
 })
 
 // Markdown rendering

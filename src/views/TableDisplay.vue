@@ -85,7 +85,10 @@
                 <div v-for="(tr, rowIndex) in sortedData" :key="rowIndex" class="table-row"
                   :class="{ 'row-hover': true }">
                   <div v-for="(td, colIndex) in tr" :key="colIndex" class="table-cell">
-                    <span class="cell-content">{{ td }}</span>
+                    <img v-if="isImageValue(td) && getSignedImageUrl(td)" :src="getSignedImageUrl(td)"
+                      class="cell-image-preview" @click.stop="openImagePreview(getSignedImageUrl(td))"
+                      @error="onCellImageError(td)" />
+                    <span v-else class="cell-content">{{ td }}</span>
                   </div>
                   <div class="table-cell actions-cell">
                     <div class="action-buttons">
@@ -144,6 +147,8 @@
             </label>
             <input v-else-if="field.type === 'date'" v-model="editFormValues[field.name]" type="date"
               class="modern-input" />
+            <FloatingFileUpload v-else-if="field.type === 'image'" v-model="editFormValues[field.name]" :label="''"
+              :project="$route.params.project" :projectID="projectID" />
             <input v-else v-model="editFormValues[field.name]" type="text"
               :placeholder="field.placeholder || field.label" class="modern-input" />
           </div>
@@ -162,12 +167,16 @@
         @close="triggerModalOpen = false" />
       <RenameTable v-if="renameModalOpen" :project="$route.params.project" :table="$route.params.table"
         @close="renameModalOpen = false" @success="handleRenameSuccess" @sidebarRefresh="refreshSidebar" />
+      <div v-if="imagePreviewUrl" class="image-lightbox" @click="imagePreviewUrl = ''">
+        <img :src="imagePreviewUrl" class="image-lightbox-img" />
+      </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script>
 import DisplayTable from "@/components/DisplayTable.vue";
+import FloatingFileUpload from "@/components/FloatingFileUpload.vue";
 import TriggerManager from "@/components/TriggerManager.vue";
 import RenameTable from "@/components/RenameTable.vue";
 import { defineComponent, ref } from "vue";
@@ -182,6 +191,7 @@ export default defineComponent({
   name: "TableDisplay",
   components: {
     DisplayTable,
+    FloatingFileUpload,
     TriggerManager,
     RenameTable,
     SiteTitle,
@@ -209,6 +219,9 @@ export default defineComponent({
       searchTerm: '',
       editFormData: [],
       editFormValues: {},
+      projectID: null,
+      signedUrls: {},
+      imagePreviewUrl: '',
     };
   },
   computed: {
@@ -479,6 +492,7 @@ export default defineComponent({
           this.data = res.data.data;
           this.load_more_btn = res.data.load_more_btn;
           this.current_limit = 1;
+          this.loadImagePreviews();
         });
 
       this.$axios
@@ -493,6 +507,8 @@ export default defineComponent({
         )
         .then((res) => {
           this.form2 = res.data || {};
+          this.projectID = res.data ? res.data.projectID : null;
+          this.loadImagePreviews();
         });
     },
     loadMore() {
@@ -503,7 +519,50 @@ export default defineComponent({
         res.data.data.forEach(element => {
           this.data.push(element);
         });
+        this.loadImagePreviews();
       });
+    },
+    isImageValue(val) {
+      return typeof val === 'string' && !/\s/.test(val) && /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(val);
+    },
+    getSignedImageUrl(val) {
+      return this.signedUrls[val] || '';
+    },
+    onCellImageError(val) {
+      delete this.signedUrls[val];
+    },
+    openImagePreview(url) {
+      this.imagePreviewUrl = url;
+    },
+    async loadImagePreviews() {
+      if (!this.projectID || !Array.isArray(this.data)) return;
+
+      const seen = new Set();
+      const files = [];
+      this.data.forEach(row => {
+        (row || []).forEach(cell => {
+          if (this.isImageValue(cell) && !this.signedUrls[cell] && !seen.has(cell)) {
+            seen.add(cell);
+            files.push({ path: cell, location: cell, projectID: this.projectID });
+          }
+        });
+      });
+
+      if (files.length === 0) return;
+
+      try {
+        const res = await this.$axios.post('signed_url_generator.php', {
+          files,
+          validitySeconds: 3600,
+        });
+        if (res.data && res.data.success) {
+          res.data.urls.forEach(item => {
+            this.signedUrls[item.originalPath] = item.signedUrl;
+          });
+        }
+      } catch (error) {
+        console.error('Error loading image previews:', error);
+      }
     }
   },
 });
@@ -781,6 +840,39 @@ export default defineComponent({
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 200px;
+}
+
+.cell-image-preview {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  cursor: zoom-in;
+  transition: transform 0.15s ease;
+}
+
+.cell-image-preview:hover {
+  transform: scale(1.05);
+}
+
+.image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  cursor: zoom-out;
+  padding: 40px;
+}
+
+.image-lightbox-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
 }
 
 .action-buttons {

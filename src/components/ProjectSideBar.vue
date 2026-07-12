@@ -165,31 +165,7 @@
           <path d="M5.615375 14.284625V0.7153750000000001" stroke-width="1"></path>
         </svg>
       </button>
-      <button type="button" id="sidebar-notif-trigger" class="footer-btn footer-notif"
-        :data-tooltip="isCollapsed ? 'Notifications' : ''" aria-label="Notifications">
-        <ion-icon name="notifications-outline" />
-        <span v-if="!isCollapsed">Notifications</span>
-        <span v-if="unreadCount > 0" class="notif-dot">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
-      </button>
     </footer>
-    <ion-popover trigger="sidebar-notif-trigger" side="top" alignment="end" show-backdrop="false"
-      :class="{ hasToBeDarkmode: hasToBeDarkmode }" @didPresent="markAllRead">
-      <ion-content class="notif-popover">
-        <div class="notif-header">
-          <h4>Notifications</h4>
-        </div>
-        <div v-if="notifications.length === 0" class="notif-empty">
-          <ion-icon name="notifications-off-outline" />
-          <span>You're all caught up</span>
-        </div>
-        <ul v-else class="notif-list">
-          <li v-for="n in notifications" :key="n.id" class="notif-item" :class="{ unread: n.read_status == 0 }">
-            <strong>{{ n.title }}</strong>
-            <p>{{ n.message }}</p>
-          </li>
-        </ul>
-      </ion-content>
-    </ion-popover>
   </div>
 </template>
 
@@ -272,8 +248,6 @@ export default defineComponent({
     const apis = ref([]);
     const codespaces = ref([]);
     const forms = ref<SidebarForm[]>([]);
-    const notifications = ref<any[]>([]);
-    const unreadCount = ref(0);
     const route = useRoute();
     const ionRouter = useIonRouter();
     const list = {} as any;
@@ -368,9 +342,7 @@ export default defineComponent({
       emit('sidebarToggled', !props.isCollapsed);
     };
 
-    const markAllRead = () => {
-      unreadCount.value = 0;
-    };
+
 
     const formatToolLink = (name: string): string => {
       return name
@@ -523,9 +495,6 @@ export default defineComponent({
       apis,
       codespaces,
       forms,
-      notifications,
-      unreadCount,
-      markAllRead,
       goToConfig,
       handleReorder,
       handleFrontReorder,
@@ -667,29 +636,6 @@ export default defineComponent({
   background: #2a2a2a;
 }
 
-.notif-dot {
-  position: absolute;
-  top: 2px;
-  right: 4px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  background: var(--ion-color-primary, #f97316);
-  color: #fff;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sidebar-footer.collapsed .notif-dot {
-  top: 4px;
-  right: 10px;
-}
-
 .footer-btn:hover::after {
   content: attr(data-tooltip);
   position: absolute;
@@ -709,62 +655,6 @@ export default defineComponent({
 
 .footer-btn[data-tooltip='']:hover::after {
   content: none;
-}
-
-.notif-popover {
-  --width: 280px;
-}
-
-.notif-header {
-  padding: 12px 16px 8px;
-  border-bottom: 1px solid var(--ion-color-step-150, #d7d8da);
-}
-
-.notif-header h4 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.notif-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 28px 16px;
-  color: var(--ion-color-medium-shade);
-  font-size: 13px;
-}
-
-.notif-empty ion-icon {
-  font-size: 26px;
-}
-
-.notif-list {
-  list-style: none;
-  margin: 0;
-  padding: 4px 0;
-}
-
-.notif-item {
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--ion-color-step-100, #f1f1f1);
-}
-
-.notif-item strong {
-  display: block;
-  font-size: 13px;
-  margin-bottom: 2px;
-}
-
-.notif-item p {
-  margin: 0;
-  font-size: 12px;
-  color: var(--ion-color-medium-shade);
-}
-
-.notif-item.unread {
-  background: rgba(var(--ion-color-primary-rgb), 0.08);
 }
 
 ion-item.new-tool {

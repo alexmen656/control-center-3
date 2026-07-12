@@ -1,4 +1,5 @@
 <template>
+  <div>
   <div class="sidebar-shell" :class="{ collapsed: isCollapsed }">
     <div class="sidebar-shell__scroll">
       <ion-list id="inbox-list" :class="{ collapsed: isCollapsed }">
@@ -82,34 +83,11 @@
           <path d="M5.615375 14.284625V0.7153750000000001" stroke-width="1"></path>
         </svg>
       </button>
-      <button type="button" id="main-sidebar-notif-trigger" class="footer-btn footer-notif"
-        :data-tooltip="isCollapsed ? 'Notifications' : ''" aria-label="Notifications">
-        <ion-icon name="notifications-outline" />
-        <span v-if="!isCollapsed">Notifications</span>
-        <span v-if="unreadCount > 0" class="notif-dot">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
-      </button>
     </footer>
-    <ion-popover trigger="main-sidebar-notif-trigger" side="top" alignment="end" show-backdrop="false"
-      @didPresent="markAllRead">
-      <ion-content class="notif-popover">
-        <div class="notif-header">
-          <h4>Notifications</h4>
-        </div>
-        <div v-if="notifications.length === 0" class="notif-empty">
-          <ion-icon name="notifications-off-outline" />
-          <span>You're all caught up</span>
-        </div>
-        <ul v-else class="notif-list">
-          <li v-for="n in notifications" :key="n.id" class="notif-item" :class="{ unread: n.read_status == 0 }">
-            <strong>{{ n.title }}</strong>
-            <p>{{ n.message }}</p>
-          </li>
-        </ul>
-      </ion-content>
-    </ion-popover>
   </div>
 
   <VersionInfoModal :is-open="isVersionModalOpen" @close="isVersionModalOpen = false" />
+  </div>
 </template>
 
 <script>
@@ -121,6 +99,7 @@ export default defineComponent({
   components: {
     VersionInfoModal,
   },
+  emits: ['sidebarToggled'],
   props: {
     bookmarks: Array,
     projects: Array,
@@ -139,9 +118,7 @@ export default defineComponent({
         { icon: "people-outline", name: "Users" },
       ],
       dev_tools: [
-        //{ icon: "key-outline", name: "Access Log" },
         { icon: "server-outline", name: "Database" },
-        // { icon: "cloud-outline", name: "Pages" },
         { icon: "globe-outline", name: "Domains" },
       ],
     };
@@ -166,16 +143,8 @@ export default defineComponent({
 
   setup() {
     const selectedIndex = ref(0);
-    const notifications = ref([]);
-    const unreadCount = ref(0);
-    const markAllRead = () => {
-      unreadCount.value = 0;
-    };
     return {
       selectedIndex,
-      notifications,
-      unreadCount,
-      markAllRead,
     };
   },
 });
@@ -698,29 +667,6 @@ ion-menu ion-item.selected ion-icon {
   width: 40px;
 }
 
-.notif-dot {
-  position: absolute;
-  top: 2px;
-  right: 4px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  background: var(--ion-color-primary, #f97316);
-  color: #fff;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sidebar-footer.collapsed .notif-dot {
-  top: 4px;
-  right: 10px;
-}
-
 .footer-btn:hover::after {
   content: attr(data-tooltip);
   position: absolute;
@@ -742,59 +688,4 @@ ion-menu ion-item.selected ion-icon {
   content: none;
 }
 
-.notif-popover {
-  --width: 280px;
-}
-
-.notif-header {
-  padding: 12px 16px 8px;
-  border-bottom: 1px solid var(--ion-color-step-150, #d7d8da);
-}
-
-.notif-header h4 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.notif-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 28px 16px;
-  color: var(--ion-color-medium-shade);
-  font-size: 13px;
-}
-
-.notif-empty ion-icon {
-  font-size: 26px;
-}
-
-.notif-list {
-  list-style: none;
-  margin: 0;
-  padding: 4px 0;
-}
-
-.notif-item {
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--ion-color-step-100, #f1f1f1);
-}
-
-.notif-item strong {
-  display: block;
-  font-size: 13px;
-  margin-bottom: 2px;
-}
-
-.notif-item p {
-  margin: 0;
-  font-size: 12px;
-  color: var(--ion-color-medium-shade);
-}
-
-.notif-item.unread {
-  background: rgba(var(--ion-color-primary-rgb), 0.08);
-}
 </style>

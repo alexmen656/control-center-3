@@ -257,6 +257,7 @@ export default defineComponent({
         { value: "select", label: "Select" },
         { value: "select2", label: "Select from Form (Form pipeline)" },
         { value: "operation", label: "Mathematic Operation" },
+        { value: "image", label: "File / Image" },
       ]
     };
   },

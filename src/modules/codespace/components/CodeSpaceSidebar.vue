@@ -1,5 +1,5 @@
 <template>
-  <div class="monaco-sidebar">
+  <div class="monaco-sidebar" v-bind="$attrs">
     <div class="sidebar-section">
       <div class="section-header">
         <ion-icon name="folder-outline"></ion-icon>
@@ -316,7 +316,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+
+defineOptions({ inheritAttrs: false })
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { ToastService } from '@/services/ToastService'
@@ -1124,7 +1126,10 @@ function openDeploymentInspector(deployment) {
   }
 }
 
-// Initialize
+const onFileSaved = () => loadGitData()
+const onFileChanged = () => loadGitData()
+const onActiveFileChanged = (event) => { activeFile.value = event.detail.filePath }
+
 onMounted(async () => {
   await Promise.allSettled([
     refreshFiles(),
@@ -1135,31 +1140,16 @@ onMounted(async () => {
 
   startLiveGitUpdates()
 
-  // Listen for file save events from Monaco editor to trigger git refresh
-  window.addEventListener('monaco-file-saved', () => {
-    console.log('File saved, refreshing git status...')
-    loadGitData()
-  })
-
-  // Listen for file changes in general
-  window.addEventListener('monaco-file-changed', () => {
-    console.log('File changed, refreshing git status...')
-    loadGitData()
-  })
-
-  // Listen for active file changes
-  window.addEventListener('monaco-active-file-changed', (event) => {
-    activeFile.value = event.detail.filePath
-  })
+  window.addEventListener('monaco-file-saved', onFileSaved)
+  window.addEventListener('monaco-file-changed', onFileChanged)
+  window.addEventListener('monaco-active-file-changed', onActiveFileChanged)
 })
 
-// Cleanup on unmount
-import { onUnmounted } from 'vue'
 onUnmounted(() => {
   stopLiveGitUpdates()
-  window.removeEventListener('monaco-file-saved', loadGitData)
-  window.removeEventListener('monaco-file-changed', loadGitData)
-  window.removeEventListener('monaco-active-file-changed', () => { })
+  window.removeEventListener('monaco-file-saved', onFileSaved)
+  window.removeEventListener('monaco-file-changed', onFileChanged)
+  window.removeEventListener('monaco-active-file-changed', onActiveFileChanged)
 })
 </script>
 

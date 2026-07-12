@@ -18,6 +18,8 @@ function mapFieldType($type)
             return 'INT';
         case 'checkbox':
             return 'BOOLEAN';
+        case 'image':
+            return 'VARCHAR(255)';
         default:
             return 'VARCHAR(255)';
     }

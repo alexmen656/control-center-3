@@ -55,6 +55,7 @@ export default {
   data() {
     return {
       isBookmark: false,
+      bg_color: null,
     };
   },
   computed: {

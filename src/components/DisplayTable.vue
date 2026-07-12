@@ -7,27 +7,28 @@
       v-if="input.type == 'textarea'" @change="checkOperation(input.label, inputValues[index])" />
     <FloatingInput v-if="input.type == 'operation'" v-model="inputValues[index]" :label="input.label"
       :placeholder="input.placeholder" disabled="true" type="number" />
+    <FloatingFileUpload v-if="input.type == 'image'" v-model="inputValues[index]" :label="input.label"
+      :project="$route.params.project" />
     <FloatingInput v-if="
       input.type != 'select' &&
       input.type != 'select2' &&
       input.type != 'checkbox' &&
       input.type != 'textarea' &&
-      input.type != 'operation'
+      input.type != 'operation' &&
+      input.type != 'image'
     " v-model="inputValues[index]" :label="input.label" :placeholder="input.placeholder" :type="input.type"
       @change="checkOperation(input.label, inputValues[index])" />
   </div>
   <form @submit.prevent="submit">
     <ion-button type="submit">Submit</ion-button>
   </form>
-  <!--  <div v-for="iV in inputValues" :key="iV">
-    {{ iV }}
-  </div>-->
 </template>
 <script>
 import FloatingInput from "@/components/FloatingInput.vue";
 import FloatingSelect from "@/components/FloatingSelect.vue";
 import FloatingCheckbox from "@/components/FloatingCheckbox.vue";
 import FloatingTextarea from "@/components/FloatingTextarea.vue";
+import FloatingFileUpload from "@/components/FloatingFileUpload.vue";
 
 export default {
   name: "DisplayForm",
@@ -36,6 +37,7 @@ export default {
     FloatingSelect,
     FloatingCheckbox,
     FloatingTextarea,
+    FloatingFileUpload,
   },
   data() {
     return {
@@ -62,11 +64,11 @@ export default {
       )
       .then((res) => {
         this.form = res.data.table;
+        if (!this.form || !Array.isArray(this.form.inputs)) return;
         this.inputss = this.form.inputs;
         this.inputss.forEach(async (input) => {
           if (input.type == "select2") {
-            //console.log(input);
-            const inputInstance = { ...input }; // Create a copy of the input object
+            const inputInstance = { ...input };
             await this.$axios
               .get(
                 "v2/tables/data",
@@ -78,7 +80,6 @@ export default {
                 }
               )
               .then((res) => {
-                //console.log(res.data);
                 inputInstance.options = [];
                 inputInstance.label = input.label;
                 inputInstance.name = input.name;
@@ -92,11 +93,9 @@ export default {
                 });
               });
             this.inputs.push(inputInstance);
-            //console.log(this.inputs);
           } else {
             this.inputs.push(input);
           }
-          //console.log(this.inputs);
         });
       });
   },
@@ -111,19 +110,13 @@ export default {
             let value2 = 0;
 
             this.inputs.forEach((input2, index) => {
-              //console.log(input2.label, input.options[0].value)
               if (input2.label.toLowerCase() == input.options[0].value) {
-                //console.log(index);
-                //console.log("value1", this.inputValues[index])
                 value1 = this.inputValues[index];
               }
             });
 
             this.inputs.forEach((input2, index) => {
-              //console.log(input2.label, input.options[2].value)
               if (input2.label.toLowerCase() == input.options[2].value) {
-                //console.log(index);
-                //console.log("value2", this.inputValues[index])
                 value2 = this.inputValues[index];
               }
             });
@@ -137,7 +130,6 @@ export default {
             } else if (input.options[1].value == "/") {
               this.inputValues[index] = value1 / value2;
             }
-            //console.log(this.inputValues[index] ?? "No value");
           }
         }
       });
@@ -151,29 +143,6 @@ export default {
 
       this.$emit("submit", formData);
     },
-    /*async select2(form, field) {
-      try {
-        const response = await this.$axios.post(
-          "/control-center/table.php",
-          this.$qs.stringify({
-            get_table_data: "get_table_data",
-            project: this.$route.params.project,
-            table: form,
-          })
-        )
-       
-
-        const array = [];
-        response.data.forEach((input, index) => {
-          array.push(input[field]);
-        });
-        return array;
-    
-      } catch (error) {
-        console.error("Error fetching select2 data:", error);
-        return [];
-      }
-    },*/
   },
 };
 </script>

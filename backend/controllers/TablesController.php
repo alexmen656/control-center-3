@@ -35,6 +35,8 @@ class TablesController
                 return 'INT';
             case 'checkbox':
                 return 'BOOLEAN';
+            case 'image':
+                return 'VARCHAR(255)';
             default:
                 return 'VARCHAR(255)';
         }
@@ -729,6 +731,7 @@ class TablesController
                 'id' => $form['table_id'],
                 'title' => json_decode($form['table_json'], true)['title'] ?? '',
                 'createdOn' => $form['created_at'],
+                'projectID' => getProjectID($project),
             ]);
         } else {
             $response->json([]);

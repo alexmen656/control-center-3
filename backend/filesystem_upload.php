@@ -101,7 +101,8 @@ if ($action === 'upload_file') {
             echo json_encode([
                 'success' => true,
                 'message' => 'File uploaded successfully',
-                'path' => $fileLocation
+                'path' => $fileLocation,
+                'projectID' => $projectID
             ]);
         }
     } catch (Exception $e) {
