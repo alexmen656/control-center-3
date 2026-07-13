@@ -65,9 +65,8 @@ class SignedUrlGenerator
     {
         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $scriptPath = dirname($_SERVER['SCRIPT_NAME']);
 
-        return $protocol . '://' . $host . $scriptPath;
+        return $protocol . '://' . $host;
     }
 }
 

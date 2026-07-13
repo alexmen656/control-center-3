@@ -45,33 +45,6 @@ class GitHelper
         return GIT_BARE_ROOT . '/' . $name . '.git';
     }
 
-    public static function git_writeGitignore($projectPath)
-    {
-        $gi = $projectPath . '/.gitignore';
-        $needed = [
-            '.monaco_commits.json',
-            '.monaco_staged.json',
-            '.monaco_lastcommit.json',
-            '.monaco_git',
-            '.monaco_initialized',
-        ];
-
-        $existing = file_exists($gi) ? file_get_contents($gi) : '';
-        $lines = $existing === '' ? [] : explode("\n", rtrim($existing, "\n"));
-        $changed = false;
-
-        foreach ($needed as $n) {
-            if (!in_array($n, $lines, true)) {
-                $lines[] = $n;
-                $changed = true;
-            }
-        }
-
-        if ($changed) {
-            file_put_contents($gi, implode("\n", $lines) . "\n");
-        }
-    }
-
     public static function git_ensureRepo($projectPath, $project, $userID, $codespace)
     {
         if (!is_dir($projectPath)) {
@@ -86,7 +59,6 @@ class GitHelper
         }
 
         if (!is_dir($projectPath . '/.git')) {
-            git_writeGitignore($projectPath);
             git_exec($projectPath, ['init', '-b', 'main']);
             git_exec($projectPath, ['remote', 'add', 'origin', $barePath]);
             git_exec($projectPath, ['add', '-A']);
@@ -100,8 +72,6 @@ class GitHelper
             } elseif (trim($ru) !== $barePath) {
                 git_exec($projectPath, ['remote', 'set-url', 'origin', $barePath]);
             }
-
-            git_writeGitignore($projectPath);
         }
 
         return $barePath;
@@ -127,11 +97,6 @@ function git_codespaceId($project, $codespace)
 function git_barePath($project, $userID, $codespace)
 {
     return GitHelper::git_barePath($project, $userID, $codespace);
-}
-
-function git_writeGitignore($projectPath)
-{
-    return GitHelper::git_writeGitignore($projectPath);
 }
 
 function git_ensureRepo($projectPath, $project, $userID, $codespace)

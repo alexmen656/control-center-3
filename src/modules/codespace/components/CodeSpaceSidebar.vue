@@ -337,31 +337,24 @@ const projectFiles = ref([])
 const availableAPIs = ref([])
 const activeAPIs = computed(() => availableAPIs.value.filter(api => api.is_active))
 
-// Excluded files state
 const excludedFiles = ref([".monaco_commits.json", ".monaco_git", ".monaco_initialized", ".monaco_lastcommit.json", ".monaco_staged.json"])
 const exclude = ref(true)
 
-// Folder state for Explorer
 const expandedFolders = ref(new Set())
 const fileTree = ref([])
 
-// Live update state
 const gitRefreshInterval = ref(null)
 
-// State für Modals
 const showDiffViewer = ref(false)
 const showMergeEditor = ref(false)
 const diffData = ref({})
 const mergeConflicts = ref([])
 
-// Active file state
 const activeFile = ref('')
 
-// Get project and codespace name from route
 const projectName = route.params.project || 'default-project'
 const codespace = route.params.codespace || 'main'
 
-// API Methods - for loading codespace-specific APIs
 const loadAvailableAPIs = async () => {
   try {
     const response = await axios.get(`v2/codespace-apis?project=${projectName}&codespace=${codespace}`)
@@ -464,25 +457,19 @@ const copyToClipboard = (text) => {
   })
 }
 
-// Environment Variables Methods
 const openEnvView = () => {
   console.log('Opening Environment Variables view')
-  // Emit event to parent component to open ENV view
   window.dispatchEvent(new CustomEvent('monaco-open-env-view'))
 }
 
 const addNewEnvVar = () => {
   console.log('Opening add new environment variable modal')
-  // Emit event to parent component to add new environment variable
   window.dispatchEvent(new CustomEvent('monaco-add-env-var'))
 }
 
-// Computed function to filter projectFiles
 const filteredProjectFiles = computed(() => {
   if (exclude.value) {
     console.log(projectFiles.value);
-    // Zeige alle Dateien an, aber excludiere nur bestimmte Monaco-interne Dateien aus der Anzeige
-    // .monaco_apis/ Dateien sollen weiterhin sichtbar und commitbar sein
     return projectFiles.value.filter(file =>
       !excludedFiles.value.includes(file.path) &&
       !file.path.startsWith(".monaco_apis/")
@@ -492,12 +479,10 @@ const filteredProjectFiles = computed(() => {
   }
 });
 
-// Build hierarchical file tree from flat file list
 const buildFileTree = (files) => {
   const tree = []
   const pathMap = new Map()
 
-  // Create root nodes and build path map
   files.forEach(file => {
     const pathParts = file.path.split('/').filter(part => part)
     let currentPath = ''
@@ -507,7 +492,7 @@ const buildFileTree = (files) => {
       currentPath = currentPath ? `${currentPath}/${part}` : part
 
       if (!pathMap.has(currentPath)) {
-        const isFile = index === pathParts.length - 1
+        const isFile = index === pathParts.length - 1 && file.type !== 'directory'
         const node = {
           name: part,
           path: currentPath,
@@ -534,12 +519,10 @@ const buildFileTree = (files) => {
   return tree
 }
 
-// Get hierarchical file tree
 const hierarchicalFileTree = computed(() => {
   return buildFileTree(filteredProjectFiles.value)
 })
 
-// Toggle folder expansion
 const toggleFolder = (folderPath) => {
   if (expandedFolders.value.has(folderPath)) {
     expandedFolders.value.delete(folderPath)
@@ -548,12 +531,10 @@ const toggleFolder = (folderPath) => {
   }
 }
 
-// Check if folder is expanded
 const isFolderExpanded = (folderPath) => {
   return expandedFolders.value.has(folderPath)
 }
 
-// Get file icon based on file type/extension
 const getFileIcon = (file) => {
   if (file.type === 'directory') return 'folder-outline'
 
@@ -571,28 +552,12 @@ const getFileIcon = (file) => {
   }
 }
 
-// File Explorer Methods
 const refreshFiles = async () => {
   try {
-    // Use file API to load files from specific codespace
     const response = await axios.get(`v2/codespaces/files?project=${projectName}&codespace=${codespace}&action=list`)
     const allFiles = flattenFileTree(response.data || [])
 
-    // Add virtual .env entry for Environment Variables management
-    /*if (!allFiles.find(file => file.path === '.env')) {
-       allFiles.unshift({
-         name: '.env',
-         path: '.env',
-         type: 'directory',
-         size: 0,
-         modified: new Date().toISOString()
-       })
-     }*/
-
-    // Make sure .monaco_apis files are included and not excluded from commits
     projectFiles.value = allFiles
-
-    // Update file tree
     fileTree.value = buildFileTree(filteredProjectFiles.value)
   } catch (error) {
     console.error('Failed to load files from codespace:', error)
@@ -612,18 +577,25 @@ const flattenFileTree = (files) => {
         size: file.size,
         modified: file.modified
       })
-    } else if (file.type === 'directory' && file.children) {
-      flattened = flattened.concat(flattenFileTree(file.children))
+    } else if (file.type === 'directory') {
+      flattened.push({
+        name: file.name,
+        path: file.path,
+        type: file.type,
+        size: 0,
+        modified: file.modified
+      })
+      if (file.children) {
+        flattened = flattened.concat(flattenFileTree(file.children))
+      }
     }
   })
   return flattened
 }
 
 const openFile = (file) => {
-  // Set active file
   activeFile.value = file.path
   console.log('Opening file:', file)
-  // Emit event to parent component to open file
   window.dispatchEvent(new CustomEvent('monaco-open-file', { detail: file }))
 }
 
@@ -631,12 +603,12 @@ const createNewFile = async () => {
   const fileName = prompt('Enter file name (with extension):')
   if (fileName) {
     try {
-      // Use file API to create file in specific codespace
       await axios.post(`v2/codespaces/files?project=${projectName}&codespace=${codespace}`, {
         action: 'create_file',
         path: fileName,
         content: ''
       })
+
       await refreshFiles()
       openFile({ name: fileName, path: fileName })
       ToastService.success(`File "${fileName}" created successfully in codespace "${codespace}"!`)
@@ -651,11 +623,11 @@ const createNewFolder = async () => {
   const folderName = prompt('Enter folder name:')
   if (folderName) {
     try {
-      // Create folder using the codespace API with codespace parameter
       await axios.post(`v2/codespaces/files?project=${projectName}&codespace=${codespace}`, {
         action: 'create_folder',
         path: folderName
       })
+
       await refreshFiles()
       ToastService.success(`Folder "${folderName}" created successfully in codespace "${codespace}"!`)
     } catch (error) {
@@ -668,10 +640,10 @@ const createNewFolder = async () => {
 const deleteFile = async (file) => {
   if (confirm(`Are you sure you want to delete ${file.name}?`)) {
     try {
-      // Use file API to delete file from specific codespace
       await axios.delete(`v2/codespaces/files?project=${projectName}&codespace=${codespace}`, {
         data: { file: file.path }
       })
+
       await refreshFiles()
       await refreshGitStatus()
       ToastService.success(`File "${file.name}" deleted from codespace "${codespace}"!`)
@@ -682,10 +654,8 @@ const deleteFile = async (file) => {
   }
 }
 
-// Git Methods
 const loadGitData = async () => {
   try {
-    // Load real git changes for specific codespace
     const changesResponse = await axios.get(`v2/codespaces/git?project=${projectName}&codespace=${codespace}&action=changes`)
     if (changesResponse.data.success) {
       changedFiles.value = changesResponse.data.changes || []
@@ -693,7 +663,6 @@ const loadGitData = async () => {
       changedFiles.value = []
     }
 
-    // Load commit history for specific codespace
     const commitsResponse = await axios.get(`v2/codespaces/git?project=${projectName}&codespace=${codespace}&action=commits`)
     if (commitsResponse.data.success) {
       recentCommits.value = commitsResponse.data.commits.map(commit => ({
@@ -707,7 +676,6 @@ const loadGitData = async () => {
     }
   } catch (error) {
     console.error('Failed to load git data:', error)
-    // Only show empty state on error, no mock data
     changedFiles.value = []
     recentCommits.value = []
   }
@@ -735,11 +703,10 @@ const loadDeployments = async () => {
   }
 }
 
-// Git Methods
 const handleCommitKeyDown = (event) => {
   if (event.ctrlKey && event.key === 'Enter') {
-    event.preventDefault() // Prevent any default behavior
-    if (!isCommitting.value) { // Only commit if not already committing
+    event.preventDefault()
+    if (!isCommitting.value) {
       commitChanges()
     }
   }
@@ -747,8 +714,7 @@ const handleCommitKeyDown = (event) => {
 
 const commitChanges = async () => {
   if (!commitMessage.value.trim()) return
-  if (isCommitting.value) return // Prevent multiple commits
-
+  if (isCommitting.value) return
   isCommitting.value = true
   try {
     console.log('Committing changes:', {
@@ -757,7 +723,6 @@ const commitChanges = async () => {
       files: changedFiles.value.map(f => f.path || f.file || f)
     })
 
-    // Stelle sicher, dass alle Dateien inklusive .monaco_apis/ committed werden
     const filesToCommit = changedFiles.value.map(f => ({
       path: f.path || f.file,
       status: f.status,
@@ -768,13 +733,12 @@ const commitChanges = async () => {
       action: 'commit',
       message: commitMessage.value,
       files: filesToCommit,
-      include_monaco_apis: true // Flag to ensure .monaco_apis files are included
+      include_monaco_apis: true
     })
 
     if (response.data.success) {
       console.log('Commit successful:', response.data)
 
-      // Add to recent commits
       recentCommits.value.unshift({
         hash: response.data.commit.sha,
         message: response.data.commit.message,
@@ -782,11 +746,9 @@ const commitChanges = async () => {
         date: new Date(response.data.commit.date)
       })
 
-      // Clear changed files and commit message
       changedFiles.value = []
       commitMessage.value = ''
 
-      // Refresh git status
       await refreshGitStatus()
 
       ToastService.success(`Commit successful! Created commit ${response.data.commit.short_sha || response.data.commit.sha.substring(0, 7)}`)
@@ -814,11 +776,9 @@ const pullFromGitHub = async () => {
       console.log('Pull successful:', response.data)
       ToastService.success(`Pull erfolgreich! ${response.data.files_count} ${response.data.files_count === 1 ? 'Datei wurde' : 'Dateien wurden'} aktualisiert.`)
 
-      // Refresh file list and git status after pull
       await refreshFiles()
       await refreshGitStatus()
 
-      // Notify parent component about file changes if needed
       window.dispatchEvent(new CustomEvent('monaco-files-updated', { detail: response.data }))
     } else {
       console.error('Pull failed:', response.data.message)
@@ -845,12 +805,10 @@ const pushToGitHub = async () => {
       console.log('Push successful:', response.data)
       ToastService.success(`Push erfolgreich! ${response.data.commits_count} ${response.data.commits_count == 1 ? 'Commit wurde' : 'Commits wurden'} zu GitHub gepusht.`)
 
-      // Refresh git status after push
       await refreshGitStatus()
     } else {
       console.error('Push failed:', response.data.message)
 
-      // Check for conflicts
       if (response.data.error && response.data.error.includes('conflict')) {
         openMergeEditor(response.data.conflicts || [])
       } else {
@@ -877,7 +835,6 @@ const closeMergeEditor = () => {
 
 const resolveConflict = async (filename) => {
   try {
-    // Open the file with conflicts for manual resolution
     window.dispatchEvent(new CustomEvent('monaco-open-file', {
       detail: { path: filename, name: filename }
     }))
@@ -954,7 +911,6 @@ const discardChanges = async (filePath) => {
 
       if (response.data.success) {
         await refreshGitStatus()
-        // Refresh the file in editor if it's currently open
         window.dispatchEvent(new CustomEvent('monaco-refresh-file', { detail: { path: filePath } }))
       } else {
         console.error('Failed to discard changes:', response.data.message)
@@ -971,13 +927,11 @@ const refreshGitStatus = async () => {
   ])
 }
 
-// Live update methods
 const startLiveGitUpdates = () => {
   if (gitRefreshInterval.value) {
     clearInterval(gitRefreshInterval.value)
   }
 
-  // Refresh git status every 3 seconds automatically
   gitRefreshInterval.value = setInterval(() => {
     loadGitData()
   }, 3000)
@@ -990,14 +944,12 @@ const stopLiveGitUpdates = () => {
   }
 }
 
-// File diff viewer
 const viewFileDiff = async (filePath) => {
   try {
     console.log('Loading diff for file:', filePath)
     const response = await axios.get(`v2/codespaces/git?project=${projectName}&codespace=${codespace}&action=diff&file=${filePath}`)
 
     if (response.data.success) {
-      // Set diff data and show modal
       diffData.value = {
         filePath,
         diff: response.data.diff,
@@ -1033,7 +985,6 @@ const deployToVercel = async () => {
     })
 
     if (response.data.success) {
-      // Add new deployment
       deployments.value.unshift({
         id: response.data.deployment.uid,
         url: response.data.deployment.url,
@@ -1042,7 +993,6 @@ const deployToVercel = async () => {
         created: new Date()
       })
 
-      // Simulate deployment completion
       setTimeout(() => {
         if (deployments.value[0]) {
           deployments.value[0].state = 'READY'
@@ -1053,7 +1003,6 @@ const deployToVercel = async () => {
     }
   } catch (error) {
     console.error('Deployment failed:', error)
-    // For demo purposes, still add the deployment locally
     deployments.value.unshift({
       id: Date.now().toString(),
       url: `https://myproject-${Math.random().toString(36).substring(2, 8)}.vercel.app`,
@@ -1077,7 +1026,6 @@ const refreshDeployments = async () => {
   await loadDeployments()
 }
 
-// Utility Methods
 const getStatusIcon = (status) => {
   switch (status) {
     case 'modified': return 'M'
@@ -1100,7 +1048,6 @@ const getDeploymentIcon = (state) => {
 }
 
 function formatDate(date) {
-  // Vercel: Millisekunden (number), GitHub: ISO-String
   let dateObj;
   if (typeof date === 'number') {
     dateObj = new Date(date);
@@ -1215,7 +1162,6 @@ onUnmounted(() => {
   justify-content: space-between;
 }
 
-/* File Explorer */
 .file-tree {
   margin-bottom: 16px;
 }
@@ -1320,7 +1266,6 @@ onUnmounted(() => {
   font-size: 12px;
 }
 
-/* Commit Section */
 .commit-input-section {
   margin-bottom: 16px;
 }
@@ -1439,7 +1384,6 @@ onUnmounted(() => {
   font-style: italic;
 }
 
-/* Deployment Section */
 .deployments-list {
   margin-top: 8px;
 }
@@ -1501,7 +1445,6 @@ onUnmounted(() => {
   font-family: monospace;
 }
 
-/* Buttons */
 ion-button {
   --background: var(--vscode-button-background, #0e639c);
   --background-hover: var(--vscode-button-hoverBackground, #1177bb);
@@ -1523,7 +1466,6 @@ ion-button[fill="clear"] {
   --color: var(--vscode-foreground, #cccccc);
 }
 
-/* Scrollbar */
 .monaco-sidebar::-webkit-scrollbar {
   width: 10px;
 }
@@ -1541,7 +1483,6 @@ ion-button[fill="clear"] {
   background: var(--vscode-scrollbarSlider-hoverBackground, #5a5a5a);
 }
 
-/* Modal Styles */
 .diff-viewer-modal,
 .merge-editor-modal {
   position: fixed;
@@ -1735,7 +1676,6 @@ ion-button[fill="clear"] {
   border-top: 1px solid var(--vscode-panel-border, #464647);
 }
 
-/* API Section Styles */
 .api-item {
   display: flex;
   align-items: center;
@@ -1868,7 +1808,6 @@ ion-button[fill="clear"] {
   border-radius: 4px;
 }
 
-/* Environment Variables Section Styles */
 .env-quick-actions {
   display: flex;
   flex-direction: column;

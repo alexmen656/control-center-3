@@ -1,4 +1,5 @@
 <?php
+require_once "head.php";
 require_once "triggers.php";
 
 function mapFieldType($type)

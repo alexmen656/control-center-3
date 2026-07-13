@@ -4,13 +4,13 @@ require_once __DIR__ . '/../helpers/project.php';
 
 class ProjectsController
 {
-    
+
     public function getUserProjects(Request $request, Response $response): void
     {
         $response->json(getUserProjectsByUserID($request->userID));
     }
 
-    
+
     public function getAll(Request $request, Response $response): void
     {
         $projects = query("SELECT projectID, icon, name, link FROM projects ORDER BY name ASC");
@@ -21,7 +21,7 @@ class ProjectsController
         $response->success(['projects' => $list]);
     }
 
-    
+
     public function getForImport(Request $request, Response $response): void
     {
         $current = $request->input('current_project', '');
@@ -34,7 +34,7 @@ class ProjectsController
         $response->json($projects);
     }
 
-    
+
     public function getByLink(Request $request, Response $response): void
     {
         $project = getProjectByLink(escape_string($request->params['link']));
@@ -45,7 +45,7 @@ class ProjectsController
         $response->success($project);
     }
 
-    
+
     public function getInfo(Request $request, Response $response): void
     {
         $project = getProjectByLink(escape_string($request->params['link']));
@@ -61,7 +61,7 @@ class ProjectsController
         ]);
     }
 
-    
+
     public function getUsers(Request $request, Response $response): void
     {
         $project = getProjectByLink(escape_string($request->params['link']));
@@ -72,7 +72,7 @@ class ProjectsController
         $response->success(['users' => getUsersByProjectID($project['projectID'])]);
     }
 
-    
+
     public function getViews(Request $request, Response $response): void
     {
         $project = getProjectByLink(escape_string($request->params['link']));
@@ -83,7 +83,7 @@ class ProjectsController
         $response->success(['views' => getProjectViewsByProjectID($project['projectID'])]);
     }
 
-    
+
     public function checkPermissions(Request $request, Response $response): void
     {
         $project = getProjectByLink(escape_string($request->params['link']));
@@ -99,7 +99,7 @@ class ProjectsController
         }
     }
 
-    
+
     public function create(Request $request, Response $response): void
     {
         $name = escape_string($request->input('projectName', ''));
@@ -128,9 +128,6 @@ class ProjectsController
             ['new/tool', 'Create new tool', '', 'true'],
             ['manage/tools', 'Manage Tools', '', 'true'],
             ['info', 'Project Info', '', 'true'],
-            ['page/main', 'Main', '', 'true'],
-            ['module-store', 'Module Store', '', 'false'],
-            ['package-manager', 'Package Manager', '', 'true'],
             ['filesystem', 'Filesystem', 'file-tray-full-outlinepr', 'true']
         ];
 
@@ -152,11 +149,8 @@ class ProjectsController
             }
         }
 
-        query("INSERT INTO project_components VALUES (0, 'main.php', 'script', 'Main', 'main', NOW(), NOW(), 'System', '1234567890', '$projectID', NULL)");
-
         query("INSERT INTO project_tools (`id`, `icon`, `name`, `link`, `hasConfig`, `order`, `projectID`) VALUES
-            (0, 'file-tray-full-outline', 'Filesystem', 'filesystem', 0, 0, '$projectID'),
-            (0, 'storefront-outline', 'Module Store', 'module-store', 0, 1, '$projectID')");
+            (0, 'file-tray-full-outline', 'Filesystem', 'filesystem', 0, 0, '$projectID')");
 
         query("INSERT INTO project_sidebar_sections
             (projectID, name, slug, icon, order_index, is_default, is_collapsible, show_add_button, add_button_route, info_route, manage_route)
@@ -174,7 +168,7 @@ class ProjectsController
         }
     }
 
-    
+
     public function update(Request $request, Response $response): void
     {
         $id = escape_string($request->params['id']);
@@ -211,7 +205,7 @@ class ProjectsController
         }
     }
 
-    
+
     public function delete(Request $request, Response $response): void
     {
         $id = escape_string($request->params['id']);
@@ -223,7 +217,7 @@ class ProjectsController
         }
     }
 
-    
+
     public function toggleVisibility(Request $request, Response $response): void
     {
         $id = escape_string($request->params['id']);
@@ -254,7 +248,7 @@ class ProjectsController
         }
     }
 
-    
+
     public function addUser(Request $request, Response $response): void
     {
         $project = getProjectByLink(escape_string($request->params['link']));

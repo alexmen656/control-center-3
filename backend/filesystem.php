@@ -1,5 +1,4 @@
 <?php
-include 'head.php';
 
 class FilesystemManager
 {

@@ -63,7 +63,7 @@ export default {
         }
       )
       .then((res) => {
-        this.form = res.data.table;
+        this.form = res.data.form;
         if (!this.form || !Array.isArray(this.form.inputs)) return;
         this.inputss = this.form.inputs;
         this.inputss.forEach(async (input) => {
