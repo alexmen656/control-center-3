@@ -189,60 +189,65 @@
                   <h4>{{ connections.domain.domain }}</h4>
                   <p v-if="connections.domain.is_main">Haupt-Domain</p>
                   <p v-else>Subdomain</p>
+                  <p v-if="connections.domain.status === 'pending'" class="info-text">
+                    <ion-spinner name="circular" style="width: 14px; height: 14px;"></ion-spinner>
+                    Wird eingerichtet (nginx + SSL-Zertifikat)...
+                  </p>
+                  <p v-else-if="connections.domain.status === 'error'" class="warning-text">
+                    Fehler: {{ connections.domain.status_message }}
+                  </p>
+                  <p v-else-if="connections.domain.status === 'active'" class="info-text">
+                    Aktiv
+                  </p>
                 </div>
                 <ActionButton variant="danger" icon="unlink-outline" @click="disconnectDomain">Trennen</ActionButton>
               </div>
 
               <div v-else class="not-connected">
                 <p>Keine Domain verbunden</p>
-                <div v-if="domainInfo" class="domain-config">
-                  <div class="form-group full-width">
-                    <div class="radio-group">
-                      <label class="radio-label">
-                        <input type="radio" v-model="domainType" value="subdomain">
-                        <span>
-                          <strong>Subdomain</strong>
-                          <small>{{ domainInput || 'subdomain' }}.{{ domainInfo.base_domain }}</small>
-                        </span>
-                      </label>
+                <div class="domain-config">
+                  <div v-if="isSuperAdmin && availableDomains.length > 0" class="form-group full-width">
+                    <label class="form-label">Domain-Typ</label>
+                    <select v-model="domainType" class="form-input" @change="domainInput = ''; selectedCustomDomain = ''">
+                      <option value="subdomain">Subdomain (sites.control-center.eu)</option>
+                      <option value="custom">Custom Domain aus Domain-Verwaltung</option>
+                    </select>
+                  </div>
 
-                      <label class="radio-label">
-                        <input type="radio" v-model="domainType" value="main" :disabled="domainInfo.main_domain_taken">
-                        <span>
-                          <strong>Haupt-Domain {{ domainInfo.main_domain_taken ? '(vergeben)' : '' }}</strong>
-                          <small>{{ domainInfo.base_domain }}</small>
-                          <small v-if="domainInfo.main_domain_taken" class="warning-text">
-                            Verwendet von: {{ domainInfo.main_domain_codespace }}
-                          </small>
-                          <small class="info-text">Die Main Domain kann nur von einem System (Codespace ODER Web
-                            Builder) gleichzeitig genutzt werden</small>
-                        </span>
-                      </label>
+                  <div v-if="!isSuperAdmin || domainType === 'subdomain'" class="form-group full-width">
+                    <label class="form-label">Subdomain</label>
+                    <div class="domain-input-wrapper">
+                      <input type="text" class="form-input" v-model="domainInput" placeholder="z.B. api, admin, staging"
+                        pattern="[a-z0-9-]+">
+                      <span class="domain-suffix">.sites.control-center.eu</span>
                     </div>
                   </div>
 
-                  <div v-if="domainType === 'subdomain'" class="form-group full-width">
-                    <label class="form-label">Subdomain</label>
-                    <input type="text" class="form-input" v-model="domainInput" placeholder="z.B. api, admin, staging"
-                      pattern="[a-z0-9-]+">
+                  <div v-if="isSuperAdmin && domainType === 'custom'" class="form-group full-width">
+                    <label class="form-label">Custom Domain auswählen</label>
+                    <select v-model="selectedCustomDomain" class="form-input">
+                      <option value="">-- Domain auswählen --</option>
+                      <option v-for="domain in availableDomains" :key="domain.id" :value="domain.domain">
+                        {{ domain.domain }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <div v-if="isSuperAdmin && domainType === 'custom' && selectedCustomDomain" class="form-group full-width">
+                    <label class="form-label">Subdomain (optional)</label>
+                    <div class="domain-input-wrapper">
+                      <input type="text" class="form-input" v-model="domainInput" placeholder="z.B. blog"
+                        pattern="[a-z0-9-]+">
+                      <span class="domain-suffix">.{{ selectedCustomDomain }}</span>
+                    </div>
+                    <small class="form-help">Leer lassen, um die Root-Domain zu verwenden</small>
                   </div>
 
                   <div class="connection-actions">
                     <ActionButton variant="primary" icon="link-outline" @click="connectDomain"
-                      :disabled="(domainType === 'subdomain' && (!domainInput || domainInput.length < 2)) || (domainType === 'main' && domainInfo.main_domain_taken)">
+                      :disabled="(domainType === 'custom' && !selectedCustomDomain) || (domainType === 'subdomain' && (!domainInput || domainInput.length < 2))">
                       Domain verbinden</ActionButton>
                   </div>
-                </div>
-
-                <div v-else-if="loadingDomainInfo" class="loading-container">
-                  <ion-spinner name="circular"></ion-spinner>
-                  <p>Domain-Informationen werden geladen...</p>
-                </div>
-
-                <div v-else>
-                  <p class="form-note warning">
-                    Keine Domain-Informationen verfügbar
-                  </p>
                 </div>
               </div>
             </div>
@@ -321,6 +326,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import AppModal from '@/components/AppModal.vue'
 import axios from 'axios'
 import { ToastService } from '@/services/ToastService'
+import { getUserData } from '@/userData'
 
 const route = useRoute()
 const toast = ToastService
@@ -336,8 +342,10 @@ const selectedCodespace = ref(null)
 const connections = ref({ domain: null })
 const domainType = ref('subdomain')
 const domainInput = ref('')
-const domainInfo = ref(null)
-const loadingDomainInfo = ref(false)
+const isSuperAdmin = ref(false)
+const availableDomains = ref([])
+const selectedCustomDomain = ref('')
+const domainStatusPoll = ref(null)
 const showTransferModal = ref(false)
 const transferCodespace = ref(null)
 const availableProjects = ref([])
@@ -556,20 +564,42 @@ const openSettings = async (codespace) => {
   selectedCodespace.value = codespace
   domainType.value = 'subdomain'
   domainInput.value = ''
-  domainInfo.value = null
+  selectedCustomDomain.value = ''
   connections.value = { domain: null }
 
   await loadConnections(codespace.id)
-  await loadDomainInfo(codespace.id)
+  await loadAvailableDomains()
   showSettingsModal.value = true
+
+  if (connections.value.domain && connections.value.domain.status === 'pending') {
+    startDomainStatusPoll(codespace.id)
+  }
 }
 
 const closeSettingsModal = () => {
   showSettingsModal.value = false
   selectedCodespace.value = null
   connections.value = { domain: null }
-  domainInfo.value = null
   domainInput.value = ''
+  selectedCustomDomain.value = ''
+  stopDomainStatusPoll()
+}
+
+const stopDomainStatusPoll = () => {
+  if (domainStatusPoll.value) {
+    clearInterval(domainStatusPoll.value)
+    domainStatusPoll.value = null
+  }
+}
+
+const startDomainStatusPoll = (codespaceId) => {
+  stopDomainStatusPoll()
+  domainStatusPoll.value = setInterval(async () => {
+    await loadConnections(codespaceId)
+    if (!connections.value.domain || connections.value.domain.status !== 'pending') {
+      stopDomainStatusPoll()
+    }
+  }, 3000)
 }
 
 const loadConnections = async (codespaceId) => {
@@ -656,42 +686,48 @@ const executeTransfer = async () => {
   }
 }
 
-const loadDomainInfo = async (codespaceId) => {
+const loadAvailableDomains = async () => {
   try {
-    loadingDomainInfo.value = true
+    const user = getUserData()
+    isSuperAdmin.value = !!(user && user.userID == 152)
 
-    const response = await axios.get(`v2/codespaces/${codespaceId}/domain-info`)
-
-    if (response.data.base_domain) {
-      domainInfo.value = response.data
+    if (isSuperAdmin.value) {
+      const response = await axios.get('v2/domains/available')
+      if (response.data.success) {
+        availableDomains.value = response.data.domains
+      }
     } else {
-      domainInfo.value = null
+      availableDomains.value = []
     }
   } catch (error) {
-    console.error('Error loading domain info:', error)
-    domainInfo.value = null
-  } finally {
-    loadingDomainInfo.value = false
+    console.error('Error loading available domains:', error)
+    availableDomains.value = []
   }
 }
 
 const connectDomain = async () => {
   try {
     const data: any = {
-      is_main: domainType.value === 'main' ? 'true' : 'false'
+      domain_type: domainType.value
     }
 
-    if (domainType.value === 'subdomain') {
+    if (domainType.value === 'custom') {
+      data.custom_base_domain = selectedCustomDomain.value
+      if (domainInput.value) {
+        data.subdomain = domainInput.value
+      }
+    } else {
       data.subdomain = domainInput.value
     }
 
     const response = await axios.post(`v2/codespaces/${selectedCodespace.value.id}/domain`, data)
 
     if (response.data.success) {
-      toast.success('Domain erfolgreich verbunden!')
+      toast.success('Domain wird verbunden...')
       await loadConnections(selectedCodespace.value.id)
-      await loadDomainInfo(selectedCodespace.value.id)
       domainInput.value = ''
+      selectedCustomDomain.value = ''
+      startDomainStatusPoll(selectedCodespace.value.id)
     } else {
       toast.error(response.data.error || 'Fehler beim Verbinden der Domain')
     }
@@ -703,12 +739,12 @@ const connectDomain = async () => {
 
 const disconnectDomain = async () => {
   try {
+    stopDomainStatusPoll()
     const response = await axios.delete(`v2/codespaces/${selectedCodespace.value.id}/domain`)
 
     if (response.data.success) {
       toast.success('Domain getrennt!')
       await loadConnections(selectedCodespace.value.id)
-      await loadDomainInfo(selectedCodespace.value.id)
     } else {
       toast.error('Fehler beim Trennen der Domain')
     }
@@ -1114,6 +1150,14 @@ select.form-input {
 
 .warning-text {
   color: var(--warning-color);
+}
+
+.info-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
 }
 
 .template-preview {

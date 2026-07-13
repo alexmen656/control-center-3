@@ -25,7 +25,6 @@ $router->group('/v2/codespaces', function ($router) {
 
     $router->post('/editor', [CodespaceEditorController::class, 'handle']);
 
-    $router->get('/{id}/domain-info', [CodespaceDomainsController::class, 'info']);
     $router->get('/{id}/domain', [CodespaceDomainsController::class, 'get']);
     $router->post('/{id}/domain', [CodespaceDomainsController::class, 'connect']);
     $router->delete('/{id}/domain', [CodespaceDomainsController::class, 'disconnect']);

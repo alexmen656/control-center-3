@@ -36,7 +36,11 @@ export const contentTools = [
             type: 'object',
             properties: {
               name: { type: 'string' },
-              type: { type: 'string', enum: ['text', 'email', 'number', 'textarea', 'select', 'checkbox', 'date', 'file'] },
+              type: {
+                type: 'string',
+                enum: ['text', 'email', 'number', 'textarea', 'select', 'checkbox', 'date', 'image'],
+                description: '"image" stores an uploaded file\'s path (any file type, not just images) and renders as a file/image upload field with preview'
+              },
               label: { type: 'string' },
               required: { type: 'boolean' },
               options: { type: 'array', items: { type: 'string' } }

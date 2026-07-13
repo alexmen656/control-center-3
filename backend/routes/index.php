@@ -19,7 +19,6 @@ require_once __DIR__ . '/deployments.routes.php';
 require_once __DIR__ . '/roles.routes.php';
 require_once __DIR__ . '/dashboard.routes.php';
 require_once __DIR__ . '/triggers.routes.php';
-require_once __DIR__ . '/project-domain.routes.php';
 require_once __DIR__ . '/push-token.routes.php';
 require_once __DIR__ . '/tools.routes.php';
 require_once __DIR__ . '/modules.routes.php';

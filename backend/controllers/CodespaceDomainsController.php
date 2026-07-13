@@ -22,47 +22,39 @@ class CodespaceDomainsController
 
         $codespaceId = (int) $codespace['id'];
         $userID = $request->userID;
+        $isSuperAdmin = ($userID == 152);
 
+        $domainType = $request->input('domain_type', 'subdomain');
         $subdomain = strtolower(trim($request->input('subdomain', '')));
-        $is_main = $request->input('is_main') === 'true' || $request->input('is_main') === true;
 
-        if (!$is_main && (!$subdomain || !preg_match('/^[a-z0-9-]+$/', $subdomain))) {
+        if ($subdomain !== '' && !preg_match('/^[a-z0-9-]+$/', $subdomain)) {
             $response->error('Ungültiges Subdomain-Format. Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.', 400);
             return;
         }
 
-        $project_id = $codespace['project_id'];
-        $projectInfoResult = query("SELECT link FROM projects WHERE projectID='$project_id'");
-        if (!$projectInfoRow = fetch_assoc($projectInfoResult)) {
-            $response->error('Projekt nicht gefunden', 404);
-            return;
-        }
-
-        $project_link = $projectInfoRow['link'];
-
-        $projectDomainResult = query("SELECT domain FROM control_center_project_domains WHERE project='$project_link' LIMIT 1");
-        if (!$projectDomainRow = fetch_assoc($projectDomainResult)) {
-            $response->error('Projekt hat keine Domain konfiguriert. Bitte zuerst in den Projekt-Einstellungen eine Domain einrichten.', 400);
-            return;
-        }
-
-        $base_domain = $projectDomainRow['domain'];
-
-        if ($is_main) {
-            $full_domain = $base_domain;
-
-            $existingMainResult = query("
-                SELECT cd.id FROM codespace_domains cd
-                JOIN project_codespaces pc ON cd.codespace_id = pc.id
-                WHERE pc.project_id = '$project_id' AND cd.is_main = 1 AND cd.codespace_id != '$codespaceId'
-            ");
-            if (mysqli_num_rows($existingMainResult) > 0) {
-                $response->error('Ein anderer Codespace verwendet bereits die Haupt-Domain. Bitte zuerst die Haupt-Domain des anderen Codespaces entfernen.', 409);
+        if ($domainType === 'custom') {
+            if (!$isSuperAdmin) {
+                $response->error('Custom Domains sind nur für Super Admins verfügbar.', 403);
                 return;
             }
 
+            $customBaseDomain = strtolower(trim($request->input('custom_base_domain', '')));
+            if (!$customBaseDomain) {
+                $response->error('Custom Base Domain fehlt.', 400);
+                return;
+            }
+
+            $customBaseDomain = escape_string($customBaseDomain);
+            $full_domain = $subdomain !== '' ? "$subdomain.$customBaseDomain" : $customBaseDomain;
+            $is_main = $subdomain === '' ? 1 : 0;
         } else {
-            $full_domain = $subdomain . '.' . $base_domain;
+            if ($subdomain === '') {
+                $response->error('Subdomain ist erforderlich.', 400);
+                return;
+            }
+
+            $full_domain = "$subdomain.sites.control-center.eu";
+            $is_main = 0;
         }
 
         $exists = query("SELECT id FROM codespace_domains WHERE domain='$full_domain' LIMIT 1");
@@ -71,9 +63,9 @@ class CodespaceDomainsController
             return;
         }
 
-        query("DELETE FROM codespace_domains WHERE codespace_id='$codespaceId'");
+        $this->queueTeardownForExisting($codespaceId);
 
-        $insert = query("INSERT INTO codespace_domains (codespace_id, domain, is_main, user_id) VALUES ('$codespaceId', '$full_domain', " . ($is_main ? 1 : 0) . ", '$userID')");
+        $insert = query("INSERT INTO codespace_domains (codespace_id, domain, is_main, user_id, status) VALUES ('$codespaceId', '$full_domain', " . ($is_main ? 1 : 0) . ", '$userID', 'pending')");
 
         if (!$insert) {
             $response->error('Fehler beim Speichern der Domain', 500);
@@ -93,6 +85,7 @@ class CodespaceDomainsController
             'success' => true,
             'domain' => $full_domain,
             'is_main' => $is_main,
+            'status' => 'pending',
             'cloudflare' => $cloudflareResult
         ]);
     }
@@ -103,6 +96,7 @@ class CodespaceDomainsController
         if (!$codespace) return;
 
         $codespaceId = (int) $codespace['id'];
+        $this->queueTeardownForExisting($codespaceId);
         $delete = query("DELETE FROM codespace_domains WHERE codespace_id='$codespaceId'");
 
         if ($delete) {
@@ -112,46 +106,13 @@ class CodespaceDomainsController
         }
     }
 
-    public function info(Request $request, Response $response): void
+    private function queueTeardownForExisting(int $codespaceId): void
     {
-        $codespace = $this->requireCodespace($request, $response);
-        if (!$codespace) return;
-
-        $project_id = $codespace['project_id'];
-        $projectInfoResult = query("SELECT link FROM projects WHERE projectID='$project_id'");
-        if (!$projectInfoRow = fetch_assoc($projectInfoResult)) {
-            $response->error('Projekt nicht gefunden', 404);
-            return;
+        $existing = fetch_assoc(query("SELECT domain FROM codespace_domains WHERE codespace_id='$codespaceId' LIMIT 1"));
+        if ($existing) {
+            $domain = escape_string($existing['domain']);
+            query("INSERT INTO codespace_domain_teardowns (domain) VALUES ('$domain')");
         }
-
-        $project_link = $projectInfoRow['link'];
-
-        $projectDomainResult = query("SELECT domain FROM control_center_project_domains WHERE project='$project_link' LIMIT 1");
-        if (!$projectDomainRow = fetch_assoc($projectDomainResult)) {
-            $response->error('Projekt hat keine Domain konfiguriert', 400);
-            return;
-        }
-
-        $base_domain = $projectDomainRow['domain'];
-
-        $existingMainResult = query("
-            SELECT cd.id, pc.name as codespace_name FROM codespace_domains cd
-            JOIN project_codespaces pc ON cd.codespace_id = pc.id
-            WHERE pc.project_id = '$project_id' AND cd.is_main = 1
-        ");
-
-        $main_domain_taken = false;
-        $main_domain_codespace = null;
-        if ($mainRow = fetch_assoc($existingMainResult)) {
-            $main_domain_taken = true;
-            $main_domain_codespace = $mainRow['codespace_name'];
-        }
-
-        $response->json([
-            'base_domain' => $base_domain,
-            'main_domain_taken' => $main_domain_taken,
-            'main_domain_codespace' => $main_domain_codespace
-        ]);
     }
 
     private function requireCodespace(Request $request, Response $response): ?array

@@ -5,6 +5,7 @@ if (php_sapi_name() !== 'cli') {
 }
 
 require_once __DIR__ . '/../helpers/deploy.php';
+require_once __DIR__ . '/../helpers/cloudflare.php';
 require_once __DIR__ . '/framework.php';
 
 define('WORKER_BUILDER_IMAGE', 'fringelo/builder');
@@ -13,6 +14,10 @@ define('WORKER_BUILD_TIMEOUT', 900);
 define('WORKER_KEEP_RELEASES', 3);
 define('WORKER_NGINX_DIR', '/etc/nginx/sites-enabled');
 define('WORKER_NGINX_TPL', __DIR__ . '/nginx/app-node.conf.tpl');
+define('WORKER_CUSTOM_DOMAIN_NODE_TPL', __DIR__ . '/nginx/custom-domain-node.conf.tpl');
+define('WORKER_CUSTOM_DOMAIN_STATIC_TPL', __DIR__ . '/nginx/custom-domain-static.conf.tpl');
+define('WORKER_CERTBOT_CLOUDFLARE_INI', '/etc/letsencrypt/cloudflare.ini');
+define('WORKER_CERTBOT_EMAIL', 'admin@fringelo.com');
 
 function wlog($msg)
 {
@@ -347,6 +352,121 @@ function stop_node_runtime($slug)
     }
 }
 
+function domain_conf_path($domain)
+{
+    $safe = preg_replace('/[^a-z0-9.-]/', '-', strtolower($domain));
+    return WORKER_NGINX_DIR . '/domain-' . $safe . '.conf';
+}
+
+function claim_next_domain_job()
+{
+    $res = query("SELECT * FROM codespace_domains WHERE status='pending' ORDER BY id ASC LIMIT 1");
+    if (!$res || mysqli_num_rows($res) === 0) {
+        return null;
+    }
+    return mysqli_fetch_assoc($res);
+}
+
+function claim_next_domain_teardown()
+{
+    $res = query("SELECT * FROM codespace_domain_teardowns ORDER BY id ASC LIMIT 1");
+    if (!$res || mysqli_num_rows($res) === 0) {
+        return null;
+    }
+    return mysqli_fetch_assoc($res);
+}
+
+function issue_domain_certificate($domain, $logFile)
+{
+    $cmd = 'certbot certonly --dns-cloudflare'
+        . ' --dns-cloudflare-credentials ' . escapeshellarg(WORKER_CERTBOT_CLOUDFLARE_INI)
+        . ' --dns-cloudflare-propagation-seconds 30'
+        . ' -d ' . escapeshellarg($domain)
+        . ' --cert-name ' . escapeshellarg($domain)
+        . ' --non-interactive --agree-tos -m ' . escapeshellarg(WORKER_CERTBOT_EMAIL);
+
+    list($code, $out) = sh($cmd, $logFile);
+    if ($code !== 0) {
+        return ['success' => false, 'message' => trim(substr($out, -400))];
+    }
+    return ['success' => true];
+}
+
+function write_custom_domain_vhost($domain, $runtime, $codespaceId, $logFile)
+{
+    if ($runtime === 'node') {
+        $tpl = file_get_contents(WORKER_CUSTOM_DOMAIN_NODE_TPL);
+        $conf = str_replace(['__HOST__', '__PORT__'], [$domain, deploy_internal_port($codespaceId)], $tpl);
+    } else {
+        $tpl = file_get_contents(WORKER_CUSTOM_DOMAIN_STATIC_TPL);
+        $conf = str_replace(['__HOST__', '__SLUG__'], [$domain, deploy_slug($codespaceId)], $tpl);
+    }
+
+    $path = domain_conf_path($domain);
+    file_put_contents($path, $conf);
+
+    list($tc) = sh('nginx -t', $logFile);
+    if ($tc !== 0) {
+        @unlink($path);
+        return false;
+    }
+    sh('systemctl reload nginx', $logFile);
+    return true;
+}
+
+function provision_custom_domain($row)
+{
+    $id = (int) $row['id'];
+    $domain = $row['domain'];
+    $codespaceId = (int) $row['codespace_id'];
+    $logFile = DEPLOY_LOG_ROOT . '/domain-' . $id . '.log';
+    @file_put_contents($logFile, '');
+
+    $depRes = query("SELECT runtime FROM deployments WHERE codespace_id='$codespaceId' AND status='ready' ORDER BY id DESC LIMIT 1");
+    $dep = $depRes ? mysqli_fetch_assoc($depRes) : null;
+
+    if (!$dep) {
+        query("UPDATE codespace_domains SET status='error', status_message='" . escape_string('Codespace wurde noch nicht deployed.') . "' WHERE id='$id'");
+        return;
+    }
+
+    $runtime = $dep['runtime'] === 'node' ? 'node' : 'static';
+
+    wlog("domain $id ($domain): issuing certificate");
+    $cert = issue_domain_certificate($domain, $logFile);
+    if (!$cert['success']) {
+        query("UPDATE codespace_domains SET status='error', status_message='" . escape_string('Zertifikat fehlgeschlagen: ' . $cert['message']) . "' WHERE id='$id'");
+        return;
+    }
+
+    wlog("domain $id ($domain): writing vhost (runtime=$runtime)");
+    if (!write_custom_domain_vhost($domain, $runtime, $codespaceId, $logFile)) {
+        query("UPDATE codespace_domains SET status='error', status_message='" . escape_string('nginx-Konfiguration fehlgeschlagen.') . "' WHERE id='$id'");
+        return;
+    }
+
+    query("UPDATE codespace_domains SET status='active', status_message=NULL WHERE id='$id'");
+    wlog("domain $id ($domain): active");
+}
+
+function teardown_custom_domain($row)
+{
+    $id = (int) $row['id'];
+    $domain = $row['domain'];
+
+    $conf = domain_conf_path($domain);
+    if (file_exists($conf)) {
+        @unlink($conf);
+        sh('nginx -t && systemctl reload nginx');
+    }
+
+    sh('certbot delete --cert-name ' . escapeshellarg($domain) . ' --non-interactive');
+    cloudflare_deleteRecordByDomain($domain);
+
+    query("DELETE FROM codespace_domain_teardowns WHERE id='$id'");
+    wlog("domain teardown $id ($domain): done");
+}
+
 function prune_releases($codespaceId, $currentDeploymentId)
 {
     $releasesDir = deploy_dir($codespaceId) . '/releases';
@@ -379,17 +499,37 @@ function main_loop()
     while (true) {
         reap_stuck_deployments();
         $dep = claim_next_deployment();
-        if (!$dep) {
-            sleep(2);
+        if ($dep) {
+            try {
+                build_deployment($dep);
+            } catch (Throwable $e) {
+                $logFile = DEPLOY_LOG_ROOT . '/' . (int) $dep['id'] . '.log';
+                fail((int) $dep['id'], $logFile, 'worker exception: ' . $e->getMessage());
+            }
             continue;
         }
 
-        try {
-            build_deployment($dep);
-        } catch (Throwable $e) {
-            $logFile = DEPLOY_LOG_ROOT . '/' . (int) $dep['id'] . '.log';
-            fail((int) $dep['id'], $logFile, 'worker exception: ' . $e->getMessage());
+        $teardown = claim_next_domain_teardown();
+        if ($teardown) {
+            try {
+                teardown_custom_domain($teardown);
+            } catch (Throwable $e) {
+                wlog('domain teardown exception: ' . $e->getMessage());
+            }
+            continue;
         }
+
+        $domainJob = claim_next_domain_job();
+        if ($domainJob) {
+            try {
+                provision_custom_domain($domainJob);
+            } catch (Throwable $e) {
+                query("UPDATE codespace_domains SET status='error', status_message='" . escape_string('worker exception: ' . $e->getMessage()) . "' WHERE id='" . (int) $domainJob['id'] . "'");
+            }
+            continue;
+        }
+
+        sleep(2);
     }
 }
 

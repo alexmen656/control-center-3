@@ -12,7 +12,7 @@ export const domainTools = [
   },
   {
     name: 'domain_list_available',
-    description: 'List available domains for project/webbuilder configuration. Super Admin (userID 152) can select ANY domain from domain management for ANY project. Normal users only see their own domains. Use this for domain selection dropdowns in Project Info, Web Builder, and Codespaces.',
+    description: 'List available custom domains for connecting to a codespace. Super Admin (userID 152) can select ANY of their own domains from domain management. Normal users only see their own domains. Use this for domain selection dropdowns in Codespaces.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -112,19 +112,19 @@ export const domainTools = [
     }
   },
   {
-    name: 'domain_connect_to_project',
-    description: 'Connect a domain to a project (Project Info). Super Admin (userID 152) can connect ANY custom domain to ANY project. Normal users can only use subdomains from sites.control-center.eu. Use domain_type: "custom" for custom domains (Super Admin only) with optional subdomain.',
+    name: 'domain_codespace_connect',
+    description: 'Connect a domain directly to a codespace. Normal users can only use a subdomain of sites.control-center.eu. Super Admin (userID 152) can instead use domainType "custom" to pick one of their own domains from domain management, with an optional subdomain prefix (root domain used if omitted).',
     inputSchema: {
       type: 'object',
       properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
+        codespaceId: {
+          type: 'number',
+          description: 'Codespace ID'
         },
         domainType: {
           type: 'string',
-          description: 'Domain type: "subdomain" (default), "custom" (Super Admin only), or "main"',
-          enum: ['subdomain', 'custom', 'main'],
+          description: 'Domain type: "subdomain" (default, under sites.control-center.eu) or "custom" (Super Admin only)',
+          enum: ['subdomain', 'custom'],
           default: 'subdomain'
         },
         customBaseDomain: {
@@ -133,48 +133,7 @@ export const domainTools = [
         },
         subdomain: {
           type: 'string',
-          description: 'Optional subdomain prefix. For custom domains, creates subdomain.customBaseDomain. For main domain type, this becomes the subdomain under sites.control-center.eu.'
-        },
-        userId: {
-          type: 'number',
-          description: 'User ID (from user_profile or context)'
-        }
-      },
-      required: ['project', 'domainType', 'userId']
-    }
-  },
-  {
-    name: 'domain_get_project',
-    description: 'Get the current domain configuration for a project',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
-        }
-      },
-      required: ['project']
-    }
-  },
-  {
-    name: 'domain_codespace_connect',
-    description: 'Connect domain to a codespace. Can use either a subdomain OR the main domain (exclusive - only Web Builder OR Codespace can use main domain at a time). IMPORTANT: Check for Web Builder main domain usage first.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        codespaceId: {
-          type: 'number',
-          description: 'Codespace ID'
-        },
-        subdomain: {
-          type: 'string',
-          description: 'Subdomain prefix (required when isMain is false)'
-        },
-        isMain: {
-          type: 'boolean',
-          description: 'Use the main domain directly (exclusive with Web Builder). Default: false',
-          default: false
+          description: 'Subdomain prefix. Required for domainType "subdomain". Optional for "custom" (root domain used if omitted).'
         },
         userId: {
           type: 'number',
@@ -185,17 +144,21 @@ export const domainTools = [
     }
   },
   {
-    name: 'domain_disconnect_from_project',
-    description: 'Disconnect the domain from a project. Useful when switching domains or removing an unwanted domain connection.',
+    name: 'domain_codespace_disconnect',
+    description: 'Disconnect the domain currently connected to a codespace.',
     inputSchema: {
       type: 'object',
       properties: {
-        project: {
-          type: 'string',
-          description: 'Project link/slug'
+        codespaceId: {
+          type: 'number',
+          description: 'Codespace ID'
+        },
+        userId: {
+          type: 'number',
+          description: 'User ID'
         }
       },
-      required: ['project']
+      required: ['codespaceId', 'userId']
     }
   }
 ];
@@ -214,14 +177,10 @@ export async function handleDomainTool(toolName, args, context) {
       return await deleteDomain(args, context);
     case 'domain_fetch_cloudflare':
       return await fetchCloudflare(args, context);
-    case 'domain_connect_to_project':
-      return await connectToProject(args, context);
-    case 'domain_get_project':
-      return await getProjectDomain(args, context);
     case 'domain_codespace_connect':
       return await connectCodespaceDomain(args, context);
-    case 'domain_disconnect_from_project':
-      return await disconnectFromProject(args, context);
+    case 'domain_codespace_disconnect':
+      return await disconnectCodespaceDomain(args, context);
     default:
       return formatError(`Unknown domain tool: ${toolName}`);
   }
@@ -380,79 +339,24 @@ async function fetchCloudflare(args, context) {
   }
 }
 
-async function connectToProject(args, context) {
-  try {
-    const params = new URLSearchParams({
-      action: 'connect',
-      project: args.project,
-      domain_type: args.domainType || 'subdomain',
-      user_id: args.userId.toString()
-    });
-
-    if (args.customBaseDomain) {
-      params.append('custom_base_domain', args.customBaseDomain);
-    }
-
-    if (args.subdomain) {
-      params.append('domain', args.subdomain);
-      params.append('subdomain', args.subdomain);
-    }
-
-    const response = await cmsRequest('project_domain.php', {
-      method: 'POST',
-      body: params
-    }, context);
-
-    if (response.error) {
-      return formatError(response.error);
-    }
-
-    return formatResponse({
-      success: true,
-      message: 'Domain connected to project successfully',
-      domain: response.domain,
-      fullDomain: response.domain
-    });
-  } catch (error) {
-    return formatError(`Failed to connect domain: ${error.message}`);
-  }
-}
-
-async function getProjectDomain(args, context) {
-  try {
-    const params = new URLSearchParams({
-      action: 'get',
-      project: args.project
-    });
-
-    const response = await cmsRequest('project_domain.php', {
-      method: 'POST',
-      body: params
-    }, context);
-
-    if (response.error) {
-      return formatError(response.error);
-    }
-
-    return formatResponse({
-      success: true,
-      domain: response.domain || null,
-      configured: !!response.domain
-    });
-  } catch (error) {
-    return formatError(`Failed to get project domain: ${error.message}`);
-  }
-}
-
 async function connectCodespaceDomain(args, context) {
   try {
+    const domainType = args.domainType || 'subdomain';
     const body = {
-      is_main: args.isMain ? true : false
+      domain_type: domainType
     };
 
-    if (!args.isMain) {
+    if (domainType === 'custom') {
+      if (!args.customBaseDomain) {
+        return formatError('customBaseDomain is required when domainType is "custom"');
+      }
+      body.custom_base_domain = args.customBaseDomain;
+      if (args.subdomain) {
+        body.subdomain = args.subdomain;
+      }
+    } else {
       if (!args.subdomain) {
-        return formatError('subdomain is required when isMain is false');
+        return formatError('subdomain is required when domainType is "subdomain"');
       }
       body.subdomain = args.subdomain;
     }
@@ -471,37 +375,28 @@ async function connectCodespaceDomain(args, context) {
       success: true,
       message: 'Codespace domain connected successfully',
       domain: response.domain,
-      isMain: args.isMain || false,
-      note: args.isMain
-        ? 'Using main domain (exclusive - Web Builder cannot use main domain while Codespace is using it)'
-        : 'Using subdomain of main domain'
+      isMain: response.is_main || false
     });
   } catch (error) {
     return formatError(`Failed to connect Codespace domain: ${error.message}`);
   }
 }
 
-async function disconnectFromProject(args, context) {
+async function disconnectCodespaceDomain(args, context) {
   try {
-    const params = new URLSearchParams({
-      action: 'delete',
-      project: args.project
-    });
-
-    const response = await cmsRequest('project_domain.php', {
-      method: 'POST',
-      body: params
+    const response = await cmsRequest(`v2/codespaces/${args.codespaceId}/domain`, {
+      method: 'DELETE'
     }, context);
 
-    if (response.error) {
-      return formatError(response.error);
+    if (!response.success) {
+      return formatError(response.error || 'Failed to disconnect Codespace domain');
     }
 
     return formatResponse({
       success: true,
-      message: 'Domain disconnected from project successfully'
+      message: 'Codespace domain disconnected successfully'
     });
   } catch (error) {
-    return formatError(`Failed to disconnect domain: ${error.message}`);
+    return formatError(`Failed to disconnect Codespace domain: ${error.message}`);
   }
 }

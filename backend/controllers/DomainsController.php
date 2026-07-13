@@ -218,15 +218,16 @@ class DomainsController
         $subdomains = [];
         $seen = [];
 
-        $pdResult = query("
-            SELECT pd.domain, pd.project AS project_link, p.name AS project_name
-            FROM control_center_project_domains pd
-            LEFT JOIN projects p ON p.link = pd.project
-            WHERE pd.domain LIKE '%.$escapedMain'
-            ORDER BY pd.domain ASC
+        $cdResult = query("
+            SELECT cd.domain, p.link AS project_link, p.name AS project_name, pc.name AS codespace_name
+            FROM codespace_domains cd
+            JOIN project_codespaces pc ON cd.codespace_id = pc.id
+            JOIN projects p ON p.projectID = pc.project_id
+            WHERE cd.domain LIKE '%.$escapedMain'
+            ORDER BY cd.domain ASC
         ");
 
-        while ($pdResult && $row = fetch_assoc($pdResult)) {
+        while ($cdResult && $row = fetch_assoc($cdResult)) {
             $full = $row['domain'];
             if (isset($seen[$full])) {
                 continue;
@@ -238,9 +239,10 @@ class DomainsController
                 'domain' => $full,
                 'project_link' => $row['project_link'],
                 'project_name' => $row['project_name'] ?: $row['project_link'],
+                'codespace_name' => $row['codespace_name'],
                 'is_enabled' => true,
                 'ssl_status' => null,
-                'source' => 'project_domain'
+                'source' => 'codespace_domain'
             ];
         }
 

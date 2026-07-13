@@ -54,64 +54,6 @@
             </div>
           </DataCard>
 
-          <DataCard title="Project Domain" subtitle="Configure your project's domain">
-            <LoadingState v-if="loadingDomain" message="Loading domain information..." />
-            <div v-else>
-              <div v-if="connectedDomain" class="connected-info">
-                <div class="connected-badge">
-                  <ion-icon name="checkmark-circle-outline"></ion-icon>
-                  <span>{{ connectedDomain }}</span>
-                  <button class="action-btn icon-only danger" @click="deleteDomain" title="Remove Domain">
-                    <ion-icon name="trash-outline"></ion-icon>
-                  </button>
-                </div>
-              </div>
-              <div v-else>
-                <div v-if="isSuperAdmin && availableDomains.length > 0" class="form-group">
-                  <label class="form-label">Select Domain</label>
-                  <select v-model="selectedDomainType" class="modern-select" @change="domainInput = ''">
-                    <option value="subdomain">Subdomain (sites.control-center.eu)</option>
-                    <option value="custom">Custom Domain from Domain Management</option>
-                  </select>
-                </div>
-
-                <div v-if="!isSuperAdmin || selectedDomainType === 'subdomain'" class="form-group">
-                  <label class="form-label">Subdomain</label>
-                  <div class="domain-input-wrapper">
-                    <input v-model="domainInput" placeholder="myproject" class="modern-input subdomain-input" />
-                    <span class="domain-suffix">.sites.control-center.eu</span>
-                  </div>
-                </div>
-
-                <div v-if="isSuperAdmin && selectedDomainType === 'custom'" class="form-group">
-                  <label class="form-label">Select Custom Domain</label>
-                  <select v-model="selectedCustomDomain" class="modern-select" @change="domainInput = ''">
-                    <option value="">-- Select a domain --</option>
-                    <option v-for="domain in availableDomains" :key="domain.id" :value="domain.domain">
-                      {{ domain.domain }}
-                    </option>
-                  </select>
-                </div>
-
-                <div v-if="isSuperAdmin && selectedDomainType === 'custom' && selectedCustomDomain" class="form-group">
-                  <label class="form-label">Subdomain (optional)</label>
-                  <div class="domain-input-wrapper">
-                    <input v-model="domainInput" placeholder="blog" class="modern-input subdomain-input" />
-                    <span class="domain-suffix">.{{ selectedCustomDomain }}</span>
-                  </div>
-                  <small class="form-help">Leave empty to use the root domain</small>
-                </div>
-
-                <ActionButton variant="primary" @click="connectDomain"
-                  :disabled="(selectedDomainType === 'custom' && !selectedCustomDomain) || (selectedDomainType === 'subdomain' && (!domainInput || domainInput.length < 3))"
-                  style="margin-top: 12px;">Connect Domain</ActionButton>
-              </div>
-              <div v-if="domainError" class="alert alert-error">
-                <ion-icon name="alert-circle-outline"></ion-icon>
-                {{ domainError }}
-              </div>
-            </div>
-          </DataCard>
         </div>
       </div>
     </ion-content>
@@ -149,14 +91,6 @@ export default {
       repos: [],
       openRepoModal: false,
       repoError: '',
-      loadingDomain: true,
-      connectedDomain: null,
-      domainInput: '',
-      domainError: '',
-      selectedDomainType: 'subdomain',
-      availableDomains: [],
-      isSuperAdmin: false,
-      selectedCustomDomain: '',
       loadingVercelProject: true,
       connectedVercelProject: null,
       openVercelModal: false,
@@ -171,107 +105,6 @@ export default {
   methods: {
     openSidebarEditor() {
       this.$router.push({ name: 'sidebar-editor', params: { project: this.$route.params.project } });
-    },
-    async fetchConnectedDomain() {
-      this.loadingDomain = true;
-      this.domainError = '';
-      try {
-        const user = getUserData();
-
-        this.isSuperAdmin = user && user.userID == 152;
-
-        if (this.isSuperAdmin) {
-          try {
-            const domainsRes = await this.$axios.get('v2/domains/available');
-            if (domainsRes.data.success) {
-              this.availableDomains = domainsRes.data.domains;
-            }
-          } catch (e) {
-            console.error('Error fetching available domains:', e);
-          }
-        }
-
-        const res = await this.$axios.post('v2/project-domain/get', {
-          project: this.$route.params.project,
-        });
-        this.connectedDomain = res.data.domain;
-      } catch (e) {
-        this.connectedDomain = null;
-      } finally {
-        this.loadingDomain = false;
-      }
-    },
-    async connectDomain() {
-      this.domainError = '';
-      const user = getUserData();
-      if (!user || !user.userID) {
-        this.domainError = 'Kein User.';
-        return;
-      }
-
-      let finalDomain = this.domainInput;
-      let customBaseDomain = '';
-
-      if (this.isSuperAdmin && this.selectedDomainType === 'custom') {
-        if (!this.selectedCustomDomain) {
-          this.domainError = 'Bitte wähle eine Custom Domain.';
-          return;
-        }
-        customBaseDomain = this.selectedCustomDomain;
-
-        if (this.domainInput) {
-          if (!/^[a-z0-9-]+$/.test(this.domainInput)) {
-            this.domainError = 'Subdomain: Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.';
-            return;
-          }
-          finalDomain = this.domainInput;
-        } else {
-          finalDomain = '';
-        }
-      } else {
-        if (!/^[a-z0-9-]+$/.test(this.domainInput)) {
-          this.domainError = 'Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.';
-          return;
-        }
-      }
-
-      try {
-        const res = await this.$axios.post('v2/project-domain/connect', {
-          project: this.$route.params.project,
-          user_id: user.userID,
-          domain: finalDomain,
-          domain_type: this.selectedDomainType,
-          custom_base_domain: customBaseDomain
-        });
-        if (res.data && res.data.success) {
-          this.connectedDomain = res.data.domain;
-          this.domainInput = '';
-          this.selectedCustomDomain = '';
-        } else {
-          this.domainError = res.data && res.data.error ? res.data.error : 'Fehler beim Verbinden.';
-        }
-      } catch (e) {
-        this.domainError = 'Fehler beim Verbinden.';
-      }
-    },
-    async deleteDomain() {
-      if (!confirm('Are you sure you want to remove the domain from this project?')) return;
-
-      this.domainError = '';
-      try {
-        const res = await this.$axios.post('v2/project-domain/delete', {
-          project: this.$route.params.project
-        });
-
-        if (res.data && res.data.success) {
-          this.connectedDomain = null;
-        } else {
-          this.domainError = res.data.error || 'Failed to remove domain';
-        }
-      } catch (e) {
-        this.domainError = 'Error removing domain';
-        console.error(e);
-      }
     },
     async loadProjectBanner() {
       try {
