@@ -62,8 +62,9 @@
 
     <CodeSpaceAPIsView v-if="showAPIsView" :project-name="projectName" :codespace="codespaceName" />
     <CodeSpaceEnvView v-if="showEnvView" :project-name="projectName" :codespace="codespaceName" />
+    <CodeSpaceLogsView v-if="showLogsView" :project-name="projectName" :codespace="codespaceName" />
 
-    <div v-if="!showAPIsView && !showEnvView && !showWelcome" class="monaco-editor-container">
+    <div v-if="!showAPIsView && !showEnvView && !showLogsView && !showWelcome" class="monaco-editor-container">
       <vue-monaco-editor v-model:value="code" :language="language" theme="vs-dark" :options="editorOptions" width="100%"
         height="100%" />
     </div>
@@ -146,20 +147,21 @@ import { useCodespace } from '@/composables/useCodespace'
 import { IonIcon } from '@ionic/vue'
 import CodeSpaceAPIsView from './CodeSpaceAPIsView.vue'
 import CodeSpaceEnvView from './CodeSpaceEnvView.vue'
+import CodeSpaceLogsView from './CodeSpaceLogsView.vue'
 
 const toast = ToastService
 
 const route = useRoute()
 const projectName = route.params.project || 'default-project'
-const codespaceName = route.params.codespace || 'main'  // Default to 'main' if no codespace specified
+const codespaceName = route.params.codespace || 'main'
 
-// Initialize codespace composable
 const codespace = useCodespace(route.params)
 
 const currentFile = ref('')
 const showWelcome = ref(true)
 const showAPIsView = ref(false)
 const showEnvView = ref(false)
+const showLogsView = ref(false)
 const recentFiles = ref([])
 
 const code = ref('// Schreibe hier deinen Code...\nconsole.log("Hello Monaco!")')
@@ -172,7 +174,6 @@ const editorOptions = {
   formatOnPaste: true,
 }
 
-// Load file content
 const loadFile = async (filename = 'index.html') => {
   try {
     const languageMap = {
@@ -196,39 +197,42 @@ const loadFile = async (filename = 'index.html') => {
       'swift': 'swift',
       'kotlin': 'kotlin',
       'rust': 'rust',
-      // Add more mappings as needed
     }
 
     language.value = languageMap[filename.split('.').pop()] || 'javascript'
-    // Handle special views first (before trying to load from API)
     if (filename == "apis") {
       showAPIsView.value = true
       showEnvView.value = false
+      showLogsView.value = false
       showWelcome.value = false
       return
     } else if (filename == "environment") {
       showEnvView.value = true
       showAPIsView.value = false
+      showLogsView.value = false
+      showWelcome.value = false
+      return
+    } else if (filename == "logs") {
+      showLogsView.value = true
+      showAPIsView.value = false
+      showEnvView.value = false
       showWelcome.value = false
       return
     }
 
 
-    // Use codespace API to load file from specific codespace
     const content = await codespace.loadFile(filename)
     code.value = content
 
-    // Normal file loaded - hide special views
     showAPIsView.value = false
     showEnvView.value = false
+    showLogsView.value = false
     currentFile.value = filename
 
-    showWelcome.value = false // Hide welcome screen when file is loaded
+    showWelcome.value = false
 
-    // Add to recent files
     addToRecentFiles(filename)
 
-    // Emit active file changed event
     window.dispatchEvent(new CustomEvent('monaco-active-file-changed', {
       detail: {
         filePath: filename,
@@ -238,12 +242,10 @@ const loadFile = async (filename = 'index.html') => {
     }))
   } catch (error) {
     console.log('File not found, creating new file')
-    // File doesn't exist, create it using codespace API
     await codespace.createFile(filename, code.value)
     currentFile.value = filename
     showWelcome.value = false
 
-    // Emit active file changed event for new file
     window.dispatchEvent(new CustomEvent('monaco-active-file-changed', {
       detail: {
         filePath: filename,
@@ -254,17 +256,14 @@ const loadFile = async (filename = 'index.html') => {
   }
 }
 
-// Save file content
 const saveFile = async (filename, content, manual = false) => {
   try {
-    // Use codespace API to save file in specific codespace
     await codespace.saveFile(filename, content)
 
     if (manual) {
       toast.success(`Datei ${filename} erfolgreich gespeichert!`, 1000)
     }
     console.log('File saved successfully to codespace:', codespaceName)
-    // Emit event to notify sidebar about file save
     window.dispatchEvent(new CustomEvent('monaco-file-saved', {
       detail: {
         filename,
@@ -279,11 +278,9 @@ const saveFile = async (filename, content, manual = false) => {
   }
 }
 
-// Auto-save when code changes
 let saveTimeout = null
 let lastSavedContent = code.value
 watch(code, (newCode) => {
-  // Only auto-save if a file is currently loaded
   if (!currentFile.value || showWelcome.value) return
 
   if (saveTimeout) {
@@ -294,16 +291,14 @@ watch(code, (newCode) => {
     try {
       await saveFile(currentFile.value, newCode)
       lastSavedContent = newCode
-      // Optionally show a subtle success indicator (only on first save)
       if (lastSavedContent !== newCode) {
         console.log(`Auto-saved: ${currentFile.value}`)
       }
     } catch (error) {
       toast.error(`Auto-Save fehlgeschlagen für ${currentFile.value}: ${error.message}`, 1000)
     }
-  }, 1000) // Auto-save after 1 second of inactivity
+  }, 1000)
 
-  // Emit change event immediately for live git updates
   if (newCode !== lastSavedContent) {
     window.dispatchEvent(new CustomEvent('monaco-file-changed', {
       detail: {
@@ -316,39 +311,31 @@ watch(code, (newCode) => {
   }
 })
 
-// Initialize project
 const initializeProject = async () => {
   try {
-    // Use codespace API to load files from specific codespace
     await codespace.loadFiles()
 
     if (codespace.files.value.length > 0) {
-      // Filter out Monaco metadata files and get regular files
       const regularFiles = codespace.files.value.filter(f =>
         f.type === 'file' &&
         !f.name.startsWith('.monaco_') &&
         !f.name.startsWith('.git')
       )
 
-      // Update recent files for welcome screen
-      recentFiles.value = regularFiles.slice(0, 5) // Show last 5 files
+      recentFiles.value = regularFiles.slice(0, 5)
 
-      // Don't auto-load any file - show welcome screen instead
       showWelcome.value = true
     } else {
-      // New codespace, show welcome screen
       showWelcome.value = true
     }
 
     console.log(`Initialized codespace: ${codespaceName} in project: ${projectName}`)
   } catch (error) {
     console.error('Failed to initialize codespace:', error)
-    // Show welcome screen on error
     showWelcome.value = true
   }
 }
 
-// Welcome screen functions
 const createNewFile = async () => {
   try {
     const filename = prompt('Dateiname eingeben:', 'neue-datei.js')
@@ -384,11 +371,8 @@ const showEditorFeatures = () => {
 }
 
 const addToRecentFiles = (filename) => {
-  // Remove if already exists
   recentFiles.value = recentFiles.value.filter(f => f.name !== filename)
-  // Add to beginning
   recentFiles.value.unshift({ name: filename, type: 'file' })
-  // Keep only 5 most recent
   recentFiles.value = recentFiles.value.slice(0, 5)
 }
 
@@ -443,7 +427,14 @@ const onRefreshFile = (event) => {
 const onOpenEnvView = () => {
   showWelcome.value = false
   showAPIsView.value = false
+  showLogsView.value = false
   showEnvView.value = true
+}
+const onOpenLogsView = () => {
+  showWelcome.value = false
+  showAPIsView.value = false
+  showEnvView.value = false
+  showLogsView.value = true
 }
 const onAddEnvVar = () => {
   showWelcome.value = false
@@ -481,6 +472,7 @@ onMounted(() => {
   window.addEventListener('monaco-refresh-file', onRefreshFile)
   window.addEventListener('monaco-open-env-view', onOpenEnvView)
   window.addEventListener('monaco-add-env-var', onAddEnvVar)
+  window.addEventListener('monaco-open-logs-view', onOpenLogsView)
   window.addEventListener('keydown', onKeydown)
 })
 
@@ -489,10 +481,10 @@ onUnmounted(() => {
   window.removeEventListener('monaco-refresh-file', onRefreshFile)
   window.removeEventListener('monaco-open-env-view', onOpenEnvView)
   window.removeEventListener('monaco-add-env-var', onAddEnvVar)
+  window.removeEventListener('monaco-open-logs-view', onOpenLogsView)
   window.removeEventListener('keydown', onKeydown)
 })
 
-// Markdown rendering
 const renderedMarkdown = ref('');
 watch(code, (newCode) => {
   if (language.value === 'markdown') {
@@ -502,7 +494,6 @@ watch(code, (newCode) => {
   }
 });
 
-// AI Assistant state
 const showAssistant = ref(false);
 const userQuestion = ref('');
 const chatHistory = ref([]);
@@ -516,7 +507,6 @@ const toggleAssistant = () => {
   showAssistant.value = !showAssistant.value;
   if (showAssistant.value) {
     unreadMessages.value = 0;
-    // Focus input when opening
     setTimeout(() => {
       if (chatInput.value) {
         chatInput.value.focus();
@@ -601,7 +591,6 @@ const askAI = async () => {
   isTyping.value = true;
 
   try {
-    // Prepare chat history for API (only user and assistant messages)
     const apiChatHistory = chatHistory.value
       .filter(msg => msg.type === 'user' || msg.type === 'ai')
       .map(msg => ({
@@ -615,7 +604,7 @@ const askAI = async () => {
       fileContent: code.value,
       language: language.value,
       agentMode: agentMode.value,
-      chatHistory: apiChatHistory.slice(-10) // Keep last 10 messages for context
+      chatHistory: apiChatHistory.slice(-10)
     });
 
     if (response.data.success) {
@@ -635,10 +624,8 @@ const applyReplacement = (replacement) => {
   const oldCode = replacement.oldCode;
   let newCode = replacement.newCode;
 
-  // Clean up any trailing END_REPLACE that might have been included
   newCode = newCode.replace(/\s*END_REPLACE\s*$/, '').trim();
 
-  // Check if current code is minimal (empty, single line, or just comments)
   const currentCodeTrimmed = code.value.trim();
   const isMinimalCode = !currentCodeTrimmed ||
     currentCodeTrimmed.split('\n').length <= 2 ||
@@ -646,15 +633,12 @@ const applyReplacement = (replacement) => {
     currentCodeTrimmed.match(/^\/\*.*\*\/$/) ||
     currentCodeTrimmed === 'console.log("Hello Monaco!")';
 
-  // If oldCode is empty or current code is minimal, replace everything or append
   if (!oldCode.trim() || isMinimalCode) {
     if (isMinimalCode && newCode.includes('<!DOCTYPE html>')) {
-      // Replace entire content for HTML files
       code.value = newCode;
       toast.success('Vollständiger Code wurde eingefügt!', 30);
       addSystemMessage('Kompletter Code wurde erfolgreich eingefügt.');
     } else {
-      // Append to existing code
       code.value += (code.value.trim() ? '\n\n' : '') + newCode;
       toast.success('Code wurde hinzugefügt!', 30);
       addSystemMessage('Neuer Code wurde hinzugefügt.');
@@ -662,7 +646,6 @@ const applyReplacement = (replacement) => {
     return;
   }
 
-  // Try exact match first
   if (code.value.includes(oldCode)) {
     code.value = code.value.replace(oldCode, newCode);
     toast.success('Code-Änderung wurde angewendet!', 30);
@@ -670,19 +653,16 @@ const applyReplacement = (replacement) => {
     return;
   }
 
-  // Try with normalized whitespace
   const normalizedOldCode = oldCode.replace(/\s+/g, ' ').trim();
   const normalizedCurrentCode = code.value.replace(/\s+/g, ' ').trim();
 
   if (normalizedCurrentCode.includes(normalizedOldCode)) {
-    // Find the original text with original formatting
     const lines = code.value.split('\n');
     let found = false;
 
     for (let i = 0; i < lines.length; i++) {
       const lineSection = lines.slice(i, i + oldCode.split('\n').length).join('\n');
       if (lineSection.replace(/\s+/g, ' ').trim() === normalizedOldCode) {
-        // Replace the section
         const beforeLines = lines.slice(0, i);
         const afterLines = lines.slice(i + oldCode.split('\n').length);
         code.value = [...beforeLines, newCode, ...afterLines].join('\n');
@@ -695,13 +675,11 @@ const applyReplacement = (replacement) => {
       toast.success('Code-Änderung wurde angewendet!', 30);
       addSystemMessage('Code-Änderung wurde erfolgreich angewendet.');
     } else {
-      // Fallback: append the new code
       code.value += '\n\n' + newCode;
       toast.success('Code wurde hinzugefügt (Fallback)!', 30);
       addSystemMessage('Code wurde als Fallback hinzugefügt, da der ursprüngliche Abschnitt nicht gefunden wurde.');
     }
   } else {
-    // Fallback: append the new code
     code.value += '\n\n' + newCode;
     toast.success('Code wurde hinzugefügt (Fallback)!', 30);
     addSystemMessage('Code wurde als Fallback hinzugefügt, da der ursprüngliche Abschnitt nicht gefunden wurde.');

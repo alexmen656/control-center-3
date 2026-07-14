@@ -40,10 +40,35 @@ function sh($cmd, $logFile = null)
 
 function ensure_dirs()
 {
-    foreach ([DEPLOY_ROOT, DEPLOY_BUILD_TMP, DEPLOY_LOG_ROOT] as $d) {
+    foreach ([DEPLOY_ROOT, DEPLOY_BUILD_TMP, DEPLOY_LOG_ROOT, DEPLOY_RUNTIME_LOG_ROOT] as $d) {
         if (!is_dir($d)) {
             @mkdir($d, 0775, true);
         }
+    }
+}
+
+function sync_runtime_logs()
+{
+    static $lastRun = 0;
+    $now = time();
+    if ($now - $lastRun < 10) {
+        return;
+    }
+    $lastRun = $now;
+
+    list($rc, $out) = sh("docker ps --filter " . escapeshellarg('name=^app-cs-') . " --format '{{.Names}}'");
+    if ($rc !== 0 || trim($out) === '') {
+        return;
+    }
+
+    foreach (explode("\n", trim($out)) as $name) {
+        $name = trim($name);
+        if ($name === '' || !preg_match('/^app-cs-(\d+)$/', $name, $m)) {
+            continue;
+        }
+        $logFile = DEPLOY_RUNTIME_LOG_ROOT . '/cs-' . $m[1] . '.log';
+        sh('docker logs --tail 500 --timestamps ' . escapeshellarg($name) . ' > ' . escapeshellarg($logFile));
+        @chmod($logFile, 0664);
     }
 }
 
@@ -498,6 +523,7 @@ function main_loop()
     wlog('worker started');
     while (true) {
         reap_stuck_deployments();
+        sync_runtime_logs();
         $dep = claim_next_deployment();
         if ($dep) {
             try {

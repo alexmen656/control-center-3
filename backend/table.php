@@ -13,14 +13,14 @@ function mapFieldType($type)
         case 'date':
             return 'VARCHAR(255)';
         case 'textarea':
-            return 'TEXT';
+            return 'LONGTEXT';
         case 'number':
         case 'operation':
             return 'INT';
         case 'checkbox':
             return 'BOOLEAN';
         case 'image':
-            return 'VARCHAR(255)';
+            return 'LONGTEXT';
         default:
             return 'VARCHAR(255)';
     }

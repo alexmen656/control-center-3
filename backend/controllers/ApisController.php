@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../helpers/apis.php';
+require_once __DIR__ . '/../helpers/api_keys.php';
 
 class ApisController
 {
@@ -150,6 +151,7 @@ class ApisController
             VALUES ('$projectID', '$apiId', '$apiKey', '$rateLimit')");
 
         if ($insertSub) {
+            api_store_key(mysqli_insert_id($GLOBALS['con']), $apiKey);
             $copyResult = copyAPISDKToProject($projectName, $apiSlug, $request->userID);
             $response->success([
                 'api_key' => $apiKey,
@@ -273,11 +275,8 @@ class ApisController
         }
 
         $newApiKey = generateApiKey($sub['projectID']);
+        api_store_key($subscriptionId, $newApiKey);
 
-        if (query("UPDATE project_api_subscriptions SET api_key='$newApiKey' WHERE id='$subscriptionId'")) {
-            $response->success(['api_key' => $newApiKey], 'API key regenerated successfully');
-        } else {
-            $response->error('Failed to regenerate API key', 500);
-        }
+        $response->success(['api_key' => $newApiKey], 'API key regenerated successfully');
     }
 }

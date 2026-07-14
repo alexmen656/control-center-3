@@ -175,6 +175,9 @@
       <div class="section-header">
         <ion-icon name="cloud-outline"></ion-icon>
         <span>Deployments</span>
+        <ion-button fill="clear" size="small" @click="openLogsView">
+          <ion-icon slot="icon-only" name="terminal-outline"></ion-icon>
+        </ion-button>
         <ion-button fill="clear" size="small" @click="refreshDeployments">
           <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
         </ion-button>
@@ -460,6 +463,10 @@ const copyToClipboard = (text) => {
 const openEnvView = () => {
   console.log('Opening Environment Variables view')
   window.dispatchEvent(new CustomEvent('monaco-open-env-view'))
+}
+
+const openLogsView = () => {
+  window.dispatchEvent(new CustomEvent('monaco-open-logs-view'))
 }
 
 const addNewEnvVar = () => {

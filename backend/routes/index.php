@@ -28,3 +28,4 @@ require_once __DIR__ . '/github.routes.php';
 require_once __DIR__ . '/components.routes.php';
 require_once __DIR__ . '/deploy-logs.routes.php';
 require_once __DIR__ . '/secure-file.routes.php';
+require_once __DIR__ . '/runtime-logs.routes.php';

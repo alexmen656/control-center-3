@@ -12,6 +12,9 @@ if (!defined('DEPLOY_BUILD_TMP')) {
 if (!defined('DEPLOY_LOG_ROOT')) {
     define('DEPLOY_LOG_ROOT', '/var/www/deploy-logs');
 }
+if (!defined('DEPLOY_RUNTIME_LOG_ROOT')) {
+    define('DEPLOY_RUNTIME_LOG_ROOT', '/var/www/runtime-logs');
+}
 if (!defined('DEPLOY_GIT_ROOT')) {
     define('DEPLOY_GIT_ROOT', '/var/www/git');
 }
