@@ -8,7 +8,8 @@ class CodespaceEditorController
         $project = $request->input('project', '');
         $codespace = $request->input('codespace', 'main');
 
-        $path = dirname(__DIR__) . '/../data/projects/' . $userID . '/' . $project . '/' . $codespace;
+        $codespaceID = requireExistingCodespace($userID, $project, $codespace);
+        $path = codespaceDataDir($codespaceID);
 
         return [$path, $project, $codespace];
     }

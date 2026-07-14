@@ -10,10 +10,10 @@ class CodespaceGitController
         $project = $request->input('project', 'default-project');
         $codespace = $request->input('codespace', 'main');
 
-        $projectPath = dirname(__DIR__) . '/../data/projects/' . $userID . '/' . $project . '/' . $codespace;
+        $codespaceID = requireExistingCodespace($userID, $project, $codespace);
+        $projectPath = codespaceDataDir($codespaceID);
 
-        requireExistingCodespace($userID, $project, $codespace);
-        git_ensureRepo($projectPath, $project, $userID, $codespace);
+        git_ensureRepo($projectPath, $codespaceID);
 
         return $projectPath;
     }

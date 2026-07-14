@@ -87,7 +87,7 @@ export async function readResource(uri, user, backendUrl, token) {
 
       case 'apis':
         if (id === 'available') {
-          data = await fetchAvailableApis(backendUrl);
+          data = await fetchAvailableApis(backendUrl, token);
         }
         break;
 
@@ -145,11 +145,10 @@ async function fetchBookmarks(backendUrl) {
   return response.json();
 }
 
-async function fetchAvailableApis(backendUrl) {
-  const response = await fetch(`${backendUrl}/apis.php`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ getAvailableApis: 'true' })
+async function fetchAvailableApis(backendUrl, token) {
+  const response = await fetch(`${backendUrl}/v2/apis/available`, {
+    method: 'GET',
+    headers: { 'Authorization': token }
   });
   return response.json();
 }

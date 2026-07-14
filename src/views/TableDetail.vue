@@ -351,8 +351,8 @@ export default defineComponent({
 }
 
 .modern-table {
-  width: 100%;
-  min-width: 800px;
+  width: max-content;
+  min-width: 100%;
 }
 
 .table-header {
@@ -625,10 +625,6 @@ export default defineComponent({
     min-width: 100px;
     padding: 12px 8px;
     font-size: 12px;
-  }
-
-  .modern-table {
-    min-width: 600px;
   }
 
   .cell-content {

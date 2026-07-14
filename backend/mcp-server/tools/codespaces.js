@@ -14,7 +14,7 @@ function gitApi(args, extra = '') {
 }
 
 function deployApi(args, action) {
-  return `vercel_api.php?project=${enc(args.project)}&codespace=${enc(args.codespace || 'main')}&action=${action}`;
+  return `v2/codespaces/${action}?project=${enc(args.project)}&codespace=${enc(args.codespace || 'main')}`;
 }
 
 function backendResult(data) {
@@ -234,7 +234,7 @@ export const codespaceTools = [
   },
   {
     name: 'codespace_publish_as_api',
-    description: 'Expose a deployed codespace as a public REST API through the gateway. Returns the gateway URL (https://gw.fringelo.com/<slug>). Use this to make a backend callable by others; api_create is only for cataloging external API metadata.',
+    description: 'Expose a deployed codespace as a public REST API through the gateway. Returns the gateway URL (https://gw.fringelo.com/<slug>). Use this to make a backend callable by others.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -623,7 +623,8 @@ async function deployCodespace(args, context) {
 async function listDeployments(args, context) {
   try {
     const data = await cmsRequest(deployApi(args, 'deployments'), { method: 'GET' }, context);
-    return formatResponse({ success: true, deployments: data.deployments || data });
+    const deployments = data.deployments?.deployments || data.deployments || [];
+    return formatResponse({ success: true, deployments });
   } catch (error) {
     return formatError(error.message);
   }

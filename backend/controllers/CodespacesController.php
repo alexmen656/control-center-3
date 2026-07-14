@@ -1,6 +1,5 @@
 <?php
 
-require_once __DIR__ . '/../helpers/project.php';
 require_once __DIR__ . '/../helpers/cloudflare.php';
 
 class CodespacesController
@@ -153,12 +152,9 @@ class CodespacesController
             return;
         }
 
-        $project = getProjectByID($codespace['project_id']);
-        if ($project) {
-            $codespaceDir = dirname(__DIR__) . "/../data/projects/" . $request->userID . "/" . $project['link'] . "/" . $codespace['slug'];
-            if (is_dir($codespaceDir)) {
-                $this->deleteDirectory($codespaceDir);
-            }
+        $codespaceDir = codespaceDataDir($codespaceID);
+        if (is_dir($codespaceDir)) {
+            $this->deleteDirectory($codespaceDir);
         }
 
         $result = query("DELETE FROM project_codespaces WHERE id='$codespaceID'");
@@ -283,24 +279,10 @@ class CodespacesController
         $targetDir = null;
 
         try {
-            $sourceProject = getProjectByID($codespace['project_id']);
-            $targetProject = getProjectByID($targetProjectID);
-
-            if (!$sourceProject || !$targetProject) {
-                $response->error('Project data error', 500);
-                return;
-            }
-
-            $sourceDir = dirname(__DIR__) . "/../data/projects/" . $userID . "/" . $sourceProject['link'] . "/" . $codespace['slug'];
-            $targetDir = dirname(__DIR__) . "/../data/projects/" . $userID . "/" . $targetProject['link'] . "/" . $targetSlug;
+            $sourceDir = codespaceDataDir($codespaceID);
 
             if (!is_dir($sourceDir)) {
                 $response->error('Source codespace directory not found', 404);
-                return;
-            }
-
-            if (!$this->copyCodespaceDirectory($sourceDir, $targetDir)) {
-                $response->error('Failed to copy codespace files', 500);
                 return;
             }
 
@@ -314,12 +296,18 @@ class CodespacesController
                                   VALUES ('" . escape_string($newName) . "', '" . escape_string($targetSlug) . "', '" . escape_string($codespace['description']) . "', '" . escape_string($codespace['icon']) . "', '" . escape_string($codespace['language']) . "', '" . escape_string($codespace['template']) . "', '$targetProjectID', '$userID', '$newOrder', '" . escape_string($codespace['status']) . "')");
 
             if (!$insertResult) {
-                $this->deleteDirectory($targetDir);
                 $response->error('Failed to create codespace record', 500);
                 return;
             }
 
             $newCodespaceID = mysqli_insert_id($GLOBALS['con']);
+            $targetDir = codespaceDataDir($newCodespaceID);
+
+            if (!$this->copyCodespaceDirectory($sourceDir, $targetDir)) {
+                query("DELETE FROM project_codespaces WHERE id='$newCodespaceID'");
+                $response->error('Failed to copy codespace files', 500);
+                return;
+            }
 
             $isMove = $request->input('moveCodespace') === 'true' || $request->input('moveCodespace') === true;
 

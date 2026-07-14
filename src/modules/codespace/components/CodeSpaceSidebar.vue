@@ -691,7 +691,7 @@ const loadGitData = async () => {
 
 const loadDeployments = async () => {
   try {
-    const response = await axios.get(`vercel_api.php?project=${projectName}&codespace=${codespace}&action=deployments`)
+    const response = await axios.get(`v2/codespaces/deployments?project=${projectName}&codespace=${codespace}`)
     if (response.data.success) {
       deployments.value = response.data.deployments.deployments?.map(deployment => ({
         id: deployment.uid,
@@ -982,14 +982,7 @@ const closeDiffViewer = () => {
 const deployToVercel = async () => {
   isDeploying.value = true
   try {
-    const response = await axios.post(`vercel_api.php?project=${projectName}&codespace=${codespace}`, {
-      action: 'deploy',
-      gitSource: {
-        type: 'github',
-        repo: projectName,
-        ref: 'main'
-      }
-    })
+    const response = await axios.post(`v2/codespaces/deploy?project=${projectName}&codespace=${codespace}`)
 
     if (response.data.success) {
       deployments.value.unshift({
@@ -1010,19 +1003,6 @@ const deployToVercel = async () => {
     }
   } catch (error) {
     console.error('Deployment failed:', error)
-    deployments.value.unshift({
-      id: Date.now().toString(),
-      url: `https://myproject-${Math.random().toString(36).substring(2, 8)}.vercel.app`,
-      state: 'BUILDING',
-      commit: recentCommits.value[0]?.hash || 'latest',
-      created: new Date()
-    })
-
-    setTimeout(() => {
-      if (deployments.value[0]) {
-        deployments.value[0].state = 'READY'
-      }
-    }, 3000)
   } finally {
     isDeploying.value = false
   }

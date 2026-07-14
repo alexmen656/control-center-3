@@ -48,6 +48,10 @@
                   <ion-icon name="settings-outline"></ion-icon>
                   Edit Table
                 </a>
+                <a @click="openDeleteModal()" class="dropdown-item dropdown-item-danger">
+                  <ion-icon name="trash-outline"></ion-icon>
+                  Delete Table
+                </a>
               </div>
             </div>
           </div>
@@ -85,7 +89,7 @@
                 <div v-for="(tr, rowIndex) in sortedData" :key="rowIndex" class="table-row"
                   :class="{ 'row-hover': true }">
                   <div v-for="(td, colIndex) in tr" :key="colIndex" class="table-cell">
-                    <img v-if="isImageValue(td) && getSignedImageUrl(td)" :src="getSignedImageUrl(td)"
+                    <img v-if="isImageValue(td) && getThumbUrl(td)" :src="getThumbUrl(td)"
                       class="cell-image-preview" @click.stop="openImagePreview(getSignedImageUrl(td))"
                       @error="onCellImageError(td)" />
                     <span v-else class="cell-content">{{ td }}</span>
@@ -167,6 +171,8 @@
         @close="triggerModalOpen = false" />
       <RenameTable v-if="renameModalOpen" :project="$route.params.project" :table="$route.params.table"
         @close="renameModalOpen = false" @success="handleRenameSuccess" @sidebarRefresh="refreshSidebar" />
+      <DeleteTable v-if="deleteModalOpen" :project="$route.params.project" :table="$route.params.table"
+        @close="deleteModalOpen = false" @success="handleDeleteSuccess" />
       <div v-if="imagePreviewUrl" class="image-lightbox" @click="imagePreviewUrl = ''">
         <img :src="imagePreviewUrl" class="image-lightbox-img" />
       </div>
@@ -179,6 +185,7 @@ import DisplayTable from "@/components/DisplayTable.vue";
 import FloatingFileUpload from "@/components/FloatingFileUpload.vue";
 import TriggerManager from "@/components/TriggerManager.vue";
 import RenameTable from "@/components/RenameTable.vue";
+import DeleteTable from "@/components/DeleteTable.vue";
 import { defineComponent, ref } from "vue";
 import SiteTitle from "@/components/SiteTitle.vue";
 import ActionButton from "@/components/ActionButton.vue";
@@ -194,6 +201,7 @@ export default defineComponent({
     FloatingFileUpload,
     TriggerManager,
     RenameTable,
+    DeleteTable,
     SiteTitle,
     ActionButton,
     DataCard,
@@ -213,6 +221,7 @@ export default defineComponent({
       sortDirection: 'asc',
       triggerModalOpen: false,
       renameModalOpen: false,
+      deleteModalOpen: false,
       showForm: false,
       dropdownOpen: false,
       exportDropdownOpen: false,
@@ -221,6 +230,7 @@ export default defineComponent({
       editFormValues: {},
       projectID: null,
       signedUrls: {},
+      thumbUrls: {},
       imagePreviewUrl: '',
     };
   },
@@ -296,6 +306,9 @@ export default defineComponent({
       if (newVal && this.edit_id) {
         this.loadEditFormData();
       }
+    },
+    '$route.params.table'() {
+      this.loadData();
     }
   },
   created() {
@@ -462,6 +475,9 @@ export default defineComponent({
     openRenameModal() {
       this.renameModalOpen = true;
     },
+    openDeleteModal() {
+      this.deleteModalOpen = true;
+    },
     openEditModal() {
       this.$router.push({
         path: `/project/${this.$route.params.project}/tables/${this.$route.params.table}/edit`
@@ -474,6 +490,16 @@ export default defineComponent({
         params: {
           project: this.$route.params.project,
           table: newTableName
+        }
+      });
+    },
+    handleDeleteSuccess() {
+      this.deleteModalOpen = false;
+      this.refreshSidebar();
+      this.$router.push({
+        name: 'ManageTables',
+        params: {
+          project: this.$route.params.project
         }
       });
     },
@@ -528,8 +554,12 @@ export default defineComponent({
     getSignedImageUrl(val) {
       return this.signedUrls[val] || '';
     },
+    getThumbUrl(val) {
+      return this.thumbUrls[val] || '';
+    },
     onCellImageError(val) {
       delete this.signedUrls[val];
+      delete this.thumbUrls[val];
     },
     openImagePreview(url) {
       this.imagePreviewUrl = url;
@@ -558,6 +588,7 @@ export default defineComponent({
         if (res.data && res.data.success) {
           res.data.urls.forEach(item => {
             this.signedUrls[item.originalPath] = item.signedUrl;
+            this.thumbUrls[item.originalPath] = `${item.signedUrl}&w=150`;
           });
         }
       } catch (error) {
@@ -697,6 +728,18 @@ export default defineComponent({
   color: var(--text-secondary);
 }
 
+.dropdown-item-danger {
+  color: var(--danger-color) !important;
+}
+
+.dropdown-item-danger ion-icon {
+  color: var(--danger-color);
+}
+
+.dropdown-item-danger:hover {
+  background: rgba(220, 38, 38, 0.08);
+}
+
 .search-box {
   position: relative;
   display: flex;
@@ -733,8 +776,8 @@ export default defineComponent({
 }
 
 .modern-table {
-  width: 100%;
-  min-width: 800px;
+  width: max-content;
+  min-width: 100%;
 }
 
 .table-header {
@@ -1061,10 +1104,6 @@ export default defineComponent({
 }
 
 @media (max-width: 480px) {
-  .modern-table {
-    min-width: 600px;
-  }
-
   .cell-content {
     max-width: 80px;
   }

@@ -3,150 +3,80 @@
     <div class="project-sidebar__scroll">
       <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
         <ion-menu-toggle auto-hide="false">
-          <ion-item @click="this.selectedIndex = 0" lines="none" detail="false"
-            :router-link="'/project/' + $route.params.project + '/'" class="hydrated menu-item"
-            :class="{ selected: this.selectedIndex === 0, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
-            :data-tooltip="isCollapsed ? 'Overview' : ''">
-            <ion-icon slot="start" name="apps-outline" />
-            <ion-label v-if="!isCollapsed">Overview</ion-label>
-          </ion-item>
+          <SidebarMenuItem :to="'/project/' + $route.params.project + '/'" icon="apps-outline" label="Overview"
+            :is-collapsed="isCollapsed" :has-to-be-darkmode="hasToBeDarkmode" />
         </ion-menu-toggle>
         <ion-reorder-group v-if="tools.length > 0" :disabled="false" @ionItemReorder="handleReorder($event)">
           <ion-menu-toggle auto-hide="false" v-for="(p, i) in tools" :key="i">
-            <ion-item
-              @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(p.link) + '/config')"
-              @click="this.selectedIndex = i + 1" lines="none" detail="false"
-              :router-link="'/project/' + $route.params.project + '/' + formatToolLink(p.link)"
-              class="hydrated menu-item"
-              :class="{ selected: this.selectedIndex === i + 1, collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
-              :data-tooltip="isCollapsed ? capitalizeFirst(p.name) : ''">
-              <ion-icon slot="start" :name="p.icon" />
-              <ion-label v-if="!isCollapsed">{{ capitalizeFirst(p.name) }}</ion-label>
-              <ion-reorder v-if="!isCollapsed" slot="end">
+            <SidebarMenuItem :to="'/project/' + $route.params.project + '/' + formatToolLink(p.link)" :icon="p.icon"
+              :label="capitalizeFirst(p.name)" :is-collapsed="isCollapsed" :has-to-be-darkmode="hasToBeDarkmode"
+              @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(p.link) + '/config')">
+              <ion-reorder slot="end">
                 <ion-icon v-if="p.hasConfig == 1" style="cursor: pointer; z-index: 1000" name="cog-outline" />
                 <pre v-else></pre>
               </ion-reorder>
-            </ion-item>
+            </SidebarMenuItem>
           </ion-menu-toggle>
         </ion-reorder-group>
       </ion-list>
       <template v-for="section in sections" :key="`section-${section.id}`">
-        <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed">
-          <h4>{{ section.name }}</h4>
-          <div>
-            <router-link v-if="section.manage_route" :to="section.manage_route">
-              <ion-icon style="color: var(--ion-color-medium-shade)" name="ellipsis-horizontal-circle-outline" />
-            </router-link>
-            <router-link v-if="section.show_add_button && section.add_button_route" :to="section.add_button_route">
-              <ion-icon style="color: var(--ion-color-medium-shade)" name="add-circle-outline" />
-            </router-link>
-          </div>
-        </ion-note>
+        <SidebarSectionHeader v-if="!isCollapsed" :title="section.name" :actions="getSectionActions(section)" />
         <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
           <ion-reorder-group :disabled="false" @ionItemReorder="handleSectionItemReorder($event, section.id)">
             <ion-menu-toggle auto-hide="false" v-for="(item, itemIndex) in getSectionItems(section)"
               :key="`section-${section.id}-item-${item.id}`">
-              <ion-item v-if="item.item_type === 'tool'"
-                @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(item.name) + '/config')"
-                @click="selectSectionItem(section.id, itemIndex)" lines="none" detail="false"
-                :router-link="getToolRoute(item)" class="hydrated menu-item" :class="{
-                  selected: isSectionItemSelected(section.id, itemIndex),
-                  collapsed: isCollapsed,
-                  hasToBeDarkmode: hasToBeDarkmode
-                }" :data-tooltip="isCollapsed ? capitalizeFirst(item.name) : ''">
-                <ion-icon slot="start" :name="item.icon" />
-                <ion-label v-if="!isCollapsed">{{ capitalizeFirst(item.name) }}</ion-label>
-                <ion-reorder v-if="!isCollapsed" slot="end">
+              <SidebarMenuItem v-if="item.item_type === 'tool'" :to="getToolRoute(item)" :icon="item.icon"
+                :label="capitalizeFirst(item.name)" :is-collapsed="isCollapsed" :has-to-be-darkmode="hasToBeDarkmode"
+                @dblclick="goToConfig('/project/' + $route.params.project + '/' + formatToolLink(item.name) + '/config')">
+                <ion-reorder slot="end">
                   <ion-icon v-if="item.hasConfig == 1" style="cursor: pointer; z-index: 1000" name="cog-outline" />
                   <pre v-else></pre>
                 </ion-reorder>
-              </ion-item>
-              <ion-item v-else-if="item.item_type === 'table'" @click="selectSectionItem(section.id, itemIndex)"
-                lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/tables/' + item.name"
-                class="hydrated menu-item" :class="{
-                  selected: isSectionItemSelected(section.id, itemIndex),
-                  collapsed: isCollapsed,
-                  hasToBeDarkmode: hasToBeDarkmode
-                }" :data-tooltip="isCollapsed ? capitalizeFirst(item.name) : ''">
-                <ion-icon slot="start" :name="item.icon || 'list-outline'" />
-                <ion-label v-if="!isCollapsed">{{ capitalizeFirst(item.name) }}</ion-label>
-                <ion-reorder v-if="!isCollapsed" slot="end">
+              </SidebarMenuItem>
+              <SidebarMenuItem v-else-if="item.item_type === 'table'"
+                :to="'/project/' + $route.params.project + '/tables/' + item.name" :icon="item.icon || 'list-outline'"
+                :label="capitalizeFirst(item.name)" :is-collapsed="isCollapsed" :has-to-be-darkmode="hasToBeDarkmode">
+                <ion-reorder slot="end">
                   <pre></pre>
                 </ion-reorder>
-              </ion-item>
+              </SidebarMenuItem>
             </ion-menu-toggle>
             <ion-menu-toggle auto-hide="false" v-if="getSectionItems(section).length === 0 && !isCollapsed">
-              <ion-item lines="none" detail="false" class="empty-section-item">
-                <ion-icon slot="start" name="folder-open-outline" color="medium" />
-                <ion-label color="medium">No items in this section</ion-label>
-              </ion-item>
+              <SidebarEmptyItem message="No items in this section" />
             </ion-menu-toggle>
           </ion-reorder-group>
         </ion-list>
       </template>
-      <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed && isAdminOrOwner">
-        <h4>Codespaces</h4>
-        <div>
-          <router-link v-for="(action, idx) in codespaceActions" :key="idx" :to="action.to">
-            <ion-icon style="color: var(--ion-color-medium-shade)" :name="action.icon" />
-          </router-link>
-        </div>
-      </ion-note>
+      <SidebarSectionHeader v-if="!isCollapsed && isAdminOrOwner" title="Codespaces" :actions="codespaceActions" />
       <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
         v-if="isAdminOrOwner">
         <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
           <ion-menu-toggle auto-hide="false" v-for="(codespace, i) in filteredCodespaces" :key="`codespace-${i}`">
-            <ion-item
-              @click="this.selectedIndex = Number(tools.length) + Number(forms.length) + Number(components.length) + Number(i) + 1"
-              lines="none" detail="false"
-              :router-link="'/project/' + $route.params.project + '/codespace/' + codespace.slug"
-              class="hydrated menu-item" :class="{
-                selected: this.selectedIndex === Number(tools.length) + Number(forms.length) + Number(components.length) + Number(i) + 1,
-                collapsed: isCollapsed,
-                hasToBeDarkmode: hasToBeDarkmode
-              }" :data-tooltip="isCollapsed ? codespace.name : ''">
-              <ion-icon slot="start" :name="codespace.icon || 'code-outline'" />
-              <ion-label v-if="!isCollapsed">{{ codespace.name }}</ion-label>
-              <span v-if="!isCollapsed" class="codespace-status-indicator"
-                :class="{ 'status-active': codespace.status === 'active', 'status-inactive': codespace.status === 'inactive' }"></span>
-            </ion-item>
+            <SidebarMenuItem :to="'/project/' + $route.params.project + '/codespace/' + codespace.slug"
+              :icon="codespace.icon || 'code-outline'" :label="codespace.name" :is-collapsed="isCollapsed"
+              :has-to-be-darkmode="hasToBeDarkmode">
+              <span class="codespace-status-indicator" :class="{
+                'status-active': codespace.status === 'active',
+                'status-inactive': codespace.status === 'inactive'
+              }"></span>
+            </SidebarMenuItem>
           </ion-menu-toggle>
           <ion-menu-toggle auto-hide="false" v-if="filteredCodespaces.length === 0 && !isCollapsed && isAdminOrOwner">
-            <ion-item lines="none" detail="false" class="no-codespaces-item">
-              <ion-icon slot="start" name="code-slash-outline" color="medium" />
-              <ion-label color="medium">No Codespaces yet</ion-label>
-            </ion-item>
+            <SidebarEmptyItem icon="code-slash-outline" message="No Codespaces yet" />
           </ion-menu-toggle>
         </ion-reorder-group>
       </ion-list>
-      <ion-note class="projects-headline" :class="{ collapsed: isCollapsed }" v-if="!isCollapsed && isAdminOrOwner">
-        <h4>APIs</h4>
-        <div>
-          <router-link v-for="(action, idx) in apiActions" :key="idx" :to="action.to">
-            <ion-icon style="color: var(--ion-color-medium-shade)" :name="action.icon" />
-          </router-link>
-        </div>
-      </ion-note>
+      <SidebarSectionHeader v-if="!isCollapsed && isAdminOrOwner" title="APIs" :actions="apiActions" />
       <ion-list id="inbox-list" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }"
         v-if="isAdminOrOwner">
         <ion-reorder-group :disabled="false" @ionItemReorder="handleFrontReorder($event)">
           <ion-menu-toggle auto-hide="false" v-for="(api, i) in filteredApis" :key="`api-${i}`">
-            <ion-item @click="this.selectedIndex = Number(tools.length) + Number(components.length) + Number(i) + 1"
-              lines="none" detail="false" :router-link="'/project/' + $route.params.project + '/apis/' + api.slug"
-              class="hydrated menu-item" :class="{
-                selected: this.selectedIndex === Number(tools.length) + Number(components.length) + Number(i) + 1,
-                collapsed: isCollapsed,
-                hasToBeDarkmode: hasToBeDarkmode
-              }" :data-tooltip="isCollapsed ? api.name : ''">
-              <ion-icon slot="start" :name="api.icon || 'code-outline'" />
-              <ion-label v-if="!isCollapsed">{{ api.name }}</ion-label>
-            </ion-item>
+            <SidebarMenuItem :to="'/project/' + $route.params.project + '/apis/' + api.slug"
+              :icon="api.icon || 'code-outline'" :label="api.name" :is-collapsed="isCollapsed"
+              :has-to-be-darkmode="hasToBeDarkmode" />
           </ion-menu-toggle>
           <ion-menu-toggle auto-hide="false" v-if="filteredApis.length === 0 && !isCollapsed && isAdminOrOwner">
-            <ion-item lines="none" detail="false" class="no-apis-item">
-              <ion-icon slot="start" name="code-slash-outline" color="medium" />
-              <ion-label color="medium">No APIs subscribed</ion-label>
-            </ion-item>
+            <SidebarEmptyItem icon="code-slash-outline" message="No APIs subscribed" />
           </ion-menu-toggle>
         </ion-reorder-group>
       </ion-list>
@@ -154,13 +84,17 @@
     <footer class="sidebar-footer" :class="{ collapsed: isCollapsed, hasToBeDarkmode: hasToBeDarkmode }">
       <button type="button" class="footer-btn footer-toggle" @click="toggleSidebar"
         :data-tooltip="isCollapsed ? 'Expand menu' : ''" :aria-label="isCollapsed ? 'Expand menu' : 'Collapse menu'">
-        <svg v-if="isCollapsed" class="sidebar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+        <svg v-if="isCollapsed" class="sidebar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
           <path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2H6a2 2 0 0 1 -2 -2z" stroke-width="2"></path>
           <path d="M15 4v16" stroke-width="2"></path>
           <path d="m9 10 2 2 -2 2" stroke-width="2"></path>
         </svg>
-        <svg v-else class="sidebar-toggle-icon" viewBox="-0.5 -0.5 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
-          <path d="M12.7769375 14.284625H2.2230625c-0.8326875 0 -1.5076875 -0.675 -1.5076875 -1.5076875l0 -10.553875c0 -0.8326875 0.675 -1.5076875 1.5076875 -1.5076875h10.553875c0.8326875 0 1.5076875 0.675 1.5076875 1.5076875v10.553875c0 0.8326875 -0.675 1.5076875 -1.5076875 1.5076875Z" stroke-width="1"></path>
+        <svg v-else class="sidebar-toggle-icon" viewBox="-0.5 -0.5 16 16" fill="none" stroke="currentColor"
+          stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+          <path
+            d="M12.7769375 14.284625H2.2230625c-0.8326875 0 -1.5076875 -0.675 -1.5076875 -1.5076875l0 -10.553875c0 -0.8326875 0.675 -1.5076875 1.5076875 -1.5076875h10.553875c0.8326875 0 1.5076875 0.675 1.5076875 1.5076875v10.553875c0 0.8326875 -0.675 1.5076875 -1.5076875 1.5076875Z"
+            stroke-width="1"></path>
           <path d="M3.9192500000000003 5.9923125 2.6 7.5l1.3192499999999998 1.5076875" stroke-width="1"></path>
           <path d="M5.615375 14.284625V0.7153750000000001" stroke-width="1"></path>
         </svg>
@@ -176,7 +110,9 @@ import axios from "axios";
 import qs from "qs";
 import { useRoute } from "vue-router";
 import { useIonRouter } from "@ionic/vue";
-import { layersOutline, gridOutline, documentsOutline } from 'ionicons/icons';
+import SidebarMenuItem from "./SidebarMenuItem.vue";
+import SidebarSectionHeader from "./SidebarSectionHeader.vue";
+import SidebarEmptyItem from "./SidebarEmptyItem.vue";
 
 interface SidebarTool {
   id: number;
@@ -226,6 +162,11 @@ interface SidebarForm {
 
 export default defineComponent({
   name: "ProjectSideBar",
+  components: {
+    SidebarMenuItem,
+    SidebarSectionHeader,
+    SidebarEmptyItem
+  },
   props: {
     isCollapsed: {
       type: Boolean,
@@ -238,10 +179,6 @@ export default defineComponent({
   },
   emits: ['sidebarToggled'],
   setup(props, { emit }) {
-    const selectedIndex = ref(0);
-    const selectedSectionId = ref<number | null>(null);
-    const selectedToolIndex = ref<number | null>(null);
-    const selectedItemIndex = ref<number | null>(null);
     const tools = ref<SidebarTool[]>([]);
     const sections = ref<SidebarSection[]>([]);
     const components = ref([]);
@@ -275,7 +212,6 @@ export default defineComponent({
     };
 
     const isAdminOrOwner = computed(() => {
-      console.log('role ' + userRole.value);
       if (!userRole.value) return false;
       return ['admin', 'owner'].includes(userRole.value.slug);
     });
@@ -290,24 +226,19 @@ export default defineComponent({
       return [];
     });
 
-    const shouldShowSection = (sectionName: string) => {
-      if (isAdminOrOwner.value) return true;
-
-      const adminOnlySections = ['APIs', 'Codespaces'];
-      return !adminOnlySections.includes(sectionName);
-    };
-
     const getSectionItems = (section: SidebarSection): SidebarItem[] => {
       return section.items || [];
     };
 
-    const selectSectionItem = (sectionId: number, itemIndex: number) => {
-      selectedSectionId.value = sectionId;
-      selectedItemIndex.value = itemIndex;
-    };
-
-    const isSectionItemSelected = (sectionId: number, itemIndex: number): boolean => {
-      return selectedSectionId.value === sectionId && selectedItemIndex.value === itemIndex;
+    const getSectionActions = (section: SidebarSection): { to: string; icon: string }[] => {
+      const actions: { to: string; icon: string }[] = [];
+      if (section.manage_route) {
+        actions.push({ to: section.manage_route, icon: 'ellipsis-horizontal-circle-outline' });
+      }
+      if (section.show_add_button && section.add_button_route) {
+        actions.push({ to: section.add_button_route, icon: 'add-circle-outline' });
+      }
+      return actions;
     };
 
     const handleSectionItemReorder = async (event: CustomEvent, sectionId: number) => {
@@ -342,8 +273,6 @@ export default defineComponent({
       emit('sidebarToggled', !props.isCollapsed);
     };
 
-
-
     const formatToolLink = (name: string): string => {
       return name
         .toLowerCase()
@@ -368,17 +297,7 @@ export default defineComponent({
       return `${projectPath}/${toolSlug}`;
     };
 
-    const selectTool = (sectionId: number, toolIndex: number) => {
-      selectedSectionId.value = sectionId;
-      selectedToolIndex.value = toolIndex;
-    };
-
-    const isToolSelected = (sectionId: number, toolIndex: number): boolean => {
-      return selectedSectionId.value === sectionId && selectedToolIndex.value === toolIndex;
-    };
-
     const handleFrontReorder = (event: CustomEvent) => {
-      console.log(1);
       event.detail.complete();
     };
 
@@ -487,10 +406,6 @@ export default defineComponent({
     return {
       tools,
       sections,
-      selectedIndex,
-      selectedSectionId,
-      selectedToolIndex,
-      selectedItemIndex,
       components,
       apis,
       codespaces,
@@ -500,19 +415,13 @@ export default defineComponent({
       handleFrontReorder,
       handleSectionToolReorder,
       handleSectionItemReorder,
-      layersOutline,
-      gridOutline,
-      documentsOutline,
       isCollapsed: computed(() => props.isCollapsed),
       toggleSidebar,
       formatToolLink,
       capitalizeFirst,
       getToolRoute,
-      selectTool,
-      isToolSelected,
       getSectionItems,
-      selectSectionItem,
-      isSectionItemSelected,
+      getSectionActions,
       loadSidebarData,
       codespaceActions,
       apiActions,
@@ -521,7 +430,6 @@ export default defineComponent({
       isAdminOrOwner,
       filteredApis,
       filteredCodespaces,
-      shouldShowSection,
     };
   },
   created() {
@@ -533,16 +441,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@media (prefers-color-scheme: light) {
-
-  ion-item,
-  ion-list,
-  ion-reorder-group {
-    --background: #eff3f6;
-    background: #eff3f6;
-  }
-}
-
 .project-sidebar {
   display: flex;
   flex-direction: column;
@@ -565,6 +463,15 @@ export default defineComponent({
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+@media (prefers-color-scheme: light) {
+
+  ion-list,
+  ion-reorder-group {
+    --background: #eff3f6;
+    background: #eff3f6;
+  }
 }
 
 .sidebar-footer {
@@ -657,233 +564,6 @@ export default defineComponent({
   content: none;
 }
 
-ion-item.new-tool {
-  --background: #f97316;
-  border-radius: 8px !important;
-  margin-top: 0.125rem !important;
-}
-
-ion-item.new-tool ion-label {
-  color: #fff;
-}
-
-ion-item.new-tool ion-icon {
-  color: #fff;
-}
-
-.empty-section-item {
-  opacity: 0.6;
-}
-
-.empty-section-item ion-label {
-  font-style: italic;
-}
-
-.projects-headline {
-  display: flex;
-  margin: 0 !important;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 12px;
-}
-
-.projects-headline>h4 {
-  margin: 0;
-  padding: 0;
-}
-
-.projects-headline>div {
-  display: flex;
-}
-
-.projects-headline>div>a {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.api-status-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-left: 8px;
-}
-
-.api-status-indicator.status-active {
-  background-color: var(--ion-color-success);
-}
-
-.api-status-indicator.status-inactive {
-  background-color: var(--ion-color-medium);
-}
-
-.api-category-badge {
-  margin-left: 8px;
-  font-size: 0.7em;
-  padding: 2px 6px;
-}
-
-.no-apis-item {
-  opacity: 0.6;
-}
-
-.no-apis-item ion-label {
-  font-style: italic;
-}
-
-.sub-components {
-  position: relative;
-  margin-left: 20px;
-  padding-left: 10px;
-  margin-bottom: 8px;
-  margin-top: 2px;
-}
-
-.sub-components::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  border-left: 1px dashed var(--ion-color-medium-shade);
-  height: 83.6%;
-}
-
-.sub-components-wrapper {
-  position: relative;
-}
-
-.sub-component-item {
-  position: relative;
-  font-size: 0.9em;
-  --padding-start: 10px;
-}
-
-.sub-component-item::before {
-  content: '';
-  position: absolute;
-  left: -16px;
-  top: 50%;
-  width: 16px;
-  height: 1px;
-  background-color: var(--ion-color-medium-shade);
-  border-top: 1px dashed var(--ion-color-medium-shade);
-  z-index: 9999;
-}
-
-.sub-components .sub-item-container:last-child::after {
-  content: '';
-  position: absolute;
-  left: -10px;
-  top: 50%;
-  bottom: -8px;
-  width: 1px;
-  background-color: var(--ion-background-color);
-  z-index: 9998;
-}
-
-.tree-branch {
-  display: none;
-}
-
-.sub-component-indent {
-  position: absolute;
-  left: -20px;
-  top: 50%;
-  width: 20px;
-  height: 1px;
-  background-color: var(--ion-color-medium-shade);
-}
-
-.sub-component-line {
-  position: relative;
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  margin-right: -8px;
-}
-
-.sub-component-line:before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 10px;
-  height: 1px;
-  background-color: var(--ion-color-medium-shade);
-  z-index: 9999;
-
-}
-
-.sub-component-line:after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 1px;
-  height: 8px;
-  background-color: var(--ion-color-medium-shade);
-}
-
-.tree-connector {
-  position: absolute;
-  width: 15px;
-  height: 15px;
-  left: -15px;
-  top: 50%;
-  transform: translateY(-50%);
-  border-bottom: 1px dashed var(--ion-color-medium-shade);
-  border-left: 1px dashed var(--ion-color-medium-shade);
-  border-bottom-left-radius: 5px;
-}
-
-.tree-connector-line {
-  position: absolute;
-  width: 10px;
-  height: 1px;
-  left: -11px;
-  margin-top: 23px;
-  border-bottom: 0.75px dashed var(--ion-color-medium-shade);
-  z-index: 1000;
-}
-
-.tree-branch-connector {
-  position: absolute;
-  width: 10px;
-  height: 1px;
-  left: -11px;
-  top: 50%;
-  border-bottom: 1px dashed var(--ion-color-medium-shade);
-  z-index: 100;
-}
-
-.horizontal-tree-line {
-  position: absolute;
-  width: 10px;
-  height: 1px;
-  left: -10px;
-  top: 49%;
-  border-bottom: 1px dashed var(--ion-color-medium-shade);
-  z-index: 100;
-}
-
-.parent-component ion-icon[slot="end"] {
-  margin-left: 4px;
-  font-size: 16px;
-  transition: transform 0.2s ease;
-}
-
-.parent-component {
-  --padding-end: 12px;
-}
-
-.sub-item-container {
-  position: relative;
-  display: block;
-  width: 100%;
-}
-
 .collapsed.projects-headline {
   display: none;
 }
@@ -903,60 +583,11 @@ ion-item.new-tool ion-icon {
   margin-bottom: 0 !important;
 }
 
-.collapsed .menu-item {
-  justify-content: center !important;
-  --padding-start: 0 !important;
-  --padding-end: 0 !important;
-  --inner-padding-start: 0 !important;
-  --inner-padding-end: 0 !important;
-  --min-height: 48px;
-  width: 100% !important;
-  max-width: 60px !important;
-  overflow: hidden !important;
-  margin: 1px 0 !important;
-}
-
-.collapsed .menu-item ion-icon {
-  margin: 0 !important;
-  font-size: 28px !important;
-  color: var(--ion-color-medium);
-}
-
-.collapsed .menu-item:hover ion-icon {
-  color: var(--ion-color-primary) !important;
-}
-
-.collapsed .menu-item.selected {
-  --background: var(--ion-color-primary-tint) !important;
-}
-
-.collapsed .menu-item.selected ion-icon {
-  color: var(--ion-color-primary) !important;
-}
-
 .collapsed {
   text-align: center;
   width: 100% !important;
   max-width: 60px !important;
   overflow: hidden !important;
-}
-
-.collapsed ion-item {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  width: 100% !important;
-  max-width: 60px !important;
-  --inner-padding-end: 0 !important;
-  --inner-padding-start: 0 !important;
-  --padding-start: 0 !important;
-  --padding-end: 0 !important;
-  --border-radius: 8px;
-  margin: 1px 2px !important;
-}
-
-.collapsed ion-item:hover {
-  --background: var(--ion-color-step-100);
 }
 
 .ion-menu.collapsed-menu ion-content {
@@ -977,63 +608,13 @@ ion-item.new-tool ion-icon {
   display: none;
 }
 
-.collapsed+div {
-  display: none;
-}
-
-.collapsed .menu-item:hover {
-  position: relative;
-  overflow: visible;
-}
-
-.collapsed .menu-item:hover::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  background: var(--ion-color-dark, #222);
-  color: var(--ion-color-light, #fff);
-  padding: 8px 12px;
-  border-radius: 6px;
-  white-space: nowrap;
-  z-index: 1001;
-  margin-left: 12px;
-  font-size: 14px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  opacity: 0;
-  animation: fadeInTooltip 0.2s ease-in-out forwards;
-}
-
 .inner-scroll {
   padding-left: 0 !important;
   padding-right: 0 !important;
 }
 
-@keyframes fadeInTooltip {
-  from {
-    opacity: 0;
-    transform: translateY(-50%) translateX(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(-50%) translateX(0);
-  }
-}
-
 ion-list.hasToBeDarkmode {
   background: #1e1e1e;
-}
-
-.menu-item.hasToBeDarkmode {
-  --background: #1e1e1e !important;
-}
-
-.codespace-language-badge {
-  font-size: 10px;
-  font-weight: 500;
-  text-transform: uppercase;
 }
 
 .codespace-status-indicator {
@@ -1051,33 +632,5 @@ ion-list.hasToBeDarkmode {
 
 .codespace-status-indicator.status-inactive {
   background-color: var(--ion-color-medium);
-}
-
-.no-codespaces-item {
-  opacity: 0.6;
-}
-
-.no-codespaces-item ion-icon {
-  color: var(--ion-color-medium) !important;
-}
-
-.no-webbuilder-item {
-  opacity: 0.6;
-}
-
-.no-webbuilder-item ion-icon {
-  color: var(--ion-color-medium) !important;
-}
-
-.no-forms-item {
-  opacity: 0.6;
-}
-
-.no-forms-item ion-icon {
-  color: var(--ion-color-medium) !important;
-}
-
-.no-forms-item ion-label {
-  font-style: italic;
 }
 </style>

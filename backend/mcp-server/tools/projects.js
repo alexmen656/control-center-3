@@ -66,6 +66,24 @@ export const projectTools = [
     }
   },
   {
+    name: 'project_rename',
+    description: 'Rename a project',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        projectId: {
+          type: 'string',
+          description: 'Project ID'
+        },
+        name: {
+          type: 'string',
+          description: 'New project name'
+        }
+      },
+      required: ['projectId', 'name']
+    }
+  },
+  {
     name: 'project_delete',
     description: 'Delete a project (use with caution)',
     inputSchema: {
@@ -126,6 +144,9 @@ export async function handleProjectTool(toolName, args, context) {
 
     case 'project_update':
       return await updateProject(args, context);
+
+    case 'project_rename':
+      return await renameProject(args, context);
 
     case 'project_delete':
       return await deleteProject(args, context);
@@ -223,6 +244,27 @@ async function updateProject(args, context) {
     return formatResponse({
       success: true,
       message: data.message || 'Project updated successfully'
+    });
+  } catch (error) {
+    return formatError(error.message);
+  }
+}
+
+async function renameProject(args, context) {
+  try {
+    const data = await cmsRequest(`v2/projects/${encodeURIComponent(args.projectId)}`, {
+      method: 'PUT',
+      contentType: 'application/json',
+      body: { projectName: args.name }
+    }, context);
+
+    if (data && data.success === false) {
+      return formatError(data.error || 'Failed to rename project');
+    }
+
+    return formatResponse({
+      success: true,
+      message: data.message || 'Project renamed successfully'
     });
   } catch (error) {
     return formatError(error.message);

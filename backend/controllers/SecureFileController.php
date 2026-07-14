@@ -73,12 +73,128 @@ class SecureFileController
             return;
         }
 
+        $servedPath = $filePath;
+        $width = (int) $request->input('w', 0);
+        $resizableMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+
+        if ($width > 0 && in_array($mimeType, $resizableMimeTypes)) {
+            $width = max(16, min($width, 1024));
+            $cacheDir = ($projectID !== null)
+                ? self::PROJECT_BASE_PATH . '/' . $projectID . '/.thumbnails'
+                : self::BASE_PATH . '/.thumbnails';
+            $thumbPath = $this->getOrCreateThumbnail($filePath, $mimeType, $width, $cacheDir);
+            if ($thumbPath) {
+                $servedPath = $thumbPath;
+            }
+        }
+
         header('Content-Type: ' . $mimeType);
-        header('Content-Length: ' . filesize($filePath));
+        header('Content-Length: ' . filesize($servedPath));
         header('Cache-Control: private, max-age=3600');
         header('X-Content-Type-Options: nosniff');
 
-        readfile($filePath);
+        readfile($servedPath);
+    }
+
+    private function getOrCreateThumbnail($filePath, $mimeType, $width, $cacheDir)
+    {
+        $thumbPath = $cacheDir . '/' . md5($filePath) . '_w' . $width . '.' . $this->extensionForMime($mimeType);
+
+        if (file_exists($thumbPath) && filemtime($thumbPath) >= filemtime($filePath)) {
+            return $thumbPath;
+        }
+
+        $source = $this->createImageFromFile($filePath, $mimeType);
+        if (!$source) {
+            return null;
+        }
+
+        $srcWidth = imagesx($source);
+        $srcHeight = imagesy($source);
+
+        if ($srcWidth <= $width) {
+            imagedestroy($source);
+            return null;
+        }
+
+        $targetHeight = (int) round($srcHeight * ($width / $srcWidth));
+        $thumb = imagecreatetruecolor($width, $targetHeight);
+
+        if ($mimeType === 'image/png' || $mimeType === 'image/gif') {
+            imagealphablending($thumb, false);
+            imagesavealpha($thumb, true);
+            $transparent = imagecolorallocatealpha($thumb, 0, 0, 0, 127);
+            imagefilledrectangle($thumb, 0, 0, $width, $targetHeight, $transparent);
+        }
+
+        imagecopyresampled($thumb, $source, 0, 0, 0, 0, $width, $targetHeight, $srcWidth, $srcHeight);
+        imagedestroy($source);
+
+        if (!is_dir($cacheDir)) {
+            @mkdir($cacheDir, 0777, true);
+        }
+
+        $saved = $this->saveImage($thumb, $thumbPath, $mimeType);
+        imagedestroy($thumb);
+
+        return $saved ? $thumbPath : null;
+    }
+
+    private function createImageFromFile($filePath, $mimeType)
+    {
+        switch ($mimeType) {
+            case 'image/jpeg':
+            case 'image/jpg':
+                return @imagecreatefromjpeg($filePath);
+            case 'image/png':
+                return @imagecreatefrompng($filePath);
+            case 'image/gif':
+                return @imagecreatefromgif($filePath);
+            case 'image/webp':
+                return function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($filePath) : false;
+            case 'image/bmp':
+                return function_exists('imagecreatefrombmp') ? @imagecreatefrombmp($filePath) : false;
+            default:
+                return false;
+        }
+    }
+
+    private function saveImage($image, $path, $mimeType)
+    {
+        switch ($mimeType) {
+            case 'image/jpeg':
+            case 'image/jpg':
+                return imagejpeg($image, $path, 80);
+            case 'image/png':
+                return imagepng($image, $path, 6);
+            case 'image/gif':
+                return imagegif($image, $path);
+            case 'image/webp':
+                return function_exists('imagewebp') ? imagewebp($image, $path, 80) : false;
+            case 'image/bmp':
+                return function_exists('imagebmp') ? imagebmp($image, $path) : false;
+            default:
+                return false;
+        }
+    }
+
+    private function extensionForMime($mimeType)
+    {
+        switch ($mimeType) {
+            case 'image/jpeg':
+            case 'image/jpg':
+                return 'jpg';
+            case 'image/png':
+                return 'png';
+            case 'image/gif':
+                return 'gif';
+            case 'image/webp':
+                return 'webp';
+            case 'image/bmp':
+                return 'bmp';
+            default:
+                return 'bin';
+        }
     }
 
     private function verifySignature($path, $expires, $signature, $projectID = null)

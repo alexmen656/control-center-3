@@ -19,39 +19,18 @@ class GitHelper
         return [$code, implode("\n", $out)];
     }
 
-    public static function git_codespaceId($project, $codespace)
+    public static function git_barePath($codespaceId)
     {
-        $p = escape_string($project);
-        $c = escape_string($codespace);
-        $res = query("SELECT pc.id FROM project_codespaces pc
-                  JOIN projects p ON pc.project_id = p.projectID
-                  WHERE p.link='$p' AND pc.slug='$c' LIMIT 1");
-        if ($res && mysqli_num_rows($res) > 0) {
-            $row = mysqli_fetch_assoc($res);
-            return $row['id'];
-        }
-        return null;
+        return GIT_BARE_ROOT . '/cs-' . (int) $codespaceId . '.git';
     }
 
-    public static function git_barePath($project, $userID, $codespace)
-    {
-        $id = git_codespaceId($project, $codespace);
-        if ($id !== null) {
-            $name = 'cs-' . $id;
-        } else {
-
-            $name = 'cs-' . preg_replace('/[^a-zA-Z0-9_-]/', '-', $userID . '-' . $project . '-' . $codespace);
-        }
-        return GIT_BARE_ROOT . '/' . $name . '.git';
-    }
-
-    public static function git_ensureRepo($projectPath, $project, $userID, $codespace)
+    public static function git_ensureRepo($projectPath, $codespaceId)
     {
         if (!is_dir($projectPath)) {
             mkdir($projectPath, 0755, true);
         }
 
-        $barePath = git_barePath($project, $userID, $codespace);
+        $barePath = git_barePath($codespaceId);
 
         if (!is_dir($barePath)) {
             @mkdir(dirname($barePath), 0775, true);
@@ -89,19 +68,14 @@ function git_exec($cwd, array $args)
     return GitHelper::git_exec($cwd, $args);
 }
 
-function git_codespaceId($project, $codespace)
+function git_barePath($codespaceId)
 {
-    return GitHelper::git_codespaceId($project, $codespace);
+    return GitHelper::git_barePath($codespaceId);
 }
 
-function git_barePath($project, $userID, $codespace)
+function git_ensureRepo($projectPath, $codespaceId)
 {
-    return GitHelper::git_barePath($project, $userID, $codespace);
-}
-
-function git_ensureRepo($projectPath, $project, $userID, $codespace)
-{
-    return GitHelper::git_ensureRepo($projectPath, $project, $userID, $codespace);
+    return GitHelper::git_ensureRepo($projectPath, $codespaceId);
 }
 
 function git_remoteHasBranch($projectPath, $branch = 'main')

@@ -5,6 +5,7 @@ require_once __DIR__ . '/../controllers/CodespaceDomainsController.php';
 require_once __DIR__ . '/../controllers/CodespaceFilesController.php';
 require_once __DIR__ . '/../controllers/CodespaceGitController.php';
 require_once __DIR__ . '/../controllers/CodespaceEditorController.php';
+require_once __DIR__ . '/../controllers/CodespaceDeployController.php';
 
 $router->group('/v2/codespaces', function ($router) {
 
@@ -22,6 +23,9 @@ $router->group('/v2/codespaces', function ($router) {
 
     $router->get('/git', [CodespaceGitController::class, 'handleGet']);
     $router->post('/git', [CodespaceGitController::class, 'handlePost']);
+
+    $router->get('/deployments', [CodespaceDeployController::class, 'list']);
+    $router->post('/deploy', [CodespaceDeployController::class, 'trigger']);
 
     $router->post('/editor', [CodespaceEditorController::class, 'handle']);
 

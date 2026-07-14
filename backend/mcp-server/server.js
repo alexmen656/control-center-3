@@ -51,7 +51,7 @@ Core concepts:
 - Project: the top-level container. Almost every tool needs a "project" (link/slug).
 - Codespace: one deployable app inside a project (its own code + git + deploy URL). A project can have several; each has a "slug". A codespace does NOT exist until you create it with codespace_create — creating a project does not create a "main" codespace. You must create a codespace before writing any files; codespace_* file tools reject a slug that does not exist.
 - Data storage: there is no raw SQL database tool. Use content_table_* as your data tables — content_table_create defines a collection (table) with typed fields, and content_table_submit / content_table_submissions / content_table_update / content_table_delete are its create/read/update/delete. Treat a "form" as a database table.
-- API catalog (api_*): registers/documents API metadata (name, endpoints, external baseUrl) and subscribes to third-party APIs. api_create does NOT implement or host a backend.
+- API catalog (api_*): pre-built platform JS SDKs (weather, database, files, stripe, ...) a project subscribes to and imports into a codespace — api_available_list to browse, api_subscribe to add one to a project, api_sdk_docs for usage. Not a place to register your own external API.
 - Gateway API: to make a codespace's own code callable as a public REST API, deploy it and then call codespace_publish_as_api (returns https://gw.fringelo.com/<slug>).
 
 Recommended workflow to build a backend (e.g. "program me a calorie counter backend"):
@@ -60,7 +60,7 @@ Recommended workflow to build a backend (e.g. "program me a calorie counter back
 3. Write code with codespace_create_file / codespace_update_file, passing the slug from step 2 as "codespace". For a Node backend include a package.json with a start script and an HTTP server listening on the PORT env var.
 4. Persist data with content_table_create (e.g. a "calorie_entries" collection with fields date/food/calories) and read/write it via content_table_submit / content_table_submissions — or from inside the codespace via the gateway.
 5. Deploy with codespace_deploy -> returns the live URL https://cs-<id>.apps.fringelo.com. Poll codespace_list_deployments for READY/ERROR.
-6. Optional: codespace_publish_as_api to expose it at https://gw.fringelo.com/<slug>; api_generate_key issues a project API key; domain_codespace_connect / connect a custom domain.
+6. Optional: codespace_publish_as_api to expose it at https://gw.fringelo.com/<slug>; domain_codespace_connect / connect a custom domain.
 
 Notes:
 - git commit/push versions code but does NOT deploy; always call codespace_deploy to go live.

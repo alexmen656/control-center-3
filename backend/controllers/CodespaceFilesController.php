@@ -8,9 +8,9 @@ class CodespaceFilesController
         $project = $request->input('project', 'default-project');
         $codespace = $request->input('codespace', 'main');
 
-        requireExistingCodespace($userID, $project, $codespace);
+        $codespaceID = requireExistingCodespace($userID, $project, $codespace);
 
-        $dataDir = dirname(__DIR__) . '/../data/projects/' . $userID . '/' . $project . '/' . $codespace;
+        $dataDir = codespaceDataDir($codespaceID);
         if (!is_dir($dataDir)) {
             mkdir($dataDir, 0755, true);
         }

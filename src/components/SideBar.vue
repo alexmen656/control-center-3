@@ -52,11 +52,16 @@
       </ion-note>
       <ion-list :class="{ collapsed: isCollapsed }">
         <ion-menu-toggle auto-hide="false" v-for="(p, i) in projects" :key="i">
-          <ion-item button lines="none" detail="false" @click="goToProject(p.link)" class="hydrated menu-item"
-            :class="{ collapsed: isCollapsed }"
+          <ion-item button lines="none" detail="false" @click="renamingProjectId === p.id ? null : goToProject(p.link)"
+            class="hydrated menu-item project-item" :class="{ collapsed: isCollapsed }"
             :data-tooltip="isCollapsed ? (p.name[0].toUpperCase() + p.name.substring(1)) : ''">
             <ion-icon slot="start" :name="p.icon ? p.icon : 'folder-outline'"></ion-icon>
-            <ion-label v-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
+            <input v-if="!isCollapsed && renamingProjectId === p.id" ref="renameInput" v-model="renamingValue"
+              class="rename-input" @click.stop @keydown.enter="saveRename(p)" @keydown.escape="cancelRename"
+              @blur="saveRename(p)" />
+            <ion-label v-else-if="!isCollapsed">{{ p.name[0].toUpperCase() }}{{ p.name.substring(1) }}</ion-label>
+            <ion-icon v-if="!isCollapsed && renamingProjectId !== p.id" slot="end" name="pencil-outline"
+              class="rename-icon" @click.stop="startRename(p)"></ion-icon>
           </ion-item>
         </ion-menu-toggle>
       </ion-list>
@@ -111,6 +116,8 @@ export default defineComponent({
   data() {
     return {
       isVersionModalOpen: false,
+      renamingProjectId: null,
+      renamingValue: '',
       version: import.meta.env.VITE_APP_VERSION ?? "0.0.0",
       tools: [
         { icon: "apps-outline", name: "Projects" },
@@ -138,6 +145,34 @@ export default defineComponent({
     },
     goToBookmark(link) {
       this.$router.push(link);
+    },
+    startRename(p) {
+      this.renamingProjectId = p.id;
+      this.renamingValue = p.name;
+      this.$nextTick(() => this.$refs.renameInput?.[0]?.focus());
+    },
+    cancelRename() {
+      this.renamingProjectId = null;
+      this.renamingValue = '';
+    },
+    async saveRename(p) {
+      if (this.renamingProjectId !== p.id) return;
+
+      const newName = this.renamingValue.trim();
+      if (!newName || newName === p.name) {
+        this.cancelRename();
+        return;
+      }
+
+      try {
+        await this.$axios.put(`v2/projects/${p.id}`, { projectName: newName });
+        this.cancelRename();
+        this.emitter.emit("updateSidebar");
+      } catch (error) {
+        console.error('Error renaming project:', error);
+        alert("Error renaming project");
+        this.cancelRename();
+      }
     },
   },
 
@@ -407,6 +442,34 @@ ion-menu ion-item.selected ion-icon {
 
 .menu-item {
   cursor: default;
+}
+
+.project-item .rename-icon {
+  opacity: 0;
+  font-size: 15px;
+  color: var(--ion-color-medium-shade);
+  transition: opacity 0.15s ease;
+}
+
+.project-item:hover .rename-icon {
+  opacity: 1;
+}
+
+.project-item .rename-icon:hover {
+  color: var(--ion-color-primary);
+}
+
+.rename-input {
+  flex: 1;
+  min-width: 0;
+  font-size: inherit;
+  font-weight: 500;
+  font-family: inherit;
+  color: inherit;
+  background: var(--ion-background-color, #fff);
+  border: 1px solid var(--ion-color-primary);
+  border-radius: 4px;
+  padding: 2px 6px;
 }
 
 /* Sidebar Toggle Button - REMOVED */

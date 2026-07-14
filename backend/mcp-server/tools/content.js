@@ -1,5 +1,7 @@
 import { cmsRequest, formatResponse, formatError } from '../utils/api.js';
 
+const enc = encodeURIComponent;
+
 export const contentTools = [
   {
     name: 'content_table_list',
@@ -142,6 +144,46 @@ export const contentTools = [
       },
       required: ['project', 'tableName', 'entryId']
     }
+  },
+  {
+    name: 'content_table_rename',
+    description: 'Rename a table (its config and underlying data table). Fails if a table with the new name already exists in the project.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project: {
+          type: 'string',
+          description: 'Project link/slug'
+        },
+        tableName: {
+          type: 'string',
+          description: 'Current table name'
+        },
+        newTableName: {
+          type: 'string',
+          description: 'New table name (letters, numbers, hyphens, underscores only)'
+        }
+      },
+      required: ['project', 'tableName', 'newTableName']
+    }
+  },
+  {
+    name: 'content_table_drop',
+    description: 'Permanently delete an entire table — its config and all of its data rows. This cannot be undone. Not to be confused with content_table_delete, which removes a single data entry.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project: {
+          type: 'string',
+          description: 'Project link/slug'
+        },
+        tableName: {
+          type: 'string',
+          description: 'Table name to delete'
+        }
+      },
+      required: ['project', 'tableName']
+    }
   }
 ];
 
@@ -165,6 +207,12 @@ export async function handleContentTool(toolName, args, context) {
     case 'content_table_delete':
       return await deleteFormData(args, context);
 
+    case 'content_table_rename':
+      return await renameTable(args, context);
+
+    case 'content_table_drop':
+      return await dropTable(args, context);
+
     default:
       return formatError(`Unknown content tool: ${toolName}`);
   }
@@ -176,16 +224,21 @@ export async function handleContentTool(toolName, args, context) {
 
 async function listForms(args, context) {
   try {
-    const data = await cmsRequest('table.php', {
-      body: {
-        getForms: 'true',
-        project: args.project
-      }
-    }, context);
+    const data = await cmsRequest(`v2/tables/tables?project=${enc(args.project)}`, { method: 'GET' }, context);
+
+    if (data && data.success === false) {
+      return formatError(data.error || 'Failed to list tables');
+    }
 
     return formatResponse({
       success: true,
-      forms: data.forms || data
+      tables: (data.tables || []).map(t => ({
+        tableName: t.name,
+        exists: t.exists,
+        rowCount: t.row_count,
+        fieldCount: t.field_count,
+        createdOn: t.created_at
+      }))
     });
   } catch (error) {
     return formatError(error.message);
@@ -205,20 +258,23 @@ async function createForm(args, context) {
       }))
     };
 
-    const data = await cmsRequest('table.php', {
+    const data = await cmsRequest('v2/tables', {
       method: 'POST',
+      contentType: 'application/json',
       body: {
-        create_table: '1',
         project: args.project,
         name: args.name,
         table: JSON.stringify(formJson)
-      },
-      expectJson: false
+      }
     }, context);
+
+    if (data && data.success === false) {
+      return formatError(data.error || 'Failed to create table');
+    }
 
     return formatResponse({
       success: true,
-      message: data || 'Form created successfully',
+      message: (data && data.message) || 'Table created successfully',
       tableName: args.name
     });
   } catch (error) {
@@ -228,17 +284,15 @@ async function createForm(args, context) {
 
 async function getFormSubmissions(args, context) {
   try {
-    const data = await cmsRequest('table.php', {
-      body: {
-        get_table_data: '1',
-        project: args.project,
-        table: args.tableName
-      }
-    }, context);
+    const data = await cmsRequest(
+      `v2/tables/data?table=${enc(args.tableName)}&project=${enc(args.project)}`,
+      { method: 'GET' },
+      context
+    );
 
     return formatResponse({
       success: true,
-      data: data,
+      data,
       count: Array.isArray(data) ? data.length : 0
     });
   } catch (error) {
@@ -248,19 +302,23 @@ async function getFormSubmissions(args, context) {
 
 async function submitFormData(args, context) {
   try {
-    const data = await cmsRequest('table.php', {
+    const data = await cmsRequest('v2/tables/submit', {
+      method: 'POST',
+      contentType: 'application/json',
       body: {
-        submit_table: '1',
         project: args.project,
         table_name: args.tableName,
         table: JSON.stringify(args.data)
-      },
-      expectJson: false
+      }
     }, context);
+
+    if (data && data.success === false) {
+      return formatError(data.error || 'Failed to submit table data');
+    }
 
     return formatResponse({
       success: true,
-      message: data || 'Form data submitted successfully'
+      message: (data && data.message) || 'Form data submitted successfully'
     });
   } catch (error) {
     return formatError(error.message);
@@ -269,20 +327,23 @@ async function submitFormData(args, context) {
 
 async function updateFormData(args, context) {
   try {
-    const data = await cmsRequest('table.php', {
+    const data = await cmsRequest(`v2/tables/entry/${enc(args.entryId)}`, {
+      method: 'PUT',
+      contentType: 'application/json',
       body: {
-        update_entry: '1',
         project: args.project,
         table_name: args.tableName,
-        entry_id: args.entryId,
         table: JSON.stringify(args.data)
-      },
-      expectJson: false
+      }
     }, context);
+
+    if (data && data.success === false) {
+      return formatError(data.error || 'Failed to update entry');
+    }
 
     return formatResponse({
       success: true,
-      message: data || 'Entry updated successfully'
+      message: (data && data.message) || 'Entry updated successfully'
     });
   } catch (error) {
     return formatError(error.message);
@@ -291,19 +352,72 @@ async function updateFormData(args, context) {
 
 async function deleteFormData(args, context) {
   try {
-    const data = await cmsRequest('table.php', {
+    const data = await cmsRequest(`v2/tables/entry/${enc(args.entryId)}`, {
+      method: 'DELETE',
+      contentType: 'application/json',
       body: {
-        delete_entry: '1',
         project: args.project,
-        table_name: args.tableName,
-        entry_id: args.entryId
-      },
-      expectJson: false
+        table_name: args.tableName
+      }
     }, context);
+
+    if (data && data.success === false) {
+      return formatError(data.error || 'Failed to delete entry');
+    }
 
     return formatResponse({
       success: true,
-      message: data || 'Entry deleted successfully'
+      message: (data && data.message) || 'Entry deleted successfully'
+    });
+  } catch (error) {
+    return formatError(error.message);
+  }
+}
+
+async function renameTable(args, context) {
+  try {
+    const data = await cmsRequest('v2/tables/rename', {
+      method: 'POST',
+      contentType: 'application/json',
+      body: {
+        project: args.project,
+        old_table_name: args.tableName,
+        new_table_name: args.newTableName
+      }
+    }, context);
+
+    if (data && data.success === false) {
+      return formatError(data.error || 'Failed to rename table');
+    }
+
+    return formatResponse({
+      success: true,
+      message: (data && data.message) || 'Table renamed successfully',
+      tableName: args.newTableName
+    });
+  } catch (error) {
+    return formatError(error.message);
+  }
+}
+
+async function dropTable(args, context) {
+  try {
+    const data = await cmsRequest('v2/tables/table', {
+      method: 'DELETE',
+      contentType: 'application/json',
+      body: {
+        project: args.project,
+        table_name: args.tableName
+      }
+    }, context);
+
+    if (data && data.success === false) {
+      return formatError(data.error || 'Failed to delete table');
+    }
+
+    return formatResponse({
+      success: true,
+      message: (data && data.message) || 'Table deleted successfully'
     });
   } catch (error) {
     return formatError(error.message);

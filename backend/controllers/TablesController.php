@@ -350,8 +350,8 @@ class TablesController
             return;
         }
 
-        $oldTableName = self::buildTableName($project, $oldTableName);
-        $newTableName = self::buildTableName($project, $newTableName);
+        $oldPhysicalTableName = self::buildTableName($project, $oldTableName);
+        $newPhysicalTableName = self::buildTableName($project, $newTableName);
 
         mysqli_autocommit($GLOBALS['con'], false);
 
@@ -361,9 +361,9 @@ class TablesController
                 throw new Exception('Fehler beim Aktualisieren der Form-Einstellungen');
             }
 
-            $tableExistsQuery = query("SHOW TABLES LIKE '$oldTableName'");
+            $tableExistsQuery = query("SHOW TABLES LIKE '$oldPhysicalTableName'");
             if (mysqli_num_rows($tableExistsQuery) > 0) {
-                $renameTableQuery = "RENAME TABLE `$oldTableName` TO `$newTableName`";
+                $renameTableQuery = "RENAME TABLE `$oldPhysicalTableName` TO `$newPhysicalTableName`";
                 if (!query($renameTableQuery)) {
                     throw new Exception('Fehler beim Umbenennen der Datentabelle');
                 }
@@ -371,7 +371,7 @@ class TablesController
 
             if (class_exists('TableTriggers')) {
                 $triggerSystem = new TableTriggers();
-                $triggerSystem->renameTableTriggers($project, $oldTableName, $newTableName);
+                $triggerSystem->renameTableTriggers($project, $oldPhysicalTableName, $newPhysicalTableName);
             }
 
             mysqli_commit($GLOBALS['con']);
@@ -572,12 +572,12 @@ class TablesController
             return;
         }
 
-        $tableName = self::buildTableName($project, $tableName);
+        $physicalTableName = self::buildTableName($project, $tableName);
 
         mysqli_autocommit($GLOBALS['con'], false);
 
         try {
-            $dropQuery = "DROP TABLE IF EXISTS `$tableName`";
+            $dropQuery = "DROP TABLE IF EXISTS `$physicalTableName`";
             if (!query($dropQuery)) {
                 throw new Exception('Fehler beim Löschen der Tabelle');
             }

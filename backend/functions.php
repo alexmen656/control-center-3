@@ -118,9 +118,17 @@ function requireExistingCodespace($userID, $project, $codespace)
    $slug = escape_string($codespace);
    $projectID = escape_string($projectID);
    $result = query("SELECT id FROM project_codespaces WHERE project_id='$projectID' AND slug='$slug'");
-   if (mysqli_num_rows($result) === 0) {
+   $row = fetch_assoc($result);
+   if (!$row) {
       throw new Exception('Codespace "' . $codespace . '" does not exist in this project. Create it first before writing files.');
    }
+
+   return (int) $row['id'];
+}
+
+function codespaceDataDir($codespaceId)
+{
+   return __DIR__ . '/../data/projects/cs-' . (int) $codespaceId;
 }
 
 function createLink($string_to_replace)

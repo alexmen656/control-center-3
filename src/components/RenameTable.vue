@@ -172,13 +172,14 @@ export default defineComponent({
     
     async checkFormExists() {
       try {
-        const response = await this.$axios.post(
-          'table.php',
-          this.$qs.stringify({
-            check_table_exists: 'check_table_exists',
-            table_name: this.newTableName,
-            project: this.project
-          })
+        const response = await this.$axios.get(
+          'v2/tables/exists',
+          {
+            params: {
+              table_name: this.newTableName,
+              project: this.project
+            }
+          }
         );
         this.tableExists = response.data.exists === true;
       } catch (error) {
@@ -211,15 +212,14 @@ export default defineComponent({
       
       try {
         const response = await this.$axios.post(
-          'table.php',
-          this.$qs.stringify({
-            rename_table: 'rename_table',
+          'v2/tables/rename',
+          {
             old_table_name: this.table,
             new_table_name: this.newTableName,
             project: this.project
-          })
+          }
         );
-        
+
         if (response.data.success) {
           // Emit events to update the parent components
           this.$emit('sidebarRefresh');
