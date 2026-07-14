@@ -216,28 +216,28 @@ export async function handleApiTool(toolName, args, context) {
   switch (toolName) {
     case 'api_list':
       return await listApis(args, context);
-      
+
     case 'api_create':
       return await createApi(args, context);
-      
+
     case 'api_get':
       return await getApi(args, context);
-      
+
     case 'api_delete':
       return await deleteApi(args, context);
-      
+
     case 'api_endpoint_create':
       return await createEndpoint(args, context);
-      
+
     case 'api_endpoint_list':
       return await listEndpoints(args, context);
-      
+
     case 'api_subscribe':
       return await subscribeToApi(args, context);
-      
+
     case 'api_available_list':
       return await listAvailableApis(context);
-      
+
     case 'api_generate_key':
       return await generateApiKey(args, context);
 
@@ -258,7 +258,7 @@ async function listApis(args, context) {
         project: args.project
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       apis: data.apis || data
@@ -283,7 +283,7 @@ async function createApi(args, context) {
         auth_type: args.authType || 'api_key'
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: 'API created successfully',
@@ -303,7 +303,7 @@ async function getApi(args, context) {
         apiId: args.apiId
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       api: data
@@ -322,7 +322,7 @@ async function deleteApi(args, context) {
         apiId: args.apiId
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: data.message || 'API deleted successfully'
@@ -349,7 +349,7 @@ async function createEndpoint(args, context) {
         requires_auth: args.requiresAuth !== false
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: 'Endpoint created successfully',
@@ -368,7 +368,7 @@ async function listEndpoints(args, context) {
         apiId: args.apiId
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       endpoints: data.endpoints || data
@@ -387,7 +387,7 @@ async function subscribeToApi(args, context) {
         apiId: args.apiId
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       message: data.message || 'Subscribed to API successfully'
@@ -404,7 +404,7 @@ async function listAvailableApis(context) {
         getAvailableApis: 'true'
       }
     }, context);
-    
+
     return formatResponse({
       success: true,
       apis: data.apis || data
@@ -434,7 +434,7 @@ async function generateApiKey(args, context) {
 }
 
 function sdkImportName(slug) {
-  const special = { 'user-management': 'UsersAPI', 'file-storage': 'FilesAPI' };
+  const special = { 'user-management': 'UsersAPI' };
   if (special[slug]) return special[slug];
   if (!slug) return 'Api';
   return slug.charAt(0).toUpperCase() + slug.slice(1) + 'API';
@@ -480,13 +480,18 @@ async function getSdkDocs(args, context) {
       example: (e.example_request && e.example_request.code) ? e.example_request.code : ''
     }));
 
+    let note = "This SDK is auto-injected into the codespace once activated for it; its API key is injected automatically as an environment variable. Import it as shown and call the methods below on the imported object.";
+    if (api.slug === 'files' || api.slug === 'database') {
+      note += " To store a file/image in a database field: upload it with FilesAPI.upload(file, folder) first, then save the returned result.data.id (a short path string like 'photos/<uuid>.jpg') as the field value with DatabaseAPI.insert(). Never store raw file bytes or a base64 data URI directly in a database field — text/varchar columns are size-limited and this will error on anything but tiny files. Activate both the 'files' and 'database' APIs for the codespace to use this pattern.";
+    }
+
     return formatResponse({
       success: true,
       slug: api.slug,
       name: api.name,
       importName,
       import: `import { ${importName} } from 'apis';`,
-      note: "This SDK is auto-injected into the codespace once activated for it; its API key is injected automatically as an environment variable. Import it as shown and call the methods below on the imported object.",
+      note,
       methods
     });
   } catch (error) {
