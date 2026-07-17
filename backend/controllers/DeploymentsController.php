@@ -21,9 +21,11 @@ class DeploymentsController
         ");
 
         $deployments = [];
+        $codespaceIds = [];
 
         if ($rows) {
             foreach ($rows as $r) {
+                $codespaceIds[] = (int) $r['codespace_id'];
                 $deployments[] = [
                     'id' => (int) $r['id'],
                     'status' => $r['status'],
@@ -46,8 +48,29 @@ class DeploymentsController
                         'link' => $r['project_link'],
                         'icon' => $r['project_icon'] ?: 'folder-outline',
                     ],
+                    'domains' => [],
                 ];
             }
+        }
+
+        if ($codespaceIds) {
+            $ids = implode(',', array_unique($codespaceIds));
+            $domainRows = query("SELECT codespace_id, domain, status FROM codespace_domains WHERE codespace_id IN ($ids)");
+
+            $domainsByCodespace = [];
+            if ($domainRows) {
+                foreach ($domainRows as $dr) {
+                    $domainsByCodespace[(int) $dr['codespace_id']][] = [
+                        'domain' => $dr['domain'],
+                        'status' => $dr['status'],
+                    ];
+                }
+            }
+
+            foreach ($deployments as &$d) {
+                $d['domains'] = $domainsByCodespace[$d['codespace']['id']] ?? [];
+            }
+            unset($d);
         }
 
         $response->json(['success' => true, 'deployments' => $deployments]);

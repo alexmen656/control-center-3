@@ -196,7 +196,7 @@ class AuthController
                 $img = 'avatar';
             }
 
-            if (query("INSERT INTO control_center_users VALUES(0, '$img', '$first_name', '$last_name', '$email_adress', '$password', '$login_with_google', '$token', 'pending_verification')")) {
+            if (query("INSERT INTO control_center_users (profileImg, firstname, lastname, email, password, login_with_google, loginToken, account_status) VALUES ('$img', '$first_name', '$last_name', '$email_adress', '$password', '$login_with_google', '$token', 'pending_verification')")) {
                 $userID_query = query("SELECT * FROM control_center_users WHERE email = '$email_adress'");
                 if ($userID_query && mysqli_num_rows($userID_query) == 1) {
                     $userID = fetch_assoc($userID_query)['userID'];

@@ -49,7 +49,7 @@ class UsersController
         mysqli_autocommit($GLOBALS['con'], false);
 
         try {
-            if (query("INSERT INTO control_center_users VALUES(0, '', '$firstName', '$lastName', '$email', '$password', 'false', '$token', 'active')")) {
+            if (query("INSERT INTO control_center_users (profileImg, firstname, lastname, email, password, login_with_google, loginToken, account_status) VALUES ('', '$firstName', '$lastName', '$email', '$password', 'false', '$token', 'active')")) {
                 $userId = mysqli_insert_id($GLOBALS['con']);
 
                 if (!empty($assignedProject)) {

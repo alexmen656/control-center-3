@@ -20,8 +20,7 @@
             description="Codespace deployments will appear here once they run." />
         </DataCard>
 
-        <DataCard v-else v-for="group in groupedByProject" :key="group.key"
-          :title="group.project.name || 'Unassigned'"
+        <DataCard v-else v-for="group in groupedByProject" :key="group.key" :title="group.project.name || 'Unassigned'"
           :subtitle="group.deployments.length + ' deployment' + (group.deployments.length === 1 ? '' : 's')" noPadding>
           <div class="table-wrapper">
             <div class="modern-table">
@@ -48,10 +47,18 @@
                     </div>
                   </div>
                   <div class="table-cell" style="flex: 2;">
-                    <a v-if="d.url" class="url-link" :href="normalizeUrl(d.url)" target="_blank" rel="noopener">
-                      <span class="cell-content">{{ d.url }}</span>
-                      <ion-icon name="open-outline"></ion-icon>
-                    </a>
+                    <div v-if="primaryLink(d)" class="url-cell">
+                      <a class="url-link" :class="{ 'domain-link': primaryLink(d).isDomain }"
+                        :href="normalizeUrl(primaryLink(d).url)" target="_blank" rel="noopener"
+                        :title="primaryLink(d).isDomain && primaryLink(d).status !== 'active' ? primaryLink(d).url + ' (' + primaryLink(d).status + ')' : primaryLink(d).url">
+                        <ion-icon :name="primaryLink(d).isDomain ? 'globe-outline' : 'link-outline'"></ion-icon>
+                        <span class="cell-content">{{ primaryLink(d).url }}</span>
+                        <ion-icon name="open-outline"></ion-icon>
+                      </a>
+                      <span v-if="extraLinks(d).length" class="more-badge" :title="extraLinksTitle(d)">
+                        +{{ extraLinks(d).length }}
+                      </span>
+                    </div>
                     <span v-else class="muted">—</span>
                   </div>
                   <div class="table-cell" style="flex: 0.8;">
@@ -131,6 +138,26 @@ export default defineComponent({
     normalizeUrl(url) {
       if (!url) return url;
       return url.startsWith('http') ? url : 'https://' + url;
+    },
+    deploymentLinks(d) {
+      const links = (d.domains || []).map((dom) => ({
+        url: dom.domain,
+        isDomain: true,
+        status: dom.status,
+      }));
+      if (d.url) {
+        links.push({ url: d.url, isDomain: false });
+      }
+      return links;
+    },
+    primaryLink(d) {
+      return this.deploymentLinks(d)[0] || null;
+    },
+    extraLinks(d) {
+      return this.deploymentLinks(d).slice(1);
+    },
+    extraLinksTitle(d) {
+      return this.extraLinks(d).map((l) => l.url).join('\n');
     },
     formatDate(value) {
       if (!value) return '';
@@ -240,6 +267,13 @@ export default defineComponent({
   flex-shrink: 0;
 }
 
+.url-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .url-link {
   display: inline-flex;
   align-items: center;
@@ -256,6 +290,22 @@ export default defineComponent({
 .url-link ion-icon {
   flex-shrink: 0;
   font-size: 14px;
+}
+
+.url-link.domain-link {
+  font-weight: 600;
+}
+
+.more-badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--background);
+  border: 1px solid var(--border);
+  padding: 2px 7px;
+  border-radius: 10px;
+  cursor: default;
 }
 
 .commit-sha {
