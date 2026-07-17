@@ -10,6 +10,7 @@ interface UserData {
   email: string;
   accountStatus: string;
   login_with_google: string;
+  isAdmin: boolean;
 }
 
 const data = ref<UserData>({
@@ -20,6 +21,7 @@ const data = ref<UserData>({
   email: "",
   accountStatus: "",
   login_with_google: "false",
+  isAdmin: false,
 });
 
 export async function loadUserData() {
@@ -57,6 +59,10 @@ export async function loadUserData() {
         valueName: "login_with_google",
         newValue: data.value.login_with_google,
       });
+      store.commit("updateUser", {
+        valueName: "isAdmin",
+        newValue: data.value.isAdmin,
+      });
     } catch (error) {
       console.error(error);
     }
@@ -73,6 +79,7 @@ export function getUserData(): UserData | null {
       email: store.state.user.email,
       accountStatus: store.state.user.accountStatus,
       login_with_google: store.state.user.login_with_google,
+      isAdmin: store.state.user.isAdmin,
     };
   } catch (error) {
     console.error(error);

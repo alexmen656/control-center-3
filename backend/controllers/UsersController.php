@@ -277,6 +277,7 @@ class UsersController
 
         $json['accountStatus'] = $data['account_status'];
         $json['email_2fa_enabled'] = $data['email_2fa_enabled'] != '0';
+        $json['isAdmin'] = $data['is_admin'] != '0';
 
         $response->json($json);
     }

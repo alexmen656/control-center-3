@@ -30,10 +30,16 @@ class DomainsController
         query($sql);
     }
 
+    private function isAdmin(int $userID): bool
+    {
+        $result = query("SELECT is_admin FROM control_center_users WHERE userID='$userID' LIMIT 1");
+        $row = fetch_assoc($result);
+        return $row && $row['is_admin'] != '0';
+    }
+
     public function list(Request $request, Response $response): void
     {
-        $userID = $request->userID;
-        $result = query("SELECT * FROM domains WHERE user_id='$userID' ORDER BY domain ASC");
+        $result = query("SELECT * FROM domains ORDER BY domain ASC");
         $domains = [];
 
         while ($row = fetch_assoc($result)) {
@@ -58,6 +64,11 @@ class DomainsController
     {
         global $cloudflare_api_token;
         $userID = $request->userID;
+
+        if (!$this->isAdmin($userID)) {
+            $response->error('Only admins can sync with Cloudflare', 403);
+            return;
+        }
 
         if (empty($cloudflare_api_token)) {
             $response->error('Cloudflare API Token nicht konfiguriert', 400);
@@ -109,7 +120,7 @@ class DomainsController
                 continue;
 
             $escapedDomain = escape_string($domainName);
-            $existing = query("SELECT id FROM domains WHERE user_id='$userID' AND domain='$escapedDomain' LIMIT 1");
+            $existing = query("SELECT id FROM domains WHERE domain='$escapedDomain' LIMIT 1");
 
             if (fetch_assoc($existing)) {
                 $skipped++;
@@ -137,6 +148,12 @@ class DomainsController
     public function save(Request $request, Response $response): void
     {
         $userID = $request->userID;
+
+        if (!$this->isAdmin($userID)) {
+            $response->error('Only admins can manage domains', 403);
+            return;
+        }
+
         $id = $request->input('id') ? intval($request->input('id')) : null;
         $domain = escape_string($request->input('domain', ''));
         $registrar = escape_string($request->input('registrar', ''));
@@ -169,7 +186,7 @@ class DomainsController
                    expiry_date=$expiryDateSQL,
                    auto_renew='$autoRenew',
                    notes='$notes'
-                   WHERE id='$id' AND user_id='$userID'");
+                   WHERE id='$id'");
 
             $response->success([], 'Domain aktualisiert');
         } else {
@@ -182,7 +199,11 @@ class DomainsController
 
     public function delete(Request $request, Response $response): void
     {
-        $userID = $request->userID;
+        if (!$this->isAdmin($request->userID)) {
+            $response->error('Only admins can manage domains', 403);
+            return;
+        }
+
         $id = intval($request->params['id']);
 
         if (!$id) {
@@ -190,13 +211,12 @@ class DomainsController
             return;
         }
 
-        query("DELETE FROM domains WHERE id='$id' AND user_id='$userID'");
+        query("DELETE FROM domains WHERE id='$id'");
         $response->success([], 'Domain gelöscht');
     }
 
     public function subdomains(Request $request, Response $response): void
     {
-        $userID = $request->userID;
         $id = intval($request->params['id']);
 
         if (!$id) {
@@ -204,7 +224,7 @@ class DomainsController
             return;
         }
 
-        $domainResult = query("SELECT domain FROM domains WHERE id='$id' AND user_id='$userID' LIMIT 1");
+        $domainResult = query("SELECT domain FROM domains WHERE id='$id' LIMIT 1");
         $domainRow = fetch_assoc($domainResult);
 
         if (!$domainRow) {
@@ -251,10 +271,8 @@ class DomainsController
 
     public function expiring(Request $request, Response $response): void
     {
-        $userID = $request->userID;
         $result = query("SELECT * FROM domains
-                         WHERE user_id='$userID'
-                         AND expiry_date IS NOT NULL
+                         WHERE expiry_date IS NOT NULL
                          AND expiry_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
                          AND expiry_date >= CURDATE()
                          ORDER BY expiry_date ASC");

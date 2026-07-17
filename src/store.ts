@@ -2,12 +2,14 @@ import { createStore } from "vuex";
 
 interface UserData {
   profileImg: string;
+  userID: string;
   firstName: string;
   lastName: string;
   email: string;
   accountStatus: string;
   login_with_google: string;
-  [key: string]: string;
+  isAdmin: boolean;
+  [key: string]: string | boolean;
 }
 
 interface ApiData {
@@ -34,18 +36,20 @@ interface State {
 const state: State = {
   user: {
     profileImg: "",
+    userID: "",
     firstName: "",
     lastName: "",
     email: "",
     accountStatus: "",
     login_with_google: "false",
+    isAdmin: false,
   },
   apis: [],
   currentProject: "",
 };
 
 const mutations = {
-  updateUser(state: State, payload: { valueName: string; newValue: string }) {
+  updateUser(state: State, payload: { valueName: string; newValue: string | boolean }) {
     state.user[payload.valueName] = payload.newValue;
   },
   setApis(state: State, apis: ApiData[]) {

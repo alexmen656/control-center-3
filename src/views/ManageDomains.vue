@@ -6,9 +6,11 @@
       <div class="page-container">
         <PageHeader icon="globe-outline" title="Domain Management">
           <template #actions>
-            <ActionButton variant="secondary" icon="cloud-download-outline" @click="fetchCloudflare">Cloudflare Sync
+            <ActionButton variant="secondary" icon="cloud-download-outline" :disabled="!isAdmin"
+              :title="isAdmin ? '' : 'Only admins can sync with Cloudflare'" @click="fetchCloudflare">Cloudflare Sync
             </ActionButton>
-            <ActionButton variant="primary" icon="add-outline" @click="openModal()">New Domain</ActionButton>
+            <ActionButton variant="primary" icon="add-outline" :disabled="!isAdmin"
+              :title="isAdmin ? '' : 'Only admins can add domains'" @click="openModal()">New Domain</ActionButton>
           </template>
         </PageHeader>
 
@@ -86,10 +88,12 @@
                     </div>
 
                     <div class="table-cell cell-actions">
-                      <button class="action-icon-btn" @click="openModal(domain)" title="Edit">
+                      <button class="action-icon-btn" :disabled="!isAdmin" @click="openModal(domain)"
+                        :title="isAdmin ? 'Edit' : 'Only admins can manage domains'">
                         <ion-icon name="pencil-outline"></ion-icon>
                       </button>
-                      <button class="action-icon-btn delete" @click="deleteDomain(domain)" title="Delete">
+                      <button class="action-icon-btn delete" :disabled="!isAdmin" @click="deleteDomain(domain)"
+                        :title="isAdmin ? 'Delete' : 'Only admins can manage domains'">
                         <ion-icon name="trash-outline"></ion-icon>
                       </button>
                     </div>
@@ -223,6 +227,7 @@ import LoadingState from "@/components/LoadingState.vue";
 import EmptyState from "@/components/EmptyState.vue";
 import axios from 'axios';
 import { alertController, toastController } from '@ionic/vue';
+import store from '@/store';
 
 interface Domain {
   id: number;
@@ -256,6 +261,8 @@ const editingDomain = ref<Domain | null>(null);
 const expandedDomains = ref<Set<number>>(new Set());
 const loadingSubdomains = ref<Set<number>>(new Set());
 const subdomainsByDomain = ref<Record<number, Subdomain[]>>({});
+
+const isAdmin = computed(() => store.state.user.isAdmin);
 
 const formData = ref({
   domain: '',
@@ -776,9 +783,14 @@ async function showToast(message: string, color: string = 'primary') {
   font-size: 16px;
 }
 
-.action-icon-btn:hover {
+.action-icon-btn:hover:not(:disabled) {
   background: rgba(249, 115, 22, 0.22);
   transform: scale(1.05);
+}
+
+.action-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .action-icon-btn.delete {
@@ -786,7 +798,7 @@ async function showToast(message: string, color: string = 'primary') {
   color: var(--danger-color);
 }
 
-.action-icon-btn.delete:hover {
+.action-icon-btn.delete:hover:not(:disabled) {
   background: rgba(235, 68, 90, 0.22);
   transform: scale(1.05);
 }
