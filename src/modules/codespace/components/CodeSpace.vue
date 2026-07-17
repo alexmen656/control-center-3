@@ -1,136 +1,141 @@
 <template>
   <ion-page>
-  <div class="monaco-container">
-    <CodeSpaceSidebar class="sidebar" />
+    <div class="monaco-container">
+      <CodeSpaceSidebar class="sidebar" />
 
-    <div v-if="showWelcome" class="welcome-screen">
-      <div class="welcome-header">
-        <h1 class="welcome-title">Codespaces</h1>
-        <p class="welcome-subtitle">Entwicklungsumgebung</p>
-      </div>
-
-      <div class="welcome-content">
-        <div class="welcome-section">
-          <h3>Start</h3>
-          <div class="action-list">
-            <button @click="createNewFile" class="action-item">
-              <ion-icon name="document-outline"></ion-icon>
-              <span>Neue Datei...</span>
-              <kbd>Ctrl+N</kbd>
-            </button>
-            <button @click="openFolder" class="action-item">
-              <ion-icon name="folder-outline"></ion-icon>
-              <span>Ordner öffnen...</span>
-            </button>
-            <button @click="cloneRepository" class="action-item">
-              <ion-icon name="git-branch-outline"></ion-icon>
-              <span>Repository klonen...</span>
-            </button>
-          </div>
+      <div v-if="showWelcome" class="welcome-screen">
+        <div class="welcome-header">
+          <h1 class="welcome-title">Codespaces</h1>
+          <p class="welcome-subtitle">Development Environment</p>
         </div>
 
-        <div class="welcome-section" v-if="recentFiles.length > 0">
-          <h3>Zuletzt verwendet</h3>
-          <div class="recent-files-list">
-            <button v-for="file in recentFiles" :key="file.name" @click="loadFile(file.name)" class="recent-file-item">
-              <ion-icon :name="getFileIcon(file.name)" :color="getFileColor(file.name)"></ion-icon>
-              <span class="file-name">{{ file.name }}</span>
-              <span class="file-path">{{ codespaceName }}</span>
-            </button>
+        <div class="welcome-content">
+          <div class="welcome-section">
+            <h3>Start</h3>
+            <div class="action-list">
+              <button @click="createNewFile" class="action-item">
+                <ion-icon name="document-outline"></ion-icon>
+                <span>New File...</span>
+                <kbd>Ctrl+N</kbd>
+              </button>
+              <button @click="openFolder" class="action-item">
+                <ion-icon name="folder-outline"></ion-icon>
+                <span>Open Folder...</span>
+              </button>
+              <button @click="cloneRepository" class="action-item">
+                <ion-icon name="git-branch-outline"></ion-icon>
+                <span>Clone Repository...</span>
+              </button>
+            </div>
           </div>
-        </div>
 
+          <div class="welcome-section" v-if="recentFiles.length > 0">
+            <h3>Recently Used</h3>
+            <div class="recent-files-list">
+              <button v-for="file in recentFiles" :key="file.name" @click="loadFile(file.name)"
+                class="recent-file-item">
+                <ion-icon :name="getFileIcon(file.name)" :color="getFileColor(file.name)"></ion-icon>
+                <span class="file-name">{{ file.name }}</span>
+                <span class="file-path">{{ codespaceName }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!--
         <div class="welcome-section">
-          <h3>Hilfe</h3>
+          <h3>Help</h3>
           <div class="action-list">
             <button @click="showAIHelp" class="action-item">
               <ion-icon name="chatbubble-outline"></ion-icon>
-              <span>KI-Assistent öffnen</span>
+              <span>Open AI Assistant</span>
             </button>
             <a href="#" class="action-item">
               <ion-icon name="book-outline"></ion-icon>
-              <span>Dokumentation</span>
+              <span>Documentation</span>
             </a>
             <a href="#" class="action-item">
               <ion-icon name="help-circle-outline"></ion-icon>
-              <span>Tastenkürzel anzeigen</span>
+              <span>Show Keyboard Shortcuts</span>
             </a>
           </div>
         </div>
+        -->
+        </div>
       </div>
-    </div>
 
-    <CodeSpaceAPIsView v-if="showAPIsView" :project-name="projectName" :codespace="codespaceName" />
-    <CodeSpaceEnvView v-if="showEnvView" :project-name="projectName" :codespace="codespaceName" />
-    <CodeSpaceLogsView v-if="showLogsView" :project-name="projectName" :codespace="codespaceName" />
+      <CodeSpaceAPIsView v-if="showAPIsView" :project-name="projectName" :codespace="codespaceName" />
+      <CodeSpaceEnvView v-if="showEnvView" :project-name="projectName" :codespace="codespaceName" />
+      <CodeSpaceLogsView v-if="showLogsView" :project-name="projectName" :codespace="codespaceName" />
 
-    <div v-if="!showAPIsView && !showEnvView && !showLogsView && !showWelcome" class="monaco-editor-container">
-      <vue-monaco-editor v-model:value="code" :language="language" theme="vs-dark" :options="editorOptions" width="100%"
-        height="100%" />
-    </div>
+      <div v-if="!showAPIsView && !showEnvView && !showLogsView && !showWelcome" class="monaco-editor-container">
+        <vue-monaco-editor v-model:value="code" :language="language" theme="vs-dark" :options="editorOptions"
+          width="100%" height="100%" />
+      </div>
 
-    <div class="markdown-preview" v-html="renderedMarkdown" v-if="language === 'markdown'"></div>
+      <div class="markdown-preview" v-html="renderedMarkdown" v-if="language === 'markdown'"></div>
 
+      <!--
     <div class="ai-assistant-button" @click="toggleAssistant" :class="{ active: showAssistant }">
       <i class="ai-icon">AI</i>
       <span v-if="unreadMessages > 0" class="notification-badge">{{ unreadMessages }}</span>
     </div>
+    -->
 
-    <div v-if="showAssistant" class="ai-chat-modal">
-      <div class="chat-header">
-        <h3>AI Assistant</h3>
-        <div class="chat-controls">
-          <button class="new-chat-btn" @click="startNewChat" title="Neuer Chat">
-            🔄
-          </button>
-          <button class="mode-toggle" @click="toggleAgentMode" :class="{ active: agentMode }"
-            :title="agentMode ? 'Agent Mode - AI kann Code bearbeiten' : 'Chat Mode - Nur Antworten'">
-            {{ agentMode ? '🔧' : '💬' }}
-          </button>
-          <button class="close-btn" @click="toggleAssistant">×</button>
+      <div v-if="showAssistant" class="ai-chat-modal">
+        <div class="chat-header">
+          <h3>AI Assistant</h3>
+          <div class="chat-controls">
+            <button class="new-chat-btn" @click="startNewChat" title="Neuer Chat">
+              🔄
+            </button>
+            <button class="mode-toggle" @click="toggleAgentMode" :class="{ active: agentMode }"
+              :title="agentMode ? 'Agent Mode - AI kann Code bearbeiten' : 'Chat Mode - Nur Antworten'">
+              {{ agentMode ? '🔧' : '💬' }}
+            </button>
+            <button class="close-btn" @click="toggleAssistant">×</button>
+          </div>
         </div>
-      </div>
 
-      <div class="chat-messages" ref="chatMessages">
-        <div v-for="(message, index) in chatHistory" :key="index" class="message" :class="message.type">
-          <div class="message-content" v-html="message.content"></div>
-          <div v-if="message.replacements && message.replacements.length > 0" class="code-replacements">
-            <div v-for="(replacement, rIndex) in message.replacements" :key="rIndex" class="replacement-item">
-              <button @click="applyReplacement(replacement)" class="apply-btn">
-                Code ändern anwenden
-              </button>
-              <div class="replacement-preview">
-                <div class="old-code">
-                  <strong>Alt:</strong>
-                  <pre>{{ replacement.oldCode }}</pre>
-                </div>
-                <div class="new-code">
-                  <strong>Neu:</strong>
-                  <pre>{{ replacement.newCode }}</pre>
+        <div class="chat-messages" ref="chatMessages">
+          <div v-for="(message, index) in chatHistory" :key="index" class="message" :class="message.type">
+            <div class="message-content" v-html="message.content"></div>
+            <div v-if="message.replacements && message.replacements.length > 0" class="code-replacements">
+              <div v-for="(replacement, rIndex) in message.replacements" :key="rIndex" class="replacement-item">
+                <button @click="applyReplacement(replacement)" class="apply-btn">
+                  Code ändern anwenden
+                </button>
+                <div class="replacement-preview">
+                  <div class="old-code">
+                    <strong>Alt:</strong>
+                    <pre>{{ replacement.oldCode }}</pre>
+                  </div>
+                  <div class="new-code">
+                    <strong>Neu:</strong>
+                    <pre>{{ replacement.newCode }}</pre>
+                  </div>
                 </div>
               </div>
             </div>
+            <div class="message-time">{{ message.time }}</div>
           </div>
-          <div class="message-time">{{ message.time }}</div>
-        </div>
-        <div v-if="isTyping" class="message ai typing">
-          <div class="typing-indicator">
-            <span></span>
-            <span></span>
-            <span></span>
+          <div v-if="isTyping" class="message ai typing">
+            <div class="typing-indicator">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="chat-input">
-        <textarea v-model="userQuestion" @keydown.enter.prevent="handleEnterKey"
-          placeholder="Stelle eine Frage oder bitte um Code-Änderungen..." ref="chatInput"></textarea>
-        <button @click="askAI" :disabled="!userQuestion.trim() || isTyping" class="send-btn">
-          {{ isTyping ? '⏳' : '➤' }}
-        </button>
+        <div class="chat-input">
+          <textarea v-model="userQuestion" @keydown.enter.prevent="handleEnterKey"
+            placeholder="Stelle eine Frage oder bitte um Code-Änderungen..." ref="chatInput"></textarea>
+          <button @click="askAI" :disabled="!userQuestion.trim() || isTyping" class="send-btn">
+            {{ isTyping ? '⏳' : '➤' }}
+          </button>
+        </div>
       </div>
     </div>
-  </div>
   </ion-page>
 </template>
 
@@ -164,7 +169,7 @@ const showEnvView = ref(false)
 const showLogsView = ref(false)
 const recentFiles = ref([])
 
-const code = ref('// Schreibe hier deinen Code...\nconsole.log("Hello Monaco!")')
+const code = ref('// Write your code here...\nconsole.log("Hello Monaco!")')
 const language = ref('javascript')
 const editorOptions = {
   fontSize: 16,
@@ -338,36 +343,36 @@ const initializeProject = async () => {
 
 const createNewFile = async () => {
   try {
-    const filename = prompt('Dateiname eingeben:', 'neue-datei.js')
+    const filename = prompt('Enter filename:', 'new-file.js')
     if (filename && filename.trim()) {
       await loadFile(filename.trim())
-      toast.success(`Neue Datei ${filename} erstellt!`, 30)
+      toast.success(`New file ${filename} created!`, 30)
     }
   } catch (error) {
-    toast.error(`Fehler beim Erstellen der Datei: ${error.message}`, 30)
+    toast.error(`Error creating file: ${error.message}`, 30)
   }
 }
 
 const openFolder = () => {
-  toast.info('Ordner-Explorer wird bald verfügbar sein!', 30)
+  toast.info('Folder explorer coming soon!', 30)
 }
 
 const cloneRepository = () => {
-  toast.info('Git-Clone-Feature wird bald verfügbar sein!', 30)
+  toast.info('Git clone feature coming soon!', 30)
 }
 
 const showAIHelp = () => {
   showAssistant.value = true
-  addAIMessage('Willkommen zum KI-Assistenten! Ich kann dir beim Programmieren helfen, Code-Probleme lösen und sogar automatisch Änderungen vorschlagen. Probier es aus!')
-  toast.success('KI-Assistent geöffnet!', 30)
+  addAIMessage('Welcome to the AI Assistant! I can help you with coding, solve code problems, and even suggest changes automatically. Give it a try!')
+  toast.success('AI Assistant opened!', 30)
 }
 
 const showGitHelp = () => {
-  toast.info('Git-Tutorial wird bald verfügbar sein!', 30)
+  toast.info('Git tutorial coming soon!', 30)
 }
 
 const showEditorFeatures = () => {
-  toast.info('Editor-Features-Tour wird bald verfügbar sein!', 30)
+  toast.info('Editor features tour coming soon!', 30)
 }
 
 const addToRecentFiles = (filename) => {
@@ -711,7 +716,6 @@ const applyReplacement = (replacement) => {
   box-sizing: border-box;
 }
 
-/* Professional Welcome Screen - VS Code Style */
 .welcome-screen {
   display: flex;
   flex-direction: column;
@@ -857,7 +861,6 @@ const applyReplacement = (replacement) => {
   border-left: 1px solid #ddd;
 }
 
-/* Responsive adjustments for Welcome Screen */
 @media (max-width: 768px) {
   .welcome-content {
     flex-direction: column;
@@ -878,7 +881,6 @@ const applyReplacement = (replacement) => {
   }
 }
 
-/* AI Assistant Styles - CMS Red Theme */
 .ai-assistant-button {
   position: fixed;
   bottom: 20px;
@@ -1248,7 +1250,6 @@ const applyReplacement = (replacement) => {
   }
 }
 
-/* Responsive adjustments */
 @media (max-width: 480px) {
   .ai-chat-modal {
     width: calc(100vw - 40px);
@@ -1263,11 +1264,9 @@ const applyReplacement = (replacement) => {
 
   .chat-input textarea {
     font-size: 16px;
-    /* Prevent zoom on iOS */
   }
 }
 
-/* Ionic List Dark Theme Overrides */
 ion-list {
   --background: transparent;
   --color: #cccccc;
@@ -1289,7 +1288,6 @@ ion-label p {
   color: #999999 !important;
 }
 
-/* File Icons Styling */
 ion-icon[slot="start"] {
   margin-inline-end: 16px;
 }
