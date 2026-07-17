@@ -36,11 +36,11 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/AccessLog.vue"),
   },
   {
-    path: "/databases",
+    path: "/database",
     component: DatabasesView,
   },
   {
-    path: "/databases/table/:name",
+    path: "/database/table/:name",
     component: TableDetail,
   },
   {

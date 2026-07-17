@@ -4,6 +4,7 @@ class DeploymentsController
 {
     public function listAll(Request $request, Response $response): void
     {
+        $userID = $request->userID;
         $rows = query("
             SELECT
                 d.id, d.codespace_id, d.commit_sha, d.status, d.runtime, d.url,
@@ -14,6 +15,8 @@ class DeploymentsController
             FROM deployments d
             JOIN project_codespaces pc ON d.codespace_id = pc.id
             LEFT JOIN projects p ON pc.project_id = p.projectID
+            JOIN control_center_user_projects cup ON pc.project_id = cup.projectID
+            WHERE cup.userID = '$userID'
             ORDER BY d.created_at DESC
         ");
 

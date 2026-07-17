@@ -190,8 +190,7 @@ export default defineComponent({
     }
 
     function openTable(tableName) {
-      // Navigate to table detail page
-      window.location.href = `/databases/table/${tableName}`;
+      window.location.href = `/database/table/${tableName}`;
     }
 
     return {

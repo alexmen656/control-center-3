@@ -66,7 +66,7 @@ const STATIC_PAGES = [
   { label: "Users", path: "/users", icon: "people-outline" },
   { label: "Domains", path: "/domains", icon: "globe-outline" },
   { label: "Pages", path: "/pages/", icon: "document-text-outline" },
-  { label: "Databases", path: "/databases", icon: "server-outline" },
+  { label: "Databases", path: "/database", icon: "server-outline" },
   { label: "Bookmarks", path: "/manage/bookmarks", icon: "bookmark-outline" },
   { label: "Manage Projects", path: "/manage/projects", icon: "folder-outline" },
   { label: "Access Log", path: "/access-log", icon: "time-outline" },

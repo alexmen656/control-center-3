@@ -144,8 +144,7 @@ class PagesController
             }
         }
 
-        // 9. Check database table routes: databases/table/{name}
-        if (preg_match('#^databases/table/([^/]+)$#', $url, $m)) {
+        if (preg_match('#^database/table/([^/]+)$#', $url, $m)) {
             $tableName = escape_string($m[1]);
             $tables = query("SHOW TABLES LIKE '$tableName'");
             if ($tables && mysqli_num_rows($tables) > 0) {
