@@ -280,9 +280,7 @@ export default defineComponent({
       try {
         await this.$axios.delete(
           "v2/bookmarks",
-          this.$qs.stringify({
-            location: this.editingBookmark.location
-          })
+          { params: { location: this.editingBookmark.location } }
         );
 
         await this.$axios.post(
@@ -312,9 +310,7 @@ export default defineComponent({
       try {
         await this.$axios.delete(
           "v2/bookmarks",
-          this.$qs.stringify({
-            location: this.deleteModal.bookmark.location
-          })
+          { params: { location: this.deleteModal.bookmark.location } }
         );
 
         alert("Bookmark deleted successfully");
