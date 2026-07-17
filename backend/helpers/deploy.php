@@ -223,6 +223,15 @@ class DeployHelper
         $id = (int) $codespaceId;
         $limit = (int) $limit;
         $res = query("SELECT * FROM deployments WHERE codespace_id='$id' ORDER BY id DESC LIMIT $limit");
+
+        $domains = [];
+        $domainRows = query("SELECT domain, status FROM codespace_domains WHERE codespace_id='$id'");
+        if ($domainRows) {
+            while ($dr = mysqli_fetch_assoc($domainRows)) {
+                $domains[] = ['domain' => $dr['domain'], 'status' => $dr['status']];
+            }
+        }
+
         $items = [];
         if ($res) {
             while ($row = mysqli_fetch_assoc($res)) {
@@ -234,6 +243,7 @@ class DeployHelper
                     'meta' => ['githubCommitSha' => $row['commit_sha']],
                     'created' => strtotime($row['created_at']) * 1000,
                     'inspectorUrl' => 'https://api.fringelo.com/v2/deploy-logs?deployment=' . $row['id'] . '&sig=' . deploy_log_sig($row['id']),
+                    'domains' => $domains,
                 ];
             }
         }

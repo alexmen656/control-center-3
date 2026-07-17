@@ -197,8 +197,14 @@
               <ion-icon :name="getDeploymentIcon(deployment.state)"></ion-icon>
             </div>
             <div class="deployment-info">
-              <div class="deployment-url">
-                <a :href="'https://' + deployment.url" target="_blank">{{ deployment.url }}</a>
+              <div class="deployment-url" v-if="primaryLink(deployment)">
+                <a :class="{ 'domain-link': primaryLink(deployment).isDomain }"
+                  :href="'https://' + primaryLink(deployment).url" target="_blank"
+                  :title="primaryLink(deployment).isDomain && primaryLink(deployment).status !== 'active' ? primaryLink(deployment).url + ' (' + primaryLink(deployment).status + ')' : primaryLink(deployment).url">{{
+                    primaryLink(deployment).url }}</a>
+                <span v-if="extraLinks(deployment).length" class="more-badge" :title="extraLinksTitle(deployment)">
+                  +{{ extraLinks(deployment).length }}
+                </span>
               </div>
               <div class="deployment-commit">{{ deployment.commit?.substring(0, 7) }}</div>
               <div class="deployment-date">{{ formatDate(deployment.created) }}</div>
@@ -699,7 +705,8 @@ const loadDeployments = async () => {
         state: deployment.readyState,
         commit: deployment.meta?.githubCommitSha,
         created: deployment.created,
-        inspectorUrl: deployment.inspectorUrl
+        inspectorUrl: deployment.inspectorUrl,
+        domains: deployment.domains || []
       })) || []
     } else {
       deployments.value = []
@@ -1033,6 +1040,24 @@ const getDeploymentIcon = (state) => {
     default: return 'help-circle-outline'
   }
 }
+
+const deploymentLinks = (deployment) => {
+  const links = (deployment.domains || []).map(dom => ({
+    url: dom.domain,
+    isDomain: true,
+    status: dom.status
+  }))
+  if (deployment.url) {
+    links.push({ url: deployment.url, isDomain: false })
+  }
+  return links
+}
+
+const primaryLink = (deployment) => deploymentLinks(deployment)[0] || null
+
+const extraLinks = (deployment) => deploymentLinks(deployment).slice(1)
+
+const extraLinksTitle = (deployment) => extraLinks(deployment).map(l => l.url).join('\n')
 
 function formatDate(date) {
   let dateObj;
@@ -1411,15 +1436,37 @@ onUnmounted(() => {
 .deployment-url {
   font-size: 13px;
   margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 
 .deployment-url a {
   color: var(--vscode-textLink-foreground, #4fc1ff);
   text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .deployment-url a:hover {
   text-decoration: underline;
+}
+
+.deployment-url a.domain-link {
+  font-weight: 600;
+}
+
+.deployment-url .more-badge {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--vscode-descriptionForeground, #999999);
+  background: var(--vscode-badge-background, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  padding: 1px 6px;
 }
 
 .deployment-commit,
