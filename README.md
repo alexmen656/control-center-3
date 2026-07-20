@@ -1,4 +1,5 @@
 # Fringelo
+Please approve 80h for HCTG! (not 100h)
 
 ## Demo
 
